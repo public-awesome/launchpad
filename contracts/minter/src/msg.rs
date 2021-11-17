@@ -11,7 +11,8 @@ pub struct InstantiateMsg {
 pub enum ExecuteMsg {
     Increment {},
     Reset { count: i32 },
-    Mint {},
+    // Instantiate a new NFT contract given a code id
+    InitNFTContract { code_id: u64 },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
