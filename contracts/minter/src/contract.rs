@@ -41,7 +41,8 @@ pub fn execute(
     match msg {
         ExecuteMsg::Increment {} => try_increment(deps),
         ExecuteMsg::Reset { count } => try_reset(deps, info, count),
-        ExecuteMsg::Mint {} => unimplemented!(),
+        ExecuteMsg::InitCollection { code_id } => unimplemented!(),
+        ExecuteMsg::Mint { collection } => unimplemented!(),
     }
 }
 
@@ -68,6 +69,7 @@ pub fn try_reset(deps: DepsMut, info: MessageInfo, count: i32) -> Result<Respons
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::GetCount {} => to_binary(&query_count(deps)?),
+        QueryMsg::CollectionsForCreator { creator } => unimplemented!(),
     }
 }
 
