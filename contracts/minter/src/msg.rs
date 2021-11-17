@@ -12,7 +12,7 @@ pub enum ExecuteMsg {
     Increment {},
     Reset { count: i32 },
     // Instantiate a new NFT contract given a code id
-    InitNFTContract { code_id: u64 },
+    InitNFTCollection { code_id: u64 },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
