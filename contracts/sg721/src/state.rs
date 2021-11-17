@@ -11,3 +11,8 @@ pub struct State {
 }
 
 pub const STATE: Item<State> = Item::new("state");
+
+// state:
+// 1. extend from cw721-base
+// 2. metadata
+// 3. royalties

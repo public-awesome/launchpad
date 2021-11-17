@@ -13,4 +13,4 @@ pub struct State {
 pub const STATE: Item<State> = Item::new("state");
 
 // Mapping from creator to NFT collection contract
-pub const COLLECTIONS: Map<Addr, Addr> = Map::new("collections");
+pub const COLLECTIONS: Map<&Addr, &Addr> = Map::new("collections");
