@@ -12,7 +12,9 @@ pub struct InstantiateMsg {
 pub enum ExecuteMsg {
     Increment {},
     Reset { count: i32 },
+    // Create a new NFT collection
     InitCollection { code_id: u64 },
+    // Mint into an existing NFT collection
     Mint { collection: Addr },
 }
 
