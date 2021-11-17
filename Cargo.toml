@@ -1,3 +1,22 @@
 [workspace]
 members = ["contracts/*"]
 
+[profile.release.package.minter]
+codegen-units = 1
+incremental = false
+
+[profile.release.package.secondary]
+codegen-units = 1
+incremental = false
+
+[profile.release.package.sg721]
+codegen-units = 1
+incremental = false
+
+[profile.release]
+rpath = false
+lto = true
+overflow-checks = true
+opt-level = 3
+debug = false
+debug-assertions = false
