@@ -41,6 +41,30 @@ pub fn execute(
     match msg {
         ExecuteMsg::Increment {} => try_increment(deps),
         ExecuteMsg::Reset { count } => try_reset(deps, info, count),
+        ExecuteMsg::AcceptBid {
+            collection,
+            token_id,
+            bid,
+        } => unimplemented!(),
+        ExecuteMsg::RemoveAsk {
+            collection,
+            token_id,
+        } => unimplemented!(),
+        ExecuteMsg::RemoveBid {
+            collection,
+            token_id,
+            bidder,
+        } => unimplemented!(),
+        ExecuteMsg::SetAsk {
+            collection,
+            token_id,
+            ask,
+        } => unimplemented!(),
+        ExecuteMsg::SetBid {
+            collection,
+            token_id,
+            bid,
+        } => unimplemented!(),
     }
 }
 
@@ -67,6 +91,21 @@ pub fn try_reset(deps: DepsMut, info: MessageInfo, count: i32) -> Result<Respons
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::GetCount {} => to_binary(&query_count(deps)?),
+        QueryMsg::Bid {
+            collection,
+            token_id,
+            bidder,
+        } => unimplemented!(),
+        QueryMsg::Bids {
+            collection,
+            token_id,
+            start_after,
+            limit,
+        } => unimplemented!(),
+        QueryMsg::CurrentAsk {
+            collection,
+            token_id,
+        } => unimplemented!(),
     }
 }
 
