@@ -12,7 +12,8 @@ pub struct InstantiateMsg {
 pub enum ExecuteMsg {
     Increment {},
     Reset { count: i32 },
-    InitNFTCollection { code_id: u64 },
+    InitCollection { code_id: u64 },
+    Mint { collection: Addr },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
