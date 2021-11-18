@@ -1,4 +1,5 @@
 use cosmwasm_std::Addr;
+use cw4::Member;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -11,11 +12,25 @@ pub struct InstantiateMsg {
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
     Increment {},
-    Reset { count: i32 },
+    Reset {
+        count: i32,
+    },
     // Create a new NFT collection
-    InitCollection { code_id: u64 },
+    InitCollection {
+        code_id: u64,
+        name: String,
+        symbol: String,
+    },
     // Mint into an existing NFT collection
-    Mint { collection: Addr },
+    Mint {
+        collection: Addr,
+        token_id: String,
+        owner: String,
+        // Storing metadata off-chain on IPFS is better for interoperability
+        token_uri: Option<String>,
+        // Members of a cw4-group for creator royalties
+        creators: Vec<Member>,
+    },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
