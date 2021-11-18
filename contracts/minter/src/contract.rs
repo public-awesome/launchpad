@@ -41,8 +41,19 @@ pub fn execute(
     match msg {
         ExecuteMsg::Increment {} => try_increment(deps),
         ExecuteMsg::Reset { count } => try_reset(deps, info, count),
-        ExecuteMsg::InitCollection { code_id } => unimplemented!(),
-        ExecuteMsg::Mint { collection } => unimplemented!(),
+        ExecuteMsg::InitCollection {
+            code_id,
+            name,
+            symbol,
+            creators,
+        } => unimplemented!(),
+        ExecuteMsg::Mint {
+            collection,
+            token_id,
+            owner,
+            token_uri,
+            creators,
+        } => unimplemented!(),
     }
 }
 

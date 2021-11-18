@@ -20,6 +20,8 @@ pub enum ExecuteMsg {
         code_id: u64,
         name: String,
         symbol: String,
+        // Members of a cw4-group for creator royalties
+        creators: Vec<Member>,
     },
     // Mint into an existing NFT collection
     Mint {
