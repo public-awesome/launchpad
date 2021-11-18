@@ -9,6 +9,12 @@ pub struct InstantiateMsg {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub enum Creator {
+    Individual(Addr),
+    Group(Vec<Member>),
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
     Increment {},
@@ -20,8 +26,7 @@ pub enum ExecuteMsg {
         code_id: u64,
         name: String,
         symbol: String,
-        // Members of a cw4-group for creator royalties
-        creators: Vec<Member>,
+        creator: Creator,
     },
 }
 
