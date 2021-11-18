@@ -1,8 +1,7 @@
+use cosmwasm_std::Addr;
+use cw_storage_plus::{Item, Map};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-
-use cosmwasm_std::Addr;
-use cw_storage_plus::Item;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct State {
@@ -12,7 +11,13 @@ pub struct State {
 
 pub const STATE: Item<State> = Item::new("state");
 
-// state:
-// 1. extend from cw721-base
-// 2. metadata
-// 3. royalties
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct Creators {
+    // address for the cw4-group that represents the creators and their ownership weights
+    pub group: Addr,
+    // share of each sale for the total group
+    // individual shares are handled by weights in the cw4-group
+    pub share: u64,
+}
+
+pub const CREATORS: Map<&str, Creators> = Map::new("creators");
