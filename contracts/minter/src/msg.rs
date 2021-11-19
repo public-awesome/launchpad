@@ -23,16 +23,6 @@ pub enum ExecuteMsg {
         // Members of a cw4-group for creator royalties
         creators: Vec<Member>,
     },
-    // Mint into an existing NFT collection
-    Mint {
-        collection: Addr,
-        token_id: String,
-        owner: String,
-        // Storing metadata off-chain on IPFS is better for interoperability
-        token_uri: Option<String>,
-        // Members of a cw4-group for creator royalties
-        creators: Vec<Member>,
-    },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
