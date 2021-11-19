@@ -47,13 +47,6 @@ pub fn execute(
             symbol,
             creators,
         } => unimplemented!(),
-        ExecuteMsg::Mint {
-            collection,
-            token_id,
-            owner,
-            token_uri,
-            creators,
-        } => unimplemented!(),
     }
 }
 
