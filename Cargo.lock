@@ -167,6 +167,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "cw4"
+version = "0.10.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0dc4c986c0f79a6d46e071f70c4ec933fb1e4ad7689f1f38df091e47a52c4530"
+dependencies = [
+ "cosmwasm-std",
+ "cw-storage-plus",
+ "schemars",
+ "serde",
+]
+
+[[package]]
 name = "der"
 version = "0.4.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -334,6 +346,7 @@ dependencies = [
  "cosmwasm-storage",
  "cw-storage-plus",
  "cw2",
+ "cw4",
  "schemars",
  "serde",
  "thiserror",
