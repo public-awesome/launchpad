@@ -1,8 +1,8 @@
+use cosmwasm_std::{Addr, Coin, Empty};
+use cw721_base::Cw721Contract;
+use cw_storage_plus::{Item, Map};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-
-use cosmwasm_std::{Addr, Coin};
-use cw_storage_plus::{Item, Map};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct State {
@@ -33,3 +33,15 @@ pub struct Ask {
     // Amount of the currency being asked
     pub amount: Coin,
 }
+
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
+pub enum Order {
+    Bid(Bid),
+    Ask(Ask),
+}
+pub type Extension = Order;
+pub type Cw721BaseContract<'a> = Cw721Contract<'a, Extension, Empty>;
+
+// [TODO]
+// need to be able to iterate over (collection, token_id)
+// two separate contracts for bids and asks?
