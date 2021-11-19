@@ -27,6 +27,7 @@ pub enum ExecuteMsg {
         name: String,
         symbol: String,
         creator: Creator,
+        creator_share: u64,
     },
 }
 
