@@ -33,15 +33,3 @@ pub struct Ask {
     // Amount of the currency being asked
     pub amount: Coin,
 }
-
-#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
-pub enum Order {
-    Bid(Bid),
-    Ask(Ask),
-}
-pub type Extension = Order;
-pub type Cw721BaseContract<'a> = Cw721Contract<'a, Extension, Empty>;
-
-// [TODO]
-// need to be able to iterate over (collection, token_id)
-// two separate contracts for bids and asks?
