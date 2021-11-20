@@ -1,5 +1,4 @@
-use cosmwasm_std::{Addr, Coin, Empty};
-use cw721_base::Cw721Contract;
+use cosmwasm_std::{Addr, Coin};
 use cw_storage_plus::{Item, Map};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
