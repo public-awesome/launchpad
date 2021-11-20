@@ -29,6 +29,11 @@ pub enum ExecuteMsg {
         creator: Creator,
         creator_share: u64,
     },
+    // Registers a new code associated with an NFT contract code
+    RegisterCode {
+        label: String,
+        code_id: u64,
+    },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

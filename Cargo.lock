@@ -389,6 +389,7 @@ dependencies = [
  "cw4",
  "schemars",
  "serde",
+ "sg721",
  "thiserror",
 ]
 
