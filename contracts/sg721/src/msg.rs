@@ -13,6 +13,10 @@ pub enum ExecuteMsg {
     Reset { count: i32 },
 }
 
+// [TODO] uncomment after removin boilerplate
+// specialize the cw721-base generic ExecuteMsg with creator extension
+// pub type ExecuteMsg = cw721_base::ExecuteMsg<Extension>;
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {

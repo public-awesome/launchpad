@@ -1,4 +1,4 @@
-use cosmwasm_std::Addr;
+use cosmwasm_std::{Addr, Empty};
 use cw_storage_plus::{Item, Map};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -11,6 +11,9 @@ pub struct State {
 
 pub const STATE: Item<State> = Item::new("state");
 
+// sg721 <> creator mapping
+pub const CREATORS: Map<&str, Creator> = Map::new("creators");
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Creator {
     // address for the individual or..
@@ -20,5 +23,5 @@ pub struct Creator {
     // individual shares are handled by weights in the cw4-group
     pub share: u64,
 }
-
-pub const CREATORS: Map<&str, Creator> = Map::new("creators");
+// use creator as the extention in token info
+pub type Extension = Creator;
