@@ -45,7 +45,7 @@ pub fn execute(
             code_id,
             name,
             symbol,
-            creators,
+            creator,
         } => unimplemented!(),
     }
 }
