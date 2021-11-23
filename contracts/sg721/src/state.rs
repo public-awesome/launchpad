@@ -23,5 +23,3 @@ pub struct Creator {
     // individual shares are handled by weights in the cw4-group
     pub share: u64,
 }
-// use creator as the extention in token info
-pub type Extension = Creator;
