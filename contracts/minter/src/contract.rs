@@ -69,11 +69,11 @@ pub fn execute_init_collection(
         code_id,
         funds: vec![],
         msg: to_binary(&SG721InstantiateMsg {
-            name,
-            symbol,
+            name: name.to_owned(),
+            symbol: symbol.to_owned(),
             minter: info.sender.to_string(),
         })?,
-        label: "label".to_string(),
+        label: format!("{}-{}-{}", symbol, name, code_id),
     };
     let sub_msg: SubMsg = SubMsg::reply_on_success(msg, 1);
 
