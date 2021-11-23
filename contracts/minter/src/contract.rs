@@ -67,6 +67,7 @@ pub fn execute_init_collection(
     let msg = WasmMsg::Instantiate {
         admin: Some(state.owner.into_string()),
         code_id,
+        // TODO: where does this come from?
         funds: vec![],
         msg: to_binary(&SG721InstantiateMsg {
             name: name.to_owned(),
@@ -75,11 +76,10 @@ pub fn execute_init_collection(
         })?,
         label: format!("{}-{}-{}", symbol, name, code_id),
     };
-    let sub_msg: SubMsg = SubMsg::reply_on_success(msg, 1);
 
     Ok(Response::new()
         .add_attribute("method", "init_collection")
-        .add_submessage(sub_msg))
+        .add_submessage(SubMsg::reply_on_success(msg, 1)))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -100,71 +100,43 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::msg::Creator;
     use cosmwasm_std::testing::mock_dependencies_with_balance;
     use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-    use cosmwasm_std::{coins, from_binary};
+    use cosmwasm_std::{coins, from_binary, Addr};
+
+    fn setup_contract(deps: DepsMut) {
+        let msg = InstantiateMsg {};
+        let info = mock_info("creator", &[]);
+        let res = instantiate(deps, mock_env(), info, msg).unwrap();
+        assert_eq!(0, res.messages.len());
+    }
 
     #[test]
     fn proper_initialization() {
         let mut deps = mock_dependencies();
-
-        let msg = InstantiateMsg { count: 17 };
-        let info = mock_info("creator", &coins(1000, "earth"));
-
-        // we can just call .unwrap() to assert this was a success
-        let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(0, res.messages.len());
-
-        // it worked, let's query the state
-        // let res = query(deps.as_ref(), mock_env(), QueryMsg::GetCount {}).unwrap();
-        // let value: CountResponse = from_binary(&res).unwrap();
-        // assert_eq!(17, value.count);
+        setup_contract(deps.as_mut());
     }
 
     #[test]
-    fn increment() {
-        let mut deps = mock_dependencies_with_balance(&coins(2, "token"));
+    fn exec_init_collection() {
+        let mut deps = mock_dependencies();
+        let creator = String::from("creator");
+        setup_contract(deps.as_mut());
 
-        let msg = InstantiateMsg { count: 17 };
-        let info = mock_info("creator", &coins(2, "token"));
-        let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let info = mock_info(&creator, &[]);
 
-        // // beneficiary can release it
-        // let info = mock_info("anyone", &coins(2, "token"));
-        // let msg = ExecuteMsg::Increment {};
-        // let _res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let msg = ExecuteMsg::InitCollection {
+            code_id: 1,
+            name: "collection name".to_string(),
+            symbol: "SYM".to_string(),
+            creator: Creator::Individual(Addr::unchecked(creator)),
+            creator_share: 50u64,
+        };
 
-        // // should increase counter by 1
-        // let res = query(deps.as_ref(), mock_env(), QueryMsg::GetCount {}).unwrap();
-        // let value: CountResponse = from_binary(&res).unwrap();
-        // assert_eq!(18, value.count);
-    }
+        let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
+        assert_eq!(res.messages.len(), 1);
 
-    #[test]
-    fn reset() {
-        let mut deps = mock_dependencies_with_balance(&coins(2, "token"));
-
-        let msg = InstantiateMsg { count: 17 };
-        let info = mock_info("creator", &coins(2, "token"));
-        let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
-
-        // // beneficiary can release it
-        // let unauth_info = mock_info("anyone", &coins(2, "token"));
-        // let msg = ExecuteMsg::Reset { count: 5 };
-        // let res = execute(deps.as_mut(), mock_env(), unauth_info, msg);
-        // match res {
-        //     Err(ContractError::Unauthorized {}) => {}
-        //     _ => panic!("Must return unauthorized error"),
-        // }
-
-        // // only the original creator can reset the counter
-        // let auth_info = mock_info("creator", &coins(2, "token"));
-        // let msg = ExecuteMsg::Reset { count: 5 };
-        // let _res = execute(deps.as_mut(), mock_env(), auth_info, msg).unwrap();
-
-        // // should now be 5
-        // let res = query(deps.as_ref(), mock_env(), QueryMsg::GetCount {}).unwrap();
-        // let value: CountResponse = from_binary(&res).unwrap();
-        // assert_eq!(5, value.count);
+        // TODO: assert contract address was saved in storage
     }
 }
