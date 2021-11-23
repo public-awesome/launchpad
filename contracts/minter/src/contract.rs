@@ -1,8 +1,10 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult, WasmMsg,
+    to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Reply, ReplyOn, Response, StdResult,
+    SubMsg, WasmMsg,
 };
+use cw0::parse_reply_instantiate_data;
 use cw2::set_contract_version;
 
 use crate::error::ContractError;
@@ -73,9 +75,19 @@ pub fn execute_init_collection(
         })?,
         label: "label".to_string(),
     };
+    let sub_msg: SubMsg = SubMsg::reply_on_success(msg, 1);
 
-    // TODO: add msg as a submessage and process reply
-    Ok(Response::new().add_attribute("method", "init_collection"))
+    Ok(Response::new()
+        .add_attribute("method", "init_collection")
+        .add_submessage(sub_msg))
+}
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn reply(_deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
+    // TODO: how to ensure no panic?
+    let res = parse_reply_instantiate_data(msg).unwrap();
+    // TODO: save contract address
+    Ok(Response::new().add_attribute("contract_address", res.contract_address))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
