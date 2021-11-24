@@ -16,6 +16,9 @@ use sg721::msg::InstantiateMsg as SG721InstantiateMsg;
 const CONTRACT_NAME: &str = "crates.io:minter";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
+// id for sub-message reply
+const INIT_COLLECTION_ID: u64 = 1;
+
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
@@ -79,21 +82,22 @@ pub fn execute_init_collection(
 
     Ok(Response::new()
         .add_attribute("method", "init_collection")
-        .add_submessage(SubMsg::reply_on_success(msg, 1)))
+        .add_submessage(SubMsg::reply_on_success(msg, INIT_COLLECTION_ID)))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn reply(_deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
-    // TODO: how to ensure no panic?
-    // let res = parse_reply_instantiate_data(msg);
-    // match res.unwrap_err() {
-    //     cw0::ParseReplyError => ContractError::Unauthorized {},
-    // };
-    let contract_address = parse_reply_instantiate_data(msg)
-        .map_err(ParseReplyError)?
-        .contract_address;
+pub fn reply(_deps: DepsMut, _env: Env, reply: Reply) -> Result<Response, ContractError> {
+    if reply.id != INIT_COLLECTION_ID {
+        return Err(ContractError::UnknownReplyId { id: reply.id });
+    }
+
+    let contract_address = match parse_reply_instantiate_data(reply) {
+        Ok(res) => res.contract_address,
+        Err(_) => return Err(ContractError::InvalidReplyData {}),
+    };
     // TODO: save contract address
-    Ok(Response::new().add_attribute("contract_address", contract_address))
+
+    Ok(Response::default().add_attribute("contract_address", contract_address))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
