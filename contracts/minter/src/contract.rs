@@ -1,10 +1,9 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Reply, ReplyOn, Response, StdResult,
-    SubMsg, WasmMsg,
+    to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Reply, Response, StdResult, SubMsg, WasmMsg,
 };
-use cw0::{parse_reply_instantiate_data, ParseReplyError};
+use cw0::parse_reply_instantiate_data;
 use cw2::set_contract_version;
 
 use crate::error::ContractError;
