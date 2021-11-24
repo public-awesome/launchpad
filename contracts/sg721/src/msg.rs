@@ -1,6 +1,14 @@
-use crate::state::Extension;
+use crate::state::{CreatorInfo, Extension};
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
-pub type InstantiateMsg = cw721_base::InstantiateMsg;
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct InstantiateMsg {
+  pub name: String,
+  pub symbol: String,
+  pub minter: String,
+  pub creator_info: CreatorInfo,
+}
 
 // specialize ExecuteMsg with the CreatorInfo extention
 pub type ExecuteMsg = cw721_base::ExecuteMsg<Extension>;

@@ -35,6 +35,9 @@ pub fn instantiate(
     Sg721Contract::default()
         .minter
         .save(deps.storage, &minter)?;
+
+    // TODO: save creator_info
+
     Ok(Response::default())
 }
 

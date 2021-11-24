@@ -7,7 +7,7 @@ use cw0::parse_reply_instantiate_data;
 use cw2::set_contract_version;
 
 use crate::error::ContractError;
-use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use crate::msg::{Creator, ExecuteMsg, InstantiateMsg, QueryMsg};
 use crate::state::{State, STATE};
 use sg721::msg::InstantiateMsg as SG721InstantiateMsg;
 
@@ -50,7 +50,7 @@ pub fn execute(
             symbol,
             creator,
             creator_share,
-        } => execute_init_collection(deps, info, code_id, name, symbol),
+        } => execute_init_collection(deps, info, code_id, name, symbol, creator, creator_share),
     }
 }
 
@@ -60,11 +60,15 @@ pub fn execute_init_collection(
     code_id: u64,
     name: String,
     symbol: String,
+    creator: Creator,
+    creator_share: u64,
 ) -> Result<Response, ContractError> {
     let state = STATE.load(deps.storage)?;
     if info.sender != state.owner {
         return Err(ContractError::Unauthorized {});
     }
+
+    // TODO: if creator is a group, create a cw4-group and get an address
 
     let msg = WasmMsg::Instantiate {
         admin: Some(state.owner.into_string()),
@@ -75,6 +79,7 @@ pub fn execute_init_collection(
             name: name.to_owned(),
             symbol: symbol.to_owned(),
             minter: info.sender.to_string(),
+            // add creator_info
         })?,
         label: format!("{}-{}-{}", symbol, name, code_id),
     };
@@ -94,7 +99,9 @@ pub fn reply(_deps: DepsMut, _env: Env, reply: Reply) -> Result<Response, Contra
         Ok(res) => res.contract_address,
         Err(_) => return Err(ContractError::InvalidReplyData {}),
     };
-    // TODO: save contract address
+    // [TODO]
+    // 1. query new contract for creator
+    // 2. save creator -> contract in storage
 
     Ok(Response::default().add_attribute("contract_address", contract_address))
 }
