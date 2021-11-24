@@ -4,7 +4,7 @@ use cosmwasm_std::{
     to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Reply, ReplyOn, Response, StdResult,
     SubMsg, WasmMsg,
 };
-use cw0::parse_reply_instantiate_data;
+use cw0::{parse_reply_instantiate_data, ParseReplyError};
 use cw2::set_contract_version;
 
 use crate::error::ContractError;
@@ -85,9 +85,15 @@ pub fn execute_init_collection(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn reply(_deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
     // TODO: how to ensure no panic?
-    let res = parse_reply_instantiate_data(msg).unwrap();
+    // let res = parse_reply_instantiate_data(msg);
+    // match res.unwrap_err() {
+    //     cw0::ParseReplyError => ContractError::Unauthorized {},
+    // };
+    let contract_address = parse_reply_instantiate_data(msg)
+        .map_err(ParseReplyError)?
+        .contract_address;
     // TODO: save contract address
-    Ok(Response::new().add_attribute("contract_address", res.contract_address))
+    Ok(Response::new().add_attribute("contract_address", contract_address))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]

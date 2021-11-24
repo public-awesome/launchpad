@@ -38,7 +38,8 @@ schemars = "0.8.3"
 serde = { version = "1.0.127", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0.26" }
 sg721 = { path = "../sg721" }
-cw0 = "0.10.3"
+# cw0 = "0.10.3"
+cw0 = { git = "https://github.com/CosmWasm/cw-plus" }
 
 [dev-dependencies]
 cosmwasm-schema = { version = "1.0.0-beta" }
