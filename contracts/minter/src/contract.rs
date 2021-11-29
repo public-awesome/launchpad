@@ -1,13 +1,15 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Reply, Response, StdResult, SubMsg, WasmMsg,
+    to_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Reply, Response, StdResult, SubMsg,
+    WasmMsg,
 };
 use cw0::parse_reply_instantiate_data;
 use cw2::set_contract_version;
+use sg721::state::CreatorInfo;
 
 use crate::error::ContractError;
-use crate::msg::{Creator, ExecuteMsg, InstantiateMsg, QueryMsg};
+use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 use crate::state::{State, STATE};
 use sg721::msg::InstantiateMsg as SG721InstantiateMsg;
 
@@ -23,7 +25,7 @@ pub fn instantiate(
     deps: DepsMut,
     _env: Env,
     info: MessageInfo,
-    msg: InstantiateMsg,
+    _msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     let state = State {
         owner: info.sender.clone(),
@@ -39,7 +41,7 @@ pub fn instantiate(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
@@ -50,29 +52,33 @@ pub fn execute(
             symbol,
             creator,
             creator_share,
-        } => execute_init_collection(deps, info, code_id, name, symbol, creator, creator_share),
+        } => execute_init_collection(
+            deps,
+            info,
+            env,
+            code_id,
+            name,
+            symbol,
+            creator,
+            creator_share,
+        ),
     }
 }
 
 pub fn execute_init_collection(
     deps: DepsMut,
     info: MessageInfo,
+    _env: Env,
     code_id: u64,
     name: String,
     symbol: String,
-    creator: Creator,
+    creator: Addr,
     creator_share: u64,
 ) -> Result<Response, ContractError> {
     let state = STATE.load(deps.storage)?;
     if info.sender != state.owner {
         return Err(ContractError::Unauthorized {});
     }
-
-    // TODO: if creator is a group, create a cw4-group and get an address
-    let creator_addr = match creator {
-        Creator::Individual(addr) => Ok(addr),
-        Creator::Group(_) => todo!(),
-    };
 
     let msg = WasmMsg::Instantiate {
         admin: Some(state.owner.into_string()),
@@ -83,7 +89,10 @@ pub fn execute_init_collection(
             name: name.to_owned(),
             symbol: symbol.to_owned(),
             minter: info.sender.to_string(),
-            // add creator_info
+            creator_info: CreatorInfo {
+                creator,
+                creator_share: creator_share,
+            },
         })?,
         label: format!("{}-{}-{}", symbol, name, code_id),
     };
@@ -103,7 +112,7 @@ pub fn reply(_deps: DepsMut, _env: Env, reply: Reply) -> Result<Response, Contra
         Ok(res) => res.contract_address,
         Err(_) => return Err(ContractError::InvalidReplyData {}),
     };
-    // [TODO]
+    // TODO:
     // 1. query new contract for creator
     // 2. save creator -> contract in storage
 
@@ -150,7 +159,7 @@ mod tests {
             code_id: 1,
             name: "collection name".to_string(),
             symbol: "SYM".to_string(),
-            creator: Creator::Individual(Addr::unchecked(creator)),
+            creator: "creator".to_string(),
             creator_share: 50u64,
         };
 
