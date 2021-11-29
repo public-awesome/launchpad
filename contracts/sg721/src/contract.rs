@@ -7,7 +7,7 @@ use cw721::ContractInfoResponse;
 use cw721_base::ContractError;
 
 use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
-use crate::state::Extension;
+use crate::state::{Extension, CREATORS};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sg721";
@@ -36,7 +36,7 @@ pub fn instantiate(
         .minter
         .save(deps.storage, &minter)?;
 
-    // TODO: save creator_info
+    CREATORS.save(deps.storage, &msg.creator_info.creator, &msg.creator_info)?;
 
     Ok(Response::default())
 }
@@ -53,5 +53,8 @@ pub fn execute(
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
-    Sg721Contract::default().query(deps, env, msg)
+    match msg {
+        QueryMsg::Extended(msg) => todo!(),
+        QueryMsg::Base(msg) => Sg721Contract::default().query(deps, env, msg),
+    }
 }

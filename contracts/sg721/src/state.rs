@@ -11,7 +11,7 @@ pub struct CreatorInfo {
 }
 
 // sg721 <> creator mapping
-pub const CREATORS: Map<&str, CreatorInfo> = Map::new("creators");
+pub const CREATORS: Map<&Addr, CreatorInfo> = Map::new("creators");
 
 // extend contract storage with creator info
 pub type Extension = CreatorInfo;

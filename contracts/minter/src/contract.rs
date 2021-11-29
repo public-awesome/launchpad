@@ -108,12 +108,16 @@ pub fn reply(_deps: DepsMut, _env: Env, reply: Reply) -> Result<Response, Contra
         return Err(ContractError::UnknownReplyId { id: reply.id });
     }
 
+    // Now a new sg721 contract should have been instantiated. We can query
+    // it to get the creator, and save the creator <> contract association.
+
     let contract_address = match parse_reply_instantiate_data(reply) {
         Ok(res) => res.contract_address,
         Err(_) => return Err(ContractError::InvalidReplyData {}),
     };
     // TODO:
     // 1. query new contract for creator
+
     // 2. save creator -> contract in storage
 
     Ok(Response::default().add_attribute("contract_address", contract_address))
@@ -149,22 +153,22 @@ mod tests {
     #[test]
     fn exec_init_collection() {
         let mut deps = mock_dependencies();
-        let sender = String::from("sender");
+        let creator = String::from("creator");
         setup_contract(deps.as_mut());
 
-        let info = mock_info(&sender, &[]);
+        let info = mock_info(&creator, &[]);
 
         let msg = ExecuteMsg::InitCollection {
             code_id: 1,
             name: "collection name".to_string(),
             symbol: "SYM".to_string(),
-            creator: Addr::unchecked("creator"),
+            creator: Addr::unchecked(creator),
             creator_share: 50u64,
         };
 
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(res.messages.len(), 1);
 
-        // TODO: assert contract address was saved in storage
+        // 3. TODO: assert contract address was saved in storage
     }
 }
