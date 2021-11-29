@@ -4,10 +4,10 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {
-  pub name: String,
-  pub symbol: String,
-  pub minter: String,
-  pub creator_info: CreatorInfo,
+    pub name: String,
+    pub symbol: String,
+    pub minter: String,
+    pub creator_info: CreatorInfo,
 }
 
 // specialize ExecuteMsg with the CreatorInfo extention

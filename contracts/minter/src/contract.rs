@@ -69,6 +69,10 @@ pub fn execute_init_collection(
     }
 
     // TODO: if creator is a group, create a cw4-group and get an address
+    let creator_addr = match creator {
+        Creator::Individual(addr) => Ok(addr),
+        Creator::Group(_) => todo!(),
+    };
 
     let msg = WasmMsg::Instantiate {
         admin: Some(state.owner.into_string()),
