@@ -129,7 +129,6 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::msg::Creator;
     use cosmwasm_std::testing::mock_dependencies_with_balance;
     use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
     use cosmwasm_std::{coins, from_binary, Addr};
@@ -150,16 +149,16 @@ mod tests {
     #[test]
     fn exec_init_collection() {
         let mut deps = mock_dependencies();
-        let creator = String::from("creator");
+        let sender = String::from("sender");
         setup_contract(deps.as_mut());
 
-        let info = mock_info(&creator, &[]);
+        let info = mock_info(&sender, &[]);
 
         let msg = ExecuteMsg::InitCollection {
             code_id: 1,
             name: "collection name".to_string(),
             symbol: "SYM".to_string(),
-            creator: "creator".to_string(),
+            creator: Addr::unchecked("creator"),
             creator_share: 50u64,
         };
 
