@@ -46,6 +46,7 @@ pub fn execute(
             name,
             symbol,
             creator,
+            creator_share,
         } => unimplemented!(),
     }
 }
