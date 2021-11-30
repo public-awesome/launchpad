@@ -1,8 +1,8 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Addr, Api, Binary, Deps, DepsMut, Env, MessageInfo, Reply, Response, StdResult,
-    SubMsg, WasmMsg, WasmQuery,
+    to_binary, Addr, Api, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Reply, Response,
+    StdResult, SubMsg, WasmMsg, WasmQuery,
 };
 use cw0::parse_reply_instantiate_data;
 use cw2::set_contract_version;
@@ -129,9 +129,12 @@ pub fn reply(deps: DepsMut, _env: Env, reply: Reply) -> Result<Response, Contrac
         .query_wasm_smart(contract_address.to_string(), &query)
         .unwrap();
 
-    // save creator -> contract in storage
-    // TODO: ooops, storing wrong way
-    COLLECTIONS.save(deps.storage, &contract_addr, &creator_info.creator)?;
+    // save creator <> contract in storage
+    COLLECTIONS.save(
+        deps.storage,
+        (&creator_info.creator, &contract_addr),
+        &Empty {},
+    )?;
 
     Ok(Response::default().add_attribute("contract_address", contract_address))
 }
