@@ -1,13 +1,15 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult};
+use cosmwasm_std::{
+    to_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult,
+};
 use cw2::set_contract_version;
 
 use cw721::ContractInfoResponse;
 use cw721_base::ContractError;
 
-use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
-use crate::state::{Extension, CREATORS};
+use crate::msg::{ExecuteMsg, ExtendedQueryMsg, InstantiateMsg, QueryMsg};
+use crate::state::{CreatorInfo, Extension, CREATOR};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sg721";
@@ -36,7 +38,7 @@ pub fn instantiate(
         .minter
         .save(deps.storage, &minter)?;
 
-    CREATORS.save(deps.storage, &msg.creator_info.creator, &msg.creator_info)?;
+    CREATOR.save(deps.storage, &msg.creator_info)?;
 
     Ok(Response::default())
 }
@@ -54,7 +56,14 @@ pub fn execute(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::Extended(msg) => todo!(),
+        QueryMsg::Extended(msg) => match msg {
+            ExtendedQueryMsg::Creator {} => to_binary(&query_creator(deps)?),
+        },
         QueryMsg::Base(msg) => Sg721Contract::default().query(deps, env, msg),
     }
+}
+
+fn query_creator(deps: Deps) -> StdResult<CreatorInfo> {
+    let creator_info = CREATOR.load(deps.storage)?;
+    Ok(creator_info)
 }

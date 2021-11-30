@@ -1,5 +1,5 @@
 use cosmwasm_std::Addr;
-use cw_storage_plus::Map;
+use cw_storage_plus::Item;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -10,8 +10,7 @@ pub struct CreatorInfo {
     pub creator_share: u64,
 }
 
-// sg721 <> creator mapping
-pub const CREATORS: Map<&Addr, CreatorInfo> = Map::new("creators");
-
 // extend contract storage with creator info
 pub type Extension = CreatorInfo;
+
+pub const CREATOR: Item<CreatorInfo> = Item::new("creator");

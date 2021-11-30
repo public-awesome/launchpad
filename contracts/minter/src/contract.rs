@@ -1,8 +1,8 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Reply, Response, StdResult, SubMsg,
-    WasmMsg,
+    to_binary, Addr, Api, Binary, Deps, DepsMut, Env, MessageInfo, Reply, Response, StdResult,
+    SubMsg, WasmMsg, WasmQuery,
 };
 use cw0::parse_reply_instantiate_data;
 use cw2::set_contract_version;
@@ -10,8 +10,8 @@ use sg721::state::CreatorInfo;
 
 use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
-use crate::state::{State, STATE};
-use sg721::msg::InstantiateMsg as SG721InstantiateMsg;
+use crate::state::{State, COLLECTIONS, STATE};
+use sg721::msg::{ExtendedQueryMsg, InstantiateMsg as SG721InstantiateMsg};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:minter";
@@ -103,7 +103,7 @@ pub fn execute_init_collection(
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn reply(_deps: DepsMut, _env: Env, reply: Reply) -> Result<Response, ContractError> {
+pub fn reply(deps: DepsMut, _env: Env, reply: Reply) -> Result<Response, ContractError> {
     if reply.id != INIT_COLLECTION_ID {
         return Err(ContractError::UnknownReplyId { id: reply.id });
     }
@@ -111,14 +111,27 @@ pub fn reply(_deps: DepsMut, _env: Env, reply: Reply) -> Result<Response, Contra
     // Now a new sg721 contract should have been instantiated. We can query
     // it to get the creator, and save the creator <> contract association.
 
+    // get the contract address from the sub-message reply
     let contract_address = match parse_reply_instantiate_data(reply) {
         Ok(res) => res.contract_address,
         Err(_) => return Err(ContractError::InvalidReplyData {}),
     };
-    // TODO:
-    // 1. query new contract for creator
+    let contract_addr = deps.api.addr_validate(contract_address.as_str())?;
 
-    // 2. save creator -> contract in storage
+    // query the newly creator contract for the creator
+    let msg = ExtendedQueryMsg::Creator {};
+    let query = WasmQuery::Smart {
+        contract_addr: contract_address.to_string(),
+        msg: to_binary(&msg)?,
+    };
+    let creator_info: CreatorInfo = deps
+        .querier
+        .query_wasm_smart(contract_address.to_string(), &query)
+        .unwrap();
+
+    // save creator -> contract in storage
+    // TODO: ooops, storing wrong way
+    COLLECTIONS.save(deps.storage, &contract_addr, &creator_info.creator)?;
 
     Ok(Response::default().add_attribute("contract_address", contract_address))
 }
@@ -169,6 +182,6 @@ mod tests {
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(res.messages.len(), 1);
 
-        // 3. TODO: assert contract address was saved in storage
+        // TODO: assert contract address was saved in storage
     }
 }
