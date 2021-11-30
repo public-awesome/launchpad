@@ -1,15 +1,16 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Addr, Api, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Reply, Response,
+    to_binary, Addr, Api, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Order, Reply, Response,
     StdResult, SubMsg, WasmMsg, WasmQuery,
 };
 use cw0::parse_reply_instantiate_data;
 use cw2::set_contract_version;
+use cw_storage_plus::Bound;
 use sg721::state::CreatorInfo;
 
 use crate::error::ContractError;
-use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use crate::msg::{CollectionsResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
 use crate::state::{State, COLLECTIONS, STATE};
 use sg721::msg::{ExtendedQueryMsg, InstantiateMsg as SG721InstantiateMsg};
 
@@ -107,6 +108,7 @@ pub fn reply(deps: DepsMut, _env: Env, reply: Reply) -> Result<Response, Contrac
     if reply.id != INIT_COLLECTION_ID {
         return Err(ContractError::UnknownReplyId { id: reply.id });
     }
+    println!("in reply!");
 
     // Now a new sg721 contract should have been instantiated. We can query
     // it to get the creator, and save the creator <> contract association.
@@ -118,7 +120,7 @@ pub fn reply(deps: DepsMut, _env: Env, reply: Reply) -> Result<Response, Contrac
     };
     let contract_addr = deps.api.addr_validate(contract_address.as_str())?;
 
-    // query the newly creator contract for the creator
+    // query the newly created contract for the creator
     let msg = ExtendedQueryMsg::Creator {};
     let query = WasmQuery::Smart {
         contract_addr: contract_address.to_string(),
@@ -142,8 +144,21 @@ pub fn reply(deps: DepsMut, _env: Env, reply: Reply) -> Result<Response, Contrac
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::CollectionsForCreator { creator } => unimplemented!(),
+        QueryMsg::Collections { creator } => to_binary(&query_collections(deps, creator)?),
     }
+}
+
+fn query_collections(deps: Deps, creator: Addr) -> StdResult<CollectionsResponse> {
+    // TODO: would an IndexedMap make more sense since it provides helpers to iterate?
+    // iterate collections by creator
+    let collections = COLLECTIONS
+        .prefix(&creator)
+        .range(deps.storage, None, None, Order::Ascending)
+        .map(|item| item.map(|k| String::from_utf8(k.0).unwrap()))
+        .map(|s| Addr::unchecked(s.unwrap()))
+        .collect();
+
+    Ok(CollectionsResponse { collections })
 }
 
 #[cfg(test)]
@@ -185,6 +200,9 @@ mod tests {
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(res.messages.len(), 1);
 
-        // TODO: assert contract address was saved in storage
+        // TODO: fake the call to reply
+
+        let collections = query_collections(deps.as_ref(), Addr::unchecked("creator")).unwrap();
+        assert_eq!(collections.collections.len(), 1);
     }
 }
