@@ -108,7 +108,6 @@ pub fn reply(deps: DepsMut, _env: Env, reply: Reply) -> Result<Response, Contrac
     if reply.id != INIT_COLLECTION_ID {
         return Err(ContractError::UnknownReplyId { id: reply.id });
     }
-    println!("in reply!");
 
     // Now a new sg721 contract should have been instantiated. We can query
     // it to get the creator, and save the creator <> contract association.
@@ -126,6 +125,7 @@ pub fn reply(deps: DepsMut, _env: Env, reply: Reply) -> Result<Response, Contrac
         contract_addr: contract_address.to_string(),
         msg: to_binary(&msg)?,
     };
+    // TODO: handle the unwrap
     let creator_info: CreatorInfo = deps
         .querier
         .query_wasm_smart(contract_address.to_string(), &query)
@@ -150,7 +150,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
 
 fn query_collections(deps: Deps, creator: Addr) -> StdResult<CollectionsResponse> {
     // TODO: would an IndexedMap make more sense since it provides helpers to iterate?
-    // iterate collections by creator
+    // TODO: handle the unchecked Addr creation and unwraps
     let collections = COLLECTIONS
         .prefix(&creator)
         .range(deps.storage, None, None, Order::Ascending)
@@ -166,7 +166,7 @@ mod tests {
     use super::*;
     use cosmwasm_std::testing::mock_dependencies_with_balance;
     use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-    use cosmwasm_std::{coins, from_binary, Addr};
+    use cosmwasm_std::{coins, from_binary, Addr, ContractResult, Reply, SubMsgExecutionResponse};
 
     fn setup_contract(deps: DepsMut) {
         let msg = InstantiateMsg {};
@@ -200,7 +200,17 @@ mod tests {
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(res.messages.len(), 1);
 
-        // TODO: fake the call to reply
+        let reply_msg = Reply {
+            id: INIT_COLLECTION_ID,
+            result: ContractResult::Ok(SubMsgExecutionResponse {
+                events: vec![],
+                data: Some(vec![10, 11, 99, 111, 108, 108, 101, 99, 116, 105, 111, 110, 48].into()),
+            }),
+        };
+
+        // TODO: need to make a mock querier for creator in reply
+
+        let _res = reply(deps.as_mut(), mock_env(), reply_msg).unwrap();
 
         let collections = query_collections(deps.as_ref(), Addr::unchecked("creator")).unwrap();
         assert_eq!(collections.collections.len(), 1);
