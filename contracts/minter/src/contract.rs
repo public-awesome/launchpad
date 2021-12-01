@@ -6,13 +6,13 @@ use cosmwasm_std::{
 };
 use cw0::parse_reply_instantiate_data;
 use cw2::set_contract_version;
-use cw_storage_plus::Bound;
 use sg721::state::CreatorInfo;
 
 use crate::error::ContractError;
 use crate::msg::{CollectionsResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
 use crate::state::{State, COLLECTIONS, STATE};
 use sg721::msg::{ExtendedQueryMsg, InstantiateMsg as SG721InstantiateMsg};
+use std::str;
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:minter";
@@ -84,8 +84,7 @@ pub fn execute_init_collection(
     let msg = WasmMsg::Instantiate {
         admin: Some(state.owner.into_string()),
         code_id,
-        // TODO: where does this come from?
-        funds: vec![],
+        funds: info.funds,
         msg: to_binary(&SG721InstantiateMsg {
             name: name.to_owned(),
             symbol: symbol.to_owned(),
@@ -120,16 +119,13 @@ pub fn reply(deps: DepsMut, _env: Env, reply: Reply) -> Result<Response, Contrac
     let contract_addr = deps.api.addr_validate(contract_address.as_str())?;
 
     // query the newly created contract for the creator
-    let msg = ExtendedQueryMsg::Creator {};
     let query = WasmQuery::Smart {
         contract_addr: contract_address.to_string(),
-        msg: to_binary(&msg)?,
+        msg: to_binary(&ExtendedQueryMsg::Creator {})?,
     };
-    // TODO: handle the unwrap
     let creator_info: CreatorInfo = deps
         .querier
-        .query_wasm_smart(contract_address.to_string(), &query)
-        .unwrap();
+        .query_wasm_smart(contract_address.to_string(), &query)?;
 
     // save creator <> contract in storage
     COLLECTIONS.save(
@@ -149,14 +145,13 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
 }
 
 fn query_collections(deps: Deps, creator: Addr) -> StdResult<CollectionsResponse> {
-    // TODO: would an IndexedMap make more sense since it provides helpers to iterate?
-    // TODO: handle the unchecked Addr creation and unwraps
     let collections = COLLECTIONS
         .prefix(&creator)
         .range(deps.storage, None, None, Order::Ascending)
-        .map(|item| item.map(|k| String::from_utf8(k.0).unwrap()))
-        .map(|s| Addr::unchecked(s.unwrap()))
-        .collect();
+        // NOTE: unwrap on a previously validated Addr is safe
+        .map(|item| item.map(|k| String::from_utf8(k.0)).unwrap())
+        .map(|s| deps.api.addr_validate(s?.as_ref()))
+        .collect::<StdResult<Vec<_>>>()?;
 
     Ok(CollectionsResponse { collections })
 }
@@ -164,9 +159,9 @@ fn query_collections(deps: Deps, creator: Addr) -> StdResult<CollectionsResponse
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cosmwasm_std::testing::mock_dependencies_with_balance;
-    use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-    use cosmwasm_std::{coins, from_binary, Addr, ContractResult, Reply, SubMsgExecutionResponse};
+    use crate::mock_querier::mock_dependencies;
+    use cosmwasm_std::testing::{mock_env, mock_info};
+    use cosmwasm_std::{Addr, ContractResult, Reply, SubMsgExecutionResponse};
 
     fn setup_contract(deps: DepsMut) {
         let msg = InstantiateMsg {};
@@ -177,21 +172,22 @@ mod tests {
 
     #[test]
     fn proper_initialization() {
-        let mut deps = mock_dependencies();
+        let mut deps = mock_dependencies(&[]);
         setup_contract(deps.as_mut());
     }
 
     #[test]
     fn exec_init_collection() {
-        let mut deps = mock_dependencies();
+        let mut deps = mock_dependencies(&[]);
         let creator = String::from("creator");
+        let collection = String::from("collection0");
         setup_contract(deps.as_mut());
 
         let info = mock_info(&creator, &[]);
 
         let msg = ExecuteMsg::InitCollection {
             code_id: 1,
-            name: "collection name".to_string(),
+            name: collection.to_string(),
             symbol: "SYM".to_string(),
             creator: Addr::unchecked(creator),
             creator_share: 50u64,
@@ -204,15 +200,24 @@ mod tests {
             id: INIT_COLLECTION_ID,
             result: ContractResult::Ok(SubMsgExecutionResponse {
                 events: vec![],
+                // "collection0" utf-8 encoded
                 data: Some(vec![10, 11, 99, 111, 108, 108, 101, 99, 116, 105, 111, 110, 48].into()),
             }),
         };
 
-        // TODO: need to make a mock querier for creator in reply
+        // register mock creator info querier
+        deps.querier.with_creator_info(&[(
+            &collection,
+            &CreatorInfo {
+                creator: Addr::unchecked("creator"),
+                creator_share: 50u64,
+            },
+        )]);
 
+        // simulate a reply coming in from the VM
         let _res = reply(deps.as_mut(), mock_env(), reply_msg).unwrap();
 
-        let collections = query_collections(deps.as_ref(), Addr::unchecked("creator")).unwrap();
-        assert_eq!(collections.collections.len(), 1);
+        let res = query_collections(deps.as_ref(), Addr::unchecked("creator")).unwrap();
+        assert_eq!(res.collections.len(), 1);
     }
 }
