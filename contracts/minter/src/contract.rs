@@ -102,14 +102,12 @@ pub fn execute_init_collection(
         .add_submessage(SubMsg::reply_on_success(msg, INIT_COLLECTION_ID)))
 }
 
+/// Handles the reply from the VM after a new collection contract has been created
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn reply(deps: DepsMut, _env: Env, reply: Reply) -> Result<Response, ContractError> {
     if reply.id != INIT_COLLECTION_ID {
         return Err(ContractError::UnknownReplyId { id: reply.id });
     }
-
-    // Now a new sg721 contract should have been instantiated. We can query
-    // it to get the creator, and save the creator <> contract association.
 
     // get the contract address from the sub-message reply
     let contract_address = match parse_reply_instantiate_data(reply) {
