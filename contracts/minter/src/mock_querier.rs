@@ -3,7 +3,8 @@ use cosmwasm_std::{
     from_slice, to_binary, Addr, Coin, ContractResult, Empty, OwnedDeps, Querier, QuerierResult,
     QueryRequest, SystemError, SystemResult,
 };
-use sg721::state::CreatorInfo;
+use sg721::msg::CreatorResponse;
+use sg721::state::Extension;
 use std::{collections::HashMap, marker::PhantomData};
 
 /// mock_dependencies is a drop-in replacement for cosmwasm_std::testing::mock_dependencies
@@ -24,30 +25,30 @@ pub fn mock_dependencies(
 
 pub struct WasmMockQuerier {
     base: MockQuerier<Empty>,
-    creator_info_querier: CreatorInfoQuerier,
+    creator_querier: CreatorQuerier,
 }
 
 #[derive(Clone, Default)]
-pub struct CreatorInfoQuerier {
-    creator_info: HashMap<String, CreatorInfo>,
+pub struct CreatorQuerier {
+    creator: HashMap<String, CreatorResponse>,
 }
 
-impl CreatorInfoQuerier {
-    pub fn new(creator_info: &[(&String, &CreatorInfo)]) -> Self {
-        CreatorInfoQuerier {
-            creator_info: creator_info_to_map(creator_info),
+impl CreatorQuerier {
+    pub fn new(creator_info: &[(&String, &CreatorResponse)]) -> Self {
+        CreatorQuerier {
+            creator: creator_to_map(creator_info),
         }
     }
 }
 
-pub(crate) fn creator_info_to_map(
-    info: &[(&String, &CreatorInfo)],
-) -> HashMap<String, CreatorInfo> {
-    let mut creator_info_map: HashMap<String, CreatorInfo> = HashMap::new();
+pub(crate) fn creator_to_map(
+    info: &[(&String, &CreatorResponse)],
+) -> HashMap<String, CreatorResponse> {
+    let mut creator_map: HashMap<String, CreatorResponse> = HashMap::new();
     for (key, creator) in info.iter() {
-        creator_info_map.insert(key.to_string(), (*creator).clone());
+        creator_map.insert(key.to_string(), (*creator).clone());
     }
-    creator_info_map
+    creator_map
 }
 
 impl Querier for WasmMockQuerier {
@@ -67,9 +68,8 @@ impl Querier for WasmMockQuerier {
 
 impl WasmMockQuerier {
     pub fn handle_query(&self, request: &QueryRequest<Empty>) -> QuerierResult {
-        SystemResult::Ok(ContractResult::from(to_binary(&CreatorInfo {
+        SystemResult::Ok(ContractResult::from(to_binary(&CreatorResponse {
             creator: Addr::unchecked("creator"),
-            creator_share: 50u64,
         })))
     }
 }
@@ -78,12 +78,12 @@ impl WasmMockQuerier {
     pub fn new(base: MockQuerier<Empty>) -> Self {
         WasmMockQuerier {
             base,
-            creator_info_querier: CreatorInfoQuerier::default(),
+            creator_querier: CreatorQuerier::default(),
         }
     }
 
     // configure creator info
-    pub fn with_creator_info(&mut self, creator_info: &[(&String, &CreatorInfo)]) {
-        self.creator_info_querier = CreatorInfoQuerier::new(creator_info);
+    pub fn with_creator(&mut self, creator_info: &[(&String, &CreatorResponse)]) {
+        self.creator_querier = CreatorQuerier::new(creator_info);
     }
 }
