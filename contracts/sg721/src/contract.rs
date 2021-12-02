@@ -75,3 +75,52 @@ fn query_royalties(deps: Deps) -> StdResult<RoyaltyResponse> {
     let royalty = EXTENSION.load(deps.storage)?.royalties;
     Ok(RoyaltyResponse { royalty })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
+    use cosmwasm_std::{coins, from_binary, Addr};
+
+    #[test]
+    fn proper_initialization() {
+        let mut deps = mock_dependencies();
+        let creator = String::from("creator");
+        let collection = String::from("collection0");
+
+        let msg = InstantiateMsg {
+            name: collection,
+            symbol: String::from("BOBO"),
+            minter: String::from("minter"),
+            extension: Extension {
+                creator: Addr::unchecked(creator),
+                royalties: None,
+            },
+        };
+        let info = mock_info("creator", &coins(1000, "earth"));
+
+        // make sure instantiate doesn't send any messages
+        let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+        assert_eq!(0, res.messages.len());
+
+        // it worked, let's query the creator
+        let res = query(
+            deps.as_ref(),
+            mock_env(),
+            QueryMsg::Extended(ExtendedQueryMsg::Creator {}),
+        )
+        .unwrap();
+        let value: CreatorResponse = from_binary(&res).unwrap();
+        assert_eq!("creator", value.creator.to_string());
+
+        // let's query the royalties
+        let res = query(
+            deps.as_ref(),
+            mock_env(),
+            QueryMsg::Extended(ExtendedQueryMsg::Royalties {}),
+        )
+        .unwrap();
+        let value: RoyaltyResponse = from_binary(&res).unwrap();
+        assert_eq!(None, value.royalty);
+    }
+}
