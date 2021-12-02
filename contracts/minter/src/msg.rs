@@ -1,6 +1,7 @@
 use cosmwasm_std::Addr;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use sg721::state::Extension;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {}
@@ -13,10 +14,7 @@ pub enum ExecuteMsg {
         code_id: u64,
         name: String,
         symbol: String,
-        // If the creator is a group, assuming a cw4-group has been created beforehand,
-        // and in that case, this address is the address of the group.
-        creator: Addr,
-        creator_share: u64,
+        extension: Extension,
     },
 }
 

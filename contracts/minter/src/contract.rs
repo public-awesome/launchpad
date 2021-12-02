@@ -6,12 +6,12 @@ use cosmwasm_std::{
 };
 use cw0::parse_reply_instantiate_data;
 use cw2::set_contract_version;
-use sg721::state::CreatorInfo;
+use sg721::state::Extension;
 
 use crate::error::ContractError;
 use crate::msg::{CollectionsResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
 use crate::state::{State, COLLECTIONS, STATE};
-use sg721::msg::{ExtendedQueryMsg, InstantiateMsg as SG721InstantiateMsg};
+use sg721::msg::{CreatorResponse, ExtendedQueryMsg, InstantiateMsg as SG721InstantiateMsg};
 use std::str;
 
 // version info for migration info
@@ -51,18 +51,8 @@ pub fn execute(
             code_id,
             name,
             symbol,
-            creator,
-            creator_share,
-        } => execute_init_collection(
-            deps,
-            info,
-            env,
-            code_id,
-            name,
-            symbol,
-            creator,
-            creator_share,
-        ),
+            extension,
+        } => execute_init_collection(deps, info, env, code_id, name, symbol, extension),
     }
 }
 
@@ -73,8 +63,7 @@ pub fn execute_init_collection(
     code_id: u64,
     name: String,
     symbol: String,
-    creator: Addr,
-    creator_share: u64,
+    extension: Extension,
 ) -> Result<Response, ContractError> {
     let state = STATE.load(deps.storage)?;
     if info.sender != state.owner {
@@ -89,10 +78,7 @@ pub fn execute_init_collection(
             name: name.to_owned(),
             symbol: symbol.to_owned(),
             minter: info.sender.to_string(),
-            creator_info: CreatorInfo {
-                creator,
-                creator_share: creator_share,
-            },
+            extension,
         })?,
         label: format!("{}-{}-{}", symbol, name, code_id),
     };
@@ -121,16 +107,12 @@ pub fn reply(deps: DepsMut, _env: Env, reply: Reply) -> Result<Response, Contrac
         contract_addr: contract_address.to_string(),
         msg: to_binary(&ExtendedQueryMsg::Creator {})?,
     };
-    let creator_info: CreatorInfo = deps
+    let res: CreatorResponse = deps
         .querier
         .query_wasm_smart(contract_address.to_string(), &query)?;
 
     // save creator <> contract in storage
-    COLLECTIONS.save(
-        deps.storage,
-        (&creator_info.creator, &contract_addr),
-        &Empty {},
-    )?;
+    COLLECTIONS.save(deps.storage, (&res.creator, &contract_addr), &Empty {})?;
 
     Ok(Response::default().add_attribute("contract_address", contract_address))
 }
@@ -187,8 +169,10 @@ mod tests {
             code_id: 1,
             name: collection.to_string(),
             symbol: "SYM".to_string(),
-            creator: Addr::unchecked(creator),
-            creator_share: 50u64,
+            extension: Extension {
+                creator: Addr::unchecked(creator),
+                royalties: None,
+            },
         };
 
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
@@ -198,17 +182,16 @@ mod tests {
             id: INIT_COLLECTION_ID,
             result: ContractResult::Ok(SubMsgExecutionResponse {
                 events: vec![],
-                // "collection0" utf-8 encoded
+                // "collection0" in binary
                 data: Some(vec![10, 11, 99, 111, 108, 108, 101, 99, 116, 105, 111, 110, 48].into()),
             }),
         };
 
         // register mock creator info querier
-        deps.querier.with_creator_info(&[(
+        deps.querier.with_creator(&[(
             &collection,
-            &CreatorInfo {
+            &CreatorResponse {
                 creator: Addr::unchecked("creator"),
-                creator_share: 50u64,
             },
         )]);
 

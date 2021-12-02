@@ -8,8 +8,10 @@ use cw2::set_contract_version;
 use cw721::ContractInfoResponse;
 use cw721_base::ContractError;
 
-use crate::msg::{ExecuteMsg, ExtendedQueryMsg, InstantiateMsg, QueryMsg};
-use crate::state::{CreatorInfo, Extension, CREATOR};
+use crate::msg::{
+    CreatorResponse, ExecuteMsg, ExtendedQueryMsg, InstantiateMsg, QueryMsg, RoyaltyResponse,
+};
+use crate::state::{Extension, EXTENSION};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sg721";
@@ -38,7 +40,7 @@ pub fn instantiate(
         .minter
         .save(deps.storage, &minter)?;
 
-    CREATOR.save(deps.storage, &msg.creator_info)?;
+    EXTENSION.save(deps.storage, &msg.extension)?;
 
     Ok(Response::default())
 }
@@ -58,12 +60,67 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::Extended(msg) => match msg {
             ExtendedQueryMsg::Creator {} => to_binary(&query_creator(deps)?),
+            ExtendedQueryMsg::Royalties {} => to_binary(&query_royalties(deps)?),
         },
         QueryMsg::Base(msg) => Sg721Contract::default().query(deps, env, msg),
     }
 }
 
-fn query_creator(deps: Deps) -> StdResult<CreatorInfo> {
-    let creator_info = CREATOR.load(deps.storage)?;
-    Ok(creator_info)
+fn query_creator(deps: Deps) -> StdResult<CreatorResponse> {
+    let creator = EXTENSION.load(deps.storage)?.creator;
+    Ok(CreatorResponse { creator })
+}
+
+fn query_royalties(deps: Deps) -> StdResult<RoyaltyResponse> {
+    let royalty = EXTENSION.load(deps.storage)?.royalties;
+    Ok(RoyaltyResponse { royalty })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
+    use cosmwasm_std::{coins, from_binary, Addr};
+
+    #[test]
+    fn proper_initialization() {
+        let mut deps = mock_dependencies();
+        let creator = String::from("creator");
+        let collection = String::from("collection0");
+
+        let msg = InstantiateMsg {
+            name: collection,
+            symbol: String::from("BOBO"),
+            minter: String::from("minter"),
+            extension: Extension {
+                creator: Addr::unchecked(creator),
+                royalties: None,
+            },
+        };
+        let info = mock_info("creator", &coins(1000, "earth"));
+
+        // make sure instantiate doesn't send any messages
+        let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+        assert_eq!(0, res.messages.len());
+
+        // it worked, let's query the creator
+        let res = query(
+            deps.as_ref(),
+            mock_env(),
+            QueryMsg::Extended(ExtendedQueryMsg::Creator {}),
+        )
+        .unwrap();
+        let value: CreatorResponse = from_binary(&res).unwrap();
+        assert_eq!("creator", value.creator.to_string());
+
+        // let's query the royalties
+        let res = query(
+            deps.as_ref(),
+            mock_env(),
+            QueryMsg::Extended(ExtendedQueryMsg::Royalties {}),
+        )
+        .unwrap();
+        let value: RoyaltyResponse = from_binary(&res).unwrap();
+        assert_eq!(None, value.royalty);
+    }
 }
