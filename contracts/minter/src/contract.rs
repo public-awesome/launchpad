@@ -146,8 +146,8 @@ fn query_collections(deps: Deps, creator: Addr) -> StdResult<CollectionsResponse
     let collections = COLLECTIONS
         .prefix(&creator)
         .range(deps.storage, None, None, Order::Ascending)
-        // NOTE: unwrap and unchecked are safe here because the addresses have already been validated
-        .map(|item| item.map(|k| String::from_utf8(k.0)).unwrap())
+        .filter_map(|item| item.map(|k| String::from_utf8(k.0)).ok())
+        // unwrap and unchecked are safe here because the addresses have already been validated
         .map(|s| Addr::unchecked(s.unwrap()))
         .collect();
 
