@@ -1,24 +1,16 @@
 use cosmwasm_std::Addr;
-use cw_storage_plus::{Item, Map};
+use cw_storage_plus::Item;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct State {
-    pub count: i32,
-    pub owner: Addr,
-}
-
-pub const STATE: Item<State> = Item::new("state");
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct Creator {
-    // address for the individual or..
-    // cw4-group that represents the creators and their ownership weights
+pub struct CreatorInfo {
+    // address for the individual or cw4-group
     pub creator: Addr,
-    // share of each sale for the total group
-    // individual shares are handled by weights in the cw4-group
-    pub share: u64,
+    pub creator_share: u64,
 }
 
-pub const CREATORS: Map<&str, Creator> = Map::new("creators");
+// extend contract storage with creator info
+pub type Extension = CreatorInfo;
+
+pub const CREATOR: Item<CreatorInfo> = Item::new("creator");
