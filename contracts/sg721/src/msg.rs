@@ -1,4 +1,5 @@
-use crate::state::{CreatorInfo, Extension};
+use crate::state::{Extension, RoyaltyInfo};
+use cosmwasm_std::Addr;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -7,7 +8,7 @@ pub struct InstantiateMsg {
     pub name: String,
     pub symbol: String,
     pub minter: String,
-    pub creator_info: CreatorInfo,
+    pub extension: Extension,
 }
 
 // specialize ExecuteMsg with the CreatorInfo extention
@@ -26,4 +27,15 @@ pub enum QueryMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub enum ExtendedQueryMsg {
     Creator {},
+    Royalties {},
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct CreatorResponse {
+    pub creator: Addr,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct RoyaltyResponse {
+    pub royalty: Option<RoyaltyInfo>,
 }

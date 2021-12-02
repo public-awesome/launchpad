@@ -8,8 +8,10 @@ use cw2::set_contract_version;
 use cw721::ContractInfoResponse;
 use cw721_base::ContractError;
 
-use crate::msg::{ExecuteMsg, ExtendedQueryMsg, InstantiateMsg, QueryMsg};
-use crate::state::{CreatorInfo, Extension, CREATOR};
+use crate::msg::{
+    CreatorResponse, ExecuteMsg, ExtendedQueryMsg, InstantiateMsg, QueryMsg, RoyaltyResponse,
+};
+use crate::state::{Extension, EXTENSION};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sg721";
@@ -38,7 +40,7 @@ pub fn instantiate(
         .minter
         .save(deps.storage, &minter)?;
 
-    CREATOR.save(deps.storage, &msg.creator_info)?;
+    EXTENSION.save(deps.storage, &msg.extension)?;
 
     Ok(Response::default())
 }
@@ -58,12 +60,18 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::Extended(msg) => match msg {
             ExtendedQueryMsg::Creator {} => to_binary(&query_creator(deps)?),
+            ExtendedQueryMsg::Royalties {} => to_binary(&query_royalties(deps)?),
         },
         QueryMsg::Base(msg) => Sg721Contract::default().query(deps, env, msg),
     }
 }
 
-fn query_creator(deps: Deps) -> StdResult<CreatorInfo> {
-    let creator_info = CREATOR.load(deps.storage)?;
-    Ok(creator_info)
+fn query_creator(deps: Deps) -> StdResult<CreatorResponse> {
+    let creator = EXTENSION.load(deps.storage)?.creator;
+    Ok(CreatorResponse { creator })
+}
+
+fn query_royalties(deps: Deps) -> StdResult<RoyaltyResponse> {
+    let royalty = EXTENSION.load(deps.storage)?.royalties;
+    Ok(RoyaltyResponse { royalty })
 }
