@@ -114,7 +114,7 @@ pub fn reply(deps: DepsMut, _env: Env, reply: Reply) -> Result<Response, Contrac
         Ok(res) => res.contract_address,
         Err(_) => return Err(ContractError::InvalidReplyData {}),
     };
-    let contract_addr = deps.api.addr_validate(contract_address.as_str())?;
+    let contract_addr = deps.api.addr_validate(&contract_address)?;
 
     // query the newly created contract for the creator
     let query = WasmQuery::Smart {
@@ -148,7 +148,7 @@ fn query_collections(deps: Deps, creator: Addr) -> StdResult<CollectionsResponse
         .range(deps.storage, None, None, Order::Ascending)
         // NOTE: unwrap on a previously validated Addr is safe
         .map(|item| item.map(|k| String::from_utf8(k.0)).unwrap())
-        .map(|s| deps.api.addr_validate(s?.as_ref()))
+        .map(|s| deps.api.addr_validate(&s?))
         .collect::<StdResult<Vec<_>>>()?;
 
     Ok(CollectionsResponse { collections })
