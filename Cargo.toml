@@ -1,7 +1,7 @@
 [workspace]
 members = ["contracts/*"]
 
-[profile.release.package.minter]
+[profile.release.package.collection-factory]
 codegen-units = 1
 incremental = false
 

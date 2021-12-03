@@ -3,7 +3,7 @@ workflows:
   version: 2
   test:
     jobs:
-      - contract_minter
+      - contract_collection_factory
       - contract_secondary
       - contract_sg721
       - lint
@@ -18,10 +18,10 @@ workflows:
               ignore: /.*/
 
 jobs:
-  contract_minter:
+  contract_collection_factory:
     docker:
       - image: rust:1.53.0
-    working_directory: ~/project/contracts/minter
+    working_directory: ~/project/contracts/collection-factory
     steps:
       - checkout:
           path: ~/project
@@ -30,7 +30,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-minter-rust:1.53.0-{{ checksum "~/project/Cargo.lock" }}
+            - cargocache-collection-factory-rust:1.53.0-{{ checksum "~/project/Cargo.lock" }}
       - run:
           name: Unit Tests
           environment:
@@ -52,7 +52,7 @@ jobs:
           paths:
             - /usr/local/cargo/registry
             - target
-          key: cargocache-minter-rust:1.53.0-{{ checksum "~/project/Cargo.lock" }}
+          key: cargocache-collection-factory-rust:1.53.0-{{ checksum "~/project/Cargo.lock" }}
 
 
   contract_secondary:
