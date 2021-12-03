@@ -60,8 +60,30 @@
         "owner_share"
       ],
       "properties": {
+        "creator_payment_address": {
+          "description": "fallback to creator address if doesn't exist",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Addr"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "creator_share": {
           "$ref": "#/definitions/Decimal"
+        },
+        "owner_payment_address": {
+          "description": "fallback to owner address if doesn't exist",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Addr"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "owner_share": {
           "$ref": "#/definitions/Decimal"
