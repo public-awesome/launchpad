@@ -42,28 +42,28 @@ pub fn execute(
         ExecuteMsg::Increment {} => try_increment(deps),
         ExecuteMsg::Reset { count } => try_reset(deps, info, count),
         ExecuteMsg::AcceptBid {
-            collection,
-            token_id,
-            bid,
+            collection: _,
+            token_id: _,
+            bid: _,
         } => unimplemented!(),
         ExecuteMsg::RemoveAsk {
-            collection,
-            token_id,
+            collection: _,
+            token_id: _,
         } => unimplemented!(),
         ExecuteMsg::RemoveBid {
-            collection,
-            token_id,
-            bidder,
+            collection: _,
+            token_id: _,
+            bidder: _,
         } => unimplemented!(),
         ExecuteMsg::SetAsk {
-            collection,
-            token_id,
-            ask,
+            collection: _,
+            token_id: _,
+            ask: _,
         } => unimplemented!(),
         ExecuteMsg::SetBid {
-            collection,
-            token_id,
-            bid,
+            collection: _,
+            token_id: _,
+            bid: _,
         } => unimplemented!(),
     }
 }
@@ -92,19 +92,19 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::GetCount {} => to_binary(&query_count(deps)?),
         QueryMsg::Bid {
-            collection,
-            token_id,
-            bidder,
+            collection: _,
+            token_id: _,
+            bidder: _,
         } => unimplemented!(),
         QueryMsg::Bids {
-            collection,
-            token_id,
-            start_after,
-            limit,
+            collection: _,
+            token_id: _,
+            start_after: _,
+            limit: _,
         } => unimplemented!(),
         QueryMsg::CurrentAsk {
-            collection,
-            token_id,
+            collection: _,
+            token_id: _,
         } => unimplemented!(),
     }
 }
