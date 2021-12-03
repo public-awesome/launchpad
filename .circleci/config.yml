@@ -7,7 +7,6 @@ workflows:
       - contract_secondary
       - contract_sg721
       - lint
-      - wasm-build
   deploy:
     jobs:
       - build_and_upload_contracts:
