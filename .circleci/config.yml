@@ -224,7 +224,6 @@ jobs:
             docker cp Cargo.lock with_code:/code
             # copy code into this volume
             docker cp ./contracts with_code:/code
-            docker cp ./packages with_code:/code
       - run:
           name: Build development contracts
           command: |
