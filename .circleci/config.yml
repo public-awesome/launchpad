@@ -4,7 +4,7 @@ workflows:
   test:
     jobs:
       - contract_collection-factory
-      - contract_secondary
+      - contract_marketplace
       - contract_sg721
       - lint
       - wasm-build
@@ -54,10 +54,10 @@ jobs:
             - target
           key: cargocache-collection-factory-rust:1.53.0-{{ checksum "~/project/Cargo.lock" }}
 
-  contract_secondary:
+  contract_marketplace:
     docker:
       - image: rust:1.53.0
-    working_directory: ~/project/contracts/secondary
+    working_directory: ~/project/contracts/marketplace
     steps:
       - checkout:
           path: ~/project
@@ -66,7 +66,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-secondary-rust:1.53.0-{{ checksum "~/project/Cargo.lock" }}
+            - cargocache-marketplace-rust:1.53.0-{{ checksum "~/project/Cargo.lock" }}
       - run:
           name: Unit Tests
           environment:
@@ -88,7 +88,7 @@ jobs:
           paths:
             - /usr/local/cargo/registry
             - target
-          key: cargocache-secondary-rust:1.53.0-{{ checksum "~/project/Cargo.lock" }}
+          key: cargocache-marketplace-rust:1.53.0-{{ checksum "~/project/Cargo.lock" }}
 
   contract_sg721:
     docker:
@@ -102,7 +102,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-secondary-rust:1.53.0-{{ checksum "~/project/Cargo.lock" }}
+            - cargocache-sg721-rust:1.53.0-{{ checksum "~/project/Cargo.lock" }}
       - run:
           name: Unit Tests
           environment:
@@ -124,7 +124,7 @@ jobs:
           paths:
             - /usr/local/cargo/registry
             - target
-          key: cargocache-secondary-rust:1.53.0-{{ checksum "~/project/Cargo.lock" }}
+          key: cargocache-sg721-rust:1.53.0-{{ checksum "~/project/Cargo.lock" }}
 
   lint:
     docker:

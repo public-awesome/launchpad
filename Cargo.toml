@@ -5,7 +5,7 @@ members = ["contracts/*"]
 codegen-units = 1
 incremental = false
 
-[profile.release.package.secondary]
+[profile.release.package.sg-marketplace]
 codegen-units = 1
 incremental = false
 
