@@ -1,5 +1,7 @@
 use cosmwasm_schema::{export_schema, remove_schemas, schema_for};
-use sg_marketplace::msg::{BidResponse, CurrentAskResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
+use sg_marketplace::msg::{
+    BidResponse, BidsResponse, CurrentAskResponse, ExecuteMsg, InstantiateMsg, QueryMsg,
+};
 use std::env::current_dir;
 use std::fs::create_dir_all;
 
@@ -14,4 +16,5 @@ fn main() {
     export_schema(&schema_for!(QueryMsg), &out_dir);
     export_schema(&schema_for!(CurrentAskResponse), &out_dir);
     export_schema(&schema_for!(BidResponse), &out_dir);
+    export_schema(&schema_for!(BidsResponse), &out_dir);
 }
