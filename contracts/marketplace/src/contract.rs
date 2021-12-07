@@ -148,30 +148,30 @@ pub fn execute_remove_bid(
     bidder: Addr,
 ) -> Result<Response, ContractError> {
     // Check bid exists for bidder
-    if let Some(bid) = query_bid(deps.as_ref(), &collection, &token_id, &bidder)?.bid {
-        // Check sender is the bidder
-        if info.sender != bid.bidder {
-            return Err(ContractError::Unauthorized {});
-        }
+    let bid = query_bid(deps.as_ref(), &collection, &token_id, &bidder)?
+        .bid
+        .ok_or(ContractError::BidNotFound {})?;
 
-        // Remove bid
-        TOKEN_BIDS.remove(deps.storage, (&collection, &token_id, &bidder));
-
-        // Refund bidder
-        let exec_refund_bidder = BankMsg::Send {
-            to_address: bidder.to_string(),
-            amount: vec![bid.amount],
-        };
-
-        Ok(Response::new()
-            .add_attribute("method", "remove_bid")
-            .add_attribute("collection", collection)
-            .add_attribute("token_id", token_id)
-            .add_attribute("bidder", bidder)
-            .add_message(exec_refund_bidder))
-    } else {
-        Err(ContractError::BidNotFound {})
+    // Check sender is the bidder
+    if info.sender != bid.bidder {
+        return Err(ContractError::Unauthorized {});
     }
+
+    // Remove bid
+    TOKEN_BIDS.remove(deps.storage, (&collection, &token_id, &bidder));
+
+    // Refund bidder
+    let exec_refund_bidder = BankMsg::Send {
+        to_address: bidder.to_string(),
+        amount: vec![bid.amount],
+    };
+
+    Ok(Response::new()
+        .add_attribute("method", "remove_bid")
+        .add_attribute("collection", collection)
+        .add_attribute("token_id", token_id)
+        .add_attribute("bidder", bidder)
+        .add_message(exec_refund_bidder))
 }
 
 /// An owner may set an Ask on their media. A bid is automatically fulfilled if it meets the asking price.
