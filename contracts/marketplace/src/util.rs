@@ -90,11 +90,6 @@ pub fn payout(
 pub fn is_valid_bid(bid: &Bid) -> Result<bool, ContractError> {
     let bid_amount = &bid.amount;
 
-    // Check amount is not less than 100, or split share math will fail
-    if bid_amount.amount < Uint128::new(100) {
-        return Err(ContractError::InvalidBidTooLow {});
-    }
-
     // Check amount is not zero
     if bid_amount.amount.is_zero() {
         return Err(ContractError::InvalidBidTooLow {});
