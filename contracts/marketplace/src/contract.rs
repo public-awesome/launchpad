@@ -3,12 +3,12 @@ use crate::msg::{
     BidResponse, BidsResponse, CurrentAskResponse, ExecuteMsg, InstantiateMsg, QueryMsg,
 };
 use crate::state::{Ask, Bid, TOKEN_ASKS, TOKEN_BIDS};
-use crate::util::{check_only_owner, finalize_sale, is_valid_bid};
 use cosmwasm_std::{
-    entry_point, has_coins, to_binary, Addr, BankMsg, Binary, CosmosMsg, Deps, DepsMut, Env,
-    MessageInfo, Order, Response, StdResult,
+    entry_point, has_coins, to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Deps, DepsMut, Env,
+    MessageInfo, Order, Response, StdResult, WasmMsg,
 };
 use cw2::set_contract_version;
+use cw721::{Cw721ExecuteMsg, OwnerOfResponse};
 use cw_storage_plus::Bound;
 
 // Version info for migration info
@@ -79,7 +79,7 @@ pub fn execute_set_bid(
     }
 
     // Check bid is valid
-    is_valid_bid(&bid)?;
+    bid.is_valid()?;
 
     // Check sent amount matches bid
     if !has_coins(&info.funds, &bid.amount) {
@@ -257,6 +257,86 @@ pub fn execute_accept_bid(
         .add_messages(msgs))
 }
 
+/// Checks to enfore only nft owner can call
+pub fn check_only_owner(
+    deps: Deps,
+    info: &MessageInfo,
+    collection: &Addr,
+    token_id: &str,
+) -> Result<OwnerOfResponse, ContractError> {
+    let owner: cw721::OwnerOfResponse = deps.querier.query_wasm_smart(
+        collection,
+        &cw721::Cw721QueryMsg::OwnerOf {
+            token_id: token_id.to_string(),
+            include_expired: None,
+        },
+    )?;
+    if owner.owner != info.sender {
+        return Err(ContractError::Unauthorized {});
+    }
+    Ok(owner)
+}
+
+/// Transfers funds and NFT, updates bid
+pub fn finalize_sale(
+    deps: DepsMut,
+    _env: Env,
+    _info: MessageInfo,
+    collection: Addr,
+    token_id: String,
+    recipient: Addr,
+    amount: Coin,
+) -> StdResult<Vec<CosmosMsg>> {
+    // Payout bid
+    let mut msgs: Vec<CosmosMsg> = payout(deps.as_ref(), &collection, &token_id, &amount)?;
+
+    // Create transfer cw721 msg
+    let cw721_transfer_msg = Cw721ExecuteMsg::TransferNft {
+        token_id,
+        recipient: recipient.to_string(),
+    };
+    let exec_cw721_transfer = WasmMsg::Execute {
+        contract_addr: collection.to_string(),
+        msg: to_binary(&cw721_transfer_msg)?,
+        funds: vec![],
+    };
+
+    msgs.append(&mut vec![exec_cw721_transfer.into()]);
+
+    Ok(msgs)
+}
+
+/// Payout a bid
+pub fn payout(
+    deps: Deps,
+    collection: &Addr,
+    token_id: &str,
+    amount: &Coin,
+) -> StdResult<Vec<CosmosMsg>> {
+    // Will hold payment msgs
+    let mut msgs: Vec<CosmosMsg> = vec![];
+
+    // Get current token owner
+    let owner: cw721::OwnerOfResponse = deps.querier.query_wasm_smart(
+        collection,
+        &cw721::Cw721QueryMsg::OwnerOf {
+            token_id: token_id.to_string(),
+            include_expired: None,
+        },
+    )?;
+
+    let owner_share_msg = BankMsg::Send {
+        to_address: owner.owner,
+        amount: vec![Coin {
+            amount: amount.amount,
+            denom: amount.denom.clone(),
+        }],
+    };
+    msgs.append(&mut vec![owner_share_msg.into()]);
+
+    Ok(msgs)
+}
+
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
@@ -312,7 +392,7 @@ pub fn query_bids(
     start_after: Option<String>,
     limit: Option<u32>,
 ) -> StdResult<BidsResponse> {
-    let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
+    let limit = limit.unwrap_or(DEFAULT_QUERY_LIMIT).min(MAX_QUERY_LIMIT) as usize;
     let start = start_after.map(Bound::exclusive);
 
     let bids: StdResult<Vec<Bid>> = TOKEN_BIDS
