@@ -16,8 +16,8 @@ const CONTRACT_NAME: &str = "crates.io:sg-marketplace";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 // Query limits
-const DEFAULT_LIMIT: u32 = 10;
-const MAX_LIMIT: u32 = 30;
+const DEFAULT_QUERY_LIMIT: u32 = 10;
+const MAX_QUERY_LIMIT: u32 = 30;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
