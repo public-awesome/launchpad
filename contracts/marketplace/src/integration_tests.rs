@@ -73,6 +73,7 @@ mod tests {
             symbol: String::from("TEST"),
             minter: creator.to_string(),
             extension: Extension {
+                contract_uri: String::from("https://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json"),
                 creator: creator.clone(),
                 royalties: Some(RoyaltyInfo {
                     creator_payment_address: Some(creator.clone()),
@@ -141,6 +142,7 @@ mod tests {
             owner: creator.clone().to_string(),
             token_uri: Some("https://starships.example.com/Starship/Enterprise.json".into()),
             extension: Extension {
+                contract_uri: String::from("https://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json"),
                 creator: creator.clone(),
                 royalties: Some(RoyaltyInfo {
                     creator_payment_address: Some(creator.clone()),
