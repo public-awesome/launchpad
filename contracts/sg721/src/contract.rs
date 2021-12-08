@@ -8,7 +8,9 @@ use cw2::set_contract_version;
 use cw721::ContractInfoResponse;
 use cw721_base::ContractError;
 
-use crate::msg::{CreatorResponse, ExecuteMsg, InstantiateMsg, QueryMsg, RoyaltyResponse};
+use crate::msg::{
+    ContractUriResponse, CreatorResponse, ExecuteMsg, InstantiateMsg, QueryMsg, RoyaltyResponse,
+};
 use crate::state::{Extension, EXTENSION};
 
 // version info for migration info
@@ -56,10 +58,16 @@ pub fn execute(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
+        QueryMsg::ContractUri {} => to_binary(&query_contract_uri(deps)?),
         QueryMsg::Creator {} => to_binary(&query_creator(deps)?),
         QueryMsg::Royalties {} => to_binary(&query_royalties(deps)?),
         _ => Sg721Contract::default().query(deps, env, msg.into()),
     }
+}
+
+fn query_contract_uri(deps: Deps) -> StdResult<ContractUriResponse> {
+    let contract_uri = EXTENSION.load(deps.storage)?.contract_uri;
+    Ok(ContractUriResponse { contract_uri })
 }
 
 fn query_creator(deps: Deps) -> StdResult<CreatorResponse> {
@@ -89,6 +97,7 @@ mod tests {
             symbol: String::from("BOBO"),
             minter: String::from("minter"),
             extension: Extension {
+                contract_uri: String::from("https://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json"),
                 creator: Addr::unchecked(creator),
                 royalties: None,
             },
@@ -99,8 +108,14 @@ mod tests {
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(0, res.messages.len());
 
+        // it worked, let's query the contract_uri
+        let res = query(deps.as_ref(), mock_env(), QueryMsg::ContractUri {}).unwrap();
+        let value: ContractUriResponse = from_binary(&res).unwrap();
+        assert_eq!("https://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json", value.contract_uri);
+
         // it worked, let's query the creator
         let res = query(deps.as_ref(), mock_env(), QueryMsg::Creator {}).unwrap();
+
         let value: CreatorResponse = from_binary(&res).unwrap();
         assert_eq!("creator", value.creator.to_string());
 

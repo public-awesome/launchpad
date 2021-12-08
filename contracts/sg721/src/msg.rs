@@ -47,6 +47,7 @@ pub enum QueryMsg {
         limit: Option<u32>,
     },
     Minter {},
+    ContractUri {},
     Creator {},
     Royalties {},
 }
@@ -98,6 +99,11 @@ impl From<QueryMsg> for Cw721QueryMsg {
             _ => unreachable!("cannot convert {:?} to Cw721QueryMsg", msg),
         }
     }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct ContractUriResponse {
+    pub contract_uri: String,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

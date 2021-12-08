@@ -215,6 +215,18 @@
     {
       "type": "object",
       "required": [
+        "contract_uri"
+      ],
+      "properties": {
+        "contract_uri": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
         "creator"
       ],
       "properties": {
