@@ -14,18 +14,37 @@ pub struct InstantiateMsg {
 // specialize ExecuteMsg with the CreatorInfo extention
 pub type ExecuteMsg = cw721_base::ExecuteMsg<Extension>;
 
-// The serde untagged attribute will remove both "base" and "extended" from the JSON, so we
-// have the same effect as #[serde(flatten)] without using it, but have to add an additional
-// Extended variant. It's still cleaner than copying over all the variants from base.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(untagged)]
 pub enum QueryMsg {
-    Base(cw721_base::QueryMsg),
-    Extended(ExtendedQueryMsg),
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub enum ExtendedQueryMsg {
+    OwnerOf {
+        token_id: String,
+        include_expired: Option<bool>,
+    },
+    ApprovedForAll {
+        owner: String,
+        include_expired: Option<bool>,
+        start_after: Option<String>,
+        limit: Option<u32>,
+    },
+    NumTokens {},
+    ContractInfo {},
+    NftInfo {
+        token_id: String,
+    },
+    AllNftInfo {
+        token_id: String,
+        include_expired: Option<bool>,
+    },
+    Tokens {
+        owner: String,
+        start_after: Option<String>,
+        limit: Option<u32>,
+    },
+    AllTokens {
+        start_after: Option<String>,
+        limit: Option<u32>,
+    },
+    Minter {},
     Creator {},
     Royalties {},
 }

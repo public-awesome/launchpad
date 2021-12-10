@@ -8,9 +8,7 @@ use cw2::set_contract_version;
 use cw721::ContractInfoResponse;
 use cw721_base::ContractError;
 
-use crate::msg::{
-    CreatorResponse, ExecuteMsg, ExtendedQueryMsg, InstantiateMsg, QueryMsg, RoyaltyResponse,
-};
+use crate::msg::{CreatorResponse, ExecuteMsg, InstantiateMsg, QueryMsg, RoyaltyResponse};
 use crate::state::{Extension, EXTENSION};
 
 // version info for migration info
@@ -58,11 +56,32 @@ pub fn execute(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::Extended(msg) => match msg {
-            ExtendedQueryMsg::Creator {} => to_binary(&query_creator(deps)?),
-            ExtendedQueryMsg::Royalties {} => to_binary(&query_royalties(deps)?),
-        },
-        QueryMsg::Base(msg) => Sg721Contract::default().query(deps, env, msg),
+        QueryMsg::OwnerOf {
+            token_id,
+            include_expired,
+        } => todo!(),
+        QueryMsg::ApprovedForAll {
+            owner,
+            include_expired,
+            start_after,
+            limit,
+        } => todo!(),
+        QueryMsg::NumTokens {} => todo!(),
+        QueryMsg::ContractInfo {} => todo!(),
+        QueryMsg::NftInfo { token_id } => todo!(),
+        QueryMsg::AllNftInfo {
+            token_id,
+            include_expired,
+        } => todo!(),
+        QueryMsg::Tokens {
+            owner,
+            start_after,
+            limit,
+        } => todo!(),
+        QueryMsg::AllTokens { start_after, limit } => todo!(),
+        QueryMsg::Minter {} => todo!(),
+        QueryMsg::Creator {} => to_binary(&query_creator(deps)?),
+        QueryMsg::Royalties {} => to_binary(&query_royalties(deps)?),
     }
 }
 
@@ -104,22 +123,12 @@ mod tests {
         assert_eq!(0, res.messages.len());
 
         // it worked, let's query the creator
-        let res = query(
-            deps.as_ref(),
-            mock_env(),
-            QueryMsg::Extended(ExtendedQueryMsg::Creator {}),
-        )
-        .unwrap();
+        let res = query(deps.as_ref(), mock_env(), QueryMsg::Creator {}).unwrap();
         let value: CreatorResponse = from_binary(&res).unwrap();
         assert_eq!("creator", value.creator.to_string());
 
         // let's query the royalties
-        let res = query(
-            deps.as_ref(),
-            mock_env(),
-            QueryMsg::Extended(ExtendedQueryMsg::Royalties {}),
-        )
-        .unwrap();
+        let res = query(deps.as_ref(), mock_env(), QueryMsg::Royalties {}).unwrap();
         let value: RoyaltyResponse = from_binary(&res).unwrap();
         assert_eq!(None, value.royalty);
     }
