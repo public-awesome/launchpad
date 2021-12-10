@@ -94,7 +94,7 @@ impl From<QueryMsg> for Cw721QueryMsg {
                 Cw721QueryMsg::AllTokens { start_after, limit }
             }
             QueryMsg::Minter {} => Cw721QueryMsg::Minter {},
-            _ => unreachable!(),
+            _ => unreachable!("cannot convert {:?} to Cw721QueryMsg", msg),
         }
     }
 }
