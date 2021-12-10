@@ -56,32 +56,9 @@ pub fn execute(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::OwnerOf {
-            token_id,
-            include_expired,
-        } => todo!(),
-        QueryMsg::ApprovedForAll {
-            owner,
-            include_expired,
-            start_after,
-            limit,
-        } => todo!(),
-        QueryMsg::NumTokens {} => todo!(),
-        QueryMsg::ContractInfo {} => todo!(),
-        QueryMsg::NftInfo { token_id } => todo!(),
-        QueryMsg::AllNftInfo {
-            token_id,
-            include_expired,
-        } => todo!(),
-        QueryMsg::Tokens {
-            owner,
-            start_after,
-            limit,
-        } => todo!(),
-        QueryMsg::AllTokens { start_after, limit } => todo!(),
-        QueryMsg::Minter {} => todo!(),
         QueryMsg::Creator {} => to_binary(&query_creator(deps)?),
         QueryMsg::Royalties {} => to_binary(&query_royalties(deps)?),
+        _ => Sg721Contract::default().query(deps, env, msg.into()),
     }
 }
 

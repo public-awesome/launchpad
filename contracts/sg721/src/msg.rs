@@ -1,5 +1,6 @@
 use crate::state::{Extension, RoyaltyInfo};
 use cosmwasm_std::Addr;
+use cw721_base::msg::QueryMsg as Cw721QueryMsg;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -47,6 +48,55 @@ pub enum QueryMsg {
     Minter {},
     Creator {},
     Royalties {},
+}
+
+impl From<QueryMsg> for Cw721QueryMsg {
+    fn from(msg: QueryMsg) -> Cw721QueryMsg {
+        match msg {
+            QueryMsg::OwnerOf {
+                token_id,
+                include_expired,
+            } => Cw721QueryMsg::OwnerOf {
+                token_id,
+                include_expired,
+            },
+            QueryMsg::ApprovedForAll {
+                owner,
+                include_expired,
+                start_after,
+                limit,
+            } => Cw721QueryMsg::ApprovedForAll {
+                owner,
+                include_expired,
+                start_after,
+                limit,
+            },
+            QueryMsg::NumTokens {} => Cw721QueryMsg::NumTokens {},
+            QueryMsg::ContractInfo {} => Cw721QueryMsg::ContractInfo {},
+            QueryMsg::NftInfo { token_id } => Cw721QueryMsg::NftInfo { token_id },
+            QueryMsg::AllNftInfo {
+                token_id,
+                include_expired,
+            } => Cw721QueryMsg::AllNftInfo {
+                token_id,
+                include_expired,
+            },
+            QueryMsg::Tokens {
+                owner,
+                start_after,
+                limit,
+            } => Cw721QueryMsg::Tokens {
+                owner,
+                start_after,
+                limit,
+            },
+            QueryMsg::AllTokens { start_after, limit } => {
+                Cw721QueryMsg::AllTokens { start_after, limit }
+            }
+            QueryMsg::Minter {} => Cw721QueryMsg::Minter {},
+            _ => unreachable!(),
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
