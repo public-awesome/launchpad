@@ -5,10 +5,10 @@
     {
       "type": "object",
       "required": [
-        "OwnerOf"
+        "owner_of"
       ],
       "properties": {
-        "OwnerOf": {
+        "owner_of": {
           "type": "object",
           "required": [
             "token_id"
@@ -31,10 +31,10 @@
     {
       "type": "object",
       "required": [
-        "ApprovedForAll"
+        "approved_for_all"
       ],
       "properties": {
-        "ApprovedForAll": {
+        "approved_for_all": {
           "type": "object",
           "required": [
             "owner"
@@ -71,10 +71,10 @@
     {
       "type": "object",
       "required": [
-        "NumTokens"
+        "num_tokens"
       ],
       "properties": {
-        "NumTokens": {
+        "num_tokens": {
           "type": "object"
         }
       },
@@ -83,10 +83,10 @@
     {
       "type": "object",
       "required": [
-        "ContractInfo"
+        "contract_info"
       ],
       "properties": {
-        "ContractInfo": {
+        "contract_info": {
           "type": "object"
         }
       },
@@ -95,10 +95,10 @@
     {
       "type": "object",
       "required": [
-        "NftInfo"
+        "nft_info"
       ],
       "properties": {
-        "NftInfo": {
+        "nft_info": {
           "type": "object",
           "required": [
             "token_id"
@@ -115,10 +115,10 @@
     {
       "type": "object",
       "required": [
-        "AllNftInfo"
+        "all_nft_info"
       ],
       "properties": {
-        "AllNftInfo": {
+        "all_nft_info": {
           "type": "object",
           "required": [
             "token_id"
@@ -141,10 +141,10 @@
     {
       "type": "object",
       "required": [
-        "Tokens"
+        "tokens"
       ],
       "properties": {
-        "Tokens": {
+        "tokens": {
           "type": "object",
           "required": [
             "owner"
@@ -175,10 +175,10 @@
     {
       "type": "object",
       "required": [
-        "AllTokens"
+        "all_tokens"
       ],
       "properties": {
-        "AllTokens": {
+        "all_tokens": {
           "type": "object",
           "properties": {
             "limit": {
@@ -203,10 +203,10 @@
     {
       "type": "object",
       "required": [
-        "Minter"
+        "minter"
       ],
       "properties": {
-        "Minter": {
+        "minter": {
           "type": "object"
         }
       },
@@ -215,10 +215,10 @@
     {
       "type": "object",
       "required": [
-        "Creator"
+        "creator"
       ],
       "properties": {
-        "Creator": {
+        "creator": {
           "type": "object"
         }
       },
@@ -227,10 +227,10 @@
     {
       "type": "object",
       "required": [
-        "Royalties"
+        "royalties"
       ],
       "properties": {
-        "Royalties": {
+        "royalties": {
           "type": "object"
         }
       },
