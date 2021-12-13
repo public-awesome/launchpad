@@ -58,7 +58,9 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::Creator {} => to_binary(&query_creator(deps)?),
         QueryMsg::Royalties {} => to_binary(&query_royalties(deps)?),
-        _ => Sg721Contract::default().query(deps, env, msg.into()),
+        _ => Sg721Contract::default()
+            .query(deps, env, msg.into())
+            .map_err(|err| err),
     }
 }
 
