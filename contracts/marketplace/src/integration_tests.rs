@@ -8,6 +8,7 @@ use cw721_base::msg::{
     ExecuteMsg as Cw721ExecuteMsg, InstantiateMsg as Cw721InstantiateMsg, MintMsg,
 };
 use cw_multi_test::{App, BankSudo, Contract, ContractWrapper, Executor, SudoMsg};
+use sg721;
 
 fn mock_app() -> App {
     App::default()
@@ -22,11 +23,11 @@ pub fn contract_nft_marketplace() -> Box<dyn Contract<Empty>> {
     Box::new(contract)
 }
 
-pub fn contract_cw721() -> Box<dyn Contract<Empty>> {
+pub fn contract_sg721() -> Box<dyn Contract<Empty>> {
     let contract = ContractWrapper::new(
-        cw721_metadata_onchain::entry::execute,
-        cw721_metadata_onchain::entry::instantiate,
-        cw721_metadata_onchain::entry::query,
+        sg721::contract::execute,
+        sg721::contract::instantiate,
+        sg721::contract::query,
     );
     Box::new(contract)
 }
@@ -36,7 +37,8 @@ mod tests {
     use crate::msg::BidResponse;
 
     use super::*;
-    use cosmwasm_std::{coin, coins, Coin};
+    use cosmwasm_std::{coin, coins, Coin, Decimal};
+    use sg721::state::{Extension, RoyaltyInfo};
 
     const TOKEN_ID: &str = "123";
     const NATIVE_TOKEN_DENOM: &str = "ustars";
@@ -59,14 +61,23 @@ mod tests {
             .unwrap();
 
         // Setup media contract
-        let cw721_id = router.store_code(contract_cw721());
-        let msg = Cw721InstantiateMsg {
+        let sg721_id = router.store_code(contract_sg721());
+        let msg = sg721::msg::InstantiateMsg {
             name: String::from("Test Coin"),
             symbol: String::from("TEST"),
             minter: creator.to_string(),
+            extension: Extension {
+                creator: creator.clone(),
+                royalties: Some(RoyaltyInfo {
+                    creator_payment_address: Some(creator.clone()),
+                    owner_payment_address: Some(creator.clone()),
+                    creator_share: Decimal::percent(10),
+                    owner_share: Decimal::percent(90),
+                }),
+            },
         };
         let nft_contract_addr = router
-            .instantiate_contract(cw721_id, creator.clone(), &msg, &[], "NFT", None)
+            .instantiate_contract(sg721_id, creator.clone(), &msg, &[], "NFT", None)
             .unwrap();
 
         Ok((nft_marketplace_addr, nft_contract_addr))
@@ -123,7 +134,15 @@ mod tests {
             token_id: TOKEN_ID.to_string(),
             owner: creator.clone().to_string(),
             token_uri: Some("https://starships.example.com/Starship/Enterprise.json".into()),
-            extension: Some(Empty {}),
+            extension: Extension {
+                creator: creator.clone(),
+                royalties: Some(RoyaltyInfo {
+                    creator_payment_address: Some(creator.clone()),
+                    owner_payment_address: Some(creator.clone()),
+                    creator_share: Decimal::percent(10),
+                    owner_share: Decimal::percent(90),
+                }),
+            },
         });
         let res = router.execute_contract(
             creator.clone(),

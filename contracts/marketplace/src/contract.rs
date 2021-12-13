@@ -8,7 +8,7 @@ use cosmwasm_std::{
     MessageInfo, Order, Response, StdResult, WasmMsg,
 };
 use cw2::set_contract_version;
-use cw721::{Cw721ExecuteMsg, OwnerOfResponse};
+use cw721::{Cw721ExecuteMsg, Cw721QueryMsg, OwnerOfResponse};
 use cw_storage_plus::Bound;
 
 // Version info for migration info
@@ -266,7 +266,7 @@ pub fn check_only_owner(
 ) -> Result<OwnerOfResponse, ContractError> {
     let owner: cw721::OwnerOfResponse = deps.querier.query_wasm_smart(
         collection,
-        &cw721::Cw721QueryMsg::OwnerOf {
+        &Cw721QueryMsg::OwnerOf {
             token_id: token_id.to_string(),
             include_expired: None,
         },
