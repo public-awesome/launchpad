@@ -13,6 +13,7 @@ pub struct InstantiateMsg {
 }
 
 // specialize ExecuteMsg with the CreatorInfo extention
+// pub type ExecuteMsg = cw721_base::ExecuteMsg<Extension>;
 pub type ExecuteMsg = cw721_base::ExecuteMsg<Empty>;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
