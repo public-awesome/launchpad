@@ -46,3 +46,4 @@ cw721-base = "0.10.0"
 cosmwasm-schema = { version = "1.0.0-beta2" }
 cw-multi-test = { version = "0.10.3"}
 cw721-metadata-onchain = "0.10.0"
+sg721= { path = "../sg721" }
