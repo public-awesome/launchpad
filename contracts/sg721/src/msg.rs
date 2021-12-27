@@ -16,6 +16,7 @@ pub struct InstantiateMsg {
 pub type ExecuteMsg = cw721_base::ExecuteMsg<Extension>;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
     OwnerOf {
         token_id: String,
