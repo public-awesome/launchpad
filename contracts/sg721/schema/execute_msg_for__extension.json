@@ -267,9 +267,13 @@
       "description": "Extensions to cw721-base that will be saved in TokenInfo",
       "type": "object",
       "required": [
+        "contract_uri",
         "creator"
       ],
       "properties": {
+        "contract_uri": {
+          "type": "string"
+        },
         "creator": {
           "$ref": "#/definitions/Addr"
         },

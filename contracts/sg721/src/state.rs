@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 /// Extensions to cw721-base that will be saved in TokenInfo
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Extension {
+    pub contract_uri: String,
     pub creator: Addr,
     pub royalties: Option<RoyaltyInfo>,
 }
