@@ -684,7 +684,7 @@ mod tests {
         // Instantiate and configure contracts
         let (nft_marketplace_addr, _) = setup_contracts(&mut router, &creator).unwrap();
 
-        // Setup media contract with 10% royalties to Curator
+        // Setup media contract with 10% royalties to a curator
         let sg721_id = router.store_code(contract_sg721());
         let msg = sg721::msg::InstantiateMsg {
             name: String::from("Test Coin"),
