@@ -1,3 +1,4 @@
+use crate::ContractError;
 use cosmwasm_std::{Addr, Decimal};
 use cw_storage_plus::Item;
 use schemars::JsonSchema;
@@ -12,12 +13,23 @@ pub struct CollectionInfo {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct RoyaltyInfo {
-    /// fallback to creator address if doesn't exist
-    pub creator_payment_address: Option<Addr>,
-    /// fallback to owner address if doesn't exist
-    pub owner_payment_address: Option<Addr>,
-    pub creator_share: Decimal,
-    pub owner_share: Decimal,
+    pub payment_address: Addr,
+    pub share: Decimal,
+}
+
+impl RoyaltyInfo {
+    // Checks if RoyaltyInfo is valid
+    pub fn is_valid(&self) -> Result<bool, ContractError> {
+        if self.share > Decimal::one() {
+            return Err(ContractError::InvalidRoyalities {});
+        }
+
+        if self.share < Decimal::zero() {
+            return Err(ContractError::InvalidRoyalities {});
+        }
+
+        Ok(true)
+    }
 }
 
 pub const COLLECTION_INFO: Item<CollectionInfo> = Item::new("collection_info");
