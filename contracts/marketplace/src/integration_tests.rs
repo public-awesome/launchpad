@@ -44,7 +44,7 @@ mod tests {
 
     use super::*;
     use cosmwasm_std::{coin, coins, Coin, Decimal};
-    use sg721::state::{Extension, RoyaltyInfo};
+    use sg721::state::{CollectionInfo, RoyaltyInfo};
 
     const TOKEN_ID: &str = "123";
     const NATIVE_TOKEN_DENOM: &str = "ustars";
@@ -72,7 +72,7 @@ mod tests {
             name: String::from("Test Coin"),
             symbol: String::from("TEST"),
             minter: creator.to_string(),
-            extension: Extension {
+            collection_info: CollectionInfo {
                 contract_uri: String::from("https://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json"),
                 creator: creator.clone(),
                 royalties: Some(RoyaltyInfo {
@@ -141,16 +141,7 @@ mod tests {
             token_id: TOKEN_ID.to_string(),
             owner: creator.clone().to_string(),
             token_uri: Some("https://starships.example.com/Starship/Enterprise.json".into()),
-            extension: Extension {
-                contract_uri: String::from("https://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json"),
-                creator: creator.clone(),
-                royalties: Some(RoyaltyInfo {
-                    creator_payment_address: Some(creator.clone()),
-                    owner_payment_address: Some(creator.clone()),
-                    creator_share: Decimal::percent(10),
-                    owner_share: Decimal::percent(90),
-                }),
-            },
+            extension: Empty {},
         });
         let res = router.execute_contract(
             creator.clone(),
