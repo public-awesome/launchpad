@@ -1,5 +1,5 @@
-use crate::state::{Extension, RoyaltyInfo};
-use cosmwasm_std::Addr;
+use crate::state::{RoyaltyInfo, State};
+use cosmwasm_std::{Addr, Empty};
 use cw721_base::msg::QueryMsg as Cw721QueryMsg;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -9,11 +9,11 @@ pub struct InstantiateMsg {
     pub name: String,
     pub symbol: String,
     pub minter: String,
-    pub extension: Extension,
+    pub state: State,
 }
 
 // specialize ExecuteMsg with the CreatorInfo extention
-pub type ExecuteMsg = cw721_base::ExecuteMsg<Extension>;
+pub type ExecuteMsg = cw721_base::ExecuteMsg<Empty>;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -113,5 +113,5 @@ pub struct CreatorResponse {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct RoyaltyResponse {
-    pub royalty: Option<RoyaltyInfo>,
+    pub royalty: RoyaltyInfo,
 }

@@ -11,13 +11,13 @@ use cw721_base::ContractError;
 use crate::msg::{
     ContractUriResponse, CreatorResponse, ExecuteMsg, InstantiateMsg, QueryMsg, RoyaltyResponse,
 };
-use crate::state::{Extension, EXTENSION};
+use crate::state::{State, STATE};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sg721";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-pub type Sg721Contract<'a> = cw721_base::Cw721Contract<'a, Extension, Empty>;
+pub type Sg721Contract<'a> = cw721_base::Cw721Contract<'a, Empty, Empty>;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -40,7 +40,7 @@ pub fn instantiate(
         .minter
         .save(deps.storage, &minter)?;
 
-    EXTENSION.save(deps.storage, &msg.extension)?;
+    STATE.save(deps.storage, &msg.state)?;
 
     Ok(Response::default())
 }
@@ -66,17 +66,17 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
 }
 
 fn query_contract_uri(deps: Deps) -> StdResult<ContractUriResponse> {
-    let contract_uri = EXTENSION.load(deps.storage)?.contract_uri;
+    let contract_uri = STATE.load(deps.storage)?.contract_uri;
     Ok(ContractUriResponse { contract_uri })
 }
 
 fn query_creator(deps: Deps) -> StdResult<CreatorResponse> {
-    let creator = EXTENSION.load(deps.storage)?.creator;
+    let creator = STATE.load(deps.storage)?.royalties.creator;
     Ok(CreatorResponse { creator })
 }
 
 fn query_royalties(deps: Deps) -> StdResult<RoyaltyResponse> {
-    let royalty = EXTENSION.load(deps.storage)?.royalties;
+    let royalty = STATE.load(deps.storage)?.royalties;
     Ok(RoyaltyResponse { royalty })
 }
 
@@ -84,7 +84,7 @@ fn query_royalties(deps: Deps) -> StdResult<RoyaltyResponse> {
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-    use cosmwasm_std::{coins, from_binary, Addr};
+    use cosmwasm_std::{coins, from_binary, Addr, Decimal};
 
     #[test]
     fn proper_initialization() {
@@ -96,10 +96,9 @@ mod tests {
             name: collection,
             symbol: String::from("BOBO"),
             minter: String::from("minter"),
-            extension: Extension {
+            state: State {
                 contract_uri: String::from("https://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json"),
-                creator: Addr::unchecked(creator),
-                royalties: None,
+                royalties: crate::state::RoyaltyInfo { creator: Addr::unchecked(creator.clone()), creator_payment_address: None, owner_payment_address: None, creator_share: Decimal::percent(50), owner_share: Decimal::percent(50) },
             },
         };
         let info = mock_info("creator", &coins(1000, "earth"));
@@ -122,6 +121,6 @@ mod tests {
         // let's query the royalties
         let res = query(deps.as_ref(), mock_env(), QueryMsg::Royalties {}).unwrap();
         let value: RoyaltyResponse = from_binary(&res).unwrap();
-        assert_eq!(None, value.royalty);
+        assert_eq!(creator.clone(), value.royalty.creator);
     }
 }
