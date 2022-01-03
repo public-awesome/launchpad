@@ -1,4 +1,4 @@
-use crate::state::{RoyaltyInfo, State};
+use crate::state::{CollectionInfo, RoyaltyInfo};
 use cosmwasm_std::{Addr, Empty};
 use cw721_base::msg::QueryMsg as Cw721QueryMsg;
 use schemars::JsonSchema;
@@ -9,7 +9,7 @@ pub struct InstantiateMsg {
     pub name: String,
     pub symbol: String,
     pub minter: String,
-    pub state: State,
+    pub collection_info: CollectionInfo,
 }
 
 // specialize ExecuteMsg with the CreatorInfo extention
@@ -113,5 +113,5 @@ pub struct CreatorResponse {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct RoyaltyResponse {
-    pub royalty: RoyaltyInfo,
+    pub royalty: Option<RoyaltyInfo>,
 }
