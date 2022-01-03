@@ -99,7 +99,7 @@ mod tests {
             minter: String::from("minter"),
             collection_info: CollectionInfo {
                 contract_uri: String::from("https://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json"),
-                creator: Addr::unchecked(creator.clone()),
+                creator: Addr::unchecked(creator),
                 royalties: None,
             },
         };
