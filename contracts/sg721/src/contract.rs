@@ -11,7 +11,7 @@ use cw721_base::ContractError;
 use crate::msg::{
     ContractUriResponse, CreatorResponse, ExecuteMsg, InstantiateMsg, QueryMsg, RoyaltyResponse,
 };
-use crate::state::{CollectionInfo, COLLECTION_INFO};
+use crate::state::COLLECTION_INFO;
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sg721";
@@ -83,8 +83,9 @@ fn query_royalties(deps: Deps) -> StdResult<RoyaltyResponse> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::state::CollectionInfo;
     use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-    use cosmwasm_std::{coins, from_binary, Addr, Decimal};
+    use cosmwasm_std::{coins, from_binary, Addr};
 
     #[test]
     fn proper_initialization() {
