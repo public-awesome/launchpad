@@ -4,7 +4,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct State {
+pub struct Collection {
     pub contract_uri: String,
     pub royalties: RoyaltyInfo,
 }
@@ -20,4 +20,4 @@ pub struct RoyaltyInfo {
     pub owner_share: Decimal,
 }
 
-pub const STATE: Item<State> = Item::new("state");
+pub const COLLECTION: Item<Collection> = Item::new("collection");
