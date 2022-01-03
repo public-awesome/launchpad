@@ -11,13 +11,13 @@ use cw721_base::ContractError;
 use crate::msg::{
     ContractUriResponse, CreatorResponse, ExecuteMsg, InstantiateMsg, QueryMsg, RoyaltyResponse,
 };
-use crate::state::{Extension, EXTENSION};
+use crate::state::COLLECTION_INFO;
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sg721";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-pub type Sg721Contract<'a> = cw721_base::Cw721Contract<'a, Extension, Empty>;
+pub type Sg721Contract<'a> = cw721_base::Cw721Contract<'a, Empty, Empty>;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -40,7 +40,7 @@ pub fn instantiate(
         .minter
         .save(deps.storage, &minter)?;
 
-    EXTENSION.save(deps.storage, &msg.extension)?;
+    COLLECTION_INFO.save(deps.storage, &msg.collection_info)?;
 
     Ok(Response::default())
 }
@@ -66,23 +66,24 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
 }
 
 fn query_contract_uri(deps: Deps) -> StdResult<ContractUriResponse> {
-    let contract_uri = EXTENSION.load(deps.storage)?.contract_uri;
+    let contract_uri = COLLECTION_INFO.load(deps.storage)?.contract_uri;
     Ok(ContractUriResponse { contract_uri })
 }
 
 fn query_creator(deps: Deps) -> StdResult<CreatorResponse> {
-    let creator = EXTENSION.load(deps.storage)?.creator;
+    let creator = COLLECTION_INFO.load(deps.storage)?.creator;
     Ok(CreatorResponse { creator })
 }
 
 fn query_royalties(deps: Deps) -> StdResult<RoyaltyResponse> {
-    let royalty = EXTENSION.load(deps.storage)?.royalties;
+    let royalty = COLLECTION_INFO.load(deps.storage)?.royalties;
     Ok(RoyaltyResponse { royalty })
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::state::CollectionInfo;
     use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
     use cosmwasm_std::{coins, from_binary, Addr};
 
@@ -96,7 +97,7 @@ mod tests {
             name: collection,
             symbol: String::from("BOBO"),
             minter: String::from("minter"),
-            extension: Extension {
+            collection_info: CollectionInfo {
                 contract_uri: String::from("https://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json"),
                 creator: Addr::unchecked(creator),
                 royalties: None,

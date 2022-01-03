@@ -3,9 +3,8 @@ use cw_storage_plus::Item;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-/// Extensions to cw721-base that will be saved in TokenInfo
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct Extension {
+pub struct CollectionInfo {
     pub contract_uri: String,
     pub creator: Addr,
     pub royalties: Option<RoyaltyInfo>,
@@ -21,4 +20,4 @@ pub struct RoyaltyInfo {
     pub owner_share: Decimal,
 }
 
-pub const EXTENSION: Item<Extension> = Item::new("extension");
+pub const COLLECTION_INFO: Item<CollectionInfo> = Item::new("collection_info");
