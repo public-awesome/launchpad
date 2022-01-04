@@ -76,10 +76,8 @@ mod tests {
                 contract_uri: String::from("https://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json"),
                 creator: creator.clone(),
                 royalties: Some(RoyaltyInfo {
-                    creator_payment_address: Some(creator.clone()),
-                    owner_payment_address: Some(creator.clone()),
-                    creator_share: Decimal::percent(10),
-                    owner_share: Decimal::percent(90),
+                    payment_address: creator.clone(),
+                    share: Decimal::percent(10),
                 }),
             },
         };
@@ -674,5 +672,124 @@ mod tests {
             .query_wasm_smart(nft_marketplace_addr, &query_bid_msg)
             .unwrap();
         assert_eq!(Some(bid), res.bid);
+    }
+
+    #[test]
+    fn royalties() {
+        let mut router = mock_app();
+
+        // Setup intial accounts
+        let (curator, bidder, creator) = setup_accounts(&mut router).unwrap();
+
+        // Instantiate and configure contracts
+        let (nft_marketplace_addr, _) = setup_contracts(&mut router, &creator).unwrap();
+
+        // Setup media contract with 10% royalties to a curator
+        let sg721_id = router.store_code(contract_sg721());
+        let msg = sg721::msg::InstantiateMsg {
+            name: String::from("Test Coin"),
+            symbol: String::from("TEST"),
+            minter: creator.to_string(),
+            collection_info: CollectionInfo {
+                contract_uri: String::from("https://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json"),
+                creator: creator.clone(),
+                royalties: Some(RoyaltyInfo {
+                    payment_address: curator.clone(),
+                    share: Decimal::percent(10),
+                }),
+            },
+        };
+        let nft_contract_addr = router
+            .instantiate_contract(sg721_id, creator.clone(), &msg, &[], "NFT", None)
+            .unwrap();
+
+        // Mint NFT for creator
+        let mint_for_creator_msg = Cw721ExecuteMsg::Mint(MintMsg {
+            token_id: TOKEN_ID.to_string(),
+            owner: creator.to_string(),
+            token_uri: Some("https://starships.example.com/Starship/Enterprise.json".into()),
+            extension: Empty {},
+        });
+        let res = router.execute_contract(
+            creator.clone(),
+            nft_contract_addr.clone(),
+            &mint_for_creator_msg,
+            &[],
+        );
+        assert!(res.is_ok());
+
+        // Creator Authorizes NFT
+        let approve_msg = Cw721ExecuteMsg::<Empty>::Approve {
+            spender: nft_marketplace_addr.to_string(),
+            token_id: TOKEN_ID.to_string(),
+            expires: None,
+        };
+        let res = router.execute_contract(
+            creator.clone(),
+            nft_contract_addr.clone(),
+            &approve_msg,
+            &[],
+        );
+        assert!(res.is_ok());
+
+        // An ask is made by the creator
+        let ask = Ask {
+            amount: coin(100, NATIVE_TOKEN_DENOM),
+        };
+        let set_ask = ExecuteMsg::SetAsk {
+            collection: nft_contract_addr.clone(),
+            token_id: TOKEN_ID.to_string(),
+            ask,
+        };
+        let res =
+            router.execute_contract(creator.clone(), nft_marketplace_addr.clone(), &set_ask, &[]);
+        assert!(res.is_ok());
+
+        // Bidder makes bid
+        let bid = Bid {
+            amount: coin(100, NATIVE_TOKEN_DENOM),
+            bidder: bidder.clone(),
+            recipient: creator.clone(),
+        };
+        let set_bid_msg = ExecuteMsg::SetBid {
+            collection: nft_contract_addr.clone(),
+            token_id: TOKEN_ID.to_string(),
+            bid,
+        };
+        let res = router.execute_contract(
+            bidder.clone(),
+            nft_marketplace_addr,
+            &set_bid_msg,
+            &coins(100, NATIVE_TOKEN_DENOM),
+        );
+        assert!(res.is_ok());
+
+        // Check money is transfered correctly and royalties paid
+        let curator_native_balances = router.wrap().query_all_balances(curator).unwrap();
+        assert_eq!(
+            curator_native_balances,
+            coins(INITIAL_BALANCE + 10, NATIVE_TOKEN_DENOM)
+        );
+        let creator_native_balances = router.wrap().query_all_balances(creator).unwrap();
+        assert_eq!(
+            creator_native_balances,
+            coins(INITIAL_BALANCE + 90, NATIVE_TOKEN_DENOM)
+        );
+        let bidder_native_balances = router.wrap().query_all_balances(bidder.clone()).unwrap();
+        assert_eq!(
+            bidder_native_balances,
+            coins(INITIAL_BALANCE - 100, NATIVE_TOKEN_DENOM)
+        );
+
+        // Check NFT is transferred
+        let query_owner_msg = Cw721QueryMsg::OwnerOf {
+            token_id: TOKEN_ID.to_string(),
+            include_expired: None,
+        };
+        let res: OwnerOfResponse = router
+            .wrap()
+            .query_wasm_smart(nft_contract_addr, &query_owner_msg)
+            .unwrap();
+        assert_eq!(res.owner, bidder.to_string());
     }
 }
