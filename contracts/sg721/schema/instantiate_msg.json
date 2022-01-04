@@ -59,36 +59,14 @@
     "RoyaltyInfo": {
       "type": "object",
       "required": [
-        "creator_share",
-        "owner_share"
+        "payment_address",
+        "share"
       ],
       "properties": {
-        "creator_payment_address": {
-          "description": "fallback to creator address if doesn't exist",
-          "anyOf": [
-            {
-              "$ref": "#/definitions/Addr"
-            },
-            {
-              "type": "null"
-            }
-          ]
+        "payment_address": {
+          "$ref": "#/definitions/Addr"
         },
-        "creator_share": {
-          "$ref": "#/definitions/Decimal"
-        },
-        "owner_payment_address": {
-          "description": "fallback to owner address if doesn't exist",
-          "anyOf": [
-            {
-              "$ref": "#/definitions/Addr"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "owner_share": {
+        "share": {
           "$ref": "#/definitions/Decimal"
         }
       }
