@@ -22,7 +22,16 @@ pub enum QueryMsg {
         token_id: String,
         include_expired: Option<bool>,
     },
-    ApprovedForAll {
+    Approval {
+        token_id: String,
+        spender: String,
+        include_expired: Option<bool>,
+    },
+    Approvals {
+        token_id: String,
+        include_expired: Option<bool>,
+    },
+    AllOperators {
         owner: String,
         include_expired: Option<bool>,
         start_after: Option<String>,
@@ -62,12 +71,28 @@ impl From<QueryMsg> for Cw721QueryMsg {
                 token_id,
                 include_expired,
             },
-            QueryMsg::ApprovedForAll {
+            QueryMsg::Approval {
+                token_id,
+                spender,
+                include_expired,
+            } => Cw721QueryMsg::Approval {
+                token_id,
+                spender,
+                include_expired,
+            },
+            QueryMsg::Approvals {
+                token_id,
+                include_expired,
+            } => Cw721QueryMsg::Approvals {
+                token_id,
+                include_expired,
+            },
+            QueryMsg::AllOperators {
                 owner,
                 include_expired,
                 start_after,
                 limit,
-            } => Cw721QueryMsg::ApprovedForAll {
+            } => Cw721QueryMsg::AllOperators {
                 owner,
                 include_expired,
                 start_after,
