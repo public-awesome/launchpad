@@ -54,6 +54,8 @@ dependencies = [
  "cw2",
  "cw4",
  "cw4-group",
+ "cw721",
+ "cw721-base",
  "schemars",
  "serde",
  "sg721",
