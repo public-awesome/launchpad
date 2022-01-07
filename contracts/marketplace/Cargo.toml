@@ -1,7 +1,10 @@
 [package]
 name = "sg-marketplace"
 version = "0.1.0"
-authors = ["Shane Vitarana <s@publicawesome.com>", "Jake Hartnell <jake@publicawesome.com>"]
+authors = [
+  "Shane Vitarana <s@publicawesome.com>",
+  "Jake Hartnell <jake@publicawesome.com>",
+]
 edition = "2018"
 repository = "https://github.com/public-awesome/contracts"
 
@@ -39,10 +42,10 @@ cw721 = "0.11"
 cw721-base = "0.11"
 schemars = "0.8.8"
 serde = { version = "1.0.133", default-features = false, features = ["derive"] }
-sg721= { path = "../sg721" }
+sg721 = { path = "../sg721" }
 thiserror = { version = "1.0.30" }
 
 [dev-dependencies]
 cosmwasm-schema = { version = "1.0.0-beta" }
-cw-multi-test = { version = "0.11"}
+cw-multi-test = { version = "0.11" }
 cw721-metadata-onchain = "0.11"
