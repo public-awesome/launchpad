@@ -147,7 +147,7 @@ pub fn query_channel(deps: Deps, id: String) -> StdResult<ChannelResponse> {
     let info = CHANNEL_INFO.load(deps.storage, &id)?;
 
     let tokens: StdResult<Vec<_>> = CHANNEL_STATE
-        .prefix(&id)
+        .sub_prefix(&id)
         .range(deps.storage, None, None, Order::Ascending)
         .map(|r| {
             let (contract_addr, token_id) = r?;
