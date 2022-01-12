@@ -3,12 +3,13 @@
   "title": "InstantiateMsg",
   "type": "object",
   "required": [
-    "count"
+    "default_timeout"
   ],
   "properties": {
-    "count": {
+    "default_timeout": {
       "type": "integer",
-      "format": "int32"
+      "format": "uint64",
+      "minimum": 0.0
     }
   }
 }

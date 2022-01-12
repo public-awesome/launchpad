@@ -1,15 +1,71 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "QueryMsg",
-  "anyOf": [
+  "oneOf": [
     {
       "type": "object",
       "required": [
-        "get_count"
+        "port"
       ],
       "properties": {
-        "get_count": {
+        "port": {
           "type": "object"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "list_channels"
+      ],
+      "properties": {
+        "list_channels": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "channel"
+      ],
+      "properties": {
+        "channel": {
+          "type": "object",
+          "required": [
+            "id"
+          ],
+          "properties": {
+            "id": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "tokens"
+      ],
+      "properties": {
+        "tokens": {
+          "type": "object",
+          "required": [
+            "channel_id",
+            "class_id"
+          ],
+          "properties": {
+            "channel_id": {
+              "type": "string"
+            },
+            "class_id": {
+              "type": "string"
+            }
+          }
         }
       },
       "additionalProperties": false
