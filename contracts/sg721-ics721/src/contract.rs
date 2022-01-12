@@ -150,7 +150,7 @@ fn query_list(deps: Deps) -> StdResult<ListChannelsResponse> {
 pub fn query_channel(deps: Deps, id: String) -> StdResult<ChannelResponse> {
     let info = CHANNEL_INFO.load(deps.storage, &id)?;
 
-    let class_ids: StdResult<Vec<_>> = CHANNEL_STATE
+    let _class_ids: StdResult<Vec<_>> = CHANNEL_STATE
         .sub_prefix(&id)
         .range(deps.storage, None, None, Order::Ascending)
         .map(|r| {
@@ -170,9 +170,9 @@ pub fn query_channel(deps: Deps, id: String) -> StdResult<ChannelResponse> {
 
 // TODO: https://github.com/public-awesome/contracts/issues/59
 pub fn query_tokens(
-    deps: Deps,
-    channel_id: String,
-    class_id: String,
+    _deps: Deps,
+    _channel_id: String,
+    _class_id: String,
 ) -> StdResult<ChannelResponse> {
     todo!()
 }
@@ -182,8 +182,8 @@ mod tests {
     use super::*;
     use crate::test_helpers::*;
 
-    use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-    use cosmwasm_std::{coins, from_binary, StdError};
+    use cosmwasm_std::testing::mock_env;
+    use cosmwasm_std::{from_binary, StdError};
 
     #[test]
     fn setup_and_query() {

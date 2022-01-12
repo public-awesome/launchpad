@@ -8,7 +8,7 @@ use cosmwasm_std::{
     attr, entry_point, from_binary, to_binary, Binary, ContractResult, DepsMut, Empty, Env,
     IbcBasicResponse, IbcChannel, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg,
     IbcEndpoint, IbcOrder, IbcPacket, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
-    IbcReceiveResponse, Reply, Response, StdResult, SubMsg, Uint128, WasmMsg,
+    IbcReceiveResponse, Reply, Response, SubMsg, WasmMsg,
 };
 
 use crate::error::{ContractError, Never};
@@ -179,7 +179,7 @@ pub fn ibc_packet_receive(
     let packet = msg.packet;
 
     let res = match do_ibc_packet_receive(deps, &packet) {
-        Ok((msg)) => {
+        Ok(msg) => {
             // this cannot fail as we did it before..
             // TODO: find a way to not call this again?
             let contract_addr = parse_voucher_contract_address(&msg.class_id, &packet.src).unwrap();
@@ -255,7 +255,7 @@ fn do_ibc_packet_receive(deps: DepsMut, packet: &IbcPacket) -> Result<Ics721Pack
     // If we don't find it, return Err.
 
     let state =
-        CHANNEL_STATE.may_load(deps.storage, (&channel, &contract_addr, &msg.token_ids[0]))?;
+        CHANNEL_STATE.may_load(deps.storage, (&channel, contract_addr, &msg.token_ids[0]))?;
     match state {
         Some(_) => CHANNEL_STATE.remove(deps.storage, (&channel, contract_addr, &msg.token_ids[0])),
         None => {
@@ -346,7 +346,7 @@ fn on_packet_failure(
 fn send_tokens(
     contract_addr: &str,
     token_ids: Vec<String>,
-    token_uris: Vec<String>,
+    _token_uris: Vec<String>,
     recipient: String,
 ) -> SubMsg {
     // TODO: need a `TransferFullNft` or `TransferRemoteNft` that includes token_uri
@@ -369,8 +369,7 @@ mod test {
 
     use crate::contract::query_channel;
     use cosmwasm_std::testing::mock_env;
-    use cosmwasm_std::{coins, to_vec, IbcAcknowledgement, IbcEndpoint, IbcTimeout, Timestamp};
-    use cw20_ics20::ibc::Ics20Packet;
+    use cosmwasm_std::{to_vec, IbcAcknowledgement, IbcEndpoint, IbcTimeout, Timestamp};
 
     #[test]
     fn check_ack_json() {
@@ -405,7 +404,7 @@ mod test {
         assert_eq!(expected, encdoded.as_str());
     }
 
-    fn cw721_transfer(token_id: String, address: &str, recipient: &str) -> SubMsg {
+    fn _cw721_transfer(token_id: String, address: &str, recipient: &str) -> SubMsg {
         let msg = Cw721ExecuteMsg::TransferNft {
             token_id,
             recipient: recipient.into(),
@@ -521,7 +520,7 @@ mod test {
             "local-rcpt",
         );
 
-        let msg = IbcPacketReceiveMsg::new(recv_packet.clone());
+        let msg = IbcPacketReceiveMsg::new(recv_packet);
         // cannot receive this class_id yet
         // TODO: but should be able to after implementing sending to other cw721 contracts
         let res = ibc_packet_receive(deps.as_mut(), mock_env(), msg).unwrap();
@@ -542,7 +541,7 @@ mod test {
         assert_eq!(0, res.messages.len());
 
         // query channel state|_|
-        let state = query_channel(deps.as_ref(), send_channel.to_string()).unwrap();
+        let _state = query_channel(deps.as_ref(), send_channel.to_string()).unwrap();
         // assert_eq!(state.balances, vec![Amount::cw20(987654321, cw721_addr)]);
         // assert_eq!(state.total_sent, vec![Amount::cw20(987654321, cw721_addr)]);
 

@@ -1,4 +1,4 @@
-use cosmwasm_std::{Addr, Empty};
+use cosmwasm_std::Empty;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
