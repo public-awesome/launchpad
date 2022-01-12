@@ -1,5 +1,5 @@
 use cosmwasm_std::StdError;
-use cw0::PaymentError;
+use cw_utils::PaymentError;
 use thiserror::Error;
 
 /// Never is a placeholder to ensure we don't return any errors
