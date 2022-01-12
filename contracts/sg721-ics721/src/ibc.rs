@@ -61,6 +61,7 @@ impl Ics721Packet {
 
     pub fn validate(&self) -> Result<(), ContractError> {
         // TODO:
+        // https://github.com/public-awesome/contracts/issues/53
         // validate class_id is a contract address
         // validate class_uri is a uri if it exists
         // validate same number of token_ids and token_uris
@@ -133,7 +134,6 @@ pub fn ibc_channel_connect(
     Ok(IbcBasicResponse::default())
 }
 
-// TODO: can make this generic by passing in local version and ordering
 fn enforce_order_and_version(
     channel: &IbcChannel,
     counterparty_version: Option<&str>,
@@ -243,6 +243,7 @@ fn do_ibc_packet_receive(deps: DepsMut, packet: &IbcPacket) -> Result<Ics721Pack
 
     // If the token originated on the remote chain, it looks like "stars1.....".
     // TODO: handle tokens originating from a remote chain
+    // https://github.com/public-awesome/contracts/issues/56
 
     // If it originated on our chain, it looks like "port/channel/stars1.....".
     let contract_addr = parse_voucher_contract_address(&msg.class_id, &packet.src)?;
