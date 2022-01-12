@@ -21,7 +21,7 @@ pub const ICS721_ORDERING: IbcOrder = IbcOrder::Unordered;
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug, Default)]
 pub struct Ics721Packet {
     /// uniquely identifies the collection to which the NFT belongs
-    /// the cw721 collection contract address
+    /// the sg721 collection contract address
     pub class_id: String,
     // a link for class/contract-level metadata
     /// https://docs.opensea.io/docs/contract-level-metadata
@@ -217,23 +217,25 @@ fn parse_voucher_contract_address<'a>(
     voucher_class_id: &'a str,
     remote_endpoint: &IbcEndpoint,
 ) -> Result<&'a str, ContractError> {
-    let split_denom: Vec<&str> = voucher_class_id.splitn(3, '/').collect();
-    if split_denom.len() != 3 {
+    let split_class_id: Vec<&str> = voucher_class_id.splitn(3, '/').collect();
+    if split_class_id.len() != 3 {
+        // only accept NFTs originating from this chain
+        // https://github.com/public-awesome/contracts/issues/56
         return Err(ContractError::NoForeignTokens {});
     }
     // a few more sanity checks
-    if split_denom[0] != remote_endpoint.port_id {
+    if split_class_id[0] != remote_endpoint.port_id {
         return Err(ContractError::FromOtherPort {
-            port: split_denom[0].into(),
+            port: split_class_id[0].into(),
         });
     }
-    if split_denom[1] != remote_endpoint.channel_id {
+    if split_class_id[1] != remote_endpoint.channel_id {
         return Err(ContractError::FromOtherChannel {
-            channel: split_denom[1].into(),
+            channel: split_class_id[1].into(),
         });
     }
 
-    Ok(split_denom[2])
+    Ok(split_class_id[2])
 }
 
 // this does the work of ibc_packet_receive, we wrap it to turn errors into acknowledgements
@@ -241,7 +243,7 @@ fn do_ibc_packet_receive(deps: DepsMut, packet: &IbcPacket) -> Result<Ics721Pack
     let msg: Ics721Packet = from_binary(&packet.data)?;
     let channel = packet.dest.channel_id.clone();
 
-    // If the token originated on the remote chain, it looks like "stars1.....".
+    // If the token originated on another chain, it looks like "juno1.....".
     // TODO: handle tokens originating from a remote chain
     // https://github.com/public-awesome/contracts/issues/56
 
@@ -343,6 +345,7 @@ fn on_packet_failure(
 
 // TODO: The standard allows sending more than one token at a time.
 // We are just sending one for now.
+// https://github.com/public-awesome/contracts/issues/64
 fn send_tokens(
     contract_addr: &str,
     token_ids: Vec<String>,
@@ -492,7 +495,7 @@ mod test {
     }
 
     #[test]
-    fn send_receive_cw721() {
+    fn send_receive_sg721() {
         let send_channel = "channel-9";
         let mut deps = setup(&["channel-1", "channel-7", send_channel]);
 
@@ -522,7 +525,7 @@ mod test {
 
         let msg = IbcPacketReceiveMsg::new(recv_packet);
         // cannot receive this class_id yet
-        // TODO: but should be able to after implementing sending to other cw721 contracts
+        // TODO: but should be able to after implementing sending to other sg721 contracts
         let res = ibc_packet_receive(deps.as_mut(), mock_env(), msg).unwrap();
         println!("{:?}", res.attributes);
         assert!(res.messages.is_empty());

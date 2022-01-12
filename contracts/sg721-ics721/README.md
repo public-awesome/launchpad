@@ -1,6 +1,6 @@
 # SG721 ICS721
 
-This is an *IBC Enabled* contract that allows sending SG721 NFTs from one CosmWasm chain over the ICS721 (draft) standard to another CosmWasm chain.
+This is an _IBC Enabled_ contract that allows sending SG721 NFTs from one CosmWasm chain over the ICS721 (draft) standard to another CosmWasm chain.
 
 It can be extended to also send NFTs from a CosmWasm chain to the native NFT module on a Cosmos SDK chain that doesn't have CosmWasm support.
 
@@ -14,7 +14,7 @@ You can send any SG721 token to this contract via the [receiver pattern](https:/
 
 ## Messages
 
-This contract only accepts a `Sg721ReceiveMsg` from a sg721 contract. 
+This contract only accepts a `Sg721ReceiveMsg` from a sg721 contract.
 
 ```rust
 pub struct Sg721ReceiveMsg {
@@ -43,14 +43,14 @@ pub struct TransferMsg {
 
 Queries only make sense relative to the established channels of this contract.
 
-* `Port{}` - returns the port ID this contract has bound, so you can create channels. This info can be queried 
+- `Port{}` - returns the port ID this contract has bound, so you can create channels. This info can be queried
   via wasmd contract info query, but we expose another query here for convenience.
-* `ListChannels{}` - returns a (currently unpaginated) list of all channels that have been created on this contract.
+- `ListChannels{}` - returns a (currently unpaginated) list of all channels that have been created on this contract.
   Returns their local channelId along with some basic metadata, like the remote port/channel and the connection they
   run on top of.
-* `Channel{id}` - returns more detailed information on one specific channel. In addition to the information available
-  in the list view, it returns the current outstanding balance on that channel, as well as the total amount that
-  has ever been sent on the channel.
+- `Channel{id}` - returns more detailed information on one specific channel. In addition to the information available
+  in the list view, it returns the list of class_ids (which include the contract address).
+- `Tokens{channel_id, class_id}` - returns all the tokens that have been sent through the channel for a specific class-id.
 
 ## Credits
 
