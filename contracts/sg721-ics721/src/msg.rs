@@ -3,7 +3,7 @@ use cw721::Cw721ReceiveMsg;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::state::ChannelState;
+// use crate::state::ChannelState;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {
@@ -55,7 +55,7 @@ pub enum QueryMsg {
 pub struct ChannelResponse {
     /// Information on the channel's connection
     pub info: ChannelInfo,
-    pub tokens: Vec<ChannelState>,
+    // pub tokens: Vec<ChannelState>,
     // pub tokens_received: Vec<>,
     // pub tokens_sent: Vec<>
 }

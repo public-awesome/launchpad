@@ -19,9 +19,9 @@ pub const CHANNEL_INFO: Map<&str, ChannelInfo> = Map::new("channel_info");
 // pub const CHANNEL_STATE: Map<(&str, &str, &str), Empty> = Map::new("channel_state");
 
 /// indexed by (channel_id, class_id)
-pub const CHANNEL_STATE: Map<(&str, &str), ChannelState> = Map::new("channel_state");
+pub const CHANNEL_STATE: Map<(&str, &str, &str), Empty> = Map::new("channel_state");
 
-#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
-pub struct ChannelState {
-    pub token_ids: Vec<String>,
-}
+// #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
+// pub struct ChannelState {
+//     pub token_ids: Vec<String>,
+// }

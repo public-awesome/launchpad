@@ -12,7 +12,7 @@ use cw721::Cw721ReceiveMsg;
 use crate::error::ContractError;
 use crate::ibc::Ics721Packet;
 use crate::msg::{ChannelResponse, ExecuteMsg, InstantiateMsg, QueryMsg, TransferMsg};
-use crate::state::{ChannelState, Config, CHANNEL_INFO, CHANNEL_STATE, CONFIG};
+use crate::state::{Config, CHANNEL_INFO, CHANNEL_STATE, CONFIG};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sg721-ics721";
