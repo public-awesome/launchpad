@@ -124,6 +124,10 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::Port {} => to_binary(&query_port(deps)?),
         QueryMsg::ListChannels {} => to_binary(&query_list(deps)?),
         QueryMsg::Channel { id } => to_binary(&query_channel(deps, id)?),
+        QueryMsg::Tokens {
+            channel_id,
+            class_id,
+        } => to_binary(&query_tokens(deps, channel_id, class_id)?),
     }
 }
 
@@ -146,24 +150,71 @@ fn query_list(deps: Deps) -> StdResult<ListChannelsResponse> {
 pub fn query_channel(deps: Deps, id: String) -> StdResult<ChannelResponse> {
     let info = CHANNEL_INFO.load(deps.storage, &id)?;
 
-    let tokens: StdResult<Vec<_>> = CHANNEL_STATE
+    let class_ids: StdResult<Vec<_>> = CHANNEL_STATE
         .sub_prefix(&id)
         .range(deps.storage, None, None, Order::Ascending)
         .map(|r| {
-            let (contract_addr, token_id) = r?;
-            Ok(ChannelState {
-                contract_addr,
-                token_id,
-            })
+            let (class_id_token_id, _) = r?;
+            // TODO: extract class_id out of Vec<u8>
+            // https://github.com/public-awesome/contracts/issues/60
+            Ok(class_id_token_id)
         })
+        // TODO: filter duplicates
         .collect();
 
-    Ok(ChannelResponse { info, tokens })
+    Ok(ChannelResponse {
+        info,
+        class_ids: vec![],
+    })
+}
+
+// TODO: https://github.com/public-awesome/contracts/issues/59
+pub fn query_tokens(
+    deps: Deps,
+    channel_id: String,
+    class_id: String,
+) -> StdResult<ChannelResponse> {
+    todo!()
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::test_helpers::*;
+
     use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-    use cosmwasm_std::{coins, from_binary};
+    use cosmwasm_std::{coins, from_binary, StdError};
+
+    #[test]
+    fn setup_and_query() {
+        let deps = setup(&["channel-3", "channel-7"]);
+
+        let raw_list = query(deps.as_ref(), mock_env(), QueryMsg::ListChannels {}).unwrap();
+        let list_res: ListChannelsResponse = from_binary(&raw_list).unwrap();
+        assert_eq!(2, list_res.channels.len());
+        assert_eq!(mock_channel_info("channel-3"), list_res.channels[0]);
+        assert_eq!(mock_channel_info("channel-7"), list_res.channels[1]);
+
+        let raw_channel = query(
+            deps.as_ref(),
+            mock_env(),
+            QueryMsg::Channel {
+                id: "channel-3".to_string(),
+            },
+        )
+        .unwrap();
+        let chan_res: ChannelResponse = from_binary(&raw_channel).unwrap();
+        assert_eq!(chan_res.info, mock_channel_info("channel-3"));
+        assert_eq!(0, chan_res.class_ids.len());
+
+        let err = query(
+            deps.as_ref(),
+            mock_env(),
+            QueryMsg::Channel {
+                id: "channel-10".to_string(),
+            },
+        )
+        .unwrap_err();
+        assert_eq!(err, StdError::not_found("cw20_ics20::state::ChannelInfo"));
+    }
 }

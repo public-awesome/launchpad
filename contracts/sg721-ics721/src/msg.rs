@@ -48,14 +48,24 @@ pub enum QueryMsg {
     ListChannels {},
     // Returns the details of the name channel, error if not created.
     // Return type: ChannelResponse.
-    Channel { id: String },
+    Channel {
+        id: String,
+    },
+    // Returns a list of tokens sent to a contract on the channel
+    // Return type: TokensResponse.
+    Tokens {
+        channel_id: String,
+        class_id: String,
+    },
 }
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 pub struct ChannelResponse {
-    /// Information on the channel's connection
     pub info: ChannelInfo,
-    // pub tokens: Vec<ChannelState>,
-    // pub tokens_received: Vec<>,
-    // pub tokens_sent: Vec<>
+    pub class_ids: Vec<String>,
+}
+
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
+pub struct TokensResponse {
+    pub tokens: Vec<String>,
 }

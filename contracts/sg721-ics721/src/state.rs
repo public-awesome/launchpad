@@ -16,13 +16,4 @@ pub const CHANNEL_INFO: Map<&str, ChannelInfo> = Map::new("channel_info");
 
 /// Indexed by (channel_id, contract_addr, token_id)
 /// Keeps track of all NFTs that have passed through this channel.
-// pub const CHANNEL_STATE: Map<(&str, &str, &str), Empty> = Map::new("channel_state");
-
-/// indexed by (channel_id, class_id, token_id)
 pub const CHANNEL_STATE: Map<(&str, &str, &str), Empty> = Map::new("channel_state");
-
-#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
-pub struct ChannelState {
-    pub class_id: String,
-    pub token_ids: Vec<String>,
-}
