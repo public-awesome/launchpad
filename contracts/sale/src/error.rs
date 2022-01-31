@@ -26,4 +26,7 @@ pub enum ContractError {
 
     #[error("Token URI list length does not match number of tokens")]
     TokenURIsListInvalidNumber {},
+
+    #[error("address not on whitelist")]
+    NotWhitelisted {},
 }

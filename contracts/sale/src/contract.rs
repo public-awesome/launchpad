@@ -1,4 +1,4 @@
-#[cfg(not(feature = "library"))]
+ #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     has_coins, to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut, Empty,
@@ -11,7 +11,7 @@ use sg721::msg::{InstantiateMsg as Sg721InstantiateMsg, QueryMsg as Sg721QueryMs
 
 use crate::error::ContractError;
 use crate::msg::{ConfigResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
-use crate::state::{Config, CONFIG, SG721_ADDRESS, TOKEN_ID_INDEX, TOKEN_URIS};
+use crate::state::{Config, MintState, CONFIG, MINT_STATE, SG721_ADDRESS, TOKEN_ID_INDEX, TOKEN_URIS, WHITELIST_ADDRS};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sale";
@@ -53,6 +53,12 @@ pub fn instantiate(
     };
     CONFIG.save(deps.storage, &config)?;
 
+    // whitelist disabled by default
+    let mint_state = MintState {
+        whitelist_enabled: false,
+    };
+    MINT_STATE.save(deps.storage, &mint_state)?;
+
     // Set Token ID index
     TOKEN_ID_INDEX.save(deps.storage, &0)?;
 
@@ -90,6 +96,8 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::Mint {} => execute_mint(deps, env, info),
+        ExecuteMsg::SetWhitelist(whitelist_addresses) => execute_set_whitelist(deps, env, info, whitelist_addresses),
+        ExecuteMsg::EnableDisableWhitelist(enable_whitelist) => execute_enable_disable_whitelist(deps, env, info, enable_whitelist),
     }
 }
 
@@ -102,6 +110,8 @@ pub fn execute_mint(
     let sg721_address = SG721_ADDRESS.load(deps.storage)?;
     let mut token_id_index = TOKEN_ID_INDEX.load(deps.storage)?;
     let token_uri = TOKEN_URIS.load(deps.storage, token_id_index)?;
+    let mint_state = MINT_STATE.load(deps.storage)?;
+    let on_whitelist = WHITELIST_ADDRS.has(deps.storage, info.sender.to_string());
 
     // Check funds sent is correct amount
     if !has_coins(&info.funds, &config.unit_price) {
@@ -111,6 +121,11 @@ pub fn execute_mint(
     // Check if over max tokens
     if token_id_index >= config.num_tokens {
         return Err(ContractError::SoldOut {});
+    }
+
+    // Check if whitelist enabled and sender is not whitelisted
+    if mint_state.whitelist_enabled && !on_whitelist {
+        return Err(ContractError::NotWhitelisted {});
     }
 
     let mut msgs: Vec<CosmosMsg> = vec![];
@@ -179,6 +194,33 @@ pub fn execute_mint(
     }
 
     Ok(Response::default().add_messages(msgs))
+}
+
+pub fn execute_set_whitelist(deps: DepsMut, _env: Env, info: MessageInfo, whitelist_addresses: Vec<String>) -> Result<Response, ContractError> {
+    let config = CONFIG.load(deps.storage)?;
+    if info.sender != config.admin {
+        return Err(ContractError::Unauthorized {});
+    }
+    
+    // Map through list of whitelist addresses
+    for whitelist_address in whitelist_addresses.into_iter() {
+        WHITELIST_ADDRS.save(deps.storage, whitelist_address, &Empty{})?;
+    }
+    Ok(Response::default())
+}
+
+pub fn execute_enable_disable_whitelist(deps: DepsMut, _env: Env, info: MessageInfo, enable_whitelist: bool) -> Result<Response, ContractError>{
+    let config = CONFIG.load(deps.storage)?;
+    if info.sender != config.admin {
+        return Err(ContractError::Unauthorized {});
+    }
+    
+    let mut mint_state = MINT_STATE.load(deps.storage)?;
+    if mint_state.whitelist_enabled != enable_whitelist{
+        mint_state.whitelist_enabled = enable_whitelist;
+        MINT_STATE.save(deps.storage, &mint_state)?;
+    }
+    Ok(Response::default())
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -402,6 +444,64 @@ mod tests {
         let mint_msg = ExecuteMsg::Mint {};
         let res = router.execute_contract(buyer, sale_addr, &mint_msg, &coins(PRICE, DENOM));
         assert!(res.is_err());
+    }
+
+    #[test]
+    fn whitelist() {
+        let mut router = mock_app();
+        let (creator, buyer) = setup_accounts(&mut router).unwrap();
+        let (sale_addr, _config) = setup_sale_contract(&mut router, &creator).unwrap();
+
+        // enable_whitelist fails if not admin
+        let whitelist_msg = ExecuteMsg::EnableDisableWhitelist(true);
+        let res = router.execute_contract(
+            buyer.clone(),
+            sale_addr.clone(),
+            &whitelist_msg,
+            &coins(PRICE, DENOM),
+        );
+        assert!(res.is_err());
+
+        // enable whitelist
+        let whitelist_msg = ExecuteMsg::EnableDisableWhitelist(true);
+        let res = router.execute_contract(
+            creator.clone(),
+            sale_addr.clone(),
+            &whitelist_msg,
+            &coins(PRICE, DENOM),
+        );
+        assert!(res.is_ok());
+
+        // mint fails
+        let mint_msg = ExecuteMsg::Mint {};
+        let res = router.execute_contract(
+            buyer.clone(),
+            sale_addr.clone(),
+            &mint_msg,
+            &coins(PRICE, DENOM),
+        );
+        assert!(res.is_err());
+
+        // add buyer to whitelist
+        let whitelist: Vec<String> = vec![buyer.clone().into_string()];
+        let set_whitelist_msg = ExecuteMsg::SetWhitelist(whitelist);
+        let res = router.execute_contract(
+            creator.clone(),
+            sale_addr.clone(),
+            &set_whitelist_msg,
+            &coins(PRICE, DENOM),
+        );
+        assert!(res.is_ok());
+
+        // mint succeeds
+        let mint_msg = ExecuteMsg::Mint {};
+        let res = router.execute_contract(
+            buyer.clone(),
+            sale_addr.clone(),
+            &mint_msg,
+            &coins(PRICE, DENOM),
+        );
+        assert!(res.is_ok());
     }
 
     #[test]

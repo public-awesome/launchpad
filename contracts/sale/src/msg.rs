@@ -17,6 +17,8 @@ pub struct InstantiateMsg {
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
     Mint {},
+    SetWhitelist(Vec<String>),
+    EnableDisableWhitelist(bool),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -26,6 +28,7 @@ pub enum QueryMsg {
     // TODO other helpful queries
     // How many tokens are left in the sale?
     // List of token Uris?
+    // List of whitelist addresses?
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
