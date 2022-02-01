@@ -1,4 +1,4 @@
- #[cfg(not(feature = "library"))]
+#[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     has_coins, to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut, Empty,
@@ -11,7 +11,10 @@ use sg721::msg::{InstantiateMsg as Sg721InstantiateMsg, QueryMsg as Sg721QueryMs
 
 use crate::error::ContractError;
 use crate::msg::{ConfigResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
-use crate::state::{Config, MintState, CONFIG, MINT_STATE, SG721_ADDRESS, TOKEN_ID_INDEX, TOKEN_URIS, WHITELIST_ADDRS};
+use crate::state::{
+    Config, MintState, CONFIG, MINT_STATE, SG721_ADDRESS, TOKEN_ID_INDEX, TOKEN_URIS,
+    WHITELIST_ADDRS,
+};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sale";
@@ -96,8 +99,12 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::Mint {} => execute_mint(deps, env, info),
-        ExecuteMsg::SetWhitelist(whitelist_addresses) => execute_set_whitelist(deps, env, info, whitelist_addresses),
-        ExecuteMsg::EnableDisableWhitelist(enable_whitelist) => execute_enable_disable_whitelist(deps, env, info, enable_whitelist),
+        ExecuteMsg::SetWhitelist(whitelist_addresses) => {
+            execute_set_whitelist(deps, env, info, whitelist_addresses)
+        }
+        ExecuteMsg::EnableDisableWhitelist(enable_whitelist) => {
+            execute_enable_disable_whitelist(deps, env, info, enable_whitelist)
+        }
     }
 }
 
@@ -196,27 +203,37 @@ pub fn execute_mint(
     Ok(Response::default().add_messages(msgs))
 }
 
-pub fn execute_set_whitelist(deps: DepsMut, _env: Env, info: MessageInfo, whitelist_addresses: Vec<String>) -> Result<Response, ContractError> {
+pub fn execute_set_whitelist(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    whitelist_addresses: Vec<String>,
+) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
     if info.sender != config.admin {
         return Err(ContractError::Unauthorized {});
     }
-    
+
     // Map through list of whitelist addresses
     for whitelist_address in whitelist_addresses.into_iter() {
-        WHITELIST_ADDRS.save(deps.storage, whitelist_address, &Empty{})?;
+        WHITELIST_ADDRS.save(deps.storage, whitelist_address, &Empty {})?;
     }
     Ok(Response::default())
 }
 
-pub fn execute_enable_disable_whitelist(deps: DepsMut, _env: Env, info: MessageInfo, enable_whitelist: bool) -> Result<Response, ContractError>{
+pub fn execute_enable_disable_whitelist(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    enable_whitelist: bool,
+) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
     if info.sender != config.admin {
         return Err(ContractError::Unauthorized {});
     }
-    
+
     let mut mint_state = MINT_STATE.load(deps.storage)?;
-    if mint_state.whitelist_enabled != enable_whitelist{
+    if mint_state.whitelist_enabled != enable_whitelist {
         mint_state.whitelist_enabled = enable_whitelist;
         MINT_STATE.save(deps.storage, &mint_state)?;
     }
