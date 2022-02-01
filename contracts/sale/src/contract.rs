@@ -512,12 +512,7 @@ mod tests {
 
         // mint succeeds
         let mint_msg = ExecuteMsg::Mint {};
-        let res = router.execute_contract(
-            buyer.clone(),
-            sale_addr.clone(),
-            &mint_msg,
-            &coins(PRICE, DENOM),
-        );
+        let res = router.execute_contract(buyer, sale_addr, &mint_msg, &coins(PRICE, DENOM));
         assert!(res.is_ok());
     }
 
