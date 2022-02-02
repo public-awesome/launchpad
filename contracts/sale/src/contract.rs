@@ -495,7 +495,7 @@ mod tests {
     }
 
     #[test]
-    fn whitelist() {
+    fn whitelist_access_add_remove_expiration() {
         let mut router = mock_app();
         let (creator, buyer) = setup_accounts(&mut router).unwrap();
         let (sale_addr, _config) = setup_sale_contract(&mut router, &creator).unwrap();
