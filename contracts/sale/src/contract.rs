@@ -2,8 +2,7 @@
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     has_coins, to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut, Empty,
-    Env, MessageInfo, Order, Reply, ReplyOn, Response, StdError, StdResult, SubMsg, Timestamp,
-    WasmMsg,
+    Env, MessageInfo, Order, Reply, ReplyOn, Response, StdError, StdResult, SubMsg, WasmMsg,
 };
 use cw2::set_contract_version;
 use cw721_base::{msg::ExecuteMsg as Cw721ExecuteMsg, MintMsg};
@@ -126,9 +125,12 @@ pub fn execute_mint(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Respon
     let token_uri = TOKEN_URIS.load(deps.storage, token_id_index)?;
     let mint_state = MINT_STATE.load(deps.storage)?;
     let allowlist = WHITELIST_ADDRS.has(deps.storage, info.sender.to_string());
-    let whitelist_expiration = mint_state
-        .whitelist_expiration
-        .unwrap_or_else(|| Expiration::AtTime(Timestamp::from_seconds(1)));
+    if let Some(whitelist_expiration) = mint_state.whitelist_expiration {
+        // Check if whitelist not expired and sender is not whitelisted
+        if !whitelist_expiration.is_expired(&env.block) && !allowlist {
+            return Err(ContractError::NotWhitelisted {});
+        }
+    }
     // Check funds sent is correct amount
     if !has_coins(&info.funds, &config.unit_price) {
         return Err(ContractError::NotEnoughFunds {});
@@ -137,11 +139,6 @@ pub fn execute_mint(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Respon
     // Check if over max tokens
     if token_id_index >= config.num_tokens {
         return Err(ContractError::SoldOut {});
-    }
-
-    // Check if whitelist not expired and sender is not whitelisted
-    if !whitelist_expiration.is_expired(&env.block) && !allowlist {
-        return Err(ContractError::NotWhitelisted {});
     }
 
     let mut msgs: Vec<CosmosMsg> = vec![];
@@ -323,7 +320,7 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractE
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{mock_dependencies_with_balance, mock_env, mock_info};
-    use cosmwasm_std::{coin, coins, Decimal};
+    use cosmwasm_std::{coin, coins, Decimal, Timestamp};
     use cw721::{Cw721QueryMsg, OwnerOfResponse};
     use cw_multi_test::{App, BankSudo, Contract, ContractWrapper, Executor, SudoMsg};
     use sg721::state::{CollectionInfo, RoyaltyInfo};
