@@ -2,7 +2,8 @@
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     has_coins, to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut, Empty,
-    Env, MessageInfo, Reply, ReplyOn, Response, StdError, StdResult, SubMsg, Timestamp, WasmMsg,
+    Env, MessageInfo, Order, Reply, ReplyOn, Response, StdError, StdResult, SubMsg, Timestamp,
+    WasmMsg,
 };
 use cw2::set_contract_version;
 use cw721_base::{msg::ExecuteMsg as Cw721ExecuteMsg, MintMsg};
@@ -10,7 +11,10 @@ use cw_utils::{parse_reply_instantiate_data, Expiration};
 use sg721::msg::{InstantiateMsg as Sg721InstantiateMsg, QueryMsg as Sg721QueryMsg};
 
 use crate::error::ContractError;
-use crate::msg::{ConfigResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
+use crate::msg::{
+    ConfigResponse, ExecuteMsg, InstantiateMsg, QueryMsg, UpdateWhitelistMsg,
+    WhitelistAddressesResponse, WhitelistExpirationResponse,
+};
 use crate::state::{
     Config, MintState, CONFIG, MINT_STATE, SG721_ADDRESS, TOKEN_ID_INDEX, TOKEN_URIS,
     WHITELIST_ADDRS,
@@ -106,11 +110,11 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::Mint {} => execute_mint(deps, env, info),
-        ExecuteMsg::UpdateWhitelist(add_whitelist, remove_whitelist) => {
-            execute_update_whitelist(deps, env, info, add_whitelist, remove_whitelist)
+        ExecuteMsg::UpdateWhitelist(update_whitelist_msg) => {
+            execute_update_whitelist(deps, env, info, update_whitelist_msg)
         }
         ExecuteMsg::WhitelistExpiration(expiration) => {
-            execute_whitelist_expiration(deps, env, info, expiration)
+            execute_update_whitelist_expiration(deps, env, info, expiration)
         }
     }
 }
@@ -212,8 +216,7 @@ pub fn execute_update_whitelist(
     deps: DepsMut,
     _env: Env,
     info: MessageInfo,
-    add_whitelist: Option<Vec<String>>,
-    remove_whitelist: Option<Vec<String>>,
+    update_whitelist_msg: UpdateWhitelistMsg,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
     if info.sender != config.admin {
@@ -221,23 +224,23 @@ pub fn execute_update_whitelist(
     }
 
     // Add whitelist addresses
-    if let Some(add_whitelist_addrs) = add_whitelist {
+    if let Some(add_whitelist_addrs) = update_whitelist_msg.add_addresses {
         for whitelist_address in add_whitelist_addrs.into_iter() {
             WHITELIST_ADDRS.save(deps.storage, whitelist_address, &Empty {})?;
         }
     }
 
     // Remove whitelist addresses
-    if let Some(remove_whitelist_addrs) = remove_whitelist {
+    if let Some(remove_whitelist_addrs) = update_whitelist_msg.remove_addresses {
         for whitelist_address in remove_whitelist_addrs.into_iter() {
             WHITELIST_ADDRS.remove(deps.storage, whitelist_address);
         }
     }
 
-    Ok(Response::default())
+    Ok(Response::new().add_attribute("method", "updated_whitelist_addresses"))
 }
 
-pub fn execute_whitelist_expiration(
+pub fn execute_update_whitelist_expiration(
     deps: DepsMut,
     _env: Env,
     info: MessageInfo,
@@ -251,13 +254,15 @@ pub fn execute_whitelist_expiration(
     let mut mint_state = MINT_STATE.load(deps.storage)?;
     mint_state.whitelist_expiration = Some(whitelist_expiration);
     MINT_STATE.save(deps.storage, &mint_state)?;
-    Ok(Response::default())
+    Ok(Response::new().add_attribute("method", "updated_whitelist_expiration"))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::GetConfig {} => to_binary(&query_config(deps)?),
+        QueryMsg::GetWhitelistAddresses {} => to_binary(&query_whitelist_addresses(deps)?),
+        QueryMsg::GetWhitelistExpiration {} => to_binary(&query_whitelist_expiration(deps)?),
     }
 }
 
@@ -274,6 +279,27 @@ fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
         unit_price: config.unit_price,
         unused_token_id,
     })
+}
+
+fn query_whitelist_addresses(deps: Deps) -> StdResult<WhitelistAddressesResponse> {
+    let addrs: StdResult<Vec<String>> = WHITELIST_ADDRS
+        .keys(deps.storage, None, None, Order::Ascending)
+        .take_while(|x| x.is_ok())
+        .collect::<StdResult<Vec<String>>>();
+    Ok(WhitelistAddressesResponse { addresses: addrs? })
+}
+
+fn query_whitelist_expiration(deps: Deps) -> StdResult<WhitelistExpirationResponse> {
+    let mint_state = MINT_STATE.load(deps.storage)?;
+    if let Some(expiration) = mint_state.whitelist_expiration {
+        Ok(WhitelistExpirationResponse {
+            expiration_time: expiration.to_string(),
+        })
+    } else {
+        Err(StdError::GenericErr {
+            msg: "whitelist expiration not found".to_string(),
+        })
+    }
 }
 
 // Reply callback triggered from cw721 contract instantiation
@@ -486,6 +512,7 @@ mod tests {
         let mut router = mock_app();
         let (creator, buyer) = setup_accounts(&mut router).unwrap();
         let (sale_addr, _config) = setup_sale_contract(&mut router, &creator).unwrap();
+        const EXPIRATION_TIME: Timestamp = Timestamp::from_seconds(100000 + 10);
 
         // set block info
         let mut block = router.block_info();
@@ -503,9 +530,7 @@ mod tests {
         assert!(res.is_err());
 
         // enable whitelist
-        let whitelist_msg = ExecuteMsg::WhitelistExpiration(Expiration::AtTime(
-            Timestamp::from_seconds(100000 + 10),
-        ));
+        let whitelist_msg = ExecuteMsg::WhitelistExpiration(Expiration::AtTime(EXPIRATION_TIME));
         let res = router.execute_contract(
             creator.clone(),
             sale_addr.clone(),
@@ -526,14 +551,35 @@ mod tests {
 
         // add buyer to whitelist
         let whitelist: Option<Vec<String>> = Some(vec![buyer.clone().into_string()]);
-        let set_whitelist_msg = ExecuteMsg::UpdateWhitelist(whitelist, None);
+        let add_whitelist_msg = UpdateWhitelistMsg {
+            add_addresses: whitelist,
+            remove_addresses: None,
+        };
+        let update_whitelist_msg = ExecuteMsg::UpdateWhitelist(add_whitelist_msg);
         let res = router.execute_contract(
             creator.clone(),
             sale_addr.clone(),
-            &set_whitelist_msg,
+            &update_whitelist_msg,
             &coins(PRICE, DENOM),
         );
         assert!(res.is_ok());
+
+        // query whitelist, confirm buyer on allowlist
+        let allowlist: WhitelistAddressesResponse = router
+            .wrap()
+            .query_wasm_smart(sale_addr.clone(), &QueryMsg::GetWhitelistAddresses {})
+            .unwrap();
+        assert!(allowlist.addresses.contains(&"buyer".to_string()));
+
+        // query whitelist_expiration, confirm not expired
+        let expiration: WhitelistExpirationResponse = router
+            .wrap()
+            .query_wasm_smart(sale_addr.clone(), &QueryMsg::GetWhitelistExpiration {})
+            .unwrap();
+        assert_eq!(
+            "expiration time: ".to_owned() + &EXPIRATION_TIME.to_string(),
+            expiration.expiration_time
+        );
 
         // mint succeeds
         let mint_msg = ExecuteMsg::Mint {};
@@ -547,11 +593,15 @@ mod tests {
 
         // remove buyer from whitelist
         let remove_whitelist: Option<Vec<String>> = Some(vec![buyer.clone().into_string()]);
-        let set_whitelist_msg = ExecuteMsg::UpdateWhitelist(None, remove_whitelist);
+        let remove_whitelist_msg = UpdateWhitelistMsg {
+            add_addresses: None,
+            remove_addresses: remove_whitelist,
+        };
+        let update_whitelist_msg = ExecuteMsg::UpdateWhitelist(remove_whitelist_msg);
         let res = router.execute_contract(
             creator.clone(),
             sale_addr.clone(),
-            &set_whitelist_msg,
+            &update_whitelist_msg,
             &coins(PRICE, DENOM),
         );
         assert!(res.is_ok());

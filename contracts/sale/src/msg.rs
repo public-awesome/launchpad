@@ -20,7 +20,7 @@ pub struct InstantiateMsg {
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
     Mint {},
-    UpdateWhitelist(Option<Vec<String>>, Option<Vec<String>>),
+    UpdateWhitelist(UpdateWhitelistMsg),
     WhitelistExpiration(Expiration),
 }
 
@@ -31,7 +31,14 @@ pub enum QueryMsg {
     // TODO other helpful queries
     // How many tokens are left in the sale?
     // List of token Uris?
-    // List of whitelist addresses?
+    GetWhitelistAddresses {},
+    GetWhitelistExpiration {},
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct UpdateWhitelistMsg {
+    pub add_addresses: Option<Vec<String>>,
+    pub remove_addresses: Option<Vec<String>>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -42,4 +49,14 @@ pub struct ConfigResponse {
     pub num_tokens: u64,
     pub unit_price: Coin,
     pub unused_token_id: u64,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct WhitelistAddressesResponse {
+    pub addresses: Vec<String>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct WhitelistExpirationResponse {
+    pub expiration_time: String,
 }
