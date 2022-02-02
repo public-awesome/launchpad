@@ -1,3 +1,4 @@
+mod bech32;
 pub mod contract;
 mod error;
 pub mod msg;
