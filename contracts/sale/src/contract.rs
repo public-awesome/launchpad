@@ -58,7 +58,7 @@ pub fn instantiate(
 
     // Set whitelist expiration
     let mint_state = MintState {
-        whitelist_expiration: msg.whitelist_expiration.clone(),
+        whitelist_expiration: msg.whitelist_expiration,
     };
     MINT_STATE.save(deps.storage, &mint_state)?;
 
@@ -124,7 +124,7 @@ pub fn execute_mint(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Respon
     let allowlist = WHITELIST_ADDRS.has(deps.storage, info.sender.to_string());
     let whitelist_expiration = mint_state
         .whitelist_expiration
-        .unwrap_or(Expiration::AtTime(Timestamp::from_seconds(1)));
+        .unwrap_or_else(|| Expiration::AtTime(Timestamp::from_seconds(1)));
     // Check funds sent is correct amount
     if !has_coins(&info.funds, &config.unit_price) {
         return Err(ContractError::NotEnoughFunds {});
@@ -490,7 +490,7 @@ mod tests {
         // set block info
         let mut block = router.block_info();
         block.time = Timestamp::from_seconds(100000);
-        router.set_block(block.clone());
+        router.set_block(block);
 
         // set whitelist_expiration fails if not admin
         let whitelist_msg = ExecuteMsg::WhitelistExpiration(Expiration::Never {});
