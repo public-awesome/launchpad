@@ -14,10 +14,7 @@ use crate::msg::{
     ConfigResponse, ExecuteMsg, InstantiateMsg, QueryMsg, UpdateWhitelistMsg,
     WhitelistAddressesResponse, WhitelistExpirationResponse,
 };
-use crate::state::{
-    Config, MintState, CONFIG, MINT_STATE, SG721_ADDRESS, TOKEN_ID_INDEX, TOKEN_URIS,
-    WHITELIST_ADDRS,
-};
+use crate::state::{Config, CONFIG, SG721_ADDRESS, TOKEN_ID_INDEX, TOKEN_URIS, WHITELIST_ADDRS};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sale";
@@ -56,14 +53,9 @@ pub fn instantiate(
         num_tokens: msg.num_tokens,
         sg721_code_id: msg.sg721_code_id,
         unit_price: msg.unit_price,
-    };
-    CONFIG.save(deps.storage, &config)?;
-
-    // Set whitelist expiration
-    let mint_state = MintState {
         whitelist_expiration: msg.whitelist_expiration,
     };
-    MINT_STATE.save(deps.storage, &mint_state)?;
+    CONFIG.save(deps.storage, &config)?;
 
     // Set whitelist addresses
     if let Some(whitelist_addresses) = msg.whitelist_addresses {
@@ -123,9 +115,8 @@ pub fn execute_mint(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Respon
     let sg721_address = SG721_ADDRESS.load(deps.storage)?;
     let mut token_id_index = TOKEN_ID_INDEX.load(deps.storage)?;
     let token_uri = TOKEN_URIS.load(deps.storage, token_id_index)?;
-    let mint_state = MINT_STATE.load(deps.storage)?;
     let allowlist = WHITELIST_ADDRS.has(deps.storage, info.sender.to_string());
-    if let Some(whitelist_expiration) = mint_state.whitelist_expiration {
+    if let Some(whitelist_expiration) = config.whitelist_expiration {
         // Check if whitelist not expired and sender is not whitelisted
         if !whitelist_expiration.is_expired(&env.block) && !allowlist {
             return Err(ContractError::NotWhitelisted {});
@@ -243,14 +234,13 @@ pub fn execute_update_whitelist_expiration(
     info: MessageInfo,
     whitelist_expiration: Expiration,
 ) -> Result<Response, ContractError> {
-    let config = CONFIG.load(deps.storage)?;
+    let mut config = CONFIG.load(deps.storage)?;
     if info.sender != config.admin {
         return Err(ContractError::Unauthorized {});
     }
 
-    let mut mint_state = MINT_STATE.load(deps.storage)?;
-    mint_state.whitelist_expiration = Some(whitelist_expiration);
-    MINT_STATE.save(deps.storage, &mint_state)?;
+    config.whitelist_expiration = Some(whitelist_expiration);
+    CONFIG.save(deps.storage, &config)?;
     Ok(Response::new().add_attribute("method", "updated_whitelist_expiration"))
 }
 
@@ -287,8 +277,8 @@ fn query_whitelist_addresses(deps: Deps) -> StdResult<WhitelistAddressesResponse
 }
 
 fn query_whitelist_expiration(deps: Deps) -> StdResult<WhitelistExpirationResponse> {
-    let mint_state = MINT_STATE.load(deps.storage)?;
-    if let Some(expiration) = mint_state.whitelist_expiration {
+    let config = CONFIG.load(deps.storage)?;
+    if let Some(expiration) = config.whitelist_expiration {
         Ok(WhitelistExpirationResponse {
             expiration_time: expiration.to_string(),
         })
