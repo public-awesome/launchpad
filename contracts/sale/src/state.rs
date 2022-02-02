@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use cosmwasm_std::{Addr, Coin, Empty};
 use cw_storage_plus::{Item, Map};
+use cw_utils::Expiration;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Config {
@@ -15,7 +16,8 @@ pub struct Config {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct MintState {
     // other mint state can go here. ex: per address limit, start time
-    pub whitelist_enabled: bool,
+    // when whitelist_expiration passes, whitelist is over
+    pub whitelist_expiration: Option<Expiration>,
 }
 
 pub const CONFIG: Item<Config> = Item::new("config");
