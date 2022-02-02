@@ -8,6 +8,7 @@ use cw2::set_contract_version;
 use cw721_base::{msg::ExecuteMsg as Cw721ExecuteMsg, MintMsg};
 use cw_utils::parse_reply_instantiate_data;
 use sg721::msg::{InstantiateMsg as Sg721InstantiateMsg, QueryMsg as Sg721QueryMsg};
+use url::Url;
 
 use crate::error::ContractError;
 use crate::msg::{ConfigResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
@@ -28,10 +29,14 @@ pub fn instantiate(
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
-    // TODO check if msg.base_token_uri is valid URI
+    // Check that base_token_uri is a valid IPFS uri
+    let parsed_token_uri = Url::parse(&msg.base_token_uri)?;
+    if parsed_token_uri.scheme() != "ipfs" {
+        return Err(ContractError::InvalidBaseTokenURI {});
+    }
 
     let config = Config {
-        admin: info.sender.clone(),
+        admin: info.sender,
         base_token_uri: msg.base_token_uri,
         num_tokens: msg.num_tokens,
         sg721_code_id: msg.sg721_code_id,
@@ -102,11 +107,7 @@ pub fn execute_mint(
     let mint_msg = Cw721ExecuteMsg::Mint(MintMsg::<Empty> {
         token_id: token_id_index.to_string(),
         owner: info.sender.to_string(),
-        token_uri: Some(format!(
-            "{}/{}",
-            config.base_token_uri,
-            token_id_index.to_string()
-        )),
+        token_uri: Some(format!("{}/{}", config.base_token_uri, token_id_index)),
         extension: Empty {},
     });
 
@@ -326,12 +327,12 @@ mod tests {
     fn initialization() {
         let mut deps = mock_dependencies_with_balance(&coins(2, "token"));
 
-        // Num tokens does not match token_uris length and should error
+        // Invalid uri returns error
         let info = mock_info("creator", &coins(INITIAL_BALANCE, DENOM));
         let msg = InstantiateMsg {
             unit_price: coin(PRICE, DENOM),
             num_tokens: 100,
-            base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
+            base_token_uri: "https://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
             sg721_code_id: 1,
             sg721_instantiate_msg: Sg721InstantiateMsg {
                 name: String::from("TEST"),
@@ -348,7 +349,7 @@ mod tests {
             },
         };
         let res = instantiate(deps.as_mut(), mock_env(), info, msg);
-        assert!(res.is_ok())
+        assert!(res.is_err());
     }
 
     #[test]
