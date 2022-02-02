@@ -80,6 +80,7 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::Mint {} => execute_mint(deps, env, info),
+        ExecuteMsg::MintFor { recipient } => execute_mint_for(deps, env, info, recipient),
     }
 }
 
@@ -170,6 +171,46 @@ pub fn execute_mint(
     Ok(Response::default().add_messages(msgs))
 }
 
+pub fn execute_mint_for(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    recipient: Addr,
+) -> Result<Response, ContractError> {
+    let config = CONFIG.load(deps.storage)?;
+    let sg721_address = SG721_ADDRESS.load(deps.storage)?;
+    let mut token_id_index = TOKEN_ID_INDEX.load(deps.storage)?;
+
+    // Check only admin
+    if info.sender != config.admin {
+        return Err(ContractError::Unauthorized {});
+    }
+
+    // Check if over max tokens
+    if token_id_index >= config.num_tokens {
+        return Err(ContractError::SoldOut {});
+    }
+
+    let mint_msg = Cw721ExecuteMsg::Mint(MintMsg::<Empty> {
+        token_id: token_id_index.to_string(),
+        owner: recipient.to_string(),
+        token_uri: Some(format!("{}/{}", config.base_token_uri, token_id_index)),
+        extension: Empty {},
+    });
+
+    let msg = CosmosMsg::Wasm(WasmMsg::Execute {
+        contract_addr: sg721_address.to_string(),
+        msg: to_binary(&mint_msg)?,
+        funds: vec![],
+    });
+
+    // Increase token ID index by one
+    token_id_index += 1;
+    TOKEN_ID_INDEX.save(deps.storage, &token_id_index)?;
+
+    Ok(Response::default().add_message(msg))
+}
+
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
@@ -258,7 +299,7 @@ mod tests {
         // Instantiate sale contract
         let msg = InstantiateMsg {
             unit_price: coin(PRICE, DENOM),
-            num_tokens: 1,
+            num_tokens: 2,
             base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
             sg721_code_id,
             sg721_instantiate_msg: Sg721InstantiateMsg {
@@ -331,7 +372,7 @@ mod tests {
         let info = mock_info("creator", &coins(INITIAL_BALANCE, DENOM));
         let msg = InstantiateMsg {
             unit_price: coin(PRICE, DENOM),
-            num_tokens: 100,
+            num_tokens: 2,
             base_token_uri: "https://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
             sg721_code_id: 1,
             sg721_instantiate_msg: Sg721InstantiateMsg {
@@ -384,13 +425,50 @@ mod tests {
         };
         let res: OwnerOfResponse = router
             .wrap()
+            .query_wasm_smart(config.sg721_address.clone(), &query_owner_msg)
+            .unwrap();
+        assert_eq!(res.owner, buyer.to_string());
+
+        // Buyer can't call MintFor
+        let mint_for_msg = ExecuteMsg::MintFor {
+            recipient: buyer.clone(),
+        };
+        let res = router.execute_contract(
+            buyer.clone(),
+            sale_addr.clone(),
+            &mint_for_msg,
+            &coins(PRICE, DENOM),
+        );
+        assert!(res.is_err());
+
+        // Creator mints an extra NFT for the buyer (who is a friend)
+        let res = router.execute_contract(
+            creator.clone(),
+            sale_addr.clone(),
+            &mint_for_msg,
+            &coins(PRICE, DENOM),
+        );
+        assert!(res.is_ok());
+
+        // Check that NFT is transferred
+        let query_owner_msg = Cw721QueryMsg::OwnerOf {
+            token_id: String::from("1"),
+            include_expired: None,
+        };
+        let res: OwnerOfResponse = router
+            .wrap()
             .query_wasm_smart(config.sg721_address, &query_owner_msg)
             .unwrap();
         assert_eq!(res.owner, buyer.to_string());
 
         // Errors if sold out
         let mint_msg = ExecuteMsg::Mint {};
-        let res = router.execute_contract(buyer, sale_addr, &mint_msg, &coins(PRICE, DENOM));
+        let res =
+            router.execute_contract(buyer, sale_addr.clone(), &mint_msg, &coins(PRICE, DENOM));
+        assert!(res.is_err());
+
+        // Creator can't use MintFor if sold out
+        let res = router.execute_contract(creator, sale_addr, &mint_for_msg, &coins(PRICE, DENOM));
         assert!(res.is_err());
     }
 
