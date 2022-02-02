@@ -4,6 +4,7 @@
   "type": "object",
   "required": [
     "admin",
+    "base_token_uri",
     "num_tokens",
     "sg721_address",
     "sg721_code_id",
@@ -13,6 +14,9 @@
   "properties": {
     "admin": {
       "$ref": "#/definitions/Addr"
+    },
+    "base_token_uri": {
+      "type": "string"
     },
     "num_tokens": {
       "type": "integer",

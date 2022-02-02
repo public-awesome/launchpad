@@ -3,13 +3,16 @@
   "title": "InstantiateMsg",
   "type": "object",
   "required": [
+    "base_token_uri",
     "num_tokens",
     "sg721_code_id",
     "sg721_instantiate_msg",
-    "token_uris",
     "unit_price"
   ],
   "properties": {
+    "base_token_uri": {
+      "type": "string"
+    },
     "num_tokens": {
       "type": "integer",
       "format": "uint64",
@@ -22,12 +25,6 @@
     },
     "sg721_instantiate_msg": {
       "$ref": "#/definitions/InstantiateMsg"
-    },
-    "token_uris": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
     },
     "unit_price": {
       "$ref": "#/definitions/Coin"
