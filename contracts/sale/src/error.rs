@@ -20,10 +20,4 @@ pub enum ContractError {
 
     #[error("Instantiate sg721 error")]
     InstantiateSg721Error {},
-
-    #[error("Token URI list exceeds max length")]
-    MaxTokenURIsLengthExceeded {},
-
-    #[error("Token URI list length does not match number of tokens")]
-    TokenURIsListInvalidNumber {},
 }

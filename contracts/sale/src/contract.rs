@@ -11,15 +11,13 @@ use sg721::msg::{InstantiateMsg as Sg721InstantiateMsg, QueryMsg as Sg721QueryMs
 
 use crate::error::ContractError;
 use crate::msg::{ConfigResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
-use crate::state::{Config, CONFIG, SG721_ADDRESS, TOKEN_ID_INDEX, TOKEN_URIS};
+use crate::state::{Config, CONFIG, SG721_ADDRESS, TOKEN_ID_INDEX};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sale";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 const INSTANTIATE_SG721_REPLY_ID: u64 = 1;
-
-const MAX_TOKEN_URIS_LENGTH: u32 = 15000;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -30,23 +28,11 @@ pub fn instantiate(
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
-    // Check token uris list length doesn't exceed max
-    if msg.token_uris.len() > MAX_TOKEN_URIS_LENGTH as usize {
-        return Err(ContractError::MaxTokenURIsLengthExceeded {});
-    }
-
-    // Check length of token uris is not greater than max tokens
-    if msg.token_uris.len() != msg.num_tokens as usize {
-        return Err(ContractError::TokenURIsListInvalidNumber {});
-    }
-
-    // Map through list of token URIs
-    for (index, token_uri) in msg.token_uris.into_iter().enumerate() {
-        TOKEN_URIS.save(deps.storage, index as u64, &token_uri)?;
-    }
+    // TODO check if msg.base_token_uri is valid URI
 
     let config = Config {
         admin: info.sender.clone(),
+        base_token_uri: msg.base_token_uri,
         num_tokens: msg.num_tokens,
         sg721_code_id: msg.sg721_code_id,
         unit_price: msg.unit_price,
@@ -77,7 +63,6 @@ pub fn instantiate(
 
     Ok(Response::new()
         .add_attribute("method", "instantiate")
-        .add_attribute("admin", info.sender)
         .add_submessages(sub_msgs))
 }
 
@@ -101,7 +86,6 @@ pub fn execute_mint(
     let config = CONFIG.load(deps.storage)?;
     let sg721_address = SG721_ADDRESS.load(deps.storage)?;
     let mut token_id_index = TOKEN_ID_INDEX.load(deps.storage)?;
-    let token_uri = TOKEN_URIS.load(deps.storage, token_id_index)?;
 
     // Check funds sent is correct amount
     if !has_coins(&info.funds, &config.unit_price) {
@@ -118,7 +102,11 @@ pub fn execute_mint(
     let mint_msg = Cw721ExecuteMsg::Mint(MintMsg::<Empty> {
         token_id: token_id_index.to_string(),
         owner: info.sender.to_string(),
-        token_uri: Some(token_uri),
+        token_uri: Some(format!(
+            "{}/{}",
+            config.base_token_uri,
+            token_id_index.to_string()
+        )),
         extension: Empty {},
     });
 
@@ -195,6 +183,7 @@ fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
 
     Ok(ConfigResponse {
         admin: config.admin,
+        base_token_uri: config.base_token_uri,
         sg721_address,
         sg721_code_id: config.sg721_code_id,
         num_tokens: config.num_tokens,
@@ -269,7 +258,7 @@ mod tests {
         let msg = InstantiateMsg {
             unit_price: coin(PRICE, DENOM),
             num_tokens: 1,
-            token_uris: vec![String::from("https://stargaze.zone/logo.png")],
+            base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
             sg721_code_id,
             sg721_instantiate_msg: Sg721InstantiateMsg {
                 name: String::from("TEST"),
@@ -342,7 +331,7 @@ mod tests {
         let msg = InstantiateMsg {
             unit_price: coin(PRICE, DENOM),
             num_tokens: 100,
-            token_uris: vec![String::from("https://stargaze.zone/logo.png")],
+            base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
             sg721_code_id: 1,
             sg721_instantiate_msg: Sg721InstantiateMsg {
                 name: String::from("TEST"),
@@ -359,7 +348,7 @@ mod tests {
             },
         };
         let res = instantiate(deps.as_mut(), mock_env(), info, msg);
-        assert!(res.is_err())
+        assert!(res.is_ok())
     }
 
     #[test]
