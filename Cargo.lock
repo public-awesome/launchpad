@@ -752,6 +752,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "sg-utils"
+version = "0.1.0"
+dependencies = [
+ "bech32",
+]
+
+[[package]]
 name = "sg721"
 version = "0.1.0"
 dependencies = [
