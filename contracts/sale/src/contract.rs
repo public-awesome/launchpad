@@ -11,7 +11,7 @@ use sg721::msg::{InstantiateMsg as Sg721InstantiateMsg, QueryMsg as Sg721QueryMs
 
 use crate::error::ContractError;
 use crate::msg::{
-    ConfigResponse, ExecuteMsg, InstantiateMsg, QueryMsg, UpdateWhitelistMsg,
+    ConfigResponse, ExecuteMsg, InstantiateMsg, QueryMsg, StartTimeResponse, UpdateWhitelistMsg,
     WhitelistAddressesResponse, WhitelistExpirationResponse,
 };
 use crate::state::{
@@ -57,6 +57,7 @@ pub fn instantiate(
         sg721_code_id: msg.sg721_code_id,
         unit_price: msg.unit_price,
         whitelist_expiration: msg.whitelist_expiration,
+        start_time: msg.start_time,
     };
     CONFIG.save(deps.storage, &config)?;
 
@@ -116,6 +117,9 @@ pub fn execute(
         ExecuteMsg::WhitelistExpiration(expiration) => {
             execute_update_whitelist_expiration(deps, env, info, expiration)
         }
+        ExecuteMsg::UpdateStartTime(expiration) => {
+            execute_update_start_time(deps, env, info, expiration)
+        }
     }
 }
 
@@ -139,6 +143,13 @@ pub fn execute_mint(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Respon
     // Check if over max tokens
     if token_id_index >= config.num_tokens {
         return Err(ContractError::SoldOut {});
+    }
+
+    if let Some(start_time) = config.start_time {
+        // Check if after start_time
+        if !start_time.is_expired(&env.block) {
+            return Err(ContractError::BeforeMintStartTime {});
+        }
     }
 
     let mut msgs: Vec<CosmosMsg> = vec![];
@@ -263,12 +274,28 @@ pub fn execute_update_whitelist_expiration(
     Ok(Response::new().add_attribute("method", "updated_whitelist_expiration"))
 }
 
+pub fn execute_update_start_time(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    start_time: Expiration,
+) -> Result<Response, ContractError> {
+    let mut config = CONFIG.load(deps.storage)?;
+    if info.sender != config.admin {
+        return Err(ContractError::Unauthorized {});
+    }
+    config.start_time = Some(start_time);
+    CONFIG.save(deps.storage, &config)?;
+    Ok(Response::new().add_attribute("method", "update_start_time"))
+}
+
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::GetConfig {} => to_binary(&query_config(deps)?),
         QueryMsg::GetWhitelistAddresses {} => to_binary(&query_whitelist_addresses(deps)?),
         QueryMsg::GetWhitelistExpiration {} => to_binary(&query_whitelist_expiration(deps)?),
+        QueryMsg::GetStartTime {} => to_binary(&query_start_time(deps)?),
     }
 }
 
@@ -304,6 +331,19 @@ fn query_whitelist_expiration(deps: Deps) -> StdResult<WhitelistExpirationRespon
     } else {
         Err(StdError::GenericErr {
             msg: "whitelist expiration not found".to_string(),
+        })
+    }
+}
+
+fn query_start_time(deps: Deps) -> StdResult<StartTimeResponse> {
+    let config = CONFIG.load(deps.storage)?;
+    if let Some(expiration) = config.start_time {
+        Ok(StartTimeResponse {
+            start_time: expiration.to_string(),
+        })
+    } else {
+        Err(StdError::GenericErr {
+            msg: "start time not found".to_string(),
         })
     }
 }
@@ -377,6 +417,7 @@ mod tests {
             token_uris: vec![String::from("https://stargaze.zone/logo.png")],
             whitelist_expiration: None,
             whitelist_addresses: Some(vec![String::from("VIPcollector")]),
+            start_time: None,
             sg721_code_id,
             sg721_instantiate_msg: Sg721InstantiateMsg {
                 name: String::from("TEST"),
@@ -452,6 +493,7 @@ mod tests {
             token_uris: vec![String::from("https://stargaze.zone/logo.png")],
             whitelist_expiration: None,
             whitelist_addresses: Some(vec![String::from("VIPcollector")]),
+            start_time: None,
             sg721_code_id: 1,
             sg721_instantiate_msg: Sg721InstantiateMsg {
                 name: String::from("TEST"),
@@ -633,6 +675,68 @@ mod tests {
         let mint_msg = ExecuteMsg::Mint {};
         let res = router.execute_contract(buyer, sale_addr, &mint_msg, &coins(PRICE, DENOM));
         assert!(res.is_err());
+    }
+
+    #[test]
+    fn before_start_time() {
+        let mut router = mock_app();
+        let (creator, buyer) = setup_accounts(&mut router).unwrap();
+        let (sale_addr, _config) = setup_sale_contract(&mut router, &creator).unwrap();
+        const START_TIME: Timestamp = Timestamp::from_seconds(100000 + 10);
+
+        // set block info
+        let mut block = router.block_info();
+        block.time = Timestamp::from_seconds(100000);
+        router.set_block(block);
+
+        // set start_time fails if not admin
+        let start_time_msg = ExecuteMsg::UpdateStartTime(Expiration::Never {});
+        let res = router.execute_contract(
+            buyer.clone(),
+            sale_addr.clone(),
+            &start_time_msg,
+            &coins(PRICE, DENOM),
+        );
+        assert!(res.is_err());
+
+        // if block before start_time, throw error
+        let start_time_msg = ExecuteMsg::UpdateStartTime(Expiration::AtTime(START_TIME));
+        let res = router.execute_contract(
+            creator.clone(),
+            sale_addr.clone(),
+            &start_time_msg,
+            &coins(PRICE, DENOM),
+        );
+        assert!(res.is_ok());
+
+        let mint_msg = ExecuteMsg::Mint {};
+        let res = router.execute_contract(
+            buyer.clone(),
+            sale_addr.clone(),
+            &mint_msg,
+            &coins(PRICE, DENOM),
+        );
+        assert!(res.is_err());
+
+        // query start_time, confirm expired
+        let start_time_response: StartTimeResponse = router
+            .wrap()
+            .query_wasm_smart(sale_addr.clone(), &QueryMsg::GetStartTime {})
+            .unwrap();
+        assert_eq!(
+            "expiration time: ".to_owned() + &START_TIME.to_string(),
+            start_time_response.start_time
+        );
+
+        // set block forward, after start time. mint succeeds
+        let mut block = router.block_info();
+        block.time = START_TIME.plus_seconds(10);
+        router.set_block(block);
+
+        // mint succeeds
+        let mint_msg = ExecuteMsg::Mint {};
+        let res = router.execute_contract(buyer, sale_addr, &mint_msg, &coins(PRICE, DENOM));
+        assert!(res.is_ok());
     }
 
     #[test]

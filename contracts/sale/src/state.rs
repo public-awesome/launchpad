@@ -13,6 +13,7 @@ pub struct Config {
     pub unit_price: Coin,
     // when whitelist_expiration passes, whitelist is over
     pub whitelist_expiration: Option<Expiration>,
+    pub start_time: Option<Expiration>,
 }
 
 pub const CONFIG: Item<Config> = Item::new("config");

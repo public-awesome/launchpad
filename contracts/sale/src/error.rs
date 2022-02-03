@@ -32,4 +32,7 @@ pub enum ContractError {
 
     #[error("Max whitelist addresses list exceeds max length")]
     MaxWhitelistAddressLengthExceeded {},
+
+    #[error("Minting has not started yet")]
+    BeforeMintStartTime {},
 }

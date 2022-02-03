@@ -14,6 +14,7 @@ pub struct InstantiateMsg {
     pub sg721_instantiate_msg: Sg721InstantiateMsg,
     pub whitelist_expiration: Option<Expiration>,
     pub whitelist_addresses: Option<Vec<String>>,
+    pub start_time: Option<Expiration>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -22,6 +23,7 @@ pub enum ExecuteMsg {
     Mint {},
     UpdateWhitelist(UpdateWhitelistMsg),
     WhitelistExpiration(Expiration),
+    UpdateStartTime(Expiration),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -33,6 +35,7 @@ pub enum QueryMsg {
     // List of token Uris?
     GetWhitelistAddresses {},
     GetWhitelistExpiration {},
+    GetStartTime {},
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -59,4 +62,9 @@ pub struct WhitelistAddressesResponse {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct WhitelistExpirationResponse {
     pub expiration_time: String,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct StartTimeResponse {
+    pub start_time: String,
 }
