@@ -4,27 +4,27 @@ use cosmwasm_std::Addr;
 const PREFIX: &str = "stars";
 
 trait ToStars {
-    fn to_stars(&self) -> String;
+    fn to_stars(&self) -> Result<String, Error>;
 }
 
 impl ToStars for String {
-    fn to_stars(&self) -> String {
-        let decoded = decode_and_convert(self).unwrap();
-        convert_and_encode(PREFIX.to_string(), decoded.1).unwrap()
+    fn to_stars(&self) -> Result<String, Error> {
+        let decoded = decode_and_convert(self)?;
+        convert_and_encode(PREFIX.to_string(), decoded.1)
     }
 }
 
 impl ToStars for str {
-    fn to_stars(&self) -> String {
-        let decoded = decode_and_convert(self).unwrap();
-        convert_and_encode(PREFIX.to_string(), decoded.1).unwrap()
+    fn to_stars(&self) -> Result<String, Error> {
+        let decoded = decode_and_convert(self)?;
+        convert_and_encode(PREFIX.to_string(), decoded.1)
     }
 }
 
 impl ToStars for Addr {
-    fn to_stars(&self) -> String {
-        let decoded = decode_and_convert(&self.to_string()).unwrap();
-        convert_and_encode(PREFIX.to_string(), decoded.1).unwrap()
+    fn to_stars(&self) -> Result<String, Error> {
+        let decoded = decode_and_convert(&self.to_string())?;
+        convert_and_encode(PREFIX.to_string(), decoded.1)
     }
 }
 
@@ -63,7 +63,8 @@ mod tests {
     fn string_to_stars() {
         let addr = "cosmos1ey69r37gfxvxg62sh4r0ktpuc46pzjrmz29g45"
             .to_string()
-            .to_stars();
+            .to_stars()
+            .unwrap();
         assert_eq!(
             addr,
             "stars1ey69r37gfxvxg62sh4r0ktpuc46pzjrmkkj479".to_string()
@@ -72,7 +73,9 @@ mod tests {
 
     #[test]
     fn str_to_stars() {
-        let addr = "cosmos1ey69r37gfxvxg62sh4r0ktpuc46pzjrmz29g45".to_stars();
+        let addr = "cosmos1ey69r37gfxvxg62sh4r0ktpuc46pzjrmz29g45"
+            .to_stars()
+            .unwrap();
         assert_eq!(
             addr,
             "stars1ey69r37gfxvxg62sh4r0ktpuc46pzjrmkkj479".to_string()
@@ -81,7 +84,9 @@ mod tests {
 
     #[test]
     fn addr_to_stars() {
-        let addr = Addr::unchecked("cosmos1ey69r37gfxvxg62sh4r0ktpuc46pzjrmz29g45").to_stars();
+        let addr = Addr::unchecked("cosmos1ey69r37gfxvxg62sh4r0ktpuc46pzjrmz29g45")
+            .to_stars()
+            .unwrap();
         assert_eq!(
             addr,
             "stars1ey69r37gfxvxg62sh4r0ktpuc46pzjrmkkj479".to_string()
