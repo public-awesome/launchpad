@@ -20,3 +20,4 @@ pub const SG721_ADDRESS: Item<Addr> = Item::new("sg721_address");
 pub const TOKEN_ID_INDEX: Item<u64> = Item::new("token_id");
 pub const TOKEN_URIS: Map<u64, String> = Map::new("token_uris");
 pub const WHITELIST_ADDRS: Map<String, Empty> = Map::new("whitelist_addresses");
+pub const NUM_WHITELIST_ADDRS: Item<u32> = Item::new("num_whitelist_addresses");

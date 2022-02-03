@@ -14,7 +14,9 @@ use crate::msg::{
     ConfigResponse, ExecuteMsg, InstantiateMsg, QueryMsg, UpdateWhitelistMsg,
     WhitelistAddressesResponse, WhitelistExpirationResponse,
 };
-use crate::state::{Config, CONFIG, SG721_ADDRESS, TOKEN_ID_INDEX, TOKEN_URIS, WHITELIST_ADDRS};
+use crate::state::{
+    Config, CONFIG, NUM_WHITELIST_ADDRS, SG721_ADDRESS, TOKEN_ID_INDEX, TOKEN_URIS, WHITELIST_ADDRS,
+};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sale";
@@ -23,6 +25,7 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 const INSTANTIATE_SG721_REPLY_ID: u64 = 1;
 
 const MAX_TOKEN_URIS_LENGTH: u32 = 15000;
+const MAX_WHITELIST_ADDRS_LENGTH: u32 = 15000;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -38,7 +41,7 @@ pub fn instantiate(
         return Err(ContractError::MaxTokenURIsLengthExceeded {});
     }
 
-    // Check length of token uris is not greater than max tokens
+    // Check length of token uris is not equal to max tokens
     if msg.token_uris.len() != msg.num_tokens as usize {
         return Err(ContractError::TokenURIsListInvalidNumber {});
     }
@@ -57,11 +60,17 @@ pub fn instantiate(
     };
     CONFIG.save(deps.storage, &config)?;
 
-    // Set whitelist addresses
+    // Set whitelist addresses and num_whitelist_addresses
     if let Some(whitelist_addresses) = msg.whitelist_addresses {
-        for whitelist_address in whitelist_addresses.into_iter() {
+        // Check length of whitelist addresses is not greater than max allowed
+        if MAX_WHITELIST_ADDRS_LENGTH <= (whitelist_addresses.len() as u32) {
+            return Err(ContractError::MaxWhitelistAddressLengthExceeded {});
+        }
+
+        for whitelist_address in whitelist_addresses.clone().into_iter() {
             WHITELIST_ADDRS.save(deps.storage, whitelist_address, &Empty {})?;
         }
+        NUM_WHITELIST_ADDRS.save(deps.storage, &(whitelist_addresses.len() as u32))?;
     }
 
     // Set Token ID index
@@ -207,23 +216,33 @@ pub fn execute_update_whitelist(
     update_whitelist_msg: UpdateWhitelistMsg,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
+    let mut num_whitelist_addresses = NUM_WHITELIST_ADDRS.load(deps.storage)?;
     if info.sender != config.admin {
         return Err(ContractError::Unauthorized {});
     }
 
     // Add whitelist addresses
     if let Some(add_whitelist_addrs) = update_whitelist_msg.add_addresses {
-        for whitelist_address in add_whitelist_addrs.into_iter() {
+        if MAX_WHITELIST_ADDRS_LENGTH
+            <= (add_whitelist_addrs.len() as u32 + num_whitelist_addresses)
+        {
+            return Err(ContractError::MaxWhitelistAddressLengthExceeded {});
+        }
+        for whitelist_address in add_whitelist_addrs.clone().into_iter() {
             WHITELIST_ADDRS.save(deps.storage, whitelist_address, &Empty {})?;
         }
+        num_whitelist_addresses += add_whitelist_addrs.len() as u32;
     }
 
     // Remove whitelist addresses
     if let Some(remove_whitelist_addrs) = update_whitelist_msg.remove_addresses {
-        for whitelist_address in remove_whitelist_addrs.into_iter() {
+        for whitelist_address in remove_whitelist_addrs.clone().into_iter() {
             WHITELIST_ADDRS.remove(deps.storage, whitelist_address);
         }
+        num_whitelist_addresses -= remove_whitelist_addrs.len() as u32;
     }
+
+    NUM_WHITELIST_ADDRS.save(deps.storage, &num_whitelist_addresses)?;
 
     Ok(Response::new().add_attribute("method", "updated_whitelist_addresses"))
 }
@@ -495,7 +514,7 @@ mod tests {
     }
 
     #[test]
-    fn whitelist_access_add_remove_expiration() {
+    fn whitelist_access_len_add_remove_expiration() {
         let mut router = mock_app();
         let (creator, buyer) = setup_accounts(&mut router).unwrap();
         let (sale_addr, _config) = setup_sale_contract(&mut router, &creator).unwrap();
@@ -532,6 +551,23 @@ mod tests {
             buyer.clone(),
             sale_addr.clone(),
             &mint_msg,
+            &coins(PRICE, DENOM),
+        );
+        assert!(res.is_err());
+
+        // fails, add too many whitelist addresses
+        let over_max_limit_whitelist_addrs =
+            vec!["addr".to_string(); MAX_WHITELIST_ADDRS_LENGTH as usize + 10];
+        let whitelist: Option<Vec<String>> = Some(over_max_limit_whitelist_addrs);
+        let add_whitelist_msg = UpdateWhitelistMsg {
+            add_addresses: whitelist,
+            remove_addresses: None,
+        };
+        let update_whitelist_msg = ExecuteMsg::UpdateWhitelist(add_whitelist_msg);
+        let res = router.execute_contract(
+            creator.clone(),
+            sale_addr.clone(),
+            &update_whitelist_msg,
             &coins(PRICE, DENOM),
         );
         assert!(res.is_err());

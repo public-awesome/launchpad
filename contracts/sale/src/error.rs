@@ -29,4 +29,7 @@ pub enum ContractError {
 
     #[error("address not on whitelist")]
     NotWhitelisted {},
+
+    #[error("Max whitelist addresses list exceeds max length")]
+    MaxWhitelistAddressLengthExceeded {},
 }
