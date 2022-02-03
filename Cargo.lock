@@ -778,7 +778,6 @@ dependencies = [
 name = "sg721-sale"
 version = "0.1.0"
 dependencies = [
- "bech32",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cosmwasm-storage",
