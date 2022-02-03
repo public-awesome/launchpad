@@ -1,6 +1,8 @@
 use bech32::{convert_bits, decode, encode, CheckBase32, Error, Variant};
 use cosmwasm_std::Addr;
 
+const PREFIX: &str = "stars";
+
 trait ToStars {
     fn to_stars(&self) -> String;
 }
@@ -8,21 +10,21 @@ trait ToStars {
 impl ToStars for String {
     fn to_stars(&self) -> String {
         let decoded = decode_and_convert(self).unwrap();
-        convert_and_encode("stars".to_string(), decoded.1).unwrap()
+        convert_and_encode(PREFIX.to_string(), decoded.1).unwrap()
     }
 }
 
 impl ToStars for str {
     fn to_stars(&self) -> String {
         let decoded = decode_and_convert(self).unwrap();
-        convert_and_encode("stars".to_string(), decoded.1).unwrap()
+        convert_and_encode(PREFIX.to_string(), decoded.1).unwrap()
     }
 }
 
 impl ToStars for Addr {
     fn to_stars(&self) -> String {
         let decoded = decode_and_convert(&self.to_string()).unwrap();
-        convert_and_encode("stars".to_string(), decoded.1).unwrap()
+        convert_and_encode(PREFIX.to_string(), decoded.1).unwrap()
     }
 }
 
