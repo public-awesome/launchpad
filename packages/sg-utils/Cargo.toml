@@ -2,7 +2,10 @@
 name = "sg-utils"
 version = "0.1.0"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+authors = ["Shane Vitarana <s@noreply.com>"]
+description = "Common utilities for Stargaze contract"
+license = "Apache-2.0"
+repository = "https://github.com/public-awesome/contracts"
+homepage = "https://stargaze.zone"
 
 [dependencies]
