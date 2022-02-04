@@ -1,5 +1,5 @@
 [workspace]
-members = ["contracts/*"]
+members = ["packages/*", "contracts/*"]
 
 [profile.release.package.collection-factory]
 codegen-units = 1
