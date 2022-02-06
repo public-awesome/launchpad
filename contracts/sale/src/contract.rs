@@ -169,7 +169,7 @@ pub fn execute_mint(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Respon
     // Check if already minted max per address limit
     if let Some(per_address_limit) = config.per_address_limit {
         let tokens: Cw721TokensResponse = deps.querier.query_wasm_smart(
-            sg721_address.clone().to_string(),
+            sg721_address.to_string(),
             &Sg721QueryMsg::Tokens {
                 owner: info.sender.to_string(),
                 start_after: None,
