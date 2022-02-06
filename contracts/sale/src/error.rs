@@ -35,4 +35,10 @@ pub enum ContractError {
 
     #[error("Minting has not started yet")]
     BeforeMintStartTime {},
+
+    #[error("Invalid minting limit per address. Max limit is 30.")]
+    InvalidPerAddressLimit {},
+
+    #[error("Max minting limit per address exceeded")]
+    MaxPerAddressLimitExceeded {},
 }

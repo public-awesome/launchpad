@@ -26,6 +26,7 @@ const INSTANTIATE_SG721_REPLY_ID: u64 = 1;
 
 const MAX_TOKEN_URIS_LENGTH: u32 = 15000;
 const MAX_WHITELIST_ADDRS_LENGTH: u32 = 15000;
+const MAX_PER_ADDRESS_LIMIT: u64 = 30;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -46,6 +47,13 @@ pub fn instantiate(
         return Err(ContractError::TokenURIsListInvalidNumber {});
     }
 
+    if let Some(per_address_limit) = msg.per_address_limit {
+        // Check per address limit is valid
+        if per_address_limit > MAX_PER_ADDRESS_LIMIT {
+            return Err(ContractError::InvalidPerAddressLimit {});
+        }
+    }
+
     // Map through list of token URIs
     for (index, token_uri) in msg.token_uris.into_iter().enumerate() {
         TOKEN_URIS.save(deps.storage, index as u64, &token_uri)?;
@@ -58,6 +66,7 @@ pub fn instantiate(
         unit_price: msg.unit_price,
         whitelist_expiration: msg.whitelist_expiration,
         start_time: msg.start_time,
+        per_address_limit: msg.per_address_limit,
     };
     CONFIG.save(deps.storage, &config)?;
 
@@ -120,6 +129,9 @@ pub fn execute(
         ExecuteMsg::UpdateStartTime(expiration) => {
             execute_update_start_time(deps, env, info, expiration)
         }
+        ExecuteMsg::UpdatePerAddressLimit { per_address_limit } => {
+            execute_update_per_address_limit(deps, env, info, per_address_limit)
+        }
     }
 }
 
@@ -135,6 +147,8 @@ pub fn execute_mint(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Respon
             return Err(ContractError::NotWhitelisted {});
         }
     }
+    println!("past whitelist");
+
     // Check funds sent is correct amount
     if !has_coins(&info.funds, &config.unit_price) {
         return Err(ContractError::NotEnoughFunds {});
@@ -152,6 +166,15 @@ pub fn execute_mint(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Respon
         }
     }
 
+    // TODO Check if already minted max per address limit
+    // sg721_address
+    // query buyers tokens
+    // throw err
+    // Tokens {
+    //     owner,
+    //     start_after,
+    //     limit,
+    println!("past checks");
     let mut msgs: Vec<CosmosMsg> = vec![];
 
     let mint_msg = Cw721ExecuteMsg::Mint(MintMsg::<Empty> {
@@ -172,6 +195,7 @@ pub fn execute_mint(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Respon
     token_id_index += 1;
     TOKEN_ID_INDEX.save(deps.storage, &token_id_index)?;
 
+    println!("past token mint");
     // Check if token supports Royalties
     let royalty: Result<sg721::msg::RoyaltyResponse, StdError> = deps
         .querier
@@ -216,7 +240,7 @@ pub fn execute_mint(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Respon
             msgs.append(&mut vec![seller_share_msg.into()]);
         }
     }
-
+    println!("past royalties");
     Ok(Response::default().add_messages(msgs))
 }
 
@@ -289,6 +313,24 @@ pub fn execute_update_start_time(
     Ok(Response::new().add_attribute("method", "update_start_time"))
 }
 
+pub fn execute_update_per_address_limit(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    per_address_limit: u64,
+) -> Result<Response, ContractError> {
+    let mut config = CONFIG.load(deps.storage)?;
+    if info.sender != config.admin {
+        return Err(ContractError::Unauthorized {});
+    }
+    if per_address_limit > MAX_PER_ADDRESS_LIMIT {
+        return Err(ContractError::InvalidPerAddressLimit {});
+    }
+    config.per_address_limit = Some(per_address_limit);
+    CONFIG.save(deps.storage, &config)?;
+    Ok(Response::new().add_attribute("method", "update_per_address_limit"))
+}
+
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
@@ -311,6 +353,7 @@ fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
         num_tokens: config.num_tokens,
         unit_price: config.unit_price,
         unused_token_id,
+        per_address_limit: config.per_address_limit,
     })
 }
 
@@ -418,6 +461,7 @@ mod tests {
             whitelist_expiration: None,
             whitelist_addresses: Some(vec![String::from("VIPcollector")]),
             start_time: None,
+            per_address_limit: None,
             sg721_code_id,
             sg721_instantiate_msg: Sg721InstantiateMsg {
                 name: String::from("TEST"),
@@ -494,6 +538,7 @@ mod tests {
             whitelist_expiration: None,
             whitelist_addresses: Some(vec![String::from("VIPcollector")]),
             start_time: None,
+            per_address_limit: None,
             sg721_code_id: 1,
             sg721_instantiate_msg: Sg721InstantiateMsg {
                 name: String::from("TEST"),
@@ -737,6 +782,76 @@ mod tests {
         let mint_msg = ExecuteMsg::Mint {};
         let res = router.execute_contract(buyer, sale_addr, &mint_msg, &coins(PRICE, DENOM));
         assert!(res.is_ok());
+    }
+
+    #[test]
+    fn per_address_limit() {
+        let mut router = mock_app();
+        let (creator, buyer) = setup_accounts(&mut router).unwrap();
+        let (sale_addr, _config) = setup_sale_contract(&mut router, &creator).unwrap();
+
+        // set limit, check unauthorized
+        let per_address_limit_msg = ExecuteMsg::UpdatePerAddressLimit {
+            per_address_limit: 30,
+        };
+        let res = router.execute_contract(
+            buyer.clone(),
+            sale_addr.clone(),
+            &per_address_limit_msg,
+            &coins(PRICE, DENOM),
+        );
+        assert!(res.is_err());
+
+        // set limit, invalid limit over max
+        let per_address_limit_msg = ExecuteMsg::UpdatePerAddressLimit {
+            per_address_limit: 100,
+        };
+        let res = router.execute_contract(
+            creator.clone(),
+            sale_addr.clone(),
+            &per_address_limit_msg,
+            &coins(PRICE, DENOM),
+        );
+        assert!(res.is_err());
+
+        // set limit, mint fails, over max
+        let per_address_limit_msg = ExecuteMsg::UpdatePerAddressLimit {
+            per_address_limit: 2,
+        };
+        let res = router.execute_contract(
+            creator.clone(),
+            sale_addr.clone(),
+            &per_address_limit_msg,
+            &coins(PRICE, DENOM),
+        );
+        assert!(res.is_ok());
+
+        // first mint succeeds
+        let mint_msg = ExecuteMsg::Mint {};
+        let res = router.execute_contract(
+            buyer.clone(),
+            sale_addr.clone(),
+            &mint_msg,
+            &coins(PRICE, DENOM),
+        );
+        assert!(res.is_ok());
+
+        // second mint succeeds
+        let mint_msg = ExecuteMsg::Mint {};
+        let res = router.execute_contract(
+            buyer.clone(),
+            sale_addr.clone(),
+            &mint_msg,
+            &coins(PRICE, DENOM),
+        );
+        assert!(res.is_ok());
+
+        // third mint fails
+        let res = router.execute_contract(buyer, sale_addr, &mint_msg, &coins(PRICE, DENOM));
+        assert_eq!(
+            res.unwrap_err().to_string(),
+            ContractError::MaxPerAddressLimitExceeded {}.to_string()
+        );
     }
 
     #[test]

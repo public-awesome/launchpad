@@ -15,6 +15,7 @@ pub struct InstantiateMsg {
     pub whitelist_expiration: Option<Expiration>,
     pub whitelist_addresses: Option<Vec<String>>,
     pub start_time: Option<Expiration>,
+    pub per_address_limit: Option<u64>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -24,6 +25,7 @@ pub enum ExecuteMsg {
     UpdateWhitelist(UpdateWhitelistMsg),
     WhitelistExpiration(Expiration),
     UpdateStartTime(Expiration),
+    UpdatePerAddressLimit { per_address_limit: u64 },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -52,6 +54,7 @@ pub struct ConfigResponse {
     pub num_tokens: u64,
     pub unit_price: Coin,
     pub unused_token_id: u64,
+    pub per_address_limit: Option<u64>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

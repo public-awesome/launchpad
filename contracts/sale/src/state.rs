@@ -14,6 +14,7 @@ pub struct Config {
     // when whitelist_expiration passes, whitelist is over
     pub whitelist_expiration: Option<Expiration>,
     pub start_time: Option<Expiration>,
+    pub per_address_limit: Option<u64>,
 }
 
 pub const CONFIG: Item<Config> = Item::new("config");
