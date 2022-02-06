@@ -147,7 +147,6 @@ pub fn execute_mint(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Respon
             return Err(ContractError::NotWhitelisted {});
         }
     }
-    println!("past whitelist");
 
     // Check funds sent is correct amount
     if !has_coins(&info.funds, &config.unit_price) {
@@ -174,7 +173,7 @@ pub fn execute_mint(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Respon
     //     owner,
     //     start_after,
     //     limit,
-    println!("past checks");
+
     let mut msgs: Vec<CosmosMsg> = vec![];
 
     let mint_msg = Cw721ExecuteMsg::Mint(MintMsg::<Empty> {
@@ -195,7 +194,6 @@ pub fn execute_mint(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Respon
     token_id_index += 1;
     TOKEN_ID_INDEX.save(deps.storage, &token_id_index)?;
 
-    println!("past token mint");
     // Check if token supports Royalties
     let royalty: Result<sg721::msg::RoyaltyResponse, StdError> = deps
         .querier
@@ -240,7 +238,6 @@ pub fn execute_mint(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Respon
             msgs.append(&mut vec![seller_share_msg.into()]);
         }
     }
-    println!("past royalties");
     Ok(Response::default().add_messages(msgs))
 }
 
