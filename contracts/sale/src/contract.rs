@@ -816,7 +816,7 @@ mod tests {
 
         // set limit, mint fails, over max
         let per_address_limit_msg = ExecuteMsg::UpdatePerAddressLimit {
-            per_address_limit: 2,
+            per_address_limit: 3,
         };
         let res = router.execute_contract(
             creator.clone(),
@@ -844,6 +844,7 @@ mod tests {
             &mint_msg,
             &coins(PRICE, DENOM),
         );
+        println!("{:?}", res);
         assert!(res.is_ok());
 
         // third mint fails
