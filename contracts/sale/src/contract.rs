@@ -5,6 +5,7 @@ use cosmwasm_std::{
     Env, MessageInfo, Order, Reply, ReplyOn, Response, StdError, StdResult, SubMsg, WasmMsg,
 };
 use cw2::set_contract_version;
+use cw721::TokensResponse as Cw721TokensResponse;
 use cw721_base::{msg::ExecuteMsg as Cw721ExecuteMsg, MintMsg};
 use cw_utils::{parse_reply_instantiate_data, Expiration};
 use sg721::msg::{InstantiateMsg as Sg721InstantiateMsg, QueryMsg as Sg721QueryMsg};
@@ -165,14 +166,20 @@ pub fn execute_mint(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Respon
         }
     }
 
-    // TODO Check if already minted max per address limit
-    // sg721_address
-    // query buyers tokens
-    // throw err
-    // Tokens {
-    //     owner,
-    //     start_after,
-    //     limit,
+    // Check if already minted max per address limit
+    if let Some(per_address_limit) = config.per_address_limit {
+        let tokens: Cw721TokensResponse = deps.querier.query_wasm_smart(
+            sg721_address.clone().to_string(),
+            &Sg721QueryMsg::Tokens {
+                owner: info.sender.to_string(),
+                start_after: None,
+                limit: Some(MAX_PER_ADDRESS_LIMIT as u32),
+            },
+        )?;
+        if tokens.tokens.len() >= per_address_limit as usize {
+            return Err(ContractError::MaxPerAddressLimitExceeded {});
+        }
+    }
 
     let mut msgs: Vec<CosmosMsg> = vec![];
 
