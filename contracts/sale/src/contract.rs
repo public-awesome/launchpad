@@ -448,6 +448,7 @@ mod tests {
     fn setup_sale_contract(
         router: &mut App,
         creator: &Addr,
+        num_tokens: u64,
     ) -> Result<(Addr, ConfigResponse), ContractError> {
         // Upload contract code
         let sg721_code_id = router.store_code(contract_sg721());
@@ -456,8 +457,8 @@ mod tests {
         // Instantiate sale contract
         let msg = InstantiateMsg {
             unit_price: coin(PRICE, DENOM),
-            num_tokens: 1,
-            token_uris: vec![String::from("https://stargaze.zone/logo.png")],
+            num_tokens,
+            token_uris: vec![String::from("https://stargaze.zone/logo.png"); num_tokens as usize],
             whitelist_expiration: None,
             whitelist_addresses: Some(vec![String::from("VIPcollector")]),
             start_time: None,
@@ -562,7 +563,8 @@ mod tests {
     fn happy_path() {
         let mut router = mock_app();
         let (creator, buyer) = setup_accounts(&mut router).unwrap();
-        let (sale_addr, config) = setup_sale_contract(&mut router, &creator).unwrap();
+        let num_tokens: u64 = 1;
+        let (sale_addr, config) = setup_sale_contract(&mut router, &creator, num_tokens).unwrap();
 
         // Succeeds if funds are sent
         let mint_msg = ExecuteMsg::Mint {};
@@ -604,7 +606,8 @@ mod tests {
     fn whitelist_access_len_add_remove_expiration() {
         let mut router = mock_app();
         let (creator, buyer) = setup_accounts(&mut router).unwrap();
-        let (sale_addr, _config) = setup_sale_contract(&mut router, &creator).unwrap();
+        let num_tokens: u64 = 1;
+        let (sale_addr, _config) = setup_sale_contract(&mut router, &creator, num_tokens).unwrap();
         const EXPIRATION_TIME: Timestamp = Timestamp::from_seconds(100000 + 10);
 
         // set block info
@@ -726,7 +729,8 @@ mod tests {
     fn before_start_time() {
         let mut router = mock_app();
         let (creator, buyer) = setup_accounts(&mut router).unwrap();
-        let (sale_addr, _config) = setup_sale_contract(&mut router, &creator).unwrap();
+        let num_tokens: u64 = 1;
+        let (sale_addr, _config) = setup_sale_contract(&mut router, &creator, num_tokens).unwrap();
         const START_TIME: Timestamp = Timestamp::from_seconds(100000 + 10);
 
         // set block info
@@ -788,7 +792,8 @@ mod tests {
     fn per_address_limit() {
         let mut router = mock_app();
         let (creator, buyer) = setup_accounts(&mut router).unwrap();
-        let (sale_addr, _config) = setup_sale_contract(&mut router, &creator).unwrap();
+        let num_tokens = 2;
+        let (sale_addr, _config) = setup_sale_contract(&mut router, &creator, num_tokens).unwrap();
 
         // set limit, check unauthorized
         let per_address_limit_msg = ExecuteMsg::UpdatePerAddressLimit {
@@ -816,7 +821,7 @@ mod tests {
 
         // set limit, mint fails, over max
         let per_address_limit_msg = ExecuteMsg::UpdatePerAddressLimit {
-            per_address_limit: 2,
+            per_address_limit: 1,
         };
         let res = router.execute_contract(
             creator.clone(),
@@ -836,29 +841,18 @@ mod tests {
         );
         assert!(res.is_ok());
 
-        // second mint succeeds
+        // second mint fails from exceeding per address limit
         let mint_msg = ExecuteMsg::Mint {};
-        let res = router.execute_contract(
-            buyer.clone(),
-            sale_addr.clone(),
-            &mint_msg,
-            &coins(PRICE, DENOM),
-        );
-        assert!(res.is_ok());
-
-        // third mint fails
         let res = router.execute_contract(buyer, sale_addr, &mint_msg, &coins(PRICE, DENOM));
-        assert_eq!(
-            res.unwrap_err().to_string(),
-            ContractError::MaxPerAddressLimitExceeded {}.to_string()
-        );
+        assert!(res.is_err());
     }
 
     #[test]
     fn unhappy_path() {
         let mut router = mock_app();
         let (creator, buyer) = setup_accounts(&mut router).unwrap();
-        let (sale_addr, _config) = setup_sale_contract(&mut router, &creator).unwrap();
+        let num_tokens: u64 = 1;
+        let (sale_addr, _config) = setup_sale_contract(&mut router, &creator, num_tokens).unwrap();
 
         // Fails if too little funds are sent
         let mint_msg = ExecuteMsg::Mint {};
