@@ -124,7 +124,7 @@ pub fn execute(
         ExecuteMsg::UpdateWhitelist(update_whitelist_msg) => {
             execute_update_whitelist(deps, env, info, update_whitelist_msg)
         }
-        ExecuteMsg::WhitelistExpiration(expiration) => {
+        ExecuteMsg::UpdateWhitelistExpiration(expiration) => {
             execute_update_whitelist_expiration(deps, env, info, expiration)
         }
         ExecuteMsg::UpdateStartTime(expiration) => {
@@ -314,7 +314,7 @@ pub fn execute_update_start_time(
     }
     config.start_time = Some(start_time);
     CONFIG.save(deps.storage, &config)?;
-    Ok(Response::new().add_attribute("method", "update_start_time"))
+    Ok(Response::new().add_attribute("method", "updated_start_time"))
 }
 
 pub fn execute_update_per_address_limit(
@@ -332,7 +332,7 @@ pub fn execute_update_per_address_limit(
     }
     config.per_address_limit = Some(per_address_limit);
     CONFIG.save(deps.storage, &config)?;
-    Ok(Response::new().add_attribute("method", "update_per_address_limit"))
+    Ok(Response::new().add_attribute("method", "updated_per_address_limit"))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -619,8 +619,8 @@ mod tests {
         block.time = Timestamp::from_seconds(100000);
         router.set_block(block);
 
-        // set whitelist_expiration fails if not admin
-        let whitelist_msg = ExecuteMsg::WhitelistExpiration(Expiration::Never {});
+        // update whitelist_expiration fails if not admin
+        let whitelist_msg = ExecuteMsg::UpdateWhitelistExpiration(Expiration::Never {});
         let res = router.execute_contract(
             buyer.clone(),
             sale_addr.clone(),
@@ -630,7 +630,8 @@ mod tests {
         assert!(res.is_err());
 
         // enable whitelist
-        let whitelist_msg = ExecuteMsg::WhitelistExpiration(Expiration::AtTime(EXPIRATION_TIME));
+        let whitelist_msg =
+            ExecuteMsg::UpdateWhitelistExpiration(Expiration::AtTime(EXPIRATION_TIME));
         let res = router.execute_contract(
             creator.clone(),
             sale_addr.clone(),
