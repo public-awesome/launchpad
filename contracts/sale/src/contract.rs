@@ -9,6 +9,7 @@ use cw721::TokensResponse as Cw721TokensResponse;
 use cw721_base::{msg::ExecuteMsg as Cw721ExecuteMsg, MintMsg};
 use cw_utils::{parse_reply_instantiate_data, Expiration};
 use sg721::msg::{InstantiateMsg as Sg721InstantiateMsg, QueryMsg as Sg721QueryMsg};
+use url::Url;
 
 use crate::error::ContractError;
 use crate::msg::{
@@ -16,7 +17,7 @@ use crate::msg::{
     WhitelistAddressesResponse, WhitelistExpirationResponse,
 };
 use crate::state::{
-    Config, CONFIG, NUM_WHITELIST_ADDRS, SG721_ADDRESS, TOKEN_ID_INDEX, TOKEN_URIS, WHITELIST_ADDRS,
+    Config, CONFIG, NUM_WHITELIST_ADDRS, SG721_ADDRESS, TOKEN_ID_INDEX, WHITELIST_ADDRS,
 };
 
 // version info for migration info
@@ -24,8 +25,6 @@ const CONTRACT_NAME: &str = "crates.io:sale";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 const INSTANTIATE_SG721_REPLY_ID: u64 = 1;
-
-const MAX_TOKEN_URIS_LENGTH: u32 = 15000;
 const MAX_WHITELIST_ADDRS_LENGTH: u32 = 15000;
 const MAX_PER_ADDRESS_LIMIT: u64 = 30;
 
@@ -38,16 +37,6 @@ pub fn instantiate(
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
-    // Check token uris list length doesn't exceed max
-    if msg.token_uris.len() > MAX_TOKEN_URIS_LENGTH as usize {
-        return Err(ContractError::MaxTokenURIsLengthExceeded {});
-    }
-
-    // Check length of token uris is not equal to max tokens
-    if msg.token_uris.len() != msg.num_tokens as usize {
-        return Err(ContractError::TokenURIsListInvalidNumber {});
-    }
-
     if let Some(per_address_limit) = msg.per_address_limit {
         // Check per address limit is valid
         if per_address_limit > MAX_PER_ADDRESS_LIMIT {
@@ -55,13 +44,15 @@ pub fn instantiate(
         }
     }
 
-    // Map through list of token URIs
-    for (index, token_uri) in msg.token_uris.into_iter().enumerate() {
-        TOKEN_URIS.save(deps.storage, index as u64, &token_uri)?;
+    // Check that base_token_uri is a valid IPFS uri
+    let parsed_token_uri = Url::parse(&msg.base_token_uri)?;
+    if parsed_token_uri.scheme() != "ipfs" {
+        return Err(ContractError::InvalidBaseTokenURI {});
     }
 
     let config = Config {
-        admin: info.sender.clone(),
+        admin: info.sender,
+        base_token_uri: msg.base_token_uri,
         num_tokens: msg.num_tokens,
         sg721_code_id: msg.sg721_code_id,
         unit_price: msg.unit_price,
@@ -108,7 +99,6 @@ pub fn instantiate(
 
     Ok(Response::new()
         .add_attribute("method", "instantiate")
-        .add_attribute("admin", info.sender)
         .add_submessages(sub_msgs))
 }
 
@@ -133,6 +123,7 @@ pub fn execute(
         ExecuteMsg::UpdatePerAddressLimit { per_address_limit } => {
             execute_update_per_address_limit(deps, env, info, per_address_limit)
         }
+        ExecuteMsg::MintFor { recipient } => execute_mint_for(deps, env, info, recipient),
     }
 }
 
@@ -140,7 +131,6 @@ pub fn execute_mint(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Respon
     let config = CONFIG.load(deps.storage)?;
     let sg721_address = SG721_ADDRESS.load(deps.storage)?;
     let mut token_id_index = TOKEN_ID_INDEX.load(deps.storage)?;
-    let token_uri = TOKEN_URIS.load(deps.storage, token_id_index)?;
     let allowlist = WHITELIST_ADDRS.has(deps.storage, info.sender.to_string());
     if let Some(whitelist_expiration) = config.whitelist_expiration {
         // Check if whitelist not expired and sender is not whitelisted
@@ -186,7 +176,7 @@ pub fn execute_mint(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Respon
     let mint_msg = Cw721ExecuteMsg::Mint(MintMsg::<Empty> {
         token_id: token_id_index.to_string(),
         owner: info.sender.to_string(),
-        token_uri: Some(token_uri),
+        token_uri: Some(format!("{}/{}", config.base_token_uri, token_id_index)),
         extension: Empty {},
     });
 
@@ -246,6 +236,45 @@ pub fn execute_mint(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Respon
         }
     }
     Ok(Response::default().add_messages(msgs))
+}
+
+pub fn execute_mint_for(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    recipient: Addr,
+) -> Result<Response, ContractError> {
+    let config = CONFIG.load(deps.storage)?;
+    let sg721_address = SG721_ADDRESS.load(deps.storage)?;
+    let mut token_id_index = TOKEN_ID_INDEX.load(deps.storage)?;
+
+    // Check only admin
+    if info.sender != config.admin {
+        return Err(ContractError::Unauthorized {});
+    }
+    // Check if over max tokens
+    if token_id_index >= config.num_tokens {
+        return Err(ContractError::SoldOut {});
+    }
+
+    let mint_msg = Cw721ExecuteMsg::Mint(MintMsg::<Empty> {
+        token_id: token_id_index.to_string(),
+        owner: recipient.to_string(),
+        token_uri: Some(format!("{}/{}", config.base_token_uri, token_id_index)),
+        extension: Empty {},
+    });
+
+    let msg = CosmosMsg::Wasm(WasmMsg::Execute {
+        contract_addr: sg721_address.to_string(),
+        msg: to_binary(&mint_msg)?,
+        funds: vec![],
+    });
+
+    // Increase token ID index by one
+    token_id_index += 1;
+    TOKEN_ID_INDEX.save(deps.storage, &token_id_index)?;
+
+    Ok(Response::default().add_message(msg))
 }
 
 pub fn execute_update_whitelist(
@@ -352,6 +381,7 @@ fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
 
     Ok(ConfigResponse {
         admin: config.admin,
+        base_token_uri: config.base_token_uri,
         sg721_address,
         sg721_code_id: config.sg721_code_id,
         num_tokens: config.num_tokens,
@@ -462,11 +492,11 @@ mod tests {
         let msg = InstantiateMsg {
             unit_price: coin(PRICE, DENOM),
             num_tokens,
-            token_uris: vec![String::from("https://stargaze.zone/logo.png"); num_tokens as usize],
             whitelist_expiration: None,
             whitelist_addresses: Some(vec![String::from("VIPcollector")]),
             start_time: None,
             per_address_limit: None,
+            base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
             sg721_code_id,
             sg721_instantiate_msg: Sg721InstantiateMsg {
                 name: String::from("TEST"),
@@ -534,16 +564,16 @@ mod tests {
     fn initialization() {
         let mut deps = mock_dependencies_with_balance(&coins(2, "token"));
 
-        // Num tokens does not match token_uris length and should error
+        // Invalid uri returns error
         let info = mock_info("creator", &coins(INITIAL_BALANCE, DENOM));
         let msg = InstantiateMsg {
             unit_price: coin(PRICE, DENOM),
             num_tokens: 100,
-            token_uris: vec![String::from("https://stargaze.zone/logo.png")],
             whitelist_expiration: None,
             whitelist_addresses: Some(vec![String::from("VIPcollector")]),
             start_time: None,
             per_address_limit: None,
+            base_token_uri: "https://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
             sg721_code_id: 1,
             sg721_instantiate_msg: Sg721InstantiateMsg {
                 name: String::from("TEST"),
@@ -560,14 +590,14 @@ mod tests {
             },
         };
         let res = instantiate(deps.as_mut(), mock_env(), info, msg);
-        assert!(res.is_err())
+        assert!(res.is_err());
     }
 
     #[test]
     fn happy_path() {
         let mut router = mock_app();
         let (creator, buyer) = setup_accounts(&mut router).unwrap();
-        let num_tokens: u64 = 1;
+        let num_tokens: u64 = 2;
         let (sale_addr, config) = setup_sale_contract(&mut router, &creator, num_tokens).unwrap();
 
         // Succeeds if funds are sent
@@ -596,13 +626,50 @@ mod tests {
         };
         let res: OwnerOfResponse = router
             .wrap()
+            .query_wasm_smart(config.sg721_address.clone(), &query_owner_msg)
+            .unwrap();
+        assert_eq!(res.owner, buyer.to_string());
+
+        // Buyer can't call MintFor
+        let mint_for_msg = ExecuteMsg::MintFor {
+            recipient: buyer.clone(),
+        };
+        let res = router.execute_contract(
+            buyer.clone(),
+            sale_addr.clone(),
+            &mint_for_msg,
+            &coins(PRICE, DENOM),
+        );
+        assert!(res.is_err());
+
+        // Creator mints an extra NFT for the buyer (who is a friend)
+        let res = router.execute_contract(
+            creator.clone(),
+            sale_addr.clone(),
+            &mint_for_msg,
+            &coins(PRICE, DENOM),
+        );
+        assert!(res.is_ok());
+
+        // Check that NFT is transferred
+        let query_owner_msg = Cw721QueryMsg::OwnerOf {
+            token_id: String::from("1"),
+            include_expired: None,
+        };
+        let res: OwnerOfResponse = router
+            .wrap()
             .query_wasm_smart(config.sg721_address, &query_owner_msg)
             .unwrap();
         assert_eq!(res.owner, buyer.to_string());
 
         // Errors if sold out
         let mint_msg = ExecuteMsg::Mint {};
-        let res = router.execute_contract(buyer, sale_addr, &mint_msg, &coins(PRICE, DENOM));
+        let res =
+            router.execute_contract(buyer, sale_addr.clone(), &mint_msg, &coins(PRICE, DENOM));
+        assert!(res.is_err());
+
+        // Creator can't use MintFor if sold out
+        let res = router.execute_contract(creator, sale_addr, &mint_for_msg, &coins(PRICE, DENOM));
         assert!(res.is_err());
     }
 

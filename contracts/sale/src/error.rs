@@ -1,5 +1,6 @@
 use cosmwasm_std::StdError;
 use thiserror::Error;
+use url::ParseError;
 
 #[derive(Error, Debug)]
 pub enum ContractError {
@@ -21,11 +22,8 @@ pub enum ContractError {
     #[error("Instantiate sg721 error")]
     InstantiateSg721Error {},
 
-    #[error("Token URI list exceeds max length")]
-    MaxTokenURIsLengthExceeded {},
-
-    #[error("Token URI list length does not match number of tokens")]
-    TokenURIsListInvalidNumber {},
+    #[error("Invalid base token URI (must be an IPFS URI)")]
+    InvalidBaseTokenURI {},
 
     #[error("address not on whitelist")]
     NotWhitelisted {},
@@ -41,4 +39,10 @@ pub enum ContractError {
 
     #[error("Max minting limit per address exceeded")]
     MaxPerAddressLimitExceeded {},
+}
+
+impl From<ParseError> for ContractError {
+    fn from(_err: ParseError) -> ContractError {
+        ContractError::InvalidBaseTokenURI {}
+    }
 }
