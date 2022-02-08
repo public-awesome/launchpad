@@ -1,4 +1,4 @@
-use crate::state::{CollectionInfo, RoyaltyInfo};
+use crate::state::{Config, RoyaltyInfo};
 use cosmwasm_std::{Addr, Empty};
 use cw721_base::msg::QueryMsg as Cw721QueryMsg;
 use schemars::JsonSchema;
@@ -9,7 +9,7 @@ pub struct InstantiateMsg {
     pub name: String,
     pub symbol: String,
     pub minter: String,
-    pub collection_info: CollectionInfo,
+    pub collection_info: Config,
 }
 
 pub type ExecuteMsg = cw721_base::ExecuteMsg<Empty>;

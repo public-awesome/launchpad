@@ -89,7 +89,7 @@ fn query_royalties(deps: Deps) -> StdResult<RoyaltyResponse> {
 mod tests {
     use super::*;
 
-    use crate::state::CollectionInfo;
+    use crate::state::Config;
     use crate::state::RoyaltyInfo;
     use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
     use cosmwasm_std::{coins, from_binary, Addr, Decimal};
@@ -104,7 +104,7 @@ mod tests {
             name: collection,
             symbol: String::from("BOBO"),
             minter: String::from("minter"),
-            collection_info: CollectionInfo {
+            collection_info: Config {
                 contract_uri: String::from("https://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json"),
                 creator: Addr::unchecked(creator),
                 royalties: None,
@@ -143,7 +143,7 @@ mod tests {
             name: collection,
             symbol: String::from("BOBO"),
             minter: String::from("minter"),
-            collection_info: CollectionInfo {
+            collection_info: Config {
                 contract_uri: String::from("https://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json"),
                 creator: Addr::unchecked(creator.clone()),
                 royalties: Some(RoyaltyInfo {

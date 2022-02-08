@@ -449,7 +449,7 @@ mod tests {
     use cosmwasm_std::{coin, coins, Decimal, Timestamp};
     use cw721::{Cw721QueryMsg, OwnerOfResponse};
     use cw_multi_test::{App, BankSudo, Contract, ContractWrapper, Executor, SudoMsg};
-    use sg721::state::{CollectionInfo, RoyaltyInfo};
+    use sg721::state::{Config, RoyaltyInfo};
 
     const DENOM: &str = "ustars";
     const INITIAL_BALANCE: u128 = 2000;
@@ -502,7 +502,7 @@ mod tests {
                 name: String::from("TEST"),
                 symbol: String::from("TEST"),
                 minter: creator.to_string(),
-                collection_info: CollectionInfo {
+                collection_info: Config {
                     contract_uri: String::from("test"),
                     creator: creator.clone(),
                     royalties: Some(RoyaltyInfo {
@@ -579,7 +579,7 @@ mod tests {
                 name: String::from("TEST"),
                 symbol: String::from("TEST"),
                 minter: info.sender.to_string(),
-                collection_info: CollectionInfo {
+                collection_info: Config {
                     contract_uri: String::from("test"),
                     creator: info.sender.clone(),
                     royalties: Some(RoyaltyInfo {
