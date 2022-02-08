@@ -44,7 +44,7 @@ mod tests {
 
     use super::*;
     use cosmwasm_std::{coin, coins, Coin, Decimal};
-    use sg721::state::{CollectionInfo, RoyaltyInfo};
+    use sg721::state::{Config, RoyaltyInfo};
 
     const TOKEN_ID: &str = "123";
     const NATIVE_TOKEN_DENOM: &str = "ustars";
@@ -72,7 +72,7 @@ mod tests {
             name: String::from("Test Coin"),
             symbol: String::from("TEST"),
             minter: creator.to_string(),
-            collection_info: CollectionInfo {
+            collection_info: Config {
                 contract_uri: String::from("https://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json"),
                 creator: creator.clone(),
                 royalties: Some(RoyaltyInfo {
@@ -690,7 +690,7 @@ mod tests {
             name: String::from("Test Coin"),
             symbol: String::from("TEST"),
             minter: creator.to_string(),
-            collection_info: CollectionInfo {
+            collection_info: Config {
                 contract_uri: String::from("https://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json"),
                 creator: creator.clone(),
                 royalties: Some(RoyaltyInfo {
