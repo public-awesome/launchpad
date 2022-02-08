@@ -127,7 +127,7 @@ impl From<QueryMsg> for Cw721QueryMsg {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct ContractUriResponse {
-    pub contract_uri: String,
+    pub contract_uri: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

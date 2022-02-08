@@ -503,7 +503,7 @@ mod tests {
                 symbol: String::from("TEST"),
                 minter: creator.to_string(),
                 config: Some(Config {
-                    contract_uri: String::from("test"),
+                    contract_uri: Some(String::from("test")),
                     creator: creator.clone(),
                     royalties: Some(RoyaltyInfo {
                         payment_address: creator.clone(),
@@ -580,7 +580,7 @@ mod tests {
                 symbol: String::from("TEST"),
                 minter: info.sender.to_string(),
                 config: Some(Config {
-                    contract_uri: String::from("test"),
+                    contract_uri: Some(String::from("test")),
                     creator: info.sender.clone(),
                     royalties: Some(RoyaltyInfo {
                         payment_address: info.sender.clone(),

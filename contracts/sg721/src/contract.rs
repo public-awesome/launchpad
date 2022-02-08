@@ -105,7 +105,7 @@ mod tests {
             symbol: String::from("BOBO"),
             minter: String::from("minter"),
             config: Some(Config {
-                contract_uri: String::from("https://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json"),
+                contract_uri: Some(String::from("https://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json")),
                 creator: Addr::unchecked(creator),
                 royalties: None,
             }),
@@ -119,7 +119,7 @@ mod tests {
         // it worked, let's query the contract_uri
         let res = query(deps.as_ref(), mock_env(), QueryMsg::ContractUri {}).unwrap();
         let value: ContractUriResponse = from_binary(&res).unwrap();
-        assert_eq!("https://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json", value.contract_uri);
+        assert_eq!(Some("https://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json".to_string()), value.contract_uri);
 
         // it worked, let's query the creator
         let res = query(deps.as_ref(), mock_env(), QueryMsg::Creator {}).unwrap();
@@ -144,7 +144,7 @@ mod tests {
             symbol: String::from("BOBO"),
             minter: String::from("minter"),
             config: Some(Config {
-                contract_uri: String::from("https://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json"),
+                contract_uri: Some(String::from("https://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json")),
                 creator: Addr::unchecked(creator.clone()),
                 royalties: Some(RoyaltyInfo {
                     payment_address: Addr::unchecked(creator.clone()),
@@ -161,7 +161,7 @@ mod tests {
         // it worked, let's query the contract_uri
         let res = query(deps.as_ref(), mock_env(), QueryMsg::ContractUri {}).unwrap();
         let value: ContractUriResponse = from_binary(&res).unwrap();
-        assert_eq!("https://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json", value.contract_uri);
+        assert_eq!(Some("https://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json".to_string()), value.contract_uri);
 
         // it worked, let's query the creator
         let res = query(deps.as_ref(), mock_env(), QueryMsg::Creator {}).unwrap();
