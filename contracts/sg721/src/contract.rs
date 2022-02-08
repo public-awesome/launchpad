@@ -40,12 +40,12 @@ pub fn instantiate(
         .minter
         .save(deps.storage, &minter)?;
 
-    // Check royalty info is valid
-    if let Some(ref royalty) = msg.config.royalties {
-        royalty.is_valid()?;
+    if let Some(ref config) = msg.config {
+        if let Some(ref royalty) = config.royalties {
+            royalty.is_valid()?;
+        }
+        CONFIG.save(deps.storage, config)?;
     }
-
-    CONFIG.save(deps.storage, &msg.config)?;
 
     Ok(Response::default())
 }
@@ -104,11 +104,11 @@ mod tests {
             name: collection,
             symbol: String::from("BOBO"),
             minter: String::from("minter"),
-            config: Config {
+            config: Some(Config {
                 contract_uri: String::from("https://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json"),
                 creator: Addr::unchecked(creator),
                 royalties: None,
-            },
+            }),
         };
         let info = mock_info("creator", &coins(1000, "earth"));
 
@@ -143,14 +143,14 @@ mod tests {
             name: collection,
             symbol: String::from("BOBO"),
             minter: String::from("minter"),
-            config: Config {
+            config: Some(Config {
                 contract_uri: String::from("https://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json"),
                 creator: Addr::unchecked(creator.clone()),
                 royalties: Some(RoyaltyInfo {
                     payment_address: Addr::unchecked(creator.clone()),
                     share: Decimal::percent(10),
                 }),
-            },
+            }),
         };
         let info = mock_info("creator", &coins(1000, "earth"));
 

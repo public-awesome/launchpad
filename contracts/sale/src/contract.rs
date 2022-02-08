@@ -502,14 +502,14 @@ mod tests {
                 name: String::from("TEST"),
                 symbol: String::from("TEST"),
                 minter: creator.to_string(),
-                config: Config {
+                config: Some(Config {
                     contract_uri: String::from("test"),
                     creator: creator.clone(),
                     royalties: Some(RoyaltyInfo {
                         payment_address: creator.clone(),
                         share: Decimal::percent(10),
                     }),
-                },
+                }),
             },
         };
         let sale_addr = router
@@ -579,14 +579,14 @@ mod tests {
                 name: String::from("TEST"),
                 symbol: String::from("TEST"),
                 minter: info.sender.to_string(),
-                config: Config {
+                config: Some(Config {
                     contract_uri: String::from("test"),
                     creator: info.sender.clone(),
                     royalties: Some(RoyaltyInfo {
                         payment_address: info.sender.clone(),
                         share: Decimal::percent(10),
                     }),
-                },
+                }),
             },
         };
         let res = instantiate(deps.as_mut(), mock_env(), info, msg);

@@ -165,14 +165,20 @@
     "InstantiateMsg": {
       "type": "object",
       "required": [
-        "config",
         "minter",
         "name",
         "symbol"
       ],
       "properties": {
         "config": {
-          "$ref": "#/definitions/Config"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Config"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "minter": {
           "type": "string"
