@@ -224,10 +224,11 @@ jobs:
             docker cp Cargo.lock with_code:/code
             # copy code into this volume
             docker cp ./contracts with_code:/code
+            docker cp ./packages with_code:/code
       - run:
           name: Build development contracts
           command: |
-            docker run --volumes-from with_code cosmwasm/workspace-optimizer:0.12.1
+            docker run --volumes-from with_code cosmwasm/workspace-optimizer:0.12.5
             docker cp with_code:/code/artifacts ./artifacts
       - run:
           name: Show data
