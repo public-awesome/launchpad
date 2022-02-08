@@ -13,6 +13,42 @@
         }
       },
       "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_whitelist_addresses"
+      ],
+      "properties": {
+        "get_whitelist_addresses": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_whitelist_expiration"
+      ],
+      "properties": {
+        "get_whitelist_expiration": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_start_time"
+      ],
+      "properties": {
+        "get_start_time": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
     }
   ]
 }

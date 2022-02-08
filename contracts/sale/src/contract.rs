@@ -85,7 +85,7 @@ pub fn instantiate(
                 name: msg.sg721_instantiate_msg.name,
                 symbol: msg.sg721_instantiate_msg.symbol,
                 minter: env.contract.address.to_string(),
-                collection_info: msg.sg721_instantiate_msg.collection_info,
+                config: msg.sg721_instantiate_msg.config,
             })?,
             funds: vec![],
             admin: None,
@@ -449,7 +449,7 @@ mod tests {
     use cosmwasm_std::{coin, coins, Decimal, Timestamp};
     use cw721::{Cw721QueryMsg, OwnerOfResponse};
     use cw_multi_test::{App, BankSudo, Contract, ContractWrapper, Executor, SudoMsg};
-    use sg721::state::{CollectionInfo, RoyaltyInfo};
+    use sg721::state::{Config, RoyaltyInfo};
 
     const DENOM: &str = "ustars";
     const INITIAL_BALANCE: u128 = 2000;
@@ -502,14 +502,14 @@ mod tests {
                 name: String::from("TEST"),
                 symbol: String::from("TEST"),
                 minter: creator.to_string(),
-                collection_info: CollectionInfo {
-                    contract_uri: String::from("test"),
-                    creator: creator.clone(),
+                config: Some(Config {
+                    contract_uri: Some(String::from("test")),
+                    creator: Some(creator.clone()),
                     royalties: Some(RoyaltyInfo {
                         payment_address: creator.clone(),
                         share: Decimal::percent(10),
                     }),
-                },
+                }),
             },
         };
         let sale_addr = router
@@ -579,14 +579,14 @@ mod tests {
                 name: String::from("TEST"),
                 symbol: String::from("TEST"),
                 minter: info.sender.to_string(),
-                collection_info: CollectionInfo {
-                    contract_uri: String::from("test"),
-                    creator: info.sender.clone(),
+                config: Some(Config {
+                    contract_uri: Some(String::from("test")),
+                    creator: Some(info.sender.clone()),
                     royalties: Some(RoyaltyInfo {
                         payment_address: info.sender.clone(),
                         share: Decimal::percent(10),
                     }),
-                },
+                }),
             },
         };
         let res = instantiate(deps.as_mut(), mock_env(), info, msg);
