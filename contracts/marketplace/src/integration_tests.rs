@@ -74,7 +74,7 @@ mod tests {
             minter: creator.to_string(),
             config: Some(Config {
                 contract_uri: Some(String::from("https://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json")),
-                creator: creator.clone(),
+                creator: Some(creator.clone()),
                 royalties: Some(RoyaltyInfo {
                     payment_address: creator.clone(),
                     share: Decimal::percent(10),
@@ -692,7 +692,7 @@ mod tests {
             minter: creator.to_string(),
             config: Some(Config {
                 contract_uri: Some(String::from("https://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json")),
-                creator: creator.clone(),
+                creator: Some(creator.clone()),
                 royalties: Some(RoyaltyInfo {
                     payment_address: curator.clone(),
                     share: Decimal::percent(10),
