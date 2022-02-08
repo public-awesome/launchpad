@@ -23,6 +23,14 @@
       "format": "uint64",
       "minimum": 0.0
     },
+    "per_address_limit": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "format": "uint64",
+      "minimum": 0.0
+    },
     "sg721_address": {
       "$ref": "#/definitions/Addr"
     },
