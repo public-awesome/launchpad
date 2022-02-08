@@ -46,7 +46,7 @@ pub fn instantiate(
     }
 
     if let Some(batch_mint_limit) = msg.batch_mint_limit {
-        // Check per address limit is valid
+        // Check batch mint limit is valid
         if batch_mint_limit > MAX_BATCH_MINT_LIMIT {
             return Err(ContractError::InvalidBatchMintLimit {});
         }
