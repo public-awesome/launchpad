@@ -72,7 +72,7 @@ mod tests {
             name: String::from("Test Coin"),
             symbol: String::from("TEST"),
             minter: creator.to_string(),
-            collection_info: Config {
+            config: Config {
                 contract_uri: String::from("https://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json"),
                 creator: creator.clone(),
                 royalties: Some(RoyaltyInfo {
@@ -690,7 +690,7 @@ mod tests {
             name: String::from("Test Coin"),
             symbol: String::from("TEST"),
             minter: creator.to_string(),
-            collection_info: Config {
+            config: Config {
                 contract_uri: String::from("https://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json"),
                 creator: creator.clone(),
                 royalties: Some(RoyaltyInfo {
