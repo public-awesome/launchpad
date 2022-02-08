@@ -504,7 +504,7 @@ mod tests {
                 minter: creator.to_string(),
                 config: Some(Config {
                     contract_uri: Some(String::from("test")),
-                    creator: creator.clone(),
+                    creator: Some(creator.clone()),
                     royalties: Some(RoyaltyInfo {
                         payment_address: creator.clone(),
                         share: Decimal::percent(10),
@@ -581,7 +581,7 @@ mod tests {
                 minter: info.sender.to_string(),
                 config: Some(Config {
                     contract_uri: Some(String::from("test")),
-                    creator: info.sender.clone(),
+                    creator: Some(info.sender.clone()),
                     royalties: Some(RoyaltyInfo {
                         payment_address: info.sender.clone(),
                         share: Decimal::percent(10),

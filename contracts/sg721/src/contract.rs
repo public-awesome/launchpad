@@ -106,7 +106,7 @@ mod tests {
             minter: String::from("minter"),
             config: Some(Config {
                 contract_uri: Some(String::from("https://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json")),
-                creator: Addr::unchecked(creator),
+                creator: Some(Addr::unchecked(creator)),
                 royalties: None,
             }),
         };
@@ -125,7 +125,7 @@ mod tests {
         let res = query(deps.as_ref(), mock_env(), QueryMsg::Creator {}).unwrap();
 
         let value: CreatorResponse = from_binary(&res).unwrap();
-        assert_eq!("creator", value.creator.to_string());
+        assert_eq!("creator", value.creator.unwrap().to_string());
 
         // let's query the royalties
         let res = query(deps.as_ref(), mock_env(), QueryMsg::Royalties {}).unwrap();
@@ -145,7 +145,7 @@ mod tests {
             minter: String::from("minter"),
             config: Some(Config {
                 contract_uri: Some(String::from("https://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json")),
-                creator: Addr::unchecked(creator.clone()),
+                creator: Some(Addr::unchecked(creator.clone())),
                 royalties: Some(RoyaltyInfo {
                     payment_address: Addr::unchecked(creator.clone()),
                     share: Decimal::percent(10),
@@ -167,7 +167,7 @@ mod tests {
         let res = query(deps.as_ref(), mock_env(), QueryMsg::Creator {}).unwrap();
 
         let value: CreatorResponse = from_binary(&res).unwrap();
-        assert_eq!("creator", value.creator.to_string());
+        assert_eq!("creator", value.creator.unwrap().to_string());
 
         // let's query the royalties
         let res = query(deps.as_ref(), mock_env(), QueryMsg::Royalties {}).unwrap();

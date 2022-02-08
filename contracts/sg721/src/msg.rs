@@ -132,7 +132,7 @@ pub struct ContractUriResponse {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct CreatorResponse {
-    pub creator: Addr,
+    pub creator: Option<Addr>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
