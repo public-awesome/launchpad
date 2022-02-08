@@ -73,7 +73,7 @@ mod tests {
             symbol: String::from("TEST"),
             minter: creator.to_string(),
             config: Some(Config {
-                contract_uri: String::from("https://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json"),
+                contract_uri: Some(String::from("https://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json")),
                 creator: creator.clone(),
                 royalties: Some(RoyaltyInfo {
                     payment_address: creator.clone(),
@@ -691,7 +691,7 @@ mod tests {
             symbol: String::from("TEST"),
             minter: creator.to_string(),
             config: Some(Config {
-                contract_uri: String::from("https://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json"),
+                contract_uri: Some(String::from("https://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json")),
                 creator: creator.clone(),
                 royalties: Some(RoyaltyInfo {
                     payment_address: curator.clone(),
