@@ -72,14 +72,14 @@ mod tests {
             name: String::from("Test Coin"),
             symbol: String::from("TEST"),
             minter: creator.to_string(),
-            config: Config {
+            config: Some(Config {
                 contract_uri: String::from("https://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json"),
                 creator: creator.clone(),
                 royalties: Some(RoyaltyInfo {
                     payment_address: creator.clone(),
                     share: Decimal::percent(10),
                 }),
-            },
+            }),
         };
         let nft_contract_addr = router
             .instantiate_contract(sg721_id, creator.clone(), &msg, &[], "NFT", None)
@@ -690,14 +690,14 @@ mod tests {
             name: String::from("Test Coin"),
             symbol: String::from("TEST"),
             minter: creator.to_string(),
-            config: Config {
+            config: Some(Config {
                 contract_uri: String::from("https://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json"),
                 creator: creator.clone(),
                 royalties: Some(RoyaltyInfo {
                     payment_address: curator.clone(),
                     share: Decimal::percent(10),
                 }),
-            },
+            }),
         };
         let nft_contract_addr = router
             .instantiate_contract(sg721_id, creator.clone(), &msg, &[], "NFT", None)
