@@ -39,6 +39,12 @@ pub enum ContractError {
 
     #[error("Max minting limit per address exceeded")]
     MaxPerAddressLimitExceeded {},
+
+    #[error("Invalid batch mint limit. Max limit is 30.")]
+    InvalidBatchMintLimit {},
+
+    #[error("Max batch mint limit exceeded")]
+    MaxBatchLimitLimitExceeded {},
 }
 
 impl From<ParseError> for ContractError {

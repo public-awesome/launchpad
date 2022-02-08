@@ -27,6 +27,7 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 const INSTANTIATE_SG721_REPLY_ID: u64 = 1;
 const MAX_WHITELIST_ADDRS_LENGTH: u32 = 15000;
 const MAX_PER_ADDRESS_LIMIT: u64 = 30;
+const MAX_BATCH_MINT_LIMIT: u64 = 30;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -41,6 +42,13 @@ pub fn instantiate(
         // Check per address limit is valid
         if per_address_limit > MAX_PER_ADDRESS_LIMIT {
             return Err(ContractError::InvalidPerAddressLimit {});
+        }
+    }
+
+    if let Some(batch_mint_limit) = msg.batch_mint_limit {
+        // Check per address limit is valid
+        if batch_mint_limit > MAX_BATCH_MINT_LIMIT {
+            return Err(ContractError::InvalidBatchMintLimit {});
         }
     }
 
@@ -59,6 +67,7 @@ pub fn instantiate(
         whitelist_expiration: msg.whitelist_expiration,
         start_time: msg.start_time,
         per_address_limit: msg.per_address_limit,
+        batch_mint_limit: msg.batch_mint_limit,
     };
     CONFIG.save(deps.storage, &config)?;
 
@@ -123,7 +132,11 @@ pub fn execute(
         ExecuteMsg::UpdatePerAddressLimit { per_address_limit } => {
             execute_update_per_address_limit(deps, env, info, per_address_limit)
         }
+        ExecuteMsg::UpdateBatchMintLimit { batch_mint_limit } => {
+            execute_update_batch_mint_limit(deps, env, info, batch_mint_limit)
+        }
         ExecuteMsg::MintFor { recipient } => execute_mint_for(deps, env, info, recipient),
+        ExecuteMsg::BatchMint { num_mints } => execute_batch_mint(deps, env, info, num_mints),
     }
 }
 
@@ -277,6 +290,29 @@ pub fn execute_mint_for(
     Ok(Response::default().add_message(msg))
 }
 
+pub fn execute_batch_mint(
+    mut deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    num_mints: u64,
+) -> Result<Response, ContractError> {
+    let config = CONFIG.load(deps.storage)?;
+    // Check batch mint limit
+    if let Some(batch_mint_limit) = config.batch_mint_limit {
+        if num_mints <= batch_mint_limit {
+            for _ in 0..num_mints {
+                execute_mint(deps.branch(), env.clone(), info.clone())?;
+            }
+        } else {
+            return Err(ContractError::MaxBatchLimitLimitExceeded {});
+        }
+    } else {
+        return Err(ContractError::MaxBatchLimitLimitExceeded {});
+    }
+
+    Ok(Response::new())
+}
+
 pub fn execute_update_whitelist(
     deps: DepsMut,
     _env: Env,
@@ -364,6 +400,24 @@ pub fn execute_update_per_address_limit(
     Ok(Response::new().add_attribute("method", "updated_per_address_limit"))
 }
 
+pub fn execute_update_batch_mint_limit(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    batch_mint_limit: u64,
+) -> Result<Response, ContractError> {
+    let mut config = CONFIG.load(deps.storage)?;
+    if info.sender != config.admin {
+        return Err(ContractError::Unauthorized {});
+    }
+    if batch_mint_limit > MAX_BATCH_MINT_LIMIT {
+        return Err(ContractError::InvalidBatchMintLimit {});
+    }
+    config.batch_mint_limit = Some(batch_mint_limit);
+    CONFIG.save(deps.storage, &config)?;
+    Ok(Response::new().add_attribute("method", "updated_batch_mint_limit"))
+}
+
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
@@ -388,6 +442,7 @@ fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
         unit_price: config.unit_price,
         unused_token_id,
         per_address_limit: config.per_address_limit,
+        batch_mint_limit: config.batch_mint_limit,
     })
 }
 
@@ -496,6 +551,7 @@ mod tests {
             whitelist_addresses: Some(vec![String::from("VIPcollector")]),
             start_time: None,
             per_address_limit: None,
+            batch_mint_limit: None,
             base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
             sg721_code_id,
             sg721_instantiate_msg: Sg721InstantiateMsg {
@@ -573,6 +629,7 @@ mod tests {
             whitelist_addresses: Some(vec![String::from("VIPcollector")]),
             start_time: None,
             per_address_limit: None,
+            batch_mint_limit: None,
             base_token_uri: "https://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
             sg721_code_id: 1,
             sg721_instantiate_msg: Sg721InstantiateMsg {
@@ -917,6 +974,108 @@ mod tests {
         let mint_msg = ExecuteMsg::Mint {};
         let res = router.execute_contract(buyer, sale_addr, &mint_msg, &coins(PRICE, DENOM));
         assert!(res.is_err());
+    }
+
+    #[test]
+    fn batch_mint_limit_access_max_sold_out() {
+        let mut router = mock_app();
+        let (creator, buyer) = setup_accounts(&mut router).unwrap();
+        let num_tokens = 3;
+        let (sale_addr, _config) = setup_sale_contract(&mut router, &creator, num_tokens).unwrap();
+
+        // batch mint limit not set by default. will error out
+        let batch_mint_msg = ExecuteMsg::BatchMint { num_mints: 1 };
+        let res = router.execute_contract(
+            buyer.clone(),
+            sale_addr.clone(),
+            &batch_mint_msg,
+            &coins(PRICE, DENOM),
+        );
+        assert!(res.is_err());
+        let err = res.unwrap_err();
+        assert_eq!("Max batch mint limit exceeded", err.to_string());
+
+        // update batch mint limit, test unauthorized
+        let update_batch_mint_limit_msg = ExecuteMsg::UpdateBatchMintLimit {
+            batch_mint_limit: 1,
+        };
+        let res = router.execute_contract(
+            buyer.clone(),
+            sale_addr.clone(),
+            &update_batch_mint_limit_msg,
+            &coins(PRICE, DENOM),
+        );
+        assert!(res.is_err());
+        let err = res.unwrap_err();
+        assert_eq!("Unauthorized", err.to_string());
+
+        // update limit, invalid limit over max
+        let update_batch_mint_limit_msg = ExecuteMsg::UpdateBatchMintLimit {
+            batch_mint_limit: 100,
+        };
+        let res = router.execute_contract(
+            creator.clone(),
+            sale_addr.clone(),
+            &update_batch_mint_limit_msg,
+            &coins(PRICE, DENOM),
+        );
+        assert!(res.is_err());
+        let err = res.unwrap_err();
+        assert_eq!(
+            "Invalid batch mint limit. Max limit is 30.",
+            err.to_string()
+        );
+
+        // update limit successfully as admin
+        let update_batch_mint_limit_msg = ExecuteMsg::UpdateBatchMintLimit {
+            batch_mint_limit: 2,
+        };
+        let res = router.execute_contract(
+            creator.clone(),
+            sale_addr.clone(),
+            &update_batch_mint_limit_msg,
+            &coins(PRICE, DENOM),
+        );
+        assert!(res.is_ok());
+
+        // test over max batch mint limit
+        let batch_mint_msg = ExecuteMsg::BatchMint { num_mints: 50 };
+        let res = router.execute_contract(
+            buyer.clone(),
+            sale_addr.clone(),
+            &batch_mint_msg,
+            &coins(PRICE, DENOM),
+        );
+        assert!(res.is_err());
+        let err = res.unwrap_err();
+        assert_eq!("Max batch mint limit exceeded", err.to_string());
+
+        // success
+        let batch_mint_msg = ExecuteMsg::BatchMint { num_mints: 2 };
+        let res = router.execute_contract(
+            buyer.clone(),
+            sale_addr.clone(),
+            &batch_mint_msg,
+            &coins(PRICE, DENOM),
+        );
+        assert!(res.is_ok());
+
+        // test sold out and fails
+        let batch_mint_msg = ExecuteMsg::BatchMint { num_mints: 2 };
+        let res = router.execute_contract(
+            buyer.clone(),
+            sale_addr.clone(),
+            &batch_mint_msg,
+            &coins(PRICE, DENOM),
+        );
+        assert!(res.is_err());
+        let err = res.unwrap_err();
+        assert_eq!("Sold out", err.to_string());
+
+        // batch mint smaller amount
+        let batch_mint_msg = ExecuteMsg::BatchMint { num_mints: 1 };
+        let res = router.execute_contract(buyer, sale_addr, &batch_mint_msg, &coins(PRICE, DENOM));
+        assert!(res.is_ok());
     }
 
     #[test]
