@@ -165,13 +165,13 @@
     "InstantiateMsg": {
       "type": "object",
       "required": [
-        "collection_info",
+        "config",
         "minter",
         "name",
         "symbol"
       ],
       "properties": {
-        "collection_info": {
+        "config": {
           "$ref": "#/definitions/Config"
         },
         "minter": {

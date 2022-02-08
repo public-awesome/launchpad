@@ -9,7 +9,7 @@ pub struct InstantiateMsg {
     pub name: String,
     pub symbol: String,
     pub minter: String,
-    pub collection_info: Config,
+    pub config: Config,
 }
 
 pub type ExecuteMsg = cw721_base::ExecuteMsg<Empty>;

@@ -41,11 +41,11 @@ pub fn instantiate(
         .save(deps.storage, &minter)?;
 
     // Check royalty info is valid
-    if let Some(ref royalty) = msg.collection_info.royalties {
+    if let Some(ref royalty) = msg.config.royalties {
         royalty.is_valid()?;
     }
 
-    CONFIG.save(deps.storage, &msg.collection_info)?;
+    CONFIG.save(deps.storage, &msg.config)?;
 
     Ok(Response::default())
 }
@@ -104,7 +104,7 @@ mod tests {
             name: collection,
             symbol: String::from("BOBO"),
             minter: String::from("minter"),
-            collection_info: Config {
+            config: Config {
                 contract_uri: String::from("https://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json"),
                 creator: Addr::unchecked(creator),
                 royalties: None,
@@ -143,7 +143,7 @@ mod tests {
             name: collection,
             symbol: String::from("BOBO"),
             minter: String::from("minter"),
-            collection_info: Config {
+            config: Config {
                 contract_uri: String::from("https://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json"),
                 creator: Addr::unchecked(creator.clone()),
                 royalties: Some(RoyaltyInfo {

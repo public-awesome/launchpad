@@ -85,7 +85,7 @@ pub fn instantiate(
                 name: msg.sg721_instantiate_msg.name,
                 symbol: msg.sg721_instantiate_msg.symbol,
                 minter: env.contract.address.to_string(),
-                collection_info: msg.sg721_instantiate_msg.collection_info,
+                config: msg.sg721_instantiate_msg.config,
             })?,
             funds: vec![],
             admin: None,
@@ -502,7 +502,7 @@ mod tests {
                 name: String::from("TEST"),
                 symbol: String::from("TEST"),
                 minter: creator.to_string(),
-                collection_info: Config {
+                config: Config {
                     contract_uri: String::from("test"),
                     creator: creator.clone(),
                     royalties: Some(RoyaltyInfo {
@@ -579,7 +579,7 @@ mod tests {
                 name: String::from("TEST"),
                 symbol: String::from("TEST"),
                 minter: info.sender.to_string(),
-                collection_info: Config {
+                config: Config {
                     contract_uri: String::from("test"),
                     creator: info.sender.clone(),
                     royalties: Some(RoyaltyInfo {
