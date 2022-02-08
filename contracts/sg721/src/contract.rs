@@ -11,7 +11,7 @@ use cw721_base::ContractError;
 use crate::msg::{
     ContractUriResponse, CreatorResponse, ExecuteMsg, InstantiateMsg, QueryMsg, RoyaltyResponse,
 };
-use crate::state::COLLECTION_INFO;
+use crate::state::CONFIG;
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sg721";
@@ -45,7 +45,7 @@ pub fn instantiate(
         royalty.is_valid()?;
     }
 
-    COLLECTION_INFO.save(deps.storage, &msg.collection_info)?;
+    CONFIG.save(deps.storage, &msg.collection_info)?;
 
     Ok(Response::default())
 }
@@ -71,17 +71,17 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
 }
 
 fn query_contract_uri(deps: Deps) -> StdResult<ContractUriResponse> {
-    let contract_uri = COLLECTION_INFO.load(deps.storage)?.contract_uri;
+    let contract_uri = CONFIG.load(deps.storage)?.contract_uri;
     Ok(ContractUriResponse { contract_uri })
 }
 
 fn query_creator(deps: Deps) -> StdResult<CreatorResponse> {
-    let creator = COLLECTION_INFO.load(deps.storage)?.creator;
+    let creator = CONFIG.load(deps.storage)?.creator;
     Ok(CreatorResponse { creator })
 }
 
 fn query_royalties(deps: Deps) -> StdResult<RoyaltyResponse> {
-    let royalty = COLLECTION_INFO.load(deps.storage)?.royalties;
+    let royalty = CONFIG.load(deps.storage)?.royalties;
     Ok(RoyaltyResponse { royalty })
 }
 

@@ -32,4 +32,4 @@ impl RoyaltyInfo {
     }
 }
 
-pub const COLLECTION_INFO: Item<Config> = Item::new("collection_info");
+pub const CONFIG: Item<Config> = Item::new("config");
