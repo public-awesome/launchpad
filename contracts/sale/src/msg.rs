@@ -39,6 +39,7 @@ pub enum QueryMsg {
     GetWhitelistAddresses {},
     GetWhitelistExpiration {},
     GetStartTime {},
+    OnWhitelist { address: String },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -72,4 +73,9 @@ pub struct WhitelistExpirationResponse {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct StartTimeResponse {
     pub start_time: String,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct OnWhitelistResponse {
+    pub on_whitelist: bool,
 }

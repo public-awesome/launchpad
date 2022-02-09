@@ -13,8 +13,8 @@ use url::Url;
 
 use crate::error::ContractError;
 use crate::msg::{
-    ConfigResponse, ExecuteMsg, InstantiateMsg, QueryMsg, StartTimeResponse, UpdateWhitelistMsg,
-    WhitelistAddressesResponse, WhitelistExpirationResponse,
+    ConfigResponse, ExecuteMsg, InstantiateMsg, OnWhitelistResponse, QueryMsg, StartTimeResponse,
+    UpdateWhitelistMsg, WhitelistAddressesResponse, WhitelistExpirationResponse,
 };
 use crate::state::{
     Config, CONFIG, NUM_WHITELIST_ADDRS, SG721_ADDRESS, TOKEN_ID_INDEX, WHITELIST_ADDRS,
@@ -371,6 +371,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::GetWhitelistAddresses {} => to_binary(&query_whitelist_addresses(deps)?),
         QueryMsg::GetWhitelistExpiration {} => to_binary(&query_whitelist_expiration(deps)?),
         QueryMsg::GetStartTime {} => to_binary(&query_start_time(deps)?),
+        QueryMsg::OnWhitelist { address } => to_binary(&query_on_whitelist(deps, address)?),
     }
 }
 
@@ -423,6 +424,13 @@ fn query_start_time(deps: Deps) -> StdResult<StartTimeResponse> {
             msg: "start time not found".to_string(),
         })
     }
+}
+
+fn query_on_whitelist(deps: Deps, address: String) -> StdResult<OnWhitelistResponse> {
+    let allowlist = WHITELIST_ADDRS.has(deps.storage, address);
+    Ok(OnWhitelistResponse {
+        on_whitelist: allowlist,
+    })
 }
 
 // Reply callback triggered from cw721 contract instantiation
@@ -750,11 +758,16 @@ mod tests {
         assert!(res.is_ok());
 
         // query whitelist, confirm buyer on allowlist
-        let allowlist: WhitelistAddressesResponse = router
+        let allowlist: OnWhitelistResponse = router
             .wrap()
-            .query_wasm_smart(sale_addr.clone(), &QueryMsg::GetWhitelistAddresses {})
+            .query_wasm_smart(
+                sale_addr.clone(),
+                &QueryMsg::OnWhitelist {
+                    address: "buyer".to_string(),
+                },
+            )
             .unwrap();
-        assert!(allowlist.addresses.contains(&"buyer".to_string()));
+        assert!(allowlist.on_whitelist);
 
         // query whitelist_expiration, confirm not expired
         let expiration: WhitelistExpirationResponse = router
