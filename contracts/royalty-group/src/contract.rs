@@ -1,8 +1,8 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    attr, to_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Order, Response, StdResult,
-    SubMsg,
+    attr, coin, to_binary, Addr, BankMsg, Binary, Coin, Deps, DepsMut, Env, MessageInfo, Order,
+    Response, StdResult, SubMsg, Uint128,
 };
 use cw0::maybe_addr;
 use cw2::set_contract_version;
@@ -82,6 +82,7 @@ pub fn execute(
         ExecuteMsg::RemoveHook { addr } => {
             Ok(HOOKS.execute_remove_hook(&ADMIN, deps, info, api.addr_validate(&addr)?)?)
         }
+        ExecuteMsg::Distribute { funds } => execute_distribute_funds(deps, info, funds),
     }
 }
 
@@ -147,6 +148,34 @@ pub fn update_members(
 
     TOTAL.save(deps.storage, &total)?;
     Ok(MemberChangedHookMsg { diffs })
+}
+
+pub fn execute_distribute_funds(
+    deps: DepsMut,
+    info: MessageInfo,
+    funds: Coin,
+) -> Result<Response, ContractError> {
+    let messages: StdResult<Vec<_>> = MEMBERS
+        .range(deps.storage, None, None, Order::Ascending)
+        .map(|member| {
+            let (key, weight) = member?;
+            let amount = funds.amount.checked_mul(Uint128::from(weight))?;
+            Ok(BankMsg::Send {
+                to_address: key.to_string(),
+                amount: vec![coin(Uint128::u128(&amount), funds.denom.clone())],
+            })
+        })
+        .collect();
+
+    let attributes = vec![
+        attr("action", "distribute_funds"),
+        attr("funds", funds.to_string()),
+        attr("sender", &info.sender),
+    ];
+
+    Ok(Response::new()
+        .add_messages(messages?)
+        .add_attributes(attributes))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
