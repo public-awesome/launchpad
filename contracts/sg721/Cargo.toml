@@ -1,7 +1,7 @@
 [package]
 name = "sg721"
 version = "0.1.0"
-authors = ["Shane Vitarana <s@publicawesome.com>"]
+authors = ["Shane Vitarana <shanev@users.noreply.github.com>"]
 edition = "2018"
 
 exclude = [

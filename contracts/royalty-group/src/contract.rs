@@ -198,7 +198,7 @@ fn list_members(
         .map(|item| {
             let (key, weight) = item?;
             Ok(Member {
-                addr: String::from_utf8(key)?,
+                addr: key.to_string(),
                 weight,
             })
         })

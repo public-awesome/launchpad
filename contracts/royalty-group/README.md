@@ -1,4 +1,4 @@
-# CW4 Group
+# Royalty Group
 
 This is a basic implementation of the [cw4 spec](../../packages/cw4/README.md).
 It fulfills all elements of the spec, including the raw query lookups,
@@ -32,7 +32,7 @@ Members are defined by an address and a weight. This is transformed
 and stored under their `CanonicalAddr`, in a format defined in
 [cw4 raw queries](../../packages/cw4/README.md#raw).
 
-Note that 0 *is an allowed weight*. This doesn't give any voting rights, but
+Note that 0 _is an allowed weight_. This doesn't give any voting rights, but
 it does define this address is part of the group. This could be used in
 e.g. a KYC whitelist to say they are allowed, but cannot participate in
 decision-making.
@@ -48,4 +48,3 @@ Basic update messages, queries, and hooks are defined by the
 members, as well as removing any provided addresses. If an address is on both
 lists, it will be removed. If it appears multiple times in `add`, only the
 last occurrence will be used.
-

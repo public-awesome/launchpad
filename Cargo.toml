@@ -13,6 +13,14 @@ incremental = false
 codegen-units = 1
 incremental = false
 
+[profile.release.package.sale]
+codegen-units = 1
+incremental = false
+
+[profile.release.package.royalty-group]
+codegen-units = 1
+incremental = false
+
 [profile.release.package.sg-utils]
 codegen-units = 1
 incremental = false
