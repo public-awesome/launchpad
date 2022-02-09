@@ -4,7 +4,7 @@ use cw_controllers::{Admin, Hooks};
 use cw_storage_plus::{Item, SnapshotMap, Strategy};
 
 pub const ADMIN: Admin = Admin::new("admin");
-pub const HOOKS: Hooks = Hooks::new("cw4-hooks");
+pub const HOOKS: Hooks = Hooks::new("royalty-group-hooks");
 
 pub const TOTAL: Item<u64> = Item::new(TOTAL_KEY);
 

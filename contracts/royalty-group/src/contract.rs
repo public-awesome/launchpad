@@ -17,7 +17,7 @@ use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 use crate::state::{ADMIN, HOOKS, MEMBERS, TOTAL};
 
 // version info for migration info
-const CONTRACT_NAME: &str = "crates.io:cw4-group";
+const CONTRACT_NAME: &str = "crates.io:royalty-group";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 // Note, you can use StdResult in some functions where you do not
