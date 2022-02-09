@@ -592,6 +592,6 @@ mod tests {
         let funds = coin(123u128, "ustars");
         let admin_info = mock_info(INIT_ADMIN, &[]);
         let msg = ExecuteMsg::Distribute { funds };
-        execute(deps.as_mut(), mock_env(), admin_info.clone(), msg).unwrap();
+        execute(deps.as_mut(), mock_env(), admin_info, msg).unwrap();
     }
 }
