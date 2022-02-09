@@ -583,4 +583,15 @@ mod tests {
         let member3_raw = deps.storage.get(&member_key(USER3));
         assert_eq!(None, member3_raw);
     }
+
+    #[test]
+    fn check_distribute_funds() {
+        let mut deps = mock_dependencies();
+        do_instantiate(deps.as_mut());
+
+        let funds = coin(123u128, "ustars");
+        let admin_info = mock_info(INIT_ADMIN, &[]);
+        let msg = ExecuteMsg::Distribute { funds };
+        execute(deps.as_mut(), mock_env(), admin_info.clone(), msg).unwrap();
+    }
 }

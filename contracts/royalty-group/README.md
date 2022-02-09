@@ -5,3 +5,4 @@ This is a fork of [cw4-group](https://github.com/CosmWasm/cw-plus/tree/main/pack
 // TODO:
 [] validate weights add up to 100 percent
 [] limit members in group
+[] unit test
