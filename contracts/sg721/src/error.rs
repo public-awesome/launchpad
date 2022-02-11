@@ -10,6 +10,9 @@ pub enum ContractError {
     #[error("Unauthorized")]
     Unauthorized {},
 
+    #[error("Insufficient creation fee")]
+    InsufficientCreationFee {},
+
     #[error("token_id already claimed")]
     Claimed {},
 

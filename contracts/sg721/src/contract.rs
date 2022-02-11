@@ -1,12 +1,13 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult,
+    coin, has_coins, to_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult,
 };
 use cw2::set_contract_version;
 
+use crate::ContractError;
 use cw721::ContractInfoResponse;
-use cw721_base::ContractError;
+use cw721_base::ContractError as BaseError;
 
 use crate::msg::{
     ContractUriResponse, CreatorResponse, ExecuteMsg, InstantiateMsg, QueryMsg, RoyaltyResponse,
@@ -17,16 +18,30 @@ use crate::state::CONFIG;
 const CONTRACT_NAME: &str = "crates.io:sg721";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
+// TODO: this should be a governance parameter in the future
+const CREATION_FEE: u128 = 1_000_000_000;
+const FEE_DENOM: &str = "ustars";
+
 pub type Sg721Contract<'a> = cw721_base::Cw721Contract<'a, Empty, Empty>;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
     _env: Env,
-    _info: MessageInfo,
+    info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+
+    // Check funds sent is correct amount
+    if !has_coins(&info.funds, &coin(CREATION_FEE, FEE_DENOM)) {
+        return Err(ContractError::InsufficientCreationFee {});
+    }
+
+    // charge creation fee
+
+    // burn half the fee
+    // send the rest to the community pool
 
     let info = ContractInfoResponse {
         name: msg.name,
@@ -56,7 +71,7 @@ pub fn execute(
     env: Env,
     info: MessageInfo,
     msg: ExecuteMsg,
-) -> Result<Response, ContractError> {
+) -> Result<Response, BaseError> {
     Sg721Contract::default().execute(deps, env, info, msg)
 }
 
