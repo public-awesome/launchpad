@@ -620,6 +620,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a3e378b66a060d48947b590737b30a1be76706c8dd7b8ba0f2fe3989c68a853f"
 
 [[package]]
+name = "minter"
+version = "0.1.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std 1.0.0-beta4",
+ "cosmwasm-storage",
+ "cw-multi-test",
+ "cw-storage-plus",
+ "cw-utils",
+ "cw2",
+ "cw721",
+ "cw721-base",
+ "schemars",
+ "serde",
+ "sg721",
+ "thiserror",
+ "url",
+]
+
+[[package]]
 name = "opaque-debug"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -839,26 +859,6 @@ dependencies = [
  "schemars",
  "serde",
  "thiserror",
-]
-
-[[package]]
-name = "sg721-sale"
-version = "0.1.0"
-dependencies = [
- "cosmwasm-schema",
- "cosmwasm-std 1.0.0-beta4",
- "cosmwasm-storage",
- "cw-multi-test",
- "cw-storage-plus",
- "cw-utils",
- "cw2",
- "cw721",
- "cw721-base",
- "schemars",
- "serde",
- "sg721",
- "thiserror",
- "url",
 ]
 
 [[package]]
