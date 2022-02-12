@@ -1,8 +1,8 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coin, has_coins, to_binary, BankMsg, Binary, Decimal, Deps, DepsMut, Empty, Env, MessageInfo,
-    Response, StdResult, Uint128,
+    coin, has_coins, to_binary, BankMsg, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut, Empty,
+    Env, MessageInfo, Response, StdResult, Uint128, WasmMsg,
 };
 use cw2::set_contract_version;
 
@@ -26,6 +26,19 @@ const CREATION_FEE_BURN_PERCENT: u64 = 50;
 
 pub type Sg721Contract<'a> = cw721_base::Cw721Contract<'a, Empty, Empty>;
 
+// message MsgFundCommunityPool {
+//     option (gogoproto.equal)           = false;
+//     option (gogoproto.goproto_getters) = false;
+
+//     repeated cosmos.base.v1beta1.Coin amount = 1
+//         [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"];
+//     string depositor = 2;
+//   }
+pub struct MsgFundCommunityPool {
+    pub amount: Vec<Coin>,
+    pub depositor: String,
+}
+
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
@@ -38,6 +51,7 @@ pub fn instantiate(
     if !has_coins(&info.funds, &coin(CREATION_FEE, FEE_DENOM)) {
         return Err(ContractError::InsufficientCreationFee {});
     }
+
     // burn half the fee
     let burn_percent = Decimal::percent(CREATION_FEE_BURN_PERCENT);
     let creation_fee = Uint128::from(CREATION_FEE);
@@ -46,7 +60,13 @@ pub fn instantiate(
     let fee_burn_msg = BankMsg::Burn {
         amount: vec![burn_coin],
     };
-    // send the rest to the community pool
+
+    // // send the rest to the community pool
+    // let fund_community_pool_msg = CosmosMsg::Custom(MsgFundCommunityPool {
+    //     amount: vec![coin(creation_fee.u128() - burn_fee.u128(), FEE_DENOM)],
+    //     depositor: msg.minter.to_string(),
+    // });
+    // // TODO: add msg + router
 
     let info = ContractInfoResponse {
         name: msg.name,
@@ -67,6 +87,7 @@ pub fn instantiate(
         CONFIG.save(deps.storage, config)?;
     }
 
+    // TODO: add community pool fund msg
     Ok(Response::default().add_message(fee_burn_msg))
 }
 
