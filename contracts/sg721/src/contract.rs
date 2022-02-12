@@ -1,7 +1,8 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coin, has_coins, to_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult,
+    coin, has_coins, to_binary, BankMsg, Binary, Decimal, Deps, DepsMut, Empty, Env, MessageInfo,
+    Response, StdResult, Uint128,
 };
 use cw2::set_contract_version;
 
@@ -18,9 +19,10 @@ use crate::state::CONFIG;
 const CONTRACT_NAME: &str = "crates.io:sg721";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-// TODO: this should be a governance parameter in the future
-const CREATION_FEE: u128 = 1_000_000_000;
+// TODO: these should be a governance parameters in the future
 const FEE_DENOM: &str = "ustars";
+const CREATION_FEE: u128 = 1_000_000_000;
+const CREATION_FEE_BURN_PERCENT: u64 = 50;
 
 pub type Sg721Contract<'a> = cw721_base::Cw721Contract<'a, Empty, Empty>;
 
@@ -33,14 +35,17 @@ pub fn instantiate(
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
-    // Check funds sent is correct amount
     if !has_coins(&info.funds, &coin(CREATION_FEE, FEE_DENOM)) {
         return Err(ContractError::InsufficientCreationFee {});
     }
-
-    // charge creation fee
-
     // burn half the fee
+    let burn_percent = Decimal::percent(CREATION_FEE_BURN_PERCENT);
+    let creation_fee = Uint128::from(CREATION_FEE);
+    let burn_fee = creation_fee * burn_percent;
+    let burn_coin = coin(burn_fee.u128(), FEE_DENOM);
+    let fee_burn_msg = BankMsg::Burn {
+        amount: vec![burn_coin],
+    };
     // send the rest to the community pool
 
     let info = ContractInfoResponse {
@@ -62,7 +67,7 @@ pub fn instantiate(
         CONFIG.save(deps.storage, config)?;
     }
 
-    Ok(Response::default())
+    Ok(Response::default().add_message(fee_burn_msg))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -194,5 +199,14 @@ mod tests {
             }),
             value.royalty
         );
+    }
+
+    #[test]
+    fn creation_fee() {
+        let burn_percent = Decimal::percent(50);
+        let creation_fee = Uint128::from(1_000_000_000u128);
+        let fee = creation_fee * burn_percent;
+        let amount = coin(fee.u128(), "ustars");
+        assert_eq!(500_000_000u128, amount.amount.u128());
     }
 }
