@@ -1,1 +1,0 @@
-# NFT Sale Contract
