@@ -77,7 +77,7 @@ pub fn instantiate(
         whitelist_expiration: msg.whitelist_expiration,
         start_time: msg.start_time,
         per_address_limit: msg.per_address_limit,
-        batch_mint_limit: batch_mint_limit,
+        batch_mint_limit,
     };
     CONFIG.save(deps.storage, &config)?;
 
