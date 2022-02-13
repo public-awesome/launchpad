@@ -113,7 +113,7 @@ pub fn instantiate(
     }];
 
     Ok(Response::new()
-        .add_attribute("method", "instantiate")
+        .add_attribute("method", "instantiated_minter")
         .add_submessages(sub_msgs))
 }
 
@@ -256,7 +256,9 @@ pub fn execute_mint(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Respon
             msgs.append(&mut vec![seller_share_msg.into()]);
         }
     }
-    Ok(Response::default().add_messages(msgs))
+    Ok(Response::default()
+        .add_attribute("method", "executed_mint")
+        .add_messages(msgs))
 }
 
 pub fn execute_mint_for(
@@ -295,7 +297,9 @@ pub fn execute_mint_for(
     token_id_index += 1;
     TOKEN_ID_INDEX.save(deps.storage, &token_id_index)?;
 
-    Ok(Response::default().add_message(msg))
+    Ok(Response::default()
+        .add_attribute("method", "executed_mint_for")
+        .add_message(msg))
 }
 
 pub fn execute_batch_mint(
@@ -515,7 +519,7 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractE
     match reply {
         Ok(res) => {
             SG721_ADDRESS.save(deps.storage, &Addr::unchecked(res.contract_address))?;
-            Ok(Response::default())
+            Ok(Response::default().add_attribute("method", "instantiated sg721"))
         }
         Err(_) => Err(ContractError::InstantiateSg721Error {}),
     }
