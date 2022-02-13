@@ -297,20 +297,20 @@ pub fn execute_batch_mint(
     num_mints: u64,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
-    // Check batch mint limit
-    if let Some(batch_mint_limit) = config.batch_mint_limit {
-        if num_mints <= batch_mint_limit {
-            for _ in 0..num_mints {
-                execute_mint(deps.branch(), env.clone(), info.clone())?;
-            }
-        } else {
-            return Err(ContractError::MaxBatchLimitLimitExceeded {});
-        }
-    } else {
+
+    let mint_limit = config
+        .batch_mint_limit
+        .ok_or(ContractError::MaxBatchLimitLimitExceeded {})?;
+
+    if num_mints > mint_limit {
         return Err(ContractError::MaxBatchLimitLimitExceeded {});
     }
 
-    Ok(Response::new())
+    for _ in 0..num_mints {
+        execute_mint(deps.branch(), env.clone(), info.clone())?;
+    }
+
+    Ok(Response::default())
 }
 
 pub fn execute_update_whitelist(
