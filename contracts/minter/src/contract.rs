@@ -28,6 +28,7 @@ const INSTANTIATE_SG721_REPLY_ID: u64 = 1;
 const MAX_WHITELIST_ADDRS_LENGTH: u32 = 15000;
 const MAX_PER_ADDRESS_LIMIT: u64 = 30;
 const MAX_BATCH_MINT_LIMIT: u64 = 30;
+const STARTING_BATCH_MINT_LIMIT: u64 = 5;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -64,6 +65,9 @@ pub fn instantiate(
         return Err(ContractError::InvalidBaseTokenURI {});
     }
 
+    // Initially set batch_mint_limit if no msg
+    let batch_mint_limit: Option<u64> = msg.batch_mint_limit.or(Some(STARTING_BATCH_MINT_LIMIT));
+
     let config = Config {
         admin: info.sender,
         base_token_uri: msg.base_token_uri,
@@ -73,7 +77,7 @@ pub fn instantiate(
         whitelist_expiration: msg.whitelist_expiration,
         start_time: msg.start_time,
         per_address_limit: msg.per_address_limit,
-        batch_mint_limit: msg.batch_mint_limit,
+        batch_mint_limit: batch_mint_limit,
     };
     CONFIG.save(deps.storage, &config)?;
 
