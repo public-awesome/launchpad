@@ -25,8 +25,8 @@ pub enum ContractError {
     #[error("Invalid base token URI (must be an IPFS URI)")]
     InvalidBaseTokenURI {},
 
-    #[error("address not on whitelist")]
-    NotWhitelisted {},
+    #[error("address not on whitelist: {addr}")]
+    NotWhitelisted { addr: String },
 
     #[error("Max whitelist addresses list exceeds max length")]
     MaxWhitelistAddressLengthExceeded {},
@@ -34,14 +34,14 @@ pub enum ContractError {
     #[error("Minting has not started yet")]
     BeforeMintStartTime {},
 
-    #[error("Invalid minting limit per address. Max limit is 30.")]
-    InvalidPerAddressLimit {},
+    #[error("Invalid minting limit per address. max: 30, got: {got}")]
+    InvalidPerAddressLimit { max: String, got: String },
 
     #[error("Max minting limit per address exceeded")]
     MaxPerAddressLimitExceeded {},
 
-    #[error("Invalid batch mint limit. Max limit is 30.")]
-    InvalidBatchMintLimit {},
+    #[error("Invalid batch mint limit. max: 30, got: {got}")]
+    InvalidBatchMintLimit { max: String, got: String },
 
     #[error("Max batch mint limit exceeded")]
     MaxBatchLimitLimitExceeded {},
