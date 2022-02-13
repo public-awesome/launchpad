@@ -13,15 +13,15 @@ use url::Url;
 
 use crate::error::ContractError;
 use crate::msg::{
-    ConfigResponse, ExecuteMsg, InstantiateMsg, QueryMsg, StartTimeResponse, UpdateWhitelistMsg,
-    WhitelistAddressesResponse, WhitelistExpirationResponse,
+    ConfigResponse, ExecuteMsg, InstantiateMsg, OnWhitelistResponse, QueryMsg, StartTimeResponse,
+    UpdateWhitelistMsg, WhitelistAddressesResponse, WhitelistExpirationResponse,
 };
 use crate::state::{
     Config, CONFIG, NUM_WHITELIST_ADDRS, SG721_ADDRESS, TOKEN_ID_INDEX, WHITELIST_ADDRS,
 };
 
 // version info for migration info
-const CONTRACT_NAME: &str = "crates.io:sale";
+const CONTRACT_NAME: &str = "crates.io:minter";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 const INSTANTIATE_SG721_REPLY_ID: u64 = 1;
@@ -94,7 +94,7 @@ pub fn instantiate(
                 name: msg.sg721_instantiate_msg.name,
                 symbol: msg.sg721_instantiate_msg.symbol,
                 minter: env.contract.address.to_string(),
-                collection_info: msg.sg721_instantiate_msg.collection_info,
+                config: msg.sg721_instantiate_msg.config,
             })?,
             funds: vec![],
             admin: None,
@@ -425,6 +425,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::GetWhitelistAddresses {} => to_binary(&query_whitelist_addresses(deps)?),
         QueryMsg::GetWhitelistExpiration {} => to_binary(&query_whitelist_expiration(deps)?),
         QueryMsg::GetStartTime {} => to_binary(&query_start_time(deps)?),
+        QueryMsg::OnWhitelist { address } => to_binary(&query_on_whitelist(deps, address)?),
     }
 }
 
@@ -480,6 +481,13 @@ fn query_start_time(deps: Deps) -> StdResult<StartTimeResponse> {
     }
 }
 
+fn query_on_whitelist(deps: Deps, address: String) -> StdResult<OnWhitelistResponse> {
+    let allowlist = WHITELIST_ADDRS.has(deps.storage, address);
+    Ok(OnWhitelistResponse {
+        on_whitelist: allowlist,
+    })
+}
+
 // Reply callback triggered from cw721 contract instantiation
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
@@ -504,7 +512,7 @@ mod tests {
     use cosmwasm_std::{coin, coins, Decimal, Timestamp};
     use cw721::{Cw721QueryMsg, OwnerOfResponse};
     use cw_multi_test::{App, BankSudo, Contract, ContractWrapper, Executor, SudoMsg};
-    use sg721::state::{CollectionInfo, RoyaltyInfo};
+    use sg721::state::{Config, RoyaltyInfo};
 
     const DENOM: &str = "ustars";
     const INITIAL_BALANCE: u128 = 2000;
@@ -514,7 +522,7 @@ mod tests {
         App::default()
     }
 
-    pub fn contract_sale() -> Box<dyn Contract<Empty>> {
+    pub fn contract_minter() -> Box<dyn Contract<Empty>> {
         let contract = ContractWrapper::new(
             crate::contract::execute,
             crate::contract::instantiate,
@@ -534,14 +542,14 @@ mod tests {
     }
 
     // Upload contract code and instantiate sale contract
-    fn setup_sale_contract(
+    fn setup_minter_contract(
         router: &mut App,
         creator: &Addr,
         num_tokens: u64,
     ) -> Result<(Addr, ConfigResponse), ContractError> {
         // Upload contract code
         let sg721_code_id = router.store_code(contract_sg721());
-        let sale_code_id = router.store_code(contract_sale());
+        let minter_code_id = router.store_code(contract_minter());
 
         // Instantiate sale contract
         let msg = InstantiateMsg {
@@ -558,26 +566,26 @@ mod tests {
                 name: String::from("TEST"),
                 symbol: String::from("TEST"),
                 minter: creator.to_string(),
-                collection_info: CollectionInfo {
-                    contract_uri: String::from("test"),
-                    creator: creator.clone(),
+                config: Some(Config {
+                    contract_uri: Some(String::from("test")),
+                    creator: Some(creator.clone()),
                     royalties: Some(RoyaltyInfo {
                         payment_address: creator.clone(),
                         share: Decimal::percent(10),
                     }),
-                },
+                }),
             },
         };
-        let sale_addr = router
-            .instantiate_contract(sale_code_id, creator.clone(), &msg, &[], "Sale", None)
+        let minter_addr = router
+            .instantiate_contract(minter_code_id, creator.clone(), &msg, &[], "Minter", None)
             .unwrap();
 
         let config: ConfigResponse = router
             .wrap()
-            .query_wasm_smart(sale_addr.clone(), &QueryMsg::GetConfig {})
+            .query_wasm_smart(minter_addr.clone(), &QueryMsg::GetConfig {})
             .unwrap();
 
-        Ok((sale_addr, config))
+        Ok((minter_addr, config))
     }
 
     // Add a creator account with initial balances
@@ -636,14 +644,14 @@ mod tests {
                 name: String::from("TEST"),
                 symbol: String::from("TEST"),
                 minter: info.sender.to_string(),
-                collection_info: CollectionInfo {
-                    contract_uri: String::from("test"),
-                    creator: info.sender.clone(),
+                config: Some(Config {
+                    contract_uri: Some(String::from("test")),
+                    creator: Some(info.sender.clone()),
                     royalties: Some(RoyaltyInfo {
                         payment_address: info.sender.clone(),
                         share: Decimal::percent(10),
                     }),
-                },
+                }),
             },
         };
         let res = instantiate(deps.as_mut(), mock_env(), info, msg);
@@ -655,13 +663,14 @@ mod tests {
         let mut router = mock_app();
         let (creator, buyer) = setup_accounts(&mut router).unwrap();
         let num_tokens: u64 = 2;
-        let (sale_addr, config) = setup_sale_contract(&mut router, &creator, num_tokens).unwrap();
+        let (minter_addr, config) =
+            setup_minter_contract(&mut router, &creator, num_tokens).unwrap();
 
         // Succeeds if funds are sent
         let mint_msg = ExecuteMsg::Mint {};
         let res = router.execute_contract(
             buyer.clone(),
-            sale_addr.clone(),
+            minter_addr.clone(),
             &mint_msg,
             &coins(PRICE, DENOM),
         );
@@ -693,7 +702,7 @@ mod tests {
         };
         let res = router.execute_contract(
             buyer.clone(),
-            sale_addr.clone(),
+            minter_addr.clone(),
             &mint_for_msg,
             &coins(PRICE, DENOM),
         );
@@ -702,7 +711,7 @@ mod tests {
         // Creator mints an extra NFT for the buyer (who is a friend)
         let res = router.execute_contract(
             creator.clone(),
-            sale_addr.clone(),
+            minter_addr.clone(),
             &mint_for_msg,
             &coins(PRICE, DENOM),
         );
@@ -722,11 +731,12 @@ mod tests {
         // Errors if sold out
         let mint_msg = ExecuteMsg::Mint {};
         let res =
-            router.execute_contract(buyer, sale_addr.clone(), &mint_msg, &coins(PRICE, DENOM));
+            router.execute_contract(buyer, minter_addr.clone(), &mint_msg, &coins(PRICE, DENOM));
         assert!(res.is_err());
 
         // Creator can't use MintFor if sold out
-        let res = router.execute_contract(creator, sale_addr, &mint_for_msg, &coins(PRICE, DENOM));
+        let res =
+            router.execute_contract(creator, minter_addr, &mint_for_msg, &coins(PRICE, DENOM));
         assert!(res.is_err());
     }
 
@@ -735,7 +745,8 @@ mod tests {
         let mut router = mock_app();
         let (creator, buyer) = setup_accounts(&mut router).unwrap();
         let num_tokens: u64 = 1;
-        let (sale_addr, _config) = setup_sale_contract(&mut router, &creator, num_tokens).unwrap();
+        let (minter_addr, _config) =
+            setup_minter_contract(&mut router, &creator, num_tokens).unwrap();
         const EXPIRATION_TIME: Timestamp = Timestamp::from_seconds(100000 + 10);
 
         // set block info
@@ -747,7 +758,7 @@ mod tests {
         let whitelist_msg = ExecuteMsg::UpdateWhitelistExpiration(Expiration::Never {});
         let res = router.execute_contract(
             buyer.clone(),
-            sale_addr.clone(),
+            minter_addr.clone(),
             &whitelist_msg,
             &coins(PRICE, DENOM),
         );
@@ -758,7 +769,7 @@ mod tests {
             ExecuteMsg::UpdateWhitelistExpiration(Expiration::AtTime(EXPIRATION_TIME));
         let res = router.execute_contract(
             creator.clone(),
-            sale_addr.clone(),
+            minter_addr.clone(),
             &whitelist_msg,
             &coins(PRICE, DENOM),
         );
@@ -768,7 +779,7 @@ mod tests {
         let mint_msg = ExecuteMsg::Mint {};
         let res = router.execute_contract(
             buyer.clone(),
-            sale_addr.clone(),
+            minter_addr.clone(),
             &mint_msg,
             &coins(PRICE, DENOM),
         );
@@ -785,7 +796,7 @@ mod tests {
         let update_whitelist_msg = ExecuteMsg::UpdateWhitelist(add_whitelist_msg);
         let res = router.execute_contract(
             creator.clone(),
-            sale_addr.clone(),
+            minter_addr.clone(),
             &update_whitelist_msg,
             &coins(PRICE, DENOM),
         );
@@ -800,23 +811,28 @@ mod tests {
         let update_whitelist_msg = ExecuteMsg::UpdateWhitelist(add_whitelist_msg);
         let res = router.execute_contract(
             creator.clone(),
-            sale_addr.clone(),
+            minter_addr.clone(),
             &update_whitelist_msg,
             &coins(PRICE, DENOM),
         );
         assert!(res.is_ok());
 
         // query whitelist, confirm buyer on allowlist
-        let allowlist: WhitelistAddressesResponse = router
+        let allowlist: OnWhitelistResponse = router
             .wrap()
-            .query_wasm_smart(sale_addr.clone(), &QueryMsg::GetWhitelistAddresses {})
+            .query_wasm_smart(
+                minter_addr.clone(),
+                &QueryMsg::OnWhitelist {
+                    address: "buyer".to_string(),
+                },
+            )
             .unwrap();
-        assert!(allowlist.addresses.contains(&"buyer".to_string()));
+        assert!(allowlist.on_whitelist);
 
         // query whitelist_expiration, confirm not expired
         let expiration: WhitelistExpirationResponse = router
             .wrap()
-            .query_wasm_smart(sale_addr.clone(), &QueryMsg::GetWhitelistExpiration {})
+            .query_wasm_smart(minter_addr.clone(), &QueryMsg::GetWhitelistExpiration {})
             .unwrap();
         assert_eq!(
             "expiration time: ".to_owned() + &EXPIRATION_TIME.to_string(),
@@ -827,7 +843,7 @@ mod tests {
         let mint_msg = ExecuteMsg::Mint {};
         let res = router.execute_contract(
             buyer.clone(),
-            sale_addr.clone(),
+            minter_addr.clone(),
             &mint_msg,
             &coins(PRICE, DENOM),
         );
@@ -842,7 +858,7 @@ mod tests {
         let update_whitelist_msg = ExecuteMsg::UpdateWhitelist(remove_whitelist_msg);
         let res = router.execute_contract(
             creator.clone(),
-            sale_addr.clone(),
+            minter_addr.clone(),
             &update_whitelist_msg,
             &coins(PRICE, DENOM),
         );
@@ -850,7 +866,7 @@ mod tests {
 
         // mint fails
         let mint_msg = ExecuteMsg::Mint {};
-        let res = router.execute_contract(buyer, sale_addr, &mint_msg, &coins(PRICE, DENOM));
+        let res = router.execute_contract(buyer, minter_addr, &mint_msg, &coins(PRICE, DENOM));
         assert!(res.is_err());
     }
 
@@ -859,7 +875,8 @@ mod tests {
         let mut router = mock_app();
         let (creator, buyer) = setup_accounts(&mut router).unwrap();
         let num_tokens: u64 = 1;
-        let (sale_addr, _config) = setup_sale_contract(&mut router, &creator, num_tokens).unwrap();
+        let (minter_addr, _config) =
+            setup_minter_contract(&mut router, &creator, num_tokens).unwrap();
         const START_TIME: Timestamp = Timestamp::from_seconds(100000 + 10);
 
         // set block info
@@ -871,7 +888,7 @@ mod tests {
         let start_time_msg = ExecuteMsg::UpdateStartTime(Expiration::Never {});
         let res = router.execute_contract(
             buyer.clone(),
-            sale_addr.clone(),
+            minter_addr.clone(),
             &start_time_msg,
             &coins(PRICE, DENOM),
         );
@@ -881,7 +898,7 @@ mod tests {
         let start_time_msg = ExecuteMsg::UpdateStartTime(Expiration::AtTime(START_TIME));
         let res = router.execute_contract(
             creator.clone(),
-            sale_addr.clone(),
+            minter_addr.clone(),
             &start_time_msg,
             &coins(PRICE, DENOM),
         );
@@ -890,7 +907,7 @@ mod tests {
         let mint_msg = ExecuteMsg::Mint {};
         let res = router.execute_contract(
             buyer.clone(),
-            sale_addr.clone(),
+            minter_addr.clone(),
             &mint_msg,
             &coins(PRICE, DENOM),
         );
@@ -899,7 +916,7 @@ mod tests {
         // query start_time, confirm expired
         let start_time_response: StartTimeResponse = router
             .wrap()
-            .query_wasm_smart(sale_addr.clone(), &QueryMsg::GetStartTime {})
+            .query_wasm_smart(minter_addr.clone(), &QueryMsg::GetStartTime {})
             .unwrap();
         assert_eq!(
             "expiration time: ".to_owned() + &START_TIME.to_string(),
@@ -913,7 +930,7 @@ mod tests {
 
         // mint succeeds
         let mint_msg = ExecuteMsg::Mint {};
-        let res = router.execute_contract(buyer, sale_addr, &mint_msg, &coins(PRICE, DENOM));
+        let res = router.execute_contract(buyer, minter_addr, &mint_msg, &coins(PRICE, DENOM));
         assert!(res.is_ok());
     }
 
@@ -922,7 +939,8 @@ mod tests {
         let mut router = mock_app();
         let (creator, buyer) = setup_accounts(&mut router).unwrap();
         let num_tokens = 2;
-        let (sale_addr, _config) = setup_sale_contract(&mut router, &creator, num_tokens).unwrap();
+        let (minter_addr, _config) =
+            setup_minter_contract(&mut router, &creator, num_tokens).unwrap();
 
         // set limit, check unauthorized
         let per_address_limit_msg = ExecuteMsg::UpdatePerAddressLimit {
@@ -930,7 +948,7 @@ mod tests {
         };
         let res = router.execute_contract(
             buyer.clone(),
-            sale_addr.clone(),
+            minter_addr.clone(),
             &per_address_limit_msg,
             &coins(PRICE, DENOM),
         );
@@ -942,7 +960,7 @@ mod tests {
         };
         let res = router.execute_contract(
             creator.clone(),
-            sale_addr.clone(),
+            minter_addr.clone(),
             &per_address_limit_msg,
             &coins(PRICE, DENOM),
         );
@@ -954,7 +972,7 @@ mod tests {
         };
         let res = router.execute_contract(
             creator.clone(),
-            sale_addr.clone(),
+            minter_addr.clone(),
             &per_address_limit_msg,
             &coins(PRICE, DENOM),
         );
@@ -964,7 +982,7 @@ mod tests {
         let mint_msg = ExecuteMsg::Mint {};
         let res = router.execute_contract(
             buyer.clone(),
-            sale_addr.clone(),
+            minter_addr.clone(),
             &mint_msg,
             &coins(PRICE, DENOM),
         );
@@ -972,7 +990,7 @@ mod tests {
 
         // second mint fails from exceeding per address limit
         let mint_msg = ExecuteMsg::Mint {};
-        let res = router.execute_contract(buyer, sale_addr, &mint_msg, &coins(PRICE, DENOM));
+        let res = router.execute_contract(buyer, minter_addr, &mint_msg, &coins(PRICE, DENOM));
         assert!(res.is_err());
     }
 
@@ -1083,13 +1101,14 @@ mod tests {
         let mut router = mock_app();
         let (creator, buyer) = setup_accounts(&mut router).unwrap();
         let num_tokens: u64 = 1;
-        let (sale_addr, _config) = setup_sale_contract(&mut router, &creator, num_tokens).unwrap();
+        let (minter_addr, _config) =
+            setup_minter_contract(&mut router, &creator, num_tokens).unwrap();
 
         // Fails if too little funds are sent
         let mint_msg = ExecuteMsg::Mint {};
         let res = router.execute_contract(
             buyer.clone(),
-            sale_addr.clone(),
+            minter_addr.clone(),
             &mint_msg,
             &coins(1, DENOM),
         );
@@ -1099,7 +1118,7 @@ mod tests {
         let mint_msg = ExecuteMsg::Mint {};
         let res = router.execute_contract(
             buyer.clone(),
-            sale_addr.clone(),
+            minter_addr.clone(),
             &mint_msg,
             &coins(11111, DENOM),
         );
@@ -1107,7 +1126,7 @@ mod tests {
 
         // Fails wrong denom is sent
         let mint_msg = ExecuteMsg::Mint {};
-        let res = router.execute_contract(buyer, sale_addr, &mint_msg, &coins(PRICE, "uatom"));
+        let res = router.execute_contract(buyer, minter_addr, &mint_msg, &coins(PRICE, "uatom"));
         assert!(res.is_err());
     }
 }

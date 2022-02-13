@@ -1,5 +1,5 @@
 [package]
-name = "sg721-sale"
+name = "minter"
 version = "0.1.0"
 authors = ["Jake Hartnell <jake@stargaze.zone>"]
 edition = "2018"

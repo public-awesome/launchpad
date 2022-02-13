@@ -1,13 +1,15 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Config",
+  "title": "ConfigResponse",
   "type": "object",
   "required": [
     "admin",
     "base_token_uri",
     "num_tokens",
+    "sg721_address",
     "sg721_code_id",
-    "unit_price"
+    "unit_price",
+    "unused_token_id"
   ],
   "properties": {
     "admin": {
@@ -21,6 +23,17 @@
       "format": "uint64",
       "minimum": 0.0
     },
+    "per_address_limit": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "format": "uint64",
+      "minimum": 0.0
+    },
+    "sg721_address": {
+      "$ref": "#/definitions/Addr"
+    },
     "sg721_code_id": {
       "type": "integer",
       "format": "uint64",
@@ -28,6 +41,11 @@
     },
     "unit_price": {
       "$ref": "#/definitions/Coin"
+    },
+    "unused_token_id": {
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
     }
   },
   "definitions": {

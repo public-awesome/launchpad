@@ -11,7 +11,7 @@ use cw721_base::ContractError;
 use crate::msg::{
     ContractUriResponse, CreatorResponse, ExecuteMsg, InstantiateMsg, QueryMsg, RoyaltyResponse,
 };
-use crate::state::COLLECTION_INFO;
+use crate::state::CONFIG;
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sg721";
@@ -40,12 +40,12 @@ pub fn instantiate(
         .minter
         .save(deps.storage, &minter)?;
 
-    // Check royalty info is valid
-    if let Some(ref royalty) = msg.collection_info.royalties {
-        royalty.is_valid()?;
+    if let Some(ref config) = msg.config {
+        if let Some(ref royalty) = config.royalties {
+            royalty.is_valid()?;
+        }
+        CONFIG.save(deps.storage, config)?;
     }
-
-    COLLECTION_INFO.save(deps.storage, &msg.collection_info)?;
 
     Ok(Response::default())
 }
@@ -71,17 +71,17 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
 }
 
 fn query_contract_uri(deps: Deps) -> StdResult<ContractUriResponse> {
-    let contract_uri = COLLECTION_INFO.load(deps.storage)?.contract_uri;
+    let contract_uri = CONFIG.load(deps.storage)?.contract_uri;
     Ok(ContractUriResponse { contract_uri })
 }
 
 fn query_creator(deps: Deps) -> StdResult<CreatorResponse> {
-    let creator = COLLECTION_INFO.load(deps.storage)?.creator;
+    let creator = CONFIG.load(deps.storage)?.creator;
     Ok(CreatorResponse { creator })
 }
 
 fn query_royalties(deps: Deps) -> StdResult<RoyaltyResponse> {
-    let royalty = COLLECTION_INFO.load(deps.storage)?.royalties;
+    let royalty = CONFIG.load(deps.storage)?.royalties;
     Ok(RoyaltyResponse { royalty })
 }
 
@@ -89,7 +89,7 @@ fn query_royalties(deps: Deps) -> StdResult<RoyaltyResponse> {
 mod tests {
     use super::*;
 
-    use crate::state::CollectionInfo;
+    use crate::state::Config;
     use crate::state::RoyaltyInfo;
     use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
     use cosmwasm_std::{coins, from_binary, Addr, Decimal};
@@ -104,11 +104,11 @@ mod tests {
             name: collection,
             symbol: String::from("BOBO"),
             minter: String::from("minter"),
-            collection_info: CollectionInfo {
-                contract_uri: String::from("https://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json"),
-                creator: Addr::unchecked(creator),
+            config: Some(Config {
+                contract_uri: Some(String::from("https://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json")),
+                creator: Some(Addr::unchecked(creator)),
                 royalties: None,
-            },
+            }),
         };
         let info = mock_info("creator", &coins(1000, "earth"));
 
@@ -119,13 +119,13 @@ mod tests {
         // it worked, let's query the contract_uri
         let res = query(deps.as_ref(), mock_env(), QueryMsg::ContractUri {}).unwrap();
         let value: ContractUriResponse = from_binary(&res).unwrap();
-        assert_eq!("https://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json", value.contract_uri);
+        assert_eq!(Some("https://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json".to_string()), value.contract_uri);
 
         // it worked, let's query the creator
         let res = query(deps.as_ref(), mock_env(), QueryMsg::Creator {}).unwrap();
 
         let value: CreatorResponse = from_binary(&res).unwrap();
-        assert_eq!("creator", value.creator.to_string());
+        assert_eq!("creator", value.creator.unwrap().to_string());
 
         // let's query the royalties
         let res = query(deps.as_ref(), mock_env(), QueryMsg::Royalties {}).unwrap();
@@ -143,14 +143,14 @@ mod tests {
             name: collection,
             symbol: String::from("BOBO"),
             minter: String::from("minter"),
-            collection_info: CollectionInfo {
-                contract_uri: String::from("https://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json"),
-                creator: Addr::unchecked(creator.clone()),
+            config: Some(Config {
+                contract_uri: Some(String::from("https://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json")),
+                creator: Some(Addr::unchecked(creator.clone())),
                 royalties: Some(RoyaltyInfo {
                     payment_address: Addr::unchecked(creator.clone()),
                     share: Decimal::percent(10),
                 }),
-            },
+            }),
         };
         let info = mock_info("creator", &coins(1000, "earth"));
 
@@ -161,13 +161,13 @@ mod tests {
         // it worked, let's query the contract_uri
         let res = query(deps.as_ref(), mock_env(), QueryMsg::ContractUri {}).unwrap();
         let value: ContractUriResponse = from_binary(&res).unwrap();
-        assert_eq!("https://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json", value.contract_uri);
+        assert_eq!(Some("https://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json".to_string()), value.contract_uri);
 
         // it worked, let's query the creator
         let res = query(deps.as_ref(), mock_env(), QueryMsg::Creator {}).unwrap();
 
         let value: CreatorResponse = from_binary(&res).unwrap();
-        assert_eq!("creator", value.creator.to_string());
+        assert_eq!("creator", value.creator.unwrap().to_string());
 
         // let's query the royalties
         let res = query(deps.as_ref(), mock_env(), QueryMsg::Royalties {}).unwrap();

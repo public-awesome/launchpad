@@ -278,6 +278,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "cw0"
+version = "0.10.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8ae676b6cced78a3d38ad4b01ab4ed66fc78ac191c3c0d6bfd5372cb2efd473b"
+dependencies = [
+ "cosmwasm-std 1.0.0-beta4",
+ "schemars",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
 name = "cw2"
 version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -608,6 +620,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a3e378b66a060d48947b590737b30a1be76706c8dd7b8ba0f2fe3989c68a853f"
 
 [[package]]
+name = "minter"
+version = "0.1.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std 1.0.0-beta4",
+ "cosmwasm-storage",
+ "cw-multi-test",
+ "cw-storage-plus",
+ "cw-utils",
+ "cw2",
+ "cw721",
+ "cw721-base",
+ "schemars",
+ "serde",
+ "sg721",
+ "thiserror",
+ "url",
+]
+
+[[package]]
 name = "opaque-debug"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -686,6 +718,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d34f1408f55294453790c48b2f1ebbb1c5b4b7563eb1f418bcfcfdbb06ebb4e7"
 dependencies = [
  "getrandom 0.2.3",
+]
+
+[[package]]
+name = "royalty-group"
+version = "0.1.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std 1.0.0-beta4",
+ "cw-controllers",
+ "cw-storage-plus",
+ "cw0",
+ "cw2",
+ "cw4",
+ "schemars",
+ "serde",
+ "thiserror",
 ]
 
 [[package]]
@@ -811,26 +859,6 @@ dependencies = [
  "schemars",
  "serde",
  "thiserror",
-]
-
-[[package]]
-name = "sg721-sale"
-version = "0.1.0"
-dependencies = [
- "cosmwasm-schema",
- "cosmwasm-std 1.0.0-beta4",
- "cosmwasm-storage",
- "cw-multi-test",
- "cw-storage-plus",
- "cw-utils",
- "cw2",
- "cw721",
- "cw721-base",
- "schemars",
- "serde",
- "sg721",
- "thiserror",
- "url",
 ]
 
 [[package]]

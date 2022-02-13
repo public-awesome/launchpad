@@ -3,8 +3,8 @@ use std::fs::create_dir_all;
 
 use cosmwasm_schema::{export_schema, remove_schemas, schema_for};
 
-use sg721_sale::msg::{ConfigResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
-use sg721_sale::state::Config;
+use minter::msg::{ConfigResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
+use minter::state::Config;
 
 fn main() {
     let mut out_dir = current_dir().unwrap();
