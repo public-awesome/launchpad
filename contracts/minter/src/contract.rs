@@ -1022,11 +1022,11 @@ mod tests {
     fn batch_mint_limit_access_max_sold_out() {
         let mut router = mock_app();
         let (creator, buyer) = setup_accounts(&mut router).unwrap();
-        let num_tokens = 3;
+        let num_tokens = 4;
         let (sale_addr, _config) =
             setup_minter_contract(&mut router, &creator, num_tokens).unwrap();
 
-        // batch mint limit not set by default. will error out
+        // batch mint limit set to STARTING_BATCH_MINT_LIMIT if no mint provided
         let batch_mint_msg = ExecuteMsg::BatchMint { num_mints: 1 };
         let res = router.execute_contract(
             buyer.clone(),
@@ -1034,9 +1034,7 @@ mod tests {
             &batch_mint_msg,
             &coins(PRICE, DENOM),
         );
-        assert!(res.is_err());
-        let err = res.unwrap_err();
-        assert_eq!("Max batch mint limit exceeded", err.to_string());
+        assert!(res.is_ok());
 
         // update batch mint limit, test unauthorized
         let update_batch_mint_limit_msg = ExecuteMsg::UpdateBatchMintLimit {
@@ -1050,7 +1048,7 @@ mod tests {
         );
         assert!(res.is_err());
         let err = res.unwrap_err();
-        assert_eq!("Unauthorized", err.to_string());
+        assert_eq!(ContractError::Unauthorized {}.to_string(), err.to_string());
 
         // update limit, invalid limit over max
         let update_batch_mint_limit_msg = ExecuteMsg::UpdateBatchMintLimit {
@@ -1095,7 +1093,10 @@ mod tests {
         );
         assert!(res.is_err());
         let err = res.unwrap_err();
-        assert_eq!("Max batch mint limit exceeded", err.to_string());
+        assert_eq!(
+            ContractError::MaxBatchLimitLimitExceeded {}.to_string(),
+            err.to_string()
+        );
 
         // success
         let batch_mint_msg = ExecuteMsg::BatchMint { num_mints: 2 };
@@ -1117,7 +1118,7 @@ mod tests {
         );
         assert!(res.is_err());
         let err = res.unwrap_err();
-        assert_eq!("Sold out", err.to_string());
+        assert_eq!(ContractError::SoldOut {}.to_string(), err.to_string());
 
         // batch mint smaller amount
         let batch_mint_msg = ExecuteMsg::BatchMint { num_mints: 1 };
