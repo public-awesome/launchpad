@@ -199,15 +199,16 @@ pub fn execute_mint(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Respon
         }
     }
 
+    // Check any mintable tokens left
+    if query_mintable_num_tokens(deps.as_ref())?.count == 0 {
+        return Err(ContractError::SoldOut {});
+    }
+
     // get mintable_token_id
     let mintable_tokens_result: StdResult<Vec<u64>> = MINTABLE_TOKEN_IDS
         .keys(deps.storage, None, None, Order::Ascending)
         .take(1)
         .collect();
-    // If no mintable tokens left, collection is sold out
-    if mintable_tokens_result.is_err() {
-        return Err(ContractError::SoldOut {});
-    }
     let mintable_token_id: u64 = mintable_tokens_result?[0];
 
     let mut msgs: Vec<CosmosMsg> = vec![];
@@ -292,15 +293,16 @@ pub fn execute_mint_to(
         return Err(ContractError::Unauthorized {});
     }
 
+    // Check any mintable tokens left
+    if query_mintable_num_tokens(deps.as_ref())?.count == 0 {
+        return Err(ContractError::SoldOut {});
+    }
+
     // get mintable_token_id
     let mintable_tokens_result: StdResult<Vec<u64>> = MINTABLE_TOKEN_IDS
         .keys(deps.storage, None, None, Order::Ascending)
         .take(1)
         .collect();
-    // If no mintable tokens left, collection is sold out
-    if mintable_tokens_result.is_err() {
-        return Err(ContractError::SoldOut {});
-    }
     let mintable_token_id: u64 = mintable_tokens_result?[0];
 
     let mint_msg = Cw721ExecuteMsg::Mint(MintMsg::<Empty> {
