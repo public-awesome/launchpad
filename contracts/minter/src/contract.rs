@@ -804,14 +804,14 @@ mod tests {
             .unwrap();
         assert_eq!(res.owner, buyer.to_string());
 
-        // Buyer can't call MintFor
-        let mint_for_msg = ExecuteMsg::MintTo {
+        // Buyer can't call MintTo
+        let mint_to_msg = ExecuteMsg::MintTo {
             recipient: buyer.clone(),
         };
         let res = router.execute_contract(
             buyer.clone(),
             minter_addr.clone(),
-            &mint_for_msg,
+            &mint_to_msg,
             &coins(PRICE, DENOM),
         );
         assert!(res.is_err());
@@ -820,7 +820,7 @@ mod tests {
         let res = router.execute_contract(
             creator.clone(),
             minter_addr.clone(),
-            &mint_for_msg,
+            &mint_to_msg,
             &coins(PRICE, DENOM),
         );
         assert!(res.is_ok());
@@ -843,8 +843,7 @@ mod tests {
         assert!(res.is_err());
 
         // Creator can't use MintFor if sold out
-        let res =
-            router.execute_contract(creator, minter_addr, &mint_for_msg, &coins(PRICE, DENOM));
+        let res = router.execute_contract(creator, minter_addr, &mint_to_msg, &coins(PRICE, DENOM));
         assert!(res.is_err());
     }
 
@@ -1107,14 +1106,14 @@ mod tests {
         let mut router = mock_app();
         let (creator, buyer) = setup_accounts(&mut router).unwrap();
         let num_tokens = 4;
-        let (sale_addr, _config) =
+        let (minter_addr, _config) =
             setup_minter_contract(&mut router, &creator, num_tokens).unwrap();
 
         // batch mint limit set to STARTING_BATCH_MINT_LIMIT if no mint provided
         let batch_mint_msg = ExecuteMsg::BatchMint { num_mints: 1 };
         let res = router.execute_contract(
             buyer.clone(),
-            sale_addr.clone(),
+            minter_addr.clone(),
             &batch_mint_msg,
             &coins(PRICE, DENOM),
         );
@@ -1126,7 +1125,7 @@ mod tests {
         };
         let res = router.execute_contract(
             buyer.clone(),
-            sale_addr.clone(),
+            minter_addr.clone(),
             &update_batch_mint_limit_msg,
             &coins(PRICE, DENOM),
         );
@@ -1140,7 +1139,7 @@ mod tests {
         };
         let res = router.execute_contract(
             creator.clone(),
-            sale_addr.clone(),
+            minter_addr.clone(),
             &update_batch_mint_limit_msg,
             &coins(PRICE, DENOM),
         );
@@ -1161,7 +1160,7 @@ mod tests {
         };
         let res = router.execute_contract(
             creator.clone(),
-            sale_addr.clone(),
+            minter_addr.clone(),
             &update_batch_mint_limit_msg,
             &coins(PRICE, DENOM),
         );
@@ -1171,7 +1170,7 @@ mod tests {
         let batch_mint_msg = ExecuteMsg::BatchMint { num_mints: 50 };
         let res = router.execute_contract(
             buyer.clone(),
-            sale_addr.clone(),
+            minter_addr.clone(),
             &batch_mint_msg,
             &coins(PRICE, DENOM),
         );
@@ -1186,7 +1185,7 @@ mod tests {
         let batch_mint_msg = ExecuteMsg::BatchMint { num_mints: 2 };
         let res = router.execute_contract(
             buyer.clone(),
-            sale_addr.clone(),
+            minter_addr.clone(),
             &batch_mint_msg,
             &coins(PRICE, DENOM),
         );
@@ -1196,7 +1195,7 @@ mod tests {
         let batch_mint_msg = ExecuteMsg::BatchMint { num_mints: 2 };
         let res = router.execute_contract(
             buyer.clone(),
-            sale_addr.clone(),
+            minter_addr.clone(),
             &batch_mint_msg,
             &coins(PRICE, DENOM),
         );
@@ -1206,7 +1205,8 @@ mod tests {
 
         // batch mint smaller amount
         let batch_mint_msg = ExecuteMsg::BatchMint { num_mints: 1 };
-        let res = router.execute_contract(buyer, sale_addr, &batch_mint_msg, &coins(PRICE, DENOM));
+        let res =
+            router.execute_contract(buyer, minter_addr, &batch_mint_msg, &coins(PRICE, DENOM));
         assert!(res.is_ok());
     }
 
