@@ -45,6 +45,9 @@ pub enum ContractError {
 
     #[error("Max batch mint limit exceeded")]
     MaxBatchLimitLimitExceeded {},
+
+    #[error("Token id: {token_id} already sold")]
+    TokenIdAlreadySold { token_id: u64 },
 }
 
 impl From<ParseError> for ContractError {

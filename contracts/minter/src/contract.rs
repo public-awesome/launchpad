@@ -356,7 +356,7 @@ pub fn execute_mint_for(
         .collect();
     // If token_id not mintable, throw err
     if mintable_tokens_result.is_err() {
-        return Err(ContractError::SoldOut {});
+        return Err(ContractError::TokenIdAlreadySold { token_id: token_id });
     }
     let mintable_token_id: u64 = mintable_tokens_result?[0];
 
