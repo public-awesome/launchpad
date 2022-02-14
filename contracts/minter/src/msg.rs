@@ -29,6 +29,7 @@ pub enum ExecuteMsg {
     UpdatePerAddressLimit { per_address_limit: u64 },
     UpdateBatchMintLimit { batch_mint_limit: u64 },
     MintTo { recipient: Addr },
+    MintFor { token_id: u64, recipient: Addr },
     BatchMint { num_mints: u64 },
 }
 

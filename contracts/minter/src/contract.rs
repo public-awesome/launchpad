@@ -7,6 +7,7 @@ use cosmwasm_std::{
 use cw2::set_contract_version;
 use cw721::TokensResponse as Cw721TokensResponse;
 use cw721_base::{msg::ExecuteMsg as Cw721ExecuteMsg, MintMsg};
+use cw_storage_plus::Bound;
 use cw_utils::{parse_reply_instantiate_data, Expiration};
 use sg721::msg::{InstantiateMsg as Sg721InstantiateMsg, QueryMsg as Sg721QueryMsg};
 use url::Url;
@@ -149,6 +150,10 @@ pub fn execute(
             execute_update_batch_mint_limit(deps, env, info, batch_mint_limit)
         }
         ExecuteMsg::MintTo { recipient } => execute_mint_to(deps, env, info, recipient),
+        ExecuteMsg::MintFor {
+            token_id,
+            recipient,
+        } => execute_mint_for(deps, env, info, token_id, recipient),
         ExecuteMsg::BatchMint { num_mints } => execute_batch_mint(deps, env, info, num_mints),
     }
 }
@@ -287,11 +292,6 @@ pub fn execute_mint_to(
         return Err(ContractError::Unauthorized {});
     }
 
-    // Check if any mintable token ids left, throw sold out err
-    if query_mintable_num_tokens(deps.as_ref())?.count == 0 {
-        return Err(ContractError::SoldOut {});
-    }
-
     // get mintable_token_id
     let mintable_tokens_result: StdResult<Vec<u64>> = MINTABLE_TOKEN_IDS
         .keys(deps.storage, None, None, Order::Ascending)
@@ -321,6 +321,63 @@ pub fn execute_mint_to(
 
     Ok(Response::default()
         .add_attribute("method", "executed_mint_to")
+        .add_message(msg))
+}
+
+pub fn execute_mint_for(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    token_id: u64,
+    recipient: Addr,
+) -> Result<Response, ContractError> {
+    let config = CONFIG.load(deps.storage)?;
+    let sg721_address = SG721_ADDRESS.load(deps.storage)?;
+
+    // Check only admin
+    if info.sender != config.admin {
+        return Err(ContractError::Unauthorized {});
+    }
+
+    // Check any mintable tokens left
+    if query_mintable_num_tokens(deps.as_ref())?.count == 0 {
+        return Err(ContractError::SoldOut {});
+    }
+
+    // make sure token_id available on mintable_token_ids
+    let mintable_tokens_result: StdResult<Vec<u64>> = MINTABLE_TOKEN_IDS
+        .keys(
+            deps.storage,
+            Some(Bound::inclusive(vec![token_id as u8])),
+            Some(Bound::inclusive(vec![token_id as u8])),
+            Order::Ascending,
+        )
+        .take(1)
+        .collect();
+    // If token_id not mintable, throw err
+    if mintable_tokens_result.is_err() {
+        return Err(ContractError::SoldOut {});
+    }
+    let mintable_token_id: u64 = mintable_tokens_result?[0];
+
+    let mint_msg = Cw721ExecuteMsg::Mint(MintMsg::<Empty> {
+        token_id: mintable_token_id.to_string(),
+        owner: recipient.to_string(),
+        token_uri: Some(format!("{}/{}", config.base_token_uri, mintable_token_id)),
+        extension: Empty {},
+    });
+
+    let msg = CosmosMsg::Wasm(WasmMsg::Execute {
+        contract_addr: sg721_address.to_string(),
+        msg: to_binary(&mint_msg)?,
+        funds: vec![],
+    });
+
+    // remove mintable token id from map
+    MINTABLE_TOKEN_IDS.remove(deps.storage, mintable_token_id);
+
+    Ok(Response::default()
+        .add_attribute("method", "executed_mint_for")
         .add_message(msg))
 }
 
