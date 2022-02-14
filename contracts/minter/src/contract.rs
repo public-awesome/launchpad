@@ -148,7 +148,7 @@ pub fn execute(
         ExecuteMsg::UpdateBatchMintLimit { batch_mint_limit } => {
             execute_update_batch_mint_limit(deps, env, info, batch_mint_limit)
         }
-        ExecuteMsg::MintFor { recipient } => execute_mint_for(deps, env, info, recipient),
+        ExecuteMsg::MintTo { recipient } => execute_mint_to(deps, env, info, recipient),
         ExecuteMsg::BatchMint { num_mints } => execute_batch_mint(deps, env, info, num_mints),
     }
 }
@@ -273,7 +273,7 @@ pub fn execute_mint(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Respon
         .add_messages(msgs))
 }
 
-pub fn execute_mint_for(
+pub fn execute_mint_to(
     deps: DepsMut,
     _env: Env,
     info: MessageInfo,
@@ -320,7 +320,7 @@ pub fn execute_mint_for(
     MINTABLE_TOKEN_IDS.remove(deps.storage, mintable_token_id);
 
     Ok(Response::default()
-        .add_attribute("method", "executed_mint_for")
+        .add_attribute("method", "executed_mint_to")
         .add_message(msg))
 }
 
@@ -746,7 +746,7 @@ mod tests {
         assert_eq!(res.owner, buyer.to_string());
 
         // Buyer can't call MintFor
-        let mint_for_msg = ExecuteMsg::MintFor {
+        let mint_for_msg = ExecuteMsg::MintTo {
             recipient: buyer.clone(),
         };
         let res = router.execute_contract(

@@ -28,7 +28,7 @@ pub enum ExecuteMsg {
     UpdateStartTime(Expiration),
     UpdatePerAddressLimit { per_address_limit: u64 },
     UpdateBatchMintLimit { batch_mint_limit: u64 },
-    MintFor { recipient: Addr },
+    MintTo { recipient: Addr },
     BatchMint { num_mints: u64 },
 }
 
