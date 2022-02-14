@@ -16,6 +16,7 @@ pub struct Config {
     pub whitelist_expiration: Option<Expiration>,
     pub start_time: Option<Expiration>,
     pub per_address_limit: Option<u64>,
+    pub batch_mint_limit: Option<u64>,
 }
 
 pub const CONFIG: Item<Config> = Item::new("config");
