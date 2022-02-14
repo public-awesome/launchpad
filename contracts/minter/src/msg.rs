@@ -37,8 +37,8 @@ pub enum ExecuteMsg {
 pub enum QueryMsg {
     GetConfig {},
     // TODO other helpful queries
-    // How many tokens are left in the sale?
     // List of token Uris?
+    GetNumMintableTokens {},
     GetWhitelistAddresses {},
     GetWhitelistExpiration {},
     GetStartTime {},
@@ -59,7 +59,6 @@ pub struct ConfigResponse {
     pub sg721_address: Addr,
     pub sg721_code_id: u64,
     pub unit_price: Coin,
-    pub unused_token_id: u64,
     pub per_address_limit: Option<u64>,
     pub batch_mint_limit: Option<u64>,
 }
@@ -82,4 +81,9 @@ pub struct StartTimeResponse {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct OnWhitelistResponse {
     pub on_whitelist: bool,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct MintableNumTokensResponse {
+    pub count: u64,
 }

@@ -21,6 +21,6 @@ pub struct Config {
 
 pub const CONFIG: Item<Config> = Item::new("config");
 pub const SG721_ADDRESS: Item<Addr> = Item::new("sg721_address");
-pub const TOKEN_ID_INDEX: Item<u64> = Item::new("token_id");
 pub const WHITELIST_ADDRS: Map<String, Empty> = Map::new("whitelist_addresses");
 pub const NUM_WHITELIST_ADDRS: Item<u32> = Item::new("num_whitelist_addresses");
+pub const MINTABLE_TOKEN_IDS: Map<u64, Empty> = Map::new("mintable_token_ids");

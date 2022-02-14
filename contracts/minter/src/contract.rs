@@ -13,11 +13,12 @@ use url::Url;
 
 use crate::error::ContractError;
 use crate::msg::{
-    ConfigResponse, ExecuteMsg, InstantiateMsg, OnWhitelistResponse, QueryMsg, StartTimeResponse,
-    UpdateWhitelistMsg, WhitelistAddressesResponse, WhitelistExpirationResponse,
+    ConfigResponse, ExecuteMsg, InstantiateMsg, MintableNumTokensResponse, OnWhitelistResponse,
+    QueryMsg, StartTimeResponse, UpdateWhitelistMsg, WhitelistAddressesResponse,
+    WhitelistExpirationResponse,
 };
 use crate::state::{
-    Config, CONFIG, NUM_WHITELIST_ADDRS, SG721_ADDRESS, TOKEN_ID_INDEX, WHITELIST_ADDRS,
+    Config, CONFIG, MINTABLE_TOKEN_IDS, NUM_WHITELIST_ADDRS, SG721_ADDRESS, WHITELIST_ADDRS,
 };
 
 // version info for migration info
@@ -94,8 +95,10 @@ pub fn instantiate(
         NUM_WHITELIST_ADDRS.save(deps.storage, &(whitelist_addresses.len() as u32))?;
     }
 
-    // Set Token ID index
-    TOKEN_ID_INDEX.save(deps.storage, &0)?;
+    // save mintable token ids map
+    for token_id in 0..msg.num_tokens {
+        MINTABLE_TOKEN_IDS.save(deps.storage, token_id, &Empty {})?;
+    }
 
     let sub_msgs: Vec<SubMsg> = vec![SubMsg {
         msg: WasmMsg::Instantiate {
@@ -153,7 +156,7 @@ pub fn execute(
 pub fn execute_mint(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
     let sg721_address = SG721_ADDRESS.load(deps.storage)?;
-    let mut token_id_index = TOKEN_ID_INDEX.load(deps.storage)?;
+
     let allowlist = WHITELIST_ADDRS.has(deps.storage, info.sender.to_string());
     if let Some(whitelist_expiration) = config.whitelist_expiration {
         // Check if whitelist not expired and sender is not whitelisted
@@ -167,11 +170,6 @@ pub fn execute_mint(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Respon
     // Check funds sent is correct amount
     if !has_coins(&info.funds, &config.unit_price) {
         return Err(ContractError::NotEnoughFunds {});
-    }
-
-    // Check if over max tokens
-    if token_id_index >= config.num_tokens {
-        return Err(ContractError::SoldOut {});
     }
 
     if let Some(start_time) = config.start_time {
@@ -196,12 +194,23 @@ pub fn execute_mint(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Respon
         }
     }
 
+    // get mintable_token_id
+    let mintable_tokens_result: StdResult<Vec<u64>> = MINTABLE_TOKEN_IDS
+        .keys(deps.storage, None, None, Order::Ascending)
+        .take(1)
+        .collect();
+    // If no mintable tokens left, collection is sold out
+    if mintable_tokens_result.is_err() {
+        return Err(ContractError::SoldOut {});
+    }
+    let mintable_token_id: u64 = mintable_tokens_result?[0];
+
     let mut msgs: Vec<CosmosMsg> = vec![];
 
     let mint_msg = Cw721ExecuteMsg::Mint(MintMsg::<Empty> {
-        token_id: token_id_index.to_string(),
+        token_id: mintable_token_id.to_string(),
         owner: info.sender.to_string(),
-        token_uri: Some(format!("{}/{}", config.base_token_uri, token_id_index)),
+        token_uri: Some(format!("{}/{}", config.base_token_uri, mintable_token_id)),
         extension: Empty {},
     });
 
@@ -212,9 +221,8 @@ pub fn execute_mint(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Respon
     });
     msgs.append(&mut vec![msg]);
 
-    // Increase token ID index by one
-    token_id_index += 1;
-    TOKEN_ID_INDEX.save(deps.storage, &token_id_index)?;
+    // remove mintable token id from map
+    MINTABLE_TOKEN_IDS.remove(deps.storage, mintable_token_id);
 
     // Check if token supports Royalties
     let royalty: Result<sg721::msg::RoyaltyResponse, StdError> = deps
@@ -273,21 +281,32 @@ pub fn execute_mint_for(
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
     let sg721_address = SG721_ADDRESS.load(deps.storage)?;
-    let mut token_id_index = TOKEN_ID_INDEX.load(deps.storage)?;
 
     // Check only admin
     if info.sender != config.admin {
         return Err(ContractError::Unauthorized {});
     }
-    // Check if over max tokens
-    if token_id_index >= config.num_tokens {
+
+    // Check if any mintable token ids left, throw sold out err
+    if query_mintable_num_tokens(deps.as_ref())?.count == 0 {
         return Err(ContractError::SoldOut {});
     }
 
+    // get mintable_token_id
+    let mintable_tokens_result: StdResult<Vec<u64>> = MINTABLE_TOKEN_IDS
+        .keys(deps.storage, None, None, Order::Ascending)
+        .take(1)
+        .collect();
+    // If no mintable tokens left, collection is sold out
+    if mintable_tokens_result.is_err() {
+        return Err(ContractError::SoldOut {});
+    }
+    let mintable_token_id: u64 = mintable_tokens_result?[0];
+
     let mint_msg = Cw721ExecuteMsg::Mint(MintMsg::<Empty> {
-        token_id: token_id_index.to_string(),
+        token_id: mintable_token_id.to_string(),
         owner: recipient.to_string(),
-        token_uri: Some(format!("{}/{}", config.base_token_uri, token_id_index)),
+        token_uri: Some(format!("{}/{}", config.base_token_uri, mintable_token_id)),
         extension: Empty {},
     });
 
@@ -297,9 +316,8 @@ pub fn execute_mint_for(
         funds: vec![],
     });
 
-    // Increase token ID index by one
-    token_id_index += 1;
-    TOKEN_ID_INDEX.save(deps.storage, &token_id_index)?;
+    // remove mintable token id from map
+    MINTABLE_TOKEN_IDS.remove(deps.storage, mintable_token_id);
 
     Ok(Response::default()
         .add_attribute("method", "executed_mint_for")
@@ -450,13 +468,13 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::GetWhitelistExpiration {} => to_binary(&query_whitelist_expiration(deps)?),
         QueryMsg::GetStartTime {} => to_binary(&query_start_time(deps)?),
         QueryMsg::OnWhitelist { address } => to_binary(&query_on_whitelist(deps, address)?),
+        QueryMsg::GetNumMintableTokens {} => to_binary(&query_mintable_num_tokens(deps)?),
     }
 }
 
 fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
     let config = CONFIG.load(deps.storage)?;
     let sg721_address = SG721_ADDRESS.load(deps.storage)?;
-    let unused_token_id = TOKEN_ID_INDEX.load(deps.storage)?;
 
     Ok(ConfigResponse {
         admin: config.admin,
@@ -465,7 +483,6 @@ fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
         sg721_code_id: config.sg721_code_id,
         num_tokens: config.num_tokens,
         unit_price: config.unit_price,
-        unused_token_id,
         per_address_limit: config.per_address_limit,
         batch_mint_limit: config.batch_mint_limit,
     })
@@ -512,6 +529,14 @@ fn query_on_whitelist(deps: Deps, address: String) -> StdResult<OnWhitelistRespo
     })
 }
 
+fn query_mintable_num_tokens(deps: Deps) -> StdResult<MintableNumTokensResponse> {
+    let count = MINTABLE_TOKEN_IDS
+        .keys(deps.storage, None, None, Order::Ascending)
+        .count();
+    Ok(MintableNumTokensResponse {
+        count: count as u64,
+    })
+}
 // Reply callback triggered from cw721 contract instantiation
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
