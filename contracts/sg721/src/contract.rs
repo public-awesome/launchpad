@@ -1,8 +1,8 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coin, has_coins, to_binary, BankMsg, Binary, Coin, Decimal, Deps, DepsMut, Empty, Env,
-    MessageInfo, Response, StdResult, Uint128,
+    coin, has_coins, to_binary, BankMsg, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut, Empty,
+    Env, MessageInfo, Response, StdResult, Uint128,
 };
 use cw2::set_contract_version;
 
@@ -62,12 +62,12 @@ pub fn instantiate(
         amount: vec![burn_coin],
     };
 
-    // // send the rest to the community pool
-    // let fund_community_pool_msg = CosmosMsg::Custom(MsgFundCommunityPool {
-    //     amount: vec![coin(creation_fee.u128() - burn_fee.u128(), FEE_DENOM)],
-    //     depositor: msg.minter.to_string(),
-    // });
-    // // TODO: add msg + router
+    // send the rest to the community pool
+    let fund_community_pool_msg = CosmosMsg::Custom(MsgFundCommunityPool {
+        amount: vec![coin(creation_fee.u128() - burn_fee.u128(), FEE_DENOM)],
+        depositor: msg.minter.to_string(),
+    });
+    // TODO: add msg + router
 
     let info = ContractInfoResponse {
         name: msg.name,
@@ -232,4 +232,5 @@ mod tests {
         let amount = coin(fee.u128(), "ustars");
         assert_eq!(500_000_000u128, amount.amount.u128());
     }
+    // TODO: properly test fee burn
 }
