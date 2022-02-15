@@ -350,17 +350,18 @@ pub fn execute_mint_for(
     let mintable_tokens_result: StdResult<Vec<u64>> = MINTABLE_TOKEN_IDS
         .keys(
             deps.storage,
-            Some(Bound::inclusive(vec![token_id as u8])),
+            None,
             Some(Bound::inclusive(vec![token_id as u8])),
             Order::Ascending,
         )
         .take(1)
         .collect();
     // If token_id not mintable, throw err
-    if mintable_tokens_result.is_err() {
-        return Err(ContractError::TokenIdAlreadySold { token_id: token_id });
+    let mintable_tokens = mintable_tokens_result?;
+    if mintable_tokens.is_empty() {
+        return Err(ContractError::TokenIdAlreadySold { token_id });
     }
-    let mintable_token_id: u64 = mintable_tokens_result?[0];
+    let mintable_token_id: u64 = mintable_tokens[0];
 
     let mint_msg = Cw721ExecuteMsg::Mint(MintMsg::<Empty> {
         token_id: mintable_token_id.to_string(),
@@ -527,7 +528,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::GetWhitelistExpiration {} => to_binary(&query_whitelist_expiration(deps)?),
         QueryMsg::GetStartTime {} => to_binary(&query_start_time(deps)?),
         QueryMsg::OnWhitelist { address } => to_binary(&query_on_whitelist(deps, address)?),
-        QueryMsg::GetNumMintableTokens {} => to_binary(&query_mintable_num_tokens(deps)?),
+        QueryMsg::GetMintableNumTokens {} => to_binary(&query_mintable_num_tokens(deps)?),
     }
 }
 
@@ -1208,6 +1209,92 @@ mod tests {
         let res =
             router.execute_contract(buyer, minter_addr, &batch_mint_msg, &coins(PRICE, DENOM));
         assert!(res.is_ok());
+    }
+
+    #[test]
+    fn mint_for_token_id_addr() {
+        let mut router = mock_app();
+        let (creator, buyer) = setup_accounts(&mut router).unwrap();
+        let num_tokens: u64 = 4;
+        let (minter_addr, _config) =
+            setup_minter_contract(&mut router, &creator, num_tokens).unwrap();
+
+        // try mint_for, test unauthorized
+        let mint_for_msg = ExecuteMsg::MintFor {
+            token_id: 1,
+            recipient: buyer.clone(),
+        };
+        let res = router.execute_contract(
+            buyer.clone(),
+            minter_addr.clone(),
+            &mint_for_msg,
+            &coins(PRICE, DENOM),
+        );
+        assert!(res.is_err());
+        let err = res.unwrap_err();
+        assert_eq!(ContractError::Unauthorized {}.to_string(), err.to_string());
+
+        // test token id already sold
+        // 1. mint token_id 0
+        // 2. mint_for token_id 0
+        let mint_msg = ExecuteMsg::Mint {};
+        let res = router.execute_contract(
+            buyer.clone(),
+            minter_addr.clone(),
+            &mint_msg,
+            &coins(PRICE, DENOM),
+        );
+        assert!(res.is_ok());
+
+        let token_id = 0;
+        let mint_for_msg = ExecuteMsg::MintFor {
+            token_id: token_id,
+            recipient: buyer.clone(),
+        };
+        let res = router.execute_contract(
+            creator.clone(),
+            minter_addr.clone(),
+            &mint_for_msg,
+            &coins(PRICE, DENOM),
+        );
+        assert!(res.is_err());
+        let err = res.unwrap_err();
+        assert_eq!(
+            ContractError::TokenIdAlreadySold { token_id }.to_string(),
+            err.to_string()
+        );
+        let mintable_num_tokens_response: MintableNumTokensResponse = router
+            .wrap()
+            .query_wasm_smart(minter_addr.clone(), &QueryMsg::GetMintableNumTokens {})
+            .unwrap();
+        assert_eq!(mintable_num_tokens_response.count, 3);
+
+        // test mint_for token_id 2 then normal mint
+        let token_id = 2;
+        let mint_for_msg = ExecuteMsg::MintFor {
+            token_id,
+            recipient: buyer.clone(),
+        };
+        let res = router.execute_contract(
+            creator.clone(),
+            minter_addr.clone(),
+            &mint_for_msg,
+            &coins(PRICE, DENOM),
+        );
+        assert!(res.is_ok());
+        let batch_mint_msg = ExecuteMsg::BatchMint { num_mints: 2 };
+        let res = router.execute_contract(
+            creator,
+            minter_addr.clone(),
+            &batch_mint_msg,
+            &coins(PRICE, DENOM),
+        );
+        assert!(res.is_ok());
+        let mintable_num_tokens_response: MintableNumTokensResponse = router
+            .wrap()
+            .query_wasm_smart(minter_addr, &QueryMsg::GetMintableNumTokens {})
+            .unwrap();
+        assert_eq!(mintable_num_tokens_response.count, 0);
     }
 
     #[test]

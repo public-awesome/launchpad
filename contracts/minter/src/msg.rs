@@ -39,7 +39,7 @@ pub enum QueryMsg {
     GetConfig {},
     // TODO other helpful queries
     // List of token Uris?
-    GetNumMintableTokens {},
+    GetMintableNumTokens {},
     GetWhitelistAddresses {},
     GetWhitelistExpiration {},
     GetStartTime {},
