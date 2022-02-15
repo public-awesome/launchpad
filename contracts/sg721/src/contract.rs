@@ -1,8 +1,8 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coin, has_coins, to_binary, BankMsg, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut, Empty,
-    Env, MessageInfo, Response, StdResult, Uint128, WasmMsg,
+    coin, has_coins, to_binary, BankMsg, Binary, Coin, Decimal, Deps, DepsMut, Empty, Env,
+    MessageInfo, Response, StdResult, Uint128,
 };
 use cw2::set_contract_version;
 
@@ -47,6 +47,8 @@ pub fn instantiate(
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+
+    println!("{:?} creation fee", info.funds);
 
     if !has_coins(&info.funds, &coin(CREATION_FEE, FEE_DENOM)) {
         return Err(ContractError::InsufficientCreationFee {});

@@ -602,7 +602,8 @@ mod tests {
     use sg721::state::{Config, RoyaltyInfo};
 
     const DENOM: &str = "ustars";
-    const INITIAL_BALANCE: u128 = 2000;
+    const CREATION_FEE: u128 = 1_000_000_000;
+    const INITIAL_BALANCE: u128 = 2000 + CREATION_FEE;
     const PRICE: u128 = 10;
 
     fn mock_app() -> App {
@@ -637,6 +638,7 @@ mod tests {
         // Upload contract code
         let sg721_code_id = router.store_code(contract_sg721());
         let minter_code_id = router.store_code(contract_minter());
+        let creation_fee = coins(1_000_000_000, DENOM);
 
         // Instantiate sale contract
         let msg = InstantiateMsg {
@@ -664,7 +666,14 @@ mod tests {
             },
         };
         let minter_addr = router
-            .instantiate_contract(minter_code_id, creator.clone(), &msg, &[], "Minter", None)
+            .instantiate_contract(
+                minter_code_id,
+                creator.clone(),
+                &msg,
+                &creation_fee,
+                "Minter",
+                None,
+            )
             .unwrap();
 
         let config: ConfigResponse = router
@@ -1021,7 +1030,7 @@ mod tests {
     }
 
     #[test]
-    fn per_address_limit() {
+    fn check_per_address_limit() {
         let mut router = mock_app();
         let (creator, buyer) = setup_accounts(&mut router).unwrap();
         let num_tokens = 2;
