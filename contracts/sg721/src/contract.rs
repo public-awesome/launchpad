@@ -48,6 +48,7 @@ pub fn instantiate(
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
+    // TODO: check exact amount using payments controller
     if !has_coins(&info.funds, &coin(CREATION_FEE, FEE_DENOM)) {
         return Err(ContractError::InsufficientCreationFee {});
     }
@@ -89,6 +90,7 @@ pub fn instantiate(
 
     // TODO: add community pool fund msg
     Ok(Response::default().add_message(fee_burn_msg))
+    // Ok(Response::default())
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
