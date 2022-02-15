@@ -16,6 +16,12 @@ pub enum ContractError {
     #[error("Not enough funds sent")]
     NotEnoughFunds {},
 
+    #[error("TooManyCoins")]
+    TooManyCoins {},
+
+    #[error("IncorrectPrice")]
+    IncorrectPrice {},
+
     #[error("Sold out")]
     SoldOut {},
 
