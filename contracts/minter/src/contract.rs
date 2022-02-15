@@ -23,7 +23,7 @@ use crate::state::{
 };
 
 // version info for migration info
-const CONTRACT_NAME: &str = "crates.io:minter";
+const CONTRACT_NAME: &str = "crates.io:sg-minter";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 const INSTANTIATE_SG721_REPLY_ID: u64 = 1;
@@ -40,8 +40,6 @@ pub fn instantiate(
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-
-    println!("{:?} minter: creation fee", info.funds);
 
     if let Some(per_address_limit) = msg.per_address_limit {
         // Check per address limit is valid
@@ -114,7 +112,7 @@ pub fn instantiate(
             })?,
             funds: info.funds,
             admin: None,
-            label: String::from("Instantiate fixed price NFT contract"),
+            label: String::from("Fixed price minter"),
         }
         .into(),
         id: INSTANTIATE_SG721_REPLY_ID,
@@ -354,54 +352,58 @@ fn _execute_mint(
     // remove mintable token id from map
     MINTABLE_TOKEN_IDS.remove(deps.storage, mintable_token_id);
 
-    // Check if token supports Royalties
-    let royalty: Result<sg721::msg::RoyaltyResponse, StdError> = deps
-        .querier
-        .query_wasm_smart(sg721_address, &Sg721QueryMsg::Royalties {});
+    // // Check if token supports Royalties
+    // let royalty: Result<sg721::msg::RoyaltyResponse, StdError> = deps
+    //     .querier
+    //     .query_wasm_smart(sg721_address, &Sg721QueryMsg::Royalties {});
 
-    // Add payout messages
-    match royalty {
-        Ok(royalty) => {
-            // If token supports royalities, payout shares
-            if let Some(royalty) = royalty.royalty {
-                // Can't assume index 0 of index.funds is the correct coin
-                let funds = info.funds.iter().find(|x| *x == &config.unit_price);
-                if let Some(funds) = funds {
-                    // Calculate royalty share and create Bank msg
-                    let royalty_share_msg = BankMsg::Send {
-                        to_address: royalty.payment_address.to_string(),
-                        amount: vec![Coin {
-                            amount: funds.amount * royalty.share,
-                            denom: funds.denom.clone(),
-                        }],
-                    };
-                    msgs.append(&mut vec![royalty_share_msg.into()]);
+    // // Add payout messages
+    // match royalty {
+    //     Ok(royalty) => {
+    //         // If token supports royalities, payout shares
+    //         if let Some(royalty) = royalty.royalty {
+    //             // Can't assume index 0 of index.funds is the correct coin
+    //             let funds = info.funds.iter().find(|x| *x == &config.unit_price);
+    //             if let Some(funds) = funds {
+    //                 // Calculate royalty share and create Bank msg
+    //                 let royalty_share_msg = BankMsg::Send {
+    //                     to_address: royalty.payment_address.to_string(),
+    //                     amount: vec![Coin {
+    //                         amount: funds.amount * royalty.share,
+    //                         denom: funds.denom.clone(),
+    //                     }],
+    //                 };
+    //                 msgs.append(&mut vec![royalty_share_msg.into()]);
 
-                    // Calculate seller share and create Bank msg
-                    let seller_share_msg = BankMsg::Send {
-                        to_address: config.admin.to_string(),
-                        amount: vec![Coin {
-                            amount: funds.amount * (Decimal::one() - royalty.share),
-                            denom: funds.denom.clone(),
-                        }],
-                    };
-                    msgs.append(&mut vec![seller_share_msg.into()]);
-                }
-            }
-        }
-        Err(_) => {
-            // If token doesn't support royalties, pay seller in full
-            let seller_share_msg = BankMsg::Send {
-                to_address: config.admin.to_string(),
-                amount: info.funds,
-            };
-            msgs.append(&mut vec![seller_share_msg.into()]);
-        }
-    }
+    //                 // Calculate seller share and create Bank msg
+    //                 let seller_share_msg = BankMsg::Send {
+    //                     to_address: config.admin.to_string(),
+    //                     amount: vec![Coin {
+    //                         amount: funds.amount * (Decimal::one() - royalty.share),
+    //                         denom: funds.denom.clone(),
+    //                     }],
+    //                 };
+    //                 msgs.append(&mut vec![seller_share_msg.into()]);
+    //             }
+    //         }
+    //     }
+    //     Err(_) => {
+    //         // If token doesn't support royalties, pay seller in full
+    //         let seller_share_msg = BankMsg::Send {
+    //             to_address: config.admin.to_string(),
+    //             amount: info.funds,
+    //         };
+    //         msgs.append(&mut vec![seller_share_msg.into()]);
+    //     }
+    // }
 
-    Ok(Response::default()
-        .add_attribute("action", action)
-        .add_messages(msgs))
+    let collector_msg = BankMsg::Send {
+        to_address: config.admin.to_string(),
+        amount: vec![amount],
+    };
+    msgs.append(&mut vec![collector_msg.into()]);
+
+    Ok(Response::default().add_messages(msgs))
 }
 
 pub fn execute_update_whitelist(
@@ -620,7 +622,7 @@ mod tests {
 
     const DENOM: &str = "ustars";
     const CREATION_FEE: u128 = 1_000_000_000;
-    const INITIAL_BALANCE: u128 = 2000 + CREATION_FEE;
+    const INITIAL_BALANCE: u128 = 2000;
     const PRICE: u128 = 10;
 
     fn mock_app() -> App {
@@ -655,7 +657,7 @@ mod tests {
         // Upload contract code
         let sg721_code_id = router.store_code(contract_sg721());
         let minter_code_id = router.store_code(contract_minter());
-        let creation_fee = coins(1_000_000_000, DENOM);
+        let creation_fee = coins(CREATION_FEE, DENOM);
 
         // Instantiate sale contract
         let msg = InstantiateMsg {
@@ -705,12 +707,13 @@ mod tests {
     fn setup_accounts(router: &mut App) -> Result<(Addr, Addr), ContractError> {
         let buyer: Addr = Addr::unchecked("buyer");
         let creator: Addr = Addr::unchecked("creator");
-        let funds: Vec<Coin> = coins(INITIAL_BALANCE, DENOM);
+        let creator_funds: Vec<Coin> = coins(INITIAL_BALANCE + CREATION_FEE, DENOM);
+        let buyer_funds: Vec<Coin> = coins(INITIAL_BALANCE, DENOM);
         router
             .sudo(SudoMsg::Bank({
                 BankSudo::Mint {
                     to_address: creator.to_string(),
-                    amount: funds.clone(),
+                    amount: creator_funds.clone(),
                 }
             }))
             .map_err(|err| println!("{:?}", err))
@@ -720,7 +723,7 @@ mod tests {
             .sudo(SudoMsg::Bank({
                 BankSudo::Mint {
                     to_address: buyer.to_string(),
-                    amount: funds.clone(),
+                    amount: buyer_funds.clone(),
                 }
             }))
             .map_err(|err| println!("{:?}", err))
@@ -728,11 +731,11 @@ mod tests {
 
         // Check native balances
         let creator_native_balances = router.wrap().query_all_balances(creator.clone()).unwrap();
-        assert_eq!(creator_native_balances, funds);
+        assert_eq!(creator_native_balances, creator_funds);
 
         // Check native balances
         let buyer_native_balances = router.wrap().query_all_balances(buyer.clone()).unwrap();
-        assert_eq!(buyer_native_balances, funds);
+        assert_eq!(buyer_native_balances, buyer_funds);
 
         Ok((creator, buyer))
     }

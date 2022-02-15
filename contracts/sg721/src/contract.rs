@@ -16,7 +16,7 @@ use crate::msg::{
 use crate::state::CONFIG;
 
 // version info for migration info
-const CONTRACT_NAME: &str = "crates.io:sg721";
+const CONTRACT_NAME: &str = "crates.io:sg-721";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 // TODO: these should be a governance parameters in the future
@@ -47,8 +47,6 @@ pub fn instantiate(
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-
-    println!("{:?} creation fee", info.funds);
 
     if !has_coins(&info.funds, &coin(CREATION_FEE, FEE_DENOM)) {
         return Err(ContractError::InsufficientCreationFee {});
