@@ -5,6 +5,8 @@ use cosmwasm_std::{
     Env, MessageInfo, Response, StdResult, Uint128,
 };
 use cw2::set_contract_version;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
 use crate::ContractError;
 use cw721::ContractInfoResponse;
@@ -34,6 +36,7 @@ pub type Sg721Contract<'a> = cw721_base::Cw721Contract<'a, Empty, Empty>;
 //         [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"];
 //     string depositor = 2;
 //   }
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct MsgFundCommunityPool {
     pub amount: Vec<Coin>,
     pub depositor: String,
@@ -153,11 +156,11 @@ mod tests {
                 royalties: None,
             }),
         };
-        let info = mock_info("creator", &coins(1000, "earth"));
+        let info = mock_info("creator", &coins(CREATION_FEE, "ustars"));
 
         // make sure instantiate doesn't send any messages
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(0, res.messages.len());
+        assert_eq!(1, res.messages.len());
 
         // it worked, let's query the contract_uri
         let res = query(deps.as_ref(), mock_env(), QueryMsg::ContractUri {}).unwrap();
@@ -195,11 +198,11 @@ mod tests {
                 }),
             }),
         };
-        let info = mock_info("creator", &coins(1000, "earth"));
+        let info = mock_info("creator", &coins(CREATION_FEE, "ustars"));
 
         // make sure instantiate doesn't send any messages
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(0, res.messages.len());
+        assert_eq!(1, res.messages.len());
 
         // it worked, let's query the contract_uri
         let res = query(deps.as_ref(), mock_env(), QueryMsg::ContractUri {}).unwrap();
