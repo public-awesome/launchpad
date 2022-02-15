@@ -5,6 +5,7 @@ use cosmwasm_std::{
     Env, MessageInfo, Response, StdResult, Uint128,
 };
 use cw2::set_contract_version;
+use cw_utils::must_pay;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -51,9 +52,9 @@ pub fn instantiate(
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
-    // TODO: check exact amount using payments controller
-    if !has_coins(&info.funds, &coin(CREATION_FEE, FEE_DENOM)) {
-        return Err(ContractError::InsufficientCreationFee {});
+    let payment = must_pay(&info, FEE_DENOM)?;
+    if payment.u128() != CREATION_FEE {
+        return Err(ContractError::InvalidCreationFee {});
     }
 
     // burn half the fee
