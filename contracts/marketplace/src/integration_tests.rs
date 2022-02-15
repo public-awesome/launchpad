@@ -676,7 +676,20 @@ mod tests {
         let (curator, bidder, creator) = setup_accounts(&mut router).unwrap();
 
         // Instantiate and configure contracts
-        let (nft_marketplace_addr, _) = setup_contracts(&mut router, &creator).unwrap();
+        // let (nft_marketplace_addr, _) = setup_contracts(&mut router, &creator).unwrap();
+        // Instantiate marketplace contract
+        let marketplace_id = router.store_code(contract_nft_marketplace());
+        let msg = crate::msg::InstantiateMsg {};
+        let nft_marketplace_addr = router
+            .instantiate_contract(
+                marketplace_id,
+                creator.clone(),
+                &msg,
+                &[],
+                "Marketplace",
+                None,
+            )
+            .unwrap();
 
         // Setup media contract with 10% royalties to a curator
         let sg721_id = router.store_code(contract_sg721());
@@ -717,6 +730,7 @@ mod tests {
             &mint_for_creator_msg,
             &[],
         );
+        println!("{:?}", res);
         assert!(res.is_ok());
 
         // Creator Authorizes NFT
@@ -772,10 +786,7 @@ mod tests {
             coins(INITIAL_BALANCE + 10, NATIVE_TOKEN_DENOM)
         );
         let creator_native_balances = router.wrap().query_all_balances(creator).unwrap();
-        assert_eq!(
-            creator_native_balances,
-            coins(INITIAL_BALANCE + 90, NATIVE_TOKEN_DENOM)
-        );
+        assert_eq!(creator_native_balances, coins(90, NATIVE_TOKEN_DENOM));
         let bidder_native_balances = router.wrap().query_all_balances(bidder.clone()).unwrap();
         assert_eq!(
             bidder_native_balances,
