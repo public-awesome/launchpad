@@ -1248,7 +1248,7 @@ mod tests {
 
         let token_id = 0;
         let mint_for_msg = ExecuteMsg::MintFor {
-            token_id: token_id,
+            token_id,
             recipient: buyer.clone(),
         };
         let res = router.execute_contract(
@@ -1273,7 +1273,7 @@ mod tests {
         let token_id = 2;
         let mint_for_msg = ExecuteMsg::MintFor {
             token_id,
-            recipient: buyer.clone(),
+            recipient: buyer,
         };
         let res = router.execute_contract(
             creator.clone(),
