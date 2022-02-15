@@ -41,6 +41,8 @@ pub fn instantiate(
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
+    println!("{:?} minter: creation fee", info.funds);
+
     if let Some(per_address_limit) = msg.per_address_limit {
         // Check per address limit is valid
         if per_address_limit > MAX_PER_ADDRESS_LIMIT {
@@ -110,7 +112,7 @@ pub fn instantiate(
                 minter: env.contract.address.to_string(),
                 config: msg.sg721_instantiate_msg.config,
             })?,
-            funds: vec![],
+            funds: info.funds,
             admin: None,
             label: String::from("Instantiate fixed price NFT contract"),
         }
