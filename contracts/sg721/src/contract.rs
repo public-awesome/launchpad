@@ -29,14 +29,6 @@ const CREATION_FEE_BURN_PERCENT: u64 = 50;
 
 pub type Sg721Contract<'a> = cw721_base::Cw721Contract<'a, Empty, Empty>;
 
-// message MsgFundCommunityPool {
-//     option (gogoproto.equal)           = false;
-//     option (gogoproto.goproto_getters) = false;
-
-//     repeated cosmos.base.v1beta1.Coin amount = 1
-//         [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"];
-//     string depositor = 2;
-//   }
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct MsgFundCommunityPool {
     pub amount: Vec<Coin>,
@@ -46,7 +38,7 @@ pub struct MsgFundCommunityPool {
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
@@ -57,21 +49,26 @@ pub fn instantiate(
         return Err(ContractError::InvalidCreationFee {});
     }
 
-    // burn half the fee
+    // calculate the fee to burn
     let burn_percent = Decimal::percent(CREATION_FEE_BURN_PERCENT);
     let creation_fee = Uint128::from(CREATION_FEE);
     let burn_fee = creation_fee * burn_percent;
     let burn_coin = coin(burn_fee.u128(), FEE_DENOM);
+    // send fee to contract to be burned
+    let send_fee_msg = BankMsg::Send {
+        to_address: env.contract.address.to_string(),
+        amount: vec![burn_coin.clone()],
+    };
+    // burn half the fee
     let fee_burn_msg = BankMsg::Burn {
         amount: vec![burn_coin],
     };
 
-    // send the rest to the community pool
+    // TODO: send the rest to the community pool
     let fund_community_pool_msg = CosmosMsg::Custom(MsgFundCommunityPool {
         amount: vec![coin(creation_fee.u128() - burn_fee.u128(), FEE_DENOM)],
         depositor: msg.minter.to_string(),
     });
-    // TODO: add msg + router
 
     let info = ContractInfoResponse {
         name: msg.name,
@@ -93,8 +90,9 @@ pub fn instantiate(
     }
 
     // TODO: add community pool fund msg
-    Ok(Response::default().add_message(fee_burn_msg))
-    // Ok(Response::default())
+    Ok(Response::default()
+        .add_message(send_fee_msg)
+        .add_message(fee_burn_msg))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -159,9 +157,9 @@ mod tests {
         };
         let info = mock_info("creator", &coins(CREATION_FEE, "ustars"));
 
-        // make sure instantiate doesn't send any messages
+        // make sure instantiate has the burn messages
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(1, res.messages.len());
+        assert_eq!(2, res.messages.len());
 
         // it worked, let's query the contract_uri
         let res = query(deps.as_ref(), mock_env(), QueryMsg::ContractUri {}).unwrap();
@@ -201,9 +199,9 @@ mod tests {
         };
         let info = mock_info("creator", &coins(CREATION_FEE, "ustars"));
 
-        // make sure instantiate doesn't send any messages
+        // make sure instantiate has the burn messages
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(1, res.messages.len());
+        assert_eq!(2, res.messages.len());
 
         // it worked, let's query the contract_uri
         let res = query(deps.as_ref(), mock_env(), QueryMsg::ContractUri {}).unwrap();
@@ -236,5 +234,8 @@ mod tests {
         let amount = coin(fee.u128(), "ustars");
         assert_eq!(500_000_000u128, amount.amount.u128());
     }
-    // TODO: properly test fee burn
+    // TODO: properly test fee burn using cw-multi-test
+    // set an initial supply in bank, and check that the fee is burned
+    #[test]
+    fn fee_burn() {}
 }
