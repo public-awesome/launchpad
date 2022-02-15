@@ -36,13 +36,13 @@ pub enum ExecuteMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
-    GetConfig {},
+    Config {},
     // TODO other helpful queries
     // List of token Uris?
-    GetMintableNumTokens {},
-    GetWhitelistAddresses {},
-    GetWhitelistExpiration {},
-    GetStartTime {},
+    MintableNumTokens {},
+    WhitelistAddresses {},
+    WhitelistExpiration {},
+    StartTime {},
     OnWhitelist { address: String },
 }
 
