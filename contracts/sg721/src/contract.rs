@@ -65,6 +65,7 @@ pub fn instantiate(
     };
 
     // TODO: send the rest to the community pool
+    // https://github.com/public-awesome/contracts/issues/99
     let fund_community_pool_msg = CosmosMsg::Custom(MsgFundCommunityPool {
         amount: vec![coin(creation_fee.u128() - burn_fee.u128(), FEE_DENOM)],
         depositor: msg.minter.to_string(),
@@ -90,6 +91,7 @@ pub fn instantiate(
     }
 
     // TODO: add community pool fund msg
+    // https://github.com/public-awesome/contracts/issues/99
     Ok(Response::default()
         .add_message(send_fee_msg)
         .add_message(fee_burn_msg))
@@ -236,6 +238,7 @@ mod tests {
     }
     // TODO: properly test fee burn using cw-multi-test
     // set an initial supply in bank, and check that the fee is burned
+    // https://github.com/public-awesome/contracts/issues/114
     #[test]
     fn fee_burn() {}
 }
