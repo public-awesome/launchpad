@@ -28,7 +28,7 @@ pub fn instantiate(
     _msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-    Ok(Response::new().add_attribute("method", "instantiate"))
+    Ok(Response::new().add_attribute("action", "instantiate"))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -123,13 +123,13 @@ pub fn execute_set_bid(
         )?;
 
         res = res
-            .add_attribute("method", "sale_finalized")
+            .add_attribute("action", "sale_finalized")
             .add_messages(msgs);
     } else {
         // Save bid
         TOKEN_BIDS.save(deps.storage, (&collection, &token_id, &bid.bidder), &bid)?;
 
-        res = res.add_attribute("method", "set_bid");
+        res = res.add_attribute("action", "set_bid");
     }
 
     Ok(res
@@ -168,7 +168,7 @@ pub fn execute_remove_bid(
     };
 
     Ok(Response::new()
-        .add_attribute("method", "remove_bid")
+        .add_attribute("action", "remove_bid")
         .add_attribute("collection", collection)
         .add_attribute("token_id", token_id)
         .add_attribute("bidder", bidder)
@@ -198,7 +198,7 @@ pub fn execute_set_ask(
     }
     TOKEN_ASKS.save(deps.storage, (&collection, &token_id), &ask)?;
     Ok(Response::new()
-        .add_attribute("method", "set_ask")
+        .add_attribute("action", "set_ask")
         .add_attribute("collection", collection)
         .add_attribute("token_id", token_id)
         .add_attribute("amount", ask.amount.to_string()))
@@ -216,7 +216,7 @@ pub fn execute_remove_ask(
     check_only_owner(deps.as_ref(), &info, &collection, &token_id)?;
     TOKEN_ASKS.remove(deps.storage, (&collection, &token_id));
     Ok(Response::new()
-        .add_attribute("method", "remove_ask")
+        .add_attribute("action", "remove_ask")
         .add_attribute("collection", collection)
         .add_attribute("token_id", token_id))
 }
@@ -251,7 +251,7 @@ pub fn execute_accept_bid(
     )?;
 
     Ok(Response::new()
-        .add_attribute("method", "accept_bid")
+        .add_attribute("action", "accept_bid")
         .add_attribute("collection", collection)
         .add_attribute("token_id", token_id)
         .add_attribute("bidder", bid.bidder)
