@@ -175,7 +175,7 @@ pub fn execute_mint(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Respon
 
     let payment = must_pay(&info, &config.unit_price.denom)?;
     if payment != config.unit_price.amount {
-        return Err(ContractError::IncorrectPrice {});
+        return Err(ContractError::IncorrectPaymentAmount {});
     }
 
     if let Some(start_time) = config.start_time {

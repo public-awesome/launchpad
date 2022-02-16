@@ -20,8 +20,8 @@ pub enum ContractError {
     #[error("TooManyCoins")]
     TooManyCoins {},
 
-    #[error("IncorrectPrice")]
-    IncorrectPrice {},
+    #[error("IncorrectPaymentAmount")]
+    IncorrectPaymentAmount {},
 
     #[error("Sold out")]
     SoldOut {},
