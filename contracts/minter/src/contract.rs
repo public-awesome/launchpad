@@ -339,11 +339,13 @@ fn _execute_mint(
 
     let seller_msg = BankMsg::Send {
         to_address: config.admin.to_string(),
-        amount: vec![amount],
+        amount: vec![config.unit_price],
     };
     msgs.append(&mut vec![seller_msg.into()]);
 
-    Ok(Response::default().add_messages(msgs))
+    Ok(Response::default()
+        .add_attribute("action", action)
+        .add_messages(msgs))
 }
 
 pub fn execute_update_whitelist(
