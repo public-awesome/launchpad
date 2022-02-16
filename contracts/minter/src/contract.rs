@@ -160,6 +160,7 @@ pub fn execute(
 pub fn execute_mint(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
     let sg721_address = SG721_ADDRESS.load(deps.storage)?;
+    let action = "executed_mint".to_string();
 
     let allowlist = WHITELIST_ADDRS.has(deps.storage, info.sender.to_string());
     if let Some(whitelist_expiration) = config.whitelist_expiration {
@@ -198,83 +199,7 @@ pub fn execute_mint(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Respon
         }
     }
 
-    // get mintable_token_id
-    let mintable_tokens_result: StdResult<Vec<u64>> = MINTABLE_TOKEN_IDS
-        .keys(deps.storage, None, None, Order::Ascending)
-        .take(1)
-        .collect();
-    let mintable_tokens = mintable_tokens_result?;
-    if mintable_tokens.is_empty() {
-        return Err(ContractError::SoldOut {});
-    }
-    let mintable_token_id: u64 = mintable_tokens[0];
-
-    let mut msgs: Vec<CosmosMsg> = vec![];
-
-    let mint_msg = Cw721ExecuteMsg::Mint(MintMsg::<Empty> {
-        token_id: mintable_token_id.to_string(),
-        owner: info.sender.to_string(),
-        token_uri: Some(format!("{}/{}", config.base_token_uri, mintable_token_id)),
-        extension: Empty {},
-    });
-
-    let msg = CosmosMsg::Wasm(WasmMsg::Execute {
-        contract_addr: sg721_address.to_string(),
-        msg: to_binary(&mint_msg)?,
-        funds: vec![],
-    });
-    msgs.append(&mut vec![msg]);
-
-    // remove mintable token id from map
-    MINTABLE_TOKEN_IDS.remove(deps.storage, mintable_token_id);
-
-    // Check if token supports Royalties
-    let royalty: Result<sg721::msg::RoyaltyResponse, StdError> = deps
-        .querier
-        .query_wasm_smart(sg721_address, &Sg721QueryMsg::Royalties {});
-
-    // Add payout messages
-    match royalty {
-        Ok(royalty) => {
-            // If token supports royalities, payout shares
-            if let Some(royalty) = royalty.royalty {
-                // Can't assume index 0 of index.funds is the correct coin
-                let funds = info.funds.iter().find(|x| *x == &config.unit_price);
-                if let Some(funds) = funds {
-                    // Calculate royalty share and create Bank msg
-                    let royalty_share_msg = BankMsg::Send {
-                        to_address: royalty.payment_address.to_string(),
-                        amount: vec![Coin {
-                            amount: funds.amount * royalty.share,
-                            denom: funds.denom.clone(),
-                        }],
-                    };
-                    msgs.append(&mut vec![royalty_share_msg.into()]);
-
-                    // Calculate seller share and create Bank msg
-                    let seller_share_msg = BankMsg::Send {
-                        to_address: config.admin.to_string(),
-                        amount: vec![Coin {
-                            amount: funds.amount * (Decimal::one() - royalty.share),
-                            denom: funds.denom.clone(),
-                        }],
-                    };
-                    msgs.append(&mut vec![seller_share_msg.into()]);
-                }
-            }
-        }
-        Err(_) => {
-            // If token doesn't support royalties, pay seller in full
-            let seller_share_msg = BankMsg::Send {
-                to_address: config.admin.to_string(),
-                amount: info.funds,
-            };
-            msgs.append(&mut vec![seller_share_msg.into()]);
-        }
-    }
-    Ok(Response::default()
-        .add_attribute("method", "executed_mint")
-        .add_messages(msgs))
+    _execute_safe_mint(deps, env, info, action, None, None)
 }
 
 pub fn execute_mint_for(
@@ -358,6 +283,103 @@ pub fn execute_batch_mint(
     Ok(Response::default()
         .add_attribute("method", "executed_batch_mint")
         .add_attribute("num_mints", num_mints.to_string()))
+}
+
+fn _execute_safe_mint(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    action: String,
+    recipient: Option<Addr>,
+    token_id: Option<u64>,
+) -> Result<Response, ContractError> {
+    let config = CONFIG.load(deps.storage)?;
+    let sg721_address = SG721_ADDRESS.load(deps.storage)?;
+
+    // mint
+    // mint_to
+    // mint_for
+    // if recipient, change nft recipient
+    // if token_id, check token_id exists. else use next available
+
+    // get mintable_token_id
+    let mintable_tokens_result: StdResult<Vec<u64>> = MINTABLE_TOKEN_IDS
+        .keys(deps.storage, None, None, Order::Ascending)
+        .take(1)
+        .collect();
+    let mintable_tokens = mintable_tokens_result?;
+    if mintable_tokens.is_empty() {
+        return Err(ContractError::SoldOut {});
+    }
+    let mintable_token_id: u64 = mintable_tokens[0];
+
+    let mut msgs: Vec<CosmosMsg> = vec![];
+
+    let mint_msg = Cw721ExecuteMsg::Mint(MintMsg::<Empty> {
+        token_id: mintable_token_id.to_string(),
+        owner: info.sender.to_string(),
+        token_uri: Some(format!("{}/{}", config.base_token_uri, mintable_token_id)),
+        extension: Empty {},
+    });
+
+    let msg = CosmosMsg::Wasm(WasmMsg::Execute {
+        contract_addr: sg721_address.to_string(),
+        msg: to_binary(&mint_msg)?,
+        funds: vec![],
+    });
+    msgs.append(&mut vec![msg]);
+
+    // remove mintable token id from map
+    MINTABLE_TOKEN_IDS.remove(deps.storage, mintable_token_id);
+
+    // Check if token supports Royalties
+    let royalty: Result<sg721::msg::RoyaltyResponse, StdError> = deps
+        .querier
+        .query_wasm_smart(sg721_address, &Sg721QueryMsg::Royalties {});
+
+    // Add payout messages
+    match royalty {
+        Ok(royalty) => {
+            // If token supports royalities, payout shares
+            if let Some(royalty) = royalty.royalty {
+                // Can't assume index 0 of index.funds is the correct coin
+                let funds = info.funds.iter().find(|x| *x == &config.unit_price);
+                if let Some(funds) = funds {
+                    // Calculate royalty share and create Bank msg
+                    let royalty_share_msg = BankMsg::Send {
+                        to_address: royalty.payment_address.to_string(),
+                        amount: vec![Coin {
+                            amount: funds.amount * royalty.share,
+                            denom: funds.denom.clone(),
+                        }],
+                    };
+                    msgs.append(&mut vec![royalty_share_msg.into()]);
+
+                    // Calculate seller share and create Bank msg
+                    let seller_share_msg = BankMsg::Send {
+                        to_address: config.admin.to_string(),
+                        amount: vec![Coin {
+                            amount: funds.amount * (Decimal::one() - royalty.share),
+                            denom: funds.denom.clone(),
+                        }],
+                    };
+                    msgs.append(&mut vec![seller_share_msg.into()]);
+                }
+            }
+        }
+        Err(_) => {
+            // If token doesn't support royalties, pay seller in full
+            let seller_share_msg = BankMsg::Send {
+                to_address: config.admin.to_string(),
+                amount: info.funds,
+            };
+            msgs.append(&mut vec![seller_share_msg.into()]);
+        }
+    }
+
+    Ok(Response::default()
+        .add_attribute("method", action)
+        .add_messages(msgs))
 }
 
 pub fn execute_update_whitelist(
