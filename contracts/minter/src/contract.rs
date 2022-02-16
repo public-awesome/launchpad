@@ -209,7 +209,15 @@ pub fn execute_mint_to(
     info: MessageInfo,
     recipient: Addr,
 ) -> Result<Response, ContractError> {
-    Ok(Response::default().add_attribute("method", "executed_mint_to"))
+    let config = CONFIG.load(deps.storage)?;
+    let action = "execute_mint_to".to_string();
+
+    // Check only admin
+    if info.sender != config.admin {
+        return Err(ContractError::Unauthorized {});
+    }
+
+    _execute_safe_mint(deps, env, info, action, Some(recipient), None)
 }
 
 pub fn execute_mint_for(
@@ -307,34 +315,56 @@ fn _execute_safe_mint(
     let sg721_address = SG721_ADDRESS.load(deps.storage)?;
     let recipient_addr = if recipient.is_none() {
         info.sender
-    } else if let Some(some_recipient) = recipient{
+    } else if let Some(some_recipient) = recipient {
         some_recipient
     } else {
-        return Err(ContractError::InvalidAddress{})
+        return Err(ContractError::InvalidAddress {});
     };
 
     // mint
     // mint_to
     // mint_for
-    // if recipient, change nft recipient
+
     // if token_id, check token_id exists. else use next available
 
     // get mintable_token_id
-    let mintable_tokens_result: StdResult<Vec<u64>> = MINTABLE_TOKEN_IDS
-        .keys(deps.storage, None, None, Order::Ascending)
-        .take(1)
-        .collect();
-    let mintable_tokens = mintable_tokens_result?;
-    if mintable_tokens.is_empty() {
-        return Err(ContractError::SoldOut {});
-    }
-    let mintable_token_id: u64 = mintable_tokens[0];
+    let mintable_token_id: u64 = if token_id.is_none() {
+        let mintable_tokens_result: StdResult<Vec<u64>> = MINTABLE_TOKEN_IDS
+            .keys(deps.storage, None, None, Order::Ascending)
+            .take(1)
+            .collect();
+        let mintable_tokens = mintable_tokens_result?;
+        if mintable_tokens.is_empty() {
+            return Err(ContractError::SoldOut {});
+        }
+        mintable_tokens[0]
+    } else if let Some(some_token_id) = token_id {
+        let mintable_tokens_result: StdResult<Vec<u64>> = MINTABLE_TOKEN_IDS
+            .keys(
+                deps.storage,
+                None,
+                Some(Bound::inclusive(vec![some_token_id as u8])),
+                Order::Ascending,
+            )
+            .take(1)
+            .collect();
+        // If token_id not mintable, throw err
+        let mintable_tokens = mintable_tokens_result?;
+        if mintable_tokens.is_empty() {
+            return Err(ContractError::TokenIdAlreadySold {
+                token_id: some_token_id,
+            });
+        }
+        mintable_tokens[0]
+    } else {
+        return Err(ContractError::InvalidTokenId {});
+    };
 
     let mut msgs: Vec<CosmosMsg> = vec![];
 
     let mint_msg = Cw721ExecuteMsg::Mint(MintMsg::<Empty> {
         token_id: mintable_token_id.to_string(),
-        owner: info.sender.to_string(),
+        owner: recipient_addr.to_string(),
         token_uri: Some(format!("{}/{}", config.base_token_uri, mintable_token_id)),
         extension: Empty {},
     });
@@ -795,15 +825,14 @@ mod tests {
             .unwrap();
         assert_eq!(res.owner, buyer.to_string());
 
-        // Buyer can't call MintFor
-        let mint_for_msg = ExecuteMsg::MintFor {
-            token_id: 1,
+        // Buyer can't call MintTo
+        let mint_to_msg = ExecuteMsg::MintTo {
             recipient: buyer.clone(),
         };
         let res = router.execute_contract(
             buyer.clone(),
             minter_addr.clone(),
-            &mint_for_msg,
+            &mint_to_msg,
             &coins(PRICE, DENOM),
         );
         assert!(res.is_err());
@@ -812,7 +841,7 @@ mod tests {
         let res = router.execute_contract(
             creator.clone(),
             minter_addr.clone(),
-            &mint_for_msg,
+            &mint_to_msg,
             &coins(PRICE, DENOM),
         );
         assert!(res.is_ok());
@@ -835,8 +864,7 @@ mod tests {
         assert!(res.is_err());
 
         // Creator can't use MintFor if sold out
-        let res =
-            router.execute_contract(creator, minter_addr, &mint_for_msg, &coins(PRICE, DENOM));
+        let res = router.execute_contract(creator, minter_addr, &mint_to_msg, &coins(PRICE, DENOM));
         assert!(res.is_err());
     }
 
@@ -1170,7 +1198,7 @@ mod tests {
         assert!(res.is_err());
         let err = res.unwrap_err();
         assert_eq!(
-            ContractError::MaxBatchLimitLimitExceeded {}.to_string(),
+            ContractError::MaxBatchMintLimitExceeded {}.to_string(),
             err.to_string()
         );
 

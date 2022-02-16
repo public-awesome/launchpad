@@ -22,6 +22,9 @@ pub enum ContractError {
     #[error("Invalid address")]
     InvalidAddress {},
 
+    #[error("Invalid token id")]
+    InvalidTokenId {},
+
     #[error("Instantiate sg721 error")]
     InstantiateSg721Error {},
 
