@@ -48,6 +48,7 @@ mod tests {
 
     const TOKEN_ID: &str = "123";
     const NATIVE_TOKEN_DENOM: &str = "ustars";
+    const CREATION_FEE: u128 = 1_000_000_000;
     const INITIAL_BALANCE: u128 = 2000;
 
     // Instantiates all needed contracts for testing
@@ -82,7 +83,14 @@ mod tests {
             }),
         };
         let nft_contract_addr = router
-            .instantiate_contract(sg721_id, creator.clone(), &msg, &[], "NFT", None)
+            .instantiate_contract(
+                sg721_id,
+                creator.clone(),
+                &msg,
+                &coins(CREATION_FEE, NATIVE_TOKEN_DENOM),
+                "NFT",
+                None,
+            )
             .unwrap();
 
         Ok((nft_marketplace_addr, nft_contract_addr))
@@ -93,6 +101,7 @@ mod tests {
         let owner: Addr = Addr::unchecked("owner");
         let bidder: Addr = Addr::unchecked("bidder");
         let creator: Addr = Addr::unchecked("creator");
+        let creator_funds: Vec<Coin> = coins(CREATION_FEE, NATIVE_TOKEN_DENOM);
         let funds: Vec<Coin> = coins(INITIAL_BALANCE, NATIVE_TOKEN_DENOM);
         router
             .sudo(SudoMsg::Bank({
@@ -116,7 +125,7 @@ mod tests {
             .sudo(SudoMsg::Bank({
                 BankSudo::Mint {
                     to_address: creator.to_string(),
-                    amount: funds.clone(),
+                    amount: creator_funds.clone(),
                 }
             }))
             .map_err(|err| println!("{:?}", err))
@@ -128,7 +137,7 @@ mod tests {
         let bidder_native_balances = router.wrap().query_all_balances(bidder.clone()).unwrap();
         assert_eq!(bidder_native_balances, funds);
         let creator_native_balances = router.wrap().query_all_balances(creator.clone()).unwrap();
-        assert_eq!(creator_native_balances, funds);
+        assert_eq!(creator_native_balances, creator_funds);
 
         Ok((owner, bidder, creator))
     }
@@ -219,10 +228,7 @@ mod tests {
 
         // Check creator hasn't been paid yet
         let creator_native_balances = router.wrap().query_all_balances(creator.clone()).unwrap();
-        assert_eq!(
-            creator_native_balances,
-            coins(INITIAL_BALANCE, NATIVE_TOKEN_DENOM)
-        );
+        assert_eq!(creator_native_balances, vec![]);
 
         // Creator accepts bid
         let accept_bid_msg = ExecuteMsg::AcceptBid {
@@ -236,10 +242,7 @@ mod tests {
 
         // Check money is transfered
         let creator_native_balances = router.wrap().query_all_balances(creator).unwrap();
-        assert_eq!(
-            creator_native_balances,
-            coins(INITIAL_BALANCE + 100, NATIVE_TOKEN_DENOM)
-        );
+        assert_eq!(creator_native_balances, coins(100, NATIVE_TOKEN_DENOM));
         let bidder_native_balances = router.wrap().query_all_balances(bidder.clone()).unwrap();
         assert_eq!(
             bidder_native_balances,
@@ -348,10 +351,7 @@ mod tests {
 
         // Check creator hasn't been paid yet
         let creator_native_balances = router.wrap().query_all_balances(creator.clone()).unwrap();
-        assert_eq!(
-            creator_native_balances,
-            coins(INITIAL_BALANCE, NATIVE_TOKEN_DENOM)
-        );
+        assert_eq!(creator_native_balances, vec![]);
 
         // Creator accepts bid
         let accept_bid_msg = ExecuteMsg::AcceptBid {
@@ -365,10 +365,7 @@ mod tests {
 
         // Check money is transfered
         let creator_native_balances = router.wrap().query_all_balances(creator).unwrap();
-        assert_eq!(
-            creator_native_balances,
-            coins(INITIAL_BALANCE + 100, NATIVE_TOKEN_DENOM)
-        );
+        assert_eq!(creator_native_balances, coins(100, NATIVE_TOKEN_DENOM));
         let bidder_native_balances = router.wrap().query_all_balances(bidder.clone()).unwrap();
         assert_eq!(
             bidder_native_balances,
@@ -490,10 +487,7 @@ mod tests {
 
         // Check money is transfered
         let creator_native_balances = router.wrap().query_all_balances(creator).unwrap();
-        assert_eq!(
-            creator_native_balances,
-            coins(INITIAL_BALANCE + 100, NATIVE_TOKEN_DENOM)
-        );
+        assert_eq!(creator_native_balances, coins(100, NATIVE_TOKEN_DENOM));
         let bidder_native_balances = router.wrap().query_all_balances(bidder.clone()).unwrap();
         assert_eq!(
             bidder_native_balances,
@@ -681,8 +675,19 @@ mod tests {
         // Setup intial accounts
         let (curator, bidder, creator) = setup_accounts(&mut router).unwrap();
 
-        // Instantiate and configure contracts
-        let (nft_marketplace_addr, _) = setup_contracts(&mut router, &creator).unwrap();
+        // Instantiate marketplace contract
+        let marketplace_id = router.store_code(contract_nft_marketplace());
+        let msg = crate::msg::InstantiateMsg {};
+        let nft_marketplace_addr = router
+            .instantiate_contract(
+                marketplace_id,
+                creator.clone(),
+                &msg,
+                &[],
+                "Marketplace",
+                None,
+            )
+            .unwrap();
 
         // Setup media contract with 10% royalties to a curator
         let sg721_id = router.store_code(contract_sg721());
@@ -700,7 +705,14 @@ mod tests {
             }),
         };
         let nft_contract_addr = router
-            .instantiate_contract(sg721_id, creator.clone(), &msg, &[], "NFT", None)
+            .instantiate_contract(
+                sg721_id,
+                creator.clone(),
+                &msg,
+                &coins(CREATION_FEE, NATIVE_TOKEN_DENOM),
+                "NFT",
+                None,
+            )
             .unwrap();
 
         // Mint NFT for creator
@@ -716,6 +728,7 @@ mod tests {
             &mint_for_creator_msg,
             &[],
         );
+        println!("{:?}", res);
         assert!(res.is_ok());
 
         // Creator Authorizes NFT
@@ -771,10 +784,7 @@ mod tests {
             coins(INITIAL_BALANCE + 10, NATIVE_TOKEN_DENOM)
         );
         let creator_native_balances = router.wrap().query_all_balances(creator).unwrap();
-        assert_eq!(
-            creator_native_balances,
-            coins(INITIAL_BALANCE + 90, NATIVE_TOKEN_DENOM)
-        );
+        assert_eq!(creator_native_balances, coins(90, NATIVE_TOKEN_DENOM));
         let bidder_native_balances = router.wrap().query_all_balances(bidder.clone()).unwrap();
         assert_eq!(
             bidder_native_balances,
