@@ -305,6 +305,13 @@ fn _execute_safe_mint(
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
     let sg721_address = SG721_ADDRESS.load(deps.storage)?;
+    let recipient_addr = if recipient.is_none() {
+        info.sender
+    } else if let Some(some_recipient) = recipient{
+        some_recipient
+    } else {
+        return Err(ContractError::InvalidAddress{})
+    };
 
     // mint
     // mint_to

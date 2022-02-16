@@ -19,6 +19,9 @@ pub enum ContractError {
     #[error("Sold out")]
     SoldOut {},
 
+    #[error("Invalid address")]
+    InvalidAddress {},
+
     #[error("Instantiate sg721 error")]
     InstantiateSg721Error {},
 
