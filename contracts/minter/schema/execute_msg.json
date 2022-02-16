@@ -97,6 +97,28 @@
     {
       "type": "object",
       "required": [
+        "mint_for"
+      ],
+      "properties": {
+        "update_batch_mint_limit": {
+          "type": "object",
+          "required": [
+            "batch_mint_limit"
+          ],
+          "properties": {
+            "batch_mint_limit": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
         "mint_to"
       ],
       "properties": {
@@ -117,6 +139,7 @@
     {
       "type": "object",
       "required": [
+<<<<<<< HEAD
         "mint_for"
       ],
       "properties": {
@@ -143,6 +166,8 @@
     {
       "type": "object",
       "required": [
+=======
+>>>>>>> 6b80859 (Updated schema)
         "batch_mint"
       ],
       "properties": {
