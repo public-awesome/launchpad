@@ -44,7 +44,7 @@ pub enum ContractError {
     InvalidBatchMintLimit { max: String, got: String },
 
     #[error("Max batch mint limit exceeded")]
-    MaxBatchLimitLimitExceeded {},
+    MaxBatchMintLimitExceeded {},
 
     #[error("Token id: {token_id} already sold")]
     TokenIdAlreadySold { token_id: u64 },

@@ -280,10 +280,10 @@ pub fn execute_batch_mint(
 
     let mint_limit = config
         .batch_mint_limit
-        .ok_or(ContractError::MaxBatchLimitLimitExceeded {})?;
+        .ok_or(ContractError::MaxBatchMintLimitExceeded {})?;
 
     if num_mints > mint_limit {
-        return Err(ContractError::MaxBatchLimitLimitExceeded {});
+        return Err(ContractError::MaxBatchMintLimitExceeded {});
     }
 
     for _ in 0..num_mints {
