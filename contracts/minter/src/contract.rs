@@ -149,7 +149,6 @@ pub fn execute(
         ExecuteMsg::UpdateBatchMintLimit { batch_mint_limit } => {
             execute_update_batch_mint_limit(deps, env, info, batch_mint_limit)
         }
-        ExecuteMsg::MintTo { recipient } => execute_mint_to(deps, env, info, recipient),
         ExecuteMsg::MintFor {
             token_id,
             recipient,
@@ -276,52 +275,6 @@ pub fn execute_mint(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Respon
     Ok(Response::default()
         .add_attribute("method", "executed_mint")
         .add_messages(msgs))
-}
-
-pub fn execute_mint_to(
-    deps: DepsMut,
-    _env: Env,
-    info: MessageInfo,
-    recipient: Addr,
-) -> Result<Response, ContractError> {
-    let config = CONFIG.load(deps.storage)?;
-    let sg721_address = SG721_ADDRESS.load(deps.storage)?;
-
-    // Check only admin
-    if info.sender != config.admin {
-        return Err(ContractError::Unauthorized {});
-    }
-
-    // get mintable_token_id
-    let mintable_tokens_result: StdResult<Vec<u64>> = MINTABLE_TOKEN_IDS
-        .keys(deps.storage, None, None, Order::Ascending)
-        .take(1)
-        .collect();
-    let mintable_tokens = mintable_tokens_result?;
-    if mintable_tokens.is_empty() {
-        return Err(ContractError::SoldOut {});
-    }
-    let mintable_token_id: u64 = mintable_tokens[0];
-
-    let mint_msg = Cw721ExecuteMsg::Mint(MintMsg::<Empty> {
-        token_id: mintable_token_id.to_string(),
-        owner: recipient.to_string(),
-        token_uri: Some(format!("{}/{}", config.base_token_uri, mintable_token_id)),
-        extension: Empty {},
-    });
-
-    let msg = CosmosMsg::Wasm(WasmMsg::Execute {
-        contract_addr: sg721_address.to_string(),
-        msg: to_binary(&mint_msg)?,
-        funds: vec![],
-    });
-
-    // remove mintable token id from map
-    MINTABLE_TOKEN_IDS.remove(deps.storage, mintable_token_id);
-
-    Ok(Response::default()
-        .add_attribute("method", "executed_mint_to")
-        .add_message(msg))
 }
 
 pub fn execute_mint_for(
@@ -803,14 +756,15 @@ mod tests {
             .unwrap();
         assert_eq!(res.owner, buyer.to_string());
 
-        // Buyer can't call MintTo
-        let mint_to_msg = ExecuteMsg::MintTo {
+        // Buyer can't call MintFor
+        let mint_for_msg = ExecuteMsg::MintFor {
+            token_id: 1,
             recipient: buyer.clone(),
         };
         let res = router.execute_contract(
             buyer.clone(),
             minter_addr.clone(),
-            &mint_to_msg,
+            &mint_for_msg,
             &coins(PRICE, DENOM),
         );
         assert!(res.is_err());
@@ -819,7 +773,7 @@ mod tests {
         let res = router.execute_contract(
             creator.clone(),
             minter_addr.clone(),
-            &mint_to_msg,
+            &mint_for_msg,
             &coins(PRICE, DENOM),
         );
         assert!(res.is_ok());
@@ -842,7 +796,8 @@ mod tests {
         assert!(res.is_err());
 
         // Creator can't use MintFor if sold out
-        let res = router.execute_contract(creator, minter_addr, &mint_to_msg, &coins(PRICE, DENOM));
+        let res =
+            router.execute_contract(creator, minter_addr, &mint_for_msg, &coins(PRICE, DENOM));
         assert!(res.is_err());
     }
 
