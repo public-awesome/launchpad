@@ -75,10 +75,32 @@
     {
       "type": "object",
       "required": [
-        "mint_for"
+        "update_batch_mint_limit"
       ],
       "properties": {
-        "mint_for": {
+        "update_batch_mint_limit": {
+          "type": "object",
+          "required": [
+            "batch_mint_limit"
+          ],
+          "properties": {
+            "batch_mint_limit": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "mint_to"
+      ],
+      "properties": {
+        "mint_to": {
           "type": "object",
           "required": [
             "recipient"
@@ -86,6 +108,54 @@
           "properties": {
             "recipient": {
               "$ref": "#/definitions/Addr"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "mint_for"
+      ],
+      "properties": {
+        "mint_for": {
+          "type": "object",
+          "required": [
+            "recipient",
+            "token_id"
+          ],
+          "properties": {
+            "recipient": {
+              "$ref": "#/definitions/Addr"
+            },
+            "token_id": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "batch_mint"
+      ],
+      "properties": {
+        "batch_mint": {
+          "type": "object",
+          "required": [
+            "num_mints"
+          ],
+          "properties": {
+            "num_mints": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
             }
           }
         }

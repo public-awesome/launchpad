@@ -19,6 +19,12 @@ pub enum ContractError {
     #[error("Sold out")]
     SoldOut {},
 
+    #[error("Invalid address")]
+    InvalidAddress {},
+
+    #[error("Invalid token id")]
+    InvalidTokenId {},
+
     #[error("Instantiate sg721 error")]
     InstantiateSg721Error {},
 
@@ -34,17 +40,20 @@ pub enum ContractError {
     #[error("Minting has not started yet")]
     BeforeMintStartTime {},
 
-    #[error("Invalid minting limit per address. max: 30, got: {got}")]
+    #[error("Invalid minting limit per address. max: {max}, got: {got}")]
     InvalidPerAddressLimit { max: String, got: String },
 
     #[error("Max minting limit per address exceeded")]
     MaxPerAddressLimitExceeded {},
 
-    #[error("Invalid batch mint limit. max: 30, got: {got}")]
+    #[error("Invalid batch mint limit. max: {max}, got: {got}")]
     InvalidBatchMintLimit { max: String, got: String },
 
     #[error("Max batch mint limit exceeded")]
-    MaxBatchLimitLimitExceeded {},
+    MaxBatchMintLimitExceeded {},
+
+    #[error("Token id: {token_id} already sold")]
+    TokenIdAlreadySold { token_id: u64 },
 }
 
 impl From<ParseError> for ContractError {

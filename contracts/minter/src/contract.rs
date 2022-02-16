@@ -7,17 +7,19 @@ use cosmwasm_std::{
 use cw2::set_contract_version;
 use cw721::TokensResponse as Cw721TokensResponse;
 use cw721_base::{msg::ExecuteMsg as Cw721ExecuteMsg, MintMsg};
+use cw_storage_plus::Bound;
 use cw_utils::{parse_reply_instantiate_data, Expiration};
 use sg721::msg::{InstantiateMsg as Sg721InstantiateMsg, QueryMsg as Sg721QueryMsg};
 use url::Url;
 
 use crate::error::ContractError;
 use crate::msg::{
-    ConfigResponse, ExecuteMsg, InstantiateMsg, OnWhitelistResponse, QueryMsg, StartTimeResponse,
-    UpdateWhitelistMsg, WhitelistAddressesResponse, WhitelistExpirationResponse,
+    ConfigResponse, ExecuteMsg, InstantiateMsg, MintableNumTokensResponse, OnWhitelistResponse,
+    QueryMsg, StartTimeResponse, UpdateWhitelistMsg, WhitelistAddressesResponse,
+    WhitelistExpirationResponse,
 };
 use crate::state::{
-    Config, CONFIG, NUM_WHITELIST_ADDRS, SG721_ADDRESS, TOKEN_ID_INDEX, WHITELIST_ADDRS,
+    Config, CONFIG, MINTABLE_TOKEN_IDS, NUM_WHITELIST_ADDRS, SG721_ADDRESS, WHITELIST_ADDRS,
 };
 
 // version info for migration info
@@ -94,8 +96,10 @@ pub fn instantiate(
         NUM_WHITELIST_ADDRS.save(deps.storage, &(whitelist_addresses.len() as u32))?;
     }
 
-    // Set Token ID index
-    TOKEN_ID_INDEX.save(deps.storage, &0)?;
+    // save mintable token ids map
+    for token_id in 0..msg.num_tokens {
+        MINTABLE_TOKEN_IDS.save(deps.storage, token_id, &Empty {})?;
+    }
 
     let sub_msgs: Vec<SubMsg> = vec![SubMsg {
         msg: WasmMsg::Instantiate {
@@ -145,7 +149,11 @@ pub fn execute(
         ExecuteMsg::UpdateBatchMintLimit { batch_mint_limit } => {
             execute_update_batch_mint_limit(deps, env, info, batch_mint_limit)
         }
-        ExecuteMsg::MintFor { recipient } => execute_mint_for(deps, env, info, recipient),
+        ExecuteMsg::MintTo { recipient } => execute_mint_to(deps, env, info, recipient),
+        ExecuteMsg::MintFor {
+            token_id,
+            recipient,
+        } => execute_mint_for(deps, env, info, token_id, recipient),
         ExecuteMsg::BatchMint { num_mints } => execute_batch_mint(deps, env, info, num_mints),
     }
 }
@@ -153,7 +161,8 @@ pub fn execute(
 pub fn execute_mint(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
     let sg721_address = SG721_ADDRESS.load(deps.storage)?;
-    let mut token_id_index = TOKEN_ID_INDEX.load(deps.storage)?;
+    let action = "mint".to_string();
+
     let allowlist = WHITELIST_ADDRS.has(deps.storage, info.sender.to_string());
     if let Some(whitelist_expiration) = config.whitelist_expiration {
         // Check if whitelist not expired and sender is not whitelisted
@@ -167,11 +176,6 @@ pub fn execute_mint(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Respon
     // Check funds sent is correct amount
     if !has_coins(&info.funds, &config.unit_price) {
         return Err(ContractError::NotEnoughFunds {});
-    }
-
-    // Check if over max tokens
-    if token_id_index >= config.num_tokens {
-        return Err(ContractError::SoldOut {});
     }
 
     if let Some(start_time) = config.start_time {
@@ -196,12 +200,130 @@ pub fn execute_mint(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Respon
         }
     }
 
+    _execute_mint(deps, env, info, action, None, None)
+}
+
+pub fn execute_mint_to(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    recipient: Addr,
+) -> Result<Response, ContractError> {
+    let config = CONFIG.load(deps.storage)?;
+    let action = "mint_to".to_string();
+
+    // Check only admin
+    if info.sender != config.admin {
+        return Err(ContractError::Unauthorized {});
+    }
+
+    _execute_mint(deps, env, info, action, Some(recipient), None)
+}
+
+pub fn execute_mint_for(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    token_id: u64,
+    recipient: Addr,
+) -> Result<Response, ContractError> {
+    let config = CONFIG.load(deps.storage)?;
+    let action = "mint_for".to_string();
+
+    // Check only admin
+    if info.sender != config.admin {
+        return Err(ContractError::Unauthorized {});
+    }
+
+    _execute_mint(deps, env, info, action, Some(recipient), Some(token_id))
+}
+
+pub fn execute_batch_mint(
+    mut deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    num_mints: u64,
+) -> Result<Response, ContractError> {
+    let config = CONFIG.load(deps.storage)?;
+
+    let mint_limit = config
+        .batch_mint_limit
+        .ok_or(ContractError::MaxBatchMintLimitExceeded {})?;
+
+    if num_mints > mint_limit {
+        return Err(ContractError::MaxBatchMintLimitExceeded {});
+    }
+
+    for _ in 0..num_mints {
+        execute_mint(deps.branch(), env.clone(), info.clone())?;
+    }
+
+    Ok(Response::default()
+        .add_attribute("method", "batch_mint")
+        .add_attribute("num_mints", num_mints.to_string()))
+}
+
+fn _execute_mint(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    action: String,
+    recipient: Option<Addr>,
+    token_id: Option<u64>,
+) -> Result<Response, ContractError> {
+    // generalize checks and mint message creation
+    // mint -> _execute_mint(recipient: None, token_id: None)
+    // mint_to(recipient: "friend") -> _execute_mint(Some(recipient), token_id: None)
+    // mint_for(recipient: "friend2", token_id: 420) -> _execute_mint(recipient, token_id)
+    let config = CONFIG.load(deps.storage)?;
+    let sg721_address = SG721_ADDRESS.load(deps.storage)?;
+    let recipient_addr = if recipient.is_none() {
+        info.sender
+    } else if let Some(some_recipient) = recipient {
+        some_recipient
+    } else {
+        return Err(ContractError::InvalidAddress {});
+    };
+
+    // if token_id None, find and assign one. else check token_id exists on mintable map.
+    let mintable_token_id: u64 = if token_id.is_none() {
+        let mintable_tokens_result: StdResult<Vec<u64>> = MINTABLE_TOKEN_IDS
+            .keys(deps.storage, None, None, Order::Ascending)
+            .take(1)
+            .collect();
+        let mintable_tokens = mintable_tokens_result?;
+        if mintable_tokens.is_empty() {
+            return Err(ContractError::SoldOut {});
+        }
+        mintable_tokens[0]
+    } else if let Some(some_token_id) = token_id {
+        let mintable_tokens_result: StdResult<Vec<u64>> = MINTABLE_TOKEN_IDS
+            .keys(
+                deps.storage,
+                None,
+                Some(Bound::inclusive(vec![some_token_id as u8])),
+                Order::Ascending,
+            )
+            .take(1)
+            .collect();
+        // If token_id not mintable, throw err
+        let mintable_tokens = mintable_tokens_result?;
+        if mintable_tokens.is_empty() {
+            return Err(ContractError::TokenIdAlreadySold {
+                token_id: some_token_id,
+            });
+        }
+        mintable_tokens[0]
+    } else {
+        return Err(ContractError::InvalidTokenId {});
+    };
+
     let mut msgs: Vec<CosmosMsg> = vec![];
 
     let mint_msg = Cw721ExecuteMsg::Mint(MintMsg::<Empty> {
-        token_id: token_id_index.to_string(),
-        owner: info.sender.to_string(),
-        token_uri: Some(format!("{}/{}", config.base_token_uri, token_id_index)),
+        token_id: mintable_token_id.to_string(),
+        owner: recipient_addr.to_string(),
+        token_uri: Some(format!("{}/{}", config.base_token_uri, mintable_token_id)),
         extension: Empty {},
     });
 
@@ -212,9 +334,8 @@ pub fn execute_mint(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Respon
     });
     msgs.append(&mut vec![msg]);
 
-    // Increase token ID index by one
-    token_id_index += 1;
-    TOKEN_ID_INDEX.save(deps.storage, &token_id_index)?;
+    // remove mintable token id from map
+    MINTABLE_TOKEN_IDS.remove(deps.storage, mintable_token_id);
 
     // Check if token supports Royalties
     let royalty: Result<sg721::msg::RoyaltyResponse, StdError> = deps
@@ -260,75 +381,10 @@ pub fn execute_mint(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Respon
             msgs.append(&mut vec![seller_share_msg.into()]);
         }
     }
+
     Ok(Response::default()
-        .add_attribute("action", "executed_mint")
+        .add_attribute("action", action)
         .add_messages(msgs))
-}
-
-pub fn execute_mint_for(
-    deps: DepsMut,
-    _env: Env,
-    info: MessageInfo,
-    recipient: Addr,
-) -> Result<Response, ContractError> {
-    let config = CONFIG.load(deps.storage)?;
-    let sg721_address = SG721_ADDRESS.load(deps.storage)?;
-    let mut token_id_index = TOKEN_ID_INDEX.load(deps.storage)?;
-
-    // Check only admin
-    if info.sender != config.admin {
-        return Err(ContractError::Unauthorized {});
-    }
-    // Check if over max tokens
-    if token_id_index >= config.num_tokens {
-        return Err(ContractError::SoldOut {});
-    }
-
-    let mint_msg = Cw721ExecuteMsg::Mint(MintMsg::<Empty> {
-        token_id: token_id_index.to_string(),
-        owner: recipient.to_string(),
-        token_uri: Some(format!("{}/{}", config.base_token_uri, token_id_index)),
-        extension: Empty {},
-    });
-
-    let msg = CosmosMsg::Wasm(WasmMsg::Execute {
-        contract_addr: sg721_address.to_string(),
-        msg: to_binary(&mint_msg)?,
-        funds: vec![],
-    });
-
-    // Increase token ID index by one
-    token_id_index += 1;
-    TOKEN_ID_INDEX.save(deps.storage, &token_id_index)?;
-
-    Ok(Response::default()
-        .add_attribute("action", "executed_mint_for")
-        .add_message(msg))
-}
-
-pub fn execute_batch_mint(
-    mut deps: DepsMut,
-    env: Env,
-    info: MessageInfo,
-    num_mints: u64,
-) -> Result<Response, ContractError> {
-    let config = CONFIG.load(deps.storage)?;
-
-    let mint_limit = config
-        .batch_mint_limit
-        .ok_or(ContractError::MaxBatchLimitLimitExceeded {})?;
-
-    if num_mints > mint_limit {
-        return Err(ContractError::MaxBatchLimitLimitExceeded {});
-    }
-
-    for _ in 0..num_mints {
-        execute_mint(deps.branch(), env.clone(), info.clone())?;
-    }
-
-    Ok(Response::default()
-        .add_attribute("action", "executed_batch_mint")
-        .add_attribute("num_mints", num_mints.to_string()))
 }
 
 pub fn execute_update_whitelist(
@@ -445,18 +501,18 @@ pub fn execute_update_batch_mint_limit(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::GetConfig {} => to_binary(&query_config(deps)?),
-        QueryMsg::GetWhitelistAddresses {} => to_binary(&query_whitelist_addresses(deps)?),
-        QueryMsg::GetWhitelistExpiration {} => to_binary(&query_whitelist_expiration(deps)?),
-        QueryMsg::GetStartTime {} => to_binary(&query_start_time(deps)?),
+        QueryMsg::Config {} => to_binary(&query_config(deps)?),
+        QueryMsg::WhitelistAddresses {} => to_binary(&query_whitelist_addresses(deps)?),
+        QueryMsg::WhitelistExpiration {} => to_binary(&query_whitelist_expiration(deps)?),
+        QueryMsg::StartTime {} => to_binary(&query_start_time(deps)?),
         QueryMsg::OnWhitelist { address } => to_binary(&query_on_whitelist(deps, address)?),
+        QueryMsg::MintableNumTokens {} => to_binary(&query_mintable_num_tokens(deps)?),
     }
 }
 
 fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
     let config = CONFIG.load(deps.storage)?;
     let sg721_address = SG721_ADDRESS.load(deps.storage)?;
-    let unused_token_id = TOKEN_ID_INDEX.load(deps.storage)?;
 
     Ok(ConfigResponse {
         admin: config.admin,
@@ -465,7 +521,6 @@ fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
         sg721_code_id: config.sg721_code_id,
         num_tokens: config.num_tokens,
         unit_price: config.unit_price,
-        unused_token_id,
         per_address_limit: config.per_address_limit,
         batch_mint_limit: config.batch_mint_limit,
     })
@@ -512,6 +567,14 @@ fn query_on_whitelist(deps: Deps, address: String) -> StdResult<OnWhitelistRespo
     })
 }
 
+fn query_mintable_num_tokens(deps: Deps) -> StdResult<MintableNumTokensResponse> {
+    let count = MINTABLE_TOKEN_IDS
+        .keys(deps.storage, None, None, Order::Ascending)
+        .count();
+    Ok(MintableNumTokensResponse {
+        count: count as u64,
+    })
+}
 // Reply callback triggered from cw721 contract instantiation
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
@@ -606,7 +669,7 @@ mod tests {
 
         let config: ConfigResponse = router
             .wrap()
-            .query_wasm_smart(minter_addr.clone(), &QueryMsg::GetConfig {})
+            .query_wasm_smart(minter_addr.clone(), &QueryMsg::Config {})
             .unwrap();
 
         Ok((minter_addr, config))
@@ -720,14 +783,14 @@ mod tests {
             .unwrap();
         assert_eq!(res.owner, buyer.to_string());
 
-        // Buyer can't call MintFor
-        let mint_for_msg = ExecuteMsg::MintFor {
+        // Buyer can't call MintTo
+        let mint_to_msg = ExecuteMsg::MintTo {
             recipient: buyer.clone(),
         };
         let res = router.execute_contract(
             buyer.clone(),
             minter_addr.clone(),
-            &mint_for_msg,
+            &mint_to_msg,
             &coins(PRICE, DENOM),
         );
         assert!(res.is_err());
@@ -736,7 +799,7 @@ mod tests {
         let res = router.execute_contract(
             creator.clone(),
             minter_addr.clone(),
-            &mint_for_msg,
+            &mint_to_msg,
             &coins(PRICE, DENOM),
         );
         assert!(res.is_ok());
@@ -759,8 +822,7 @@ mod tests {
         assert!(res.is_err());
 
         // Creator can't use MintFor if sold out
-        let res =
-            router.execute_contract(creator, minter_addr, &mint_for_msg, &coins(PRICE, DENOM));
+        let res = router.execute_contract(creator, minter_addr, &mint_to_msg, &coins(PRICE, DENOM));
         assert!(res.is_err());
     }
 
@@ -856,7 +918,7 @@ mod tests {
         // query whitelist_expiration, confirm not expired
         let expiration: WhitelistExpirationResponse = router
             .wrap()
-            .query_wasm_smart(minter_addr.clone(), &QueryMsg::GetWhitelistExpiration {})
+            .query_wasm_smart(minter_addr.clone(), &QueryMsg::WhitelistExpiration {})
             .unwrap();
         assert_eq!(
             "expiration time: ".to_owned() + &EXPIRATION_TIME.to_string(),
@@ -940,7 +1002,7 @@ mod tests {
         // query start_time, confirm expired
         let start_time_response: StartTimeResponse = router
             .wrap()
-            .query_wasm_smart(minter_addr.clone(), &QueryMsg::GetStartTime {})
+            .query_wasm_smart(minter_addr.clone(), &QueryMsg::StartTime {})
             .unwrap();
         assert_eq!(
             "expiration time: ".to_owned() + &START_TIME.to_string(),
@@ -1023,14 +1085,14 @@ mod tests {
         let mut router = mock_app();
         let (creator, buyer) = setup_accounts(&mut router).unwrap();
         let num_tokens = 4;
-        let (sale_addr, _config) =
+        let (minter_addr, _config) =
             setup_minter_contract(&mut router, &creator, num_tokens).unwrap();
 
         // batch mint limit set to STARTING_BATCH_MINT_LIMIT if no mint provided
         let batch_mint_msg = ExecuteMsg::BatchMint { num_mints: 1 };
         let res = router.execute_contract(
             buyer.clone(),
-            sale_addr.clone(),
+            minter_addr.clone(),
             &batch_mint_msg,
             &coins(PRICE, DENOM),
         );
@@ -1042,7 +1104,7 @@ mod tests {
         };
         let res = router.execute_contract(
             buyer.clone(),
-            sale_addr.clone(),
+            minter_addr.clone(),
             &update_batch_mint_limit_msg,
             &coins(PRICE, DENOM),
         );
@@ -1056,7 +1118,7 @@ mod tests {
         };
         let res = router.execute_contract(
             creator.clone(),
-            sale_addr.clone(),
+            minter_addr.clone(),
             &update_batch_mint_limit_msg,
             &coins(PRICE, DENOM),
         );
@@ -1077,7 +1139,7 @@ mod tests {
         };
         let res = router.execute_contract(
             creator.clone(),
-            sale_addr.clone(),
+            minter_addr.clone(),
             &update_batch_mint_limit_msg,
             &coins(PRICE, DENOM),
         );
@@ -1087,14 +1149,14 @@ mod tests {
         let batch_mint_msg = ExecuteMsg::BatchMint { num_mints: 50 };
         let res = router.execute_contract(
             buyer.clone(),
-            sale_addr.clone(),
+            minter_addr.clone(),
             &batch_mint_msg,
             &coins(PRICE, DENOM),
         );
         assert!(res.is_err());
         let err = res.unwrap_err();
         assert_eq!(
-            ContractError::MaxBatchLimitLimitExceeded {}.to_string(),
+            ContractError::MaxBatchMintLimitExceeded {}.to_string(),
             err.to_string()
         );
 
@@ -1102,7 +1164,7 @@ mod tests {
         let batch_mint_msg = ExecuteMsg::BatchMint { num_mints: 2 };
         let res = router.execute_contract(
             buyer.clone(),
-            sale_addr.clone(),
+            minter_addr.clone(),
             &batch_mint_msg,
             &coins(PRICE, DENOM),
         );
@@ -1112,7 +1174,7 @@ mod tests {
         let batch_mint_msg = ExecuteMsg::BatchMint { num_mints: 2 };
         let res = router.execute_contract(
             buyer.clone(),
-            sale_addr.clone(),
+            minter_addr.clone(),
             &batch_mint_msg,
             &coins(PRICE, DENOM),
         );
@@ -1122,8 +1184,95 @@ mod tests {
 
         // batch mint smaller amount
         let batch_mint_msg = ExecuteMsg::BatchMint { num_mints: 1 };
-        let res = router.execute_contract(buyer, sale_addr, &batch_mint_msg, &coins(PRICE, DENOM));
+        let res =
+            router.execute_contract(buyer, minter_addr, &batch_mint_msg, &coins(PRICE, DENOM));
         assert!(res.is_ok());
+    }
+
+    #[test]
+    fn mint_for_token_id_addr() {
+        let mut router = mock_app();
+        let (creator, buyer) = setup_accounts(&mut router).unwrap();
+        let num_tokens: u64 = 4;
+        let (minter_addr, _config) =
+            setup_minter_contract(&mut router, &creator, num_tokens).unwrap();
+
+        // try mint_for, test unauthorized
+        let mint_for_msg = ExecuteMsg::MintFor {
+            token_id: 1,
+            recipient: buyer.clone(),
+        };
+        let res = router.execute_contract(
+            buyer.clone(),
+            minter_addr.clone(),
+            &mint_for_msg,
+            &coins(PRICE, DENOM),
+        );
+        assert!(res.is_err());
+        let err = res.unwrap_err();
+        assert_eq!(ContractError::Unauthorized {}.to_string(), err.to_string());
+
+        // test token id already sold
+        // 1. mint token_id 0
+        // 2. mint_for token_id 0
+        let mint_msg = ExecuteMsg::Mint {};
+        let res = router.execute_contract(
+            buyer.clone(),
+            minter_addr.clone(),
+            &mint_msg,
+            &coins(PRICE, DENOM),
+        );
+        assert!(res.is_ok());
+
+        let token_id = 0;
+        let mint_for_msg = ExecuteMsg::MintFor {
+            token_id,
+            recipient: buyer.clone(),
+        };
+        let res = router.execute_contract(
+            creator.clone(),
+            minter_addr.clone(),
+            &mint_for_msg,
+            &coins(PRICE, DENOM),
+        );
+        assert!(res.is_err());
+        let err = res.unwrap_err();
+        assert_eq!(
+            ContractError::TokenIdAlreadySold { token_id }.to_string(),
+            err.to_string()
+        );
+        let mintable_num_tokens_response: MintableNumTokensResponse = router
+            .wrap()
+            .query_wasm_smart(minter_addr.clone(), &QueryMsg::MintableNumTokens {})
+            .unwrap();
+        assert_eq!(mintable_num_tokens_response.count, 3);
+
+        // test mint_for token_id 2 then normal mint
+        let token_id = 2;
+        let mint_for_msg = ExecuteMsg::MintFor {
+            token_id,
+            recipient: buyer,
+        };
+        let res = router.execute_contract(
+            creator.clone(),
+            minter_addr.clone(),
+            &mint_for_msg,
+            &coins(PRICE, DENOM),
+        );
+        assert!(res.is_ok());
+        let batch_mint_msg = ExecuteMsg::BatchMint { num_mints: 2 };
+        let res = router.execute_contract(
+            creator,
+            minter_addr.clone(),
+            &batch_mint_msg,
+            &coins(PRICE, DENOM),
+        );
+        assert!(res.is_ok());
+        let mintable_num_tokens_response: MintableNumTokensResponse = router
+            .wrap()
+            .query_wasm_smart(minter_addr, &QueryMsg::MintableNumTokens {})
+            .unwrap();
+        assert_eq!(mintable_num_tokens_response.count, 0);
     }
 
     #[test]
