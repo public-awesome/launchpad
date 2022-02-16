@@ -1,4 +1,5 @@
 use cosmwasm_std::StdError;
+use cw_utils::PaymentError;
 use thiserror::Error;
 use url::ParseError;
 
@@ -60,6 +61,9 @@ pub enum ContractError {
 
     #[error("Token id: {token_id} already sold")]
     TokenIdAlreadySold { token_id: u64 },
+
+    #[error("{0}")]
+    Payment(#[from] PaymentError),
 }
 
 impl From<ParseError> for ContractError {

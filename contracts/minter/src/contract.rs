@@ -8,7 +8,7 @@ use cw2::set_contract_version;
 use cw721::TokensResponse as Cw721TokensResponse;
 use cw721_base::{msg::ExecuteMsg as Cw721ExecuteMsg, MintMsg};
 use cw_storage_plus::Bound;
-use cw_utils::{parse_reply_instantiate_data, Expiration};
+use cw_utils::{must_pay, parse_reply_instantiate_data, Expiration};
 use sg721::msg::{InstantiateMsg as Sg721InstantiateMsg, QueryMsg as Sg721QueryMsg};
 use url::Url;
 
@@ -177,19 +177,8 @@ pub fn execute_mint(
         }
     }
 
-    // require some funds
-    let amount = match info.funds.pop() {
-        Some(coin) => coin,
-        None => {
-            return Err(ContractError::NotEnoughFunds {});
-        }
-    };
-    // if there are any more coins, reject the message
-    if !info.funds.is_empty() {
-        return Err(ContractError::TooManyCoins {});
-    }
-    // check that the amount is correct
-    if amount != config.unit_price {
+    let payment = must_pay(&info, &config.unit_price.denom)?;
+    if payment != config.unit_price.amount {
         return Err(ContractError::IncorrectPrice {});
     }
 
