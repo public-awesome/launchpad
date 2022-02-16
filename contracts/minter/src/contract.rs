@@ -149,6 +149,7 @@ pub fn execute(
         ExecuteMsg::UpdateBatchMintLimit { batch_mint_limit } => {
             execute_update_batch_mint_limit(deps, env, info, batch_mint_limit)
         }
+        ExecuteMsg::MintTo { recipient } => execute_mint_to(deps, env, info, recipient),
         ExecuteMsg::MintFor {
             token_id,
             recipient,
@@ -200,6 +201,15 @@ pub fn execute_mint(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Respon
     }
 
     _execute_safe_mint(deps, env, info, action, None, None)
+}
+
+pub fn execute_mint_to(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    recipient: Addr,
+) -> Result<Response, ContractError> {
+    Ok(Response::default().add_attribute("method", "executed_mint_to"))
 }
 
 pub fn execute_mint_for(
