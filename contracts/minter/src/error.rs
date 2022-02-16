@@ -19,8 +19,8 @@ pub enum ContractError {
     #[error("Sold out")]
     SoldOut {},
 
-    #[error("Invalid address")]
-    InvalidAddress {},
+    #[error("Invalid address {addr}")]
+    InvalidAddress { addr: String },
 
     #[error("Invalid token id")]
     InvalidTokenId {},

@@ -91,6 +91,7 @@ pub fn instantiate(
         }
 
         for whitelist_address in whitelist_addresses.clone().into_iter() {
+            _verify_address(whitelist_address.clone())?;
             WHITELIST_ADDRS.save(deps.storage, whitelist_address, &Empty {})?;
         }
         NUM_WHITELIST_ADDRS.save(deps.storage, &(whitelist_addresses.len() as u32))?;
@@ -282,7 +283,9 @@ fn _execute_mint(
     } else if let Some(some_recipient) = recipient {
         some_recipient
     } else {
-        return Err(ContractError::InvalidAddress {});
+        return Err(ContractError::InvalidAddress {
+            addr: info.sender.to_string(),
+        });
     };
 
     // if token_id None, find and assign one. else check token_id exists on mintable map.
@@ -407,6 +410,7 @@ pub fn execute_update_whitelist(
             return Err(ContractError::MaxWhitelistAddressLengthExceeded {});
         }
         for whitelist_address in add_whitelist_addrs.clone().into_iter() {
+            _verify_address(whitelist_address.clone())?;
             WHITELIST_ADDRS.save(deps.storage, whitelist_address, &Empty {})?;
         }
         num_whitelist_addresses += add_whitelist_addrs.len() as u32;
@@ -415,6 +419,7 @@ pub fn execute_update_whitelist(
     // Remove whitelist addresses
     if let Some(remove_whitelist_addrs) = update_whitelist_msg.remove_addresses {
         for whitelist_address in remove_whitelist_addrs.clone().into_iter() {
+            _verify_address(whitelist_address.clone())?;
             WHITELIST_ADDRS.remove(deps.storage, whitelist_address);
         }
         num_whitelist_addresses -= remove_whitelist_addrs.len() as u32;
@@ -496,6 +501,20 @@ pub fn execute_update_batch_mint_limit(
     config.batch_mint_limit = Some(batch_mint_limit);
     CONFIG.save(deps.storage, &config)?;
     Ok(Response::new().add_attribute("action", "updated_batch_mint_limit"))
+}
+
+fn _verify_address(addr: String) -> Result<bool, ContractError> {
+    // lightweight addr check
+    // throws err if it doesn't pass
+    let prefix = "stars1";
+    let addr_str: &str = &*addr;
+    if !addr_str.starts_with(prefix) {
+        return Err(ContractError::InvalidAddress { addr });
+    }
+    if addr_str.len() != 44 {
+        return Err(ContractError::InvalidAddress { addr });
+    }
+    Ok(true)
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -709,6 +728,11 @@ mod tests {
         assert_eq!(buyer_native_balances, funds);
 
         Ok((creator, buyer))
+    }
+
+    fn pad_test_addr(addr: &str) -> String {
+        // format test addrs to pass _verify_address validation
+        format!("{:1<44}", "stars1".to_owned() + addr)
     }
 
     #[test]
@@ -1273,6 +1297,16 @@ mod tests {
             .query_wasm_smart(minter_addr, &QueryMsg::MintableNumTokens {})
             .unwrap();
         assert_eq!(mintable_num_tokens_response.count, 0);
+    }
+
+    #[test]
+    fn check_valid_address() {
+        let res = _verify_address("invalid_address".to_string());
+        assert!(res.is_err());
+        let res = _verify_address("stars1invalid_address".to_string());
+        assert!(res.is_err());
+        let res = _verify_address(pad_test_addr("valid_address"));
+        assert!(res.is_ok());
     }
 
     #[test]
