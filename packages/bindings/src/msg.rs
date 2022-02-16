@@ -39,7 +39,9 @@ pub enum StargazeMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ClaimAction {
+    #[serde(rename = "mint_nft")]
     MintNFT,
+    #[serde(rename = "bid_nft")]
     BidNFT,
 }
 
