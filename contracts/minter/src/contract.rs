@@ -474,12 +474,12 @@ pub fn execute_update_batch_mint_limit(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::GetConfig {} => to_binary(&query_config(deps)?),
-        QueryMsg::GetWhitelistAddresses {} => to_binary(&query_whitelist_addresses(deps)?),
-        QueryMsg::GetWhitelistExpiration {} => to_binary(&query_whitelist_expiration(deps)?),
-        QueryMsg::GetStartTime {} => to_binary(&query_start_time(deps)?),
+        QueryMsg::Config {} => to_binary(&query_config(deps)?),
+        QueryMsg::WhitelistAddresses {} => to_binary(&query_whitelist_addresses(deps)?),
+        QueryMsg::WhitelistExpiration {} => to_binary(&query_whitelist_expiration(deps)?),
+        QueryMsg::StartTime {} => to_binary(&query_start_time(deps)?),
         QueryMsg::OnWhitelist { address } => to_binary(&query_on_whitelist(deps, address)?),
-        QueryMsg::GetMintableNumTokens {} => to_binary(&query_mintable_num_tokens(deps)?),
+        QueryMsg::MintableNumTokens {} => to_binary(&query_mintable_num_tokens(deps)?),
     }
 }
 
@@ -642,7 +642,7 @@ mod tests {
 
         let config: ConfigResponse = router
             .wrap()
-            .query_wasm_smart(minter_addr.clone(), &QueryMsg::GetConfig {})
+            .query_wasm_smart(minter_addr.clone(), &QueryMsg::Config {})
             .unwrap();
 
         Ok((minter_addr, config))
@@ -893,7 +893,7 @@ mod tests {
         // query whitelist_expiration, confirm not expired
         let expiration: WhitelistExpirationResponse = router
             .wrap()
-            .query_wasm_smart(minter_addr.clone(), &QueryMsg::GetWhitelistExpiration {})
+            .query_wasm_smart(minter_addr.clone(), &QueryMsg::WhitelistExpiration {})
             .unwrap();
         assert_eq!(
             "expiration time: ".to_owned() + &EXPIRATION_TIME.to_string(),
@@ -977,7 +977,7 @@ mod tests {
         // query start_time, confirm expired
         let start_time_response: StartTimeResponse = router
             .wrap()
-            .query_wasm_smart(minter_addr.clone(), &QueryMsg::GetStartTime {})
+            .query_wasm_smart(minter_addr.clone(), &QueryMsg::StartTime {})
             .unwrap();
         assert_eq!(
             "expiration time: ".to_owned() + &START_TIME.to_string(),
@@ -1218,7 +1218,7 @@ mod tests {
         );
         let mintable_num_tokens_response: MintableNumTokensResponse = router
             .wrap()
-            .query_wasm_smart(minter_addr.clone(), &QueryMsg::GetMintableNumTokens {})
+            .query_wasm_smart(minter_addr.clone(), &QueryMsg::MintableNumTokens {})
             .unwrap();
         assert_eq!(mintable_num_tokens_response.count, 3);
 
@@ -1245,7 +1245,7 @@ mod tests {
         assert!(res.is_ok());
         let mintable_num_tokens_response: MintableNumTokensResponse = router
             .wrap()
-            .query_wasm_smart(minter_addr, &QueryMsg::GetMintableNumTokens {})
+            .query_wasm_smart(minter_addr, &QueryMsg::MintableNumTokens {})
             .unwrap();
         assert_eq!(mintable_num_tokens_response.count, 0);
     }
