@@ -222,60 +222,20 @@ pub fn execute_mint_to(
 
 pub fn execute_mint_for(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
     token_id: u64,
     recipient: Addr,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
-    let sg721_address = SG721_ADDRESS.load(deps.storage)?;
+    let action = "executed_mint_for".to_string();
 
     // Check only admin
     if info.sender != config.admin {
         return Err(ContractError::Unauthorized {});
     }
 
-    // Check any mintable tokens left
-    if query_mintable_num_tokens(deps.as_ref())?.count == 0 {
-        return Err(ContractError::SoldOut {});
-    }
-
-    // make sure token_id available on mintable_token_ids
-    let mintable_tokens_result: StdResult<Vec<u64>> = MINTABLE_TOKEN_IDS
-        .keys(
-            deps.storage,
-            None,
-            Some(Bound::inclusive(vec![token_id as u8])),
-            Order::Ascending,
-        )
-        .take(1)
-        .collect();
-    // If token_id not mintable, throw err
-    let mintable_tokens = mintable_tokens_result?;
-    if mintable_tokens.is_empty() {
-        return Err(ContractError::TokenIdAlreadySold { token_id });
-    }
-    let mintable_token_id: u64 = mintable_tokens[0];
-
-    let mint_msg = Cw721ExecuteMsg::Mint(MintMsg::<Empty> {
-        token_id: mintable_token_id.to_string(),
-        owner: recipient.to_string(),
-        token_uri: Some(format!("{}/{}", config.base_token_uri, mintable_token_id)),
-        extension: Empty {},
-    });
-
-    let msg = CosmosMsg::Wasm(WasmMsg::Execute {
-        contract_addr: sg721_address.to_string(),
-        msg: to_binary(&mint_msg)?,
-        funds: vec![],
-    });
-
-    // remove mintable token id from map
-    MINTABLE_TOKEN_IDS.remove(deps.storage, mintable_token_id);
-
-    Ok(Response::default()
-        .add_attribute("method", "executed_mint_for")
-        .add_message(msg))
+    _execute_safe_mint(deps, env, info, action, Some(recipient), Some(token_id))
 }
 
 pub fn execute_batch_mint(
