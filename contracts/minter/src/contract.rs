@@ -662,7 +662,7 @@ mod tests {
             unit_price: coin(PRICE, DENOM),
             num_tokens,
             whitelist_expiration: None,
-            whitelist_addresses: Some(vec![String::from("VIPcollector")]),
+            whitelist_addresses: Some(vec![pad_test_addr("VIPcollector")]),
             start_time: None,
             per_address_limit: None,
             batch_mint_limit: None,
@@ -696,8 +696,8 @@ mod tests {
 
     // Add a creator account with initial balances
     fn setup_accounts(router: &mut App) -> Result<(Addr, Addr), ContractError> {
-        let buyer: Addr = Addr::unchecked("buyer");
-        let creator: Addr = Addr::unchecked("creator");
+        let buyer: Addr = Addr::unchecked(pad_test_addr("buyer"));
+        let creator: Addr = Addr::unchecked(pad_test_addr("creator"));
         let funds: Vec<Coin> = coins(INITIAL_BALANCE, DENOM);
         router
             .sudo(SudoMsg::Bank({
@@ -745,7 +745,7 @@ mod tests {
             unit_price: coin(PRICE, DENOM),
             num_tokens: 100,
             whitelist_expiration: None,
-            whitelist_addresses: Some(vec![String::from("VIPcollector")]),
+            whitelist_addresses: Some(vec![pad_test_addr("VIPcollector")]),
             start_time: None,
             per_address_limit: None,
             batch_mint_limit: None,
@@ -933,7 +933,7 @@ mod tests {
             .query_wasm_smart(
                 minter_addr.clone(),
                 &QueryMsg::OnWhitelist {
-                    address: "buyer".to_string(),
+                    address: pad_test_addr("buyer"),
                 },
             )
             .unwrap();
