@@ -210,7 +210,7 @@ pub fn execute_mint_to(
     recipient: Addr,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
-    let action = "execute_mint_to".to_string();
+    let action = "executed_mint_to".to_string();
 
     // Check only admin
     if info.sender != config.admin {
@@ -271,6 +271,10 @@ fn _execute_safe_mint(
     recipient: Option<Addr>,
     token_id: Option<u64>,
 ) -> Result<Response, ContractError> {
+    // generalize checks and mint message creation
+    // mint -> _execute_safe_mint(recipient: None, token_id: None)
+    // mint_to(recipient: "friend") -> _execute_safe_mint(Some(recipient), token_id: None)
+    // mint_for(recipient: "friend2", token_id: 420) -> _execute_safe_mint(recipient, token_id)
     let config = CONFIG.load(deps.storage)?;
     let sg721_address = SG721_ADDRESS.load(deps.storage)?;
     let recipient_addr = if recipient.is_none() {
@@ -281,13 +285,7 @@ fn _execute_safe_mint(
         return Err(ContractError::InvalidAddress {});
     };
 
-    // mint
-    // mint_to
-    // mint_for
-
-    // if token_id, check token_id exists. else use next available
-
-    // get mintable_token_id
+    // if token_id None, find and assign one. else check token_id exists on mintable map.
     let mintable_token_id: u64 = if token_id.is_none() {
         let mintable_tokens_result: StdResult<Vec<u64>> = MINTABLE_TOKEN_IDS
             .keys(deps.storage, None, None, Order::Ascending)
@@ -385,7 +383,7 @@ fn _execute_safe_mint(
     }
 
     Ok(Response::default()
-        .add_attribute("method", action)
+        .add_attribute("action", action)
         .add_messages(msgs))
 }
 
