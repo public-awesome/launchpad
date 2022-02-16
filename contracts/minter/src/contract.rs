@@ -352,56 +352,11 @@ fn _execute_mint(
     // remove mintable token id from map
     MINTABLE_TOKEN_IDS.remove(deps.storage, mintable_token_id);
 
-    // // Check if token supports Royalties
-    // let royalty: Result<sg721::msg::RoyaltyResponse, StdError> = deps
-    //     .querier
-    //     .query_wasm_smart(sg721_address, &Sg721QueryMsg::Royalties {});
-
-    // // Add payout messages
-    // match royalty {
-    //     Ok(royalty) => {
-    //         // If token supports royalities, payout shares
-    //         if let Some(royalty) = royalty.royalty {
-    //             // Can't assume index 0 of index.funds is the correct coin
-    //             let funds = info.funds.iter().find(|x| *x == &config.unit_price);
-    //             if let Some(funds) = funds {
-    //                 // Calculate royalty share and create Bank msg
-    //                 let royalty_share_msg = BankMsg::Send {
-    //                     to_address: royalty.payment_address.to_string(),
-    //                     amount: vec![Coin {
-    //                         amount: funds.amount * royalty.share,
-    //                         denom: funds.denom.clone(),
-    //                     }],
-    //                 };
-    //                 msgs.append(&mut vec![royalty_share_msg.into()]);
-
-    //                 // Calculate seller share and create Bank msg
-    //                 let seller_share_msg = BankMsg::Send {
-    //                     to_address: config.admin.to_string(),
-    //                     amount: vec![Coin {
-    //                         amount: funds.amount * (Decimal::one() - royalty.share),
-    //                         denom: funds.denom.clone(),
-    //                     }],
-    //                 };
-    //                 msgs.append(&mut vec![seller_share_msg.into()]);
-    //             }
-    //         }
-    //     }
-    //     Err(_) => {
-    //         // If token doesn't support royalties, pay seller in full
-    //         let seller_share_msg = BankMsg::Send {
-    //             to_address: config.admin.to_string(),
-    //             amount: info.funds,
-    //         };
-    //         msgs.append(&mut vec![seller_share_msg.into()]);
-    //     }
-    // }
-
-    let collector_msg = BankMsg::Send {
+    let seller_msg = BankMsg::Send {
         to_address: config.admin.to_string(),
         amount: vec![amount],
     };
-    msgs.append(&mut vec![collector_msg.into()]);
+    msgs.append(&mut vec![seller_msg.into()]);
 
     Ok(Response::default().add_messages(msgs))
 }
