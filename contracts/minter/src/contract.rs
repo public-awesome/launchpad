@@ -1255,7 +1255,7 @@ mod tests {
 
     fn check_max_num_tokens() {
         let mut router = mock_app();
-        let (creator, buyer) = setup_accounts(&mut router).unwrap();
+        let (creator, _) = setup_accounts(&mut router).unwrap();
 
         let over_max_num_tokens = MAX_TOKEN_LIMIT + 1;
 
@@ -1287,8 +1287,7 @@ mod tests {
                 }),
             },
         };
-        let res =
-            router.instantiate_contract(minter_code_id, creator.clone(), &msg, &[], "Minter", None);
+        let res = router.instantiate_contract(minter_code_id, creator, &msg, &[], "Minter", None);
 
         // setup_minter_contract(&mut router.branch(), &creator, over_max_num_tokens.into());
         assert!(res.is_err());
