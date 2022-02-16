@@ -161,7 +161,7 @@ pub fn execute(
 pub fn execute_mint(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
     let sg721_address = SG721_ADDRESS.load(deps.storage)?;
-    let action = "executed_mint".to_string();
+    let action = "mint".to_string();
 
     let allowlist = WHITELIST_ADDRS.has(deps.storage, info.sender.to_string());
     if let Some(whitelist_expiration) = config.whitelist_expiration {
@@ -200,7 +200,7 @@ pub fn execute_mint(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Respon
         }
     }
 
-    _execute_safe_mint(deps, env, info, action, None, None)
+    _execute_mint(deps, env, info, action, None, None)
 }
 
 pub fn execute_mint_to(
@@ -210,14 +210,14 @@ pub fn execute_mint_to(
     recipient: Addr,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
-    let action = "executed_mint_to".to_string();
+    let action = "mint_to".to_string();
 
     // Check only admin
     if info.sender != config.admin {
         return Err(ContractError::Unauthorized {});
     }
 
-    _execute_safe_mint(deps, env, info, action, Some(recipient), None)
+    _execute_mint(deps, env, info, action, Some(recipient), None)
 }
 
 pub fn execute_mint_for(
@@ -228,14 +228,14 @@ pub fn execute_mint_for(
     recipient: Addr,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
-    let action = "executed_mint_for".to_string();
+    let action = "mint_for".to_string();
 
     // Check only admin
     if info.sender != config.admin {
         return Err(ContractError::Unauthorized {});
     }
 
-    _execute_safe_mint(deps, env, info, action, Some(recipient), Some(token_id))
+    _execute_mint(deps, env, info, action, Some(recipient), Some(token_id))
 }
 
 pub fn execute_batch_mint(
@@ -259,11 +259,11 @@ pub fn execute_batch_mint(
     }
 
     Ok(Response::default()
-        .add_attribute("method", "executed_batch_mint")
+        .add_attribute("method", "batch_mint")
         .add_attribute("num_mints", num_mints.to_string()))
 }
 
-fn _execute_safe_mint(
+fn _execute_mint(
     deps: DepsMut,
     _env: Env,
     info: MessageInfo,
@@ -272,9 +272,9 @@ fn _execute_safe_mint(
     token_id: Option<u64>,
 ) -> Result<Response, ContractError> {
     // generalize checks and mint message creation
-    // mint -> _execute_safe_mint(recipient: None, token_id: None)
-    // mint_to(recipient: "friend") -> _execute_safe_mint(Some(recipient), token_id: None)
-    // mint_for(recipient: "friend2", token_id: 420) -> _execute_safe_mint(recipient, token_id)
+    // mint -> _execute_mint(recipient: None, token_id: None)
+    // mint_to(recipient: "friend") -> _execute_mint(Some(recipient), token_id: None)
+    // mint_for(recipient: "friend2", token_id: 420) -> _execute_mint(recipient, token_id)
     let config = CONFIG.load(deps.storage)?;
     let sg721_address = SG721_ADDRESS.load(deps.storage)?;
     let recipient_addr = if recipient.is_none() {
