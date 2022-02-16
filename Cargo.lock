@@ -795,7 +795,6 @@ dependencies = [
  "cw721-metadata-onchain",
  "schemars",
  "serde",
- "sg-std",
  "sg721",
  "thiserror",
 ]
