@@ -121,7 +121,7 @@ pub fn instantiate(
     }];
 
     Ok(Response::new()
-        .add_attribute("action", "instantiated_minter")
+        .add_attribute("action", "instantiate")
         .add_submessages(sub_msgs))
 }
 
@@ -259,7 +259,7 @@ pub fn execute_batch_mint(
     }
 
     Ok(Response::default()
-        .add_attribute("method", "batch_mint")
+        .add_attribute("action", "batch_mint")
         .add_attribute("num_mints", num_mints.to_string()))
 }
 
@@ -381,7 +381,7 @@ pub fn execute_update_whitelist(
 
     NUM_WHITELIST_ADDRS.save(deps.storage, &num_whitelist_addresses)?;
 
-    Ok(Response::new().add_attribute("action", "updated_whitelist_addresses"))
+    Ok(Response::new().add_attribute("action", "update_whitelist"))
 }
 
 pub fn execute_update_whitelist_expiration(
@@ -397,7 +397,7 @@ pub fn execute_update_whitelist_expiration(
 
     config.whitelist_expiration = Some(whitelist_expiration);
     CONFIG.save(deps.storage, &config)?;
-    Ok(Response::new().add_attribute("action", "updated_whitelist_expiration"))
+    Ok(Response::new().add_attribute("action", "update_whitelist_expiration"))
 }
 
 pub fn execute_update_start_time(
@@ -412,7 +412,7 @@ pub fn execute_update_start_time(
     }
     config.start_time = Some(start_time);
     CONFIG.save(deps.storage, &config)?;
-    Ok(Response::new().add_attribute("action", "updated_start_time"))
+    Ok(Response::new().add_attribute("action", "update_start_time"))
 }
 
 pub fn execute_update_per_address_limit(
@@ -433,7 +433,7 @@ pub fn execute_update_per_address_limit(
     }
     config.per_address_limit = Some(per_address_limit);
     CONFIG.save(deps.storage, &config)?;
-    Ok(Response::new().add_attribute("action", "updated_per_address_limit"))
+    Ok(Response::new().add_attribute("action", "update_per_address_limit"))
 }
 
 pub fn execute_update_batch_mint_limit(
@@ -454,7 +454,7 @@ pub fn execute_update_batch_mint_limit(
     }
     config.batch_mint_limit = Some(batch_mint_limit);
     CONFIG.save(deps.storage, &config)?;
-    Ok(Response::new().add_attribute("action", "updated_batch_mint_limit"))
+    Ok(Response::new().add_attribute("action", "update_batch_mint_limit"))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
