@@ -15,9 +15,9 @@ pub struct StargazeMsgWrapper {
     pub version: String,
 }
 
-impl Into<CosmosMsg<StargazeMsgWrapper>> for StargazeMsgWrapper {
-    fn into(self) -> CosmosMsg<StargazeMsgWrapper> {
-        CosmosMsg::Custom(self)
+impl From<StargazeMsgWrapper> for CosmosMsg<StargazeMsgWrapper> {
+    fn from(original: StargazeMsgWrapper) -> Self {
+        CosmosMsg::Custom(original)
     }
 }
 
