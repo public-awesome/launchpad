@@ -27,7 +27,7 @@ impl CustomMsg for StargazeMsgWrapper {}
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum StargazeMsg {
-    Claim {
+    ClaimFor {
         address: String,
         action: ClaimAction,
     },
@@ -43,10 +43,10 @@ pub enum ClaimAction {
     BidNFT,
 }
 
-pub fn create_claim_msg(address: String, action: ClaimAction) -> CosmosMsg<StargazeMsgWrapper> {
+pub fn create_claim_for_msg(address: String, action: ClaimAction) -> CosmosMsg<StargazeMsgWrapper> {
     StargazeMsgWrapper {
         route: StargazeRoute::Claim,
-        msg_data: StargazeMsg::Claim { address, action },
+        msg_data: StargazeMsg::ClaimFor { address, action },
         version: MSG_DATA_VERSION.to_owned(),
     }
     .into()
