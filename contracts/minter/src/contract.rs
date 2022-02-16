@@ -161,7 +161,7 @@ pub fn execute(
 pub fn execute_mint(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
     let sg721_address = SG721_ADDRESS.load(deps.storage)?;
-    let action = "mint".to_string();
+    let action = "mint";
 
     let allowlist = WHITELIST_ADDRS.has(deps.storage, info.sender.to_string());
     if let Some(whitelist_expiration) = config.whitelist_expiration {
@@ -210,7 +210,7 @@ pub fn execute_mint_to(
     recipient: Addr,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
-    let action = "mint_to".to_string();
+    let action = "mint_to";
 
     // Check only admin
     if info.sender != config.admin {
@@ -228,7 +228,7 @@ pub fn execute_mint_for(
     recipient: Addr,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
-    let action = "mint_for".to_string();
+    let action = "mint_for";
 
     // Check only admin
     if info.sender != config.admin {
@@ -267,7 +267,7 @@ fn _execute_mint(
     deps: DepsMut,
     _env: Env,
     info: MessageInfo,
-    action: String,
+    action: &str,
     recipient: Option<Addr>,
     token_id: Option<u64>,
 ) -> Result<Response, ContractError> {
