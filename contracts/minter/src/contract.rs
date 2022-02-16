@@ -1,8 +1,8 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    has_coins, to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut, Empty,
-    Env, MessageInfo, Order, Reply, ReplyOn, Response, StdError, StdResult, SubMsg, WasmMsg,
+    to_binary, Addr, BankMsg, Binary, CosmosMsg, Deps, DepsMut, Empty, Env, MessageInfo, Order,
+    Reply, ReplyOn, Response, StdError, StdResult, SubMsg, WasmMsg,
 };
 use cw2::set_contract_version;
 use cw721::TokensResponse as Cw721TokensResponse;
@@ -158,11 +158,7 @@ pub fn execute(
     }
 }
 
-pub fn execute_mint(
-    deps: DepsMut,
-    env: Env,
-    mut info: MessageInfo,
-) -> Result<Response, ContractError> {
+pub fn execute_mint(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
     let sg721_address = SG721_ADDRESS.load(deps.storage)?;
     let action = "mint".to_string();
@@ -649,10 +645,10 @@ mod tests {
 
     // Add a creator account with initial balances
     fn setup_accounts(router: &mut App) -> Result<(Addr, Addr), ContractError> {
-        let buyer: Addr = Addr::unchecked("buyer");
-        let creator: Addr = Addr::unchecked("creator");
-        let creator_funds: Vec<Coin> = coins(INITIAL_BALANCE + CREATION_FEE, DENOM);
-        let buyer_funds: Vec<Coin> = coins(INITIAL_BALANCE, DENOM);
+        let buyer = Addr::unchecked("buyer");
+        let creator = Addr::unchecked("creator");
+        let creator_funds = coins(INITIAL_BALANCE + CREATION_FEE, DENOM);
+        let buyer_funds = coins(INITIAL_BALANCE, DENOM);
         router
             .sudo(SudoMsg::Bank({
                 BankSudo::Mint {

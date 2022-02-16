@@ -1,8 +1,8 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coin, has_coins, to_binary, BankMsg, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut, Empty,
-    Env, MessageInfo, Response, StdResult, Uint128,
+    coin, to_binary, BankMsg, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut, Empty, Env,
+    MessageInfo, Response, StdResult, Uint128,
 };
 use cw2::set_contract_version;
 use cw_utils::must_pay;
@@ -66,7 +66,7 @@ pub fn instantiate(
 
     // TODO: send the rest to the community pool
     // https://github.com/public-awesome/contracts/issues/99
-    let fund_community_pool_msg = CosmosMsg::Custom(MsgFundCommunityPool {
+    let _fund_community_pool_msg = CosmosMsg::Custom(MsgFundCommunityPool {
         amount: vec![coin(creation_fee.u128() - burn_fee.u128(), FEE_DENOM)],
         depositor: msg.minter.to_string(),
     });
