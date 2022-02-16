@@ -675,8 +675,6 @@ mod tests {
         // Setup intial accounts
         let (curator, bidder, creator) = setup_accounts(&mut router).unwrap();
 
-        // Instantiate and configure contracts
-        // let (nft_marketplace_addr, _) = setup_contracts(&mut router, &creator).unwrap();
         // Instantiate marketplace contract
         let marketplace_id = router.store_code(contract_nft_marketplace());
         let msg = crate::msg::InstantiateMsg {};
