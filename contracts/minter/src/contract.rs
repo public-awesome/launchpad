@@ -1253,6 +1253,7 @@ mod tests {
         assert_eq!(mintable_num_tokens_response.count, 0);
     }
 
+    #[test]
     fn check_max_num_tokens() {
         let mut router = mock_app();
         let (creator, _) = setup_accounts(&mut router).unwrap();
@@ -1299,6 +1300,7 @@ mod tests {
             res.unwrap_err().to_string()
         );
     }
+
     #[test]
     fn unhappy_path() {
         let mut router = mock_app();
