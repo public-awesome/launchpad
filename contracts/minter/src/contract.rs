@@ -32,6 +32,7 @@ const MAX_WHITELIST_ADDRS_LENGTH: u32 = 15000;
 const MAX_PER_ADDRESS_LIMIT: u64 = 30;
 const MAX_BATCH_MINT_LIMIT: u64 = 30;
 const STARTING_BATCH_MINT_LIMIT: u64 = 5;
+const MIN_MINT_PRICE: u128 = 50;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -291,6 +292,14 @@ fn _execute_mint(
     let payment = must_pay(&info, &config.unit_price.denom)?;
     if payment != config.unit_price.amount {
         return Err(ContractError::IncorrectPaymentAmount {});
+    }
+
+    // guardrail against low mint price updates
+    if MIN_MINT_PRICE > payment.into() {
+        return Err(ContractError::InsufficientMintPrice {
+            expected: MIN_MINT_PRICE,
+            got: payment.into(),
+        });
     }
 
     // if token_id None, find and assign one. else check token_id exists on mintable map.
