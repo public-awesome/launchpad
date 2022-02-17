@@ -91,11 +91,7 @@ pub fn instantiate(
         }
 
         for whitelist_address in whitelist_addresses.clone().into_iter() {
-            deps.api
-                .addr_validate(&whitelist_address.clone())
-                .map_err(|_| ContractError::InvalidAddress {
-                    addr: whitelist_address.clone(),
-                })?;
+            deps.api.addr_validate(&whitelist_address.clone())?;
             WHITELIST_ADDRS.save(deps.storage, whitelist_address, &Empty {})?;
         }
         NUM_WHITELIST_ADDRS.save(deps.storage, &(whitelist_addresses.len() as u32))?;
@@ -414,11 +410,7 @@ pub fn execute_update_whitelist(
             return Err(ContractError::MaxWhitelistAddressLengthExceeded {});
         }
         for whitelist_address in add_whitelist_addrs.clone().into_iter() {
-            deps.api
-                .addr_validate(&whitelist_address.clone())
-                .map_err(|_| ContractError::InvalidAddress {
-                    addr: whitelist_address.clone(),
-                })?;
+            deps.api.addr_validate(&whitelist_address.clone())?;
             WHITELIST_ADDRS.save(deps.storage, whitelist_address, &Empty {})?;
         }
         num_whitelist_addresses += add_whitelist_addrs.len() as u32;
@@ -427,11 +419,7 @@ pub fn execute_update_whitelist(
     // Remove whitelist addresses
     if let Some(remove_whitelist_addrs) = update_whitelist_msg.remove_addresses {
         for whitelist_address in remove_whitelist_addrs.clone().into_iter() {
-            deps.api
-                .addr_validate(&whitelist_address.clone())
-                .map_err(|_| ContractError::InvalidAddress {
-                    addr: whitelist_address.clone(),
-                })?;
+            deps.api.addr_validate(&whitelist_address.clone())?;
             WHITELIST_ADDRS.remove(deps.storage, whitelist_address);
         }
         num_whitelist_addresses -= remove_whitelist_addrs.len() as u32;
@@ -613,6 +601,7 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractE
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{mock_dependencies_with_balance, mock_env, mock_info};
+    use cosmwasm_std::Api;
     use cosmwasm_std::{coin, coins, Decimal, Timestamp};
     use cw721::{Cw721QueryMsg, OwnerOfResponse};
     use cw_multi_test::{App, BankSudo, Contract, ContractWrapper, Executor, SudoMsg};
@@ -731,6 +720,11 @@ mod tests {
     #[test]
     fn initialization() {
         let mut deps = mock_dependencies_with_balance(&coins(2, "token"));
+
+        // Check valid addr
+        let addr = "earth1";
+        let res = deps.api.addr_validate(&(*addr));
+        assert!(res.is_ok());
 
         // Invalid uri returns error
         let info = mock_info("creator", &coins(INITIAL_BALANCE, DENOM));
