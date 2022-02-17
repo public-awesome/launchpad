@@ -774,6 +774,7 @@ mod tests {
             },
         };
         let res = instantiate(deps.as_mut(), mock_env(), info, msg);
+        assert!(res.is_err());
 
         // insufficient mint price returns error
         let info = mock_info("creator", &coins(INITIAL_BALANCE, DENOM));
