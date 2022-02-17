@@ -32,7 +32,7 @@ const MAX_WHITELIST_ADDRS_LENGTH: u32 = 15000;
 const MAX_PER_ADDRESS_LIMIT: u64 = 30;
 const MAX_BATCH_MINT_LIMIT: u64 = 30;
 const STARTING_BATCH_MINT_LIMIT: u64 = 5;
-const MIN_MINT_PRICE: u128 = 50;
+const MIN_MINT_PRICE: u128 = 20;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -582,7 +582,7 @@ mod tests {
     const DENOM: &str = "ustars";
     const CREATION_FEE: u128 = 1_000_000_000;
     const INITIAL_BALANCE: u128 = 2000;
-    const PRICE: u128 = 10;
+    const PRICE: u128 = 20;
 
     fn mock_app() -> App {
         App::default()
