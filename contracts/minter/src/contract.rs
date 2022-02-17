@@ -1,14 +1,14 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    has_coins, to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut, Empty,
-    Env, MessageInfo, Order, Reply, ReplyOn, Response, StdError, StdResult, SubMsg, WasmMsg,
+    to_binary, Addr, BankMsg, Binary, CosmosMsg, Deps, DepsMut, Empty, Env, MessageInfo, Order,
+    Reply, ReplyOn, Response, StdError, StdResult, SubMsg, WasmMsg,
 };
 use cw2::set_contract_version;
 use cw721::TokensResponse as Cw721TokensResponse;
 use cw721_base::{msg::ExecuteMsg as Cw721ExecuteMsg, MintMsg};
 use cw_storage_plus::Bound;
-use cw_utils::{parse_reply_instantiate_data, Expiration};
+use cw_utils::{must_pay, parse_reply_instantiate_data, Expiration};
 use sg721::msg::{InstantiateMsg as Sg721InstantiateMsg, QueryMsg as Sg721QueryMsg};
 use url::Url;
 
@@ -23,10 +23,11 @@ use crate::state::{
 };
 
 // version info for migration info
-const CONTRACT_NAME: &str = "crates.io:minter";
+const CONTRACT_NAME: &str = "crates.io:sg-minter";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 const INSTANTIATE_SG721_REPLY_ID: u64 = 1;
+const MAX_TOKEN_LIMIT: u32 = 10000;
 const MAX_WHITELIST_ADDRS_LENGTH: u32 = 15000;
 const MAX_PER_ADDRESS_LIMIT: u64 = 30;
 const MAX_BATCH_MINT_LIMIT: u64 = 30;
@@ -40,6 +41,12 @@ pub fn instantiate(
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+
+    if msg.num_tokens > MAX_TOKEN_LIMIT.into() {
+        return Err(ContractError::MaxTokenLimitExceeded {
+            max: MAX_TOKEN_LIMIT,
+        });
+    }
 
     if let Some(per_address_limit) = msg.per_address_limit {
         // Check per address limit is valid
@@ -111,9 +118,9 @@ pub fn instantiate(
                 minter: env.contract.address.to_string(),
                 config: msg.sg721_instantiate_msg.config,
             })?,
-            funds: vec![],
+            funds: info.funds,
             admin: None,
-            label: String::from("Instantiate fixed price NFT contract"),
+            label: String::from("Fixed price minter"),
         }
         .into(),
         id: INSTANTIATE_SG721_REPLY_ID,
@@ -122,7 +129,7 @@ pub fn instantiate(
     }];
 
     Ok(Response::new()
-        .add_attribute("action", "instantiated_minter")
+        .add_attribute("action", "instantiate")
         .add_submessages(sub_msgs))
 }
 
@@ -162,7 +169,7 @@ pub fn execute(
 pub fn execute_mint(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
     let sg721_address = SG721_ADDRESS.load(deps.storage)?;
-    let action = "mint".to_string();
+    let action = "mint";
 
     let allowlist = WHITELIST_ADDRS.has(deps.storage, info.sender.to_string());
     if let Some(whitelist_expiration) = config.whitelist_expiration {
@@ -174,9 +181,9 @@ pub fn execute_mint(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Respon
         }
     }
 
-    // Check funds sent is correct amount
-    if !has_coins(&info.funds, &config.unit_price) {
-        return Err(ContractError::NotEnoughFunds {});
+    let payment = must_pay(&info, &config.unit_price.denom)?;
+    if payment != config.unit_price.amount {
+        return Err(ContractError::IncorrectPaymentAmount {});
     }
 
     if let Some(start_time) = config.start_time {
@@ -211,7 +218,7 @@ pub fn execute_mint_to(
     recipient: Addr,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
-    let action = "mint_to".to_string();
+    let action = "mint_to";
 
     // Check only admin
     if info.sender != config.admin {
@@ -229,7 +236,7 @@ pub fn execute_mint_for(
     recipient: Addr,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
-    let action = "mint_for".to_string();
+    let action = "mint_for";
 
     // Check only admin
     if info.sender != config.admin {
@@ -260,7 +267,7 @@ pub fn execute_batch_mint(
     }
 
     Ok(Response::default()
-        .add_attribute("method", "batch_mint")
+        .add_attribute("action", "batch_mint")
         .add_attribute("num_mints", num_mints.to_string()))
 }
 
@@ -268,7 +275,7 @@ fn _execute_mint(
     deps: DepsMut,
     _env: Env,
     info: MessageInfo,
-    action: String,
+    action: &str,
     recipient: Option<Addr>,
     token_id: Option<u64>,
 ) -> Result<Response, ContractError> {
@@ -340,50 +347,11 @@ fn _execute_mint(
     // remove mintable token id from map
     MINTABLE_TOKEN_IDS.remove(deps.storage, mintable_token_id);
 
-    // Check if token supports Royalties
-    let royalty: Result<sg721::msg::RoyaltyResponse, StdError> = deps
-        .querier
-        .query_wasm_smart(sg721_address, &Sg721QueryMsg::Royalties {});
-
-    // Add payout messages
-    match royalty {
-        Ok(royalty) => {
-            // If token supports royalities, payout shares
-            if let Some(royalty) = royalty.royalty {
-                // Can't assume index 0 of index.funds is the correct coin
-                let funds = info.funds.iter().find(|x| *x == &config.unit_price);
-                if let Some(funds) = funds {
-                    // Calculate royalty share and create Bank msg
-                    let royalty_share_msg = BankMsg::Send {
-                        to_address: royalty.payment_address.to_string(),
-                        amount: vec![Coin {
-                            amount: funds.amount * royalty.share,
-                            denom: funds.denom.clone(),
-                        }],
-                    };
-                    msgs.append(&mut vec![royalty_share_msg.into()]);
-
-                    // Calculate seller share and create Bank msg
-                    let seller_share_msg = BankMsg::Send {
-                        to_address: config.admin.to_string(),
-                        amount: vec![Coin {
-                            amount: funds.amount * (Decimal::one() - royalty.share),
-                            denom: funds.denom.clone(),
-                        }],
-                    };
-                    msgs.append(&mut vec![seller_share_msg.into()]);
-                }
-            }
-        }
-        Err(_) => {
-            // If token doesn't support royalties, pay seller in full
-            let seller_share_msg = BankMsg::Send {
-                to_address: config.admin.to_string(),
-                amount: info.funds,
-            };
-            msgs.append(&mut vec![seller_share_msg.into()]);
-        }
-    }
+    let seller_msg = BankMsg::Send {
+        to_address: config.admin.to_string(),
+        amount: vec![config.unit_price],
+    };
+    msgs.append(&mut vec![seller_msg.into()]);
 
     Ok(Response::default()
         .add_attribute("action", action)
@@ -427,7 +395,7 @@ pub fn execute_update_whitelist(
 
     NUM_WHITELIST_ADDRS.save(deps.storage, &num_whitelist_addresses)?;
 
-    Ok(Response::new().add_attribute("action", "updated_whitelist_addresses"))
+    Ok(Response::new().add_attribute("action", "update_whitelist"))
 }
 
 pub fn execute_update_whitelist_expiration(
@@ -443,7 +411,7 @@ pub fn execute_update_whitelist_expiration(
 
     config.whitelist_expiration = Some(whitelist_expiration);
     CONFIG.save(deps.storage, &config)?;
-    Ok(Response::new().add_attribute("action", "updated_whitelist_expiration"))
+    Ok(Response::new().add_attribute("action", "update_whitelist_expiration"))
 }
 
 pub fn execute_update_start_time(
@@ -458,7 +426,7 @@ pub fn execute_update_start_time(
     }
     config.start_time = Some(start_time);
     CONFIG.save(deps.storage, &config)?;
-    Ok(Response::new().add_attribute("action", "updated_start_time"))
+    Ok(Response::new().add_attribute("action", "update_start_time"))
 }
 
 pub fn execute_update_per_address_limit(
@@ -479,7 +447,7 @@ pub fn execute_update_per_address_limit(
     }
     config.per_address_limit = Some(per_address_limit);
     CONFIG.save(deps.storage, &config)?;
-    Ok(Response::new().add_attribute("action", "updated_per_address_limit"))
+    Ok(Response::new().add_attribute("action", "update_per_address_limit"))
 }
 
 pub fn execute_update_batch_mint_limit(
@@ -500,7 +468,7 @@ pub fn execute_update_batch_mint_limit(
     }
     config.batch_mint_limit = Some(batch_mint_limit);
     CONFIG.save(deps.storage, &config)?;
-    Ok(Response::new().add_attribute("action", "updated_batch_mint_limit"))
+    Ok(Response::new().add_attribute("action", "update_batch_mint_limit"))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -608,6 +576,7 @@ mod tests {
     use sg721::state::{Config, RoyaltyInfo};
 
     const DENOM: &str = "ustars";
+    const CREATION_FEE: u128 = 1_000_000_000;
     const INITIAL_BALANCE: u128 = 2000;
     const PRICE: u128 = 10;
 
@@ -643,6 +612,7 @@ mod tests {
         // Upload contract code
         let sg721_code_id = router.store_code(contract_sg721());
         let minter_code_id = router.store_code(contract_minter());
+        let creation_fee = coins(CREATION_FEE, DENOM);
 
         // Instantiate sale contract
         let msg = InstantiateMsg {
@@ -670,7 +640,14 @@ mod tests {
             },
         };
         let minter_addr = router
-            .instantiate_contract(minter_code_id, creator.clone(), &msg, &[], "Minter", None)
+            .instantiate_contract(
+                minter_code_id,
+                creator.clone(),
+                &msg,
+                &creation_fee,
+                "Minter",
+                None,
+            )
             .unwrap();
 
         let config: ConfigResponse = router
@@ -683,14 +660,15 @@ mod tests {
 
     // Add a creator account with initial balances
     fn setup_accounts(router: &mut App) -> Result<(Addr, Addr), ContractError> {
-        let buyer: Addr = Addr::unchecked(String::from("buyer"));
-        let creator: Addr = Addr::unchecked(String::from("creator"));
-        let funds: Vec<Coin> = coins(INITIAL_BALANCE, DENOM);
+        let buyer = Addr::unchecked("buyer");
+        let creator = Addr::unchecked("creator");
+        let creator_funds = coins(INITIAL_BALANCE + CREATION_FEE, DENOM);
+        let buyer_funds = coins(INITIAL_BALANCE, DENOM);
         router
             .sudo(SudoMsg::Bank({
                 BankSudo::Mint {
                     to_address: creator.to_string(),
-                    amount: funds.clone(),
+                    amount: creator_funds.clone(),
                 }
             }))
             .map_err(|err| println!("{:?}", err))
@@ -700,7 +678,7 @@ mod tests {
             .sudo(SudoMsg::Bank({
                 BankSudo::Mint {
                     to_address: buyer.to_string(),
-                    amount: funds.clone(),
+                    amount: buyer_funds.clone(),
                 }
             }))
             .map_err(|err| println!("{:?}", err))
@@ -708,11 +686,11 @@ mod tests {
 
         // Check native balances
         let creator_native_balances = router.wrap().query_all_balances(creator.clone()).unwrap();
-        assert_eq!(creator_native_balances, funds);
+        assert_eq!(creator_native_balances, creator_funds);
 
         // Check native balances
         let buyer_native_balances = router.wrap().query_all_balances(buyer.clone()).unwrap();
-        assert_eq!(buyer_native_balances, funds);
+        assert_eq!(buyer_native_balances, buyer_funds);
 
         Ok((creator, buyer))
     }
@@ -1032,7 +1010,7 @@ mod tests {
     }
 
     #[test]
-    fn per_address_limit() {
+    fn check_per_address_limit() {
         let mut router = mock_app();
         let (creator, buyer) = setup_accounts(&mut router).unwrap();
         let num_tokens = 2;
@@ -1284,6 +1262,54 @@ mod tests {
             .query_wasm_smart(minter_addr, &QueryMsg::MintableNumTokens {})
             .unwrap();
         assert_eq!(mintable_num_tokens_response.count, 0);
+    }
+
+    #[test]
+    fn check_max_num_tokens() {
+        let mut router = mock_app();
+        let (creator, _) = setup_accounts(&mut router).unwrap();
+
+        let over_max_num_tokens = MAX_TOKEN_LIMIT + 1;
+
+        let sg721_code_id = router.store_code(contract_sg721());
+        let minter_code_id = router.store_code(contract_minter());
+
+        // Instantiate sale contract
+        let msg = InstantiateMsg {
+            unit_price: coin(PRICE, DENOM),
+            num_tokens: over_max_num_tokens.into(),
+            whitelist_expiration: None,
+            whitelist_addresses: Some(vec![String::from("VIPcollector")]),
+            start_time: None,
+            per_address_limit: None,
+            batch_mint_limit: None,
+            base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
+            sg721_code_id,
+            sg721_instantiate_msg: Sg721InstantiateMsg {
+                name: String::from("TEST"),
+                symbol: String::from("TEST"),
+                minter: creator.to_string(),
+                config: Some(Config {
+                    contract_uri: Some(String::from("test")),
+                    creator: Some(creator.clone()),
+                    royalties: Some(RoyaltyInfo {
+                        payment_address: creator.clone(),
+                        share: Decimal::percent(10),
+                    }),
+                }),
+            },
+        };
+        let res = router.instantiate_contract(minter_code_id, creator, &msg, &[], "Minter", None);
+
+        // setup_minter_contract(&mut router.branch(), &creator, over_max_num_tokens.into());
+        assert!(res.is_err());
+        assert_eq!(
+            ContractError::MaxTokenLimitExceeded {
+                max: MAX_TOKEN_LIMIT
+            }
+            .to_string(),
+            res.unwrap_err().to_string()
+        );
     }
 
     #[test]

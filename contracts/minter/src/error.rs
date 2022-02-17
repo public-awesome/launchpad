@@ -1,4 +1,5 @@
 use cosmwasm_std::StdError;
+use cw_utils::PaymentError;
 use thiserror::Error;
 use url::ParseError;
 
@@ -15,6 +16,15 @@ pub enum ContractError {
 
     #[error("Not enough funds sent")]
     NotEnoughFunds {},
+
+    #[error("TooManyCoins")]
+    TooManyCoins {},
+
+    #[error("IncorrectPaymentAmount")]
+    IncorrectPaymentAmount {},
+
+    #[error("Num tokens exceeds max token limit {max}")]
+    MaxTokenLimitExceeded { max: u32 },
 
     #[error("Sold out")]
     SoldOut {},
@@ -54,6 +64,9 @@ pub enum ContractError {
 
     #[error("Token id: {token_id} already sold")]
     TokenIdAlreadySold { token_id: u64 },
+
+    #[error("{0}")]
+    Payment(#[from] PaymentError),
 }
 
 impl From<ParseError> for ContractError {
