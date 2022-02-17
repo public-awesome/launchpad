@@ -75,6 +75,13 @@ pub fn instantiate(
         return Err(ContractError::InvalidBaseTokenURI {});
     }
 
+    if MIN_MINT_PRICE > msg.unit_price.amount.into() {
+        return Err(ContractError::InsufficientMintPrice {
+            expected: MIN_MINT_PRICE,
+            got: msg.unit_price.amount.into(),
+        });
+    }
+
     // Initially set batch_mint_limit if no msg
     let batch_mint_limit: Option<u64> = msg.batch_mint_limit.or(Some(STARTING_BATCH_MINT_LIMIT));
 
