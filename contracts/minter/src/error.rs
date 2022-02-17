@@ -29,7 +29,10 @@ pub enum ContractError {
     #[error("Sold out")]
     SoldOut {},
 
-    #[error("Minimum mint price set by stargaze network is at least {expected} got {got}")]
+    #[error("InvalidDenom {expected} got {got}")]
+    InvalidDenom { expected: String, got: String },
+
+    #[error("Minimum network mint price {expected} got {got}")]
     InsufficientMintPrice { expected: u128, got: u128 },
 
     #[error("Invalid address")]

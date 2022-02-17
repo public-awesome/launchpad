@@ -32,7 +32,8 @@ const MAX_WHITELIST_ADDRS_LENGTH: u32 = 15000;
 const MAX_PER_ADDRESS_LIMIT: u64 = 30;
 const MAX_BATCH_MINT_LIMIT: u64 = 30;
 const STARTING_BATCH_MINT_LIMIT: u64 = 5;
-const MIN_MINT_PRICE: u128 = 20;
+const NETWORK_MIN_MINT_PRICE: u128 = 10000;
+const NETWORK_DENOM: &str = "ustars";
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -75,9 +76,15 @@ pub fn instantiate(
         return Err(ContractError::InvalidBaseTokenURI {});
     }
 
-    if MIN_MINT_PRICE > msg.unit_price.amount.into() {
+    if NETWORK_DENOM != msg.unit_price.denom {
+        return Err(ContractError::InvalidDenom {
+            expected: NETWORK_DENOM.to_string(),
+            got: msg.unit_price.denom.to_string(),
+        });
+    }
+    if NETWORK_MIN_MINT_PRICE > msg.unit_price.amount.into() {
         return Err(ContractError::InsufficientMintPrice {
-            expected: MIN_MINT_PRICE,
+            expected: NETWORK_MIN_MINT_PRICE,
             got: msg.unit_price.amount.into(),
         });
     }
@@ -302,9 +309,9 @@ fn _execute_mint(
     }
 
     // guardrail against low mint price updates
-    if MIN_MINT_PRICE > payment.into() {
+    if NETWORK_MIN_MINT_PRICE > payment.into() {
         return Err(ContractError::InsufficientMintPrice {
-            expected: MIN_MINT_PRICE,
+            expected: NETWORK_MIN_MINT_PRICE,
             got: payment.into(),
         });
     }
