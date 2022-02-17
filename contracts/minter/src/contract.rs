@@ -76,15 +76,15 @@ pub fn instantiate(
         return Err(ContractError::InvalidBaseTokenURI {});
     }
 
-    if NETWORK_DENOM != msg.unit_price.denom {
+    if NATIVE_DENOM != msg.unit_price.denom {
         return Err(ContractError::InvalidDenom {
-            expected: NETWORK_DENOM.to_string(),
+            expected: NATIVE_DENOM.to_string(),
             got: msg.unit_price.denom.to_string(),
         });
     }
-    if NETWORK_MIN_MINT_PRICE > msg.unit_price.amount.into() {
+    if MIN_MINT_PRICE > msg.unit_price.amount.into() {
         return Err(ContractError::InsufficientMintPrice {
-            expected: NETWORK_MIN_MINT_PRICE,
+            expected: MIN_MINT_PRICE,
             got: msg.unit_price.amount.into(),
         });
     }
@@ -309,9 +309,9 @@ fn _execute_mint(
     }
 
     // guardrail against low mint price updates
-    if NETWORK_MIN_MINT_PRICE > payment.into() {
+    if MIN_MINT_PRICE > payment.into() {
         return Err(ContractError::InsufficientMintPrice {
-            expected: NETWORK_MIN_MINT_PRICE,
+            expected: MIN_MINT_PRICE,
             got: payment.into(),
         });
     }
@@ -595,8 +595,8 @@ mod tests {
 
     const DENOM: &str = "ustars";
     const CREATION_FEE: u128 = 1_000_000_000;
-    const INITIAL_BALANCE: u128 = 2_000_000;
-    const PRICE: u128 = 20_000;
+    const INITIAL_BALANCE: u128 = 2_000_000_000;
+    const PRICE: u128 = 100_000_000;
 
     fn mock_app() -> App {
         App::default()
