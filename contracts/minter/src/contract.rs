@@ -32,7 +32,7 @@ const MAX_WHITELIST_ADDRS_LENGTH: u32 = 15000;
 const MAX_PER_ADDRESS_LIMIT: u64 = 30;
 const MAX_BATCH_MINT_LIMIT: u64 = 30;
 const STARTING_BATCH_MINT_LIMIT: u64 = 5;
-const NETWORK_MIN_MINT_PRICE: u128 = 10000;
+const MIN_MINT_PRICE: u128 = 100_000_000;
 const NETWORK_DENOM: &str = "ustars";
 
 #[cfg_attr(not(feature = "library"), entry_point)]
