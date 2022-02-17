@@ -180,11 +180,6 @@ pub fn execute_mint(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Respon
         }
     }
 
-    let payment = must_pay(&info, &config.unit_price.denom)?;
-    if payment != config.unit_price.amount {
-        return Err(ContractError::IncorrectPaymentAmount {});
-    }
-
     if let Some(start_time) = config.start_time {
         // Check if after start_time
         if !start_time.is_expired(&env.block) {
@@ -285,12 +280,18 @@ fn _execute_mint(
     let config = CONFIG.load(deps.storage)?;
     let sg721_address = SG721_ADDRESS.load(deps.storage)?;
     let recipient_addr = if recipient.is_none() {
-        info.sender
+        info.sender.clone()
     } else if let Some(some_recipient) = recipient {
         some_recipient
     } else {
         return Err(ContractError::InvalidAddress {});
     };
+
+    // exact payment only
+    let payment = must_pay(&info, &config.unit_price.denom)?;
+    if payment != config.unit_price.amount {
+        return Err(ContractError::IncorrectPaymentAmount {});
+    }
 
     // if token_id None, find and assign one. else check token_id exists on mintable map.
     let mintable_token_id: u64 = if token_id.is_none() {
