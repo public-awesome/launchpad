@@ -8,8 +8,7 @@
     "num_tokens",
     "sg721_address",
     "sg721_code_id",
-    "unit_price",
-    "unused_token_id"
+    "unit_price"
   ],
   "properties": {
     "admin": {
@@ -17,6 +16,14 @@
     },
     "base_token_uri": {
       "type": "string"
+    },
+    "batch_mint_limit": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "format": "uint64",
+      "minimum": 0.0
     },
     "num_tokens": {
       "type": "integer",
@@ -41,11 +48,6 @@
     },
     "unit_price": {
       "$ref": "#/definitions/Coin"
-    },
-    "unused_token_id": {
-      "type": "integer",
-      "format": "uint64",
-      "minimum": 0.0
     }
   },
   "definitions": {
