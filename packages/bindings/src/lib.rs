@@ -2,7 +2,8 @@ mod msg;
 mod route;
 
 pub use msg::{
-    create_claim_for_msg, create_fund_community_pool_msg, StargazeMsg, StargazeMsgWrapper,
+    create_claim_for_msg, create_fund_community_pool_msg, ClaimAction, StargazeMsg,
+    StargazeMsgWrapper,
 };
 pub use route::StargazeRoute;
 
