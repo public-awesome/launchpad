@@ -27,6 +27,7 @@ const CONTRACT_NAME: &str = "crates.io:sg-minter";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 const INSTANTIATE_SG721_REPLY_ID: u64 = 1;
+const MAX_TOKEN_LIMIT: u32 = 10000;
 const MAX_WHITELIST_ADDRS_LENGTH: u32 = 15000;
 const MAX_PER_ADDRESS_LIMIT: u64 = 30;
 const MAX_BATCH_MINT_LIMIT: u64 = 30;
@@ -40,6 +41,12 @@ pub fn instantiate(
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+
+    if msg.num_tokens > MAX_TOKEN_LIMIT.into() {
+        return Err(ContractError::MaxTokenLimitExceeded {
+            max: MAX_TOKEN_LIMIT,
+        });
+    }
 
     if let Some(per_address_limit) = msg.per_address_limit {
         // Check per address limit is valid
@@ -1244,6 +1251,54 @@ mod tests {
             .query_wasm_smart(minter_addr, &QueryMsg::MintableNumTokens {})
             .unwrap();
         assert_eq!(mintable_num_tokens_response.count, 0);
+    }
+
+    #[test]
+    fn check_max_num_tokens() {
+        let mut router = mock_app();
+        let (creator, _) = setup_accounts(&mut router).unwrap();
+
+        let over_max_num_tokens = MAX_TOKEN_LIMIT + 1;
+
+        let sg721_code_id = router.store_code(contract_sg721());
+        let minter_code_id = router.store_code(contract_minter());
+
+        // Instantiate sale contract
+        let msg = InstantiateMsg {
+            unit_price: coin(PRICE, DENOM),
+            num_tokens: over_max_num_tokens.into(),
+            whitelist_expiration: None,
+            whitelist_addresses: Some(vec![String::from("VIPcollector")]),
+            start_time: None,
+            per_address_limit: None,
+            batch_mint_limit: None,
+            base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
+            sg721_code_id,
+            sg721_instantiate_msg: Sg721InstantiateMsg {
+                name: String::from("TEST"),
+                symbol: String::from("TEST"),
+                minter: creator.to_string(),
+                config: Some(Config {
+                    contract_uri: Some(String::from("test")),
+                    creator: Some(creator.clone()),
+                    royalties: Some(RoyaltyInfo {
+                        payment_address: creator.clone(),
+                        share: Decimal::percent(10),
+                    }),
+                }),
+            },
+        };
+        let res = router.instantiate_contract(minter_code_id, creator, &msg, &[], "Minter", None);
+
+        // setup_minter_contract(&mut router.branch(), &creator, over_max_num_tokens.into());
+        assert!(res.is_err());
+        assert_eq!(
+            ContractError::MaxTokenLimitExceeded {
+                max: MAX_TOKEN_LIMIT
+            }
+            .to_string(),
+            res.unwrap_err().to_string()
+        );
     }
 
     #[test]

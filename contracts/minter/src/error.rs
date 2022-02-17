@@ -23,6 +23,9 @@ pub enum ContractError {
     #[error("IncorrectPaymentAmount")]
     IncorrectPaymentAmount {},
 
+    #[error("Num tokens exceeds max token limit {max}")]
+    MaxTokenLimitExceeded { max: u32 },
+
     #[error("Sold out")]
     SoldOut {},
 
