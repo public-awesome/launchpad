@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::route::StargazeRoute;
 use cosmwasm_std::{Coin, CosmosMsg, CustomMsg};
-
+use cw721::CustomMsg as Cw721CustomMsg;
 static MSG_DATA_VERSION: &str = "1.0.0";
 
 /// StargazeMsg is an override of CosmosMsg::Custom to add support for Stargaze's custom message types
@@ -22,8 +22,8 @@ impl From<StargazeMsgWrapper> for CosmosMsg<StargazeMsgWrapper> {
 }
 
 impl CustomMsg for StargazeMsgWrapper {}
+impl Cw721CustomMsg for StargazeMsgWrapper {}
 
-/// StargazeMsg is an override of CosmosMsg::Custom to add support for Stargaze's custom message types
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum StargazeMsg {
