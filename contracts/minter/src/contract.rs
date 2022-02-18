@@ -32,6 +32,8 @@ const MAX_WHITELIST_ADDRS_LENGTH: u32 = 15000;
 const MAX_PER_ADDRESS_LIMIT: u64 = 30;
 const MAX_BATCH_MINT_LIMIT: u64 = 30;
 const STARTING_BATCH_MINT_LIMIT: u64 = 5;
+const MIN_MINT_PRICE: u128 = 100_000_000;
+const NATIVE_DENOM: &str = "ustars";
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -72,6 +74,19 @@ pub fn instantiate(
     let parsed_token_uri = Url::parse(&msg.base_token_uri)?;
     if parsed_token_uri.scheme() != "ipfs" {
         return Err(ContractError::InvalidBaseTokenURI {});
+    }
+
+    if NATIVE_DENOM != msg.unit_price.denom {
+        return Err(ContractError::InvalidDenom {
+            expected: NATIVE_DENOM.to_string(),
+            got: msg.unit_price.denom.to_string(),
+        });
+    }
+    if MIN_MINT_PRICE > msg.unit_price.amount.into() {
+        return Err(ContractError::InsufficientMintPrice {
+            expected: MIN_MINT_PRICE,
+            got: msg.unit_price.amount.into(),
+        });
     }
 
     // Initially set batch_mint_limit if no msg
@@ -181,11 +196,6 @@ pub fn execute_mint(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Respon
         }
     }
 
-    let payment = must_pay(&info, &config.unit_price.denom)?;
-    if payment != config.unit_price.amount {
-        return Err(ContractError::IncorrectPaymentAmount {});
-    }
-
     if let Some(start_time) = config.start_time {
         // Check if after start_time
         if !start_time.is_expired(&env.block) {
@@ -286,7 +296,7 @@ fn _execute_mint(
     let config = CONFIG.load(deps.storage)?;
     let sg721_address = SG721_ADDRESS.load(deps.storage)?;
     let recipient_addr = if recipient.is_none() {
-        info.sender
+        info.sender.clone()
     } else if let Some(some_recipient) = recipient {
         some_recipient
     } else {
@@ -294,6 +304,20 @@ fn _execute_mint(
             addr: info.sender.to_string(),
         });
     };
+
+    // exact payment only
+    let payment = must_pay(&info, &config.unit_price.denom)?;
+    if payment != config.unit_price.amount {
+        return Err(ContractError::IncorrectPaymentAmount {});
+    }
+
+    // guardrail against low mint price updates
+    if MIN_MINT_PRICE > payment.into() {
+        return Err(ContractError::InsufficientMintPrice {
+            expected: MIN_MINT_PRICE,
+            got: payment.into(),
+        });
+    }
 
     // if token_id None, find and assign one. else check token_id exists on mintable map.
     let mintable_token_id: u64 = if token_id.is_none() {
@@ -577,8 +601,8 @@ mod tests {
 
     const DENOM: &str = "ustars";
     const CREATION_FEE: u128 = 1_000_000_000;
-    const INITIAL_BALANCE: u128 = 2000;
-    const PRICE: u128 = 10;
+    const INITIAL_BALANCE: u128 = 2_000_000_000;
+    const PRICE: u128 = 100_000_000;
 
     fn mock_app() -> App {
         App::default()
@@ -715,6 +739,94 @@ mod tests {
             per_address_limit: None,
             batch_mint_limit: None,
             base_token_uri: "https://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
+            sg721_code_id: 1,
+            sg721_instantiate_msg: Sg721InstantiateMsg {
+                name: String::from("TEST"),
+                symbol: String::from("TEST"),
+                minter: info.sender.to_string(),
+                config: Some(Config {
+                    contract_uri: Some(String::from("test")),
+                    creator: Some(info.sender.clone()),
+                    royalties: Some(RoyaltyInfo {
+                        payment_address: info.sender.clone(),
+                        share: Decimal::percent(10),
+                    }),
+                }),
+            },
+        };
+        let res = instantiate(deps.as_mut(), mock_env(), info, msg);
+        assert!(res.is_err());
+
+        // invalid denom returns error
+        let wrong_denom = "uosmo";
+        let info = mock_info("creator", &coins(INITIAL_BALANCE, DENOM));
+        let msg = InstantiateMsg {
+            unit_price: coin(PRICE, wrong_denom),
+            num_tokens: 100,
+            whitelist_expiration: None,
+            whitelist_addresses: Some(vec![String::from("VIPcollector")]),
+            start_time: None,
+            per_address_limit: None,
+            batch_mint_limit: None,
+            base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
+            sg721_code_id: 1,
+            sg721_instantiate_msg: Sg721InstantiateMsg {
+                name: String::from("TEST"),
+                symbol: String::from("TEST"),
+                minter: info.sender.to_string(),
+                config: Some(Config {
+                    contract_uri: Some(String::from("test")),
+                    creator: Some(info.sender.clone()),
+                    royalties: Some(RoyaltyInfo {
+                        payment_address: info.sender.clone(),
+                        share: Decimal::percent(10),
+                    }),
+                }),
+            },
+        };
+        let res = instantiate(deps.as_mut(), mock_env(), info, msg);
+        assert!(res.is_err());
+
+        // insufficient mint price returns error
+        let info = mock_info("creator", &coins(INITIAL_BALANCE, DENOM));
+        let msg = InstantiateMsg {
+            unit_price: coin(1, DENOM),
+            num_tokens: 100,
+            whitelist_expiration: None,
+            whitelist_addresses: Some(vec![String::from("VIPcollector")]),
+            start_time: None,
+            per_address_limit: None,
+            batch_mint_limit: None,
+            base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
+            sg721_code_id: 1,
+            sg721_instantiate_msg: Sg721InstantiateMsg {
+                name: String::from("TEST"),
+                symbol: String::from("TEST"),
+                minter: info.sender.to_string(),
+                config: Some(Config {
+                    contract_uri: Some(String::from("test")),
+                    creator: Some(info.sender.clone()),
+                    royalties: Some(RoyaltyInfo {
+                        payment_address: info.sender.clone(),
+                        share: Decimal::percent(10),
+                    }),
+                }),
+            },
+        };
+        let res = instantiate(deps.as_mut(), mock_env(), info, msg);
+        assert!(res.is_err());
+
+        // over max token limit
+        let info = mock_info("creator", &coins(INITIAL_BALANCE, DENOM));
+        let msg = InstantiateMsg {
+            unit_price: coin(PRICE, DENOM),
+            num_tokens: (MAX_TOKEN_LIMIT + 1).into(),
+            whitelist_expiration: None,
+            whitelist_addresses: Some(vec![String::from("VIPcollector")]),
+            start_time: None,
+            per_address_limit: None,
+            batch_mint_limit: None,
+            base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
             sg721_code_id: 1,
             sg721_instantiate_msg: Sg721InstantiateMsg {
                 name: String::from("TEST"),
@@ -1262,54 +1374,6 @@ mod tests {
             .query_wasm_smart(minter_addr, &QueryMsg::MintableNumTokens {})
             .unwrap();
         assert_eq!(mintable_num_tokens_response.count, 0);
-    }
-
-    #[test]
-    fn check_max_num_tokens() {
-        let mut router = mock_app();
-        let (creator, _) = setup_accounts(&mut router).unwrap();
-
-        let over_max_num_tokens = MAX_TOKEN_LIMIT + 1;
-
-        let sg721_code_id = router.store_code(contract_sg721());
-        let minter_code_id = router.store_code(contract_minter());
-
-        // Instantiate sale contract
-        let msg = InstantiateMsg {
-            unit_price: coin(PRICE, DENOM),
-            num_tokens: over_max_num_tokens.into(),
-            whitelist_expiration: None,
-            whitelist_addresses: Some(vec![String::from("VIPcollector")]),
-            start_time: None,
-            per_address_limit: None,
-            batch_mint_limit: None,
-            base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
-            sg721_code_id,
-            sg721_instantiate_msg: Sg721InstantiateMsg {
-                name: String::from("TEST"),
-                symbol: String::from("TEST"),
-                minter: creator.to_string(),
-                config: Some(Config {
-                    contract_uri: Some(String::from("test")),
-                    creator: Some(creator.clone()),
-                    royalties: Some(RoyaltyInfo {
-                        payment_address: creator.clone(),
-                        share: Decimal::percent(10),
-                    }),
-                }),
-            },
-        };
-        let res = router.instantiate_contract(minter_code_id, creator, &msg, &[], "Minter", None);
-
-        // setup_minter_contract(&mut router.branch(), &creator, over_max_num_tokens.into());
-        assert!(res.is_err());
-        assert_eq!(
-            ContractError::MaxTokenLimitExceeded {
-                max: MAX_TOKEN_LIMIT
-            }
-            .to_string(),
-            res.unwrap_err().to_string()
-        );
     }
 
     #[test]
