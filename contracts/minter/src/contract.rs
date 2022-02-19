@@ -156,7 +156,7 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
-        ExecuteMsg::Mint {} => execute_mint(deps, env, info),
+        ExecuteMsg::Mint {} => execute_mint_sender(deps, env, info),
         ExecuteMsg::UpdateWhitelist(update_whitelist_msg) => {
             execute_update_whitelist(deps, env, info, update_whitelist_msg)
         }
@@ -181,10 +181,14 @@ pub fn execute(
     }
 }
 
-pub fn execute_mint(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Response, ContractError> {
+pub fn execute_mint_sender(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
     let sg721_address = SG721_ADDRESS.load(deps.storage)?;
-    let action = "mint";
+    let action = "mint_sender";
 
     let allowlist = WHITELIST_ADDRS.has(deps.storage, info.sender.to_string());
     if let Some(whitelist_expiration) = config.whitelist_expiration {
@@ -273,7 +277,7 @@ pub fn execute_batch_mint(
     }
 
     for _ in 0..num_mints {
-        execute_mint(deps.branch(), env.clone(), info.clone())?;
+        execute_mint_sender(deps.branch(), env.clone(), info.clone())?;
     }
 
     Ok(Response::default()
