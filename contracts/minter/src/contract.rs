@@ -334,8 +334,8 @@ fn _execute_mint(
         let mintable_tokens_result: StdResult<Vec<u64>> = MINTABLE_TOKEN_IDS
             .keys(
                 deps.storage,
-                None,
-                Some(Bound::inclusive(vec![some_token_id as u8])),
+                Some(Bound::inclusive_int(some_token_id)),
+                Some(Bound::inclusive_int(some_token_id)),
                 Order::Ascending,
             )
             .take(1)
@@ -1361,6 +1361,7 @@ mod tests {
             &coins(PRICE, DENOM),
         );
         assert!(res.is_ok());
+
         let batch_mint_msg = ExecuteMsg::BatchMint { num_mints: 2 };
         let res = router.execute_contract(
             creator,
