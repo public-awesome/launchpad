@@ -7,7 +7,6 @@ use cosmwasm_std::{
 use cw2::set_contract_version;
 use cw721::TokensResponse as Cw721TokensResponse;
 use cw721_base::{msg::ExecuteMsg as Cw721ExecuteMsg, MintMsg};
-use cw_storage_plus::Bound;
 use cw_utils::{must_pay, parse_reply_instantiate_data, Expiration};
 use sg721::msg::{InstantiateMsg as Sg721InstantiateMsg, QueryMsg as Sg721QueryMsg};
 use url::Url;
@@ -335,23 +334,13 @@ fn _execute_mint(
         }
         mintable_tokens[0]
     } else if let Some(some_token_id) = token_id {
-        let mintable_tokens_result: StdResult<Vec<u64>> = MINTABLE_TOKEN_IDS
-            .keys(
-                deps.storage,
-                None,
-                Some(Bound::inclusive(vec![some_token_id as u8])),
-                Order::Ascending,
-            )
-            .take(1)
-            .collect();
-        // If token_id not mintable, throw err
-        let mintable_tokens = mintable_tokens_result?;
-        if mintable_tokens.is_empty() {
+        // If token_id not on mintable map, throw err
+        if !MINTABLE_TOKEN_IDS.has(deps.storage, some_token_id) {
             return Err(ContractError::TokenIdAlreadySold {
                 token_id: some_token_id,
             });
         }
-        mintable_tokens[0]
+        some_token_id
     } else {
         return Err(ContractError::InvalidTokenId {});
     };
@@ -1365,6 +1354,7 @@ mod tests {
             &coins(PRICE, DENOM),
         );
         assert!(res.is_ok());
+
         let batch_mint_msg = ExecuteMsg::BatchMint { num_mints: 2 };
         let res = router.execute_contract(
             creator,
