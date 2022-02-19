@@ -93,7 +93,7 @@ pub fn instantiate(
     // TODO: add community pool fund msg
     // https://github.com/public-awesome/contracts/issues/99
     Ok(Response::default()
-        .add_attribute("action", "instantiate")
+        .add_attribute("action", "instantiate_sg721")
         .add_message(send_fee_msg)
         .add_message(fee_burn_msg))
 }

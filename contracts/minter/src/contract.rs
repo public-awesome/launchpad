@@ -144,7 +144,7 @@ pub fn instantiate(
     }];
 
     Ok(Response::new()
-        .add_attribute("action", "instantiate")
+        .add_attribute("action", "instantiate_minter")
         .add_submessages(sub_msgs))
 }
 
@@ -587,7 +587,7 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractE
     match reply {
         Ok(res) => {
             SG721_ADDRESS.save(deps.storage, &Addr::unchecked(res.contract_address))?;
-            Ok(Response::default().add_attribute("action", "instantiated sg721"))
+            Ok(Response::default().add_attribute("action", "instantiate_sg721_reply"))
         }
         Err(_) => Err(ContractError::InstantiateSg721Error {}),
     }
