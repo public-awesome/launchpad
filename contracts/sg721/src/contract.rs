@@ -12,6 +12,7 @@ use serde::{Deserialize, Serialize};
 use crate::ContractError;
 use cw721::ContractInfoResponse;
 use cw721_base::ContractError as BaseError;
+use sg_std::FEE_DENOM;
 
 use crate::msg::{
     ContractUriResponse, CreatorResponse, ExecuteMsg, InstantiateMsg, QueryMsg, RoyaltyResponse,
@@ -22,8 +23,6 @@ use crate::state::CONFIG;
 const CONTRACT_NAME: &str = "crates.io:sg-721";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-// TODO: these should be a governance parameters in the future
-const FEE_DENOM: &str = "ustars";
 const CREATION_FEE: u128 = 1_000_000_000;
 const CREATION_FEE_BURN_PERCENT: u64 = 50;
 
