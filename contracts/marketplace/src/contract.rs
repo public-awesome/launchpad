@@ -450,10 +450,10 @@ mod tests {
     use super::*;
     use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
     use cosmwasm_std::{coin, coins, from_binary};
+    use sg_std::NATIVE_DENOM;
 
     const CREATOR: &str = "creator";
     const COLLECTION: &str = "collection";
-    const NATIVE_TOKEN_DENOM: &str = "ustars";
     const TOKEN_ID: &str = "123";
 
     fn setup_contract(deps: DepsMut) {
@@ -468,7 +468,7 @@ mod tests {
         let mut deps = mock_dependencies();
 
         let msg = InstantiateMsg {};
-        let info = mock_info("creator", &coins(1000, NATIVE_TOKEN_DENOM));
+        let info = mock_info("creator", &coins(1000, NATIVE_DENOM));
 
         // we can just call .unwrap() to assert this was a success
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
@@ -481,13 +481,13 @@ mod tests {
         setup_contract(deps.as_mut());
 
         let broke = mock_info("broke", &[]);
-        let bidder = mock_info("bidder", &coins(1000, NATIVE_TOKEN_DENOM));
-        let recipient = mock_info("recipient", &coins(1000, NATIVE_TOKEN_DENOM));
-        let random_addr = mock_info("random", &coins(1000, NATIVE_TOKEN_DENOM));
+        let bidder = mock_info("bidder", &coins(1000, NATIVE_DENOM));
+        let recipient = mock_info("recipient", &coins(1000, NATIVE_DENOM));
+        let random_addr = mock_info("random", &coins(1000, NATIVE_DENOM));
 
         // Ensure funds bidder has funds
         let bid = Bid {
-            amount: coin(100, NATIVE_TOKEN_DENOM),
+            amount: coin(100, NATIVE_DENOM),
             bidder: broke.sender.clone(),
             recipient: recipient.sender.clone(),
         };
@@ -503,7 +503,7 @@ mod tests {
 
         // Set bid
         let bid = Bid {
-            amount: coin(100, NATIVE_TOKEN_DENOM),
+            amount: coin(100, NATIVE_DENOM),
             bidder: bidder.sender.clone(),
             recipient: recipient.sender,
         };
@@ -568,7 +568,7 @@ mod tests {
         setup_contract(deps.as_mut());
 
         let ask = Ask {
-            amount: coin(100, NATIVE_TOKEN_DENOM),
+            amount: coin(100, NATIVE_DENOM),
         };
         let set_ask = ExecuteMsg::SetAsk {
             collection: Addr::unchecked(COLLECTION),

@@ -44,6 +44,7 @@ schemars = "0.8.8"
 serde = { version = "1.0.133", default-features = false, features = ["derive"] }
 sg721 = { path = "../sg721" }
 thiserror = { version = "1.0.30" }
+sg-std = { path = "../../packages/sg-std" }
 
 [dev-dependencies]
 cosmwasm-schema = { version = "1.0.0-beta" }

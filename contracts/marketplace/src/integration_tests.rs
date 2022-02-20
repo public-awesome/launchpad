@@ -45,9 +45,9 @@ mod tests {
     use super::*;
     use cosmwasm_std::{coin, coins, Coin, Decimal};
     use sg721::state::{Config, RoyaltyInfo};
+    use sg_std::NATIVE_DENOM;
 
     const TOKEN_ID: &str = "123";
-    const NATIVE_TOKEN_DENOM: &str = "ustars";
     const CREATION_FEE: u128 = 1_000_000_000;
     const INITIAL_BALANCE: u128 = 2000;
 
@@ -87,7 +87,7 @@ mod tests {
                 sg721_id,
                 creator.clone(),
                 &msg,
-                &coins(CREATION_FEE, NATIVE_TOKEN_DENOM),
+                &coins(CREATION_FEE, NATIVE_DENOM),
                 "NFT",
                 None,
             )
@@ -101,8 +101,8 @@ mod tests {
         let owner: Addr = Addr::unchecked("owner");
         let bidder: Addr = Addr::unchecked("bidder");
         let creator: Addr = Addr::unchecked("creator");
-        let creator_funds: Vec<Coin> = coins(CREATION_FEE, NATIVE_TOKEN_DENOM);
-        let funds: Vec<Coin> = coins(INITIAL_BALANCE, NATIVE_TOKEN_DENOM);
+        let creator_funds: Vec<Coin> = coins(CREATION_FEE, NATIVE_DENOM);
+        let funds: Vec<Coin> = coins(INITIAL_BALANCE, NATIVE_DENOM);
         router
             .sudo(SudoMsg::Bank({
                 BankSudo::Mint {
@@ -189,7 +189,7 @@ mod tests {
 
         // An asking price is made by the creator
         let ask = Ask {
-            amount: coin(110, NATIVE_TOKEN_DENOM),
+            amount: coin(110, NATIVE_DENOM),
         };
         let set_ask = ExecuteMsg::SetAsk {
             collection: nft_contract_addr.clone(),
@@ -202,7 +202,7 @@ mod tests {
 
         // Bidder makes bid
         let bid = Bid {
-            amount: coin(100, NATIVE_TOKEN_DENOM),
+            amount: coin(100, NATIVE_DENOM),
             bidder: bidder.clone(),
             recipient: creator.clone(),
         };
@@ -215,7 +215,7 @@ mod tests {
             bidder.clone(),
             nft_marketplace_addr.clone(),
             &set_bid_msg,
-            &coins(100, NATIVE_TOKEN_DENOM),
+            &coins(100, NATIVE_DENOM),
         );
         assert!(res.is_ok());
 
@@ -224,7 +224,7 @@ mod tests {
             .wrap()
             .query_all_balances(nft_marketplace_addr.clone())
             .unwrap();
-        assert_eq!(contract_balances, coins(100, NATIVE_TOKEN_DENOM));
+        assert_eq!(contract_balances, coins(100, NATIVE_DENOM));
 
         // Check creator hasn't been paid yet
         let creator_native_balances = router.wrap().query_all_balances(creator.clone()).unwrap();
@@ -242,11 +242,11 @@ mod tests {
 
         // Check money is transfered
         let creator_native_balances = router.wrap().query_all_balances(creator).unwrap();
-        assert_eq!(creator_native_balances, coins(100, NATIVE_TOKEN_DENOM));
+        assert_eq!(creator_native_balances, coins(100, NATIVE_DENOM));
         let bidder_native_balances = router.wrap().query_all_balances(bidder.clone()).unwrap();
         assert_eq!(
             bidder_native_balances,
-            coins(INITIAL_BALANCE - 100, NATIVE_TOKEN_DENOM)
+            coins(INITIAL_BALANCE - 100, NATIVE_DENOM)
         );
 
         // Check NFT is transferred
@@ -312,7 +312,7 @@ mod tests {
 
         // An asking price is made by the creator
         let ask = Ask {
-            amount: coin(110, NATIVE_TOKEN_DENOM),
+            amount: coin(110, NATIVE_DENOM),
         };
         let set_ask = ExecuteMsg::SetAsk {
             collection: nft_contract_addr.clone(),
@@ -325,7 +325,7 @@ mod tests {
 
         // Bidder makes bid
         let bid = Bid {
-            amount: coin(100, NATIVE_TOKEN_DENOM),
+            amount: coin(100, NATIVE_DENOM),
             bidder: bidder.clone(),
             recipient: creator.clone(),
         };
@@ -338,7 +338,7 @@ mod tests {
             bidder.clone(),
             nft_marketplace_addr.clone(),
             &set_bid_msg,
-            &coins(100, NATIVE_TOKEN_DENOM),
+            &coins(100, NATIVE_DENOM),
         );
         assert!(res.is_ok());
 
@@ -347,7 +347,7 @@ mod tests {
             .wrap()
             .query_all_balances(nft_marketplace_addr.clone())
             .unwrap();
-        assert_eq!(contract_balances, coins(100, NATIVE_TOKEN_DENOM));
+        assert_eq!(contract_balances, coins(100, NATIVE_DENOM));
 
         // Check creator hasn't been paid yet
         let creator_native_balances = router.wrap().query_all_balances(creator.clone()).unwrap();
@@ -365,11 +365,11 @@ mod tests {
 
         // Check money is transfered
         let creator_native_balances = router.wrap().query_all_balances(creator).unwrap();
-        assert_eq!(creator_native_balances, coins(100, NATIVE_TOKEN_DENOM));
+        assert_eq!(creator_native_balances, coins(100, NATIVE_DENOM));
         let bidder_native_balances = router.wrap().query_all_balances(bidder.clone()).unwrap();
         assert_eq!(
             bidder_native_balances,
-            coins(INITIAL_BALANCE - 100, NATIVE_TOKEN_DENOM)
+            coins(INITIAL_BALANCE - 100, NATIVE_DENOM)
         );
 
         // Check NFT is transferred
@@ -400,7 +400,7 @@ mod tests {
 
         // An ask is made by the creator, but fails because NFT is not authorized
         let ask = Ask {
-            amount: coin(100, NATIVE_TOKEN_DENOM),
+            amount: coin(100, NATIVE_DENOM),
         };
         let set_ask = ExecuteMsg::SetAsk {
             collection: nft_contract_addr.clone(),
@@ -464,7 +464,7 @@ mod tests {
 
         // Bidder makes bid that meets the ask criteria
         let bid = Bid {
-            amount: coin(100, NATIVE_TOKEN_DENOM),
+            amount: coin(100, NATIVE_DENOM),
             bidder: bidder.clone(),
             recipient: creator.clone(),
         };
@@ -478,7 +478,7 @@ mod tests {
                 bidder.clone(),
                 nft_marketplace_addr,
                 &set_bid_msg,
-                &coins(100, NATIVE_TOKEN_DENOM),
+                &coins(100, NATIVE_DENOM),
             )
             .unwrap();
 
@@ -487,13 +487,13 @@ mod tests {
 
         // Check money is transfered
         let creator_native_balances = router.wrap().query_all_balances(creator).unwrap();
-        assert_eq!(creator_native_balances, coins(100, NATIVE_TOKEN_DENOM));
+        assert_eq!(creator_native_balances, coins(100, NATIVE_DENOM));
         let bidder_native_balances = router.wrap().query_all_balances(bidder.clone()).unwrap();
         assert_eq!(
             bidder_native_balances,
             vec![
                 coin(1000, "random"),
-                coin(INITIAL_BALANCE - 100, NATIVE_TOKEN_DENOM),
+                coin(INITIAL_BALANCE - 100, NATIVE_DENOM),
             ]
         );
 
@@ -525,7 +525,7 @@ mod tests {
 
         // Bidder makes bid
         let bid = Bid {
-            amount: coin(100, NATIVE_TOKEN_DENOM),
+            amount: coin(100, NATIVE_DENOM),
             bidder: bidder.clone(),
             recipient: creator,
         };
@@ -539,7 +539,7 @@ mod tests {
             bidder.clone(),
             nft_marketplace_addr.clone(),
             &set_bid_msg,
-            &coins(100, NATIVE_TOKEN_DENOM),
+            &coins(100, NATIVE_DENOM),
         );
         assert!(res.is_ok());
 
@@ -547,7 +547,7 @@ mod tests {
         let bidder_native_balances = router.wrap().query_all_balances(bidder.clone()).unwrap();
         assert_eq!(
             bidder_native_balances,
-            coins(INITIAL_BALANCE - 100, NATIVE_TOKEN_DENOM)
+            coins(INITIAL_BALANCE - 100, NATIVE_DENOM)
         );
 
         // Contract has been paid
@@ -555,7 +555,7 @@ mod tests {
             .wrap()
             .query_all_balances(nft_marketplace_addr.clone())
             .unwrap();
-        assert_eq!(contract_balances, coins(100, NATIVE_TOKEN_DENOM));
+        assert_eq!(contract_balances, coins(100, NATIVE_DENOM));
 
         // Bidder removes bid
         let remove_bid_msg = ExecuteMsg::RemoveBid {
@@ -569,10 +569,7 @@ mod tests {
 
         // Bidder has money back
         let bidder_native_balances = router.wrap().query_all_balances(bidder).unwrap();
-        assert_eq!(
-            bidder_native_balances,
-            coins(INITIAL_BALANCE, NATIVE_TOKEN_DENOM)
-        );
+        assert_eq!(bidder_native_balances, coins(INITIAL_BALANCE, NATIVE_DENOM));
     }
 
     #[test]
@@ -591,7 +588,7 @@ mod tests {
 
         // Bidder makes bid
         let bid = Bid {
-            amount: coin(100, NATIVE_TOKEN_DENOM),
+            amount: coin(100, NATIVE_DENOM),
             bidder: bidder.clone(),
             recipient: creator.clone(),
         };
@@ -604,7 +601,7 @@ mod tests {
             bidder.clone(),
             nft_marketplace_addr.clone(),
             &set_bid_msg,
-            &coins(100, NATIVE_TOKEN_DENOM),
+            &coins(100, NATIVE_DENOM),
         );
         assert!(res.is_ok());
 
@@ -612,7 +609,7 @@ mod tests {
         let bidder_native_balances = router.wrap().query_all_balances(bidder.clone()).unwrap();
         assert_eq!(
             bidder_native_balances,
-            coins(INITIAL_BALANCE - 100, NATIVE_TOKEN_DENOM)
+            coins(INITIAL_BALANCE - 100, NATIVE_DENOM)
         );
 
         // Contract has been paid
@@ -620,11 +617,11 @@ mod tests {
             .wrap()
             .query_all_balances(nft_marketplace_addr.clone())
             .unwrap();
-        assert_eq!(contract_balances, coins(100, NATIVE_TOKEN_DENOM));
+        assert_eq!(contract_balances, coins(100, NATIVE_DENOM));
 
         // Bidder makes higher bid
         let bid = Bid {
-            amount: coin(150, NATIVE_TOKEN_DENOM),
+            amount: coin(150, NATIVE_DENOM),
             bidder: bidder.clone(),
             recipient: creator,
         };
@@ -637,7 +634,7 @@ mod tests {
             bidder.clone(),
             nft_marketplace_addr.clone(),
             &set_bid_msg,
-            &coins(150, NATIVE_TOKEN_DENOM),
+            &coins(150, NATIVE_DENOM),
         );
         assert!(res.is_ok());
 
@@ -645,7 +642,7 @@ mod tests {
         let bidder_native_balances = router.wrap().query_all_balances(bidder.clone()).unwrap();
         assert_eq!(
             bidder_native_balances,
-            coins(INITIAL_BALANCE - 150, NATIVE_TOKEN_DENOM)
+            coins(INITIAL_BALANCE - 150, NATIVE_DENOM)
         );
 
         // Contract has been paid
@@ -653,7 +650,7 @@ mod tests {
             .wrap()
             .query_all_balances(nft_marketplace_addr.clone())
             .unwrap();
-        assert_eq!(contract_balances, coins(150, NATIVE_TOKEN_DENOM));
+        assert_eq!(contract_balances, coins(150, NATIVE_DENOM));
 
         // Check new bid has been saved
         let query_bid_msg = QueryMsg::Bid {
@@ -709,7 +706,7 @@ mod tests {
                 sg721_id,
                 creator.clone(),
                 &msg,
-                &coins(CREATION_FEE, NATIVE_TOKEN_DENOM),
+                &coins(CREATION_FEE, NATIVE_DENOM),
                 "NFT",
                 None,
             )
@@ -747,7 +744,7 @@ mod tests {
 
         // An ask is made by the creator
         let ask = Ask {
-            amount: coin(100, NATIVE_TOKEN_DENOM),
+            amount: coin(100, NATIVE_DENOM),
         };
         let set_ask = ExecuteMsg::SetAsk {
             collection: nft_contract_addr.clone(),
@@ -760,7 +757,7 @@ mod tests {
 
         // Bidder makes bid
         let bid = Bid {
-            amount: coin(100, NATIVE_TOKEN_DENOM),
+            amount: coin(100, NATIVE_DENOM),
             bidder: bidder.clone(),
             recipient: creator.clone(),
         };
@@ -773,7 +770,7 @@ mod tests {
             bidder.clone(),
             nft_marketplace_addr,
             &set_bid_msg,
-            &coins(100, NATIVE_TOKEN_DENOM),
+            &coins(100, NATIVE_DENOM),
         );
         assert!(res.is_ok());
 
@@ -781,14 +778,14 @@ mod tests {
         let curator_native_balances = router.wrap().query_all_balances(curator).unwrap();
         assert_eq!(
             curator_native_balances,
-            coins(INITIAL_BALANCE + 10, NATIVE_TOKEN_DENOM)
+            coins(INITIAL_BALANCE + 10, NATIVE_DENOM)
         );
         let creator_native_balances = router.wrap().query_all_balances(creator).unwrap();
-        assert_eq!(creator_native_balances, coins(90, NATIVE_TOKEN_DENOM));
+        assert_eq!(creator_native_balances, coins(90, NATIVE_DENOM));
         let bidder_native_balances = router.wrap().query_all_balances(bidder.clone()).unwrap();
         assert_eq!(
             bidder_native_balances,
-            coins(INITIAL_BALANCE - 100, NATIVE_TOKEN_DENOM)
+            coins(INITIAL_BALANCE - 100, NATIVE_DENOM)
         );
 
         // Check NFT is transferred
