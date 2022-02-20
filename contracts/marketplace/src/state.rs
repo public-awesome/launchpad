@@ -44,7 +44,7 @@ pub const TOKEN_ASKS: Map<(&Addr, &str), Ask> = Map::new("token_asks");
 mod tests {
     use super::*;
     use cosmwasm_std::{coin, Addr};
-    const NATIVE_TOKEN_DENOM: &str = "ustars";
+    use sg_std::NATIVE_DENOM;
 
     #[test]
     fn valid_bids() {
@@ -53,7 +53,7 @@ mod tests {
 
         // Normal bid
         let bid = Bid {
-            amount: coin(100, NATIVE_TOKEN_DENOM),
+            amount: coin(100, NATIVE_DENOM),
             bidder: bidder.clone(),
             recipient: creator.clone(),
         };
@@ -61,7 +61,7 @@ mod tests {
 
         // High number
         let bid = Bid {
-            amount: coin(1000000000000, NATIVE_TOKEN_DENOM),
+            amount: coin(1000000000000, NATIVE_DENOM),
             bidder,
             recipient: creator,
         };
@@ -75,7 +75,7 @@ mod tests {
 
         // Low number
         let bid = Bid {
-            amount: coin(0, NATIVE_TOKEN_DENOM),
+            amount: coin(0, NATIVE_DENOM),
             bidder,
             recipient: creator,
         };
