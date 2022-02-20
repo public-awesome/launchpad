@@ -1,27 +1,39 @@
+use cw4::Member;
+use cw_utils::Expiration;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {
-    pub count: i32,
+    // The minter contract is the only one that can update the whitelist
+    pub minter: Option<String>,
+    pub members: Vec<Member>,
+    pub start_time: Expiration,
+    pub end_time: Expiration,
 }
-
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
-    Increment {},
-    Reset { count: i32 },
+    UpdateStartTime(Expiration),
+    UpdateEndTime(Expiration),
+    UpdateMembers {
+        remove: Vec<String>,
+        add: Vec<Member>,
+    },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
-    // GetCount returns the current count as a json-encoded number
-    GetCount {},
+    StartTime {},
+    EndTime {},
+    ListMembers {
+        start_after: Option<String>,
+        limit: Option<u32>,
+    },
 }
 
-// We define a custom struct for each query response
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct CountResponse {
-    pub count: i32,
+pub struct TimeResponse {
+    pub time: String,
 }

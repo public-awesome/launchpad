@@ -1,14 +1,26 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "QueryMsg",
-  "anyOf": [
+  "oneOf": [
     {
       "type": "object",
       "required": [
-        "get_count"
+        "start_time"
       ],
       "properties": {
-        "get_count": {
+        "start_time": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "end_time"
+      ],
+      "properties": {
+        "end_time": {
           "type": "object"
         }
       },

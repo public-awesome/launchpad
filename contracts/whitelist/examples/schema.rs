@@ -3,8 +3,8 @@ use std::fs::create_dir_all;
 
 use cosmwasm_schema::{export_schema, remove_schemas, schema_for};
 
-use whitelist::msg::{CountResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
-use whitelist::state::State;
+use whitelist::msg::{ExecuteMsg, InstantiateMsg, QueryMsg, TimeResponse};
+use whitelist::state::Config;
 
 fn main() {
     let mut out_dir = current_dir().unwrap();
@@ -15,6 +15,6 @@ fn main() {
     export_schema(&schema_for!(InstantiateMsg), &out_dir);
     export_schema(&schema_for!(ExecuteMsg), &out_dir);
     export_schema(&schema_for!(QueryMsg), &out_dir);
-    export_schema(&schema_for!(State), &out_dir);
-    export_schema(&schema_for!(CountResponse), &out_dir);
+    export_schema(&schema_for!(Config), &out_dir);
+    export_schema(&schema_for!(TimeResponse), &out_dir);
 }
