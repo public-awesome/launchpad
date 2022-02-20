@@ -1,7 +1,7 @@
 mod msg;
 mod route;
 
-pub const FEE_DENOM: &str = "ustars";
+pub const NATIVE_DENOM: &str = "ustars";
 
 pub use msg::{
     create_claim_for_msg, create_fund_community_pool_msg, ClaimAction, StargazeMsg,

@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 use crate::ContractError;
 use cw721::ContractInfoResponse;
 use cw721_base::ContractError as BaseError;
-use sg_std::FEE_DENOM;
+use sg_std::NATIVE_DENOM;
 
 use crate::msg::{
     ContractUriResponse, CreatorResponse, ExecuteMsg, InstantiateMsg, QueryMsg, RoyaltyResponse,
@@ -43,7 +43,7 @@ pub fn instantiate(
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
-    let payment = must_pay(&info, FEE_DENOM)?;
+    let payment = must_pay(&info, NATIVE_DENOM)?;
     if payment.u128() != CREATION_FEE {
         return Err(ContractError::InvalidCreationFee {});
     }
@@ -52,7 +52,7 @@ pub fn instantiate(
     let burn_percent = Decimal::percent(CREATION_FEE_BURN_PERCENT);
     let creation_fee = Uint128::from(CREATION_FEE);
     let burn_fee = creation_fee * burn_percent;
-    let burn_coin = coin(burn_fee.u128(), FEE_DENOM);
+    let burn_coin = coin(burn_fee.u128(), NATIVE_DENOM);
     // send fee to contract to be burned
     let send_fee_msg = BankMsg::Send {
         to_address: env.contract.address.to_string(),
@@ -66,7 +66,7 @@ pub fn instantiate(
     // TODO: send the rest to the community pool
     // https://github.com/public-awesome/contracts/issues/99
     let _fund_community_pool_msg = CosmosMsg::Custom(MsgFundCommunityPool {
-        amount: vec![coin(creation_fee.u128() - burn_fee.u128(), FEE_DENOM)],
+        amount: vec![coin(creation_fee.u128() - burn_fee.u128(), NATIVE_DENOM)],
         depositor: msg.minter.to_string(),
     });
 
@@ -157,7 +157,7 @@ mod tests {
                 royalties: None,
             }),
         };
-        let info = mock_info("creator", &coins(CREATION_FEE, "ustars"));
+        let info = mock_info("creator", &coins(CREATION_FEE, NATIVE_DENOM));
 
         // make sure instantiate has the burn messages
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
@@ -199,7 +199,7 @@ mod tests {
                 }),
             }),
         };
-        let info = mock_info("creator", &coins(CREATION_FEE, "ustars"));
+        let info = mock_info("creator", &coins(CREATION_FEE, NATIVE_DENOM));
 
         // make sure instantiate has the burn messages
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
@@ -233,7 +233,7 @@ mod tests {
         let burn_percent = Decimal::percent(50);
         let creation_fee = Uint128::from(1_000_000_000u128);
         let fee = creation_fee * burn_percent;
-        let amount = coin(fee.u128(), "ustars");
+        let amount = coin(fee.u128(), NATIVE_DENOM);
         assert_eq!(500_000_000u128, amount.amount.u128());
     }
     // TODO: properly test fee burn using cw-multi-test

@@ -243,6 +243,7 @@ mod tests {
     use cosmwasm_std::{from_slice, Api, OwnedDeps, Querier, Storage};
     use cw4::{member_key, TOTAL_KEY};
     use cw_controllers::{AdminError, HookError};
+    use sg_std::NATIVE_DENOM;
 
     const INIT_ADMIN: &str = "juan";
     const USER1: &str = "somebody";
@@ -589,7 +590,7 @@ mod tests {
         let mut deps = mock_dependencies();
         do_instantiate(deps.as_mut());
 
-        let funds = coin(123u128, "ustars");
+        let funds = coin(123u128, NATIVE_DENOM);
         let admin_info = mock_info(INIT_ADMIN, &[]);
         let msg = ExecuteMsg::Distribute { funds };
         execute(deps.as_mut(), mock_env(), admin_info, msg).unwrap();
