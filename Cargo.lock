@@ -65,6 +65,7 @@ dependencies = [
  "http",
  "schemars",
  "serde",
+ "sg-std",
  "sg721",
  "thiserror",
 ]
@@ -602,6 +603,7 @@ dependencies = [
  "cw721-base",
  "schemars",
  "serde",
+ "sg-std",
  "sg721",
  "thiserror",
  "url",
@@ -701,6 +703,7 @@ dependencies = [
  "cw4",
  "schemars",
  "serde",
+ "sg-std",
  "thiserror",
 ]
 
@@ -801,6 +804,7 @@ dependencies = [
  "cw721-metadata-onchain",
  "schemars",
  "serde",
+ "sg-std",
  "sg721",
  "thiserror",
 ]
@@ -838,6 +842,7 @@ dependencies = [
  "cw721-base",
  "schemars",
  "serde",
+ "sg-std",
  "thiserror",
 ]
 

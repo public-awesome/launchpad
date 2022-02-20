@@ -20,6 +20,7 @@ use crate::msg::{
 use crate::state::{
     Config, CONFIG, MINTABLE_TOKEN_IDS, NUM_WHITELIST_ADDRS, SG721_ADDRESS, WHITELIST_ADDRS,
 };
+use sg_std::NATIVE_DENOM;
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sg-minter";
@@ -32,7 +33,6 @@ const MAX_PER_ADDRESS_LIMIT: u64 = 30;
 const MAX_BATCH_MINT_LIMIT: u64 = 30;
 const STARTING_BATCH_MINT_LIMIT: u64 = 5;
 const MIN_MINT_PRICE: u128 = 100_000_000;
-const NATIVE_DENOM: &str = "ustars";
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -592,7 +592,6 @@ mod tests {
     use cw_multi_test::{App, BankSudo, Contract, ContractWrapper, Executor, SudoMsg};
     use sg721::state::{Config, RoyaltyInfo};
 
-    const DENOM: &str = "ustars";
     const CREATION_FEE: u128 = 1_000_000_000;
     const INITIAL_BALANCE: u128 = 2_000_000_000;
     const PRICE: u128 = 100_000_000;
@@ -629,11 +628,11 @@ mod tests {
         // Upload contract code
         let sg721_code_id = router.store_code(contract_sg721());
         let minter_code_id = router.store_code(contract_minter());
-        let creation_fee = coins(CREATION_FEE, DENOM);
+        let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
 
         // Instantiate sale contract
         let msg = InstantiateMsg {
-            unit_price: coin(PRICE, DENOM),
+            unit_price: coin(PRICE, NATIVE_DENOM),
             num_tokens,
             whitelist_expiration: None,
             whitelist_addresses: Some(vec![String::from("VIPcollector")]),
@@ -679,8 +678,8 @@ mod tests {
     fn setup_accounts(router: &mut App) -> Result<(Addr, Addr), ContractError> {
         let buyer = Addr::unchecked("buyer");
         let creator = Addr::unchecked("creator");
-        let creator_funds = coins(INITIAL_BALANCE + CREATION_FEE, DENOM);
-        let buyer_funds = coins(INITIAL_BALANCE, DENOM);
+        let creator_funds = coins(INITIAL_BALANCE + CREATION_FEE, NATIVE_DENOM);
+        let buyer_funds = coins(INITIAL_BALANCE, NATIVE_DENOM);
         router
             .sudo(SudoMsg::Bank({
                 BankSudo::Mint {
@@ -722,9 +721,9 @@ mod tests {
         assert!(res.is_ok());
 
         // Invalid uri returns error
-        let info = mock_info("creator", &coins(INITIAL_BALANCE, DENOM));
+        let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
         let msg = InstantiateMsg {
-            unit_price: coin(PRICE, DENOM),
+            unit_price: coin(PRICE, NATIVE_DENOM),
             num_tokens: 100,
             whitelist_expiration: None,
             whitelist_addresses: Some(vec![String::from("VIPcollector")]),
@@ -752,7 +751,7 @@ mod tests {
 
         // invalid denom returns error
         let wrong_denom = "uosmo";
-        let info = mock_info("creator", &coins(INITIAL_BALANCE, DENOM));
+        let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
         let msg = InstantiateMsg {
             unit_price: coin(PRICE, wrong_denom),
             num_tokens: 100,
@@ -781,9 +780,9 @@ mod tests {
         assert!(res.is_err());
 
         // insufficient mint price returns error
-        let info = mock_info("creator", &coins(INITIAL_BALANCE, DENOM));
+        let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
         let msg = InstantiateMsg {
-            unit_price: coin(1, DENOM),
+            unit_price: coin(1, NATIVE_DENOM),
             num_tokens: 100,
             whitelist_expiration: None,
             whitelist_addresses: Some(vec![String::from("VIPcollector")]),
@@ -810,9 +809,9 @@ mod tests {
         assert!(res.is_err());
 
         // over max token limit
-        let info = mock_info("creator", &coins(INITIAL_BALANCE, DENOM));
+        let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
         let msg = InstantiateMsg {
-            unit_price: coin(PRICE, DENOM),
+            unit_price: coin(PRICE, NATIVE_DENOM),
             num_tokens: (MAX_TOKEN_LIMIT + 1).into(),
             whitelist_expiration: None,
             whitelist_addresses: Some(vec![String::from("VIPcollector")]),
@@ -853,7 +852,7 @@ mod tests {
             buyer.clone(),
             minter_addr.clone(),
             &mint_msg,
-            &coins(PRICE, DENOM),
+            &coins(PRICE, NATIVE_DENOM),
         );
         assert!(res.is_ok());
 
@@ -861,10 +860,13 @@ mod tests {
         let creator_native_balances = router.wrap().query_all_balances(creator.clone()).unwrap();
         assert_eq!(
             creator_native_balances,
-            coins(INITIAL_BALANCE + PRICE, DENOM)
+            coins(INITIAL_BALANCE + PRICE, NATIVE_DENOM)
         );
         let buyer_native_balances = router.wrap().query_all_balances(buyer.clone()).unwrap();
-        assert_eq!(buyer_native_balances, coins(INITIAL_BALANCE - PRICE, DENOM));
+        assert_eq!(
+            buyer_native_balances,
+            coins(INITIAL_BALANCE - PRICE, NATIVE_DENOM)
+        );
 
         // Check NFT is transferred
         let query_owner_msg = Cw721QueryMsg::OwnerOf {
@@ -885,7 +887,7 @@ mod tests {
             buyer.clone(),
             minter_addr.clone(),
             &mint_to_msg,
-            &coins(PRICE, DENOM),
+            &coins(PRICE, NATIVE_DENOM),
         );
         assert!(res.is_err());
 
@@ -894,7 +896,7 @@ mod tests {
             creator.clone(),
             minter_addr.clone(),
             &mint_to_msg,
-            &coins(PRICE, DENOM),
+            &coins(PRICE, NATIVE_DENOM),
         );
         assert!(res.is_ok());
 
@@ -911,12 +913,21 @@ mod tests {
 
         // Errors if sold out
         let mint_msg = ExecuteMsg::Mint {};
-        let res =
-            router.execute_contract(buyer, minter_addr.clone(), &mint_msg, &coins(PRICE, DENOM));
+        let res = router.execute_contract(
+            buyer,
+            minter_addr.clone(),
+            &mint_msg,
+            &coins(PRICE, NATIVE_DENOM),
+        );
         assert!(res.is_err());
 
         // Creator can't use MintFor if sold out
-        let res = router.execute_contract(creator, minter_addr, &mint_to_msg, &coins(PRICE, DENOM));
+        let res = router.execute_contract(
+            creator,
+            minter_addr,
+            &mint_to_msg,
+            &coins(PRICE, NATIVE_DENOM),
+        );
         assert!(res.is_err());
     }
 
@@ -940,7 +951,7 @@ mod tests {
             buyer.clone(),
             minter_addr.clone(),
             &whitelist_msg,
-            &coins(PRICE, DENOM),
+            &coins(PRICE, NATIVE_DENOM),
         );
         assert!(res.is_err());
 
@@ -951,7 +962,7 @@ mod tests {
             creator.clone(),
             minter_addr.clone(),
             &whitelist_msg,
-            &coins(PRICE, DENOM),
+            &coins(PRICE, NATIVE_DENOM),
         );
         assert!(res.is_ok());
 
@@ -961,7 +972,7 @@ mod tests {
             buyer.clone(),
             minter_addr.clone(),
             &mint_msg,
-            &coins(PRICE, DENOM),
+            &coins(PRICE, NATIVE_DENOM),
         );
         assert!(res.is_err());
 
@@ -978,7 +989,7 @@ mod tests {
             creator.clone(),
             minter_addr.clone(),
             &update_whitelist_msg,
-            &coins(PRICE, DENOM),
+            &coins(PRICE, NATIVE_DENOM),
         );
         assert!(res.is_err());
 
@@ -993,7 +1004,7 @@ mod tests {
             creator.clone(),
             minter_addr.clone(),
             &update_whitelist_msg,
-            &coins(PRICE, DENOM),
+            &coins(PRICE, NATIVE_DENOM),
         );
         assert!(res.is_ok());
 
@@ -1025,7 +1036,7 @@ mod tests {
             buyer.clone(),
             minter_addr.clone(),
             &mint_msg,
-            &coins(PRICE, DENOM),
+            &coins(PRICE, NATIVE_DENOM),
         );
         assert!(res.is_ok());
 
@@ -1040,13 +1051,14 @@ mod tests {
             creator.clone(),
             minter_addr.clone(),
             &update_whitelist_msg,
-            &coins(PRICE, DENOM),
+            &coins(PRICE, NATIVE_DENOM),
         );
         assert!(res.is_ok());
 
         // mint fails
         let mint_msg = ExecuteMsg::Mint {};
-        let res = router.execute_contract(buyer, minter_addr, &mint_msg, &coins(PRICE, DENOM));
+        let res =
+            router.execute_contract(buyer, minter_addr, &mint_msg, &coins(PRICE, NATIVE_DENOM));
         assert!(res.is_err());
     }
 
@@ -1070,7 +1082,7 @@ mod tests {
             buyer.clone(),
             minter_addr.clone(),
             &start_time_msg,
-            &coins(PRICE, DENOM),
+            &coins(PRICE, NATIVE_DENOM),
         );
         assert!(res.is_err());
 
@@ -1080,7 +1092,7 @@ mod tests {
             creator.clone(),
             minter_addr.clone(),
             &start_time_msg,
-            &coins(PRICE, DENOM),
+            &coins(PRICE, NATIVE_DENOM),
         );
         assert!(res.is_ok());
 
@@ -1089,7 +1101,7 @@ mod tests {
             buyer.clone(),
             minter_addr.clone(),
             &mint_msg,
-            &coins(PRICE, DENOM),
+            &coins(PRICE, NATIVE_DENOM),
         );
         assert!(res.is_err());
 
@@ -1110,7 +1122,8 @@ mod tests {
 
         // mint succeeds
         let mint_msg = ExecuteMsg::Mint {};
-        let res = router.execute_contract(buyer, minter_addr, &mint_msg, &coins(PRICE, DENOM));
+        let res =
+            router.execute_contract(buyer, minter_addr, &mint_msg, &coins(PRICE, NATIVE_DENOM));
         assert!(res.is_ok());
     }
 
@@ -1130,7 +1143,7 @@ mod tests {
             buyer.clone(),
             minter_addr.clone(),
             &per_address_limit_msg,
-            &coins(PRICE, DENOM),
+            &coins(PRICE, NATIVE_DENOM),
         );
         assert!(res.is_err());
 
@@ -1142,7 +1155,7 @@ mod tests {
             creator.clone(),
             minter_addr.clone(),
             &per_address_limit_msg,
-            &coins(PRICE, DENOM),
+            &coins(PRICE, NATIVE_DENOM),
         );
         assert!(res.is_err());
 
@@ -1154,7 +1167,7 @@ mod tests {
             creator.clone(),
             minter_addr.clone(),
             &per_address_limit_msg,
-            &coins(PRICE, DENOM),
+            &coins(PRICE, NATIVE_DENOM),
         );
         assert!(res.is_ok());
 
@@ -1164,13 +1177,14 @@ mod tests {
             buyer.clone(),
             minter_addr.clone(),
             &mint_msg,
-            &coins(PRICE, DENOM),
+            &coins(PRICE, NATIVE_DENOM),
         );
         assert!(res.is_ok());
 
         // second mint fails from exceeding per address limit
         let mint_msg = ExecuteMsg::Mint {};
-        let res = router.execute_contract(buyer, minter_addr, &mint_msg, &coins(PRICE, DENOM));
+        let res =
+            router.execute_contract(buyer, minter_addr, &mint_msg, &coins(PRICE, NATIVE_DENOM));
         assert!(res.is_err());
     }
 
@@ -1188,7 +1202,7 @@ mod tests {
             buyer.clone(),
             minter_addr.clone(),
             &batch_mint_msg,
-            &coins(PRICE, DENOM),
+            &coins(PRICE, NATIVE_DENOM),
         );
         assert!(res.is_ok());
 
@@ -1200,7 +1214,7 @@ mod tests {
             buyer.clone(),
             minter_addr.clone(),
             &update_batch_mint_limit_msg,
-            &coins(PRICE, DENOM),
+            &coins(PRICE, NATIVE_DENOM),
         );
         assert!(res.is_err());
         let err = res.unwrap_err();
@@ -1214,7 +1228,7 @@ mod tests {
             creator.clone(),
             minter_addr.clone(),
             &update_batch_mint_limit_msg,
-            &coins(PRICE, DENOM),
+            &coins(PRICE, NATIVE_DENOM),
         );
         assert!(res.is_err());
         let err = res.unwrap_err();
@@ -1235,7 +1249,7 @@ mod tests {
             creator.clone(),
             minter_addr.clone(),
             &update_batch_mint_limit_msg,
-            &coins(PRICE, DENOM),
+            &coins(PRICE, NATIVE_DENOM),
         );
         assert!(res.is_ok());
 
@@ -1245,7 +1259,7 @@ mod tests {
             buyer.clone(),
             minter_addr.clone(),
             &batch_mint_msg,
-            &coins(PRICE, DENOM),
+            &coins(PRICE, NATIVE_DENOM),
         );
         assert!(res.is_err());
         let err = res.unwrap_err();
@@ -1260,7 +1274,7 @@ mod tests {
             buyer.clone(),
             minter_addr.clone(),
             &batch_mint_msg,
-            &coins(PRICE, DENOM),
+            &coins(PRICE, NATIVE_DENOM),
         );
         assert!(res.is_ok());
 
@@ -1270,7 +1284,7 @@ mod tests {
             buyer.clone(),
             minter_addr.clone(),
             &batch_mint_msg,
-            &coins(PRICE, DENOM),
+            &coins(PRICE, NATIVE_DENOM),
         );
         assert!(res.is_err());
         let err = res.unwrap_err();
@@ -1278,8 +1292,12 @@ mod tests {
 
         // batch mint smaller amount
         let batch_mint_msg = ExecuteMsg::BatchMint { num_mints: 1 };
-        let res =
-            router.execute_contract(buyer, minter_addr, &batch_mint_msg, &coins(PRICE, DENOM));
+        let res = router.execute_contract(
+            buyer,
+            minter_addr,
+            &batch_mint_msg,
+            &coins(PRICE, NATIVE_DENOM),
+        );
         assert!(res.is_ok());
     }
 
@@ -1300,7 +1318,7 @@ mod tests {
             buyer.clone(),
             minter_addr.clone(),
             &mint_for_msg,
-            &coins(PRICE, DENOM),
+            &coins(PRICE, NATIVE_DENOM),
         );
         assert!(res.is_err());
         let err = res.unwrap_err();
@@ -1314,7 +1332,7 @@ mod tests {
             buyer.clone(),
             minter_addr.clone(),
             &mint_msg,
-            &coins(PRICE, DENOM),
+            &coins(PRICE, NATIVE_DENOM),
         );
         assert!(res.is_ok());
 
@@ -1327,7 +1345,7 @@ mod tests {
             creator.clone(),
             minter_addr.clone(),
             &mint_for_msg,
-            &coins(PRICE, DENOM),
+            &coins(PRICE, NATIVE_DENOM),
         );
         assert!(res.is_err());
         let err = res.unwrap_err();
@@ -1351,7 +1369,7 @@ mod tests {
             creator.clone(),
             minter_addr.clone(),
             &mint_for_msg,
-            &coins(PRICE, DENOM),
+            &coins(PRICE, NATIVE_DENOM),
         );
         assert!(res.is_ok());
 
@@ -1360,7 +1378,7 @@ mod tests {
             creator,
             minter_addr.clone(),
             &batch_mint_msg,
-            &coins(PRICE, DENOM),
+            &coins(PRICE, NATIVE_DENOM),
         );
         assert!(res.is_ok());
         let mintable_num_tokens_response: MintableNumTokensResponse = router
@@ -1384,7 +1402,7 @@ mod tests {
             buyer.clone(),
             minter_addr.clone(),
             &mint_msg,
-            &coins(1, DENOM),
+            &coins(1, NATIVE_DENOM),
         );
         assert!(res.is_err());
 
@@ -1394,7 +1412,7 @@ mod tests {
             buyer.clone(),
             minter_addr.clone(),
             &mint_msg,
-            &coins(11111, DENOM),
+            &coins(11111, NATIVE_DENOM),
         );
         assert!(res.is_err());
 
