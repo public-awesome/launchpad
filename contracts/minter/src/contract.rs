@@ -34,7 +34,7 @@ const MIN_MINT_PRICE: u128 = 100_000_000;
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
-    env: Env,
+    _env: Env,
     info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
@@ -88,6 +88,11 @@ pub fn instantiate(
     // Initially set batch_mint_limit if no msg
     let batch_mint_limit: Option<u64> = msg.batch_mint_limit.or(Some(STARTING_BATCH_MINT_LIMIT));
 
+    let mut whitelist_addr;
+    if msg.whitelist.is_some() {
+        whitelist_addr = deps.api.addr_validate(&msg.whitelist.unwrap())?;
+    }
+
     let config = Config {
         admin: info.sender,
         base_token_uri: msg.base_token_uri,
@@ -96,6 +101,8 @@ pub fn instantiate(
         unit_price: msg.unit_price,
         per_address_limit: msg.per_address_limit,
         batch_mint_limit,
+        whitelist: Some(whitelist_addr),
+        start_time: msg.start_time,
     };
     CONFIG.save(deps.storage, &config)?;
 
@@ -380,62 +387,6 @@ fn _execute_mint(
         .add_messages(msgs))
 }
 
-pub fn execute_update_whitelist(
-    deps: DepsMut,
-    _env: Env,
-    info: MessageInfo,
-    update_whitelist_msg: UpdateWhitelistMsg,
-) -> Result<Response, ContractError> {
-    let config = CONFIG.load(deps.storage)?;
-    let mut num_whitelist_addresses = NUM_WHITELIST_ADDRS.load(deps.storage)?;
-    if info.sender != config.admin {
-        return Err(ContractError::Unauthorized {});
-    }
-
-    // Add whitelist addresses
-    if let Some(add_whitelist_addrs) = update_whitelist_msg.add_addresses {
-        if MAX_WHITELIST_ADDRS_LENGTH
-            <= (add_whitelist_addrs.len() as u32 + num_whitelist_addresses)
-        {
-            return Err(ContractError::MaxWhitelistAddressLengthExceeded {});
-        }
-        for whitelist_address in add_whitelist_addrs.clone().into_iter() {
-            deps.api.addr_validate(&whitelist_address.clone())?;
-            WHITELIST_ADDRS.save(deps.storage, whitelist_address, &Empty {})?;
-        }
-        num_whitelist_addresses += add_whitelist_addrs.len() as u32;
-    }
-
-    // Remove whitelist addresses
-    if let Some(remove_whitelist_addrs) = update_whitelist_msg.remove_addresses {
-        for whitelist_address in remove_whitelist_addrs.clone().into_iter() {
-            deps.api.addr_validate(&whitelist_address.clone())?;
-            WHITELIST_ADDRS.remove(deps.storage, whitelist_address);
-        }
-        num_whitelist_addresses -= remove_whitelist_addrs.len() as u32;
-    }
-
-    NUM_WHITELIST_ADDRS.save(deps.storage, &num_whitelist_addresses)?;
-
-    Ok(Response::new().add_attribute("action", "update_whitelist"))
-}
-
-pub fn execute_update_whitelist_expiration(
-    deps: DepsMut,
-    _env: Env,
-    info: MessageInfo,
-    whitelist_expiration: Expiration,
-) -> Result<Response, ContractError> {
-    let mut config = CONFIG.load(deps.storage)?;
-    if info.sender != config.admin {
-        return Err(ContractError::Unauthorized {});
-    }
-
-    config.whitelist_expiration = Some(whitelist_expiration);
-    CONFIG.save(deps.storage, &config)?;
-    Ok(Response::new().add_attribute("action", "update_whitelist_expiration"))
-}
-
 pub fn execute_update_start_time(
     deps: DepsMut,
     _env: Env,
@@ -611,6 +562,7 @@ mod tests {
             start_time: None,
             per_address_limit: None,
             batch_mint_limit: None,
+            whitelist: None,
             base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
             sg721_code_id,
             sg721_instantiate_msg: Sg721InstantiateMsg {
@@ -700,6 +652,7 @@ mod tests {
             start_time: None,
             per_address_limit: None,
             batch_mint_limit: None,
+            whitelist: None,
             base_token_uri: "https://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
             sg721_code_id: 1,
             sg721_instantiate_msg: Sg721InstantiateMsg {
@@ -728,6 +681,7 @@ mod tests {
             start_time: None,
             per_address_limit: None,
             batch_mint_limit: None,
+            whitelist: None,
             base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
             sg721_code_id: 1,
             sg721_instantiate_msg: Sg721InstantiateMsg {
@@ -755,6 +709,7 @@ mod tests {
             start_time: None,
             per_address_limit: None,
             batch_mint_limit: None,
+            whitelist: None,
             base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
             sg721_code_id: 1,
             sg721_instantiate_msg: Sg721InstantiateMsg {
@@ -782,6 +737,7 @@ mod tests {
             start_time: None,
             per_address_limit: None,
             batch_mint_limit: None,
+            whitelist: None,
             base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
             sg721_code_id: 1,
             sg721_instantiate_msg: Sg721InstantiateMsg {

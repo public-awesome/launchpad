@@ -15,6 +15,7 @@ pub struct InstantiateMsg {
     pub per_address_limit: Option<u64>,
     pub batch_mint_limit: Option<u64>,
     pub unit_price: Coin,
+    pub whitelist: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
