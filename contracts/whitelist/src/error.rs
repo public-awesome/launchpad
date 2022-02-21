@@ -9,6 +9,6 @@ pub enum ContractError {
     #[error("Unauthorized")]
     Unauthorized {},
 
-    #[error("Max whitelist addresses list exceeds max length")]
-    MaxWhitelistAddressLengthExceeded {},
+    #[error("MembersExceeded: {expected} got {actual}")]
+    MembersExceeded { expected: u32, actual: u32 },
 }

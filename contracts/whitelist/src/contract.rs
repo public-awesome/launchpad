@@ -19,7 +19,7 @@ const CONTRACT_NAME: &str = "crates.io:sg-whitelist";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 // contract governance params
-const MAX_WHITELIST_ADDRS_LENGTH: u32 = 10000;
+const MAX_MEMBERS: u32 = 10000;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -32,12 +32,15 @@ pub fn instantiate(
     let config = Config {
         admin: info.sender.clone(),
         end_time: msg.end_time,
-        num_addresses: msg.members.len() as u32,
+        num_members: msg.members.len() as u32,
     };
     CONFIG.save(deps.storage, &config)?;
 
-    if MAX_WHITELIST_ADDRS_LENGTH <= (config.num_addresses) {
-        return Err(ContractError::MaxWhitelistAddressLengthExceeded {});
+    if MAX_MEMBERS <= (config.num_members) {
+        return Err(ContractError::MembersExceeded {
+            expected: MAX_MEMBERS,
+            actual: config.num_members,
+        });
     }
 
     for member in msg.members.into_iter() {
@@ -92,17 +95,22 @@ pub fn execute_update_members(
         return Err(ContractError::Unauthorized {});
     }
 
-    // TODO: guard against too many members
     for add in msg.add.into_iter() {
+        if config.num_members >= MAX_MEMBERS {
+            return Err(ContractError::MembersExceeded {
+                expected: MAX_MEMBERS,
+                actual: config.num_members,
+            });
+        }
         let addr = deps.api.addr_validate(&add)?;
         WHITELIST.save(deps.storage, addr, &Empty {})?;
-        config.num_addresses += 1;
+        config.num_members += 1;
     }
 
     for remove in msg.remove.into_iter() {
         let addr = deps.api.addr_validate(&remove)?;
         WHITELIST.remove(deps.storage, addr);
-        config.num_addresses -= 1;
+        config.num_members -= 1;
     }
 
     CONFIG.save(deps.storage, &config)?;
@@ -205,7 +213,6 @@ mod tests {
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(res.attributes.len(), 1);
         let res = query_members(deps.as_ref()).unwrap();
-        println!("{:?}", res);
         assert_eq!(res.members.len(), 2);
     }
 }
