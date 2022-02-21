@@ -90,6 +90,7 @@ pub fn execute_update_members(
         return Err(ContractError::Unauthorized {});
     }
 
+    // TODO: guard against too many members
     for add in msg.add.into_iter() {
         let addr = deps.api.addr_validate(&add)?;
         WHITELIST.save(deps.storage, addr, &Empty {})?;
