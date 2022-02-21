@@ -107,11 +107,11 @@ pub fn execute_update_members(
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
+pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::EndTime {} => to_binary(&query_end_time(deps)?),
         QueryMsg::Members {} => to_binary(&query_members(deps)?),
-        QueryMsg::IsValidMember { member } => to_binary(&query_is_valid_member(deps, member)?),
+        QueryMsg::IsValidMember { member } => to_binary(&query_is_valid_member(deps, env, member)?),
     }
 }
 
@@ -131,9 +131,12 @@ fn query_members(deps: Deps) -> StdResult<MembersResponse> {
     Ok(MembersResponse { members })
 }
 
-fn query_is_valid_member(deps: Deps, member: String) -> StdResult<IsValidResponse> {
+fn query_is_valid_member(deps: Deps, env: Env, member: String) -> StdResult<IsValidResponse> {
     let config = CONFIG.load(deps.storage)?;
-    Ok(TimeResponse {
-        time: config.end_time.to_string(),
-    })
+    let addr = deps.api.addr_validate(&member)?;
+
+    let allowlist = WHITELIST.has(deps.storage, addr);
+    let is_valid = allowlist && !config.end_time.is_expired(&env.block);
+
+    Ok(IsValidResponse { is_valid })
 }
