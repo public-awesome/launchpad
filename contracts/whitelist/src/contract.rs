@@ -30,6 +30,7 @@ pub fn instantiate(
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
     let config = Config {
+        admin: info.sender.clone(),
         end_time: msg.end_time,
         num_addresses: msg.members.len() as u32,
     };
@@ -39,7 +40,7 @@ pub fn instantiate(
         return Err(ContractError::MaxWhitelistAddressLengthExceeded {});
     }
 
-    for member in msg.members.clone().into_iter() {
+    for member in msg.members.into_iter() {
         let addr = deps.api.addr_validate(&member.clone())?;
         WHITELIST.save(deps.storage, addr, &Empty {})?;
     }
@@ -65,13 +66,13 @@ pub fn execute(
 pub fn execute_update_end_time(
     deps: DepsMut,
     _env: Env,
-    _info: MessageInfo,
+    info: MessageInfo,
     end_time: Expiration,
 ) -> Result<Response, ContractError> {
     let mut config = CONFIG.load(deps.storage)?;
-    // if info.sender != config.admin {
-    //     return Err(ContractError::Unauthorized {});
-    // }
+    if info.sender != config.admin {
+        return Err(ContractError::Unauthorized {});
+    }
 
     config.end_time = end_time;
     CONFIG.save(deps.storage, &config)?;
@@ -81,13 +82,13 @@ pub fn execute_update_end_time(
 pub fn execute_update_members(
     deps: DepsMut,
     _env: Env,
-    _info: MessageInfo,
+    info: MessageInfo,
     msg: UpdateMembersMsg,
 ) -> Result<Response, ContractError> {
     let mut config = CONFIG.load(deps.storage)?;
-    // if info.sender != config.admin {
-    //     return Err(ContractError::Unauthorized {});
-    // }
+    if info.sender != config.admin {
+        return Err(ContractError::Unauthorized {});
+    }
 
     for add in msg.add.into_iter() {
         let addr = deps.api.addr_validate(&add)?;
