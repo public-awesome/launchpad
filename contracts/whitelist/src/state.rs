@@ -6,7 +6,6 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Config {
-    pub start_time: Expiration,
     pub end_time: Expiration,
     pub num_addresses: u32,
 }
