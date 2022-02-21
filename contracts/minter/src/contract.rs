@@ -12,10 +12,13 @@ use sg721::msg::{InstantiateMsg as Sg721InstantiateMsg, QueryMsg as Sg721QueryMs
 use url::Url;
 
 use crate::error::ContractError;
-use crate::msg::{ConfigResponse, ExecuteMsg, InstantiateMsg, MintableNumTokensResponse, QueryMsg};
+use crate::msg::{
+    ConfigResponse, ExecuteMsg, InstantiateMsg, MintableNumTokensResponse, QueryMsg,
+    StartTimeResponse,
+};
 use crate::state::{Config, CONFIG, MINTABLE_TOKEN_IDS, SG721_ADDRESS};
 use sg_std::NATIVE_DENOM;
-use whitelist::msg::{IsValidResponse, QueryMsg as WhitelistQueryMsg};
+use whitelist::msg::{HasEndedResponse, HasMemberResponse, QueryMsg as WhitelistQueryMsg};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sg-minter";
@@ -159,25 +162,24 @@ pub fn execute_mint_sender(
     let sg721_address = SG721_ADDRESS.load(deps.storage)?;
     let action = "mint_sender";
 
-    // check if a whitelist exists
+    // check if a whitelist exists and not ended
+    // sender has to be whitelisted to mint
     if let Some(whitelist) = config.whitelist {
-        let res: IsValidResponse = deps.querier.query_wasm_smart(
-            whitelist,
-            &WhitelistQueryMsg::IsValidMember {
-                member: info.sender.to_string(),
-            },
-        )?;
-        if !res.is_valid {
-            return Err(ContractError::NotWhitelisted {});
-    }
-
-    let allowlist = WHITELIST_ADDRS.has(deps.storage, info.sender.to_string());
-    if let Some(whitelist_expiration) = config.whitelist_expiration {
-        // Check if whitelist not expired and sender is not whitelisted
-        if !whitelist_expiration.is_expired(&env.block) && !allowlist {
-            return Err(ContractError::NotWhitelisted {
-                addr: info.sender.to_string(),
-            });
+        let res: HasEndedResponse = deps
+            .querier
+            .query_wasm_smart(whitelist, &WhitelistQueryMsg::HasEnded {})?;
+        if !res.has_ended {
+            let res: HasMemberResponse = deps.querier.query_wasm_smart(
+                whitelist,
+                &WhitelistQueryMsg::HasMember {
+                    member: info.sender.to_string(),
+                },
+            )?;
+            if !res.has_member {
+                return Err(ContractError::NotWhitelisted {
+                    addr: info.sender.to_string(),
+                });
+            }
         }
     }
 
@@ -474,10 +476,7 @@ pub fn execute_update_batch_mint_limit(
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::Config {} => to_binary(&query_config(deps)?),
-        QueryMsg::WhitelistAddresses {} => to_binary(&query_whitelist_addresses(deps)?),
-        QueryMsg::WhitelistExpiration {} => to_binary(&query_whitelist_expiration(deps)?),
         QueryMsg::StartTime {} => to_binary(&query_start_time(deps)?),
-        QueryMsg::OnWhitelist { address } => to_binary(&query_on_whitelist(deps, address)?),
         QueryMsg::MintableNumTokens {} => to_binary(&query_mintable_num_tokens(deps)?),
     }
 }
@@ -498,27 +497,6 @@ fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
     })
 }
 
-fn query_whitelist_addresses(deps: Deps) -> StdResult<WhitelistAddressesResponse> {
-    let addrs: StdResult<Vec<String>> = WHITELIST_ADDRS
-        .keys(deps.storage, None, None, Order::Ascending)
-        .take_while(|x| x.is_ok())
-        .collect::<StdResult<Vec<String>>>();
-    Ok(WhitelistAddressesResponse { addresses: addrs? })
-}
-
-fn query_whitelist_expiration(deps: Deps) -> StdResult<WhitelistExpirationResponse> {
-    let config = CONFIG.load(deps.storage)?;
-    if let Some(expiration) = config.whitelist_expiration {
-        Ok(WhitelistExpirationResponse {
-            expiration_time: expiration.to_string(),
-        })
-    } else {
-        Err(StdError::GenericErr {
-            msg: "whitelist expiration not found".to_string(),
-        })
-    }
-}
-
 fn query_start_time(deps: Deps) -> StdResult<StartTimeResponse> {
     let config = CONFIG.load(deps.storage)?;
     if let Some(expiration) = config.start_time {
@@ -530,13 +508,6 @@ fn query_start_time(deps: Deps) -> StdResult<StartTimeResponse> {
             msg: "start time not found".to_string(),
         })
     }
-}
-
-fn query_on_whitelist(deps: Deps, address: String) -> StdResult<OnWhitelistResponse> {
-    let allowlist = WHITELIST_ADDRS.has(deps.storage, address);
-    Ok(OnWhitelistResponse {
-        on_whitelist: allowlist,
-    })
 }
 
 fn query_mintable_num_tokens(deps: Deps) -> StdResult<MintableNumTokensResponse> {
@@ -616,8 +587,6 @@ mod tests {
         let msg = InstantiateMsg {
             unit_price: coin(PRICE, NATIVE_DENOM),
             num_tokens,
-            whitelist_expiration: None,
-            whitelist_addresses: None,
             start_time: None,
             per_address_limit: None,
             batch_mint_limit: None,
@@ -707,8 +676,6 @@ mod tests {
         let msg = InstantiateMsg {
             unit_price: coin(PRICE, NATIVE_DENOM),
             num_tokens: 100,
-            whitelist_expiration: None,
-            whitelist_addresses: Some(vec![String::from("VIPcollector")]),
             start_time: None,
             per_address_limit: None,
             batch_mint_limit: None,
@@ -737,8 +704,6 @@ mod tests {
         let msg = InstantiateMsg {
             unit_price: coin(PRICE, wrong_denom),
             num_tokens: 100,
-            whitelist_expiration: None,
-            whitelist_addresses: Some(vec![String::from("VIPcollector")]),
             start_time: None,
             per_address_limit: None,
             batch_mint_limit: None,
@@ -766,8 +731,6 @@ mod tests {
         let msg = InstantiateMsg {
             unit_price: coin(1, NATIVE_DENOM),
             num_tokens: 100,
-            whitelist_expiration: None,
-            whitelist_addresses: Some(vec![String::from("VIPcollector")]),
             start_time: None,
             per_address_limit: None,
             batch_mint_limit: None,
@@ -795,8 +758,6 @@ mod tests {
         let msg = InstantiateMsg {
             unit_price: coin(PRICE, NATIVE_DENOM),
             num_tokens: (MAX_TOKEN_LIMIT + 1).into(),
-            whitelist_expiration: None,
-            whitelist_addresses: Some(vec![String::from("VIPcollector")]),
             start_time: None,
             per_address_limit: None,
             batch_mint_limit: None,

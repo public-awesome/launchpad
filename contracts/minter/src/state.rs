@@ -1,3 +1,4 @@
+use cw_utils::Expiration;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -12,6 +13,7 @@ pub struct Config {
     pub sg721_code_id: u64,
     pub unit_price: Coin,
     pub whitelist: Option<Addr>,
+    pub start_time: Option<Expiration>,
     pub per_address_limit: Option<u64>,
     pub batch_mint_limit: Option<u64>,
 }
