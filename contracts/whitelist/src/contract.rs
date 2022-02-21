@@ -215,4 +215,31 @@ mod tests {
         let res = query_members(deps.as_ref()).unwrap();
         assert_eq!(res.members.len(), 2);
     }
+
+    #[test]
+    fn too_many_members_check() {
+        let mut deps = mock_dependencies();
+        setup_contract(deps.as_mut());
+
+        let mut members = vec![];
+        for _ in 0..MAX_MEMBERS + 1 {
+            members.push("adsfsa".to_string());
+        }
+
+        let inner_msg = UpdateMembersMsg {
+            add: members,
+            remove: vec![],
+        };
+        let msg = ExecuteMsg::UpdateMembers(inner_msg);
+        let info = mock_info(ADMIN, &[]);
+        let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
+        assert_eq!(
+            ContractError::MembersExceeded {
+                expected: 10000,
+                actual: 10000
+            }
+            .to_string(),
+            err.to_string()
+        );
+    }
 }
