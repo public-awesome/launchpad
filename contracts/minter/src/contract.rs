@@ -15,6 +15,7 @@ use crate::error::ContractError;
 use crate::msg::{ConfigResponse, ExecuteMsg, InstantiateMsg, MintableNumTokensResponse, QueryMsg};
 use crate::state::{Config, CONFIG, MINTABLE_TOKEN_IDS, SG721_ADDRESS};
 use sg_std::NATIVE_DENOM;
+use whitelist::msg::{IsValidResponse, QueryMsg as WhitelistQueryMsg};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sg-minter";
@@ -160,7 +161,14 @@ pub fn execute_mint_sender(
 
     // check if a whitelist exists
     if let Some(whitelist) = config.whitelist {
-        // execute check in whitelist
+        let res: IsValidResponse = deps.querier.query_wasm_smart(
+            whitelist,
+            &WhitelistQueryMsg::IsValidMember {
+                member: info.sender.to_string(),
+            },
+        )?;
+        if !res.is_valid {
+            return Err(ContractError::NotWhitelisted {});
     }
 
     let allowlist = WHITELIST_ADDRS.has(deps.storage, info.sender.to_string());

@@ -673,6 +673,7 @@ dependencies = [
  "sg721",
  "thiserror",
  "url",
+ "whitelist",
 ]
 
 [[package]]

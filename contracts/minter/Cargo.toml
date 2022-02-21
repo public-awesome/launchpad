@@ -53,6 +53,7 @@ sg721 = { path = "../sg721", features = ["library"] }
 thiserror = { version = "1.0" }
 url = "2.2.0"
 sg-std = { path = "../../packages/sg-std" }
+whitelist = { path = "../whitelist" }
 
 [dev-dependencies]
 cosmwasm-schema = { version = "1.0.0-beta" }
