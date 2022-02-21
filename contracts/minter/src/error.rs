@@ -47,12 +47,11 @@ pub enum ContractError {
     #[error("Invalid base token URI (must be an IPFS URI)")]
     InvalidBaseTokenURI {},
 
-    #[error("address not on whitelist: {addr}")]
-    NotWhitelisted { addr: String },
+    // #[error("address not on whitelist: {addr}")]
+    // NotWhitelisted { addr: String },
 
-    #[error("Max whitelist addresses list exceeds max length")]
-    MaxWhitelistAddressLengthExceeded {},
-
+    // #[error("Max whitelist addresses list exceeds max length")]
+    // MaxWhitelistAddressLengthExceeded {},
     #[error("Minting has not started yet")]
     BeforeMintStartTime {},
 

@@ -12,14 +12,8 @@ use sg721::msg::{InstantiateMsg as Sg721InstantiateMsg, QueryMsg as Sg721QueryMs
 use url::Url;
 
 use crate::error::ContractError;
-use crate::msg::{
-    ConfigResponse, ExecuteMsg, InstantiateMsg, MintableNumTokensResponse, OnWhitelistResponse,
-    QueryMsg, StartTimeResponse, UpdateWhitelistMsg, WhitelistAddressesResponse,
-    WhitelistExpirationResponse,
-};
-use crate::state::{
-    Config, CONFIG, MINTABLE_TOKEN_IDS, NUM_WHITELIST_ADDRS, SG721_ADDRESS, WHITELIST_ADDRS,
-};
+use crate::msg::{ConfigResponse, ExecuteMsg, InstantiateMsg, MintableNumTokensResponse, QueryMsg};
+use crate::state::{Config, CONFIG, MINTABLE_TOKEN_IDS, SG721_ADDRESS};
 use sg_std::NATIVE_DENOM;
 
 // version info for migration info
@@ -28,7 +22,6 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 const INSTANTIATE_SG721_REPLY_ID: u64 = 1;
 const MAX_TOKEN_LIMIT: u32 = 10000;
-const MAX_WHITELIST_ADDRS_LENGTH: u32 = 15000;
 const MAX_PER_ADDRESS_LIMIT: u64 = 30;
 const MAX_BATCH_MINT_LIMIT: u64 = 30;
 const STARTING_BATCH_MINT_LIMIT: u64 = 5;
@@ -97,28 +90,10 @@ pub fn instantiate(
         num_tokens: msg.num_tokens,
         sg721_code_id: msg.sg721_code_id,
         unit_price: msg.unit_price,
-        whitelist_expiration: msg.whitelist_expiration,
-        start_time: msg.start_time,
         per_address_limit: msg.per_address_limit,
         batch_mint_limit,
     };
     CONFIG.save(deps.storage, &config)?;
-
-    // Set whitelist addresses and num_whitelist_addresses
-    if let Some(whitelist_addresses) = msg.whitelist_addresses {
-        // Check length of whitelist addresses is not greater than max allowed
-        if MAX_WHITELIST_ADDRS_LENGTH <= (whitelist_addresses.len() as u32) {
-            return Err(ContractError::MaxWhitelistAddressLengthExceeded {});
-        }
-
-        for whitelist_address in whitelist_addresses.clone().into_iter() {
-            deps.api.addr_validate(&whitelist_address.clone())?;
-            WHITELIST_ADDRS.save(deps.storage, whitelist_address, &Empty {})?;
-        }
-        NUM_WHITELIST_ADDRS.save(deps.storage, &(whitelist_addresses.len() as u32))?;
-    } else {
-        NUM_WHITELIST_ADDRS.save(deps.storage, &0)?;
-    }
 
     // save mintable token ids map
     for token_id in 0..msg.num_tokens {
@@ -158,15 +133,6 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::Mint {} => execute_mint_sender(deps, env, info),
-        ExecuteMsg::UpdateWhitelist(update_whitelist_msg) => {
-            execute_update_whitelist(deps, env, info, update_whitelist_msg)
-        }
-        ExecuteMsg::UpdateWhitelistExpiration(expiration) => {
-            execute_update_whitelist_expiration(deps, env, info, expiration)
-        }
-        ExecuteMsg::UpdateStartTime(expiration) => {
-            execute_update_start_time(deps, env, info, expiration)
-        }
         ExecuteMsg::UpdatePerAddressLimit { per_address_limit } => {
             execute_update_per_address_limit(deps, env, info, per_address_limit)
         }
@@ -179,6 +145,7 @@ pub fn execute(
             recipient,
         } => execute_mint_for(deps, env, info, token_id, recipient),
         ExecuteMsg::BatchMint { num_mints } => execute_batch_mint(deps, env, info, num_mints),
+        ExecuteMsg::SetWhitelist { whitelist } => execute_set_whitelist(deps, env, info, whitelist),
     }
 }
 
@@ -190,6 +157,11 @@ pub fn execute_mint_sender(
     let config = CONFIG.load(deps.storage)?;
     let sg721_address = SG721_ADDRESS.load(deps.storage)?;
     let action = "mint_sender";
+
+    // check if a whitelist exists
+    if let Some(whitelist) = config.whitelist {
+        // execute check in whitelist
+    }
 
     let allowlist = WHITELIST_ADDRS.has(deps.storage, info.sender.to_string());
     if let Some(whitelist_expiration) = config.whitelist_expiration {
