@@ -1,16 +1,29 @@
 #[cfg(test)]
 mod tests {
-    use super::*;
     use cosmwasm_std::testing::{mock_dependencies_with_balance, mock_env, mock_info};
-    use cosmwasm_std::{coin, coins, Decimal, Timestamp};
+    use cosmwasm_std::{coin, coins, Addr, Decimal, Timestamp};
     use cosmwasm_std::{Api, Empty};
     use cw721::{Cw721QueryMsg, OwnerOfResponse};
     use cw_multi_test::{App, BankSudo, Contract, ContractWrapper, Executor, SudoMsg};
+    use cw_utils::Expiration;
+    use sg721::msg::InstantiateMsg as Sg721InstantiateMsg;
     use sg721::state::{Config, RoyaltyInfo};
+    use sg_std::NATIVE_DENOM;
+    use whitelist::msg::InstantiateMsg as WhitelistInstantiateMsg;
+    use whitelist::msg::{ExecuteMsg as WhitelistExecuteMsg, UpdateMembersMsg};
+
+    use crate::contract::instantiate;
+    use crate::msg::{
+        ConfigResponse, ExecuteMsg, InstantiateMsg, MintableNumTokensResponse, QueryMsg,
+        StartTimeResponse,
+    };
+    use crate::ContractError;
 
     const CREATION_FEE: u128 = 1_000_000_000;
     const INITIAL_BALANCE: u128 = 2_000_000_000;
     const PRICE: u128 = 100_000_000;
+
+    const MAX_TOKEN_LIMIT: u32 = 10000;
 
     fn mock_app() -> App {
         App::default()
@@ -18,11 +31,10 @@ mod tests {
 
     pub fn contract_whitelist() -> Box<dyn Contract<Empty>> {
         let contract = ContractWrapper::new(
-            crate::contract::execute,
-            crate::contract::instantiate,
-            crate::contract::query,
-        )
-        .with_reply(crate::contract::reply);
+            whitelist::contract::execute,
+            whitelist::contract::instantiate,
+            whitelist::contract::query,
+        );
         Box::new(contract)
     }
 
@@ -43,6 +55,27 @@ mod tests {
             sg721::contract::query,
         );
         Box::new(contract)
+    }
+
+    fn setup_whitelist_contract(router: &mut App, creator: &Addr) -> Result<Addr, ContractError> {
+        let whitelist_code_id = router.store_code(contract_whitelist());
+
+        let msg = WhitelistInstantiateMsg {
+            members: vec![],
+            end_time: Expiration::Never {},
+        };
+        let whitelist_addr = router
+            .instantiate_contract(
+                whitelist_code_id,
+                creator.clone(),
+                &msg,
+                &[],
+                "whitelist",
+                None,
+            )
+            .unwrap();
+
+        Ok(whitelist_addr)
     }
 
     // Upload contract code and instantiate sale contract
@@ -359,6 +392,7 @@ mod tests {
         let num_tokens: u64 = 1;
         let (minter_addr, _config) =
             setup_minter_contract(&mut router, &creator, num_tokens).unwrap();
+        let whitelist_addr = setup_whitelist_contract(&mut router, &creator).unwrap();
         const EXPIRATION_TIME: Timestamp = Timestamp::from_seconds(100000 + 10);
 
         // set block info
@@ -367,34 +401,35 @@ mod tests {
         router.set_block(block);
 
         // update whitelist_expiration fails if not admin
-        let whitelist_msg = ExecuteMsg::UpdateWhitelistExpiration(Expiration::Never {});
+        let wl_msg = WhitelistExecuteMsg::UpdateEndTime(Expiration::AtTime(EXPIRATION_TIME));
         let res = router.execute_contract(
             buyer.clone(),
-            minter_addr.clone(),
-            &whitelist_msg,
+            whitelist_addr.clone(),
+            &wl_msg,
             &coins(PRICE, NATIVE_DENOM),
         );
         assert!(res.is_err());
 
-        // enable whitelist
-        // let whitelist_msg =
-        //     ExecuteMsg::UpdateWhitelistExpiration(Expiration::AtTime(EXPIRATION_TIME));
-        // let res = router.execute_contract(
-        //     creator.clone(),
-        //     minter_addr.clone(),
-        //     &whitelist_msg,
-        //     &coins(PRICE, NATIVE_DENOM),
-        // );
-        // assert!(res.is_ok());
+        let wl_msg = WhitelistExecuteMsg::UpdateEndTime(Expiration::AtTime(EXPIRATION_TIME));
+        let res = router.execute_contract(
+            creator.clone(),
+            whitelist_addr.clone(),
+            &wl_msg,
+            &coins(PRICE, NATIVE_DENOM),
+        );
+        assert!(res.is_ok());
 
-        // let wl_msg = WhitelistExecuteMsg::UpdateEndTime(Expiration::AtTime(EXPIRATION_TIME));
-        // let res = router.execute_contract(
-        //     creator.clone(),
-        //     ,
-        //     &wl_msg,
-        //     &coins(PRICE, NATIVE_DENOM),
-        // );
-        // assert!(res.is_ok());
+        // set whitelist in minter contract
+        let set_whitelist_msg = ExecuteMsg::SetWhitelist {
+            whitelist: whitelist_addr.to_string(),
+        };
+        let res = router.execute_contract(
+            creator.clone(),
+            minter_addr.clone(),
+            &set_whitelist_msg,
+            &coins(PRICE, NATIVE_DENOM),
+        );
+        assert!(res.is_ok());
 
         // mint fails, buyer is not on whitelist
         let mint_msg = ExecuteMsg::Mint {};
@@ -406,59 +441,18 @@ mod tests {
         );
         assert!(res.is_err());
 
-        // fails, add too many whitelist addresses
-        let over_max_limit_whitelist_addrs =
-            vec!["addr".to_string(); MAX_WHITELIST_ADDRS_LENGTH as usize + 10];
-        let whitelist: Option<Vec<String>> = Some(over_max_limit_whitelist_addrs);
-        let add_whitelist_msg = UpdateWhitelistMsg {
-            add_addresses: whitelist,
-            remove_addresses: None,
+        let inner_msg = UpdateMembersMsg {
+            add: vec![buyer.to_string()],
+            remove: vec![],
         };
-        let update_whitelist_msg = ExecuteMsg::UpdateWhitelist(add_whitelist_msg);
+        let wasm_msg = WhitelistExecuteMsg::UpdateMembers(inner_msg);
         let res = router.execute_contract(
             creator.clone(),
-            minter_addr.clone(),
-            &update_whitelist_msg,
-            &coins(PRICE, NATIVE_DENOM),
-        );
-        assert!(res.is_err());
-
-        // add buyer to whitelist
-        let whitelist: Option<Vec<String>> = Some(vec![buyer.clone().into_string()]);
-        let add_whitelist_msg = UpdateWhitelistMsg {
-            add_addresses: whitelist,
-            remove_addresses: None,
-        };
-        let update_whitelist_msg = ExecuteMsg::UpdateWhitelist(add_whitelist_msg);
-        let res = router.execute_contract(
-            creator.clone(),
-            minter_addr.clone(),
-            &update_whitelist_msg,
+            whitelist_addr.clone(),
+            &wasm_msg,
             &coins(PRICE, NATIVE_DENOM),
         );
         assert!(res.is_ok());
-
-        // query whitelist, confirm buyer on allowlist
-        let allowlist: OnWhitelistResponse = router
-            .wrap()
-            .query_wasm_smart(
-                minter_addr.clone(),
-                &QueryMsg::OnWhitelist {
-                    address: String::from("buyer"),
-                },
-            )
-            .unwrap();
-        assert!(allowlist.on_whitelist);
-
-        // query whitelist_expiration, confirm not expired
-        let expiration: WhitelistExpirationResponse = router
-            .wrap()
-            .query_wasm_smart(minter_addr.clone(), &QueryMsg::WhitelistExpiration {})
-            .unwrap();
-        assert_eq!(
-            "expiration time: ".to_owned() + &EXPIRATION_TIME.to_string(),
-            expiration.expiration_time
-        );
 
         // mint succeeds
         let mint_msg = ExecuteMsg::Mint {};
@@ -471,16 +465,15 @@ mod tests {
         assert!(res.is_ok());
 
         // remove buyer from whitelist
-        let remove_whitelist: Option<Vec<String>> = Some(vec![buyer.clone().into_string()]);
-        let remove_whitelist_msg = UpdateWhitelistMsg {
-            add_addresses: None,
-            remove_addresses: remove_whitelist,
+        let inner_msg = UpdateMembersMsg {
+            add: vec![],
+            remove: vec![buyer.to_string()],
         };
-        let update_whitelist_msg = ExecuteMsg::UpdateWhitelist(remove_whitelist_msg);
+        let wasm_msg = WhitelistExecuteMsg::UpdateMembers(inner_msg);
         let res = router.execute_contract(
             creator.clone(),
-            minter_addr.clone(),
-            &update_whitelist_msg,
+            whitelist_addr,
+            &wasm_msg,
             &coins(PRICE, NATIVE_DENOM),
         );
         assert!(res.is_ok());

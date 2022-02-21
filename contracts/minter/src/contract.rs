@@ -18,7 +18,6 @@ use crate::msg::{
 };
 use crate::state::{Config, CONFIG, MINTABLE_TOKEN_IDS, SG721_ADDRESS};
 use sg_std::NATIVE_DENOM;
-use whitelist::msg::ExecuteMsg as WhitelistExecuteMsg;
 use whitelist::msg::{HasEndedResponse, HasMemberResponse, QueryMsg as WhitelistQueryMsg};
 
 // version info for migration info
@@ -89,10 +88,10 @@ pub fn instantiate(
     // Initially set batch_mint_limit if no msg
     let batch_mint_limit: Option<u64> = msg.batch_mint_limit.or(Some(STARTING_BATCH_MINT_LIMIT));
 
-    let mut whitelist_addr;
-    if msg.whitelist.is_some() {
-        whitelist_addr = deps.api.addr_validate(&msg.whitelist.unwrap())?;
-    }
+    let whitelist_addr: Option<Addr> = match msg.whitelist {
+        Some(wl) => Some(deps.api.addr_validate(&wl)?),
+        None => None,
+    };
 
     let config = Config {
         admin: info.sender,
@@ -102,7 +101,7 @@ pub fn instantiate(
         unit_price: msg.unit_price,
         per_address_limit: msg.per_address_limit,
         batch_mint_limit,
-        whitelist: Some(whitelist_addr),
+        whitelist: whitelist_addr,
         start_time: msg.start_time,
     };
     CONFIG.save(deps.storage, &config)?;
@@ -145,6 +144,9 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::Mint {} => execute_mint_sender(deps, env, info),
+        ExecuteMsg::UpdateStartTime(expiration) => {
+            execute_update_start_time(deps, env, info, expiration)
+        }
         ExecuteMsg::UpdatePerAddressLimit { per_address_limit } => {
             execute_update_per_address_limit(deps, env, info, per_address_limit)
         }
@@ -165,16 +167,15 @@ pub fn execute(
 
 pub fn execute_set_whitelist(
     deps: DepsMut,
-    env: Env,
+    _env: Env,
     info: MessageInfo,
     whitelist: &str,
 ) -> Result<Response, ContractError> {
-    let config = CONFIG.load(deps.storage)?;
+    let mut config = CONFIG.load(deps.storage)?;
     if config.admin != info.sender {
         return Err(ContractError::Unauthorized {});
     };
-    let addr = deps.api.addr_validate(whitelist)?;
-    config.whitelist = Some(addr);
+    config.whitelist = Some(deps.api.addr_validate(whitelist)?);
     CONFIG.save(deps.storage, &config)?;
 
     Ok(Response::default()
@@ -196,7 +197,7 @@ pub fn execute_mint_sender(
     if let Some(whitelist) = config.whitelist {
         let res: HasEndedResponse = deps
             .querier
-            .query_wasm_smart(whitelist, &WhitelistQueryMsg::HasEnded {})?;
+            .query_wasm_smart(whitelist.clone(), &WhitelistQueryMsg::HasEnded {})?;
         if !res.has_ended {
             let res: HasMemberResponse = deps.querier.query_wasm_smart(
                 whitelist,
