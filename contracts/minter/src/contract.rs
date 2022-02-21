@@ -149,8 +149,29 @@ pub fn execute(
             recipient,
         } => execute_mint_for(deps, env, info, token_id, recipient),
         ExecuteMsg::BatchMint { num_mints } => execute_batch_mint(deps, env, info, num_mints),
-        ExecuteMsg::SetWhitelist { whitelist } => execute_set_whitelist(deps, env, info, whitelist),
+        ExecuteMsg::SetWhitelist { whitelist } => {
+            execute_set_whitelist(deps, env, info, &whitelist)
+        }
     }
+}
+
+pub fn execute_set_whitelist(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    whitelist: &str,
+) -> Result<Response, ContractError> {
+    let config = CONFIG.load(deps.storage)?;
+    if config.admin != info.sender {
+        return Err(ContractError::Unauthorized {});
+    };
+    let addr = deps.api.addr_validate(whitelist)?;
+    config.whitelist = Some(addr);
+    CONFIG.save(deps.storage, &config)?;
+
+    Ok(Response::default()
+        .add_attribute("action", "set_whitelist")
+        .add_attribute("whitelist", whitelist.to_string()))
 }
 
 pub fn execute_mint_sender(
