@@ -15,12 +15,6 @@
       "items": {
         "type": "string"
       }
-    },
-    "minter": {
-      "type": [
-        "string",
-        "null"
-      ]
     }
   },
   "definitions": {

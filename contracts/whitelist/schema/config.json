@@ -5,7 +5,7 @@
   "required": [
     "admin",
     "end_time",
-    "num_addresses"
+    "num_members"
   ],
   "properties": {
     "admin": {
@@ -14,7 +14,7 @@
     "end_time": {
       "$ref": "#/definitions/Expiration"
     },
-    "num_addresses": {
+    "num_members": {
       "type": "integer",
       "format": "uint32",
       "minimum": 0.0
