@@ -76,7 +76,9 @@ pub fn execute_update_end_time(
 
     config.end_time = end_time;
     CONFIG.save(deps.storage, &config)?;
-    Ok(Response::new().add_attribute("action", "update_end_time"))
+    Ok(Response::new()
+        .add_attribute("action", "update_end_time")
+        .add_attribute("end_time", &end_time.to_string()))
 }
 
 pub fn execute_update_members(
@@ -147,4 +149,63 @@ fn query_has_member(deps: Deps, member: String) -> StdResult<HasMemberResponse> 
     Ok(HasMemberResponse {
         has_member: WHITELIST.has(deps.storage, addr),
     })
+}
+
+#[cfg(test)]
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
+
+    const ADMIN: &str = "admin";
+
+    const NON_EXPIRED_HEIGHT: Expiration = Expiration::AtHeight(22_222);
+    const EXPIRED_HEIGHT: Expiration = Expiration::AtHeight(10);
+
+    fn setup_contract(deps: DepsMut) {
+        let msg = InstantiateMsg {
+            members: vec!["adsfsa".to_string()],
+            end_time: NON_EXPIRED_HEIGHT,
+        };
+        let info = mock_info(ADMIN, &[]);
+        let res = instantiate(deps, mock_env(), info, msg).unwrap();
+        assert_eq!(0, res.messages.len());
+    }
+
+    #[test]
+    fn proper_initialization() {
+        let mut deps = mock_dependencies();
+        setup_contract(deps.as_mut());
+    }
+
+    #[test]
+    fn update_end_time() {
+        let mut deps = mock_dependencies();
+        setup_contract(deps.as_mut());
+
+        let msg = ExecuteMsg::UpdateEndTime(EXPIRED_HEIGHT);
+        let info = mock_info(ADMIN, &[]);
+        let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
+        assert_eq!(res.attributes.len(), 2);
+        let res = query_end_time(deps.as_ref()).unwrap();
+        assert_eq!(res.time, "expiration height: 10");
+    }
+
+    #[test]
+    fn update_members() {
+        let mut deps = mock_dependencies();
+        setup_contract(deps.as_mut());
+
+        let inner_msg = UpdateMembersMsg {
+            add: vec!["adsfsa1".to_string()],
+            remove: vec![],
+        };
+        let msg = ExecuteMsg::UpdateMembers(inner_msg);
+        let info = mock_info(ADMIN, &[]);
+        let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
+        assert_eq!(res.attributes.len(), 1);
+        let res = query_members(deps.as_ref()).unwrap();
+        println!("{:?}", res);
+        assert_eq!(res.members.len(), 2);
+    }
 }
