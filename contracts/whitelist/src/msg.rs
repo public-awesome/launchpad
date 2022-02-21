@@ -26,13 +26,19 @@ pub struct UpdateMembersMsg {
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
     EndTime {},
+    HasEnded {},
     Members {},
-    IsValidMember { member: String },
+    HasMember { member: String },
 }
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 pub struct MembersResponse {
     pub members: Vec<String>,
+}
+
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
+pub struct HasMemberResponse {
+    pub has_member: bool,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -41,6 +47,6 @@ pub struct TimeResponse {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct IsValidResponse {
-    pub is_valid: bool,
+pub struct HasEndedResponse {
+    pub has_ended: bool,
 }

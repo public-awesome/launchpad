@@ -9,8 +9,8 @@ use cw_utils::Expiration;
 
 use crate::error::ContractError;
 use crate::msg::{
-    ExecuteMsg, InstantiateMsg, IsValidResponse, MembersResponse, QueryMsg, TimeResponse,
-    UpdateMembersMsg,
+    ExecuteMsg, HasEndedResponse, HasMemberResponse, InstantiateMsg, MembersResponse, QueryMsg,
+    TimeResponse, UpdateMembersMsg,
 };
 use crate::state::{Config, CONFIG, WHITELIST};
 
@@ -111,7 +111,8 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::EndTime {} => to_binary(&query_end_time(deps)?),
         QueryMsg::Members {} => to_binary(&query_members(deps)?),
-        QueryMsg::IsValidMember { member } => to_binary(&query_is_valid_member(deps, env, member)?),
+        QueryMsg::HasEnded {} => to_binary(&query_has_ended(deps, env)?),
+        QueryMsg::HasMember { member } => to_binary(&query_has_member(deps, member)?),
     }
 }
 
@@ -119,6 +120,13 @@ fn query_end_time(deps: Deps) -> StdResult<TimeResponse> {
     let config = CONFIG.load(deps.storage)?;
     Ok(TimeResponse {
         time: config.end_time.to_string(),
+    })
+}
+
+fn query_has_ended(deps: Deps, env: Env) -> StdResult<HasEndedResponse> {
+    let config = CONFIG.load(deps.storage)?;
+    Ok(HasEndedResponse {
+        has_ended: config.end_time.is_expired(&env.block),
     })
 }
 
@@ -131,12 +139,10 @@ fn query_members(deps: Deps) -> StdResult<MembersResponse> {
     Ok(MembersResponse { members })
 }
 
-fn query_is_valid_member(deps: Deps, env: Env, member: String) -> StdResult<IsValidResponse> {
-    let config = CONFIG.load(deps.storage)?;
+fn query_has_member(deps: Deps, member: String) -> StdResult<HasMemberResponse> {
     let addr = deps.api.addr_validate(&member)?;
 
-    let allowlist = WHITELIST.has(deps.storage, addr);
-    let is_valid = allowlist && !config.end_time.is_expired(&env.block);
-
-    Ok(IsValidResponse { is_valid })
+    Ok(HasMemberResponse {
+        has_member: WHITELIST.has(deps.storage, addr),
+    })
 }
