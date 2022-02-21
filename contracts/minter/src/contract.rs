@@ -116,6 +116,8 @@ pub fn instantiate(
             WHITELIST_ADDRS.save(deps.storage, whitelist_address, &Empty {})?;
         }
         NUM_WHITELIST_ADDRS.save(deps.storage, &(whitelist_addresses.len() as u32))?;
+    } else {
+        NUM_WHITELIST_ADDRS.save(deps.storage, &0)?;
     }
 
     // save mintable token ids map
@@ -635,7 +637,7 @@ mod tests {
             unit_price: coin(PRICE, NATIVE_DENOM),
             num_tokens,
             whitelist_expiration: None,
-            whitelist_addresses: Some(vec![String::from("VIPcollector")]),
+            whitelist_addresses: None,
             start_time: None,
             per_address_limit: None,
             batch_mint_limit: None,
@@ -939,6 +941,13 @@ mod tests {
         let (minter_addr, _config) =
             setup_minter_contract(&mut router, &creator, num_tokens).unwrap();
         const EXPIRATION_TIME: Timestamp = Timestamp::from_seconds(100000 + 10);
+
+        // whitelist query works
+        let addrs: WhitelistAddressesResponse = router
+            .wrap()
+            .query_wasm_smart(minter_addr.clone(), &QueryMsg::WhitelistAddresses {})
+            .unwrap();
+        assert!(addrs.addresses.is_empty());
 
         // set block info
         let mut block = router.block_info();
