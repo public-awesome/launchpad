@@ -321,7 +321,7 @@ fn happy_path() {
 
     // Check NFT is transferred
     let query_owner_msg = Cw721QueryMsg::OwnerOf {
-        token_id: String::from("0"),
+        token_id: String::from("1"),
         include_expired: None,
     };
     let res: OwnerOfResponse = router
