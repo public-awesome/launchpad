@@ -2,6 +2,7 @@ use cosmwasm_std::StdError;
 use cw721_base::ContractError as Cw721ContractError;
 use cw_utils::PaymentError;
 use thiserror::Error;
+use url::ParseError;
 
 #[derive(Error, Debug)]
 pub enum ContractError {
@@ -28,6 +29,9 @@ pub enum ContractError {
 
     #[error("{0}")]
     Payment(#[from] PaymentError),
+
+    #[error("InvalidContractUri")]
+    InvalidContractUri {},
 }
 
 impl From<ContractError> for Cw721ContractError {
@@ -38,5 +42,11 @@ impl From<ContractError> for Cw721ContractError {
             ContractError::Expired {} => Cw721ContractError::Expired {},
             _ => unreachable!("cannot convert {:?} to Cw721ContractError", err),
         }
+    }
+}
+
+impl From<ParseError> for ContractError {
+    fn from(_err: ParseError) -> ContractError {
+        ContractError::InvalidContractUri {}
     }
 }
