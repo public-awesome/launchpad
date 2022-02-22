@@ -107,7 +107,7 @@ pub fn instantiate(
     CONFIG.save(deps.storage, &config)?;
 
     // save mintable token ids map
-    for token_id in 0..msg.num_tokens {
+    for token_id in 1..=msg.num_tokens {
         MINTABLE_TOKEN_IDS.save(deps.storage, token_id, &Empty {})?;
     }
 
