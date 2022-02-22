@@ -1,14 +1,6 @@
 [workspace]
 members = ["packages/*", "contracts/*"]
 
-[profile.release.package.collection-factory]
-codegen-units = 1
-incremental = false
-
-[profile.release.package.sg-marketplace]
-codegen-units = 1
-incremental = false
-
 [profile.release.package.sg721]
 codegen-units = 1
 incremental = false
