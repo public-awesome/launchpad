@@ -17,23 +17,19 @@
     {
       "type": "object",
       "required": [
-        "update_whitelist"
+        "set_whitelist"
       ],
       "properties": {
-        "update_whitelist": {
-          "$ref": "#/definitions/UpdateWhitelistMsg"
-        }
-      },
-      "additionalProperties": false
-    },
-    {
-      "type": "object",
-      "required": [
-        "update_whitelist_expiration"
-      ],
-      "properties": {
-        "update_whitelist_expiration": {
-          "$ref": "#/definitions/Expiration"
+        "set_whitelist": {
+          "type": "object",
+          "required": [
+            "whitelist"
+          ],
+          "properties": {
+            "whitelist": {
+              "type": "string"
+            }
+          }
         }
       },
       "additionalProperties": false
@@ -225,29 +221,6 @@
     "Uint64": {
       "description": "A thin wrapper around u64 that is using strings for JSON encoding/decoding, such that the full u64 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u64` to get the value out:\n\n``` # use cosmwasm_std::Uint64; let a = Uint64::from(42u64); assert_eq!(a.u64(), 42);\n\nlet b = Uint64::from(70u32); assert_eq!(b.u64(), 70); ```",
       "type": "string"
-    },
-    "UpdateWhitelistMsg": {
-      "type": "object",
-      "properties": {
-        "add_addresses": {
-          "type": [
-            "array",
-            "null"
-          ],
-          "items": {
-            "type": "string"
-          }
-        },
-        "remove_addresses": {
-          "type": [
-            "array",
-            "null"
-          ],
-          "items": {
-            "type": "string"
-          }
-        }
-      }
     }
   }
 }

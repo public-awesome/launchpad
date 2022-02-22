@@ -46,13 +46,14 @@ cw-storage-plus = "0.11"
 cw2 = "0.11"
 cw721 = "0.11"
 cw721-base = { version = "0.11", features = ["library"] }
-cw-utils = "0.11"
+cw-utils = "0.12.1"
 schemars = "0.8"
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 sg721 = { path = "../sg721", features = ["library"] }
 thiserror = { version = "1.0" }
 url = "2.2.0"
 sg-std = { path = "../../packages/sg-std" }
+whitelist = { path = "../whitelist" }
 
 [dev-dependencies]
 cosmwasm-schema = { version = "1.0.0-beta" }
