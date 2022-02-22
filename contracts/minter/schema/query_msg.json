@@ -29,55 +29,11 @@
     {
       "type": "object",
       "required": [
-        "whitelist_addresses"
-      ],
-      "properties": {
-        "whitelist_addresses": {
-          "type": "object"
-        }
-      },
-      "additionalProperties": false
-    },
-    {
-      "type": "object",
-      "required": [
-        "whitelist_expiration"
-      ],
-      "properties": {
-        "whitelist_expiration": {
-          "type": "object"
-        }
-      },
-      "additionalProperties": false
-    },
-    {
-      "type": "object",
-      "required": [
         "start_time"
       ],
       "properties": {
         "start_time": {
           "type": "object"
-        }
-      },
-      "additionalProperties": false
-    },
-    {
-      "type": "object",
-      "required": [
-        "on_whitelist"
-      ],
-      "properties": {
-        "on_whitelist": {
-          "type": "object",
-          "required": [
-            "address"
-          ],
-          "properties": {
-            "address": {
-              "type": "string"
-            }
-          }
         }
       },
       "additionalProperties": false

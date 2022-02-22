@@ -55,23 +55,10 @@
     "unit_price": {
       "$ref": "#/definitions/Coin"
     },
-    "whitelist_addresses": {
+    "whitelist": {
       "type": [
-        "array",
+        "string",
         "null"
-      ],
-      "items": {
-        "type": "string"
-      }
-    },
-    "whitelist_expiration": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/Expiration"
-        },
-        {
-          "type": "null"
-        }
       ]
     }
   },
