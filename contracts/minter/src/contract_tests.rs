@@ -102,7 +102,7 @@ fn setup_minter_contract(
             symbol: String::from("TEST"),
             minter: creator.to_string(),
             config: Some(Config {
-                contract_uri: Some(String::from("test")),
+                contract_uri: Some(String::from("ipfs://url.json")),
                 creator: Some(creator.clone()),
                 royalties: Some(RoyaltyInfo {
                     payment_address: creator.clone(),
