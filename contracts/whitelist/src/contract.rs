@@ -221,13 +221,8 @@ mod tests {
         let mut deps = mock_dependencies();
         setup_contract(deps.as_mut());
 
-        let mut members = vec![];
-        for _ in 0..MAX_MEMBERS + 1 {
-            members.push("adsfsa".to_string());
-        }
-
         let inner_msg = UpdateMembersMsg {
-            add: members,
+            add: vec!["asdf".to_string(); MAX_MEMBERS as usize],
             remove: vec![],
         };
         let msg = ExecuteMsg::UpdateMembers(inner_msg);
