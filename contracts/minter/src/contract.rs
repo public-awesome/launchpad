@@ -2,7 +2,7 @@
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     to_binary, Addr, BankMsg, Binary, CosmosMsg, Deps, DepsMut, Empty, Env, MessageInfo, Order,
-    Reply, ReplyOn, Response, StdError, StdResult, SubMsg, WasmMsg,
+    Reply, ReplyOn, Response, StdError, StdResult, SubMsg, Timestamp, WasmMsg,
 };
 use cw2::set_contract_version;
 use cw721::TokensResponse as Cw721TokensResponse;
@@ -17,7 +17,7 @@ use crate::msg::{
     StartTimeResponse,
 };
 use crate::state::{Config, CONFIG, MINTABLE_TOKEN_IDS, SG721_ADDRESS};
-use sg_std::NATIVE_DENOM;
+use sg_std::{NATIVE_DENOM, START_TIME};
 use whitelist::msg::{HasEndedResponse, HasMemberResponse, QueryMsg as WhitelistQueryMsg};
 
 // version info for migration info
@@ -91,6 +91,28 @@ pub fn instantiate(
     let whitelist_addr: Option<Addr> = match msg.whitelist {
         Some(wl) => Some(deps.api.addr_validate(&wl)?),
         None => None,
+    };
+
+    // let start_time: Expiration = match msg.start_time {
+    //     Some(st) => {
+    //         if (st.is_expired({time: Timestamp::from(START_TIME)}){
+    //             st
+    //         } else {
+    //             Expiration::At_Time(START_TIME)
+    //         }
+    //     }
+    //     None => Expiration::At_Time(START_TIME),
+    // };
+    let default_start_time = Expiration::AtTime(Timestamp::from_nanos(START_TIME));
+    let start_time = match msg.start_time {
+        Some(st) => {
+            if (st.is_expired?(default_start_time)) {
+                default_start_time
+            } else {
+                st
+            }
+        }
+        None => Expiration::AtTime(Timestamp::from_nanos(START_TIME)),
     };
 
     let config = Config {

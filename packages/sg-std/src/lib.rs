@@ -2,6 +2,8 @@ mod msg;
 mod route;
 
 pub const NATIVE_DENOM: &str = "ustars";
+// 3/1/2022 00:00:00GMT
+pub const START_TIME: u64 = 1646092800000000000;
 
 pub use msg::{
     create_claim_for_msg, create_fund_community_pool_msg, ClaimAction, StargazeMsg,
