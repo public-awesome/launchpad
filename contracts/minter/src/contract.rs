@@ -1,8 +1,8 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Addr, BankMsg, Binary, CosmosMsg, Deps, DepsMut, Empty, Env, MessageInfo, Order,
-    Reply, ReplyOn, Response, StdError, StdResult, SubMsg, Timestamp, WasmMsg,
+    to_binary, Addr, BankMsg, Binary, BlockInfo, CosmosMsg, Deps, DepsMut, Empty, Env, MessageInfo,
+    Order, Reply, ReplyOn, Response, StdError, StdResult, SubMsg, Timestamp, WasmMsg,
 };
 use cw2::set_contract_version;
 use cw721::TokensResponse as Cw721TokensResponse;
@@ -93,20 +93,15 @@ pub fn instantiate(
         None => None,
     };
 
-    // let start_time: Expiration = match msg.start_time {
-    //     Some(st) => {
-    //         if (st.is_expired({time: Timestamp::from(START_TIME)}){
-    //             st
-    //         } else {
-    //             Expiration::At_Time(START_TIME)
-    //         }
-    //     }
-    //     None => Expiration::At_Time(START_TIME),
-    // };
     let default_start_time = Expiration::AtTime(Timestamp::from_nanos(START_TIME));
+    let block = BlockInfo {
+        height: 0,
+        time: Timestamp::from_nanos(START_TIME),
+        chain_id: "".to_string(),
+    };
     let start_time = match msg.start_time {
         Some(st) => {
-            if (st.is_expired?(default_start_time)) {
+            if st.is_expired(&block) {
                 default_start_time
             } else {
                 st
@@ -124,7 +119,7 @@ pub fn instantiate(
         per_address_limit: msg.per_address_limit,
         batch_mint_limit,
         whitelist: whitelist_addr,
-        start_time: msg.start_time,
+        start_time: Some(start_time),
     };
     CONFIG.save(deps.storage, &config)?;
 
