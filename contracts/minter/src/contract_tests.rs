@@ -822,6 +822,65 @@ fn mint_for_token_id_addr() {
 }
 
 #[test]
+fn test_start_time_before_genesis() {
+    let mut router = mock_app();
+    let (creator, _) = setup_accounts(&mut router).unwrap();
+    let num_tokens = 10;
+
+    // Upload contract code
+    let sg721_code_id = router.store_code(contract_sg721());
+    let minter_code_id = router.store_code(contract_minter());
+    let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
+
+    // Instantiate sale contract
+    let msg = InstantiateMsg {
+        unit_price: coin(PRICE, NATIVE_DENOM),
+        num_tokens,
+        start_time: Some(Expiration::AtTime(Timestamp::from_nanos(
+            GENESIS_MINT_START_TIME - 100,
+        ))),
+        per_address_limit: None,
+        batch_mint_limit: None,
+        whitelist: None,
+        base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
+        sg721_code_id,
+        sg721_instantiate_msg: Sg721InstantiateMsg {
+            name: String::from("TEST"),
+            symbol: String::from("TEST"),
+            minter: creator.to_string(),
+            config: Some(Config {
+                contract_uri: Some(String::from("ipfs://url.json")),
+                creator: Some(creator.clone()),
+                royalties: Some(RoyaltyInfo {
+                    payment_address: creator.clone(),
+                    share: Decimal::percent(10),
+                }),
+            }),
+        },
+    };
+    let minter_addr = router
+        .instantiate_contract(
+            minter_code_id,
+            creator.clone(),
+            &msg,
+            &creation_fee,
+            "Minter",
+            None,
+        )
+        .unwrap();
+
+    let res: StartTimeResponse = router
+        .wrap()
+        .query_wasm_smart(minter_addr, &QueryMsg::StartTime {})
+        .unwrap();
+    assert_eq!(
+        res.start_time,
+        "expiration time: ".to_owned()
+            + &Timestamp::from_nanos(GENESIS_MINT_START_TIME).to_string()
+    );
+}
+
+#[test]
 fn unhappy_path() {
     let mut router = mock_app();
     let (creator, buyer) = setup_accounts(&mut router).unwrap();
