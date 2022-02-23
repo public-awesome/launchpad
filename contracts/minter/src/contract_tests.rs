@@ -682,7 +682,8 @@ fn batch_mint_limit_access_max_sold_out() {
     );
 
     // success
-    let batch_mint_msg = ExecuteMsg::BatchMint { num_mints: 2 };
+    let num_mints = 2;
+    let batch_mint_msg = ExecuteMsg::BatchMint { num_mints };
     let res = router.execute_contract(
         buyer.clone(),
         minter_addr.clone(),
@@ -690,6 +691,18 @@ fn batch_mint_limit_access_max_sold_out() {
         &coins(PRICE, NATIVE_DENOM),
     );
     assert!(res.is_ok());
+
+    // Balances are correct
+    let creator_native_balances = router.wrap().query_all_balances(creator.clone()).unwrap();
+    assert_eq!(
+        creator_native_balances,
+        coins(INITIAL_BALANCE + (PRICE * num_mints as u128), NATIVE_DENOM)
+    );
+    let buyer_native_balances = router.wrap().query_all_balances(buyer.clone()).unwrap();
+    assert_eq!(
+        buyer_native_balances,
+        coins(INITIAL_BALANCE - (PRICE * num_mints as u128), NATIVE_DENOM)
+    );
 
     // test sold out and fails
     let batch_mint_msg = ExecuteMsg::BatchMint { num_mints: 2 };
