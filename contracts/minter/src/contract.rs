@@ -1,8 +1,8 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Addr, BankMsg, Binary, BlockInfo, CosmosMsg, Deps, DepsMut, Empty, Env, MessageInfo,
-    Order, Reply, ReplyOn, Response, StdError, StdResult, SubMsg, Timestamp, WasmMsg,
+    to_binary, Addr, BankMsg, Binary, CosmosMsg, Deps, DepsMut, Empty, Env, MessageInfo, Order,
+    Reply, ReplyOn, Response, StdError, StdResult, SubMsg, Timestamp, WasmMsg,
 };
 use cw2::set_contract_version;
 use cw721::TokensResponse as Cw721TokensResponse;
@@ -95,14 +95,9 @@ pub fn instantiate(
 
     // default is genesis mint start time
     let default_start_time = Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME));
-    let block = BlockInfo {
-        height: 0,
-        time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
-        chain_id: "".to_string(),
-    };
     let start_time = match msg.start_time {
         Some(st) => {
-            if st.is_expired(&block) {
+            if st < default_start_time {
                 default_start_time
             } else {
                 st
@@ -419,12 +414,7 @@ pub fn execute_update_start_time(
     }
 
     let default_start_time = Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME));
-    let block = BlockInfo {
-        height: 0,
-        time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
-        chain_id: "".to_string(),
-    };
-    let start_time = if start_time.is_expired(&block) {
+    let start_time = if start_time < default_start_time {
         default_start_time
     } else {
         start_time
