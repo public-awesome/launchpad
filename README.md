@@ -14,7 +14,7 @@ A contract that facilitates primary market vending machine style minting.
 
 Features:
 
-- Aidrops
+- Airdrops
 
 - Whitelist
 
