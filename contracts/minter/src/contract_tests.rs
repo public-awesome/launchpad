@@ -102,7 +102,7 @@ fn setup_minter_contract(
             symbol: String::from("TEST"),
             minter: creator.to_string(),
             config: Some(Config {
-                contract_uri: Some(String::from("test")),
+                contract_uri: Some(String::from("ipfs://url.json")),
                 creator: Some(creator.clone()),
                 royalties: Some(RoyaltyInfo {
                     payment_address: creator.clone(),
@@ -321,7 +321,7 @@ fn happy_path() {
 
     // Check NFT is transferred
     let query_owner_msg = Cw721QueryMsg::OwnerOf {
-        token_id: String::from("0"),
+        token_id: String::from("1"),
         include_expired: None,
     };
     let res: OwnerOfResponse = router
