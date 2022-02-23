@@ -17,7 +17,7 @@ use crate::msg::{
     StartTimeResponse,
 };
 use crate::state::{Config, CONFIG, MINTABLE_TOKEN_IDS, SG721_ADDRESS};
-use sg_std::{NATIVE_DENOM, START_TIME};
+use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use whitelist::msg::{HasEndedResponse, HasMemberResponse, QueryMsg as WhitelistQueryMsg};
 
 // version info for migration info
@@ -93,10 +93,10 @@ pub fn instantiate(
         None => None,
     };
 
-    let default_start_time = Expiration::AtTime(Timestamp::from_nanos(START_TIME));
+    let default_start_time = Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME));
     let block = BlockInfo {
         height: 0,
-        time: Timestamp::from_nanos(START_TIME),
+        time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
         chain_id: "".to_string(),
     };
     let start_time = match msg.start_time {
@@ -107,7 +107,7 @@ pub fn instantiate(
                 st
             }
         }
-        None => Expiration::AtTime(Timestamp::from_nanos(START_TIME)),
+        None => Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME)),
     };
 
     let config = Config {
