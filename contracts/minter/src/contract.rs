@@ -103,7 +103,7 @@ pub fn instantiate(
                 st
             }
         }
-        None => Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME)),
+        None => default_start_time,
     };
 
     let config = Config {
