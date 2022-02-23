@@ -306,6 +306,17 @@ fn happy_path() {
     let num_tokens: u64 = 2;
     let (minter_addr, config) = setup_minter_contract(&mut router, &creator, num_tokens).unwrap();
 
+    // default start time genesis mint time
+    let res: StartTimeResponse = router
+        .wrap()
+        .query_wasm_smart(minter_addr.clone(), &QueryMsg::StartTime {})
+        .unwrap();
+    assert_eq!(
+        res.start_time,
+        "expiration time: ".to_owned()
+            + &Timestamp::from_nanos(GENESIS_MINT_START_TIME).to_string()
+    );
+
     // Succeeds if funds are sent
     let mint_msg = ExecuteMsg::Mint {};
     let res = router.execute_contract(
