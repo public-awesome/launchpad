@@ -6,7 +6,7 @@ use cw_multi_test::{App, BankSudo, Contract, ContractWrapper, Executor, SudoMsg}
 use cw_utils::Expiration;
 use sg721::msg::InstantiateMsg as Sg721InstantiateMsg;
 use sg721::state::{Config, RoyaltyInfo};
-use sg_std::NATIVE_DENOM;
+use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use whitelist::msg::InstantiateMsg as WhitelistInstantiateMsg;
 use whitelist::msg::{ExecuteMsg as WhitelistExecuteMsg, UpdateMembersMsg};
 
@@ -167,6 +167,14 @@ fn setup_accounts(router: &mut App) -> Result<(Addr, Addr), ContractError> {
     Ok((creator, buyer))
 }
 
+// set blockchain time to after mint by default
+fn setup_block_time(router: &mut App, nanos: u64) -> Result<Timestamp, ContractError> {
+    let mut block = router.block_info();
+    block.time = Timestamp::from_nanos(nanos);
+    router.set_block(block.clone());
+    Ok(block.time)
+}
+
 #[test]
 fn initialization() {
     let mut deps = mock_dependencies_with_balance(&coins(2, "token"));
@@ -293,6 +301,7 @@ fn initialization() {
 #[test]
 fn happy_path() {
     let mut router = mock_app();
+    let _timestamp = setup_block_time(&mut router, GENESIS_MINT_START_TIME + 1).unwrap();
     let (creator, buyer) = setup_accounts(&mut router).unwrap();
     let num_tokens: u64 = 2;
     let (minter_addr, config) = setup_minter_contract(&mut router, &creator, num_tokens).unwrap();
@@ -389,12 +398,9 @@ fn whitelist_access_len_add_remove_expiration() {
     let num_tokens: u64 = 1;
     let (minter_addr, _config) = setup_minter_contract(&mut router, &creator, num_tokens).unwrap();
     let whitelist_addr = setup_whitelist_contract(&mut router, &creator).unwrap();
-    const EXPIRATION_TIME: Timestamp = Timestamp::from_seconds(100000 + 10);
-
-    // set block info
-    let mut block = router.block_info();
-    block.time = Timestamp::from_seconds(100000);
-    router.set_block(block);
+    const EXPIRATION_TIME: Timestamp = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000_000);
+    // set to genesis mint start time
+    let _timestamp = setup_block_time(&mut router, GENESIS_MINT_START_TIME).unwrap();
 
     // update whitelist_expiration fails if not admin
     let wl_msg = WhitelistExecuteMsg::UpdateEndTime(Expiration::AtTime(EXPIRATION_TIME));
@@ -486,12 +492,8 @@ fn before_start_time() {
     let (creator, buyer) = setup_accounts(&mut router).unwrap();
     let num_tokens: u64 = 1;
     let (minter_addr, _config) = setup_minter_contract(&mut router, &creator, num_tokens).unwrap();
-    const START_TIME: Timestamp = Timestamp::from_seconds(100000 + 10);
-
-    // set block info
-    let mut block = router.block_info();
-    block.time = Timestamp::from_seconds(100000);
-    router.set_block(block);
+    // set to before genesis mint start time
+    let _timestamp = setup_block_time(&mut router, GENESIS_MINT_START_TIME - 10).unwrap();
 
     // set start_time fails if not admin
     let start_time_msg = ExecuteMsg::UpdateStartTime(Expiration::Never {});
@@ -504,7 +506,9 @@ fn before_start_time() {
     assert!(res.is_err());
 
     // if block before start_time, throw error
-    let start_time_msg = ExecuteMsg::UpdateStartTime(Expiration::AtTime(START_TIME));
+    let start_time_msg = ExecuteMsg::UpdateStartTime(Expiration::AtTime(Timestamp::from_nanos(
+        GENESIS_MINT_START_TIME,
+    )));
     let res = router.execute_contract(
         creator.clone(),
         minter_addr.clone(),
@@ -528,14 +532,13 @@ fn before_start_time() {
         .query_wasm_smart(minter_addr.clone(), &QueryMsg::StartTime {})
         .unwrap();
     assert_eq!(
-        "expiration time: ".to_owned() + &START_TIME.to_string(),
+        "expiration time: ".to_owned()
+            + &Timestamp::from_nanos(GENESIS_MINT_START_TIME).to_string(),
         start_time_response.start_time
     );
 
     // set block forward, after start time. mint succeeds
-    let mut block = router.block_info();
-    block.time = START_TIME.plus_seconds(10);
-    router.set_block(block);
+    let _timestamp = setup_block_time(&mut router, GENESIS_MINT_START_TIME + 10_000_000);
 
     // mint succeeds
     let mint_msg = ExecuteMsg::Mint {};
@@ -549,6 +552,8 @@ fn check_per_address_limit() {
     let (creator, buyer) = setup_accounts(&mut router).unwrap();
     let num_tokens = 2;
     let (minter_addr, _config) = setup_minter_contract(&mut router, &creator, num_tokens).unwrap();
+    // set to genesis mint start time
+    let _timestamp = setup_block_time(&mut router, GENESIS_MINT_START_TIME).unwrap();
 
     // set limit, check unauthorized
     let per_address_limit_msg = ExecuteMsg::UpdatePerAddressLimit {
@@ -594,6 +599,7 @@ fn check_per_address_limit() {
         &mint_msg,
         &coins(PRICE, NATIVE_DENOM),
     );
+
     assert!(res.is_ok());
 
     // second mint fails from exceeding per address limit
@@ -608,6 +614,8 @@ fn batch_mint_limit_access_max_sold_out() {
     let (creator, buyer) = setup_accounts(&mut router).unwrap();
     let num_tokens = 4;
     let (minter_addr, _config) = setup_minter_contract(&mut router, &creator, num_tokens).unwrap();
+    // set to genesis mint start time
+    let _timestamp = setup_block_time(&mut router, GENESIS_MINT_START_TIME).unwrap();
 
     // batch mint limit set to STARTING_BATCH_MINT_LIMIT if no mint provided
     let batch_mint_msg = ExecuteMsg::BatchMint { num_mints: 1 };
@@ -720,6 +728,8 @@ fn mint_for_token_id_addr() {
     let (creator, buyer) = setup_accounts(&mut router).unwrap();
     let num_tokens: u64 = 4;
     let (minter_addr, _config) = setup_minter_contract(&mut router, &creator, num_tokens).unwrap();
+    // set to genesis mint start time
+    let _timestamp = setup_block_time(&mut router, GENESIS_MINT_START_TIME).unwrap();
 
     // try mint_for, test unauthorized
     let mint_for_msg = ExecuteMsg::MintFor {
