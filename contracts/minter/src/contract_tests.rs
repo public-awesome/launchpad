@@ -859,14 +859,7 @@ fn test_start_time_before_genesis() {
         },
     };
     let minter_addr = router
-        .instantiate_contract(
-            minter_code_id,
-            creator.clone(),
-            &msg,
-            &creation_fee,
-            "Minter",
-            None,
-        )
+        .instantiate_contract(minter_code_id, creator, &msg, &creation_fee, "Minter", None)
         .unwrap();
 
     let res: StartTimeResponse = router
