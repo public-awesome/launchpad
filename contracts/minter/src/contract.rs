@@ -93,6 +93,7 @@ pub fn instantiate(
         None => None,
     };
 
+    // default is genesis mint start time
     let default_start_time = Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME));
     let block = BlockInfo {
         height: 0,
@@ -416,6 +417,19 @@ pub fn execute_update_start_time(
     if info.sender != config.admin {
         return Err(ContractError::Unauthorized {});
     }
+
+    let default_start_time = Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME));
+    let block = BlockInfo {
+        height: 0,
+        time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
+        chain_id: "".to_string(),
+    };
+    let start_time = if start_time.is_expired(&block) {
+        default_start_time
+    } else {
+        start_time
+    };
+
     config.start_time = Some(start_time);
     CONFIG.save(deps.storage, &config)?;
     Ok(Response::new().add_attribute("action", "update_start_time"))
