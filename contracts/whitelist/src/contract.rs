@@ -1,11 +1,10 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::Order;
-use cosmwasm_std::{
-    to_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult,
-};
+use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, StdResult};
 use cw2::set_contract_version;
 use cw_utils::Expiration;
+use sg_std::StargazeMsgWrapper;
 
 use crate::error::ContractError;
 use crate::msg::{
@@ -14,6 +13,7 @@ use crate::msg::{
 };
 use crate::state::{Config, CONFIG, WHITELIST};
 
+type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sg-whitelist";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");

@@ -17,8 +17,11 @@ use crate::msg::{
     StartTimeResponse,
 };
 use crate::state::{Config, CONFIG, MINTABLE_TOKEN_IDS, SG721_ADDRESS};
-use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
+use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use whitelist::msg::{HasEndedResponse, HasMemberResponse, QueryMsg as WhitelistQueryMsg};
+
+pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
+pub type SubMsg = cosmwasm_std::SubMsg<StargazeMsgWrapper>;
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sg-minter";
@@ -390,7 +393,7 @@ fn _execute_mint(
         return Err(ContractError::InvalidTokenId {});
     };
 
-    let mut msgs: Vec<CosmosMsg> = vec![];
+    let mut msgs: Vec<CosmosMsg<StargazeMsgWrapper>> = vec![];
 
     let mint_msg = Cw721ExecuteMsg::Mint(MintMsg::<Empty> {
         token_id: mintable_token_id.to_string(),

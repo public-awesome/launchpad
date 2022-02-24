@@ -1,9 +1,11 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
+
 use cosmwasm_std::{
-    coin, to_binary, BankMsg, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut, Empty, Env,
-    MessageInfo, Response, StdResult, Uint128,
+    coin, coins, to_binary, BankMsg, Binary, Coin, Decimal, Deps, DepsMut, Empty, Env, MessageInfo,
+    StdResult, Uint128,
 };
+
 use cw2::set_contract_version;
 use cw_utils::must_pay;
 use schemars::JsonSchema;
@@ -12,7 +14,7 @@ use serde::{Deserialize, Serialize};
 use crate::ContractError;
 use cw721::ContractInfoResponse;
 use cw721_base::ContractError as BaseError;
-use sg_std::NATIVE_DENOM;
+use sg_std::{create_fund_community_pool_msg, StargazeMsgWrapper, NATIVE_DENOM};
 use url::Url;
 
 use crate::msg::{
@@ -27,7 +29,8 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 const CREATION_FEE: u128 = 1_000_000_000;
 const CREATION_FEE_BURN_PERCENT: u64 = 50;
 
-pub type Sg721Contract<'a> = cw721_base::Cw721Contract<'a, Empty, Empty>;
+type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
+pub type Sg721Contract<'a> = cw721_base::Cw721Contract<'a, Empty, StargazeMsgWrapper>;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct MsgFundCommunityPool {
@@ -66,11 +69,8 @@ pub fn instantiate(
 
     // TODO: send the rest to the community pool
     // https://github.com/public-awesome/contracts/issues/99
-    let _fund_community_pool_msg = CosmosMsg::Custom(MsgFundCommunityPool {
-        amount: vec![coin(creation_fee.u128() - burn_fee.u128(), NATIVE_DENOM)],
-        depositor: msg.minter.to_string(),
-    });
-
+    let fund_community_pool_msg =
+        create_fund_community_pool_msg(coins(creation_fee.u128() - burn_fee.u128(), "ustars"));
     let info = ContractInfoResponse {
         name: msg.name,
         symbol: msg.symbol,
@@ -99,7 +99,8 @@ pub fn instantiate(
     Ok(Response::default()
         .add_attribute("action", "instantiate_sg721")
         .add_message(send_fee_msg)
-        .add_message(fee_burn_msg))
+        .add_message(fee_burn_msg)
+        .add_message(fund_community_pool_msg))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -143,9 +144,19 @@ mod tests {
 
     use crate::state::Config;
     use crate::state::RoyaltyInfo;
-    use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-    use cosmwasm_std::{coins, from_binary, Addr, Decimal};
+    use cosmwasm_std::testing::mock_dependencies;
+    use cosmwasm_std::testing::{mock_env, mock_info, MockApi, MockQuerier, MockStorage};
+    use cosmwasm_std::{coins, from_binary, Addr, Decimal, OwnedDeps};
+    use std::marker::PhantomData;
 
+    fn _mock_dependencies_with_custom() -> OwnedDeps<MockStorage, MockApi, MockQuerier, Empty> {
+        OwnedDeps {
+            storage: MockStorage::default(),
+            api: MockApi::default(),
+            querier: MockQuerier::default(),
+            custom_query_type: PhantomData,
+        }
+    }
     #[test]
     fn proper_initialization_no_royalties() {
         let mut deps = mock_dependencies();
@@ -166,7 +177,7 @@ mod tests {
 
         // make sure instantiate has the burn messages
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(2, res.messages.len());
+        assert_eq!(3, res.messages.len());
 
         // it worked, let's query the contract_uri
         let res = query(deps.as_ref(), mock_env(), QueryMsg::ContractUri {}).unwrap();
@@ -208,7 +219,7 @@ mod tests {
 
         // make sure instantiate has the burn messages
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(2, res.messages.len());
+        assert_eq!(3, res.messages.len());
 
         // it worked, let's query the contract_uri
         let res = query(deps.as_ref(), mock_env(), QueryMsg::ContractUri {}).unwrap();
