@@ -7,8 +7,8 @@ use cw_utils::Expiration;
 use sg721::msg::InstantiateMsg as Sg721InstantiateMsg;
 use sg721::state::{Config, RoyaltyInfo};
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
-use whitelist::msg::InstantiateMsg as WhitelistInstantiateMsg;
-use whitelist::msg::{ExecuteMsg as WhitelistExecuteMsg, UpdateMembersMsg};
+// use whitelist::msg::InstantiateMsg as WhitelistInstantiateMsg;
+// use whitelist::msg::{ExecuteMsg as WhitelistExecuteMsg, UpdateMembersMsg};
 
 use crate::contract::instantiate;
 use crate::msg::{
