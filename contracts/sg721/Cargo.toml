@@ -29,8 +29,8 @@ optimize = """docker run --rm -v "$(pwd)":/code \
 """
 
 [dependencies]
-cosmwasm-std = { version = "1.0.0-beta" }
-cosmwasm-storage = { version = "1.0.0-beta" }
+cosmwasm-std = { version = "1.0.0-beta5" }
+cosmwasm-storage = { version = "1.0.0-beta5" }
 cw-storage-plus = "0.12.1"
 cw-utils = "0.12.1"
 cw2 = "0.12.1"
@@ -43,4 +43,4 @@ sg-std = { path = "../../packages/sg-std" }
 url = "2.2.2"
 
 [dev-dependencies]
-cosmwasm-schema = { version = "1.0.0-beta" }
+cosmwasm-schema = { version = "1.0.0-beta5" }
