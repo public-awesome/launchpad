@@ -148,7 +148,9 @@ pub fn instantiate(
     }];
 
     Ok(Response::new()
-        .add_attribute("action", "instantiate_minter")
+        .add_attribute("action", "instantiate")
+        .add_attribute("contract_name", CONTRACT_NAME)
+        .add_attribute("contract_version", CONTRACT_VERSION)
         .add_submessages(sub_msgs))
 }
 
