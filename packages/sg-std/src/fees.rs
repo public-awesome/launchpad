@@ -39,3 +39,11 @@ pub enum FeeError {
     #[error("{0}")]
     Payment(#[from] PaymentError),
 }
+
+#[cfg(test)]
+mod tests {
+    // use super::*;
+
+    #[test]
+    fn can_burn_and_distribute_fees() {}
+}
