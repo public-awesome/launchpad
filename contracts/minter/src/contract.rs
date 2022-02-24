@@ -274,13 +274,13 @@ pub fn execute_mint_for(
 }
 
 pub fn execute_batch_mint(
-    mut deps: DepsMut,
+    deps: DepsMut,
     env: Env,
-    info: MessageInfo,
+    _info: MessageInfo,
     num_mints: u64,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
-
+    let unit_price = config.unit_price;
     let mint_limit = config
         .batch_mint_limit
         .ok_or(ContractError::MaxBatchMintLimitExceeded {})?;
@@ -289,13 +289,21 @@ pub fn execute_batch_mint(
         return Err(ContractError::MaxBatchMintLimitExceeded {});
     }
 
+    let mut msgs: Vec<CosmosMsg> = vec![];
+    let mint_msg = ExecuteMsg::Mint {};
+    let msg = CosmosMsg::Wasm(WasmMsg::Execute {
+        contract_addr: env.contract.address.to_string(),
+        msg: to_binary(&mint_msg)?,
+        funds: vec![unit_price.clone()],
+    });
     for _ in 0..num_mints {
-        execute_mint_sender(deps.branch(), env.clone(), info.clone())?;
+        msgs.append(&mut vec![msg.clone()]);
     }
 
     Ok(Response::default()
         .add_attribute("action", "batch_mint")
-        .add_attribute("num_mints", num_mints.to_string()))
+        .add_attribute("num_mints", num_mints.to_string())
+        .add_messages(msgs))
 }
 
 fn _execute_mint(
