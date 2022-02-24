@@ -1,15 +1,15 @@
-use crate::{create_fund_community_pool_msg, NATIVE_DENOM};
+use crate::{create_fund_community_pool_msg, StargazeMsg, NATIVE_DENOM};
 use cosmwasm_std::{coin, coins, BankMsg, CosmosMsg, Decimal, Env, MessageInfo};
 use cw_utils::{must_pay, PaymentError};
 use thiserror::Error;
 
 const FEE_BURN_PERCENT: u64 = 50;
 
-pub fn handle_fee<T>(
+pub fn handle_fee(
     env: Env,
     info: &MessageInfo,
     expected_fee: u128,
-) -> Result<Vec<CosmosMsg<T>>, FeeError> {
+) -> Result<Vec<CosmosMsg>, FeeError> {
     let payment = must_pay(info, NATIVE_DENOM)?;
     if payment.u128() != expected_fee {
         return Err(FeeError::InvalidFee {});
@@ -33,9 +33,9 @@ pub fn handle_fee<T>(
         create_fund_community_pool_msg(coins(payment.u128() - burn_fee.u128(), NATIVE_DENOM));
 
     Ok(vec![
-        cosmwasm_std::CosmosMsg::Bank(send_fee_msg),
-        cosmwasm_std::CosmosMsg::Bank(fee_burn_msg),
-        fund_community_pool_msg,
+        CosmosMsg::Bank(send_fee_msg),
+        CosmosMsg::Bank(fee_burn_msg),
+        CosmosMsg::Custom(fund_community_pool_msg),
     ])
 }
 

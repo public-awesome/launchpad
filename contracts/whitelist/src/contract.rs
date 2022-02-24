@@ -5,7 +5,7 @@ use cosmwasm_std::{
     to_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult,
 };
 use cw2::set_contract_version;
-use cw_utils::{must_pay, Expiration};
+use cw_utils::Expiration;
 
 use crate::error::ContractError;
 use crate::msg::{
@@ -13,7 +13,6 @@ use crate::msg::{
     TimeResponse, UpdateMembersMsg,
 };
 use crate::state::{Config, CONFIG, WHITELIST};
-use sg_std::NATIVE_DENOM;
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sg-whitelist";
@@ -21,8 +20,6 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 // contract governance params
 const MAX_MEMBERS: u32 = 10000;
-const CREATION_FEE: u128 = 100_000_000;
-const CREATION_FEE_BURN_PERCENT: u64 = 50;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -32,12 +29,6 @@ pub fn instantiate(
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-
-    let payment = must_pay(&info, NATIVE_DENOM)?;
-    if payment.u128() != CREATION_FEE {
-        return Err(ContractError::InvalidCreationFee {});
-    }
-
     let config = Config {
         admin: info.sender.clone(),
         end_time: msg.end_time,
