@@ -475,15 +475,11 @@ pub fn execute_update_batch_mint_limit(
     batch_mint_limit: u64,
 ) -> Result<Response, ContractError> {
     let mut config = CONFIG.load(deps.storage)?;
-    println!("{:?}", info.sender);
-    println!("{:?}", config.admin);
     if info.sender != config.admin {
-        println!("in error");
         return Err(ContractError::Unauthorized(
             "Sender is not an admin".to_owned(),
         ));
     }
-    println!("outside error");
     if batch_mint_limit > MAX_BATCH_MINT_LIMIT {
         return Err(ContractError::InvalidBatchMintLimit {
             max: MAX_BATCH_MINT_LIMIT.to_string(),
