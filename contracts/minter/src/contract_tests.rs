@@ -649,35 +649,38 @@ fn batch_mint_limit_access_max_sold_out() {
     let update_batch_mint_limit_msg = ExecuteMsg::UpdateBatchMintLimit {
         batch_mint_limit: 1,
     };
-    let res = router.execute_contract(
-        buyer.clone(),
-        minter_addr.clone(),
-        &update_batch_mint_limit_msg,
-        &coins(PRICE, NATIVE_DENOM),
+    let err = router
+        .execute_contract(
+            buyer.clone(),
+            minter_addr.clone(),
+            &update_batch_mint_limit_msg,
+            &coins(PRICE, NATIVE_DENOM),
+        )
+        .unwrap_err();
+    assert_eq!(
+        err.source().unwrap().to_string(),
+        ContractError::Unauthorized("Sender is not an admin".to_string()).to_string()
     );
-    assert!(res.is_err());
-    let err = res.unwrap_err();
-    assert_eq!(ContractError::Unauthorized {}.to_string(), err.to_string());
 
     // update limit, invalid limit over max
     let update_batch_mint_limit_msg = ExecuteMsg::UpdateBatchMintLimit {
         batch_mint_limit: 100,
     };
-    let res = router.execute_contract(
-        creator.clone(),
-        minter_addr.clone(),
-        &update_batch_mint_limit_msg,
-        &coins(PRICE, NATIVE_DENOM),
-    );
-    assert!(res.is_err());
-    let err = res.unwrap_err();
+    let err = router
+        .execute_contract(
+            creator.clone(),
+            minter_addr.clone(),
+            &update_batch_mint_limit_msg,
+            &coins(PRICE, NATIVE_DENOM),
+        )
+        .unwrap_err();
     assert_eq!(
         ContractError::InvalidBatchMintLimit {
             max: 30.to_string(),
             got: 100.to_string()
         }
         .to_string(),
-        err.to_string()
+        err.source().unwrap().to_string()
     );
 
     // update limit successfully as admin
@@ -694,17 +697,17 @@ fn batch_mint_limit_access_max_sold_out() {
 
     // test over max batch mint limit
     let batch_mint_msg = ExecuteMsg::BatchMint { num_mints: 50 };
-    let res = router.execute_contract(
-        buyer.clone(),
-        minter_addr.clone(),
-        &batch_mint_msg,
-        &coins(PRICE, NATIVE_DENOM),
-    );
-    assert!(res.is_err());
-    let err = res.unwrap_err();
+    let err = router
+        .execute_contract(
+            buyer.clone(),
+            minter_addr.clone(),
+            &batch_mint_msg,
+            &coins(PRICE, NATIVE_DENOM),
+        )
+        .unwrap_err();
     assert_eq!(
         ContractError::MaxBatchMintLimitExceeded {}.to_string(),
-        err.to_string()
+        err.source().unwrap().to_string()
     );
 
     // success
@@ -748,7 +751,12 @@ fn batch_mint_limit_access_max_sold_out() {
     );
     assert!(res.is_err());
     let err = res.unwrap_err();
-    assert_eq!(ContractError::SoldOut {}.to_string(), err.to_string());
+    if let Some(nested_err) = err.source() {
+        assert_eq!(
+            nested_err.source().unwrap().to_string(),
+            ContractError::SoldOut {}.to_string(),
+        );
+    };
 
     // batch mint smaller amount
     let batch_mint_msg = ExecuteMsg::BatchMint { num_mints: 1 };
@@ -775,15 +783,18 @@ fn mint_for_token_id_addr() {
         token_id: 1,
         recipient: buyer.clone(),
     };
-    let res = router.execute_contract(
-        buyer.clone(),
-        minter_addr.clone(),
-        &mint_for_msg,
-        &coins(PRICE, NATIVE_DENOM),
+    let err = router
+        .execute_contract(
+            buyer.clone(),
+            minter_addr.clone(),
+            &mint_for_msg,
+            &coins(PRICE, NATIVE_DENOM),
+        )
+        .unwrap_err();
+    assert_eq!(
+        err.source().unwrap().to_string(),
+        ContractError::Unauthorized("Sender is not an admin".to_string()).to_string(),
     );
-    assert!(res.is_err());
-    let err = res.unwrap_err();
-    assert_eq!(ContractError::Unauthorized {}.to_string(), err.to_string());
 
     // test token id already sold
     // 1. mint token_id 0
@@ -809,17 +820,17 @@ fn mint_for_token_id_addr() {
         token_id,
         recipient: buyer.clone(),
     };
-    let res = router.execute_contract(
-        creator.clone(),
-        minter_addr.clone(),
-        &mint_for_msg,
-        &coins(PRICE, NATIVE_DENOM),
-    );
-    assert!(res.is_err());
-    let err = res.unwrap_err();
+    let err = router
+        .execute_contract(
+            creator.clone(),
+            minter_addr.clone(),
+            &mint_for_msg,
+            &coins(PRICE, NATIVE_DENOM),
+        )
+        .unwrap_err();
     assert_eq!(
         ContractError::TokenIdAlreadySold { token_id }.to_string(),
-        err.to_string()
+        err.source().unwrap().to_string()
     );
     let mintable_num_tokens_response: MintableNumTokensResponse = router
         .wrap()
