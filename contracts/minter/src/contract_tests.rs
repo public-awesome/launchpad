@@ -655,9 +655,10 @@ fn batch_mint_limit_access_max_sold_out() {
         &update_batch_mint_limit_msg,
         &coins(PRICE, NATIVE_DENOM),
     );
+    println!("{:?}", res);
     assert!(res.is_err());
     let err = res.unwrap_err();
-    assert_eq!(ContractError::Unauthorized {}.to_string(), err.to_string());
+    assert_eq!(ContractError::Unauthorized {}, err);
 
     // update limit, invalid limit over max
     let update_batch_mint_limit_msg = ExecuteMsg::UpdateBatchMintLimit {

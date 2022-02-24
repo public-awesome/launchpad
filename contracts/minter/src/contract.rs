@@ -190,7 +190,9 @@ pub fn execute_set_whitelist(
 ) -> Result<Response, ContractError> {
     let mut config = CONFIG.load(deps.storage)?;
     if config.admin != info.sender {
-        return Err(ContractError::Unauthorized {});
+        return Err(ContractError::Unauthorized(
+            "Sender is not an admin".to_owned(),
+        ));
     };
     config.whitelist = Some(deps.api.addr_validate(whitelist)?);
     CONFIG.save(deps.storage, &config)?;
@@ -266,7 +268,9 @@ pub fn execute_mint_to(
 
     // Check only admin
     if info.sender != config.admin {
-        return Err(ContractError::Unauthorized {});
+        return Err(ContractError::Unauthorized(
+            "Sender is not an admin".to_owned(),
+        ));
     }
 
     _execute_mint(deps, env, info, action, Some(recipient), None)
@@ -284,7 +288,9 @@ pub fn execute_mint_for(
 
     // Check only admin
     if info.sender != config.admin {
-        return Err(ContractError::Unauthorized {});
+        return Err(ContractError::Unauthorized(
+            "Sender is not an admin".to_owned(),
+        ));
     }
 
     _execute_mint(deps, env, info, action, Some(recipient), Some(token_id))
@@ -422,7 +428,9 @@ pub fn execute_update_start_time(
 ) -> Result<Response, ContractError> {
     let mut config = CONFIG.load(deps.storage)?;
     if info.sender != config.admin {
-        return Err(ContractError::Unauthorized {});
+        return Err(ContractError::Unauthorized(
+            "Sender is not an admin".to_owned(),
+        ));
     }
 
     let default_start_time = Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME));
@@ -445,7 +453,9 @@ pub fn execute_update_per_address_limit(
 ) -> Result<Response, ContractError> {
     let mut config = CONFIG.load(deps.storage)?;
     if info.sender != config.admin {
-        return Err(ContractError::Unauthorized {});
+        return Err(ContractError::Unauthorized(
+            "Sender is not an admin".to_owned(),
+        ));
     }
     if per_address_limit > MAX_PER_ADDRESS_LIMIT {
         return Err(ContractError::InvalidPerAddressLimit {
@@ -465,9 +475,15 @@ pub fn execute_update_batch_mint_limit(
     batch_mint_limit: u64,
 ) -> Result<Response, ContractError> {
     let mut config = CONFIG.load(deps.storage)?;
+    println!("{:?}", info.sender);
+    println!("{:?}", config.admin);
     if info.sender != config.admin {
-        return Err(ContractError::Unauthorized {});
+        println!("in error");
+        return Err(ContractError::Unauthorized(
+            "Sender is not an admin".to_owned(),
+        ));
     }
+    println!("outside error");
     if batch_mint_limit > MAX_BATCH_MINT_LIMIT {
         return Err(ContractError::InvalidBatchMintLimit {
             max: MAX_BATCH_MINT_LIMIT.to_string(),
