@@ -6,7 +6,7 @@ use cw_multi_test::{App, BankSudo, Contract, ContractWrapper, Executor, SudoMsg}
 use cw_utils::Expiration;
 use sg721::msg::InstantiateMsg as Sg721InstantiateMsg;
 use sg721::state::{Config, RoyaltyInfo};
-use sg_std::NATIVE_DENOM;
+use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use whitelist::msg::InstantiateMsg as WhitelistInstantiateMsg;
 use whitelist::msg::{ExecuteMsg as WhitelistExecuteMsg, UpdateMembersMsg};
 
@@ -167,6 +167,14 @@ fn setup_accounts(router: &mut App) -> Result<(Addr, Addr), ContractError> {
     Ok((creator, buyer))
 }
 
+// set blockchain time to after mint by default
+fn setup_block_time(router: &mut App, nanos: u64) -> Result<Timestamp, ContractError> {
+    let mut block = router.block_info();
+    block.time = Timestamp::from_nanos(nanos);
+    router.set_block(block.clone());
+    Ok(block.time)
+}
+
 #[test]
 fn initialization() {
     let mut deps = mock_dependencies_with_balance(&coins(2, "token"));
@@ -293,9 +301,21 @@ fn initialization() {
 #[test]
 fn happy_path() {
     let mut router = mock_app();
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 1).unwrap();
     let (creator, buyer) = setup_accounts(&mut router).unwrap();
     let num_tokens: u64 = 2;
     let (minter_addr, config) = setup_minter_contract(&mut router, &creator, num_tokens).unwrap();
+
+    // default start time genesis mint time
+    let res: StartTimeResponse = router
+        .wrap()
+        .query_wasm_smart(minter_addr.clone(), &QueryMsg::StartTime {})
+        .unwrap();
+    assert_eq!(
+        res.start_time,
+        "expiration time: ".to_owned()
+            + &Timestamp::from_nanos(GENESIS_MINT_START_TIME).to_string()
+    );
 
     // Succeeds if funds are sent
     let mint_msg = ExecuteMsg::Mint {};
@@ -396,12 +416,9 @@ fn whitelist_access_len_add_remove_expiration() {
     let num_tokens: u64 = 1;
     let (minter_addr, _config) = setup_minter_contract(&mut router, &creator, num_tokens).unwrap();
     let whitelist_addr = setup_whitelist_contract(&mut router, &creator).unwrap();
-    const EXPIRATION_TIME: Timestamp = Timestamp::from_seconds(100000 + 10);
-
-    // set block info
-    let mut block = router.block_info();
-    block.time = Timestamp::from_seconds(100000);
-    router.set_block(block);
+    const EXPIRATION_TIME: Timestamp = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000_000);
+    // set to genesis mint start time
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME).unwrap();
 
     // update whitelist_expiration fails if not admin
     let wl_msg = WhitelistExecuteMsg::UpdateEndTime(Expiration::AtTime(EXPIRATION_TIME));
@@ -493,12 +510,8 @@ fn before_start_time() {
     let (creator, buyer) = setup_accounts(&mut router).unwrap();
     let num_tokens: u64 = 1;
     let (minter_addr, _config) = setup_minter_contract(&mut router, &creator, num_tokens).unwrap();
-    const START_TIME: Timestamp = Timestamp::from_seconds(100000 + 10);
-
-    // set block info
-    let mut block = router.block_info();
-    block.time = Timestamp::from_seconds(100000);
-    router.set_block(block);
+    // set to before genesis mint start time
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME - 10).unwrap();
 
     // set start_time fails if not admin
     let start_time_msg = ExecuteMsg::UpdateStartTime(Expiration::Never {});
@@ -511,7 +524,9 @@ fn before_start_time() {
     assert!(res.is_err());
 
     // if block before start_time, throw error
-    let start_time_msg = ExecuteMsg::UpdateStartTime(Expiration::AtTime(START_TIME));
+    let start_time_msg = ExecuteMsg::UpdateStartTime(Expiration::AtTime(Timestamp::from_nanos(
+        GENESIS_MINT_START_TIME,
+    )));
     let res = router.execute_contract(
         creator.clone(),
         minter_addr.clone(),
@@ -535,14 +550,13 @@ fn before_start_time() {
         .query_wasm_smart(minter_addr.clone(), &QueryMsg::StartTime {})
         .unwrap();
     assert_eq!(
-        "expiration time: ".to_owned() + &START_TIME.to_string(),
+        "expiration time: ".to_owned()
+            + &Timestamp::from_nanos(GENESIS_MINT_START_TIME).to_string(),
         start_time_response.start_time
     );
 
     // set block forward, after start time. mint succeeds
-    let mut block = router.block_info();
-    block.time = START_TIME.plus_seconds(10);
-    router.set_block(block);
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 10_000_000).unwrap();
 
     // mint succeeds
     let mint_msg = ExecuteMsg::Mint {};
@@ -556,6 +570,8 @@ fn check_per_address_limit() {
     let (creator, buyer) = setup_accounts(&mut router).unwrap();
     let num_tokens = 2;
     let (minter_addr, _config) = setup_minter_contract(&mut router, &creator, num_tokens).unwrap();
+    // set to genesis mint start time
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME).unwrap();
 
     // set limit, check unauthorized
     let per_address_limit_msg = ExecuteMsg::UpdatePerAddressLimit {
@@ -601,6 +617,7 @@ fn check_per_address_limit() {
         &mint_msg,
         &coins(PRICE, NATIVE_DENOM),
     );
+
     assert!(res.is_ok());
 
     // second mint fails from exceeding per address limit
@@ -615,6 +632,8 @@ fn batch_mint_limit_access_max_sold_out() {
     let (creator, buyer) = setup_accounts(&mut router).unwrap();
     let num_tokens = 4;
     let (minter_addr, _config) = setup_minter_contract(&mut router, &creator, num_tokens).unwrap();
+    // set to genesis mint start time
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME).unwrap();
 
     // batch mint limit set to STARTING_BATCH_MINT_LIMIT if no mint provided
     let batch_mint_msg = ExecuteMsg::BatchMint { num_mints: 1 };
@@ -748,6 +767,8 @@ fn mint_for_token_id_addr() {
     let (creator, buyer) = setup_accounts(&mut router).unwrap();
     let num_tokens: u64 = 4;
     let (minter_addr, _config) = setup_minter_contract(&mut router, &creator, num_tokens).unwrap();
+    // set to genesis mint start time
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME).unwrap();
 
     // try mint_for, test unauthorized
     let mint_for_msg = ExecuteMsg::MintFor {
@@ -834,6 +855,58 @@ fn mint_for_token_id_addr() {
         .query_wasm_smart(minter_addr, &QueryMsg::MintableNumTokens {})
         .unwrap();
     assert_eq!(mintable_num_tokens_response.count, 0);
+}
+
+#[test]
+fn test_start_time_before_genesis() {
+    let mut router = mock_app();
+    let (creator, _) = setup_accounts(&mut router).unwrap();
+    let num_tokens = 10;
+
+    // Upload contract code
+    let sg721_code_id = router.store_code(contract_sg721());
+    let minter_code_id = router.store_code(contract_minter());
+    let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
+
+    // Instantiate sale contract
+    let msg = InstantiateMsg {
+        unit_price: coin(PRICE, NATIVE_DENOM),
+        num_tokens,
+        start_time: Some(Expiration::AtTime(Timestamp::from_nanos(
+            GENESIS_MINT_START_TIME - 100,
+        ))),
+        per_address_limit: None,
+        batch_mint_limit: None,
+        whitelist: None,
+        base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
+        sg721_code_id,
+        sg721_instantiate_msg: Sg721InstantiateMsg {
+            name: String::from("TEST"),
+            symbol: String::from("TEST"),
+            minter: creator.to_string(),
+            config: Some(Config {
+                contract_uri: Some(String::from("ipfs://url.json")),
+                creator: Some(creator.clone()),
+                royalties: Some(RoyaltyInfo {
+                    payment_address: creator.clone(),
+                    share: Decimal::percent(10),
+                }),
+            }),
+        },
+    };
+    let minter_addr = router
+        .instantiate_contract(minter_code_id, creator, &msg, &creation_fee, "Minter", None)
+        .unwrap();
+
+    let res: StartTimeResponse = router
+        .wrap()
+        .query_wasm_smart(minter_addr, &QueryMsg::StartTime {})
+        .unwrap();
+    assert_eq!(
+        res.start_time,
+        "expiration time: ".to_owned()
+            + &Timestamp::from_nanos(GENESIS_MINT_START_TIME).to_string()
+    );
 }
 
 #[test]

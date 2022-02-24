@@ -2,7 +2,7 @@
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     to_binary, Addr, BankMsg, Binary, CosmosMsg, Deps, DepsMut, Empty, Env, MessageInfo, Order,
-    Reply, ReplyOn, Response, StdError, StdResult, SubMsg, WasmMsg,
+    Reply, ReplyOn, Response, StdError, StdResult, SubMsg, Timestamp, WasmMsg,
 };
 use cw2::set_contract_version;
 use cw721::TokensResponse as Cw721TokensResponse;
@@ -17,7 +17,7 @@ use crate::msg::{
     StartTimeResponse,
 };
 use crate::state::{Config, CONFIG, MINTABLE_TOKEN_IDS, SG721_ADDRESS};
-use sg_std::NATIVE_DENOM;
+use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use whitelist::msg::{HasEndedResponse, HasMemberResponse, QueryMsg as WhitelistQueryMsg};
 
 // version info for migration info
@@ -93,6 +93,19 @@ pub fn instantiate(
         None => None,
     };
 
+    // default is genesis mint start time
+    let default_start_time = Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME));
+    let start_time = match msg.start_time {
+        Some(st) => {
+            if st < default_start_time {
+                default_start_time
+            } else {
+                st
+            }
+        }
+        None => default_start_time,
+    };
+
     let config = Config {
         admin: info.sender,
         base_token_uri: msg.base_token_uri,
@@ -102,7 +115,7 @@ pub fn instantiate(
         per_address_limit: msg.per_address_limit,
         batch_mint_limit,
         whitelist: whitelist_addr,
-        start_time: msg.start_time,
+        start_time: Some(start_time),
     };
     CONFIG.save(deps.storage, &config)?;
 
@@ -407,6 +420,14 @@ pub fn execute_update_start_time(
     if info.sender != config.admin {
         return Err(ContractError::Unauthorized {});
     }
+
+    let default_start_time = Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME));
+    let start_time = if start_time < default_start_time {
+        default_start_time
+    } else {
+        start_time
+    };
+
     config.start_time = Some(start_time);
     CONFIG.save(deps.storage, &config)?;
     Ok(Response::new().add_attribute("action", "update_start_time"))
