@@ -6,6 +6,8 @@ use cosmwasm_std::{
 };
 use cw2::set_contract_version;
 use cw_utils::Expiration;
+use sg_std::fees::burn_and_distribute_fee;
+use sg_std::StargazeMsgWrapper;
 
 use crate::error::ContractError;
 use crate::msg::{
@@ -20,14 +22,15 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 // contract governance params
 const MAX_MEMBERS: u32 = 10000;
+const CREATION_FEE: u128 = 100_000_000;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
     msg: InstantiateMsg,
-) -> Result<Response, ContractError> {
+) -> Result<Response<StargazeMsgWrapper>, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
     let config = Config {
         admin: info.sender.clone(),
@@ -35,6 +38,8 @@ pub fn instantiate(
         num_members: msg.members.len() as u32,
     };
     CONFIG.save(deps.storage, &config)?;
+
+    let fee_msgs = burn_and_distribute_fee(env, &info, CREATION_FEE)?;
 
     if MAX_MEMBERS <= (config.num_members) {
         return Err(ContractError::MembersExceeded {
@@ -50,7 +55,8 @@ pub fn instantiate(
 
     Ok(Response::new()
         .add_attribute("method", "instantiate_whitelist")
-        .add_attribute("sender", info.sender))
+        .add_attribute("sender", info.sender)
+        .add_messages(fee_msgs))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -160,10 +166,12 @@ fn query_has_member(deps: Deps, member: String) -> StdResult<HasMemberResponse> 
 }
 
 #[cfg(test)]
-#[cfg(test)]
 mod tests {
     use super::*;
-    use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
+    use cosmwasm_std::{
+        coin,
+        testing::{mock_dependencies, mock_env, mock_info},
+    };
 
     const ADMIN: &str = "admin";
 
@@ -175,9 +183,9 @@ mod tests {
             members: vec!["adsfsa".to_string()],
             end_time: NON_EXPIRED_HEIGHT,
         };
-        let info = mock_info(ADMIN, &[]);
+        let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
         let res = instantiate(deps, mock_env(), info, msg).unwrap();
-        assert_eq!(0, res.messages.len());
+        assert_eq!(2, res.messages.len());
     }
 
     #[test]
