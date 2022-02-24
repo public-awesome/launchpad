@@ -294,7 +294,7 @@ pub fn execute_batch_mint(
     let msg = CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: env.contract.address.to_string(),
         msg: to_binary(&mint_msg)?,
-        funds: vec![unit_price.clone()],
+        funds: vec![unit_price],
     });
     for _ in 0..num_mints {
         msgs.append(&mut vec![msg.clone()]);
