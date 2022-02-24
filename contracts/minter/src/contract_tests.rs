@@ -549,7 +549,7 @@ fn before_start_time() {
     );
 
     // set block forward, after start time. mint succeeds
-    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 10_000_000);
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 10_000_000).unwrap();
 
     // mint succeeds
     let mint_msg = ExecuteMsg::Mint {};
