@@ -719,12 +719,13 @@ fn batch_mint_limit_access_max_sold_out() {
     );
 
     // test sold out and fails
-    let batch_mint_msg = ExecuteMsg::BatchMint { num_mints: 2 };
+    let num_mints = 2;
+    let batch_mint_msg = ExecuteMsg::BatchMint { num_mints };
     let res = router.execute_contract(
         buyer.clone(),
         minter_addr.clone(),
         &batch_mint_msg,
-        &coins(PRICE, NATIVE_DENOM),
+        &coins(PRICE * num_mints as u128, NATIVE_DENOM),
     );
     assert!(res.is_err());
     let err = res.unwrap_err();
@@ -819,12 +820,13 @@ fn mint_for_token_id_addr() {
     );
     assert!(res.is_ok());
 
-    let batch_mint_msg = ExecuteMsg::BatchMint { num_mints: 2 };
+    let num_mints = 2;
+    let batch_mint_msg = ExecuteMsg::BatchMint { num_mints };
     let res = router.execute_contract(
         creator,
         minter_addr.clone(),
         &batch_mint_msg,
-        &coins(PRICE, NATIVE_DENOM),
+        &coins(PRICE * num_mints as u128, NATIVE_DENOM),
     );
     assert!(res.is_ok());
     let mintable_num_tokens_response: MintableNumTokensResponse = router
