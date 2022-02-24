@@ -8,8 +8,6 @@ pub enum ContractError {
     #[error("{0}")]
     Std(#[from] StdError),
 
-    // #[error("Unauthorized")]
-    // Unauthorized {},
     #[error("Unauthorized: {0}")]
     Unauthorized(String),
 
