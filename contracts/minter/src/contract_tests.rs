@@ -743,19 +743,20 @@ fn batch_mint_limit_access_max_sold_out() {
     // test sold out and fails
     let num_mints = 2;
     let batch_mint_msg = ExecuteMsg::BatchMint { num_mints };
-    let _err = router
-        .execute_contract(
-            buyer.clone(),
-            minter_addr.clone(),
-            &batch_mint_msg,
-            &coins(PRICE * num_mints as u128, NATIVE_DENOM),
-        )
-        .unwrap_err();
-    // TODO: figure out how to test nested errors
-    // assert_eq!(
-    //     err.source().unwrap().to_string(),
-    //     ContractError::SoldOut {}.to_string(),
-    // );
+    let res = router.execute_contract(
+        buyer.clone(),
+        minter_addr.clone(),
+        &batch_mint_msg,
+        &coins(PRICE * num_mints as u128, NATIVE_DENOM),
+    );
+    assert!(res.is_err());
+    let err = res.unwrap_err();
+    if let Some(nested_err) = err.source() {
+        assert_eq!(
+            nested_err.source().unwrap().to_string(),
+            ContractError::SoldOut {}.to_string(),
+        );
+    };
 
     // batch mint smaller amount
     let batch_mint_msg = ExecuteMsg::BatchMint { num_mints: 1 };
