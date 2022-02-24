@@ -1,4 +1,4 @@
-mod fees;
+pub mod fees;
 mod msg;
 mod route;
 
