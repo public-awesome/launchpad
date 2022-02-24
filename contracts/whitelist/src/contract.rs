@@ -54,7 +54,9 @@ pub fn instantiate(
     }
 
     Ok(Response::new()
-        .add_attribute("method", "instantiate_whitelist")
+        .add_attribute("method", "instantiate")
+        .add_attribute("contract_name", CONTRACT_NAME)
+        .add_attribute("contract_version", CONTRACT_VERSION)
         .add_attribute("sender", info.sender)
         .add_messages(fee_msgs))
 }
