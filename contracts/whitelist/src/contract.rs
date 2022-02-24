@@ -168,7 +168,10 @@ fn query_has_member(deps: Deps, member: String) -> StdResult<HasMemberResponse> 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
+    use cosmwasm_std::{
+        coin,
+        testing::{mock_dependencies, mock_env, mock_info},
+    };
 
     const ADMIN: &str = "admin";
 
@@ -180,9 +183,9 @@ mod tests {
             members: vec!["adsfsa".to_string()],
             end_time: NON_EXPIRED_HEIGHT,
         };
-        let info = mock_info(ADMIN, &[]);
+        let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
         let res = instantiate(deps, mock_env(), info, msg).unwrap();
-        assert_eq!(0, res.messages.len());
+        assert_eq!(2, res.messages.len());
     }
 
     #[test]
