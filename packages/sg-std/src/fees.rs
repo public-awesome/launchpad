@@ -5,7 +5,7 @@ use thiserror::Error;
 
 const FEE_BURN_PERCENT: u64 = 50;
 
-pub fn handle_fee(
+pub fn burn_and_distribute_fee(
     env: Env,
     info: &MessageInfo,
     expected_fee: u128,
