@@ -739,9 +739,11 @@ version = "0.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
+ "cw-utils 0.12.1",
  "cw721 0.11.0",
  "schemars",
  "serde",
+ "thiserror",
 ]
 
 [[package]]
