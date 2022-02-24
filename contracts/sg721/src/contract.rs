@@ -90,10 +90,6 @@ pub fn instantiate(
         if let Some(ref contract_uri) = config.contract_uri {
             // validate the URI
             Url::parse(contract_uri)?;
-            // validate the extension
-            if !contract_uri.ends_with(".json") {
-                return Err(ContractError::InvalidContractUri {});
-            }
         }
         CONFIG.save(deps.storage, config)?;
     }
