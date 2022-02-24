@@ -6,7 +6,7 @@ use thiserror::Error;
 const FEE_BURN_PERCENT: u64 = 50;
 
 pub fn burn_and_distribute_fee(
-    env: Env,
+    _env: Env,
     info: &MessageInfo,
     expected_fee: u128,
 ) -> Result<Vec<CosmosMsg<StargazeMsgWrapper>>, FeeError> {
@@ -19,24 +19,16 @@ pub fn burn_and_distribute_fee(
     let burn_percent = Decimal::percent(FEE_BURN_PERCENT);
     let burn_fee = payment * burn_percent;
     let burn_coin = coin(burn_fee.u128(), NATIVE_DENOM);
-    // send fee to contract to be burned
-    let send_fee_msg = BankMsg::Send {
-        to_address: env.contract.address.to_string(),
-        amount: vec![burn_coin.clone()],
-    };
     // burn half the fee
     let fee_burn_msg = BankMsg::Burn {
         amount: vec![burn_coin],
     };
 
+    // Send other half to community pool
     let fund_community_pool_msg =
         create_fund_community_pool_msg(coins(payment.u128() - burn_fee.u128(), NATIVE_DENOM));
 
-    Ok(vec![
-        CosmosMsg::Bank(send_fee_msg),
-        CosmosMsg::Bank(fee_burn_msg),
-        fund_community_pool_msg,
-    ])
+    Ok(vec![CosmosMsg::Bank(fee_burn_msg), fund_community_pool_msg])
 }
 
 #[derive(Error, Debug, PartialEq)]
