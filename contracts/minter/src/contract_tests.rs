@@ -351,6 +351,13 @@ fn happy_path() {
     );
     assert!(res.is_ok());
 
+    // minter contract should have no balance
+    let minter_balance = router
+        .wrap()
+        .query_all_balances(minter_addr.clone())
+        .unwrap();
+    assert_eq!(0, minter_balance.len());
+
     // Check that NFT is transferred
     let query_owner_msg = Cw721QueryMsg::OwnerOf {
         token_id: String::from("1"),
@@ -682,7 +689,8 @@ fn batch_mint_limit_access_max_sold_out() {
     );
 
     // success
-    let batch_mint_msg = ExecuteMsg::BatchMint { num_mints: 2 };
+    let num_mints = 2;
+    let batch_mint_msg = ExecuteMsg::BatchMint { num_mints };
     let res = router.execute_contract(
         buyer.clone(),
         minter_addr.clone(),
@@ -691,13 +699,33 @@ fn batch_mint_limit_access_max_sold_out() {
     );
     assert!(res.is_ok());
 
+    // Balances are correct
+    let buyer_native_balances = router.wrap().query_all_balances(buyer.clone()).unwrap();
+    assert_eq!(
+        buyer_native_balances,
+        coins(INITIAL_BALANCE - (PRICE * num_mints as u128), NATIVE_DENOM)
+    );
+    // minter contract should have no balance
+    let minter_balance = router
+        .wrap()
+        .query_all_balances(minter_addr.clone())
+        .unwrap();
+    assert_eq!(0, minter_balance.len());
+
+    let creator_native_balances = router.wrap().query_all_balances(creator.clone()).unwrap();
+    assert_eq!(
+        creator_native_balances,
+        coins(INITIAL_BALANCE + (PRICE * num_mints as u128), NATIVE_DENOM)
+    );
+
     // test sold out and fails
-    let batch_mint_msg = ExecuteMsg::BatchMint { num_mints: 2 };
+    let num_mints = 2;
+    let batch_mint_msg = ExecuteMsg::BatchMint { num_mints };
     let res = router.execute_contract(
         buyer.clone(),
         minter_addr.clone(),
         &batch_mint_msg,
-        &coins(PRICE, NATIVE_DENOM),
+        &coins(PRICE * num_mints as u128, NATIVE_DENOM),
     );
     assert!(res.is_err());
     let err = res.unwrap_err();
@@ -748,6 +776,13 @@ fn mint_for_token_id_addr() {
     );
     assert!(res.is_ok());
 
+    // minter contract should have no balance
+    let minter_balance = router
+        .wrap()
+        .query_all_balances(minter_addr.clone())
+        .unwrap();
+    assert_eq!(0, minter_balance.len());
+
     let token_id = 0;
     let mint_for_msg = ExecuteMsg::MintFor {
         token_id,
@@ -785,12 +820,13 @@ fn mint_for_token_id_addr() {
     );
     assert!(res.is_ok());
 
-    let batch_mint_msg = ExecuteMsg::BatchMint { num_mints: 2 };
+    let num_mints = 2;
+    let batch_mint_msg = ExecuteMsg::BatchMint { num_mints };
     let res = router.execute_contract(
         creator,
         minter_addr.clone(),
         &batch_mint_msg,
-        &coins(PRICE, NATIVE_DENOM),
+        &coins(PRICE * num_mints as u128, NATIVE_DENOM),
     );
     assert!(res.is_ok());
     let mintable_num_tokens_response: MintableNumTokensResponse = router
