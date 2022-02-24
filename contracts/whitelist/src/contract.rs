@@ -166,7 +166,6 @@ fn query_has_member(deps: Deps, member: String) -> StdResult<HasMemberResponse> 
 }
 
 #[cfg(test)]
-#[cfg(test)]
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
