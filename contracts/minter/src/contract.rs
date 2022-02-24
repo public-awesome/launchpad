@@ -29,6 +29,7 @@ const MAX_TOKEN_LIMIT: u32 = 10000;
 const MAX_PER_ADDRESS_LIMIT: u64 = 30;
 const MAX_BATCH_MINT_LIMIT: u64 = 30;
 const STARTING_BATCH_MINT_LIMIT: u64 = 5;
+const STARTING_PER_ADDRESS_LIMIT: u64 = 5;
 const MIN_MINT_PRICE: u128 = 100_000_000;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -88,6 +89,9 @@ pub fn instantiate(
     // Initially set batch_mint_limit if no msg
     let batch_mint_limit: Option<u64> = msg.batch_mint_limit.or(Some(STARTING_BATCH_MINT_LIMIT));
 
+    // Initially set per_address_limit if no msg
+    let per_address_limit: Option<u64> = msg.per_address_limit.or(Some(STARTING_PER_ADDRESS_LIMIT));
+
     let whitelist_addr: Option<Addr> = match msg.whitelist {
         Some(wl) => Some(deps.api.addr_validate(&wl)?),
         None => None,
@@ -112,7 +116,7 @@ pub fn instantiate(
         num_tokens: msg.num_tokens,
         sg721_code_id: msg.sg721_code_id,
         unit_price: msg.unit_price,
-        per_address_limit: msg.per_address_limit,
+        per_address_limit,
         batch_mint_limit,
         whitelist: whitelist_addr,
         start_time: Some(start_time),
