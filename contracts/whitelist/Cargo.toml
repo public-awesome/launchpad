@@ -50,7 +50,6 @@ cw4-group = "0.12.1"
 schemars = "0.8"
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0" }
-sg-std = { path = "../../packages/sg-std" }
 
 [dev-dependencies]
 cosmwasm-schema = { version = "1.0.0-beta" }

@@ -985,7 +985,6 @@ dependencies = [
  "cw4-group",
  "schemars",
  "serde",
- "sg-std",
  "thiserror",
 ]
 
