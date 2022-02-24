@@ -6,6 +6,8 @@ use cosmwasm_std::{
 };
 use cw2::set_contract_version;
 use cw_utils::Expiration;
+use sg_std::fees::burn_and_distribute_fee;
+use sg_std::StargazeMsgWrapper;
 
 use crate::error::ContractError;
 use crate::msg::{
@@ -20,15 +22,19 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 // contract governance params
 const MAX_MEMBERS: u32 = 10000;
+const CREATION_FEE: u128 = 100_000_000;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
     msg: InstantiateMsg,
-) -> Result<Response, ContractError> {
+) -> Result<Response<StargazeMsgWrapper>, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+
+    let fee_msgs = burn_and_distribute_fee(env, &info, CREATION_FEE)?;
+
     let config = Config {
         admin: info.sender.clone(),
         end_time: msg.end_time,
@@ -50,7 +56,8 @@ pub fn instantiate(
 
     Ok(Response::new()
         .add_attribute("method", "instantiate_whitelist")
-        .add_attribute("sender", info.sender))
+        .add_attribute("sender", info.sender)
+        .add_messages(fee_msgs))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
