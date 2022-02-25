@@ -7,7 +7,7 @@ use cw_utils::Expiration;
 use sg721::msg::InstantiateMsg as Sg721InstantiateMsg;
 use sg721::state::{Config, RoyaltyInfo};
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
-// use whitelist::msg::InstantiateMsg as WhitelistInstantiateMsg;
+use whitelist::msg::InstantiateMsg as WhitelistInstantiateMsg;
 // use whitelist::msg::{ExecuteMsg as WhitelistExecuteMsg, UpdateMembersMsg};
 
 use crate::contract::instantiate;
@@ -27,14 +27,14 @@ fn mock_app() -> App {
     App::default()
 }
 
-// pub fn contract_whitelist() -> Box<dyn Contract<Empty>> {
-//     let contract = ContractWrapper::new(
-//         whitelist::contract::execute,
-//         whitelist::contract::instantiate,
-//         whitelist::contract::query,
-//     );
-//     Box::new(contract)
-// }
+pub fn contract_whitelist() -> Box<dyn Contract<Empty>> {
+    let contract = ContractWrapper::new(
+        whitelist::contract::execute,
+        whitelist::contract::instantiate,
+        whitelist::contract::query,
+    );
+    Box::new(contract)
+}
 
 pub fn contract_minter() -> Box<dyn Contract<Empty>> {
     let contract = ContractWrapper::new(
@@ -55,26 +55,27 @@ pub fn contract_sg721() -> Box<dyn Contract<Empty>> {
     Box::new(contract)
 }
 
-// fn setup_whitelist_contract(router: &mut App, creator: &Addr) -> Result<Addr, ContractError> {
-//     let whitelist_code_id = router.store_code(contract_whitelist());
+fn setup_whitelist_contract(router: &mut App, creator: &Addr) -> Result<Addr, ContractError> {
+    let whitelist_code_id = router.store_code(contract_whitelist());
 
-//     let msg = WhitelistInstantiateMsg {
-//         members: vec![],
-//         end_time: Expiration::Never {},
-//     };
-//     let whitelist_addr = router
-//         .instantiate_contract(
-//             whitelist_code_id,
-//             creator.clone(),
-//             &msg,
-//             &[],
-//             "whitelist",
-//             None,
-//         )
-//         .unwrap();
+    let msg = WhitelistInstantiateMsg {
+        members: vec![],
+        start_time: Expiration::Never {},
+        end_time: Expiration::Never {},
+    };
+    let whitelist_addr = router
+        .instantiate_contract(
+            whitelist_code_id,
+            creator.clone(),
+            &msg,
+            &[],
+            "whitelist",
+            None,
+        )
+        .unwrap();
 
-//     Ok(whitelist_addr)
-// }
+    Ok(whitelist_addr)
+}
 
 // Upload contract code and instantiate sale contract
 fn setup_minter_contract(
