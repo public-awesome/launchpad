@@ -88,8 +88,12 @@ pub fn instantiate(
             royalty.is_valid()?;
         }
         if let Some(ref contract_uri) = config.contract_uri {
-            // validate the URI
-            Url::parse(contract_uri)?;
+            // Check that base_token_uri is a valid IPFS uri
+            let parsed_contract_uri =
+                Url::parse(contract_uri).or(Err(ContractError::InvalidContractUri {}))?;
+            if parsed_contract_uri.scheme() != "ipfs" {
+                return Err(ContractError::InvalidContractUri {});
+            }
         }
         CONFIG.save(deps.storage, config)?;
     }
@@ -159,7 +163,7 @@ mod tests {
             symbol: String::from("BOBO"),
             minter: String::from("minter"),
             config: Some(Config {
-                contract_uri: Some(String::from("https://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json")),
+                contract_uri: Some(String::from("ipfs://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json")),
                 creator: Some(Addr::unchecked(creator)),
                 royalties: None,
             }),
@@ -173,7 +177,7 @@ mod tests {
         // it worked, let's query the contract_uri
         let res = query(deps.as_ref(), mock_env(), QueryMsg::ContractUri {}).unwrap();
         let value: ContractUriResponse = from_binary(&res).unwrap();
-        assert_eq!(Some("https://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json".to_string()), value.contract_uri);
+        assert_eq!(Some("ipfs://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json".to_string()), value.contract_uri);
 
         // it worked, let's query the creator
         let res = query(deps.as_ref(), mock_env(), QueryMsg::Creator {}).unwrap();
@@ -198,7 +202,7 @@ mod tests {
             symbol: String::from("BOBO"),
             minter: String::from("minter"),
             config: Some(Config {
-                contract_uri: Some(String::from("https://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json")),
+                contract_uri: Some(String::from("ipfs://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json")),
                 creator: Some(Addr::unchecked(creator.clone())),
                 royalties: Some(RoyaltyInfo {
                     payment_address: Addr::unchecked(creator.clone()),
@@ -215,7 +219,7 @@ mod tests {
         // it worked, let's query the contract_uri
         let res = query(deps.as_ref(), mock_env(), QueryMsg::ContractUri {}).unwrap();
         let value: ContractUriResponse = from_binary(&res).unwrap();
-        assert_eq!(Some("https://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json".to_string()), value.contract_uri);
+        assert_eq!(Some("ipfs://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json".to_string()), value.contract_uri);
 
         // it worked, let's query the creator
         let res = query(deps.as_ref(), mock_env(), QueryMsg::Creator {}).unwrap();
