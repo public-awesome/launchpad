@@ -240,8 +240,8 @@ mod tests {
         let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
         assert_eq!(
             ContractError::MembersExceeded {
-                expected: 10000,
-                actual: 10000
+                expected: 1000,
+                actual: 1000
             }
             .to_string(),
             err.to_string()
