@@ -40,7 +40,19 @@ pub fn instantiate(
     };
     CONFIG.save(deps.storage, &config)?;
 
-    // TODO: make sure start and end times aren't in the past
+    if msg.start_time > msg.end_time {
+        return Err(ContractError::InvalidStartTime(
+            msg.start_time,
+            msg.end_time,
+        ));
+    }
+
+    if msg.start_time.is_expired(&env.block) {
+        return Err(ContractError::InvalidStartTime(
+            Expiration::AtTime(env.block.time),
+            msg.start_time,
+        ));
+    }
 
     let fee_msgs = burn_and_distribute_fee(env, &info, CREATION_FEE)?;
 
@@ -233,6 +245,18 @@ mod tests {
     fn proper_initialization() {
         let mut deps = mock_dependencies();
         setup_contract(deps.as_mut());
+    }
+
+    #[test]
+    fn check_start_time_after_end_time() {
+        let msg = InstantiateMsg {
+            members: vec!["adsfsa".to_string()],
+            start_time: Expiration::AtHeight(101),
+            end_time: Expiration::AtHeight(100),
+        };
+        let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
+        let mut deps = mock_dependencies();
+        instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
     }
 
     #[test]
