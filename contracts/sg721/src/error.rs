@@ -1,6 +1,7 @@
 use cosmwasm_std::StdError;
 use cw721_base::ContractError as Cw721ContractError;
 use cw_utils::PaymentError;
+use sg_std::fees::FeeError;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -31,6 +32,9 @@ pub enum ContractError {
 
     #[error("InvalidContractUri")]
     InvalidContractUri {},
+
+    #[error("{0}")]
+    Fee(#[from] FeeError),
 }
 
 impl From<ContractError> for Cw721ContractError {
