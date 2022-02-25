@@ -13,4 +13,4 @@ pub struct Config {
 }
 
 pub const CONFIG: Item<Config> = Item::new("config");
-pub const WHITELIST: Map<Addr, Empty> = Map::new("whitelist");
+pub const WHITELIST: Map<Addr, Empty> = Map::new("wl");
