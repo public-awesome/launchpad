@@ -1,4 +1,5 @@
 use cosmwasm_std::StdError;
+use cw_utils::Expiration;
 use sg_std::fees::FeeError;
 use thiserror::Error;
 
@@ -9,6 +10,9 @@ pub enum ContractError {
 
     #[error("Unauthorized")]
     Unauthorized {},
+
+    #[error("InvalidStartTime {0} > {1}")]
+    InvalidStartTime(Expiration, Expiration),
 
     #[error("MembersExceeded: {expected} got {actual}")]
     MembersExceeded { expected: u32, actual: u32 },

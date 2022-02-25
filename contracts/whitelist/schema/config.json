@@ -5,7 +5,8 @@
   "required": [
     "admin",
     "end_time",
-    "num_members"
+    "num_members",
+    "start_time"
   ],
   "properties": {
     "admin": {
@@ -18,6 +19,9 @@
       "type": "integer",
       "format": "uint32",
       "minimum": 0.0
+    },
+    "start_time": {
+      "$ref": "#/definitions/Expiration"
     }
   },
   "definitions": {

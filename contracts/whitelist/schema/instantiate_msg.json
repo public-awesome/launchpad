@@ -4,7 +4,8 @@
   "type": "object",
   "required": [
     "end_time",
-    "members"
+    "members",
+    "start_time"
   ],
   "properties": {
     "end_time": {
@@ -15,6 +16,9 @@
       "items": {
         "type": "string"
       }
+    },
+    "start_time": {
+      "$ref": "#/definitions/Expiration"
     }
   },
   "definitions": {
