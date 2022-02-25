@@ -21,7 +21,7 @@ const CONTRACT_NAME: &str = "crates.io:sg-whitelist";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 // contract governance params
-const MAX_MEMBERS: u32 = 10000;
+const MAX_MEMBERS: u32 = 1000;
 const CREATION_FEE: u128 = 100_000_000;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
