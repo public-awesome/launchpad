@@ -13,6 +13,7 @@ use crate::ContractError;
 use cw721::ContractInfoResponse;
 use cw721_base::ContractError as BaseError;
 use sg_std::NATIVE_DENOM;
+use url::Url;
 
 use crate::msg::{
     ContractUriResponse, CreatorResponse, ExecuteMsg, InstantiateMsg, QueryMsg, RoyaltyResponse,
@@ -85,6 +86,10 @@ pub fn instantiate(
     if let Some(ref config) = msg.config {
         if let Some(ref royalty) = config.royalties {
             royalty.is_valid()?;
+        }
+        if let Some(ref contract_uri) = config.contract_uri {
+            // validate the URI
+            Url::parse(contract_uri)?;
         }
         CONFIG.save(deps.storage, config)?;
     }
