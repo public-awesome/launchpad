@@ -1,5 +1,5 @@
-use crate::{create_fund_community_pool_msg, StargazeMsgWrapper, NATIVE_DENOM};
-use cosmwasm_std::{coin, coins, BankMsg, CosmosMsg, Decimal, Env, MessageInfo};
+use crate::NATIVE_DENOM;
+use cosmwasm_std::{coin, BankMsg, CosmosMsg, Decimal, Env, MessageInfo};
 use cw_utils::{must_pay, PaymentError};
 use thiserror::Error;
 
@@ -9,7 +9,7 @@ pub fn burn_and_distribute_fee(
     _env: Env,
     info: &MessageInfo,
     expected_fee: u128,
-) -> Result<Vec<CosmosMsg<StargazeMsgWrapper>>, FeeError> {
+) -> Result<Vec<CosmosMsg>, FeeError> {
     let payment = must_pay(info, NATIVE_DENOM)?;
     if payment.u128() != expected_fee {
         return Err(FeeError::InvalidFee {});
@@ -24,11 +24,14 @@ pub fn burn_and_distribute_fee(
         amount: vec![burn_coin],
     };
 
-    // Send other half to community pool
-    let fund_community_pool_msg =
-        create_fund_community_pool_msg(coins(payment.u128() - burn_fee.u128(), NATIVE_DENOM));
+    // TODO: add back after fixing: https://github.com/public-awesome/stargaze-contracts/issues/46
+    // // Send other half to community pool
+    // let fund_community_pool_msg =
+    //     create_fund_community_pool_msg(coins(payment.u128() - burn_fee.u128(), NATIVE_DENOM));
 
-    Ok(vec![CosmosMsg::Bank(fee_burn_msg), fund_community_pool_msg])
+    // Ok(vec![CosmosMsg::Bank(fee_burn_msg), fund_community_pool_msg])
+
+    Ok(vec![CosmosMsg::Bank(fee_burn_msg)])
 }
 
 #[derive(Error, Debug, PartialEq)]
