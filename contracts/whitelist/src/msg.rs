@@ -5,11 +5,13 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {
     pub members: Vec<String>,
+    pub start_time: Expiration,
     pub end_time: Expiration,
 }
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
+    UpdateStartTime(Expiration),
     UpdateEndTime(Expiration),
     UpdateMembers(UpdateMembersMsg),
 }
@@ -23,7 +25,9 @@ pub struct UpdateMembersMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
+    StartTime {},
     EndTime {},
+    HasStarted {},
     HasEnded {},
     Members {},
     HasMember { member: String },
@@ -47,4 +51,9 @@ pub struct TimeResponse {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct HasEndedResponse {
     pub has_ended: bool,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct HasStartedResponse {
+    pub has_started: bool,
 }

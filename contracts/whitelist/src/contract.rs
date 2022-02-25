@@ -11,8 +11,8 @@ use sg_std::StargazeMsgWrapper;
 
 use crate::error::ContractError;
 use crate::msg::{
-    ExecuteMsg, HasEndedResponse, HasMemberResponse, InstantiateMsg, MembersResponse, QueryMsg,
-    TimeResponse, UpdateMembersMsg,
+    ExecuteMsg, HasEndedResponse, HasMemberResponse, HasStartedResponse, InstantiateMsg,
+    MembersResponse, QueryMsg, TimeResponse, UpdateMembersMsg,
 };
 use crate::state::{Config, CONFIG, WHITELIST};
 
@@ -34,10 +34,13 @@ pub fn instantiate(
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
     let config = Config {
         admin: info.sender.clone(),
+        start_time: msg.start_time,
         end_time: msg.end_time,
         num_members: msg.members.len() as u32,
     };
     CONFIG.save(deps.storage, &config)?;
+
+    // TODO: make sure start and end times aren't in the past
 
     let fee_msgs = burn_and_distribute_fee(env, &info, CREATION_FEE)?;
 
@@ -69,9 +72,28 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
+        ExecuteMsg::UpdateStartTime(time) => execute_update_start_time(deps, env, info, time),
         ExecuteMsg::UpdateEndTime(time) => execute_update_end_time(deps, env, info, time),
         ExecuteMsg::UpdateMembers(msg) => execute_update_members(deps, env, info, msg),
     }
+}
+
+pub fn execute_update_start_time(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    start_time: Expiration,
+) -> Result<Response, ContractError> {
+    let mut config = CONFIG.load(deps.storage)?;
+    if info.sender != config.admin {
+        return Err(ContractError::Unauthorized {});
+    }
+
+    config.start_time = start_time;
+    CONFIG.save(deps.storage, &config)?;
+    Ok(Response::new()
+        .add_attribute("action", "update_end_time")
+        .add_attribute("start_time", start_time.to_string()))
 }
 
 pub fn execute_update_end_time(
@@ -89,7 +111,7 @@ pub fn execute_update_end_time(
     CONFIG.save(deps.storage, &config)?;
     Ok(Response::new()
         .add_attribute("action", "update_end_time")
-        .add_attribute("end_time", &end_time.to_string()))
+        .add_attribute("end_time", end_time.to_string()))
 }
 
 pub fn execute_update_members(
@@ -129,17 +151,33 @@ pub fn execute_update_members(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
+        QueryMsg::StartTime {} => to_binary(&query_start_time(deps)?),
         QueryMsg::EndTime {} => to_binary(&query_end_time(deps)?),
         QueryMsg::Members {} => to_binary(&query_members(deps)?),
+        QueryMsg::HasStarted {} => to_binary(&query_has_started(deps, env)?),
         QueryMsg::HasEnded {} => to_binary(&query_has_ended(deps, env)?),
         QueryMsg::HasMember { member } => to_binary(&query_has_member(deps, member)?),
     }
+}
+
+fn query_start_time(deps: Deps) -> StdResult<TimeResponse> {
+    let config = CONFIG.load(deps.storage)?;
+    Ok(TimeResponse {
+        time: config.start_time.to_string(),
+    })
 }
 
 fn query_end_time(deps: Deps) -> StdResult<TimeResponse> {
     let config = CONFIG.load(deps.storage)?;
     Ok(TimeResponse {
         time: config.end_time.to_string(),
+    })
+}
+
+fn query_has_started(deps: Deps, env: Env) -> StdResult<HasStartedResponse> {
+    let config = CONFIG.load(deps.storage)?;
+    Ok(HasStartedResponse {
+        has_started: config.start_time.is_expired(&env.block),
     })
 }
 
@@ -183,6 +221,7 @@ mod tests {
     fn setup_contract(deps: DepsMut) {
         let msg = InstantiateMsg {
             members: vec!["adsfsa".to_string()],
+            start_time: NON_EXPIRED_HEIGHT,
             end_time: NON_EXPIRED_HEIGHT,
         };
         let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
