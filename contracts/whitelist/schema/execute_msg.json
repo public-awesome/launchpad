@@ -5,6 +5,18 @@
     {
       "type": "object",
       "required": [
+        "update_start_time"
+      ],
+      "properties": {
+        "update_start_time": {
+          "$ref": "#/definitions/Expiration"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
         "update_end_time"
       ],
       "properties": {

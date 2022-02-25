@@ -5,10 +5,34 @@
     {
       "type": "object",
       "required": [
+        "start_time"
+      ],
+      "properties": {
+        "start_time": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
         "end_time"
       ],
       "properties": {
         "end_time": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "has_started"
+      ],
+      "properties": {
+        "has_started": {
           "type": "object"
         }
       },
