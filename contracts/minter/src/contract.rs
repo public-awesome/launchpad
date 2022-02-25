@@ -18,7 +18,9 @@ use crate::msg::{
 };
 use crate::state::{Config, CONFIG, MINTABLE_TOKEN_IDS, SG721_ADDRESS};
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
-use whitelist::msg::{HasEndedResponse, HasMemberResponse, QueryMsg as WhitelistQueryMsg};
+use whitelist::msg::{
+    HasEndedResponse, HasMemberResponse, HasStartedResponse, QueryMsg as WhitelistQueryMsg,
+};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sg-minter";
@@ -212,14 +214,18 @@ pub fn execute_mint_sender(
     let config = CONFIG.load(deps.storage)?;
     let sg721_address = SG721_ADDRESS.load(deps.storage)?;
     let action = "mint_sender";
+    let mut pub_mint: bool = false;
 
     // check if a whitelist exists and not ended
     // sender has to be whitelisted to mint
     if let Some(whitelist) = config.whitelist {
-        let res: HasEndedResponse = deps
+        let res_started: HasStartedResponse = deps
+            .querier
+            .query_wasm_smart(whitelist.clone(), &WhitelistQueryMsg::HasStarted {})?;
+        let res_ended: HasEndedResponse = deps
             .querier
             .query_wasm_smart(whitelist.clone(), &WhitelistQueryMsg::HasEnded {})?;
-        if !res.has_ended {
+        if res_started.has_started && !res_ended.has_ended {
             let res: HasMemberResponse = deps.querier.query_wasm_smart(
                 whitelist,
                 &WhitelistQueryMsg::HasMember {
@@ -231,13 +237,20 @@ pub fn execute_mint_sender(
                     addr: info.sender.to_string(),
                 });
             }
+        } else {
+            pub_mint = true;
         }
+    } else {
+        pub_mint = true;
     }
 
-    if let Some(start_time) = config.start_time {
-        // Check if after start_time
-        if !start_time.is_expired(&env.block) {
-            return Err(ContractError::BeforeMintStartTime {});
+    // if there is no active whitelist right now, check public mint
+    if pub_mint {
+        if let Some(start_time) = config.start_time {
+            // Check if after start_time
+            if !start_time.is_expired(&env.block) {
+                return Err(ContractError::BeforeMintStartTime {});
+            }
         }
     }
 

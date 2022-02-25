@@ -440,6 +440,15 @@ fn whitelist_access_len_add_remove_expiration() {
     );
     assert!(res.is_ok());
 
+    let wl_msg = WhitelistExecuteMsg::UpdateStartTime(Expiration::AtTime(Timestamp::from_nanos(0)));
+    let res = router.execute_contract(
+        creator.clone(),
+        whitelist_addr.clone(),
+        &wl_msg,
+        &coins(PRICE, NATIVE_DENOM),
+    );
+    assert!(res.is_ok());
+
     // set whitelist in minter contract
     let set_whitelist_msg = ExecuteMsg::SetWhitelist {
         whitelist: whitelist_addr.to_string(),
