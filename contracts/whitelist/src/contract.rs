@@ -7,7 +7,6 @@ use cosmwasm_std::{
 use cw2::set_contract_version;
 use cw_utils::Expiration;
 use sg_std::fees::burn_and_distribute_fee;
-use sg_std::StargazeMsgWrapper;
 
 use crate::error::ContractError;
 use crate::msg::{
@@ -30,7 +29,7 @@ pub fn instantiate(
     env: Env,
     info: MessageInfo,
     msg: InstantiateMsg,
-) -> Result<Response<StargazeMsgWrapper>, ContractError> {
+) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
     let config = Config {
         admin: info.sender.clone(),
@@ -238,7 +237,7 @@ mod tests {
         };
         let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
         let res = instantiate(deps, mock_env(), info, msg).unwrap();
-        assert_eq!(2, res.messages.len());
+        assert_eq!(1, res.messages.len());
     }
 
     #[test]
