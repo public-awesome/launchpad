@@ -1,18 +1,16 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coin, to_binary, BankMsg, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut, Empty, Env,
-    MessageInfo, Response, StdResult, Uint128,
+    to_binary, Binary, Coin, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult,
 };
 use cw2::set_contract_version;
-use cw_utils::must_pay;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use sg_std::fees::burn_and_distribute_fee;
 
 use crate::ContractError;
 use cw721::ContractInfoResponse;
 use cw721_base::ContractError as BaseError;
-use sg_std::NATIVE_DENOM;
 use url::Url;
 
 use crate::msg::{
@@ -25,7 +23,6 @@ const CONTRACT_NAME: &str = "crates.io:sg-721";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 const CREATION_FEE: u128 = 1_000_000_000;
-const CREATION_FEE_BURN_PERCENT: u64 = 50;
 
 pub type Sg721Contract<'a> = cw721_base::Cw721Contract<'a, Empty, Empty>;
 
@@ -44,32 +41,7 @@ pub fn instantiate(
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
-    let payment = must_pay(&info, NATIVE_DENOM)?;
-    if payment.u128() != CREATION_FEE {
-        return Err(ContractError::InvalidCreationFee {});
-    }
-
-    // calculate the fee to burn
-    let burn_percent = Decimal::percent(CREATION_FEE_BURN_PERCENT);
-    let creation_fee = Uint128::from(CREATION_FEE);
-    let burn_fee = creation_fee * burn_percent;
-    let burn_coin = coin(burn_fee.u128(), NATIVE_DENOM);
-    // send fee to contract to be burned
-    let send_fee_msg = BankMsg::Send {
-        to_address: env.contract.address.to_string(),
-        amount: vec![burn_coin.clone()],
-    };
-    // burn half the fee
-    let fee_burn_msg = BankMsg::Burn {
-        amount: vec![burn_coin],
-    };
-
-    // TODO: send the rest to the community pool
-    // https://github.com/public-awesome/contracts/issues/99
-    let _fund_community_pool_msg = CosmosMsg::Custom(MsgFundCommunityPool {
-        amount: vec![coin(creation_fee.u128() - burn_fee.u128(), NATIVE_DENOM)],
-        depositor: msg.minter.to_string(),
-    });
+    let fee_msgs = burn_and_distribute_fee(env, &info, CREATION_FEE)?;
 
     let info = ContractInfoResponse {
         name: msg.name,
@@ -98,14 +70,11 @@ pub fn instantiate(
         CONFIG.save(deps.storage, config)?;
     }
 
-    // TODO: add community pool fund msg
-    // https://github.com/public-awesome/contracts/issues/99
     Ok(Response::default()
         .add_attribute("action", "instantiate")
         .add_attribute("contract_name", CONTRACT_NAME)
         .add_attribute("contract_version", CONTRACT_VERSION)
-        .add_message(send_fee_msg)
-        .add_message(fee_burn_msg))
+        .add_messages(fee_msgs))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -151,6 +120,7 @@ mod tests {
     use crate::state::RoyaltyInfo;
     use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
     use cosmwasm_std::{coins, from_binary, Addr, Decimal};
+    use sg_std::NATIVE_DENOM;
 
     #[test]
     fn proper_initialization_no_royalties() {
@@ -172,7 +142,7 @@ mod tests {
 
         // make sure instantiate has the burn messages
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(2, res.messages.len());
+        assert_eq!(1, res.messages.len());
 
         // it worked, let's query the contract_uri
         let res = query(deps.as_ref(), mock_env(), QueryMsg::ContractUri {}).unwrap();
@@ -214,7 +184,7 @@ mod tests {
 
         // make sure instantiate has the burn messages
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(2, res.messages.len());
+        assert_eq!(1, res.messages.len());
 
         // it worked, let's query the contract_uri
         let res = query(deps.as_ref(), mock_env(), QueryMsg::ContractUri {}).unwrap();
@@ -238,18 +208,4 @@ mod tests {
             value.royalty
         );
     }
-
-    #[test]
-    fn creation_fee() {
-        let burn_percent = Decimal::percent(50);
-        let creation_fee = Uint128::from(1_000_000_000u128);
-        let fee = creation_fee * burn_percent;
-        let amount = coin(fee.u128(), NATIVE_DENOM);
-        assert_eq!(500_000_000u128, amount.amount.u128());
-    }
-    // TODO: properly test fee burn using cw-multi-test
-    // set an initial supply in bank, and check that the fee is burned
-    // https://github.com/public-awesome/contracts/issues/114
-    #[test]
-    fn fee_burn() {}
 }
