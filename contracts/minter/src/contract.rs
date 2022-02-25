@@ -111,7 +111,7 @@ pub fn instantiate(
     };
 
     let config = Config {
-        admin: info.sender,
+        admin: info.sender.clone(),
         base_token_uri: msg.base_token_uri,
         num_tokens: msg.num_tokens,
         sg721_code_id: msg.sg721_code_id,
@@ -138,7 +138,7 @@ pub fn instantiate(
                 config: msg.sg721_instantiate_msg.config,
             })?,
             funds: info.funds,
-            admin: None,
+            admin: Some(info.sender.to_string()),
             label: String::from("Fixed price minter"),
         }
         .into(),
