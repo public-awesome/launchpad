@@ -245,7 +245,7 @@ pub fn execute_mint_sender(
     }
 
     // if there is no active whitelist right now, check public mint
-    if pub_mint == true {
+    if pub_mint {
         if let Some(start_time) = config.start_time {
             // Check if after start_time
             if !start_time.is_expired(&env.block) {
