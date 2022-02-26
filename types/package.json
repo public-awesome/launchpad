@@ -1,7 +1,7 @@
 {
-  "name": "@dao-dao/types",
-  "version": "0.0.9",
-  "description": "",
+  "name": "@stargaze-contracts/types",
+  "version": "0.1.0",
+  "description": "Types for Stargaze CosmWasm Contracts",
   "main": "build/codegen.js",
   "scripts": {
     "prepare": "tsc",
@@ -10,7 +10,7 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "Apache License 2.0",
   "husky": {
     "hooks": {
       "pre-commit": "pretty-quick --staged"
