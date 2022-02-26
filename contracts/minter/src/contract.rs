@@ -437,13 +437,11 @@ fn _execute_mint(
 
     // guardrail against low mint price updates
     // ignore lower whitelist prices
-    if mint_price.amount >= config.unit_price.amount {
-        if MIN_MINT_PRICE > mint_price.amount.into() {
-            return Err(ContractError::InsufficientMintPrice {
-                expected: MIN_MINT_PRICE,
-                got: mint_price.amount.into(),
-            });
-        }
+    if mint_price.amount >= config.unit_price.amount && MIN_MINT_PRICE > mint_price.amount.into() {
+        return Err(ContractError::InsufficientMintPrice {
+            expected: MIN_MINT_PRICE,
+            got: mint_price.amount.into(),
+        });
     }
 
     // if token_id None, find and assign one. else check token_id exists on mintable map.

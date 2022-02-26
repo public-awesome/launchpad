@@ -522,7 +522,7 @@ fn whitelist_access_len_add_remove_expiration() {
                 denom: NATIVE_DENOM.into(),
             },
             Coin {
-                amount: mint_price.into(),
+                amount: mint_price,
                 denom: NATIVE_DENOM.into(),
             }
         )
