@@ -1,5 +1,6 @@
 use cosmwasm_std::{Coin, StdError};
 use cw_utils::PaymentError;
+use sg_std::fees::FeeError;
 use thiserror::Error;
 use url::ParseError;
 
@@ -70,6 +71,9 @@ pub enum ContractError {
 
     #[error("{0}")]
     Payment(#[from] PaymentError),
+
+    #[error("{0}")]
+    Fee(#[from] FeeError),
 }
 
 impl From<ParseError> for ContractError {
