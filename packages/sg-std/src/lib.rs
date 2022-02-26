@@ -1,5 +1,6 @@
 pub mod fees;
 mod msg;
+mod query;
 mod route;
 
 pub const NATIVE_DENOM: &str = "ustars";
@@ -10,6 +11,9 @@ pub use msg::{
     create_claim_for_msg, create_fund_community_pool_msg, ClaimAction, StargazeMsg,
     StargazeMsgWrapper,
 };
+
+pub use fees::burn_and_distribute_fee;
+pub use query::StargazeQuery;
 pub use route::StargazeRoute;
 
 // This export is added to all contracts that import this package, signifying that they require

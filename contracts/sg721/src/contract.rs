@@ -1,12 +1,11 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{
-    to_binary, Binary, Coin, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult,
-};
+use cosmwasm_std::{to_binary, Binary, Coin, Deps, DepsMut, Empty, Env, MessageInfo, StdResult};
 use cw2::set_contract_version;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use sg_std::fees::burn_and_distribute_fee;
+use sg_std::StargazeMsgWrapper;
 
 use crate::ContractError;
 use cw721::ContractInfoResponse;
@@ -24,7 +23,8 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 const CREATION_FEE: u128 = 1_000_000_000;
 
-pub type Sg721Contract<'a> = cw721_base::Cw721Contract<'a, Empty, Empty>;
+type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
+pub type Sg721Contract<'a> = cw721_base::Cw721Contract<'a, Empty, StargazeMsgWrapper>;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct MsgFundCommunityPool {
@@ -142,7 +142,7 @@ mod tests {
 
         // make sure instantiate has the burn messages
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(1, res.messages.len());
+        assert_eq!(2, res.messages.len());
 
         // it worked, let's query the contract_uri
         let res = query(deps.as_ref(), mock_env(), QueryMsg::ContractUri {}).unwrap();
@@ -184,7 +184,7 @@ mod tests {
 
         // make sure instantiate has the burn messages
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(1, res.messages.len());
+        assert_eq!(2, res.messages.len());
 
         // it worked, let's query the contract_uri
         let res = query(deps.as_ref(), mock_env(), QueryMsg::ContractUri {}).unwrap();
