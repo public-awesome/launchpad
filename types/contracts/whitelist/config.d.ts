@@ -1,4 +1,4 @@
-import { Expiration } from "./shared-types";
+import { Coin, Expiration } from "./shared-types";
 
 /**
  * A human readable address.
@@ -16,5 +16,6 @@ admin: Addr
 end_time: Expiration
 num_members: number
 start_time: Expiration
+unit_price: Coin
 [k: string]: unknown
 }
