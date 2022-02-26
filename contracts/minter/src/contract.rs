@@ -528,6 +528,7 @@ fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
         unit_price: config.unit_price,
         per_address_limit: config.per_address_limit,
         batch_mint_limit: config.batch_mint_limit,
+        whitelist: config.whitelist,
     })
 }
 
