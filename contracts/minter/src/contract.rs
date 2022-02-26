@@ -324,7 +324,6 @@ pub fn execute_batch_mint(
     num_mints: u64,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
-    let unit_price = config.unit_price;
     let mint_limit = config
         .batch_mint_limit
         .ok_or(ContractError::MaxBatchMintLimitExceeded {})?;
@@ -333,12 +332,15 @@ pub fn execute_batch_mint(
         return Err(ContractError::MaxBatchMintLimitExceeded {});
     }
 
+    let mint_fee_percent = Decimal::percent(MINT_FEE_PERCENT);
+    let price = (config.unit_price.amount * mint_fee_percent) + config.unit_price.amount;
+
     let mut msgs: Vec<CosmosMsg<StargazeMsgWrapper>> = vec![];
     let mint_msg = ExecuteMsg::Mint {};
     let msg: CosmosMsg<StargazeMsgWrapper> = CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: env.contract.address.to_string(),
         msg: to_binary(&mint_msg)?,
-        funds: vec![unit_price],
+        funds: vec![coin(price.u128(), config.unit_price.denom)],
     });
     for _ in 0..num_mints {
         msgs.append(&mut vec![msg.clone()]);
@@ -377,11 +379,9 @@ fn _execute_mint(
     // calculate the mint fee
     let mint_fee_percent = Decimal::percent(MINT_FEE_PERCENT);
     let price = (config.unit_price.amount * mint_fee_percent) + config.unit_price.amount;
-    // println!("price: {}", price);
 
     // exact payment only
     let payment = must_pay(&info, &config.unit_price.denom)?;
-    // println!("payment: {}", payment);
     if payment != price {
         return Err(ContractError::IncorrectPaymentAmount(
             coin(payment.u128(), &config.unit_price.denom),
@@ -391,8 +391,6 @@ fn _execute_mint(
 
     // handle fee
     let fee = price - config.unit_price.amount;
-    // println!("fee: {}", fee);
-    // println!("info: {}", &info.funds[0]);
     let fee_msg = burn_and_distribute_fee(env, &info, fee.u128())?;
 
     // guardrail against low mint price updates
