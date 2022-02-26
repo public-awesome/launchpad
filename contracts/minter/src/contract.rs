@@ -333,27 +333,7 @@ pub fn execute_batch_mint(
         return Err(ContractError::MaxBatchMintLimitExceeded {});
     }
 
-    // calculate the mint fee
-    // if in whitelist, use whitelist price. else use mint price
-    let mint_price: Coin = if let Some(whitelist) = config.whitelist {
-        let res_started: HasStartedResponse = deps
-            .querier
-            .query_wasm_smart(whitelist.clone(), &WhitelistQueryMsg::HasStarted {})?;
-        let res_ended: HasEndedResponse = deps
-            .querier
-            .query_wasm_smart(whitelist.clone(), &WhitelistQueryMsg::HasEnded {})?;
-        if res_started.has_started && !res_ended.has_ended {
-            let unit_price: UnitPriceResponse = deps
-                .querier
-                .query_wasm_smart(whitelist, &WhitelistQueryMsg::UnitPrice {})?;
-            unit_price.unit_price
-        } else {
-            config.unit_price.clone()
-        }
-    } else {
-        config.unit_price.clone()
-    };
-
+    let mint_price = mint_price(deps.as_ref())?;
     let mint_fee_percent = Decimal::percent(MINT_FEE_PERCENT);
     let price = (mint_price.amount * mint_fee_percent) + mint_price.amount;
 
@@ -398,27 +378,7 @@ fn _execute_mint(
         });
     };
 
-    // calculate the mint fee
-    // if in whitelist, use whitelist price. else use mint price
-    let mint_price: Coin = if let Some(whitelist) = config.whitelist {
-        let res_started: HasStartedResponse = deps
-            .querier
-            .query_wasm_smart(whitelist.clone(), &WhitelistQueryMsg::HasStarted {})?;
-        let res_ended: HasEndedResponse = deps
-            .querier
-            .query_wasm_smart(whitelist.clone(), &WhitelistQueryMsg::HasEnded {})?;
-        if res_started.has_started && !res_ended.has_ended {
-            let unit_price: UnitPriceResponse = deps
-                .querier
-                .query_wasm_smart(whitelist, &WhitelistQueryMsg::UnitPrice {})?;
-            unit_price.unit_price
-        } else {
-            config.unit_price.clone()
-        }
-    } else {
-        config.unit_price.clone()
-    };
-
+    let mint_price = mint_price(deps.as_ref())?;
     let mint_fee_percent = Decimal::percent(MINT_FEE_PERCENT);
     let price = (mint_price.amount * mint_fee_percent) + mint_price.amount;
 
@@ -567,6 +527,31 @@ pub fn execute_update_batch_mint_limit(
     config.batch_mint_limit = Some(batch_mint_limit);
     CONFIG.save(deps.storage, &config)?;
     Ok(Response::new().add_attribute("action", "update_batch_mint_limit"))
+}
+
+// calculate the mint fee
+// if in whitelist, use whitelist price, else use mint price
+fn mint_price(deps: Deps) -> Result<Coin, ContractError> {
+    let config = CONFIG.load(deps.storage)?;
+
+    if let Some(whitelist) = config.whitelist {
+        let res_started: HasStartedResponse = deps
+            .querier
+            .query_wasm_smart(whitelist.clone(), &WhitelistQueryMsg::HasStarted {})?;
+        let res_ended: HasEndedResponse = deps
+            .querier
+            .query_wasm_smart(whitelist.clone(), &WhitelistQueryMsg::HasEnded {})?;
+        if res_started.has_started && !res_ended.has_ended {
+            let unit_price: UnitPriceResponse = deps
+                .querier
+                .query_wasm_smart(whitelist, &WhitelistQueryMsg::UnitPrice {})?;
+            Ok(unit_price.unit_price)
+        } else {
+            Ok(config.unit_price.clone())
+        }
+    } else {
+        Ok(config.unit_price.clone())
+    }
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
