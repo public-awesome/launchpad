@@ -20,8 +20,9 @@ use crate::ContractError;
 
 const CREATION_FEE: u128 = 1_000_000_000;
 const INITIAL_BALANCE: u128 = 2_000_000_000;
-const PRICE: u128 = 100_000_000;
 
+const UNIT_PRICE: u128 = 100_000_000;
+const MINT_FEE: u128 = 10_000_000;
 const MAX_TOKEN_LIMIT: u32 = 10000;
 
 fn custom_mock_app() -> StargazeApp {
@@ -93,7 +94,7 @@ fn setup_minter_contract(
 
     // Instantiate sale contract
     let msg = InstantiateMsg {
-        unit_price: coin(PRICE, NATIVE_DENOM),
+        unit_price: coin(UNIT_PRICE, NATIVE_DENOM),
         num_tokens,
         start_time: None,
         per_address_limit: None,
@@ -138,7 +139,9 @@ fn setup_minter_contract(
 fn setup_accounts(router: &mut StargazeApp) -> Result<(Addr, Addr), ContractError> {
     let buyer = Addr::unchecked("buyer");
     let creator = Addr::unchecked("creator");
+    // 3,000 tokens
     let creator_funds = coins(INITIAL_BALANCE + CREATION_FEE, NATIVE_DENOM);
+    // 2,000 tokens
     let buyer_funds = coins(INITIAL_BALANCE, NATIVE_DENOM);
     router
         .sudo(SudoMsg::Bank({
@@ -191,7 +194,7 @@ fn initialization() {
     // Invalid uri returns error
     let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
     let msg = InstantiateMsg {
-        unit_price: coin(PRICE, NATIVE_DENOM),
+        unit_price: coin(UNIT_PRICE, NATIVE_DENOM),
         num_tokens: 100,
         start_time: None,
         per_address_limit: None,
@@ -220,7 +223,7 @@ fn initialization() {
     let wrong_denom = "uosmo";
     let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
     let msg = InstantiateMsg {
-        unit_price: coin(PRICE, wrong_denom),
+        unit_price: coin(UNIT_PRICE, wrong_denom),
         num_tokens: 100,
         start_time: None,
         per_address_limit: None,
@@ -276,7 +279,7 @@ fn initialization() {
     // over max token limit
     let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
     let msg = InstantiateMsg {
-        unit_price: coin(PRICE, NATIVE_DENOM),
+        unit_price: coin(UNIT_PRICE, NATIVE_DENOM),
         num_tokens: (MAX_TOKEN_LIMIT + 1).into(),
         start_time: None,
         per_address_limit: None,
@@ -327,7 +330,7 @@ fn happy_path() {
         buyer.clone(),
         minter_addr.clone(),
         &mint_msg,
-        &coins(PRICE + 100, NATIVE_DENOM),
+        &coins(UNIT_PRICE + 100, NATIVE_DENOM),
     );
     assert!(err.is_err());
 
@@ -337,20 +340,22 @@ fn happy_path() {
         buyer.clone(),
         minter_addr.clone(),
         &mint_msg,
-        &coins(PRICE, NATIVE_DENOM),
+        &coins(UNIT_PRICE, NATIVE_DENOM),
     );
     assert!(res.is_ok());
 
     // Balances are correct
-    let creator_native_balances = router.wrap().query_all_balances(creator.clone()).unwrap();
+    // The creator should get the unit price - mint fee for the mint above
+    let creator_balances = router.wrap().query_all_balances(creator.clone()).unwrap();
     assert_eq!(
-        creator_native_balances,
-        coins(INITIAL_BALANCE + PRICE, NATIVE_DENOM)
+        creator_balances,
+        coins(INITIAL_BALANCE + UNIT_PRICE - MINT_FEE, NATIVE_DENOM)
     );
-    let buyer_native_balances = router.wrap().query_all_balances(buyer.clone()).unwrap();
+    // The buyer's tokens should reduce by unit price
+    let buyer_balances = router.wrap().query_all_balances(buyer.clone()).unwrap();
     assert_eq!(
-        buyer_native_balances,
-        coins(INITIAL_BALANCE - PRICE, NATIVE_DENOM)
+        buyer_balances,
+        coins(INITIAL_BALANCE - UNIT_PRICE, NATIVE_DENOM)
     );
 
     // Check NFT is transferred
@@ -372,7 +377,7 @@ fn happy_path() {
         buyer.clone(),
         minter_addr.clone(),
         &mint_to_msg,
-        &coins(PRICE, NATIVE_DENOM),
+        &coins(UNIT_PRICE, NATIVE_DENOM),
     );
     assert!(res.is_err());
 
@@ -381,7 +386,7 @@ fn happy_path() {
         creator.clone(),
         minter_addr.clone(),
         &mint_to_msg,
-        &coins(PRICE, NATIVE_DENOM),
+        &coins(UNIT_PRICE, NATIVE_DENOM),
     );
     assert!(res.is_ok());
 
@@ -409,7 +414,7 @@ fn happy_path() {
         buyer,
         minter_addr.clone(),
         &mint_msg,
-        &coins(PRICE, NATIVE_DENOM),
+        &coins(UNIT_PRICE, NATIVE_DENOM),
     );
     assert!(res.is_err());
 
@@ -418,7 +423,7 @@ fn happy_path() {
         creator,
         minter_addr,
         &mint_to_msg,
-        &coins(PRICE, NATIVE_DENOM),
+        &coins(UNIT_PRICE, NATIVE_DENOM),
     );
     assert!(res.is_err());
 }
@@ -440,7 +445,7 @@ fn whitelist_access_len_add_remove_expiration() {
         buyer.clone(),
         whitelist_addr.clone(),
         &wl_msg,
-        &coins(PRICE, NATIVE_DENOM),
+        &coins(UNIT_PRICE, NATIVE_DENOM),
     );
     assert!(res.is_err());
 
@@ -449,7 +454,7 @@ fn whitelist_access_len_add_remove_expiration() {
         creator.clone(),
         whitelist_addr.clone(),
         &wl_msg,
-        &coins(PRICE, NATIVE_DENOM),
+        &coins(UNIT_PRICE, NATIVE_DENOM),
     );
     assert!(res.is_ok());
 
@@ -458,7 +463,7 @@ fn whitelist_access_len_add_remove_expiration() {
         creator.clone(),
         whitelist_addr.clone(),
         &wl_msg,
-        &coins(PRICE, NATIVE_DENOM),
+        &coins(UNIT_PRICE, NATIVE_DENOM),
     );
     assert!(res.is_ok());
 
@@ -470,7 +475,7 @@ fn whitelist_access_len_add_remove_expiration() {
         creator.clone(),
         minter_addr.clone(),
         &set_whitelist_msg,
-        &coins(PRICE, NATIVE_DENOM),
+        &coins(UNIT_PRICE, NATIVE_DENOM),
     );
     assert!(res.is_ok());
 
@@ -480,7 +485,7 @@ fn whitelist_access_len_add_remove_expiration() {
         buyer.clone(),
         minter_addr.clone(),
         &mint_msg,
-        &coins(PRICE, NATIVE_DENOM),
+        &coins(UNIT_PRICE, NATIVE_DENOM),
     );
     assert!(res.is_err());
 
@@ -493,7 +498,7 @@ fn whitelist_access_len_add_remove_expiration() {
         creator.clone(),
         whitelist_addr.clone(),
         &wasm_msg,
-        &coins(PRICE, NATIVE_DENOM),
+        &coins(UNIT_PRICE, NATIVE_DENOM),
     );
     assert!(res.is_ok());
 
@@ -503,7 +508,7 @@ fn whitelist_access_len_add_remove_expiration() {
         buyer.clone(),
         minter_addr.clone(),
         &mint_msg,
-        &coins(PRICE, NATIVE_DENOM),
+        &coins(UNIT_PRICE, NATIVE_DENOM),
     );
     assert!(res.is_ok());
 
@@ -517,13 +522,18 @@ fn whitelist_access_len_add_remove_expiration() {
         creator.clone(),
         whitelist_addr,
         &wasm_msg,
-        &coins(PRICE, NATIVE_DENOM),
+        &coins(UNIT_PRICE, NATIVE_DENOM),
     );
     assert!(res.is_ok());
 
     // mint fails
     let mint_msg = ExecuteMsg::Mint {};
-    let res = router.execute_contract(buyer, minter_addr, &mint_msg, &coins(PRICE, NATIVE_DENOM));
+    let res = router.execute_contract(
+        buyer,
+        minter_addr,
+        &mint_msg,
+        &coins(UNIT_PRICE, NATIVE_DENOM),
+    );
     assert!(res.is_err());
 }
 
@@ -542,7 +552,7 @@ fn before_start_time() {
         buyer.clone(),
         minter_addr.clone(),
         &start_time_msg,
-        &coins(PRICE, NATIVE_DENOM),
+        &coins(UNIT_PRICE, NATIVE_DENOM),
     );
     assert!(res.is_err());
 
@@ -554,7 +564,7 @@ fn before_start_time() {
         creator.clone(),
         minter_addr.clone(),
         &start_time_msg,
-        &coins(PRICE, NATIVE_DENOM),
+        &coins(UNIT_PRICE, NATIVE_DENOM),
     );
     assert!(res.is_ok());
 
@@ -563,7 +573,7 @@ fn before_start_time() {
         buyer.clone(),
         minter_addr.clone(),
         &mint_msg,
-        &coins(PRICE, NATIVE_DENOM),
+        &coins(UNIT_PRICE, NATIVE_DENOM),
     );
     assert!(res.is_err());
 
@@ -583,7 +593,12 @@ fn before_start_time() {
 
     // mint succeeds
     let mint_msg = ExecuteMsg::Mint {};
-    let res = router.execute_contract(buyer, minter_addr, &mint_msg, &coins(PRICE, NATIVE_DENOM));
+    let res = router.execute_contract(
+        buyer,
+        minter_addr,
+        &mint_msg,
+        &coins(UNIT_PRICE, NATIVE_DENOM),
+    );
     assert!(res.is_ok());
 }
 
@@ -604,7 +619,7 @@ fn check_per_address_limit() {
         buyer.clone(),
         minter_addr.clone(),
         &per_address_limit_msg,
-        &coins(PRICE, NATIVE_DENOM),
+        &coins(UNIT_PRICE, NATIVE_DENOM),
     );
     assert!(res.is_err());
 
@@ -616,7 +631,7 @@ fn check_per_address_limit() {
         creator.clone(),
         minter_addr.clone(),
         &per_address_limit_msg,
-        &coins(PRICE, NATIVE_DENOM),
+        &coins(UNIT_PRICE, NATIVE_DENOM),
     );
     assert!(res.is_err());
 
@@ -628,7 +643,7 @@ fn check_per_address_limit() {
         creator.clone(),
         minter_addr.clone(),
         &per_address_limit_msg,
-        &coins(PRICE, NATIVE_DENOM),
+        &coins(UNIT_PRICE, NATIVE_DENOM),
     );
     assert!(res.is_ok());
 
@@ -638,14 +653,19 @@ fn check_per_address_limit() {
         buyer.clone(),
         minter_addr.clone(),
         &mint_msg,
-        &coins(PRICE, NATIVE_DENOM),
+        &coins(UNIT_PRICE, NATIVE_DENOM),
     );
 
     assert!(res.is_ok());
 
     // second mint fails from exceeding per address limit
     let mint_msg = ExecuteMsg::Mint {};
-    let res = router.execute_contract(buyer, minter_addr, &mint_msg, &coins(PRICE, NATIVE_DENOM));
+    let res = router.execute_contract(
+        buyer,
+        minter_addr,
+        &mint_msg,
+        &coins(UNIT_PRICE, NATIVE_DENOM),
+    );
     assert!(res.is_err());
 }
 
@@ -653,10 +673,21 @@ fn check_per_address_limit() {
 fn batch_mint_limit_access_max_sold_out() {
     let mut router = custom_mock_app();
     let (creator, buyer) = setup_accounts(&mut router).unwrap();
+
+    let creator_balances = router.wrap().query_all_balances(creator.clone()).unwrap();
+    assert_eq!(
+        creator_balances,
+        coins(INITIAL_BALANCE + CREATION_FEE, NATIVE_DENOM)
+    );
+
     let num_tokens = 4;
     let (minter_addr, _config) = setup_minter_contract(&mut router, &creator, num_tokens).unwrap();
     // set to genesis mint start time
     setup_block_time(&mut router, GENESIS_MINT_START_TIME).unwrap();
+
+    // initial + creation fee - creation_fee = 2,000 + 1,000 - 1,000 = 2,000 tokens
+    let creator_balances = router.wrap().query_all_balances(creator.clone()).unwrap();
+    assert_eq!(creator_balances, coins(INITIAL_BALANCE, NATIVE_DENOM));
 
     // batch mint limit set to STARTING_BATCH_MINT_LIMIT if no mint provided
     let batch_mint_msg = ExecuteMsg::BatchMint { num_mints: 1 };
@@ -664,7 +695,7 @@ fn batch_mint_limit_access_max_sold_out() {
         buyer.clone(),
         minter_addr.clone(),
         &batch_mint_msg,
-        &coins(PRICE, NATIVE_DENOM),
+        &coins(UNIT_PRICE, NATIVE_DENOM),
     );
     assert!(res.is_ok());
 
@@ -677,7 +708,7 @@ fn batch_mint_limit_access_max_sold_out() {
             buyer.clone(),
             minter_addr.clone(),
             &update_batch_mint_limit_msg,
-            &coins(PRICE, NATIVE_DENOM),
+            &[],
         )
         .unwrap_err();
     assert_eq!(
@@ -694,7 +725,7 @@ fn batch_mint_limit_access_max_sold_out() {
             creator.clone(),
             minter_addr.clone(),
             &update_batch_mint_limit_msg,
-            &coins(PRICE, NATIVE_DENOM),
+            &[],
         )
         .unwrap_err();
     assert_eq!(
@@ -714,7 +745,7 @@ fn batch_mint_limit_access_max_sold_out() {
         creator.clone(),
         minter_addr.clone(),
         &update_batch_mint_limit_msg,
-        &coins(PRICE, NATIVE_DENOM),
+        &[],
     );
     assert!(res.is_ok());
 
@@ -725,7 +756,7 @@ fn batch_mint_limit_access_max_sold_out() {
             buyer.clone(),
             minter_addr.clone(),
             &batch_mint_msg,
-            &coins(PRICE, NATIVE_DENOM),
+            &coins(UNIT_PRICE, NATIVE_DENOM),
         )
         .unwrap_err();
     assert_eq!(
@@ -740,16 +771,21 @@ fn batch_mint_limit_access_max_sold_out() {
         buyer.clone(),
         minter_addr.clone(),
         &batch_mint_msg,
-        &coins(PRICE, NATIVE_DENOM),
+        &coins(UNIT_PRICE * (num_mints as u128), NATIVE_DENOM),
     );
     assert!(res.is_ok());
 
     // Balances are correct
-    let buyer_native_balances = router.wrap().query_all_balances(buyer.clone()).unwrap();
+    // Buyer minted 3 times, thus num_mints = num_mints + 1
+    let buyer_balances = router.wrap().query_all_balances(buyer.clone()).unwrap();
     assert_eq!(
-        buyer_native_balances,
-        coins(INITIAL_BALANCE - (PRICE * num_mints as u128), NATIVE_DENOM)
+        buyer_balances,
+        coins(
+            INITIAL_BALANCE - (UNIT_PRICE * (num_mints + 1) as u128),
+            NATIVE_DENOM
+        )
     );
+
     // minter contract should have no balance
     let minter_balance = router
         .wrap()
@@ -757,10 +793,14 @@ fn batch_mint_limit_access_max_sold_out() {
         .unwrap();
     assert_eq!(0, minter_balance.len());
 
-    let creator_native_balances = router.wrap().query_all_balances(creator.clone()).unwrap();
+    // creator / seller should get tokens from buyer
+    let creator_balances = router.wrap().query_all_balances(creator.clone()).unwrap();
     assert_eq!(
-        creator_native_balances,
-        coins(INITIAL_BALANCE + (PRICE * num_mints as u128), NATIVE_DENOM)
+        creator_balances,
+        coins(
+            INITIAL_BALANCE + ((UNIT_PRICE - MINT_FEE) * (num_mints + 1) as u128),
+            NATIVE_DENOM
+        )
     );
 
     // test sold out and fails
@@ -770,7 +810,7 @@ fn batch_mint_limit_access_max_sold_out() {
         buyer.clone(),
         minter_addr.clone(),
         &batch_mint_msg,
-        &coins(PRICE * num_mints as u128, NATIVE_DENOM),
+        &coins(UNIT_PRICE * num_mints as u128, NATIVE_DENOM),
     );
     assert!(res.is_err());
     let err = res.unwrap_err();
@@ -787,7 +827,7 @@ fn batch_mint_limit_access_max_sold_out() {
         buyer,
         minter_addr,
         &batch_mint_msg,
-        &coins(PRICE, NATIVE_DENOM),
+        &coins(UNIT_PRICE, NATIVE_DENOM),
     );
     assert!(res.is_ok());
 }
@@ -811,7 +851,7 @@ fn mint_for_token_id_addr() {
             buyer.clone(),
             minter_addr.clone(),
             &mint_for_msg,
-            &coins(PRICE, NATIVE_DENOM),
+            &coins(UNIT_PRICE, NATIVE_DENOM),
         )
         .unwrap_err();
     assert_eq!(
@@ -827,7 +867,7 @@ fn mint_for_token_id_addr() {
         buyer.clone(),
         minter_addr.clone(),
         &mint_msg,
-        &coins(PRICE, NATIVE_DENOM),
+        &coins(UNIT_PRICE, NATIVE_DENOM),
     );
     assert!(res.is_ok());
 
@@ -848,7 +888,7 @@ fn mint_for_token_id_addr() {
             creator.clone(),
             minter_addr.clone(),
             &mint_for_msg,
-            &coins(PRICE, NATIVE_DENOM),
+            &coins(UNIT_PRICE, NATIVE_DENOM),
         )
         .unwrap_err();
     assert_eq!(
@@ -871,7 +911,7 @@ fn mint_for_token_id_addr() {
         creator.clone(),
         minter_addr.clone(),
         &mint_for_msg,
-        &coins(PRICE, NATIVE_DENOM),
+        &coins(UNIT_PRICE, NATIVE_DENOM),
     );
     assert!(res.is_ok());
 
@@ -881,7 +921,7 @@ fn mint_for_token_id_addr() {
         creator,
         minter_addr.clone(),
         &batch_mint_msg,
-        &coins(PRICE * num_mints as u128, NATIVE_DENOM),
+        &coins(UNIT_PRICE * num_mints as u128, NATIVE_DENOM),
     );
     assert!(res.is_ok());
     let mintable_num_tokens_response: MintableNumTokensResponse = router
@@ -904,7 +944,7 @@ fn test_start_time_before_genesis() {
 
     // Instantiate sale contract
     let msg = InstantiateMsg {
-        unit_price: coin(PRICE, NATIVE_DENOM),
+        unit_price: coin(UNIT_PRICE, NATIVE_DENOM),
         num_tokens,
         start_time: Some(Expiration::AtTime(Timestamp::from_nanos(
             GENESIS_MINT_START_TIME - 100,
@@ -972,6 +1012,6 @@ fn unhappy_path() {
 
     // Fails wrong denom is sent
     let mint_msg = ExecuteMsg::Mint {};
-    let res = router.execute_contract(buyer, minter_addr, &mint_msg, &coins(PRICE, "uatom"));
+    let res = router.execute_contract(buyer, minter_addr, &mint_msg, &coins(UNIT_PRICE, "uatom"));
     assert!(res.is_err());
 }

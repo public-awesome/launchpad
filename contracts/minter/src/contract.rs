@@ -1,8 +1,8 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coin, to_binary, Addr, BankMsg, Binary, CosmosMsg, Deps, DepsMut, Empty, Env, MessageInfo,
-    Order, Reply, ReplyOn, StdError, StdResult, Timestamp, WasmMsg,
+    coin, to_binary, Addr, BankMsg, Binary, CosmosMsg, Decimal, Deps, DepsMut, Empty, Env,
+    MessageInfo, Order, Reply, ReplyOn, StdError, StdResult, Timestamp, WasmMsg,
 };
 use cw2::set_contract_version;
 use cw721::TokensResponse as Cw721TokensResponse;
@@ -17,7 +17,7 @@ use crate::msg::{
     StartTimeResponse,
 };
 use crate::state::{Config, CONFIG, MINTABLE_TOKEN_IDS, SG721_ADDRESS};
-use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
+use sg_std::{burn_and_distribute_fee, StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use whitelist::msg::{
     HasEndedResponse, HasMemberResponse, HasStartedResponse, QueryMsg as WhitelistQueryMsg,
 };
@@ -30,12 +30,15 @@ const CONTRACT_NAME: &str = "crates.io:sg-minter";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 const INSTANTIATE_SG721_REPLY_ID: u64 = 1;
+
+// governance parameters
 const MAX_TOKEN_LIMIT: u32 = 10000;
 const MAX_PER_ADDRESS_LIMIT: u64 = 30;
 const MAX_BATCH_MINT_LIMIT: u64 = 30;
 const STARTING_BATCH_MINT_LIMIT: u64 = 5;
 const STARTING_PER_ADDRESS_LIMIT: u64 = 5;
 const MIN_MINT_PRICE: u128 = 50_000_000;
+const MINT_FEE_PERCENT: u64 = 10;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -321,7 +324,6 @@ pub fn execute_batch_mint(
     num_mints: u64,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
-    let unit_price = config.unit_price;
     let mint_limit = config
         .batch_mint_limit
         .ok_or(ContractError::MaxBatchMintLimitExceeded {})?;
@@ -330,12 +332,14 @@ pub fn execute_batch_mint(
         return Err(ContractError::MaxBatchMintLimitExceeded {});
     }
 
+    // NOTE: fees are handled in the `_execute_mint` function
+
     let mut msgs: Vec<CosmosMsg<StargazeMsgWrapper>> = vec![];
     let mint_msg = ExecuteMsg::Mint {};
     let msg: CosmosMsg<StargazeMsgWrapper> = CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: env.contract.address.to_string(),
         msg: to_binary(&mint_msg)?,
-        funds: vec![unit_price],
+        funds: vec![config.unit_price],
     });
     for _ in 0..num_mints {
         msgs.append(&mut vec![msg.clone()]);
@@ -349,7 +353,7 @@ pub fn execute_batch_mint(
 
 fn _execute_mint(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
     action: &str,
     recipient: Option<Addr>,
@@ -371,6 +375,12 @@ fn _execute_mint(
         });
     };
 
+    // calculate the mint fee
+    let fee_percent = Decimal::percent(MINT_FEE_PERCENT);
+    let network_fee = config.unit_price.amount * fee_percent;
+    let network_fee_msg = burn_and_distribute_fee(env, &info, network_fee.u128())?;
+    let seller_amount = config.unit_price.amount - network_fee;
+
     // exact payment only
     let payment = must_pay(&info, &config.unit_price.denom)?;
     if payment != config.unit_price.amount {
@@ -381,10 +391,10 @@ fn _execute_mint(
     }
 
     // guardrail against low mint price updates
-    if MIN_MINT_PRICE > payment.into() {
+    if MIN_MINT_PRICE > config.unit_price.amount.into() {
         return Err(ContractError::InsufficientMintPrice {
             expected: MIN_MINT_PRICE,
-            got: payment.into(),
+            got: config.unit_price.amount.into(),
         });
     }
 
@@ -432,13 +442,14 @@ fn _execute_mint(
 
     let seller_msg = BankMsg::Send {
         to_address: config.admin.to_string(),
-        amount: vec![config.unit_price],
+        amount: vec![coin(seller_amount.u128(), config.unit_price.denom)],
     };
     msgs.append(&mut vec![seller_msg.into()]);
 
     Ok(Response::default()
         .add_attribute("action", action)
-        .add_messages(msgs))
+        .add_messages(msgs)
+        .add_messages(network_fee_msg))
 }
 
 pub fn execute_update_start_time(
