@@ -395,7 +395,7 @@ fn _execute_mint(
     }
 
     let fee_percent = Decimal::percent(MINT_FEE_PERCENT);
-    let network_fee = mint_price * fee_percent;
+    let network_fee = mint_price.amount * fee_percent;
     let network_fee_msg = burn_and_distribute_fee(env, &info, network_fee.u128())?;
 
     // if token_id None, find and assign one. else check token_id exists on mintable map.

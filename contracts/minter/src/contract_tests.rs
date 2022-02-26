@@ -24,6 +24,7 @@ const INITIAL_BALANCE: u128 = 2_000_000_000;
 const UNIT_PRICE: u128 = 100_000_000;
 const MINT_FEE: u128 = 10_000_000;
 const MAX_TOKEN_LIMIT: u32 = 10000;
+const WHITELIST_AMOUNT: u128 = 66_000_000;
 
 fn custom_mock_app() -> StargazeApp {
     StargazeApp::default()
@@ -66,6 +67,7 @@ fn setup_whitelist_contract(
         members: vec![],
         start_time: Expiration::Never {},
         end_time: Expiration::Never {},
+        unit_price: coin(WHITELIST_AMOUNT, NATIVE_DENOM),
     };
     let whitelist_addr = router
         .instantiate_contract(
@@ -502,13 +504,24 @@ fn whitelist_access_len_add_remove_expiration() {
     );
     assert!(res.is_ok());
 
+    // mint fails, not whitelist price
+    let mint_msg = ExecuteMsg::Mint {};
+    let err = router
+        .execute_contract(
+            buyer.clone(),
+            minter_addr.clone(),
+            &mint_msg,
+            &coins(UNIT_PRICE, NATIVE_DENOM),
+        )
+        .unwrap_err();
+
     // mint succeeds
     let mint_msg = ExecuteMsg::Mint {};
     let res = router.execute_contract(
         buyer.clone(),
         minter_addr.clone(),
         &mint_msg,
-        &coins(UNIT_PRICE, NATIVE_DENOM),
+        &coins(WHITELIST_AMOUNT, NATIVE_DENOM),
     );
     assert!(res.is_ok());
 
