@@ -95,7 +95,7 @@ impl Module for StargazeModule {
         _block: &BlockInfo,
         request: Empty,
     ) -> anyhow::Result<Binary> {
-        bail!("Unexpected custom query {:?}", request)
+        bail!("custom query not implemented {:?}", request)
     }
 }
 
@@ -131,5 +131,11 @@ impl StargazeApp {
                 .with_custom(StargazeModule {})
                 .build(|_, _, _| {}),
         )
+    }
+}
+
+impl Default for StargazeApp {
+    fn default() -> Self {
+        Self::new()
     }
 }
