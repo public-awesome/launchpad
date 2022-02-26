@@ -377,28 +377,49 @@ fn _execute_mint(
     };
 
     // calculate the mint fee
+    // if in whitelist, use whitelist price. else use mint price
+    let mint_price = if let Some(whitelist) = config.whitelist {
+        let res_started: HasStartedResponse = deps
+            .querier
+            .query_wasm_smart(whitelist.clone(), &WhitelistQueryMsg::HasStarted {})?;
+        let res_ended: HasEndedResponse = deps
+            .querier
+            .query_wasm_smart(whitelist.clone(), &WhitelistQueryMsg::HasEnded {})?;
+        if res_started.has_started && !res_ended.has_ended {
+            deps.querier
+                .query_wasm_smart(whitelist, &WhitelistQueryMsg::UnitPrice {})?
+        } else {
+            config.unit_price.clone()
+        }
+    } else {
+        config.unit_price.clone()
+    };
+
     let mint_fee_percent = Decimal::percent(MINT_FEE_PERCENT);
-    let price = (config.unit_price.amount * mint_fee_percent) + config.unit_price.amount;
+    let price = (mint_price.amount * mint_fee_percent) + mint_price.amount;
 
     // exact payment only
-    let payment = must_pay(&info, &config.unit_price.denom)?;
+    let payment = must_pay(&info, &mint_price.denom)?;
     if payment != price {
         return Err(ContractError::IncorrectPaymentAmount(
-            coin(payment.u128(), &config.unit_price.denom),
-            coin(price.u128(), &config.unit_price.denom),
+            coin(payment.u128(), &mint_price.denom),
+            coin(price.u128(), &mint_price.denom),
         ));
     }
 
     // handle fee
-    let fee = price - config.unit_price.amount;
+    let fee = price - mint_price.amount;
     let fee_msg = burn_and_distribute_fee(env, &info, fee.u128())?;
 
     // guardrail against low mint price updates
-    if MIN_MINT_PRICE > config.unit_price.amount.into() {
-        return Err(ContractError::InsufficientMintPrice {
-            expected: MIN_MINT_PRICE,
-            got: config.unit_price.amount.into(),
-        });
+    // ignore lower whitelist prices
+    if mint_price.amount >= config.unit_price.amount {
+        if MIN_MINT_PRICE > mint_price.amount.into() {
+            return Err(ContractError::InsufficientMintPrice {
+                expected: MIN_MINT_PRICE,
+                got: mint_price.amount.into(),
+            });
+        }
     }
 
     // if token_id None, find and assign one. else check token_id exists on mintable map.
