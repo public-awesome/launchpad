@@ -1,7 +1,7 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coin, to_binary, Addr, BankMsg, Binary, CosmosMsg, Decimal, Deps, DepsMut, Empty, Env,
+    coin, to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut, Empty, Env,
     MessageInfo, Order, Reply, ReplyOn, StdError, StdResult, Timestamp, WasmMsg,
 };
 use cw2::set_contract_version;
@@ -20,6 +20,7 @@ use crate::state::{Config, CONFIG, MINTABLE_TOKEN_IDS, SG721_ADDRESS};
 use sg_std::{burn_and_distribute_fee, StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use whitelist::msg::{
     HasEndedResponse, HasMemberResponse, HasStartedResponse, QueryMsg as WhitelistQueryMsg,
+    UnitPriceResponse,
 };
 
 pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
@@ -339,7 +340,7 @@ pub fn execute_batch_mint(
     let msg: CosmosMsg<StargazeMsgWrapper> = CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: env.contract.address.to_string(),
         msg: to_binary(&mint_msg)?,
-        funds: vec![config.unit_price],
+        funds: vec![mint_price(deps.as_ref())?],
     });
     for _ in 0..num_mints {
         msgs.append(&mut vec![msg.clone()]);
@@ -375,28 +376,27 @@ fn _execute_mint(
         });
     };
 
-    // calculate the mint fee
-    let fee_percent = Decimal::percent(MINT_FEE_PERCENT);
-    let network_fee = config.unit_price.amount * fee_percent;
-    let network_fee_msg = burn_and_distribute_fee(env, &info, network_fee.u128())?;
-    let seller_amount = config.unit_price.amount - network_fee;
-
+    let mint_price: Coin = mint_price(deps.as_ref())?;
     // exact payment only
     let payment = must_pay(&info, &config.unit_price.denom)?;
-    if payment != config.unit_price.amount {
+    if payment != mint_price.amount {
         return Err(ContractError::IncorrectPaymentAmount(
             coin(payment.u128(), &config.unit_price.denom),
-            config.unit_price,
+            mint_price,
         ));
     }
 
     // guardrail against low mint price updates
-    if MIN_MINT_PRICE > config.unit_price.amount.into() {
+    if MIN_MINT_PRICE > mint_price.amount.into() {
         return Err(ContractError::InsufficientMintPrice {
             expected: MIN_MINT_PRICE,
-            got: config.unit_price.amount.into(),
+            got: mint_price.amount.into(),
         });
     }
+
+    let fee_percent = Decimal::percent(MINT_FEE_PERCENT);
+    let network_fee = mint_price * fee_percent;
+    let network_fee_msg = burn_and_distribute_fee(env, &info, network_fee.u128())?;
 
     // if token_id None, find and assign one. else check token_id exists on mintable map.
     let mintable_token_id: u64 = if token_id.is_none() {
@@ -440,6 +440,7 @@ fn _execute_mint(
     // remove mintable token id from map
     MINTABLE_TOKEN_IDS.remove(deps.storage, mintable_token_id);
 
+    let seller_amount = mint_price.amount - network_fee;
     let seller_msg = BankMsg::Send {
         to_address: config.admin.to_string(),
         amount: vec![coin(seller_amount.u128(), config.unit_price.denom)],
@@ -521,6 +522,30 @@ pub fn execute_update_batch_mint_limit(
     config.batch_mint_limit = Some(batch_mint_limit);
     CONFIG.save(deps.storage, &config)?;
     Ok(Response::new().add_attribute("action", "update_batch_mint_limit"))
+}
+
+pub fn mint_price(deps: Deps) -> Result<Coin, StdError> {
+    // if in whitelist, use whitelist price. else use config unit price
+    let config = CONFIG.load(deps.storage)?;
+    let mint_price: Coin = if let Some(whitelist) = config.whitelist {
+        let res_started: HasStartedResponse = deps
+            .querier
+            .query_wasm_smart(whitelist.clone(), &WhitelistQueryMsg::HasStarted {})?;
+        let res_ended: HasEndedResponse = deps
+            .querier
+            .query_wasm_smart(whitelist.clone(), &WhitelistQueryMsg::HasEnded {})?;
+        if res_started.has_started && !res_ended.has_ended {
+            let unit_price: UnitPriceResponse = deps
+                .querier
+                .query_wasm_smart(whitelist, &WhitelistQueryMsg::UnitPrice {})?;
+            unit_price.unit_price
+        } else {
+            config.unit_price.clone()
+        }
+    } else {
+        config.unit_price.clone()
+    };
+    Ok(mint_price)
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
