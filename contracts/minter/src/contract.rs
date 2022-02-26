@@ -525,6 +525,7 @@ fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
         sg721_address,
         sg721_code_id: config.sg721_code_id,
         num_tokens: config.num_tokens,
+        start_time: config.start_time,
         unit_price: config.unit_price,
         per_address_limit: config.per_address_limit,
         batch_mint_limit: config.batch_mint_limit,

@@ -43,12 +43,13 @@ pub enum QueryMsg {
 pub struct ConfigResponse {
     pub admin: Addr,
     pub base_token_uri: String,
+    pub batch_mint_limit: Option<u64>,
     pub num_tokens: u64,
+    pub per_address_limit: Option<u64>,
     pub sg721_address: Addr,
     pub sg721_code_id: u64,
+    pub start_time: Option<Expiration>,
     pub unit_price: Coin,
-    pub per_address_limit: Option<u64>,
-    pub batch_mint_limit: Option<u64>,
     pub whitelist: Option<Addr>,
 }
 
