@@ -377,21 +377,19 @@ fn _execute_mint(
     };
 
     // calculate the mint fee
-    let mint_fee_percent = Decimal::percent(MINT_FEE_PERCENT);
-    let price = (config.unit_price.amount * mint_fee_percent) + config.unit_price.amount;
+    let fee_percent = Decimal::percent(MINT_FEE_PERCENT);
+    let network_fee = config.unit_price.amount * fee_percent;
+    let network_fee_msg = burn_and_distribute_fee(env, &info, network_fee.u128())?;
+    let seller_amount = config.unit_price.amount - network_fee;
 
     // exact payment only
     let payment = must_pay(&info, &config.unit_price.denom)?;
-    if payment != price {
+    if payment != config.unit_price.amount {
         return Err(ContractError::IncorrectPaymentAmount(
             coin(payment.u128(), &config.unit_price.denom),
-            coin(price.u128(), &config.unit_price.denom),
+            config.unit_price,
         ));
     }
-
-    // handle fee
-    let fee = price - config.unit_price.amount;
-    let fee_msg = burn_and_distribute_fee(env, &info, fee.u128())?;
 
     // guardrail against low mint price updates
     if MIN_MINT_PRICE > config.unit_price.amount.into() {
@@ -445,14 +443,14 @@ fn _execute_mint(
 
     let seller_msg = BankMsg::Send {
         to_address: config.admin.to_string(),
-        amount: vec![config.unit_price],
+        amount: vec![coin(seller_amount.u128(), config.unit_price.denom)],
     };
     msgs.append(&mut vec![seller_msg.into()]);
 
     Ok(Response::default()
         .add_attribute("action", action)
         .add_messages(msgs)
-        .add_messages(fee_msg))
+        .add_messages(network_fee_msg))
 }
 
 pub fn execute_update_start_time(
