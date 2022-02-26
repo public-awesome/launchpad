@@ -90,7 +90,7 @@ impl Module for StargazeModule {
     fn query(
         &self,
         _api: &dyn Api,
-        storage: &dyn Storage,
+        _storage: &dyn Storage,
         _querier: &dyn Querier,
         _block: &BlockInfo,
         request: Empty,
