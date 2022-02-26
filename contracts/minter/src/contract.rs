@@ -380,6 +380,7 @@ fn _execute_mint(
     let network_fee = config.unit_price.amount * fee_percent;
     let network_fee_msg = burn_and_distribute_fee(env, &info, network_fee.u128())?;
     let seller_amount = config.unit_price.amount - network_fee;
+    println!("seller_amount: {}", seller_amount);
 
     // exact payment only
     let payment = must_pay(&info, &config.unit_price.denom)?;

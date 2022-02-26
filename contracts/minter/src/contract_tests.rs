@@ -139,7 +139,9 @@ fn setup_minter_contract(
 fn setup_accounts(router: &mut StargazeApp) -> Result<(Addr, Addr), ContractError> {
     let buyer = Addr::unchecked("buyer");
     let creator = Addr::unchecked("creator");
+    // 3,000 tokens
     let creator_funds = coins(INITIAL_BALANCE + CREATION_FEE, NATIVE_DENOM);
+    // 2,000 tokens
     let buyer_funds = coins(INITIAL_BALANCE, NATIVE_DENOM);
     router
         .sudo(SudoMsg::Bank({
@@ -671,10 +673,26 @@ fn check_per_address_limit() {
 fn batch_mint_limit_access_max_sold_out() {
     let mut router = custom_mock_app();
     let (creator, buyer) = setup_accounts(&mut router).unwrap();
+
+    let creator_balances = router.wrap().query_all_balances(creator.clone()).unwrap();
+    assert_eq!(
+        creator_balances,
+        coins(INITIAL_BALANCE + CREATION_FEE, NATIVE_DENOM)
+    );
+
     let num_tokens = 4;
     let (minter_addr, _config) = setup_minter_contract(&mut router, &creator, num_tokens).unwrap();
     // set to genesis mint start time
     setup_block_time(&mut router, GENESIS_MINT_START_TIME).unwrap();
+
+    // creator should have:
+    // initial - creation fee = 2,000 - 1,000 = 1,000 tokens
+    // FIXME: creation fee not being charged?
+    let creator_balances = router.wrap().query_all_balances(creator.clone()).unwrap();
+    assert_eq!(
+        creator_balances,
+        coins(INITIAL_BALANCE - CREATION_FEE, NATIVE_DENOM)
+    );
 
     // batch mint limit set to STARTING_BATCH_MINT_LIMIT if no mint provided
     let batch_mint_msg = ExecuteMsg::BatchMint { num_mints: 1 };
@@ -762,33 +780,57 @@ fn batch_mint_limit_access_max_sold_out() {
     );
     assert!(res.is_ok());
 
-    // test sold out and fails
-    let num_mints = 2;
-    let batch_mint_msg = ExecuteMsg::BatchMint { num_mints };
-    let res = router.execute_contract(
-        buyer.clone(),
-        minter_addr.clone(),
-        &batch_mint_msg,
-        &coins(UNIT_PRICE * num_mints as u128, NATIVE_DENOM),
+    // Balances are correct
+    // Buyer minted 3 times, thus num_mints = num_mints + 1
+    let buyer_balances = router.wrap().query_all_balances(buyer.clone()).unwrap();
+    assert_eq!(
+        buyer_balances,
+        coins(
+            INITIAL_BALANCE - (UNIT_PRICE * (num_mints + 1) as u128),
+            NATIVE_DENOM
+        )
     );
-    assert!(res.is_err());
-    let err = res.unwrap_err();
-    if let Some(nested_err) = err.source() {
-        assert_eq!(
-            nested_err.source().unwrap().to_string(),
-            ContractError::SoldOut {}.to_string(),
-        );
-    };
 
-    // batch mint smaller amount
-    let batch_mint_msg = ExecuteMsg::BatchMint { num_mints: 1 };
-    let res = router.execute_contract(
-        buyer,
-        minter_addr,
-        &batch_mint_msg,
-        &coins(UNIT_PRICE, NATIVE_DENOM),
+    // minter contract should have no balance
+    let minter_balance = router
+        .wrap()
+        .query_all_balances(minter_addr.clone())
+        .unwrap();
+    assert_eq!(0, minter_balance.len());
+
+    let creator_balances = router.wrap().query_all_balances(creator.clone()).unwrap();
+    assert_eq!(
+        creator_balances,
+        coins(INITIAL_BALANCE - CREATION_FEE, NATIVE_DENOM)
     );
-    assert!(res.is_ok());
+
+    // // test sold out and fails
+    // let num_mints = 2;
+    // let batch_mint_msg = ExecuteMsg::BatchMint { num_mints };
+    // let res = router.execute_contract(
+    //     buyer.clone(),
+    //     minter_addr.clone(),
+    //     &batch_mint_msg,
+    //     &coins(UNIT_PRICE * num_mints as u128, NATIVE_DENOM),
+    // );
+    // assert!(res.is_err());
+    // let err = res.unwrap_err();
+    // if let Some(nested_err) = err.source() {
+    //     assert_eq!(
+    //         nested_err.source().unwrap().to_string(),
+    //         ContractError::SoldOut {}.to_string(),
+    //     );
+    // };
+
+    // // batch mint smaller amount
+    // let batch_mint_msg = ExecuteMsg::BatchMint { num_mints: 1 };
+    // let res = router.execute_contract(
+    //     buyer,
+    //     minter_addr,
+    //     &batch_mint_msg,
+    //     &coins(UNIT_PRICE, NATIVE_DENOM),
+    // );
+    // assert!(res.is_ok());
 }
 
 #[test]
