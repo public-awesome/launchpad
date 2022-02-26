@@ -1,3 +1,4 @@
+use cosmwasm_std::Coin;
 use cw_utils::Expiration;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -7,7 +8,9 @@ pub struct InstantiateMsg {
     pub members: Vec<String>,
     pub start_time: Expiration,
     pub end_time: Expiration,
+    pub unit_price: Coin,
 }
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
@@ -31,6 +34,7 @@ pub enum QueryMsg {
     HasEnded {},
     Members {},
     HasMember { member: String },
+    UnitPrice {},
 }
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
@@ -56,4 +60,9 @@ pub struct HasEndedResponse {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct HasStartedResponse {
     pub has_started: bool,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct UnitPriceResponse {
+    pub unit_price: Coin,
 }
