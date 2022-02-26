@@ -169,7 +169,7 @@ checksum = "2e125c834c186f20b48106917329fae6459b41715fd1c6a4f4be4a49e4185c49"
 dependencies = [
  "cosmwasm-std",
  "cw-storage-plus",
- "cw-utils 0.12.1",
+ "cw-utils",
  "schemars",
  "serde",
  "thiserror",
@@ -185,7 +185,7 @@ dependencies = [
  "cosmwasm-std",
  "cosmwasm-storage",
  "cw-storage-plus",
- "cw-utils 0.12.1",
+ "cw-utils",
  "derivative",
  "itertools",
  "prost",
@@ -203,18 +203,6 @@ dependencies = [
  "cosmwasm-std",
  "schemars",
  "serde",
-]
-
-[[package]]
-name = "cw-utils"
-version = "0.11.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ef842a1792e4285beff7b3b518705f760fa4111dc1e296e53f3e92d1ef7f6220"
-dependencies = [
- "cosmwasm-std",
- "schemars",
- "serde",
- "thiserror",
 ]
 
 [[package]]
@@ -274,7 +262,7 @@ dependencies = [
  "cosmwasm-std",
  "cw-controllers",
  "cw-storage-plus",
- "cw-utils 0.12.1",
+ "cw-utils",
  "cw2",
  "cw4",
  "schemars",
@@ -284,23 +272,11 @@ dependencies = [
 
 [[package]]
 name = "cw721"
-version = "0.11.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e031c47a592cbdbed3cb05bff041b1754914098d1e4c361a5e4b9dd7b27c8c31"
-dependencies = [
- "cosmwasm-std",
- "cw-utils 0.11.1",
- "schemars",
- "serde",
-]
-
-[[package]]
-name = "cw721"
 version = "0.12.0"
 source = "git+https://github.com/public-awesome/cw-nfts?branch=shanev/fix-versions#0c820b9e1d0f0bd7ea7681d75cdf16668c3456c0"
 dependencies = [
  "cosmwasm-std",
- "cw-utils 0.12.1",
+ "cw-utils",
  "schemars",
  "serde",
 ]
@@ -312,9 +288,9 @@ source = "git+https://github.com/public-awesome/cw-nfts?branch=shanev/fix-versio
 dependencies = [
  "cosmwasm-std",
  "cw-storage-plus",
- "cw-utils 0.12.1",
+ "cw-utils",
  "cw2",
- "cw721 0.12.0",
+ "cw721",
  "schemars",
  "serde",
  "thiserror",
@@ -541,9 +517,9 @@ dependencies = [
  "cosmwasm-storage",
  "cw-multi-test",
  "cw-storage-plus",
- "cw-utils 0.12.1",
+ "cw-utils",
  "cw2",
- "cw721 0.12.0",
+ "cw721",
  "cw721-base",
  "schemars",
  "serde",
@@ -739,8 +715,9 @@ version = "0.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
- "cw-utils 0.12.1",
- "cw721 0.11.0",
+ "cw-utils",
+ "cw721",
+ "cw721-base",
  "schemars",
  "serde",
  "thiserror",
@@ -762,9 +739,9 @@ dependencies = [
  "cosmwasm-std",
  "cosmwasm-storage",
  "cw-storage-plus",
- "cw-utils 0.12.1",
+ "cw-utils",
  "cw2",
- "cw721 0.12.0",
+ "cw721",
  "cw721-base",
  "schemars",
  "serde",
@@ -940,7 +917,7 @@ dependencies = [
  "cosmwasm-std",
  "cosmwasm-storage",
  "cw-storage-plus",
- "cw-utils 0.12.1",
+ "cw-utils",
  "cw2",
  "cw4",
  "cw4-group",
