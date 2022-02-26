@@ -333,8 +333,29 @@ pub fn execute_batch_mint(
         return Err(ContractError::MaxBatchMintLimitExceeded {});
     }
 
+    // calculate the mint fee
+    // if in whitelist, use whitelist price. else use mint price
+    let mint_price: Coin = if let Some(whitelist) = config.whitelist {
+        let res_started: HasStartedResponse = deps
+            .querier
+            .query_wasm_smart(whitelist.clone(), &WhitelistQueryMsg::HasStarted {})?;
+        let res_ended: HasEndedResponse = deps
+            .querier
+            .query_wasm_smart(whitelist.clone(), &WhitelistQueryMsg::HasEnded {})?;
+        if res_started.has_started && !res_ended.has_ended {
+            let unit_price: UnitPriceResponse = deps
+                .querier
+                .query_wasm_smart(whitelist, &WhitelistQueryMsg::UnitPrice {})?;
+            unit_price.unit_price
+        } else {
+            config.unit_price.clone()
+        }
+    } else {
+        config.unit_price.clone()
+    };
+
     let mint_fee_percent = Decimal::percent(MINT_FEE_PERCENT);
-    let price = (config.unit_price.amount * mint_fee_percent) + config.unit_price.amount;
+    let price = (mint_price.amount * mint_fee_percent) + mint_price.amount;
 
     let mut msgs: Vec<CosmosMsg<StargazeMsgWrapper>> = vec![];
     let mint_msg = ExecuteMsg::Mint {};
