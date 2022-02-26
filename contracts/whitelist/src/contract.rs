@@ -174,14 +174,14 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
 fn query_start_time(deps: Deps) -> StdResult<TimeResponse> {
     let config = CONFIG.load(deps.storage)?;
     Ok(TimeResponse {
-        time: config.start_time.to_string(),
+        time: config.start_time,
     })
 }
 
 fn query_end_time(deps: Deps) -> StdResult<TimeResponse> {
     let config = CONFIG.load(deps.storage)?;
     Ok(TimeResponse {
-        time: config.end_time.to_string(),
+        time: config.end_time,
     })
 }
 
@@ -268,7 +268,7 @@ mod tests {
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(res.attributes.len(), 2);
         let res = query_end_time(deps.as_ref()).unwrap();
-        assert_eq!(res.time, "expiration height: 10");
+        assert_eq!(res.time, Expiration::AtHeight(10));
     }
 
     #[test]

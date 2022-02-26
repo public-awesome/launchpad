@@ -45,7 +45,7 @@ pub struct HasMemberResponse {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct TimeResponse {
-    pub time: String,
+    pub time: Expiration,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
