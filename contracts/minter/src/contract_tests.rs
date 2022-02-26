@@ -24,7 +24,7 @@ const INITIAL_BALANCE: u128 = 2_000_000_000;
 const UNIT_PRICE: u128 = 100_000_000;
 const MINT_FEE: u128 = 10_000_000;
 const PRICE: u128 = UNIT_PRICE + MINT_FEE; // 110,000,000
-
+const WHITELIST_AMOUNT: u128 = 5_000_000;
 const MAX_TOKEN_LIMIT: u32 = 10000;
 
 fn custom_mock_app() -> StargazeApp {
@@ -68,6 +68,7 @@ fn setup_whitelist_contract(
         members: vec![],
         start_time: Expiration::Never {},
         end_time: Expiration::Never {},
+        unit_price: coin(WHITELIST_AMOUNT, NATIVE_DENOM),
     };
     let whitelist_addr = router
         .instantiate_contract(
