@@ -332,15 +332,14 @@ pub fn execute_batch_mint(
         return Err(ContractError::MaxBatchMintLimitExceeded {});
     }
 
-    let mint_fee_percent = Decimal::percent(MINT_FEE_PERCENT);
-    let price = (config.unit_price.amount * mint_fee_percent) + config.unit_price.amount;
+    // NOTE: fees are handled in the `_execute_mint` function
 
     let mut msgs: Vec<CosmosMsg<StargazeMsgWrapper>> = vec![];
     let mint_msg = ExecuteMsg::Mint {};
     let msg: CosmosMsg<StargazeMsgWrapper> = CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: env.contract.address.to_string(),
         msg: to_binary(&mint_msg)?,
-        funds: vec![coin(price.u128(), config.unit_price.denom)],
+        funds: vec![config.unit_price],
     });
     for _ in 0..num_mints {
         msgs.append(&mut vec![msg.clone()]);
