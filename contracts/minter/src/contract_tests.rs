@@ -25,7 +25,7 @@ const PRICE: u128 = 100_000_000;
 const MAX_TOKEN_LIMIT: u32 = 10000;
 
 fn custom_mock_app() -> StargazeApp {
-    return StargazeApp::new();
+    StargazeApp::default()
 }
 pub fn contract_whitelist() -> Box<dyn Contract<StargazeMsgWrapper>> {
     let contract = ContractWrapper::new(

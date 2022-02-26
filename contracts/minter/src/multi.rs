@@ -51,25 +51,25 @@ impl Module for StargazeModule {
         ExecC: Debug + Clone + PartialEq + JsonSchema + DeserializeOwned + 'static,
         QueryC: CustomQuery + DeserializeOwned + 'static,
     {
-        match msg {
-            StargazeMsgWrapper {
-                route: _,
-                msg_data,
-                version: _,
-            } => match msg_data {
-                sg_std::StargazeMsg::FundCommunityPool { amount } => {
-                    let msg = BankMsg::Send {
-                        to_address: "an_address".to_owned(),
-                        amount: amount,
-                    }
-                    .into();
-                    router.execute(api, storage, block, sender, msg)?;
-                    Ok(AppResponse::default())
+        let StargazeMsgWrapper {
+            route: _,
+            msg_data,
+            version: _,
+        } = msg;
+
+        match msg_data {
+            sg_std::StargazeMsg::FundCommunityPool { amount } => {
+                let msg = BankMsg::Send {
+                    to_address: "an_address".to_owned(),
+                    amount,
                 }
-                _ => {
-                    bail!("not implemented")
-                }
-            },
+                .into();
+                router.execute(api, storage, block, sender, msg)?;
+                Ok(AppResponse::default())
+            }
+            _ => {
+                bail!("not implemented")
+            }
         }
     }
     fn sudo<ExecC, QueryC>(
