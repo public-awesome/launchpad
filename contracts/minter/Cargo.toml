@@ -60,3 +60,4 @@ whitelist = { path = "../whitelist" }
 [dev-dependencies]
 cosmwasm-schema = { version = "1.0.0-beta5" }
 cw-multi-test = "0.12.1"
+anyhow="1"
