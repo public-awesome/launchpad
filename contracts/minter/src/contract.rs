@@ -1,8 +1,8 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coin, to_binary, Addr, BankMsg, Binary, CosmosMsg, Deps, DepsMut, Empty, Env, MessageInfo,
-    Order, Reply, ReplyOn, StdError, StdResult, Timestamp, WasmMsg,
+    coin, to_binary, Addr, BankMsg, Binary, CosmosMsg, Decimal, Deps, DepsMut, Empty, Env,
+    MessageInfo, Order, Reply, ReplyOn, StdError, StdResult, Timestamp, WasmMsg,
 };
 use cw2::set_contract_version;
 use cw721::TokensResponse as Cw721TokensResponse;
@@ -17,7 +17,7 @@ use crate::msg::{
     StartTimeResponse,
 };
 use crate::state::{Config, CONFIG, MINTABLE_TOKEN_IDS, SG721_ADDRESS};
-use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
+use sg_std::{burn_and_distribute_fee, StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use whitelist::msg::{
     HasEndedResponse, HasMemberResponse, HasStartedResponse, QueryMsg as WhitelistQueryMsg,
 };
@@ -30,12 +30,15 @@ const CONTRACT_NAME: &str = "crates.io:sg-minter";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 const INSTANTIATE_SG721_REPLY_ID: u64 = 1;
+
+// governance parameters
 const MAX_TOKEN_LIMIT: u32 = 10000;
 const MAX_PER_ADDRESS_LIMIT: u64 = 30;
 const MAX_BATCH_MINT_LIMIT: u64 = 30;
 const STARTING_BATCH_MINT_LIMIT: u64 = 5;
 const STARTING_PER_ADDRESS_LIMIT: u64 = 5;
 const MIN_MINT_PRICE: u128 = 50_000_000;
+const MINT_FEE_PERCENT: u64 = 10;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -349,7 +352,7 @@ pub fn execute_batch_mint(
 
 fn _execute_mint(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
     action: &str,
     recipient: Option<Addr>,
@@ -371,20 +374,32 @@ fn _execute_mint(
         });
     };
 
+    // calculate the mint fee
+    let mint_fee_percent = Decimal::percent(MINT_FEE_PERCENT);
+    let price = (config.unit_price.amount * mint_fee_percent) + config.unit_price.amount;
+    // println!("price: {}", price);
+
     // exact payment only
     let payment = must_pay(&info, &config.unit_price.denom)?;
-    if payment != config.unit_price.amount {
+    // println!("payment: {}", payment);
+    if payment != price {
         return Err(ContractError::IncorrectPaymentAmount(
             coin(payment.u128(), &config.unit_price.denom),
-            config.unit_price,
+            coin(price.u128(), &config.unit_price.denom),
         ));
     }
 
+    // handle fee
+    let fee = price - config.unit_price.amount;
+    // println!("fee: {}", fee);
+    // println!("info: {}", &info.funds[0]);
+    let fee_msg = burn_and_distribute_fee(env, &info, fee.u128())?;
+
     // guardrail against low mint price updates
-    if MIN_MINT_PRICE > payment.into() {
+    if MIN_MINT_PRICE > config.unit_price.amount.into() {
         return Err(ContractError::InsufficientMintPrice {
             expected: MIN_MINT_PRICE,
-            got: payment.into(),
+            got: config.unit_price.amount.into(),
         });
     }
 
@@ -438,7 +453,8 @@ fn _execute_mint(
 
     Ok(Response::default()
         .add_attribute("action", action)
-        .add_messages(msgs))
+        .add_messages(msgs)
+        .add_messages(fee_msg))
 }
 
 pub fn execute_update_start_time(
