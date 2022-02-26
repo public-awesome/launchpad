@@ -81,6 +81,18 @@
         }
       },
       "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "unit_price"
+      ],
+      "properties": {
+        "unit_price": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
     }
   ]
 }

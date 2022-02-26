@@ -1,7 +1,7 @@
 use crate::multi::StargazeApp;
 use cosmwasm_std::testing::{mock_dependencies_with_balance, mock_env, mock_info};
-use cosmwasm_std::Api;
-use cosmwasm_std::{coin, coins, Addr, Decimal, Timestamp};
+use cosmwasm_std::{coin, coins, Addr, Decimal, Timestamp, Uint128};
+use cosmwasm_std::{Api, Coin};
 use cw721::{Cw721QueryMsg, OwnerOfResponse};
 use cw_multi_test::{BankSudo, Contract, ContractWrapper, Executor, SudoMsg};
 use cw_utils::Expiration;
@@ -24,8 +24,9 @@ const INITIAL_BALANCE: u128 = 2_000_000_000;
 const UNIT_PRICE: u128 = 100_000_000;
 const MINT_FEE: u128 = 10_000_000;
 const PRICE: u128 = UNIT_PRICE + MINT_FEE; // 110,000,000
-const WHITELIST_AMOUNT: u128 = 5_000_000;
+const WHITELIST_AMOUNT: u128 = PRICE + 10_000_000; // set higher to trip tests. irl this should be lower than mint price
 const MAX_TOKEN_LIMIT: u32 = 10000;
+const MINT_FEE_PERCENT: u64 = 10;
 
 fn custom_mock_app() -> StargazeApp {
     StargazeApp::default()
@@ -500,13 +501,41 @@ fn whitelist_access_len_add_remove_expiration() {
     );
     assert!(res.is_ok());
 
+    // mint fails, not whitelist price
+    let mint_msg = ExecuteMsg::Mint {};
+    let mint_fee_percent = Decimal::percent(MINT_FEE_PERCENT);
+    let mint_price: Uint128 =
+        (Uint128::from(WHITELIST_AMOUNT) * mint_fee_percent) + Uint128::from(WHITELIST_AMOUNT);
+    let err = router
+        .execute_contract(
+            buyer.clone(),
+            minter_addr.clone(),
+            &mint_msg,
+            &coins(PRICE, NATIVE_DENOM),
+        )
+        .unwrap_err();
+    assert_eq!(
+        err.source().unwrap().to_string(),
+        ContractError::IncorrectPaymentAmount(
+            Coin {
+                amount: PRICE.into(),
+                denom: NATIVE_DENOM.into(),
+            },
+            Coin {
+                amount: mint_price,
+                denom: NATIVE_DENOM.into(),
+            }
+        )
+        .to_string()
+    );
+
     // mint succeeds
     let mint_msg = ExecuteMsg::Mint {};
     let res = router.execute_contract(
         buyer.clone(),
         minter_addr.clone(),
         &mint_msg,
-        &coins(PRICE, NATIVE_DENOM),
+        &coins(mint_price.into(), NATIVE_DENOM),
     );
     assert!(res.is_ok());
 
@@ -765,13 +794,31 @@ fn batch_mint_limit_access_max_sold_out() {
         );
     };
 
+    // add active whitelist
+    let whitelist_addr = setup_whitelist_contract(&mut router, &creator).unwrap();
+
+    // set whitelist in minter contract
+    let set_whitelist_msg = ExecuteMsg::SetWhitelist {
+        whitelist: whitelist_addr.to_string(),
+    };
+    let res = router.execute_contract(
+        creator.clone(),
+        minter_addr.clone(),
+        &set_whitelist_msg,
+        &coins(PRICE, NATIVE_DENOM),
+    );
+    assert!(res.is_ok());
+
     // batch mint smaller amount
+    let mint_fee_percent = Decimal::percent(MINT_FEE_PERCENT);
+    let mint_price: Uint128 =
+        (Uint128::from(WHITELIST_AMOUNT) * mint_fee_percent) + Uint128::from(WHITELIST_AMOUNT);
     let batch_mint_msg = ExecuteMsg::BatchMint { num_mints: 1 };
     let res = router.execute_contract(
         buyer,
         minter_addr,
         &batch_mint_msg,
-        &coins(PRICE, NATIVE_DENOM),
+        &coins(mint_price.into(), NATIVE_DENOM),
     );
     assert!(res.is_ok());
 }
