@@ -60,7 +60,7 @@ impl Module for StargazeModule {
         match msg_data {
             sg_std::StargazeMsg::FundCommunityPool { amount } => {
                 let msg = BankMsg::Send {
-                    to_address: "an_address".to_owned(),
+                    to_address: "community_pool".to_owned(),
                     amount,
                 }
                 .into();
