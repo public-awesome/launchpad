@@ -1,7 +1,7 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coin, to_binary, Addr, BankMsg, Binary, CosmosMsg, Decimal, Deps, DepsMut, Empty, Env,
+    coin, to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut, Empty, Env,
     MessageInfo, Order, Reply, ReplyOn, StdError, StdResult, Timestamp, WasmMsg,
 };
 use cw2::set_contract_version;
@@ -20,6 +20,7 @@ use crate::state::{Config, CONFIG, MINTABLE_TOKEN_IDS, SG721_ADDRESS};
 use sg_std::{burn_and_distribute_fee, StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use whitelist::msg::{
     HasEndedResponse, HasMemberResponse, HasStartedResponse, QueryMsg as WhitelistQueryMsg,
+    UnitPriceResponse,
 };
 
 pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
@@ -378,7 +379,7 @@ fn _execute_mint(
 
     // calculate the mint fee
     // if in whitelist, use whitelist price. else use mint price
-    let mint_price = if let Some(whitelist) = config.whitelist {
+    let mint_price: Coin = if let Some(whitelist) = config.whitelist {
         let res_started: HasStartedResponse = deps
             .querier
             .query_wasm_smart(whitelist.clone(), &WhitelistQueryMsg::HasStarted {})?;
@@ -386,8 +387,10 @@ fn _execute_mint(
             .querier
             .query_wasm_smart(whitelist.clone(), &WhitelistQueryMsg::HasEnded {})?;
         if res_started.has_started && !res_ended.has_ended {
-            deps.querier
-                .query_wasm_smart(whitelist, &WhitelistQueryMsg::UnitPrice {})?
+            let unit_price: UnitPriceResponse = deps
+                .querier
+                .query_wasm_smart(whitelist, &WhitelistQueryMsg::UnitPrice {})?;
+            unit_price.unit_price
         } else {
             config.unit_price.clone()
         }
