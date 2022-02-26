@@ -318,6 +318,16 @@ fn happy_path() {
             + &Timestamp::from_nanos(GENESIS_MINT_START_TIME).to_string()
     );
 
+    // Fail with incorrect tokens
+    let mint_msg = ExecuteMsg::Mint {};
+    let err = router.execute_contract(
+        buyer.clone(),
+        minter_addr.clone(),
+        &mint_msg,
+        &coins(PRICE + 100, NATIVE_DENOM),
+    );
+    assert!(err.is_err());
+
     // Succeeds if funds are sent
     let mint_msg = ExecuteMsg::Mint {};
     let res = router.execute_contract(
