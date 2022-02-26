@@ -794,13 +794,31 @@ fn batch_mint_limit_access_max_sold_out() {
         );
     };
 
+    // add active whitelist
+    let whitelist_addr = setup_whitelist_contract(&mut router, &creator).unwrap();
+
+    // set whitelist in minter contract
+    let set_whitelist_msg = ExecuteMsg::SetWhitelist {
+        whitelist: whitelist_addr.to_string(),
+    };
+    let res = router.execute_contract(
+        creator.clone(),
+        minter_addr.clone(),
+        &set_whitelist_msg,
+        &coins(PRICE, NATIVE_DENOM),
+    );
+    assert!(res.is_ok());
+
     // batch mint smaller amount
+    let mint_fee_percent = Decimal::percent(MINT_FEE_PERCENT);
+    let mint_price: Uint128 =
+        (Uint128::from(WHITELIST_AMOUNT) * mint_fee_percent) + Uint128::from(WHITELIST_AMOUNT);
     let batch_mint_msg = ExecuteMsg::BatchMint { num_mints: 1 };
     let res = router.execute_contract(
         buyer,
         minter_addr,
         &batch_mint_msg,
-        &coins(PRICE, NATIVE_DENOM),
+        &coins(mint_price.into(), NATIVE_DENOM),
     );
     assert!(res.is_ok());
 }
