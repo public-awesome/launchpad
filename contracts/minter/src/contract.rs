@@ -1,8 +1,8 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Addr, BankMsg, Binary, CosmosMsg, Deps, DepsMut, Empty, Env, MessageInfo, Order,
-    Reply, ReplyOn, Response, StdError, StdResult, SubMsg, Timestamp, WasmMsg,
+    coin, to_binary, Addr, BankMsg, Binary, CosmosMsg, Deps, DepsMut, Empty, Env, MessageInfo,
+    Order, Reply, ReplyOn, Response, StdError, StdResult, SubMsg, Timestamp, WasmMsg,
 };
 use cw2::set_contract_version;
 use cw721::TokensResponse as Cw721TokensResponse;
@@ -371,7 +371,10 @@ fn _execute_mint(
     // exact payment only
     let payment = must_pay(&info, &config.unit_price.denom)?;
     if payment != config.unit_price.amount {
-        return Err(ContractError::IncorrectPaymentAmount {});
+        return Err(ContractError::IncorrectPaymentAmount(
+            coin(payment.u128(), &config.unit_price.denom),
+            config.unit_price,
+        ));
     }
 
     // guardrail against low mint price updates

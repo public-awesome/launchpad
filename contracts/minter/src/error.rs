@@ -1,4 +1,4 @@
-use cosmwasm_std::StdError;
+use cosmwasm_std::{Coin, StdError};
 use cw_utils::PaymentError;
 use thiserror::Error;
 use url::ParseError;
@@ -20,8 +20,8 @@ pub enum ContractError {
     #[error("TooManyCoins")]
     TooManyCoins {},
 
-    #[error("IncorrectPaymentAmount")]
-    IncorrectPaymentAmount {},
+    #[error("IncorrectPaymentAmount {0} != {1}")]
+    IncorrectPaymentAmount(Coin, Coin),
 
     #[error("Num tokens exceeds max token limit {max}")]
     MaxTokenLimitExceeded { max: u32 },
