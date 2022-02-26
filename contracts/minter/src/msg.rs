@@ -49,6 +49,7 @@ pub struct ConfigResponse {
     pub unit_price: Coin,
     pub per_address_limit: Option<u64>,
     pub batch_mint_limit: Option<u64>,
+    pub whitelist: Option<Addr>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

@@ -48,6 +48,16 @@
     },
     "unit_price": {
       "$ref": "#/definitions/Coin"
+    },
+    "whitelist": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/Addr"
+        },
+        {
+          "type": "null"
+        }
+      ]
     }
   },
   "definitions": {
