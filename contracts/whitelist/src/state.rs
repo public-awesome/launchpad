@@ -1,4 +1,4 @@
-use cosmwasm_std::{Addr, Empty};
+use cosmwasm_std::{Addr, Coin, Empty};
 use cw_storage_plus::{Item, Map};
 use cw_utils::Expiration;
 use schemars::JsonSchema;
@@ -10,6 +10,7 @@ pub struct Config {
     pub start_time: Expiration,
     pub end_time: Expiration,
     pub num_members: u32,
+    pub unit_price: Coin,
 }
 
 pub const CONFIG: Item<Config> = Item::new("config");
