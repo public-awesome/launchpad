@@ -386,10 +386,8 @@ fn _execute_mint(
     };
 
     let mint_price: Coin = mint_price(deps.as_ref(), admin_no_fee)?;
-    println!("_execute_mint mint price {}", mint_price);
     // exact payment only
     let payment = may_pay(&info, &config.unit_price.denom)?;
-    println!("_execute_mint payment {}", payment);
     if payment != mint_price.amount {
         return Err(ContractError::IncorrectPaymentAmount(
             coin(payment.u128(), &config.unit_price.denom),
@@ -404,8 +402,6 @@ fn _execute_mint(
             got: mint_price.amount.into(),
         });
     }
-
-    println!("got through mint fee and payment checks");
 
     let mut network_fee_msgs: Vec<CosmosMsg<StargazeMsgWrapper>> = vec![];
 
