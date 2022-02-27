@@ -21,6 +21,7 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 // contract governance params
 const MAX_MEMBERS: u32 = 5000;
 const CREATION_FEE: u128 = 100_000_000;
+const MIN_MINT_PRICE: u128 = 25_000_000;
 
 type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 
@@ -32,6 +33,14 @@ pub fn instantiate(
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+
+    if msg.unit_price.amount.u128() < MIN_MINT_PRICE {
+        return Err(ContractError::InvalidUnitPrice(
+            msg.unit_price.amount.u128(),
+            MIN_MINT_PRICE,
+        ));
+    }
+
     let config = Config {
         admin: info.sender.clone(),
         start_time: msg.start_time,
@@ -236,7 +245,7 @@ mod tests {
     use sg_std::NATIVE_DENOM;
 
     const ADMIN: &str = "admin";
-    const UNIT_AMOUNT: u128 = 100;
+    const UNIT_AMOUNT: u128 = 100_000_000;
 
     const NON_EXPIRED_HEIGHT: Expiration = Expiration::AtHeight(22_222);
     const EXPIRED_HEIGHT: Expiration = Expiration::AtHeight(10);
@@ -257,6 +266,19 @@ mod tests {
     fn proper_initialization() {
         let mut deps = mock_dependencies();
         setup_contract(deps.as_mut());
+    }
+
+    #[test]
+    fn improper_initialization() {
+        let mut deps = mock_dependencies();
+        let msg = InstantiateMsg {
+            members: vec!["adsfsa".to_string()],
+            start_time: NON_EXPIRED_HEIGHT,
+            end_time: NON_EXPIRED_HEIGHT,
+            unit_price: coin(1, NATIVE_DENOM),
+        };
+        let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
+        instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
     }
 
     #[test]
