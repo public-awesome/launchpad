@@ -40,6 +40,7 @@ const STARTING_BATCH_MINT_LIMIT: u64 = 5;
 const STARTING_PER_ADDRESS_LIMIT: u64 = 5;
 const MIN_MINT_PRICE: u128 = 50_000_000;
 const MINT_FEE_PERCENT: u64 = 10;
+const ADMIN_MINT_PRICE: u128 = 1;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -388,7 +389,7 @@ fn _execute_mint(
         ));
     }
 
-    // guardrail against low mint price updates
+    // guardrail against low mint price updates for non-admins
     if MIN_MINT_PRICE > mint_price.amount.into() && info.sender != config.admin {
         return Err(ContractError::InsufficientMintPrice {
             expected: MIN_MINT_PRICE,
@@ -400,6 +401,7 @@ fn _execute_mint(
 
     let fee_percent = Decimal::percent(MINT_FEE_PERCENT);
     let network_fee = mint_price.amount * fee_percent;
+    println!("network fee, {}", network_fee);
     let network_fee_msg = burn_and_distribute_fee(env, &info, network_fee.u128())?;
 
     // if token_id None, find and assign one. else check token_id exists on mintable map.
@@ -529,11 +531,13 @@ pub fn execute_update_batch_mint_limit(
 }
 
 pub fn mint_price(deps: Deps, info: MessageInfo) -> Result<Coin, StdError> {
-    // if admin free mint, else if in whitelist use whitelist price, else use config unit price
+    // if admin => admin mint fee,
+    // else if in whitelist => whitelist price
+    // else => config unit price
     let config = CONFIG.load(deps.storage)?;
     let mint_price: Coin = if config.admin == info.sender {
         Coin {
-            amount: Uint128::zero(),
+            amount: Uint128::from(ADMIN_MINT_PRICE),
             denom: NATIVE_DENOM.to_string(),
         }
     } else if let Some(whitelist) = config.whitelist {
