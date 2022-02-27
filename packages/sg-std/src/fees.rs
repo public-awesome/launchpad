@@ -1,6 +1,6 @@
 use crate::{create_fund_community_pool_msg, StargazeMsgWrapper, NATIVE_DENOM};
-use cosmwasm_std::{coin, BankMsg, Coin, CosmosMsg, Decimal, Env, MessageInfo, Uint128};
-use cw_utils::{must_pay, PaymentError};
+use cosmwasm_std::{coin, coins, BankMsg, Coin, CosmosMsg, Decimal, Env, MessageInfo, Uint128};
+use cw_utils::{may_pay, PaymentError};
 use thiserror::Error;
 
 // governance parameters
@@ -12,7 +12,7 @@ fn convert_coins_for_msg(msg_coin: Coin) -> Vec<Coin> {
         vec![msg_coin]
     } else {
         println!("sg-std fees: no funds sent");
-        vec![]
+        coins(0, NATIVE_DENOM)
     }
 }
 
@@ -22,16 +22,22 @@ pub fn burn_and_distribute_fee(
     info: &MessageInfo,
     fee_amount: u128,
 ) -> Result<Vec<SubMsg>, FeeError> {
-    let payment = must_pay(info, NATIVE_DENOM)?;
+    println!("inside burn and distribute fee");
+    let payment = may_pay(info, NATIVE_DENOM)?;
     if payment.u128() < fee_amount {
         return Err(FeeError::InsufficientFee(fee_amount, payment.u128()));
     };
 
+    println!("before burn calc");
     // calculate the fee to burn
     let burn_percent = Decimal::percent(FEE_BURN_PERCENT);
     let burn_fee = Uint128::from(fee_amount) * burn_percent;
     let burn_coin = coin(burn_fee.u128(), NATIVE_DENOM);
     // burn half the fee
+    println!(
+        "fee burn msg: {:?}",
+        convert_coins_for_msg(burn_coin.clone())
+    );
     let fee_burn_msg = BankMsg::Burn {
         amount: convert_coins_for_msg(burn_coin),
     };

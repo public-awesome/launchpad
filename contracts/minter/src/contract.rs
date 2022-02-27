@@ -403,6 +403,7 @@ fn _execute_mint(
     let network_fee = mint_price.amount * fee_percent;
     println!("network fee, {}", network_fee);
     let network_fee_msg = burn_and_distribute_fee(env, &info, network_fee.u128())?;
+    println!("after network fee, {}", network_fee);
 
     // if token_id None, find and assign one. else check token_id exists on mintable map.
     let mintable_token_id: u64 = if token_id.is_none() {
