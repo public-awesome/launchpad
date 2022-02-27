@@ -966,11 +966,12 @@ fn mint_for_token_id_addr() {
         minter_addr.clone(),
         &batch_mint_msg,
         &coins_for_msg(Coin {
-            amount: Uint128::from(ADMIN_MINT_PRICE),
+            amount: Uint128::from(UNIT_PRICE * num_mints as u128),
             denom: NATIVE_DENOM.to_string(),
         }),
     );
     assert!(res.is_ok());
+
     let mintable_num_tokens_response: MintableNumTokensResponse = router
         .wrap()
         .query_wasm_smart(minter_addr, &QueryMsg::MintableNumTokens {})
