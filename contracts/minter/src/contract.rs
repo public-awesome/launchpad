@@ -373,6 +373,7 @@ fn _execute_mint(
     // mint -> _execute_mint(recipient: None, token_id: None)
     // mint_to(recipient: "friend") -> _execute_mint(Some(recipient), token_id: None)
     // mint_for(recipient: "friend2", token_id: 420) -> _execute_mint(recipient, token_id)
+    let mut msgs: Vec<CosmosMsg<StargazeMsgWrapper>> = vec![];
     let config = CONFIG.load(deps.storage)?;
     let sg721_address = SG721_ADDRESS.load(deps.storage)?;
     let recipient_addr = if recipient.is_none() {
@@ -404,13 +405,16 @@ fn _execute_mint(
     }
 
     // create network fee msgs
-    let mut network_fee_msgs: Vec<CosmosMsg<StargazeMsgWrapper>> = vec![];
     let network_fee: Uint128 = if admin_no_fee {
         Uint128::zero()
     } else {
         let fee_percent = Decimal::percent(MINT_FEE_PERCENT);
         let network_fee = mint_price.amount * fee_percent;
-        network_fee_msgs = burn_and_distribute_fee(env, &info, network_fee.u128())?;
+        msgs.append(&mut burn_and_distribute_fee(
+            env,
+            &info,
+            network_fee.u128(),
+        )?);
         network_fee
     };
 
@@ -438,7 +442,6 @@ fn _execute_mint(
     };
 
     // create mint msgs
-    let mut msgs: Vec<CosmosMsg<StargazeMsgWrapper>> = vec![];
     let mint_msg = Cw721ExecuteMsg::Mint(MintMsg::<Empty> {
         token_id: mintable_token_id.to_string(),
         owner: recipient_addr.to_string(),
@@ -455,21 +458,17 @@ fn _execute_mint(
     // remove mintable token id from map
     MINTABLE_TOKEN_IDS.remove(deps.storage, mintable_token_id);
 
-    let seller_msg: Vec<BankMsg> = if admin_no_fee {
-        vec![]
-    } else {
+    if !admin_no_fee {
         let seller_amount = mint_price.amount - network_fee;
-        vec![BankMsg::Send {
+        msgs.append(&mut vec![BankMsg::Send {
             to_address: config.admin.to_string(),
             amount: vec![coin(seller_amount.u128(), config.unit_price.denom)],
-        }]
+        }]);
     };
 
     Ok(Response::default()
         .add_attribute("action", action)
-        .add_messages(msgs)
-        .add_messages(network_fee_msgs)
-        .add_messages(seller_msg))
+        .add_messages(msgs))
 }
 
 pub fn execute_update_start_time(

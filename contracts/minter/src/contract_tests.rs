@@ -381,7 +381,7 @@ fn happy_path() {
         .unwrap();
     assert_eq!(res.owner, buyer.to_string());
 
-    // // Buyer can't call MintTo
+    // Buyer can't call MintTo
     let mint_to_msg = ExecuteMsg::MintTo {
         recipient: buyer.clone(),
     };
