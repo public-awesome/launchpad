@@ -19,4 +19,7 @@ pub enum ContractError {
 
     #[error("{0}")]
     Fee(#[from] FeeError),
+
+    #[error("InvalidUnitPrice {0} < {1}")]
+    InvalidUnitPrice(u128, u128),
 }

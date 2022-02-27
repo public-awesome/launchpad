@@ -21,6 +21,7 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 // contract governance params
 const MAX_MEMBERS: u32 = 5000;
 const CREATION_FEE: u128 = 100_000_000;
+const MIN_MINT_PRICE: u128 = 25_000_000;
 
 type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 
@@ -32,6 +33,14 @@ pub fn instantiate(
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+
+    if msg.unit_price.amount.u128() < MIN_MINT_PRICE {
+        return Err(ContractError::InvalidUnitPrice(
+            msg.unit_price.amount.u128(),
+            MIN_MINT_PRICE,
+        ));
+    }
+
     let config = Config {
         admin: info.sender.clone(),
         start_time: msg.start_time,
