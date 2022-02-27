@@ -40,7 +40,7 @@ const STARTING_BATCH_MINT_LIMIT: u64 = 5;
 const STARTING_PER_ADDRESS_LIMIT: u64 = 5;
 const MIN_MINT_PRICE: u128 = 50_000_000;
 const MINT_FEE_PERCENT: u64 = 10;
-const ADMIN_MINT_PRICE: u128 = 1;
+const ADMIN_MINT_PRICE: u128 = 0;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
