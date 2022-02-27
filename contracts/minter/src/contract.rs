@@ -40,7 +40,6 @@ const STARTING_BATCH_MINT_LIMIT: u64 = 5;
 const STARTING_PER_ADDRESS_LIMIT: u64 = 5;
 const MIN_MINT_PRICE: u128 = 50_000_000;
 const MINT_FEE_PERCENT: u64 = 10;
-const ADMIN_MINT_PRICE: u128 = 0;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -277,7 +276,7 @@ pub fn execute_mint_sender(
         }
     }
 
-    _execute_mint(deps, env, info, action, None, None)
+    _execute_mint(deps, env, info, action, false, None, None)
 }
 
 pub fn execute_mint_to(
@@ -296,7 +295,7 @@ pub fn execute_mint_to(
         ));
     }
 
-    _execute_mint(deps, env, info, action, Some(recipient), None)
+    _execute_mint(deps, env, info, action, true, Some(recipient), None)
 }
 
 pub fn execute_mint_for(
@@ -316,13 +315,21 @@ pub fn execute_mint_for(
         ));
     }
 
-    _execute_mint(deps, env, info, action, Some(recipient), Some(token_id))
+    _execute_mint(
+        deps,
+        env,
+        info,
+        action,
+        true,
+        Some(recipient),
+        Some(token_id),
+    )
 }
 
 pub fn execute_batch_mint(
     deps: DepsMut,
     env: Env,
-    info: MessageInfo,
+    _info: MessageInfo,
     num_mints: u64,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
@@ -341,7 +348,7 @@ pub fn execute_batch_mint(
     let msg: CosmosMsg<StargazeMsgWrapper> = CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: env.contract.address.to_string(),
         msg: to_binary(&mint_msg)?,
-        funds: vec![mint_price(deps.as_ref(), info)?],
+        funds: vec![mint_price(deps.as_ref(), false)?],
     });
     for _ in 0..num_mints {
         msgs.append(&mut vec![msg.clone()]);
@@ -358,6 +365,7 @@ fn _execute_mint(
     env: Env,
     info: MessageInfo,
     action: &str,
+    admin_no_fee: bool,
     recipient: Option<Addr>,
     token_id: Option<u64>,
 ) -> Result<Response, ContractError> {
@@ -377,7 +385,7 @@ fn _execute_mint(
         });
     };
 
-    let mint_price: Coin = mint_price(deps.as_ref(), info.clone())?;
+    let mint_price: Coin = mint_price(deps.as_ref(), admin_no_fee)?;
     println!("_execute_mint mint price {}", mint_price);
     // exact payment only
     let payment = may_pay(&info, &config.unit_price.denom)?;
@@ -400,13 +408,14 @@ fn _execute_mint(
     println!("got through mint fee and payment checks");
 
     let mut network_fee_msgs: Vec<CosmosMsg<StargazeMsgWrapper>> = vec![];
-    let network_fee: Uint128 = if mint_price.amount != Uint128::zero() {
+
+    let network_fee: Uint128 = if admin_no_fee {
+        Uint128::zero()
+    } else {
         let fee_percent = Decimal::percent(MINT_FEE_PERCENT);
         let network_fee = mint_price.amount * fee_percent;
         network_fee_msgs = burn_and_distribute_fee(env, &info, network_fee.u128())?;
         network_fee
-    } else {
-        Uint128::zero()
     };
 
     // if token_id None, find and assign one. else check token_id exists on mintable map.
@@ -451,14 +460,15 @@ fn _execute_mint(
     // remove mintable token id from map
     MINTABLE_TOKEN_IDS.remove(deps.storage, mintable_token_id);
 
-    let mut seller_msg: Vec<BankMsg> = vec![];
-    if mint_price.amount != Uint128::zero() {
+    let seller_msg: Vec<BankMsg> = if admin_no_fee {
+        vec![]
+    } else {
         let seller_amount = mint_price.amount - network_fee;
-        seller_msg.push(BankMsg::Send {
+        vec![BankMsg::Send {
             to_address: config.admin.to_string(),
             amount: vec![coin(seller_amount.u128(), config.unit_price.denom)],
-        });
-    }
+        }]
+    };
 
     Ok(Response::default()
         .add_attribute("action", action)
@@ -538,14 +548,14 @@ pub fn execute_update_batch_mint_limit(
     Ok(Response::new().add_attribute("action", "update_batch_mint_limit"))
 }
 
-pub fn mint_price(deps: Deps, info: MessageInfo) -> Result<Coin, StdError> {
+pub fn mint_price(deps: Deps, admin_no_fee: bool) -> Result<Coin, StdError> {
     // if admin => admin mint fee,
     // else if in whitelist => whitelist price
     // else => config unit price
     let config = CONFIG.load(deps.storage)?;
-    let mint_price: Coin = if config.admin == info.sender {
+    let mint_price: Coin = if admin_no_fee {
         Coin {
-            amount: Uint128::from(ADMIN_MINT_PRICE),
+            amount: Uint128::zero(),
             denom: NATIVE_DENOM.to_string(),
         }
     } else if let Some(whitelist) = config.whitelist {
