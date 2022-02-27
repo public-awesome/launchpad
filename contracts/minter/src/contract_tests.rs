@@ -1,7 +1,7 @@
 use crate::multi::StargazeApp;
 use cosmwasm_std::testing::{mock_dependencies_with_balance, mock_env, mock_info};
-use cosmwasm_std::Api;
-use cosmwasm_std::{coin, coins, Addr, Decimal, Timestamp};
+use cosmwasm_std::{coin, coins, Addr, Decimal, Timestamp, Uint128};
+use cosmwasm_std::{Api, Coin};
 use cw721::{Cw721QueryMsg, OwnerOfResponse};
 use cw_multi_test::{BankSudo, Contract, ContractWrapper, Executor, SudoMsg};
 use cw_utils::Expiration;
@@ -25,6 +25,7 @@ const UNIT_PRICE: u128 = 100_000_000;
 const MINT_FEE: u128 = 10_000_000;
 const MAX_TOKEN_LIMIT: u32 = 10000;
 const WHITELIST_AMOUNT: u128 = 66_000_000;
+const ADMIN_MINT_PRICE: u128 = 0;
 
 fn custom_mock_app() -> StargazeApp {
     StargazeApp::default()
@@ -182,6 +183,15 @@ fn setup_block_time(router: &mut StargazeApp, nanos: u64) -> Result<Timestamp, C
     block.time = Timestamp::from_nanos(nanos);
     router.set_block(block.clone());
     Ok(block.time)
+}
+
+// deal with zero and non-zero coin amounts for msgs
+fn coins_for_msg(msg_coin: Coin) -> Vec<Coin> {
+    if msg_coin.amount > Uint128::zero() {
+        vec![msg_coin]
+    } else {
+        vec![]
+    }
 }
 
 #[test]
@@ -375,11 +385,27 @@ fn happy_path() {
     let mint_to_msg = ExecuteMsg::MintTo {
         recipient: buyer.clone(),
     };
-    let res = router.execute_contract(buyer.clone(), minter_addr.clone(), &mint_to_msg, &vec![]);
+    let res = router.execute_contract(
+        buyer.clone(),
+        minter_addr.clone(),
+        &mint_to_msg,
+        &coins_for_msg(Coin {
+            amount: Uint128::from(ADMIN_MINT_PRICE),
+            denom: NATIVE_DENOM.to_string(),
+        }),
+    );
     assert!(res.is_err());
 
     // Creator mints an extra NFT for the buyer (who is a friend)
-    let res = router.execute_contract(creator.clone(), minter_addr.clone(), &mint_to_msg, &vec![]);
+    let res = router.execute_contract(
+        creator.clone(),
+        minter_addr.clone(),
+        &mint_to_msg,
+        &coins_for_msg(Coin {
+            amount: Uint128::from(ADMIN_MINT_PRICE),
+            denom: NATIVE_DENOM.to_string(),
+        }),
+    );
     let err = res.unwrap_err();
     println!("{}", err.source().unwrap().to_string());
     assert!(false);
@@ -409,12 +435,23 @@ fn happy_path() {
         buyer,
         minter_addr.clone(),
         &mint_msg,
-        &coins(UNIT_PRICE, NATIVE_DENOM),
+        &coins_for_msg(Coin {
+            amount: Uint128::from(UNIT_PRICE),
+            denom: NATIVE_DENOM.to_string(),
+        }),
     );
     assert!(res.is_err());
 
     // Creator can't use MintTo if sold out
-    let res = router.execute_contract(creator, minter_addr, &mint_to_msg, &vec![]);
+    let res = router.execute_contract(
+        creator,
+        minter_addr,
+        &mint_to_msg,
+        &coins_for_msg(Coin {
+            amount: Uint128::from(ADMIN_MINT_PRICE),
+            denom: NATIVE_DENOM.to_string(),
+        }),
+    );
     assert!(res.is_err());
 }
 
@@ -848,7 +885,15 @@ fn mint_for_token_id_addr() {
         recipient: buyer.clone(),
     };
     let err = router
-        .execute_contract(buyer.clone(), minter_addr.clone(), &mint_for_msg, &vec![])
+        .execute_contract(
+            buyer.clone(),
+            minter_addr.clone(),
+            &mint_for_msg,
+            &coins_for_msg(Coin {
+                amount: Uint128::from(ADMIN_MINT_PRICE),
+                denom: NATIVE_DENOM.to_string(),
+            }),
+        )
         .unwrap_err();
     assert_eq!(
         err.source().unwrap().to_string(),
@@ -880,7 +925,15 @@ fn mint_for_token_id_addr() {
         recipient: buyer.clone(),
     };
     let err = router
-        .execute_contract(creator.clone(), minter_addr.clone(), &mint_for_msg, &vec![])
+        .execute_contract(
+            creator.clone(),
+            minter_addr.clone(),
+            &mint_for_msg,
+            &coins_for_msg(Coin {
+                amount: Uint128::from(ADMIN_MINT_PRICE),
+                denom: NATIVE_DENOM.to_string(),
+            }),
+        )
         .unwrap_err();
     assert_eq!(
         ContractError::TokenIdAlreadySold { token_id }.to_string(),
@@ -898,12 +951,28 @@ fn mint_for_token_id_addr() {
         token_id,
         recipient: buyer,
     };
-    let res = router.execute_contract(creator.clone(), minter_addr.clone(), &mint_for_msg, &vec![]);
+    let res = router.execute_contract(
+        creator.clone(),
+        minter_addr.clone(),
+        &mint_for_msg,
+        &coins_for_msg(Coin {
+            amount: Uint128::from(ADMIN_MINT_PRICE),
+            denom: NATIVE_DENOM.to_string(),
+        }),
+    );
     assert!(res.is_ok());
 
     let num_mints = 2;
     let batch_mint_msg = ExecuteMsg::BatchMint { num_mints };
-    let res = router.execute_contract(creator, minter_addr.clone(), &batch_mint_msg, &vec![]);
+    let res = router.execute_contract(
+        creator,
+        minter_addr.clone(),
+        &batch_mint_msg,
+        &coins_for_msg(Coin {
+            amount: Uint128::from(ADMIN_MINT_PRICE),
+            denom: NATIVE_DENOM.to_string(),
+        }),
+    );
     assert!(res.is_ok());
     let mintable_num_tokens_response: MintableNumTokensResponse = router
         .wrap()
