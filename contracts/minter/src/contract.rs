@@ -399,11 +399,15 @@ fn _execute_mint(
 
     println!("got through mint fee and payment checks");
 
-    let fee_percent = Decimal::percent(MINT_FEE_PERCENT);
-    let network_fee = mint_price.amount * fee_percent;
-    println!("network fee, {}", network_fee);
-    let network_fee_msg = burn_and_distribute_fee(env, &info, network_fee.u128())?;
-    println!("after network fee, {}", network_fee);
+    let mut network_fee_msgs: Vec<CosmosMsg<StargazeMsgWrapper>> = vec![];
+    let network_fee: Uint128 = if mint_price.amount != Uint128::zero() {
+        let fee_percent = Decimal::percent(MINT_FEE_PERCENT);
+        let network_fee = mint_price.amount * fee_percent;
+        network_fee_msgs = burn_and_distribute_fee(env, &info, network_fee.u128())?;
+        network_fee
+    } else {
+        Uint128::zero()
+    };
 
     // if token_id None, find and assign one. else check token_id exists on mintable map.
     let mintable_token_id: u64 = if token_id.is_none() {
@@ -447,17 +451,20 @@ fn _execute_mint(
     // remove mintable token id from map
     MINTABLE_TOKEN_IDS.remove(deps.storage, mintable_token_id);
 
-    let seller_amount = mint_price.amount - network_fee;
-    let seller_msg = BankMsg::Send {
-        to_address: config.admin.to_string(),
-        amount: vec![coin(seller_amount.u128(), config.unit_price.denom)],
-    };
-    msgs.append(&mut vec![seller_msg.into()]);
+    let mut seller_msg: Vec<BankMsg> = vec![];
+    if mint_price.amount != Uint128::zero() {
+        let seller_amount = mint_price.amount - network_fee;
+        seller_msg.push(BankMsg::Send {
+            to_address: config.admin.to_string(),
+            amount: vec![coin(seller_amount.u128(), config.unit_price.denom)],
+        });
+    }
 
     Ok(Response::default()
         .add_attribute("action", action)
         .add_messages(msgs)
-        .add_messages(network_fee_msg))
+        .add_messages(network_fee_msgs)
+        .add_messages(seller_msg))
 }
 
 pub fn execute_update_start_time(
