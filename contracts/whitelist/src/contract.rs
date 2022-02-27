@@ -245,7 +245,7 @@ mod tests {
     use sg_std::NATIVE_DENOM;
 
     const ADMIN: &str = "admin";
-    const UNIT_AMOUNT: u128 = 100;
+    const UNIT_AMOUNT: u128 = 100_000_000;
 
     const NON_EXPIRED_HEIGHT: Expiration = Expiration::AtHeight(22_222);
     const EXPIRED_HEIGHT: Expiration = Expiration::AtHeight(10);
