@@ -269,6 +269,19 @@ mod tests {
     }
 
     #[test]
+    fn improper_initialization() {
+        let mut deps = mock_dependencies();
+        let msg = InstantiateMsg {
+            members: vec!["adsfsa".to_string()],
+            start_time: NON_EXPIRED_HEIGHT,
+            end_time: NON_EXPIRED_HEIGHT,
+            unit_price: coin(1, NATIVE_DENOM),
+        };
+        let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
+        instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
+    }
+
+    #[test]
     fn check_start_time_after_end_time() {
         let msg = InstantiateMsg {
             members: vec!["adsfsa".to_string()],
