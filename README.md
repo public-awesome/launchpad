@@ -4,28 +4,26 @@ Stargaze smart contracts are written in [CosmWasm](https://cosmwasm.com), a mult
 
 Contracts run in a WASM VM on the [Stargaze Layer 1 blockchain](https://github.com/public-awesome/stargaze).
 
-## Sg-721
+## SG-721
 
 Stargaze's NFT contract sg721 is a set of optional extensions on top of [cw721-base](https://github.com/CosmWasm/cw-nfts/tree/main/contracts/cw721-base), and conforms to the [cw721 specification](https://github.com/CosmWasm/cw-nfts/tree/main/packages/cw721).
 
-## Minter
+## MINTER
 
 A contract that facilitates primary market vending machine style minting.
 
-Features:
+## WHITELIST
 
-- Airdrops
+A contract that manages a list of addresses.
 
-- Whitelist
-
-## Whitelist
-
-A basic whitelist contract with a max number of members and an end time.
-
-## Sg-Std
+## SG-STD
 
 Stargaze standard library.
 
-# Disclaimer
+## SG-UTIL
+
+Stargaze utilities.
+
+# DISCLAIMER
 
 STARGAZE CONTRACTS IS PROVIDED “AS IS”, AT YOUR OWN RISK, AND WITHOUT WARRANTIES OF ANY KIND. No developer or entity involved in creating or instantiating Stargaze smart contracts will be liable for any claims or damages whatsoever associated with your use, inability to use, or your interaction with other users of Stargaze, including any direct, indirect, incidental, special, exemplary, punitive or consequential damages, or loss of profits, cryptocurrencies, tokens, or anything else of value. Although Public Awesome, LLC and it's affilliates developed the initial code for Stargaze, it does not own or control the Stargaze network, which is run by a decentralized validator set.
