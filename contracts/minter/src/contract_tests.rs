@@ -506,7 +506,7 @@ fn whitelist_access_len_add_remove_expiration() {
 
     // mint fails, not whitelist price
     let mint_msg = ExecuteMsg::Mint {};
-    let err = router
+    router
         .execute_contract(
             buyer.clone(),
             minter_addr.clone(),
