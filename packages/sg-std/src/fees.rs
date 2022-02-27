@@ -1,6 +1,6 @@
 use crate::{create_fund_community_pool_msg, StargazeMsgWrapper, NATIVE_DENOM};
 use cosmwasm_std::{coins, BankMsg, CosmosMsg, Decimal, Env, MessageInfo, Uint128};
-use cw_utils::{may_pay, PaymentError};
+use cw_utils::{must_pay, PaymentError};
 use thiserror::Error;
 
 // governance parameters
@@ -12,7 +12,7 @@ pub fn burn_and_distribute_fee(
     info: &MessageInfo,
     fee_amount: u128,
 ) -> Result<Vec<SubMsg>, FeeError> {
-    let payment = may_pay(info, NATIVE_DENOM)?;
+    let payment = must_pay(info, NATIVE_DENOM)?;
     if payment.u128() < fee_amount {
         return Err(FeeError::InsufficientFee(fee_amount, payment.u128()));
     };
