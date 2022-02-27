@@ -2,12 +2,12 @@
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     coin, to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut, Empty, Env,
-    MessageInfo, Order, Reply, ReplyOn, StdError, StdResult, Timestamp, WasmMsg,
+    MessageInfo, Order, Reply, ReplyOn, StdError, StdResult, Timestamp, Uint128, WasmMsg,
 };
 use cw2::set_contract_version;
 use cw721::TokensResponse as Cw721TokensResponse;
 use cw721_base::{msg::ExecuteMsg as Cw721ExecuteMsg, MintMsg};
-use cw_utils::{must_pay, parse_reply_instantiate_data, Expiration};
+use cw_utils::{may_pay, parse_reply_instantiate_data, Expiration};
 use sg721::msg::{InstantiateMsg as Sg721InstantiateMsg, QueryMsg as Sg721QueryMsg};
 use url::Url;
 
@@ -276,7 +276,7 @@ pub fn execute_mint_sender(
         }
     }
 
-    _execute_mint(deps, env, info, action, None, None)
+    _execute_mint(deps, env, info, action, false, None, None)
 }
 
 pub fn execute_mint_to(
@@ -295,7 +295,7 @@ pub fn execute_mint_to(
         ));
     }
 
-    _execute_mint(deps, env, info, action, Some(recipient), None)
+    _execute_mint(deps, env, info, action, true, Some(recipient), None)
 }
 
 pub fn execute_mint_for(
@@ -315,7 +315,15 @@ pub fn execute_mint_for(
         ));
     }
 
-    _execute_mint(deps, env, info, action, Some(recipient), Some(token_id))
+    _execute_mint(
+        deps,
+        env,
+        info,
+        action,
+        true,
+        Some(recipient),
+        Some(token_id),
+    )
 }
 
 pub fn execute_batch_mint(
@@ -340,7 +348,7 @@ pub fn execute_batch_mint(
     let msg: CosmosMsg<StargazeMsgWrapper> = CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: env.contract.address.to_string(),
         msg: to_binary(&mint_msg)?,
-        funds: vec![mint_price(deps.as_ref())?],
+        funds: vec![mint_price(deps.as_ref(), false)?],
     });
     for _ in 0..num_mints {
         msgs.append(&mut vec![msg.clone()]);
@@ -357,6 +365,7 @@ fn _execute_mint(
     env: Env,
     info: MessageInfo,
     action: &str,
+    admin_no_fee: bool,
     recipient: Option<Addr>,
     token_id: Option<u64>,
 ) -> Result<Response, ContractError> {
@@ -364,6 +373,7 @@ fn _execute_mint(
     // mint -> _execute_mint(recipient: None, token_id: None)
     // mint_to(recipient: "friend") -> _execute_mint(Some(recipient), token_id: None)
     // mint_for(recipient: "friend2", token_id: 420) -> _execute_mint(recipient, token_id)
+    let mut msgs: Vec<CosmosMsg<StargazeMsgWrapper>> = vec![];
     let config = CONFIG.load(deps.storage)?;
     let sg721_address = SG721_ADDRESS.load(deps.storage)?;
     let recipient_addr = if recipient.is_none() {
@@ -376,9 +386,9 @@ fn _execute_mint(
         });
     };
 
-    let mint_price: Coin = mint_price(deps.as_ref())?;
+    let mint_price: Coin = mint_price(deps.as_ref(), admin_no_fee)?;
     // exact payment only
-    let payment = must_pay(&info, &config.unit_price.denom)?;
+    let payment = may_pay(&info, &config.unit_price.denom)?;
     if payment != mint_price.amount {
         return Err(ContractError::IncorrectPaymentAmount(
             coin(payment.u128(), &config.unit_price.denom),
@@ -387,16 +397,26 @@ fn _execute_mint(
     }
 
     // guardrail against low mint price updates
-    if MIN_MINT_PRICE > mint_price.amount.into() {
+    if MIN_MINT_PRICE > mint_price.amount.into() && !admin_no_fee {
         return Err(ContractError::InsufficientMintPrice {
             expected: MIN_MINT_PRICE,
             got: mint_price.amount.into(),
         });
     }
 
-    let fee_percent = Decimal::percent(MINT_FEE_PERCENT);
-    let network_fee = mint_price.amount * fee_percent;
-    let network_fee_msg = burn_and_distribute_fee(env, &info, network_fee.u128())?;
+    // create network fee msgs
+    let network_fee: Uint128 = if admin_no_fee {
+        Uint128::zero()
+    } else {
+        let fee_percent = Decimal::percent(MINT_FEE_PERCENT);
+        let network_fee = mint_price.amount * fee_percent;
+        msgs.append(&mut burn_and_distribute_fee(
+            env,
+            &info,
+            network_fee.u128(),
+        )?);
+        network_fee
+    };
 
     // if token_id None, find and assign one. else check token_id exists on mintable map.
     let mintable_token_id: u64 = if token_id.is_none() {
@@ -421,15 +441,13 @@ fn _execute_mint(
         return Err(ContractError::InvalidTokenId {});
     };
 
-    let mut msgs: Vec<CosmosMsg<StargazeMsgWrapper>> = vec![];
-
+    // create mint msgs
     let mint_msg = Cw721ExecuteMsg::Mint(MintMsg::<Empty> {
         token_id: mintable_token_id.to_string(),
         owner: recipient_addr.to_string(),
         token_uri: Some(format!("{}/{}", config.base_token_uri, mintable_token_id)),
         extension: Empty {},
     });
-
     let msg = CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: sg721_address.to_string(),
         msg: to_binary(&mint_msg)?,
@@ -440,17 +458,17 @@ fn _execute_mint(
     // remove mintable token id from map
     MINTABLE_TOKEN_IDS.remove(deps.storage, mintable_token_id);
 
-    let seller_amount = mint_price.amount - network_fee;
-    let seller_msg = BankMsg::Send {
-        to_address: config.admin.to_string(),
-        amount: vec![coin(seller_amount.u128(), config.unit_price.denom)],
+    if !admin_no_fee {
+        let seller_amount = mint_price.amount - network_fee;
+        msgs.append(&mut vec![CosmosMsg::Bank(BankMsg::Send {
+            to_address: config.admin.to_string(),
+            amount: vec![coin(seller_amount.u128(), config.unit_price.denom)],
+        })]);
     };
-    msgs.append(&mut vec![seller_msg.into()]);
 
     Ok(Response::default()
         .add_attribute("action", action)
-        .add_messages(msgs)
-        .add_messages(network_fee_msg))
+        .add_messages(msgs))
 }
 
 pub fn execute_update_start_time(
@@ -524,10 +542,17 @@ pub fn execute_update_batch_mint_limit(
     Ok(Response::new().add_attribute("action", "update_batch_mint_limit"))
 }
 
-pub fn mint_price(deps: Deps) -> Result<Coin, StdError> {
-    // if in whitelist, use whitelist price. else use config unit price
+pub fn mint_price(deps: Deps, admin_no_fee: bool) -> Result<Coin, StdError> {
+    // if admin => admin mint fee,
+    // else if in whitelist => whitelist price
+    // else => config unit price
     let config = CONFIG.load(deps.storage)?;
-    let mint_price: Coin = if let Some(whitelist) = config.whitelist {
+    let mint_price: Coin = if admin_no_fee {
+        Coin {
+            amount: Uint128::zero(),
+            denom: NATIVE_DENOM.to_string(),
+        }
+    } else if let Some(whitelist) = config.whitelist {
         let res_started: HasStartedResponse = deps
             .querier
             .query_wasm_smart(whitelist.clone(), &WhitelistQueryMsg::HasStarted {})?;
