@@ -380,7 +380,10 @@ fn happy_path() {
 
     // Creator mints an extra NFT for the buyer (who is a friend)
     let res = router.execute_contract(creator.clone(), minter_addr.clone(), &mint_to_msg, &vec![]);
-    assert!(res.is_ok());
+    let err = res.unwrap_err();
+    println!("{}", err.source().unwrap().to_string());
+    assert!(false);
+    // assert!(res.is_ok());
 
     // minter contract should have no balance
     let minter_balance = router
