@@ -23,4 +23,8 @@ has_member: {
 member: string
 [k: string]: unknown
 }
+} | {
+unit_price: {
+[k: string]: unknown
+}
 })
