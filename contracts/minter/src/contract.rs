@@ -403,8 +403,8 @@ fn _execute_mint(
         });
     }
 
+    // create network fee msgs
     let mut network_fee_msgs: Vec<CosmosMsg<StargazeMsgWrapper>> = vec![];
-
     let network_fee: Uint128 = if admin_no_fee {
         Uint128::zero()
     } else {
@@ -437,15 +437,14 @@ fn _execute_mint(
         return Err(ContractError::InvalidTokenId {});
     };
 
+    // create mint msgs
     let mut msgs: Vec<CosmosMsg<StargazeMsgWrapper>> = vec![];
-
     let mint_msg = Cw721ExecuteMsg::Mint(MintMsg::<Empty> {
         token_id: mintable_token_id.to_string(),
         owner: recipient_addr.to_string(),
         token_uri: Some(format!("{}/{}", config.base_token_uri, mintable_token_id)),
         extension: Empty {},
     });
-
     let msg = CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: sg721_address.to_string(),
         msg: to_binary(&mint_msg)?,
