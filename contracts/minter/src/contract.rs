@@ -395,8 +395,8 @@ fn _execute_mint(
         ));
     }
 
-    // guardrail against low mint price updates for non-admins
-    if MIN_MINT_PRICE > mint_price.amount.into() && info.sender != config.admin {
+    // guardrail against low mint price updates
+    if MIN_MINT_PRICE > mint_price.amount.into() && !admin_no_fee {
         return Err(ContractError::InsufficientMintPrice {
             expected: MIN_MINT_PRICE,
             got: mint_price.amount.into(),
