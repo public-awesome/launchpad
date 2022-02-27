@@ -12,7 +12,10 @@ pub fn burn_and_distribute_fee(
     info: &MessageInfo,
     fee_amount: u128,
 ) -> Result<Vec<SubMsg>, FeeError> {
-    must_pay(info, NATIVE_DENOM)?;
+    let payment = must_pay(info, NATIVE_DENOM)?;
+    if payment.u128() < fee_amount {
+        return Err(FeeError::InsufficientFee(fee_amount, payment.u128()));
+    };
 
     // calculate the fee to burn
     let burn_percent = Decimal::percent(FEE_BURN_PERCENT);
@@ -32,6 +35,9 @@ pub fn burn_and_distribute_fee(
 
 #[derive(Error, Debug, PartialEq)]
 pub enum FeeError {
+    #[error("Insufficient fee: expected {0}, got {1}")]
+    InsufficientFee(u128, u128),
+
     #[error("{0}")]
     Payment(#[from] PaymentError),
 }
