@@ -17,6 +17,9 @@ pub enum ContractError {
     #[error("MembersExceeded: {expected} got {actual}")]
     MembersExceeded { expected: u32, actual: u32 },
 
+    #[error("Invalid minting limit per address. max: {max}, got: {got}")]
+    InvalidPerAddressLimit { max: String, got: String },
+
     #[error("{0}")]
     Fee(#[from] FeeError),
 

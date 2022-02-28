@@ -23,6 +23,7 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 const MAX_MEMBERS: u32 = 5000;
 const CREATION_FEE: u128 = 100_000_000;
 const MIN_MINT_PRICE: u128 = 25_000_000;
+const MAX_PER_ADDRESS_LIMIT: u64 = 30;
 
 type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 
@@ -40,6 +41,14 @@ pub fn instantiate(
             msg.unit_price.amount.u128(),
             MIN_MINT_PRICE,
         ));
+    }
+
+    // Check per address limit is valid
+    if msg.per_address_limit > MAX_PER_ADDRESS_LIMIT {
+        return Err(ContractError::InvalidPerAddressLimit {
+            max: MAX_PER_ADDRESS_LIMIT.to_string(),
+            got: msg.per_address_limit.to_string(),
+        });
     }
 
     let config = Config {
