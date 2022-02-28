@@ -34,15 +34,13 @@ cosmwasm-storage = { version = "1.0.0-beta5" }
 cw-storage-plus = "0.12.1"
 cw-utils = "0.12.1"
 cw2 = "0.12.1"
-cw721 = { git = "https://github.com/public-awesome/cw-nfts", branch = "shanev/fix-versions" }
-cw721-base = { git = "https://github.com/public-awesome/cw-nfts", branch = "shanev/fix-versions", features = [
-  "library",
-] }
 schemars = "0.8.8"
 serde = { version = "1.0.133", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0.30" }
 sg-std = { path = "../../packages/sg-std" }
 url = "2.2.2"
+cw721 = "0.12.0"
+cw721-base = "0.12.0"
 
 [dev-dependencies]
 cosmwasm-schema = { version = "1.0.0-beta5" }

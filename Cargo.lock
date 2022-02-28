@@ -273,7 +273,8 @@ dependencies = [
 [[package]]
 name = "cw721"
 version = "0.12.0"
-source = "git+https://github.com/public-awesome/cw-nfts?branch=shanev/fix-versions#0c820b9e1d0f0bd7ea7681d75cdf16668c3456c0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cc5bb00baf493fc48bf05831edc3ed074731da7c1944c8521ead3df4ff08d9c7"
 dependencies = [
  "cosmwasm-std",
  "cw-utils",
@@ -284,7 +285,8 @@ dependencies = [
 [[package]]
 name = "cw721-base"
 version = "0.12.0"
-source = "git+https://github.com/public-awesome/cw-nfts?branch=shanev/fix-versions#0c820b9e1d0f0bd7ea7681d75cdf16668c3456c0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "da773ac93cae5a01a052772d65a2f377dd22933f583ef8f739d67f32ffce1b6b"
 dependencies = [
  "cosmwasm-std",
  "cw-storage-plus",
