@@ -502,6 +502,7 @@ pub fn execute_update_start_time(
     CONFIG.save(deps.storage, &config)?;
     Ok(Response::new()
         .add_attribute("action", "update_start_time")
+        .add_attribute("sender", info.sender)
         .add_attribute("start_time", start_time.to_string()))
 }
 
@@ -527,6 +528,7 @@ pub fn execute_update_per_address_limit(
     CONFIG.save(deps.storage, &config)?;
     Ok(Response::new()
         .add_attribute("action", "update_per_address_limit")
+        .add_attribute("sender", info.sender)
         .add_attribute("limit", per_address_limit.to_string()))
 }
 
