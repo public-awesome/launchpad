@@ -186,7 +186,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::IsActive {} => to_binary(&query_is_active(deps, env)?),
         QueryMsg::HasMember { member } => to_binary(&query_has_member(deps, member)?),
         QueryMsg::UnitPrice {} => to_binary(&query_unit_price(deps)?),
-        QueryMsg::Config {} => to_binary(&query_config(deps)?),
+        QueryMsg::Config {} => to_binary(&query_config(deps, env)?),
     }
 }
 
@@ -250,14 +250,19 @@ fn query_has_member(deps: Deps, member: String) -> StdResult<HasMemberResponse> 
     })
 }
 
-fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
-    let config = CONFIG.load(deps.storage)?;
+fn query_config(deps: Deps, env: Env) -> StdResult<ConfigResponse> {
+    let per_address_limit = CONFIG.load(deps.storage)?.per_address_limit;
+    let start_time = CONFIG.load(deps.storage)?.start_time;
+    let end_time = CONFIG.load(deps.storage)?.end_time;
+    let unit_price = CONFIG.load(deps.storage)?.unit_price;
+    let is_active: bool = query_is_active(deps, env)?.is_active;
 
     Ok(ConfigResponse {
-        per_address_limit: config.per_address_limit,
-        start_time: config.start_time,
-        end_time: config.end_time,
-        unit_price: config.unit_price,
+        per_address_limit,
+        start_time,
+        end_time,
+        unit_price,
+        is_active,
     })
 }
 
