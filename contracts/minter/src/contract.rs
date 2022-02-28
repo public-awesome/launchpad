@@ -583,7 +583,7 @@ pub fn mint_price(deps: Deps, admin_no_fee: bool) -> Result<Coin, StdError> {
     } else if let Some(whitelist) = config.whitelist {
         let wl_config: WhitelistConfigResponse = deps
             .querier
-            .query_wasm_smart(whitelist.clone(), &WhitelistQueryMsg::Config {})?;
+            .query_wasm_smart(whitelist, &WhitelistQueryMsg::Config {})?;
         if wl_config.is_active {
             wl_config.unit_price
         } else {
