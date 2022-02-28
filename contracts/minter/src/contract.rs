@@ -13,14 +13,13 @@ use url::Url;
 
 use crate::error::ContractError;
 use crate::msg::{
-    ConfigResponse, ExecuteMsg, InstantiateMsg, MintableNumTokensResponse, QueryMsg,
-    StartTimeResponse,
+    ConfigResponse, ExecuteMsg, InstantiateMsg, MintPriceResponse, MintableNumTokensResponse,
+    QueryMsg, StartTimeResponse,
 };
 use crate::state::{Config, CONFIG, MINTABLE_TOKEN_IDS, SG721_ADDRESS};
 use sg_std::{burn_and_distribute_fee, StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use whitelist::msg::{
-    HasEndedResponse, HasMemberResponse, HasStartedResponse, QueryMsg as WhitelistQueryMsg,
-    UnitPriceResponse,
+    HasMemberResponse, IsActiveResponse, QueryMsg as WhitelistQueryMsg, UnitPriceResponse,
 };
 
 pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
@@ -226,13 +225,10 @@ pub fn execute_mint_sender(
     // check if a whitelist exists and not ended
     // sender has to be whitelisted to mint
     if let Some(whitelist) = config.whitelist {
-        let res_started: HasStartedResponse = deps
+        let res_is_active: IsActiveResponse = deps
             .querier
-            .query_wasm_smart(whitelist.clone(), &WhitelistQueryMsg::HasStarted {})?;
-        let res_ended: HasEndedResponse = deps
-            .querier
-            .query_wasm_smart(whitelist.clone(), &WhitelistQueryMsg::HasEnded {})?;
-        if res_started.has_started && !res_ended.has_ended {
+            .query_wasm_smart(whitelist.clone(), &WhitelistQueryMsg::IsActive {})?;
+        if res_is_active.is_active {
             let res: HasMemberResponse = deps.querier.query_wasm_smart(
                 whitelist,
                 &WhitelistQueryMsg::HasMember {
@@ -543,7 +539,7 @@ pub fn execute_update_batch_mint_limit(
 }
 
 pub fn mint_price(deps: Deps, admin_no_fee: bool) -> Result<Coin, StdError> {
-    // if admin => admin mint fee,
+    // if admin_no_fee => no fee,
     // else if in whitelist => whitelist price
     // else => config unit price
     let config = CONFIG.load(deps.storage)?;
@@ -553,13 +549,10 @@ pub fn mint_price(deps: Deps, admin_no_fee: bool) -> Result<Coin, StdError> {
             denom: NATIVE_DENOM.to_string(),
         }
     } else if let Some(whitelist) = config.whitelist {
-        let res_started: HasStartedResponse = deps
+        let res_is_active: IsActiveResponse = deps
             .querier
-            .query_wasm_smart(whitelist.clone(), &WhitelistQueryMsg::HasStarted {})?;
-        let res_ended: HasEndedResponse = deps
-            .querier
-            .query_wasm_smart(whitelist.clone(), &WhitelistQueryMsg::HasEnded {})?;
-        if res_started.has_started && !res_ended.has_ended {
+            .query_wasm_smart(whitelist.clone(), &WhitelistQueryMsg::IsActive {})?;
+        if res_is_active.is_active {
             let unit_price: UnitPriceResponse = deps
                 .querier
                 .query_wasm_smart(whitelist, &WhitelistQueryMsg::UnitPrice {})?;
@@ -579,6 +572,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::Config {} => to_binary(&query_config(deps)?),
         QueryMsg::StartTime {} => to_binary(&query_start_time(deps)?),
         QueryMsg::MintableNumTokens {} => to_binary(&query_mintable_num_tokens(deps)?),
+        QueryMsg::MintPrice {} => to_binary(&query_mint_price(deps)?),
     }
 }
 
@@ -621,6 +615,26 @@ fn query_mintable_num_tokens(deps: Deps) -> StdResult<MintableNumTokensResponse>
         count: count as u64,
     })
 }
+
+fn query_mint_price(deps: Deps) -> StdResult<MintPriceResponse> {
+    let config = CONFIG.load(deps.storage)?;
+    let current_price = mint_price(deps, false)?;
+    let public_price = config.unit_price;
+    let whitelist_price: Option<Coin> = if let Some(whitelist) = config.whitelist {
+        let unit_price: UnitPriceResponse = deps
+            .querier
+            .query_wasm_smart(whitelist, &WhitelistQueryMsg::UnitPrice {})?;
+        Some(unit_price.unit_price)
+    } else {
+        None
+    };
+    Ok(MintPriceResponse {
+        current_price,
+        public_price,
+        whitelist_price,
+    })
+}
+
 // Reply callback triggered from cw721 contract instantiation
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {

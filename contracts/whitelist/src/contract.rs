@@ -10,7 +10,7 @@ use sg_std::StargazeMsgWrapper;
 use crate::error::ContractError;
 use crate::msg::{
     ExecuteMsg, HasEndedResponse, HasMemberResponse, HasStartedResponse, InstantiateMsg,
-    MembersResponse, QueryMsg, TimeResponse, UnitPriceResponse, UpdateMembersMsg,
+    IsActiveResponse, MembersResponse, QueryMsg, TimeResponse, UnitPriceResponse, UpdateMembersMsg,
 };
 use crate::state::{Config, CONFIG, WHITELIST};
 
@@ -178,6 +178,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::Members {} => to_binary(&query_members(deps)?),
         QueryMsg::HasStarted {} => to_binary(&query_has_started(deps, env)?),
         QueryMsg::HasEnded {} => to_binary(&query_has_ended(deps, env)?),
+        QueryMsg::IsActive {} => to_binary(&query_is_active(deps, env)?),
         QueryMsg::HasMember { member } => to_binary(&query_has_member(deps, member)?),
         QueryMsg::UnitPrice {} => to_binary(&query_unit_price(deps)?),
     }
@@ -215,6 +216,14 @@ fn query_has_ended(deps: Deps, env: Env) -> StdResult<HasEndedResponse> {
     let config = CONFIG.load(deps.storage)?;
     Ok(HasEndedResponse {
         has_ended: config.end_time.is_expired(&env.block),
+    })
+}
+
+fn query_is_active(deps: Deps, env: Env) -> StdResult<IsActiveResponse> {
+    let config = CONFIG.load(deps.storage)?;
+    Ok(IsActiveResponse {
+        is_active: config.start_time.is_expired(&env.block)
+            && !config.end_time.is_expired(&env.block),
     })
 }
 

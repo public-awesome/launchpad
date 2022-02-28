@@ -37,6 +37,7 @@ pub enum QueryMsg {
     Config {},
     MintableNumTokens {},
     StartTime {},
+    MintPrice {},
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -61,4 +62,11 @@ pub struct MintableNumTokensResponse {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct StartTimeResponse {
     pub start_time: String,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct MintPriceResponse {
+    pub public_price: Coin,
+    pub whitelist_price: Option<Coin>,
+    pub current_price: Coin,
 }
