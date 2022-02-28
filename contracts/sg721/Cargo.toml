@@ -40,7 +40,7 @@ thiserror = { version = "1.0.30" }
 sg-std = { path = "../../packages/sg-std" }
 url = "2.2.2"
 cw721 = "0.12.0"
-cw721-base = "0.12.0"
+cw721-base = { version = "0.12.0", features = ["library"] }
 
 [dev-dependencies]
 cosmwasm-schema = { version = "1.0.0-beta5" }
