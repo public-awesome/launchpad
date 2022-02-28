@@ -13,8 +13,8 @@ use url::Url;
 
 use crate::error::ContractError;
 use crate::msg::{
-    ConfigResponse, ExecuteMsg, InstantiateMsg, MintableNumTokensResponse, QueryMsg,
-    StartTimeResponse,
+    ConfigResponse, ExecuteMsg, InstantiateMsg, MintPriceResponse, MintableNumTokensResponse,
+    QueryMsg, StartTimeResponse,
 };
 use crate::state::{Config, CONFIG, MINTABLE_TOKEN_IDS, SG721_ADDRESS};
 use sg_std::{burn_and_distribute_fee, StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
@@ -579,6 +579,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::Config {} => to_binary(&query_config(deps)?),
         QueryMsg::StartTime {} => to_binary(&query_start_time(deps)?),
         QueryMsg::MintableNumTokens {} => to_binary(&query_mintable_num_tokens(deps)?),
+        QueryMsg::MintPrice {} => to_binary(&query_mint_price(deps)?),
     }
 }
 
@@ -621,6 +622,12 @@ fn query_mintable_num_tokens(deps: Deps) -> StdResult<MintableNumTokensResponse>
         count: count as u64,
     })
 }
+
+fn query_mint_price(deps: Deps) -> StdResult<MintPriceResponse> {
+    let mint_price = mint_price(deps, false)?;
+    Ok(MintPriceResponse { price: mint_price })
+}
+
 // Reply callback triggered from cw721 contract instantiation
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
