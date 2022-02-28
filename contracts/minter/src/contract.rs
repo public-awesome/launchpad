@@ -471,6 +471,8 @@ fn _execute_mint(
 
     Ok(Response::default()
         .add_attribute("action", action)
+        .add_attribute("sender", info.sender)
+        .add_attribute("recipient", recipient_addr)
         .add_attribute("network_fee", network_fee)
         .add_attribute("mint_price", mint_price.amount)
         .add_attribute("seller_amount", seller_amount)
