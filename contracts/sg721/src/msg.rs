@@ -58,6 +58,7 @@ pub enum QueryMsg {
     ContractUri {},
     Creator {},
     Royalties {},
+    Config {},
 }
 
 impl From<QueryMsg> for Cw721QueryMsg {
@@ -137,5 +138,12 @@ pub struct CreatorResponse {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct RoyaltyResponse {
+    pub royalty: Option<RoyaltyInfo>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct ConfigResponse {
+    pub contract_uri: Option<String>,
+    pub creator: Option<Addr>,
     pub royalty: Option<RoyaltyInfo>,
 }

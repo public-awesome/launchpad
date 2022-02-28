@@ -13,7 +13,8 @@ use cw721_base::ContractError as BaseError;
 use url::Url;
 
 use crate::msg::{
-    ContractUriResponse, CreatorResponse, ExecuteMsg, InstantiateMsg, QueryMsg, RoyaltyResponse,
+    ConfigResponse, ContractUriResponse, CreatorResponse, ExecuteMsg, InstantiateMsg, QueryMsg,
+    RoyaltyResponse,
 };
 use crate::state::CONFIG;
 
@@ -93,6 +94,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::ContractUri {} => to_binary(&query_contract_uri(deps)?),
         QueryMsg::Creator {} => to_binary(&query_creator(deps)?),
         QueryMsg::Royalties {} => to_binary(&query_royalties(deps)?),
+        QueryMsg::Config {} => to_binary(&query_config(deps)?),
         _ => Sg721Contract::default().query(deps, env, msg.into()),
     }
 }
@@ -110,6 +112,17 @@ fn query_creator(deps: Deps) -> StdResult<CreatorResponse> {
 fn query_royalties(deps: Deps) -> StdResult<RoyaltyResponse> {
     let royalty = CONFIG.load(deps.storage)?.royalties;
     Ok(RoyaltyResponse { royalty })
+}
+
+fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
+    let contract_uri = CONFIG.load(deps.storage)?.contract_uri;
+    let creator = CONFIG.load(deps.storage)?.creator;
+    let royalty = CONFIG.load(deps.storage)?.royalties;
+    Ok(ConfigResponse {
+        contract_uri,
+        creator,
+        royalty,
+    })
 }
 
 #[cfg(test)]
