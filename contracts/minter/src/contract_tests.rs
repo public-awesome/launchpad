@@ -544,7 +544,15 @@ fn whitelist_access_len_add_remove_expiration() {
         .unwrap();
     assert_eq!(
         coin(WHITELIST_AMOUNT, NATIVE_DENOM),
-        mint_price_response.price
+        mint_price_response.whitelist_price.unwrap()
+    );
+    assert_eq!(
+        coin(WHITELIST_AMOUNT, NATIVE_DENOM),
+        mint_price_response.current_price
+    );
+    assert_eq!(
+        coin(UNIT_PRICE, NATIVE_DENOM),
+        mint_price_response.public_price
     );
 
     // mint succeeds

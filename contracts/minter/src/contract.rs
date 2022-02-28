@@ -543,7 +543,7 @@ pub fn execute_update_batch_mint_limit(
 }
 
 pub fn mint_price(deps: Deps, admin_no_fee: bool) -> Result<Coin, StdError> {
-    // if admin => admin mint fee,
+    // if admin_no_fee => no fee,
     // else if in whitelist => whitelist price
     // else => config unit price
     let config = CONFIG.load(deps.storage)?;
@@ -624,8 +624,22 @@ fn query_mintable_num_tokens(deps: Deps) -> StdResult<MintableNumTokensResponse>
 }
 
 fn query_mint_price(deps: Deps) -> StdResult<MintPriceResponse> {
-    let mint_price = mint_price(deps, false)?;
-    Ok(MintPriceResponse { price: mint_price })
+    let config = CONFIG.load(deps.storage)?;
+    let current_price = mint_price(deps, false)?;
+    let public_price = config.unit_price;
+    let whitelist_price: Option<Coin> = if let Some(whitelist) = config.whitelist {
+        let unit_price: UnitPriceResponse = deps
+            .querier
+            .query_wasm_smart(whitelist, &WhitelistQueryMsg::UnitPrice {})?;
+        Some(unit_price.unit_price)
+    } else {
+        None
+    };
+    Ok(MintPriceResponse {
+        current_price,
+        public_price,
+        whitelist_price,
+    })
 }
 
 // Reply callback triggered from cw721 contract instantiation
