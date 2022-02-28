@@ -25,6 +25,7 @@ const UNIT_PRICE: u128 = 100_000_000;
 const MINT_FEE: u128 = 10_000_000;
 const MAX_TOKEN_LIMIT: u32 = 10000;
 const WHITELIST_AMOUNT: u128 = 66_000_000;
+const WL_PER_ADDRESS_LIMIT: u64 = 1;
 const ADMIN_MINT_PRICE: u128 = 0;
 
 fn custom_mock_app() -> StargazeApp {
@@ -69,6 +70,7 @@ fn setup_whitelist_contract(
         start_time: Expiration::Never {},
         end_time: Expiration::Never {},
         unit_price: coin(WHITELIST_AMOUNT, NATIVE_DENOM),
+        per_address_limit: WL_PER_ADDRESS_LIMIT,
     };
     let whitelist_addr = router
         .instantiate_contract(
