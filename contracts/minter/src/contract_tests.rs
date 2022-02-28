@@ -13,8 +13,8 @@ use whitelist::msg::{ExecuteMsg as WhitelistExecuteMsg, UpdateMembersMsg};
 
 use crate::contract::instantiate;
 use crate::msg::{
-    ConfigResponse, ExecuteMsg, InstantiateMsg, MintableNumTokensResponse, QueryMsg,
-    StartTimeResponse,
+    ConfigResponse, ExecuteMsg, InstantiateMsg, MintPriceResponse, MintableNumTokensResponse,
+    QueryMsg, StartTimeResponse,
 };
 use crate::ContractError;
 
@@ -536,6 +536,16 @@ fn whitelist_access_len_add_remove_expiration() {
             &coins(UNIT_PRICE, NATIVE_DENOM),
         )
         .unwrap_err();
+
+    // query mint price
+    let mint_price_response: MintPriceResponse = router
+        .wrap()
+        .query_wasm_smart(minter_addr.clone(), &QueryMsg::MintPrice {})
+        .unwrap();
+    assert_eq!(
+        coin(WHITELIST_AMOUNT, NATIVE_DENOM),
+        mint_price_response.price
+    );
 
     // mint succeeds
     let mint_msg = ExecuteMsg::Mint {};
