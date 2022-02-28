@@ -79,7 +79,7 @@ pub fn instantiate(
     }
 
     Ok(Response::new()
-        .add_attribute("method", "instantiate")
+        .add_attribute("action", "instantiate")
         .add_attribute("contract_name", CONTRACT_NAME)
         .add_attribute("contract_version", CONTRACT_VERSION)
         .add_attribute("sender", info.sender)
@@ -114,7 +114,7 @@ pub fn execute_update_start_time(
     config.start_time = start_time;
     CONFIG.save(deps.storage, &config)?;
     Ok(Response::new()
-        .add_attribute("action", "update_end_time")
+        .add_attribute("action", "update_start_time")
         .add_attribute("start_time", start_time.to_string()))
 }
 
@@ -133,7 +133,8 @@ pub fn execute_update_end_time(
     CONFIG.save(deps.storage, &config)?;
     Ok(Response::new()
         .add_attribute("action", "update_end_time")
-        .add_attribute("end_time", end_time.to_string()))
+        .add_attribute("end_time", end_time.to_string())
+        .add_attribute("sender", info.sender))
 }
 
 pub fn execute_update_members(
@@ -167,7 +168,9 @@ pub fn execute_update_members(
 
     CONFIG.save(deps.storage, &config)?;
 
-    Ok(Response::new().add_attribute("action", "update_whitelist"))
+    Ok(Response::new()
+        .add_attribute("action", "update_whitelist_members")
+        .add_attribute("sender", info.sender))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -311,7 +314,7 @@ mod tests {
         let msg = ExecuteMsg::UpdateEndTime(EXPIRED_HEIGHT);
         let info = mock_info(ADMIN, &[]);
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(res.attributes.len(), 2);
+        assert_eq!(res.attributes.len(), 3);
         let res = query_end_time(deps.as_ref()).unwrap();
         assert_eq!(res.time, Expiration::AtHeight(10));
     }
@@ -328,7 +331,7 @@ mod tests {
         let msg = ExecuteMsg::UpdateMembers(inner_msg);
         let info = mock_info(ADMIN, &[]);
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(res.attributes.len(), 1);
+        assert_eq!(res.attributes.len(), 2);
         let res = query_members(deps.as_ref()).unwrap();
         assert_eq!(res.members.len(), 2);
     }

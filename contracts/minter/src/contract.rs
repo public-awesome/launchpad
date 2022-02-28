@@ -159,6 +159,7 @@ pub fn instantiate(
         .add_attribute("action", "instantiate")
         .add_attribute("contract_name", CONTRACT_NAME)
         .add_attribute("contract_version", CONTRACT_VERSION)
+        .add_attribute("sender", info.sender)
         .add_submessages(sub_msgs))
 }
 
@@ -454,8 +455,10 @@ fn _execute_mint(
     // remove mintable token id from map
     MINTABLE_TOKEN_IDS.remove(deps.storage, mintable_token_id);
 
+    let mut seller_amount = Uint128::zero();
+    // does have a fee
     if !admin_no_fee {
-        let seller_amount = mint_price.amount - network_fee;
+        seller_amount = mint_price.amount - network_fee;
         msgs.append(&mut vec![CosmosMsg::Bank(BankMsg::Send {
             to_address: config.admin.to_string(),
             amount: vec![coin(seller_amount.u128(), config.unit_price.denom)],
@@ -464,6 +467,13 @@ fn _execute_mint(
 
     Ok(Response::default()
         .add_attribute("action", action)
+        .add_attribute("sender", info.sender)
+        .add_attribute("recipient", recipient_addr)
+        .add_attribute("token_id", mintable_token_id.to_string())
+        .add_attribute("network_fee", network_fee)
+        .add_attribute("mint_price", mint_price.amount)
+        .add_attribute("seller_amount", seller_amount)
+        .add_attribute("no_fee", admin_no_fee.to_string())
         .add_messages(msgs))
 }
 
@@ -489,7 +499,10 @@ pub fn execute_update_start_time(
 
     config.start_time = Some(start_time);
     CONFIG.save(deps.storage, &config)?;
-    Ok(Response::new().add_attribute("action", "update_start_time"))
+    Ok(Response::new()
+        .add_attribute("action", "update_start_time")
+        .add_attribute("sender", info.sender)
+        .add_attribute("start_time", start_time.to_string()))
 }
 
 pub fn execute_update_per_address_limit(
@@ -512,7 +525,10 @@ pub fn execute_update_per_address_limit(
     }
     config.per_address_limit = Some(per_address_limit);
     CONFIG.save(deps.storage, &config)?;
-    Ok(Response::new().add_attribute("action", "update_per_address_limit"))
+    Ok(Response::new()
+        .add_attribute("action", "update_per_address_limit")
+        .add_attribute("sender", info.sender)
+        .add_attribute("limit", per_address_limit.to_string()))
 }
 
 pub fn execute_update_batch_mint_limit(
@@ -535,7 +551,9 @@ pub fn execute_update_batch_mint_limit(
     }
     config.batch_mint_limit = Some(batch_mint_limit);
     CONFIG.save(deps.storage, &config)?;
-    Ok(Response::new().add_attribute("action", "update_batch_mint_limit"))
+    Ok(Response::new()
+        .add_attribute("action", "update_batch_mint_limit")
+        .add_attribute("limit", batch_mint_limit.to_string()))
 }
 
 pub fn mint_price(deps: Deps, admin_no_fee: bool) -> Result<Coin, StdError> {
