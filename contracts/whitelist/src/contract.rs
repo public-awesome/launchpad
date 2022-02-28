@@ -19,7 +19,7 @@ const CONTRACT_NAME: &str = "crates.io:sg-whitelist";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 // contract governance params
-const MAX_MEMBERS: u32 = 3333;
+const MAX_MEMBERS: u32 = 5000;
 const CREATION_FEE: u128 = 100_000_000;
 const MIN_MINT_PRICE: u128 = 25_000_000;
 
@@ -338,8 +338,8 @@ mod tests {
         let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
         assert_eq!(
             ContractError::MembersExceeded {
-                expected: 3333,
-                actual: 3333
+                expected: 5000,
+                actual: 5000
             }
             .to_string(),
             err.to_string()
