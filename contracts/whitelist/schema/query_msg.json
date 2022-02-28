@@ -53,6 +53,18 @@
     {
       "type": "object",
       "required": [
+        "is_active"
+      ],
+      "properties": {
+        "is_active": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
         "members"
       ],
       "properties": {
