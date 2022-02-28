@@ -19,8 +19,7 @@ use crate::msg::{
 use crate::state::{Config, CONFIG, MINTABLE_TOKEN_IDS, SG721_ADDRESS};
 use sg_std::{burn_and_distribute_fee, StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use whitelist::msg::{
-    HasEndedResponse, HasMemberResponse, HasStartedResponse, QueryMsg as WhitelistQueryMsg,
-    UnitPriceResponse,
+    HasMemberResponse, IsActiveResponse, QueryMsg as WhitelistQueryMsg, UnitPriceResponse,
 };
 
 pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
@@ -226,13 +225,10 @@ pub fn execute_mint_sender(
     // check if a whitelist exists and not ended
     // sender has to be whitelisted to mint
     if let Some(whitelist) = config.whitelist {
-        let res_started: HasStartedResponse = deps
+        let res_is_active: IsActiveResponse = deps
             .querier
-            .query_wasm_smart(whitelist.clone(), &WhitelistQueryMsg::HasStarted {})?;
-        let res_ended: HasEndedResponse = deps
-            .querier
-            .query_wasm_smart(whitelist.clone(), &WhitelistQueryMsg::HasEnded {})?;
-        if res_started.has_started && !res_ended.has_ended {
+            .query_wasm_smart(whitelist.clone(), &WhitelistQueryMsg::IsActive {})?;
+        if res_is_active.is_active {
             let res: HasMemberResponse = deps.querier.query_wasm_smart(
                 whitelist,
                 &WhitelistQueryMsg::HasMember {
@@ -553,13 +549,10 @@ pub fn mint_price(deps: Deps, admin_no_fee: bool) -> Result<Coin, StdError> {
             denom: NATIVE_DENOM.to_string(),
         }
     } else if let Some(whitelist) = config.whitelist {
-        let res_started: HasStartedResponse = deps
+        let res_is_active: IsActiveResponse = deps
             .querier
-            .query_wasm_smart(whitelist.clone(), &WhitelistQueryMsg::HasStarted {})?;
-        let res_ended: HasEndedResponse = deps
-            .querier
-            .query_wasm_smart(whitelist.clone(), &WhitelistQueryMsg::HasEnded {})?;
-        if res_started.has_started && !res_ended.has_ended {
+            .query_wasm_smart(whitelist.clone(), &WhitelistQueryMsg::IsActive {})?;
+        if res_is_active.is_active {
             let unit_price: UnitPriceResponse = deps
                 .querier
                 .query_wasm_smart(whitelist, &WhitelistQueryMsg::UnitPrice {})?;

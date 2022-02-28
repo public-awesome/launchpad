@@ -32,6 +32,7 @@ pub enum QueryMsg {
     EndTime {},
     HasStarted {},
     HasEnded {},
+    IsActive {},
     Members {},
     HasMember { member: String },
     UnitPrice {},
@@ -60,6 +61,11 @@ pub struct HasEndedResponse {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct HasStartedResponse {
     pub has_started: bool,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct IsActiveResponse {
+    pub is_active: bool,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
