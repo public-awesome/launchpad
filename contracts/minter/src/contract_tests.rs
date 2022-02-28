@@ -567,6 +567,21 @@ fn whitelist_access_len_add_remove_expiration() {
     );
     assert!(res.is_ok());
 
+    // mint fails, over whitelist per address limit
+    let mint_msg = ExecuteMsg::Mint {};
+    let err = router
+        .execute_contract(
+            buyer.clone(),
+            minter_addr.clone(),
+            &mint_msg,
+            &coins(WHITELIST_AMOUNT, NATIVE_DENOM),
+        )
+        .unwrap_err();
+    assert_eq!(
+        err.source().unwrap().to_string(),
+        ContractError::MaxPerAddressLimitExceeded {}.to_string()
+    );
+
     // remove buyer from whitelist
     let inner_msg = UpdateMembersMsg {
         add: vec![],
