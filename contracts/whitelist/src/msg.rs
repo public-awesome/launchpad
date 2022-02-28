@@ -9,6 +9,7 @@ pub struct InstantiateMsg {
     pub start_time: Expiration,
     pub end_time: Expiration,
     pub unit_price: Coin,
+    pub per_address_limit: u64,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -36,6 +37,7 @@ pub enum QueryMsg {
     Members {},
     HasMember { member: String },
     UnitPrice {},
+    Config {},
 }
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
@@ -70,5 +72,13 @@ pub struct IsActiveResponse {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct UnitPriceResponse {
+    pub unit_price: Coin,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct ConfigResponse {
+    pub per_address_limit: u64,
+    pub start_time: Expiration,
+    pub end_time: Expiration,
     pub unit_price: Coin,
 }

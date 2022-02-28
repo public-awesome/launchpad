@@ -9,8 +9,9 @@ use sg_std::StargazeMsgWrapper;
 
 use crate::error::ContractError;
 use crate::msg::{
-    ExecuteMsg, HasEndedResponse, HasMemberResponse, HasStartedResponse, InstantiateMsg,
-    IsActiveResponse, MembersResponse, QueryMsg, TimeResponse, UnitPriceResponse, UpdateMembersMsg,
+    ConfigResponse, ExecuteMsg, HasEndedResponse, HasMemberResponse, HasStartedResponse,
+    InstantiateMsg, IsActiveResponse, MembersResponse, QueryMsg, TimeResponse, UnitPriceResponse,
+    UpdateMembersMsg,
 };
 use crate::state::{Config, CONFIG, WHITELIST};
 
@@ -47,6 +48,7 @@ pub fn instantiate(
         end_time: msg.end_time,
         num_members: msg.members.len() as u32,
         unit_price: msg.unit_price,
+        per_address_limit: msg.per_address_limit,
     };
     CONFIG.save(deps.storage, &config)?;
 
@@ -184,6 +186,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::IsActive {} => to_binary(&query_is_active(deps, env)?),
         QueryMsg::HasMember { member } => to_binary(&query_has_member(deps, member)?),
         QueryMsg::UnitPrice {} => to_binary(&query_unit_price(deps)?),
+        QueryMsg::Config {} => to_binary(&query_config(deps)?),
     }
 }
 
@@ -247,6 +250,17 @@ fn query_has_member(deps: Deps, member: String) -> StdResult<HasMemberResponse> 
     })
 }
 
+fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
+    let config = CONFIG.load(deps.storage)?;
+
+    Ok(ConfigResponse {
+        per_address_limit: config.per_address_limit,
+        start_time: config.start_time,
+        end_time: config.end_time,
+        unit_price: config.unit_price,
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -268,6 +282,7 @@ mod tests {
             start_time: NON_EXPIRED_HEIGHT,
             end_time: NON_EXPIRED_HEIGHT,
             unit_price: coin(UNIT_AMOUNT, NATIVE_DENOM),
+            per_address_limit: 1,
         };
         let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
         let res = instantiate(deps, mock_env(), info, msg).unwrap();
@@ -288,6 +303,7 @@ mod tests {
             start_time: NON_EXPIRED_HEIGHT,
             end_time: NON_EXPIRED_HEIGHT,
             unit_price: coin(1, NATIVE_DENOM),
+            per_address_limit: 1,
         };
         let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
         instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
@@ -300,6 +316,7 @@ mod tests {
             start_time: Expiration::AtHeight(101),
             end_time: Expiration::AtHeight(100),
             unit_price: coin(UNIT_AMOUNT, NATIVE_DENOM),
+            per_address_limit: 1,
         };
         let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
         let mut deps = mock_dependencies();
