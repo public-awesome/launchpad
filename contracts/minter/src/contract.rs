@@ -89,8 +89,7 @@ pub fn instantiate(
     let whitelist_addr: Option<Addr> = match msg.whitelist {
         Some(wl) => Some(deps.api.addr_validate(&wl)?),
         None => None,
-    let whitelist_addr = msg
-        .whitelist.and_then(|w| deps.api.addr_validate(w.as_str()).ok());
+    };
 
     // default is genesis mint start time
     let default_start_time = Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME));
