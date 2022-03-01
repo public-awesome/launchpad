@@ -34,12 +34,12 @@ const INSTANTIATE_SG721_REPLY_ID: u64 = 1;
 
 // governance parameters
 const MAX_TOKEN_LIMIT: u32 = 10000;
-const MAX_PER_ADDRESS_LIMIT: u64 = 30;
-const MAX_BATCH_MINT_LIMIT: u64 = 30;
-const STARTING_BATCH_MINT_LIMIT: u64 = 5;
-const STARTING_PER_ADDRESS_LIMIT: u64 = 5;
+const MAX_PER_ADDRESS_LIMIT: u32 = 30;
+const MAX_BATCH_MINT_LIMIT: u32 = 30;
+const STARTING_BATCH_MINT_LIMIT: u32 = 5;
+const STARTING_PER_ADDRESS_LIMIT: u32 = 5;
 const MIN_MINT_PRICE: u128 = 50_000_000;
-const MINT_FEE_PERCENT: u64 = 10;
+const MINT_FEE_PERCENT: u32 = 10;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -96,10 +96,10 @@ pub fn instantiate(
     }
 
     // Initially set batch_mint_limit if no msg
-    let batch_mint_limit: Option<u64> = msg.batch_mint_limit.or(Some(STARTING_BATCH_MINT_LIMIT));
+    let batch_mint_limit: Option<u32> = msg.batch_mint_limit.or(Some(STARTING_BATCH_MINT_LIMIT));
 
     // Initially set per_address_limit if no msg
-    let per_address_limit: Option<u64> = msg.per_address_limit.or(Some(STARTING_PER_ADDRESS_LIMIT));
+    let per_address_limit: Option<u32> = msg.per_address_limit.or(Some(STARTING_PER_ADDRESS_LIMIT));
 
     let whitelist_addr: Option<Addr> = match msg.whitelist {
         Some(wl) => Some(deps.api.addr_validate(&wl)?),
@@ -341,7 +341,7 @@ pub fn execute_batch_mint(
     deps: DepsMut,
     env: Env,
     _info: MessageInfo,
-    num_mints: u64,
+    num_mints: u32,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
     let mint_limit = config
@@ -419,7 +419,7 @@ fn _execute_mint(
     let network_fee: Uint128 = if admin_no_fee {
         Uint128::zero()
     } else {
-        let fee_percent = Decimal::percent(MINT_FEE_PERCENT);
+        let fee_percent = Decimal::percent(MINT_FEE_PERCENT as u64);
         let network_fee = mint_price.amount * fee_percent;
         msgs.append(&mut burn_and_distribute_fee(
             env,
@@ -523,7 +523,7 @@ pub fn execute_update_per_address_limit(
     deps: DepsMut,
     _env: Env,
     info: MessageInfo,
-    per_address_limit: u64,
+    per_address_limit: u32,
 ) -> Result<Response, ContractError> {
     let mut config = CONFIG.load(deps.storage)?;
     if info.sender != config.admin {
@@ -549,7 +549,7 @@ pub fn execute_update_batch_mint_limit(
     deps: DepsMut,
     _env: Env,
     info: MessageInfo,
-    batch_mint_limit: u64,
+    batch_mint_limit: u32,
 ) -> Result<Response, ContractError> {
     let mut config = CONFIG.load(deps.storage)?;
     if info.sender != config.admin {
