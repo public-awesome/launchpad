@@ -63,20 +63,3 @@ export interface Coin {
     amount: Uint128;
     denom: string;
 }
-export interface Config {
-    [k: string]: unknown;
-    admin: Addr;
-    base_token_uri: string;
-    num_tokens: number;
-    per_address_limit?: (number | null);
-    sg721_code_id: number;
-    start_time?: (Expiration | null);
-    unit_price: Coin;
-    whitelist?: (Addr | null);
-}
-export interface Config_1 {
-    [k: string]: unknown;
-    contract_uri?: (string | null);
-    creator?: (Addr | null);
-    royalties?: (RoyaltyInfo | null);
-}

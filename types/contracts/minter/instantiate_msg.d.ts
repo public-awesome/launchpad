@@ -1,4 +1,4 @@
-import { Addr, Coin, Config_1, Expiration } from "./shared-types";
+import { Addr, Coin, Expiration } from "./shared-types";
 
 /**
  * A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0
@@ -19,13 +19,19 @@ whitelist?: (string | null)
 [k: string]: unknown
 }
 export interface InstantiateMsg1 {
-config?: (Config_1 | null)
+collection_info: CollectionInfo
 minter: string
 name: string
 symbol: string
 [k: string]: unknown
 }
-
+export interface CollectionInfo {
+description: string
+external_link?: (string | null)
+image: string
+royalties?: (RoyaltyInfo | null)
+[k: string]: unknown
+}
 export interface RoyaltyInfo {
 payment_address: Addr
 share: Decimal
