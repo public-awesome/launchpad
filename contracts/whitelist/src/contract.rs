@@ -50,6 +50,12 @@ pub fn instantiate(
             got: msg.per_address_limit.to_string(),
         });
     }
+    if msg.per_address_limit == 0 {
+        return Err(ContractError::InvalidPerAddressLimit {
+            max: "must be > 0".to_string(),
+            got: msg.per_address_limit.to_string(),
+        });
+    }
 
     let config = Config {
         admin: info.sender.clone(),
