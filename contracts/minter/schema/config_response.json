@@ -23,7 +23,10 @@
       "minimum": 0.0
     },
     "per_address_limit": {
-      "type": ["integer", "null"],
+      "type": [
+        "integer",
+        "null"
+      ],
       "format": "uint32",
       "minimum": 0.0
     },
@@ -66,7 +69,10 @@
     },
     "Coin": {
       "type": "object",
-      "required": ["amount", "denom"],
+      "required": [
+        "amount",
+        "denom"
+      ],
       "properties": {
         "amount": {
           "$ref": "#/definitions/Uint128"
@@ -82,7 +88,9 @@
         {
           "description": "AtHeight will expire when `env.block.height` >= height",
           "type": "object",
-          "required": ["at_height"],
+          "required": [
+            "at_height"
+          ],
           "properties": {
             "at_height": {
               "type": "integer",
@@ -95,7 +103,9 @@
         {
           "description": "AtTime will expire when `env.block.time` >= time",
           "type": "object",
-          "required": ["at_time"],
+          "required": [
+            "at_time"
+          ],
           "properties": {
             "at_time": {
               "$ref": "#/definitions/Timestamp"
@@ -106,7 +116,9 @@
         {
           "description": "Never will never expire. Used to express the empty variant",
           "type": "object",
-          "required": ["never"],
+          "required": [
+            "never"
+          ],
           "properties": {
             "never": {
               "type": "object"
