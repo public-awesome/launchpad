@@ -277,8 +277,9 @@ pub fn execute_mint_to(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    recipient: Addr,
+    recipient: String,
 ) -> Result<Response, ContractError> {
+    let recipient = deps.api.addr_validate(&recipient)?;
     let config = CONFIG.load(deps.storage)?;
     let action = "mint_to";
 
@@ -297,8 +298,9 @@ pub fn execute_mint_for(
     env: Env,
     info: MessageInfo,
     token_id: u64,
-    recipient: Addr,
+    recipient: String,
 ) -> Result<Response, ContractError> {
+    let recipient = deps.api.addr_validate(&recipient)?;
     let config = CONFIG.load(deps.storage)?;
     let action = "mint_for";
 
