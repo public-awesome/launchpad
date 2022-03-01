@@ -37,6 +37,20 @@
         }
       },
       "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "update_per_address_limit"
+      ],
+      "properties": {
+        "update_per_address_limit": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        }
+      },
+      "additionalProperties": false
     }
   ],
   "definitions": {

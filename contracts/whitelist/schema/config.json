@@ -24,7 +24,7 @@
     },
     "per_address_limit": {
       "type": "integer",
-      "format": "uint64",
+      "format": "uint32",
       "minimum": 0.0
     },
     "start_time": {
