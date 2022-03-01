@@ -71,28 +71,6 @@
     {
       "type": "object",
       "required": [
-        "update_batch_mint_limit"
-      ],
-      "properties": {
-        "update_batch_mint_limit": {
-          "type": "object",
-          "required": [
-            "batch_mint_limit"
-          ],
-          "properties": {
-            "batch_mint_limit": {
-              "type": "integer",
-              "format": "uint32",
-              "minimum": 0.0
-            }
-          }
-        }
-      },
-      "additionalProperties": false
-    },
-    {
-      "type": "object",
-      "required": [
         "mint_to"
       ],
       "properties": {
@@ -129,28 +107,6 @@
             "token_id": {
               "type": "integer",
               "format": "uint64",
-              "minimum": 0.0
-            }
-          }
-        }
-      },
-      "additionalProperties": false
-    },
-    {
-      "type": "object",
-      "required": [
-        "batch_mint"
-      ],
-      "properties": {
-        "batch_mint": {
-          "type": "object",
-          "required": [
-            "num_mints"
-          ],
-          "properties": {
-            "num_mints": {
-              "type": "integer",
-              "format": "uint32",
               "minimum": 0.0
             }
           }

@@ -9,7 +9,6 @@ export type Decimal = string
 
 export interface InstantiateMsg {
 base_token_uri: string
-batch_mint_limit?: (number | null)
 num_tokens: number
 per_address_limit?: (number | null)
 sg721_code_id: number

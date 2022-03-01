@@ -15,6 +15,7 @@ export interface Config {
 admin: Addr
 end_time: Expiration
 num_members: number
+per_address_limit: number
 start_time: Expiration
 unit_price: Coin
 [k: string]: unknown

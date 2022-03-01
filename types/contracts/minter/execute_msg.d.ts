@@ -17,11 +17,6 @@ per_address_limit: number
 [k: string]: unknown
 }
 } | {
-update_batch_mint_limit: {
-batch_mint_limit: number
-[k: string]: unknown
-}
-} | {
 mint_to: {
 recipient: Addr
 [k: string]: unknown
@@ -30,11 +25,6 @@ recipient: Addr
 mint_for: {
 recipient: Addr
 token_id: number
-[k: string]: unknown
-}
-} | {
-batch_mint: {
-num_mints: number
 [k: string]: unknown
 }
 })

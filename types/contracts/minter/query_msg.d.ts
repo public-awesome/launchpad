@@ -10,4 +10,8 @@ mintable_num_tokens: {
 start_time: {
 [k: string]: unknown
 }
+} | {
+mint_price: {
+[k: string]: unknown
+}
 })

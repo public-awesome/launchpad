@@ -60,12 +60,6 @@ pub enum ContractError {
     #[error("Max minting limit per address exceeded")]
     MaxPerAddressLimitExceeded {},
 
-    #[error("Invalid batch mint limit. max: {max}, got: {got}")]
-    InvalidBatchMintLimit { max: String, got: String },
-
-    #[error("Max batch mint limit exceeded")]
-    MaxBatchMintLimitExceeded {},
-
     #[error("Token id: {token_id} already sold")]
     TokenIdAlreadySold { token_id: u64 },
 

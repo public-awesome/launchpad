@@ -16,14 +16,6 @@
     "base_token_uri": {
       "type": "string"
     },
-    "batch_mint_limit": {
-      "type": [
-        "integer",
-        "null"
-      ],
-      "format": "uint32",
-      "minimum": 0.0
-    },
     "num_tokens": {
       "type": "integer",
       "format": "uint64",
