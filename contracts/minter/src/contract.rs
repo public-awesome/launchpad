@@ -102,6 +102,10 @@ pub fn instantiate(
         }
         None => default_start_time,
     };
+    // TODO: refactor idea
+    // let start_time = msg.start_time.map_or(default_start_time, |st| {
+    //     std::cmp::max(st, default_start_time)
+    // });
 
     let config = Config {
         admin: info.sender.clone(),
@@ -374,27 +378,25 @@ fn _execute_mint(
         network_fee
     };
 
-    // if token_id None, find and assign one. else check token_id exists on mintable map.
-    let mintable_token_id: u64 = if token_id.is_none() {
-        let mintable_tokens_result: StdResult<Vec<u64>> = MINTABLE_TOKEN_IDS
-            .keys(deps.storage, None, None, Order::Ascending)
-            .take(1)
-            .collect();
-        let mintable_tokens = mintable_tokens_result?;
-        if mintable_tokens.is_empty() {
-            return Err(ContractError::SoldOut {});
+    let mintable_token_id: u64 = match token_id {
+        Some(token_id) => {
+            // If token_id not on mintable map, throw err
+            if !MINTABLE_TOKEN_IDS.has(deps.storage, token_id) {
+                return Err(ContractError::TokenIdAlreadySold { token_id });
+            }
+            token_id
         }
-        mintable_tokens[0]
-    } else if let Some(some_token_id) = token_id {
-        // If token_id not on mintable map, throw err
-        if !MINTABLE_TOKEN_IDS.has(deps.storage, some_token_id) {
-            return Err(ContractError::TokenIdAlreadySold {
-                token_id: some_token_id,
-            });
+        None => {
+            let mintable_tokens_result: StdResult<Vec<u64>> = MINTABLE_TOKEN_IDS
+                .keys(deps.storage, None, None, Order::Ascending)
+                .take(1)
+                .collect();
+            let mintable_tokens = mintable_tokens_result?;
+            if mintable_tokens.is_empty() {
+                return Err(ContractError::SoldOut {});
+            }
+            mintable_tokens[0]
         }
-        some_token_id
-    } else {
-        return Err(ContractError::InvalidTokenId {});
     };
 
     // create mint msgs
