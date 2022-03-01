@@ -108,6 +108,9 @@ pub fn execute(
         ExecuteMsg::UpdateStartTime(time) => execute_update_start_time(deps, env, info, time),
         ExecuteMsg::UpdateEndTime(time) => execute_update_end_time(deps, env, info, time),
         ExecuteMsg::UpdateMembers(msg) => execute_update_members(deps, env, info, msg),
+        ExecuteMsg::UpdatePerAddressLimit(per_address_limit) => {
+            execute_update_per_address_limit(deps, env, info, per_address_limit)
+        }
     }
 }
 
@@ -182,6 +185,31 @@ pub fn execute_update_members(
     Ok(Response::new()
         .add_attribute("action", "update_whitelist_members")
         .add_attribute("sender", info.sender))
+}
+
+pub fn execute_update_per_address_limit(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    per_address_limit: u64,
+) -> Result<Response, ContractError> {
+    let mut config = CONFIG.load(deps.storage)?;
+    if info.sender != config.admin {
+        return Err(ContractError::Unauthorized {});
+    }
+
+    if per_address_limit > MAX_PER_ADDRESS_LIMIT {
+        return Err(ContractError::InvalidPerAddressLimit {
+            max: MAX_PER_ADDRESS_LIMIT.to_string(),
+            got: per_address_limit.to_string(),
+        });
+    }
+
+    config.per_address_limit = per_address_limit;
+    CONFIG.save(deps.storage, &config)?;
+    Ok(Response::new()
+        .add_attribute("action", "update_per_address_limit")
+        .add_attribute("per_address_limit", per_address_limit.to_string()))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -387,5 +415,34 @@ mod tests {
             .to_string(),
             err.to_string()
         );
+    }
+
+    #[test]
+    fn update_per_address_limit() {
+        let mut deps = mock_dependencies();
+        setup_contract(deps.as_mut());
+
+        let per_address_limit: u64 = 50;
+        let msg = ExecuteMsg::UpdatePerAddressLimit(per_address_limit);
+        let info = mock_info(ADMIN, &[]);
+        // let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
+        // let wl_config: ConfigResponse = query_config(deps.as_ref(), mock_env()).unwrap();
+        let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
+        assert_eq!(
+            ContractError::InvalidPerAddressLimit {
+                max: MAX_PER_ADDRESS_LIMIT.to_string(),
+                got: per_address_limit.to_string(),
+            }
+            .to_string(),
+            err.to_string()
+        );
+
+        let per_address_limit = 2;
+        let msg = ExecuteMsg::UpdatePerAddressLimit(per_address_limit);
+        let info = mock_info(ADMIN, &[]);
+        let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
+        assert_eq!(res.attributes.len(), 2);
+        let wl_config: ConfigResponse = query_config(deps.as_ref(), mock_env()).unwrap();
+        assert_eq!(wl_config.per_address_limit, per_address_limit);
     }
 }

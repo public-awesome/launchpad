@@ -18,6 +18,7 @@ pub enum ExecuteMsg {
     UpdateStartTime(Expiration),
     UpdateEndTime(Expiration),
     UpdateMembers(UpdateMembersMsg),
+    UpdatePerAddressLimit(u64),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
