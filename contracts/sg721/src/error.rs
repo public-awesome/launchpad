@@ -28,6 +28,9 @@ pub enum ContractError {
     #[error("Invalid Royalities")]
     InvalidRoyalities {},
 
+    #[error("Description too long")]
+    DescriptionTooLong {},
+
     #[error("{0}")]
     Payment(#[from] PaymentError),
 

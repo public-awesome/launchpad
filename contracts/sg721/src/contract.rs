@@ -56,6 +56,10 @@ pub fn instantiate(
         .save(deps.storage, &minter)?;
 
     // sg721 instantiation
+    if msg.collection_info.description.len() > 256 {
+        return Err(ContractError::DescriptionTooLong {});
+    }
+
     let image = Url::parse(&msg.collection_info.image)?;
 
     if let Some(ref external_link) = msg.collection_info.external_link {
@@ -98,6 +102,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
 fn query_config(deps: Deps) -> StdResult<CollectionInfoResponse> {
     let info = CONFIG.load(deps.storage)?;
     Ok(CollectionInfoResponse {
+        description: info.description,
         image: info.image,
         external_link: info.external_link,
         royalty: info.royalties,
@@ -124,6 +129,7 @@ mod tests {
             symbol: String::from("BOBO"),
             minter: String::from("minter"),
             collection_info: CollectionInfo {
+                description: String::from("Stargaze Monkeys"),
                 image: "https://example.com/image.png".to_string(),
                 external_link: Some("https://example.com/external.html".to_string()),
                 royalties: None,
@@ -139,6 +145,7 @@ mod tests {
         let res = query(deps.as_ref(), mock_env(), QueryMsg::CollectionInfo {}).unwrap();
         let value: CollectionInfoResponse = from_binary(&res).unwrap();
         assert_eq!("https://example.com/image.png", value.image);
+        assert_eq!("Stargaze Monkeys", value.description);
         assert_eq!(
             "https://example.com/external.html",
             value.external_link.unwrap()
@@ -157,6 +164,7 @@ mod tests {
             symbol: String::from("BOBO"),
             minter: String::from("minter"),
             collection_info: CollectionInfo {
+                description: String::from("Stargaze Monkeys"),
                 image: "https://example.com/image.png".to_string(),
                 external_link: Some("https://example.com/external.html".to_string()),
                 royalties: Some(RoyaltyInfo {

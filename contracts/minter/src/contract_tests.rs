@@ -111,6 +111,7 @@ fn setup_minter_contract(
             symbol: String::from("TEST"),
             minter: creator.to_string(),
             collection_info: CollectionInfo {
+                description: String::from("Stargaze Monkeys"),
                 image: "https://example.com/image.png".to_string(),
                 external_link: Some("https://example.com/external.html".to_string()),
                 royalties: Some(RoyaltyInfo {
@@ -219,6 +220,7 @@ fn initialization() {
             symbol: String::from("TEST"),
             minter: info.sender.to_string(),
             collection_info: CollectionInfo {
+                description: String::from("Stargaze Monkeys"),
                 image: "https://example.com/image.png".to_string(),
                 external_link: Some("https://example.com/external.html".to_string()),
                 royalties: Some(RoyaltyInfo {
@@ -247,6 +249,7 @@ fn initialization() {
             symbol: String::from("TEST"),
             minter: info.sender.to_string(),
             collection_info: CollectionInfo {
+                description: String::from("Stargaze Monkeys"),
                 image: "https://example.com/image.png".to_string(),
                 external_link: Some("https://example.com/external.html".to_string()),
                 royalties: Some(RoyaltyInfo {
@@ -274,6 +277,7 @@ fn initialization() {
             symbol: String::from("TEST"),
             minter: info.sender.to_string(),
             collection_info: CollectionInfo {
+                description: String::from("Stargaze Monkeys"),
                 image: "https://example.com/image.png".to_string(),
                 external_link: Some("https://example.com/external.html".to_string()),
                 royalties: Some(RoyaltyInfo {
@@ -301,6 +305,7 @@ fn initialization() {
             symbol: String::from("TEST"),
             minter: info.sender.to_string(),
             collection_info: CollectionInfo {
+                description: String::from("Stargaze Monkeys"),
                 image: "https://example.com/image.png".to_string(),
                 external_link: Some("https://example.com/external.html".to_string()),
                 royalties: Some(RoyaltyInfo {
@@ -860,6 +865,7 @@ fn test_start_time_before_genesis() {
             symbol: String::from("TEST"),
             minter: creator.to_string(),
             collection_info: CollectionInfo {
+                description: String::from("Stargaze Monkeys"),
                 image: "https://example.com/image.png".to_string(),
                 external_link: Some("https://example.com/external.html".to_string()),
                 royalties: Some(RoyaltyInfo {

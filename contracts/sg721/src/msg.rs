@@ -125,6 +125,7 @@ impl From<QueryMsg> for Cw721QueryMsg {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct CollectionInfoResponse {
+    pub description: String,
     pub image: String,
     pub external_link: Option<String>,
     pub royalty: Option<RoyaltyInfo>,
