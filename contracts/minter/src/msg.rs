@@ -24,8 +24,8 @@ pub enum ExecuteMsg {
     SetWhitelist { whitelist: String },
     UpdateStartTime(Expiration),
     UpdatePerAddressLimit { per_address_limit: u32 },
-    MintTo { recipient: Addr },
-    MintFor { token_id: u64, recipient: Addr },
+    MintTo { recipient: String },
+    MintFor { token_id: u64, recipient: String },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

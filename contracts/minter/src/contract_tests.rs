@@ -385,7 +385,7 @@ fn happy_path() {
 
     // Buyer can't call MintTo
     let mint_to_msg = ExecuteMsg::MintTo {
-        recipient: buyer.clone(),
+        recipient: buyer.to_string(),
     };
     let res = router.execute_contract(
         buyer.clone(),
@@ -751,7 +751,7 @@ fn mint_for_token_id_addr() {
     // try mint_for, test unauthorized
     let mint_for_msg = ExecuteMsg::MintFor {
         token_id: 1,
-        recipient: buyer.clone(),
+        recipient: buyer.to_string(),
     };
     let err = router
         .execute_contract(
@@ -791,7 +791,7 @@ fn mint_for_token_id_addr() {
     let token_id = 0;
     let mint_for_msg = ExecuteMsg::MintFor {
         token_id,
-        recipient: buyer.clone(),
+        recipient: buyer.to_string(),
     };
     let err = router
         .execute_contract(
@@ -812,7 +812,7 @@ fn mint_for_token_id_addr() {
     let token_id = 1;
     let mint_for_msg = ExecuteMsg::MintFor {
         token_id,
-        recipient: buyer.clone(),
+        recipient: buyer.to_string(),
     };
     let err = router
         .execute_contract(
@@ -840,7 +840,7 @@ fn mint_for_token_id_addr() {
     let token_id = 2;
     let mint_for_msg = ExecuteMsg::MintFor {
         token_id,
-        recipient: buyer,
+        recipient: buyer.to_string(),
     };
     let res = router.execute_contract(
         creator.clone(),
