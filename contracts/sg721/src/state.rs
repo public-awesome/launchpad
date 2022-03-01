@@ -5,9 +5,10 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct Config {
-    pub contract_uri: Option<String>,
-    pub creator: Option<Addr>,
+pub struct CollectionInfo {
+    pub description: String,
+    pub image: String,
+    pub external_link: Option<String>,
     pub royalties: Option<RoyaltyInfo>,
 }
 
@@ -32,4 +33,4 @@ impl RoyaltyInfo {
     }
 }
 
-pub const CONFIG: Item<Config> = Item::new("config");
+pub const CONFIG: Item<CollectionInfo> = Item::new("config");

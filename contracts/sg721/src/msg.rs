@@ -1,5 +1,5 @@
-use crate::state::{Config, RoyaltyInfo};
-use cosmwasm_std::{Addr, Empty};
+use crate::state::{CollectionInfo, RoyaltyInfo};
+use cosmwasm_std::Empty;
 use cw721_base::msg::QueryMsg as Cw721QueryMsg;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -9,7 +9,7 @@ pub struct InstantiateMsg {
     pub name: String,
     pub symbol: String,
     pub minter: String,
-    pub config: Option<Config>,
+    pub collection_info: CollectionInfo,
 }
 
 pub type ExecuteMsg = cw721_base::ExecuteMsg<Empty>;
@@ -55,10 +55,7 @@ pub enum QueryMsg {
         limit: Option<u32>,
     },
     Minter {},
-    ContractUri {},
-    Creator {},
-    Royalties {},
-    Config {},
+    CollectionInfo {},
 }
 
 impl From<QueryMsg> for Cw721QueryMsg {
@@ -127,23 +124,9 @@ impl From<QueryMsg> for Cw721QueryMsg {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct ContractUriResponse {
-    pub contract_uri: Option<String>,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct CreatorResponse {
-    pub creator: Option<Addr>,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct RoyaltyResponse {
-    pub royalty: Option<RoyaltyInfo>,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct ConfigResponse {
-    pub contract_uri: Option<String>,
-    pub creator: Option<Addr>,
+pub struct CollectionInfoResponse {
+    pub description: String,
+    pub image: String,
+    pub external_link: Option<String>,
     pub royalty: Option<RoyaltyInfo>,
 }

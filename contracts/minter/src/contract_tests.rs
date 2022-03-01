@@ -6,7 +6,7 @@ use cw721::{Cw721QueryMsg, OwnerOfResponse};
 use cw_multi_test::{BankSudo, Contract, ContractWrapper, Executor, SudoMsg};
 use cw_utils::Expiration;
 use sg721::msg::InstantiateMsg as Sg721InstantiateMsg;
-use sg721::state::{Config, RoyaltyInfo};
+use sg721::state::{CollectionInfo, RoyaltyInfo};
 use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use whitelist::msg::InstantiateMsg as WhitelistInstantiateMsg;
 use whitelist::msg::{ExecuteMsg as WhitelistExecuteMsg, UpdateMembersMsg};
@@ -110,14 +110,15 @@ fn setup_minter_contract(
             name: String::from("TEST"),
             symbol: String::from("TEST"),
             minter: creator.to_string(),
-            config: Some(Config {
-                contract_uri: Some(String::from("ipfs://url.json")),
-                creator: Some(creator.clone()),
+            collection_info: CollectionInfo {
+                description: String::from("Stargaze Monkeys"),
+                image: "https://example.com/image.png".to_string(),
+                external_link: Some("https://example.com/external.html".to_string()),
                 royalties: Some(RoyaltyInfo {
                     payment_address: creator.clone(),
                     share: Decimal::percent(10),
                 }),
-            }),
+            },
         },
     };
     let minter_addr = router
@@ -218,14 +219,15 @@ fn initialization() {
             name: String::from("TEST"),
             symbol: String::from("TEST"),
             minter: info.sender.to_string(),
-            config: Some(Config {
-                contract_uri: Some(String::from("test")),
-                creator: Some(info.sender.clone()),
+            collection_info: CollectionInfo {
+                description: String::from("Stargaze Monkeys"),
+                image: "https://example.com/image.png".to_string(),
+                external_link: Some("https://example.com/external.html".to_string()),
                 royalties: Some(RoyaltyInfo {
                     payment_address: info.sender.clone(),
                     share: Decimal::percent(10),
                 }),
-            }),
+            },
         },
     };
     let res = instantiate(deps.as_mut(), mock_env(), info, msg);
@@ -246,14 +248,15 @@ fn initialization() {
             name: String::from("TEST"),
             symbol: String::from("TEST"),
             minter: info.sender.to_string(),
-            config: Some(Config {
-                contract_uri: Some(String::from("test")),
-                creator: Some(info.sender.clone()),
+            collection_info: CollectionInfo {
+                description: String::from("Stargaze Monkeys"),
+                image: "https://example.com/image.png".to_string(),
+                external_link: Some("https://example.com/external.html".to_string()),
                 royalties: Some(RoyaltyInfo {
                     payment_address: info.sender.clone(),
                     share: Decimal::percent(10),
                 }),
-            }),
+            },
         },
     };
     let res = instantiate(deps.as_mut(), mock_env(), info, msg);
@@ -273,14 +276,15 @@ fn initialization() {
             name: String::from("TEST"),
             symbol: String::from("TEST"),
             minter: info.sender.to_string(),
-            config: Some(Config {
-                contract_uri: Some(String::from("test")),
-                creator: Some(info.sender.clone()),
+            collection_info: CollectionInfo {
+                description: String::from("Stargaze Monkeys"),
+                image: "https://example.com/image.png".to_string(),
+                external_link: Some("https://example.com/external.html".to_string()),
                 royalties: Some(RoyaltyInfo {
                     payment_address: info.sender.clone(),
                     share: Decimal::percent(10),
                 }),
-            }),
+            },
         },
     };
     let res = instantiate(deps.as_mut(), mock_env(), info, msg);
@@ -300,14 +304,15 @@ fn initialization() {
             name: String::from("TEST"),
             symbol: String::from("TEST"),
             minter: info.sender.to_string(),
-            config: Some(Config {
-                contract_uri: Some(String::from("test")),
-                creator: Some(info.sender.clone()),
+            collection_info: CollectionInfo {
+                description: String::from("Stargaze Monkeys"),
+                image: "https://example.com/image.png".to_string(),
+                external_link: Some("https://example.com/external.html".to_string()),
                 royalties: Some(RoyaltyInfo {
                     payment_address: info.sender.clone(),
                     share: Decimal::percent(10),
                 }),
-            }),
+            },
         },
     };
     let res = instantiate(deps.as_mut(), mock_env(), info, msg);
@@ -859,14 +864,15 @@ fn test_start_time_before_genesis() {
             name: String::from("TEST"),
             symbol: String::from("TEST"),
             minter: creator.to_string(),
-            config: Some(Config {
-                contract_uri: Some(String::from("ipfs://url.json")),
-                creator: Some(creator.clone()),
+            collection_info: CollectionInfo {
+                description: String::from("Stargaze Monkeys"),
+                image: "https://example.com/image.png".to_string(),
+                external_link: Some("https://example.com/external.html".to_string()),
                 royalties: Some(RoyaltyInfo {
                     payment_address: creator.clone(),
                     share: Decimal::percent(10),
                 }),
-            }),
+            },
         },
     };
     let minter_addr = router

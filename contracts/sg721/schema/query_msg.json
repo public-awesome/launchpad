@@ -271,46 +271,10 @@
     {
       "type": "object",
       "required": [
-        "contract_uri"
+        "collection_info"
       ],
       "properties": {
-        "contract_uri": {
-          "type": "object"
-        }
-      },
-      "additionalProperties": false
-    },
-    {
-      "type": "object",
-      "required": [
-        "creator"
-      ],
-      "properties": {
-        "creator": {
-          "type": "object"
-        }
-      },
-      "additionalProperties": false
-    },
-    {
-      "type": "object",
-      "required": [
-        "royalties"
-      ],
-      "properties": {
-        "royalties": {
-          "type": "object"
-        }
-      },
-      "additionalProperties": false
-    },
-    {
-      "type": "object",
-      "required": [
-        "config"
-      ],
-      "properties": {
-        "config": {
+        "collection_info": {
           "type": "object"
         }
       },
