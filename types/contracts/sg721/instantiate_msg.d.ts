@@ -16,15 +16,16 @@ export type Addr = string
 export type Decimal = string
 
 export interface InstantiateMsg {
-config?: (Config | null)
+collection_info: CollectionInfo
 minter: string
 name: string
 symbol: string
 [k: string]: unknown
 }
-export interface Config {
-contract_uri?: (string | null)
-creator?: (Addr | null)
+export interface CollectionInfo {
+description: string
+external_link?: (string | null)
+image: string
 royalties?: (RoyaltyInfo | null)
 [k: string]: unknown
 }

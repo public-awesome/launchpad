@@ -62,19 +62,7 @@ minter: {
 [k: string]: unknown
 }
 } | {
-contract_uri: {
-[k: string]: unknown
-}
-} | {
-creator: {
-[k: string]: unknown
-}
-} | {
-royalties: {
-[k: string]: unknown
-}
-} | {
-config: {
+collection_info: {
 [k: string]: unknown
 }
 })
