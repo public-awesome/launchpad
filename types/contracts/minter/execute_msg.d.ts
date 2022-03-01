@@ -1,4 +1,4 @@
-import { Addr, Expiration } from "./shared-types";
+import { Expiration } from "./shared-types";
 
 export type ExecuteMsg = ({
 mint: {
@@ -18,12 +18,12 @@ per_address_limit: number
 }
 } | {
 mint_to: {
-recipient: Addr
+recipient: string
 [k: string]: unknown
 }
 } | {
 mint_for: {
-recipient: Addr
+recipient: string
 token_id: number
 [k: string]: unknown
 }

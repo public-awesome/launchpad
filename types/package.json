@@ -1,6 +1,6 @@
 {
   "name": "@stargazezone/types",
-  "version": "0.2.0",
+  "version": "0.2.2",
   "description": "Types for Stargaze CosmWasm Contracts",
   "main": "build/codegen.js",
   "scripts": {
