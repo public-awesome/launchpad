@@ -34,8 +34,6 @@ const INSTANTIATE_SG721_REPLY_ID: u64 = 1;
 // governance parameters
 const MAX_TOKEN_LIMIT: u32 = 10000;
 const MAX_PER_ADDRESS_LIMIT: u64 = 30;
-const MAX_BATCH_MINT_LIMIT: u64 = 30;
-const STARTING_BATCH_MINT_LIMIT: u64 = 5;
 const STARTING_PER_ADDRESS_LIMIT: u64 = 5;
 const MIN_MINT_PRICE: u128 = 50_000_000;
 const MINT_FEE_PERCENT: u64 = 10;
@@ -65,16 +63,6 @@ pub fn instantiate(
         }
     }
 
-    if let Some(batch_mint_limit) = msg.batch_mint_limit {
-        // Check batch mint limit is valid
-        if batch_mint_limit > MAX_BATCH_MINT_LIMIT {
-            return Err(ContractError::InvalidBatchMintLimit {
-                max: MAX_BATCH_MINT_LIMIT.to_string(),
-                got: batch_mint_limit.to_string(),
-            });
-        }
-    }
-
     // Check that base_token_uri is a valid IPFS uri
     let parsed_token_uri = Url::parse(&msg.base_token_uri)?;
     if parsed_token_uri.scheme() != "ipfs" {
@@ -93,9 +81,6 @@ pub fn instantiate(
             got: msg.unit_price.amount.into(),
         });
     }
-
-    // Initially set batch_mint_limit if no msg
-    let batch_mint_limit: Option<u64> = msg.batch_mint_limit.or(Some(STARTING_BATCH_MINT_LIMIT));
 
     // Initially set per_address_limit if no msg
     let per_address_limit: Option<u64> = msg.per_address_limit.or(Some(STARTING_PER_ADDRESS_LIMIT));
@@ -125,7 +110,6 @@ pub fn instantiate(
         sg721_code_id: msg.sg721_code_id,
         unit_price: msg.unit_price,
         per_address_limit,
-        batch_mint_limit,
         whitelist: whitelist_addr,
         start_time: Some(start_time),
     };
@@ -178,15 +162,11 @@ pub fn execute(
         ExecuteMsg::UpdatePerAddressLimit { per_address_limit } => {
             execute_update_per_address_limit(deps, env, info, per_address_limit)
         }
-        ExecuteMsg::UpdateBatchMintLimit { batch_mint_limit } => {
-            execute_update_batch_mint_limit(deps, env, info, batch_mint_limit)
-        }
         ExecuteMsg::MintTo { recipient } => execute_mint_to(deps, env, info, recipient),
         ExecuteMsg::MintFor {
             token_id,
             recipient,
         } => execute_mint_for(deps, env, info, token_id, recipient),
-        ExecuteMsg::BatchMint { num_mints } => execute_batch_mint(deps, env, info, num_mints),
         ExecuteMsg::SetWhitelist { whitelist } => {
             execute_set_whitelist(deps, env, info, &whitelist)
         }
@@ -321,40 +301,6 @@ pub fn execute_mint_for(
         Some(recipient),
         Some(token_id),
     )
-}
-
-pub fn execute_batch_mint(
-    deps: DepsMut,
-    env: Env,
-    _info: MessageInfo,
-    num_mints: u64,
-) -> Result<Response, ContractError> {
-    let config = CONFIG.load(deps.storage)?;
-    let mint_limit = config
-        .batch_mint_limit
-        .ok_or(ContractError::MaxBatchMintLimitExceeded {})?;
-
-    if num_mints > mint_limit {
-        return Err(ContractError::MaxBatchMintLimitExceeded {});
-    }
-
-    // NOTE: fees are handled in the `_execute_mint` function
-
-    let mut msgs: Vec<CosmosMsg<StargazeMsgWrapper>> = vec![];
-    let mint_msg = ExecuteMsg::Mint {};
-    let msg: CosmosMsg<StargazeMsgWrapper> = CosmosMsg::Wasm(WasmMsg::Execute {
-        contract_addr: env.contract.address.to_string(),
-        msg: to_binary(&mint_msg)?,
-        funds: vec![mint_price(deps.as_ref(), false)?],
-    });
-    for _ in 0..num_mints {
-        msgs.append(&mut vec![msg.clone()]);
-    }
-
-    Ok(Response::default()
-        .add_attribute("action", "batch_mint")
-        .add_attribute("num_mints", num_mints.to_string())
-        .add_messages(msgs))
 }
 
 fn _execute_mint(
@@ -531,31 +477,6 @@ pub fn execute_update_per_address_limit(
         .add_attribute("limit", per_address_limit.to_string()))
 }
 
-pub fn execute_update_batch_mint_limit(
-    deps: DepsMut,
-    _env: Env,
-    info: MessageInfo,
-    batch_mint_limit: u64,
-) -> Result<Response, ContractError> {
-    let mut config = CONFIG.load(deps.storage)?;
-    if info.sender != config.admin {
-        return Err(ContractError::Unauthorized(
-            "Sender is not an admin".to_owned(),
-        ));
-    }
-    if batch_mint_limit > MAX_BATCH_MINT_LIMIT {
-        return Err(ContractError::InvalidBatchMintLimit {
-            max: MAX_BATCH_MINT_LIMIT.to_string(),
-            got: batch_mint_limit.to_string(),
-        });
-    }
-    config.batch_mint_limit = Some(batch_mint_limit);
-    CONFIG.save(deps.storage, &config)?;
-    Ok(Response::new()
-        .add_attribute("action", "update_batch_mint_limit")
-        .add_attribute("limit", batch_mint_limit.to_string()))
-}
-
 pub fn mint_price(deps: Deps, admin_no_fee: bool) -> Result<Coin, StdError> {
     // if admin_no_fee => no fee,
     // else if in whitelist => whitelist price
@@ -607,7 +528,6 @@ fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
         start_time: config.start_time,
         unit_price: config.unit_price,
         per_address_limit: config.per_address_limit,
-        batch_mint_limit: config.batch_mint_limit,
         whitelist: config.whitelist,
     })
 }
