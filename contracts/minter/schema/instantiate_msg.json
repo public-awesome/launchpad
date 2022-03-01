@@ -13,24 +13,13 @@
     "base_token_uri": {
       "type": "string"
     },
-    "batch_mint_limit": {
-      "type": [
-        "integer",
-        "null"
-      ],
-      "format": "uint32",
-      "minimum": 0.0
-    },
     "num_tokens": {
       "type": "integer",
       "format": "uint64",
       "minimum": 0.0
     },
     "per_address_limit": {
-      "type": [
-        "integer",
-        "null"
-      ],
+      "type": ["integer", "null"],
       "format": "uint32",
       "minimum": 0.0
     },
@@ -56,10 +45,7 @@
       "$ref": "#/definitions/Coin"
     },
     "whitelist": {
-      "type": [
-        "string",
-        "null"
-      ]
+      "type": ["string", "null"]
     }
   },
   "definitions": {
@@ -69,10 +55,7 @@
     },
     "Coin": {
       "type": "object",
-      "required": [
-        "amount",
-        "denom"
-      ],
+      "required": ["amount", "denom"],
       "properties": {
         "amount": {
           "$ref": "#/definitions/Uint128"
@@ -86,10 +69,7 @@
       "type": "object",
       "properties": {
         "contract_uri": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "creator": {
           "anyOf": [
@@ -123,9 +103,7 @@
         {
           "description": "AtHeight will expire when `env.block.height` >= height",
           "type": "object",
-          "required": [
-            "at_height"
-          ],
+          "required": ["at_height"],
           "properties": {
             "at_height": {
               "type": "integer",
@@ -138,9 +116,7 @@
         {
           "description": "AtTime will expire when `env.block.time` >= time",
           "type": "object",
-          "required": [
-            "at_time"
-          ],
+          "required": ["at_time"],
           "properties": {
             "at_time": {
               "$ref": "#/definitions/Timestamp"
@@ -151,9 +127,7 @@
         {
           "description": "Never will never expire. Used to express the empty variant",
           "type": "object",
-          "required": [
-            "never"
-          ],
+          "required": ["never"],
           "properties": {
             "never": {
               "type": "object"
@@ -165,11 +139,7 @@
     },
     "InstantiateMsg": {
       "type": "object",
-      "required": [
-        "minter",
-        "name",
-        "symbol"
-      ],
+      "required": ["minter", "name", "symbol"],
       "properties": {
         "config": {
           "anyOf": [
@@ -194,10 +164,7 @@
     },
     "RoyaltyInfo": {
       "type": "object",
-      "required": [
-        "payment_address",
-        "share"
-      ],
+      "required": ["payment_address", "share"],
       "properties": {
         "payment_address": {
           "$ref": "#/definitions/Addr"

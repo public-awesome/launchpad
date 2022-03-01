@@ -4,9 +4,7 @@
   "oneOf": [
     {
       "type": "object",
-      "required": [
-        "mint"
-      ],
+      "required": ["mint"],
       "properties": {
         "mint": {
           "type": "object"
@@ -16,15 +14,11 @@
     },
     {
       "type": "object",
-      "required": [
-        "set_whitelist"
-      ],
+      "required": ["set_whitelist"],
       "properties": {
         "set_whitelist": {
           "type": "object",
-          "required": [
-            "whitelist"
-          ],
+          "required": ["whitelist"],
           "properties": {
             "whitelist": {
               "type": "string"
@@ -36,9 +30,7 @@
     },
     {
       "type": "object",
-      "required": [
-        "update_start_time"
-      ],
+      "required": ["update_start_time"],
       "properties": {
         "update_start_time": {
           "$ref": "#/definitions/Expiration"
@@ -48,15 +40,11 @@
     },
     {
       "type": "object",
-      "required": [
-        "update_per_address_limit"
-      ],
+      "required": ["update_per_address_limit"],
       "properties": {
         "update_per_address_limit": {
           "type": "object",
-          "required": [
-            "per_address_limit"
-          ],
+          "required": ["per_address_limit"],
           "properties": {
             "per_address_limit": {
               "type": "integer",
@@ -70,37 +58,11 @@
     },
     {
       "type": "object",
-      "required": [
-        "update_batch_mint_limit"
-      ],
-      "properties": {
-        "update_batch_mint_limit": {
-          "type": "object",
-          "required": [
-            "batch_mint_limit"
-          ],
-          "properties": {
-            "batch_mint_limit": {
-              "type": "integer",
-              "format": "uint32",
-              "minimum": 0.0
-            }
-          }
-        }
-      },
-      "additionalProperties": false
-    },
-    {
-      "type": "object",
-      "required": [
-        "mint_to"
-      ],
+      "required": ["mint_to"],
       "properties": {
         "mint_to": {
           "type": "object",
-          "required": [
-            "recipient"
-          ],
+          "required": ["recipient"],
           "properties": {
             "recipient": {
               "$ref": "#/definitions/Addr"
@@ -112,16 +74,11 @@
     },
     {
       "type": "object",
-      "required": [
-        "mint_for"
-      ],
+      "required": ["mint_for"],
       "properties": {
         "mint_for": {
           "type": "object",
-          "required": [
-            "recipient",
-            "token_id"
-          ],
+          "required": ["recipient", "token_id"],
           "properties": {
             "recipient": {
               "$ref": "#/definitions/Addr"
@@ -129,28 +86,6 @@
             "token_id": {
               "type": "integer",
               "format": "uint64",
-              "minimum": 0.0
-            }
-          }
-        }
-      },
-      "additionalProperties": false
-    },
-    {
-      "type": "object",
-      "required": [
-        "batch_mint"
-      ],
-      "properties": {
-        "batch_mint": {
-          "type": "object",
-          "required": [
-            "num_mints"
-          ],
-          "properties": {
-            "num_mints": {
-              "type": "integer",
-              "format": "uint32",
               "minimum": 0.0
             }
           }
@@ -170,9 +105,7 @@
         {
           "description": "AtHeight will expire when `env.block.height` >= height",
           "type": "object",
-          "required": [
-            "at_height"
-          ],
+          "required": ["at_height"],
           "properties": {
             "at_height": {
               "type": "integer",
@@ -185,9 +118,7 @@
         {
           "description": "AtTime will expire when `env.block.time` >= time",
           "type": "object",
-          "required": [
-            "at_time"
-          ],
+          "required": ["at_time"],
           "properties": {
             "at_time": {
               "$ref": "#/definitions/Timestamp"
@@ -198,9 +129,7 @@
         {
           "description": "Never will never expire. Used to express the empty variant",
           "type": "object",
-          "required": [
-            "never"
-          ],
+          "required": ["never"],
           "properties": {
             "never": {
               "type": "object"
