@@ -12,8 +12,8 @@ pub struct InstantiateMsg {
     pub sg721_code_id: u64,
     pub sg721_instantiate_msg: Sg721InstantiateMsg,
     pub start_time: Option<Expiration>,
-    pub per_address_limit: Option<u64>,
-    pub batch_mint_limit: Option<u64>,
+    pub per_address_limit: Option<u32>,
+    pub batch_mint_limit: Option<u32>,
     pub unit_price: Coin,
     pub whitelist: Option<String>,
 }
@@ -24,11 +24,11 @@ pub enum ExecuteMsg {
     Mint {},
     SetWhitelist { whitelist: String },
     UpdateStartTime(Expiration),
-    UpdatePerAddressLimit { per_address_limit: u64 },
-    UpdateBatchMintLimit { batch_mint_limit: u64 },
+    UpdatePerAddressLimit { per_address_limit: u32 },
+    UpdateBatchMintLimit { batch_mint_limit: u32 },
     MintTo { recipient: Addr },
     MintFor { token_id: u64, recipient: Addr },
-    BatchMint { num_mints: u64 },
+    BatchMint { num_mints: u32 },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -44,9 +44,9 @@ pub enum QueryMsg {
 pub struct ConfigResponse {
     pub admin: Addr,
     pub base_token_uri: String,
-    pub batch_mint_limit: Option<u64>,
+    pub batch_mint_limit: Option<u32>,
     pub num_tokens: u64,
-    pub per_address_limit: Option<u64>,
+    pub per_address_limit: Option<u32>,
     pub sg721_address: Addr,
     pub sg721_code_id: u64,
     pub start_time: Option<Expiration>,
