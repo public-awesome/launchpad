@@ -58,6 +58,7 @@ pub fn instantiate(
 
     if let Some(ref config) = msg.config {
         if let Some(ref royalty) = config.royalties {
+            deps.api.addr_validate(royalty.payment_address.as_str())?;
             royalty.is_valid()?;
         }
         if let Some(ref contract_uri) = config.contract_uri {
