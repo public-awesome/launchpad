@@ -73,7 +73,7 @@ pub fn instantiate(
     if NATIVE_DENOM != msg.unit_price.denom {
         return Err(ContractError::InvalidDenom {
             expected: NATIVE_DENOM.to_string(),
-            got: msg.unit_price.denom.to_string(),
+            got: msg.unit_price.denom,
         });
     }
     if MIN_MINT_PRICE > msg.unit_price.amount.into() {
@@ -86,10 +86,9 @@ pub fn instantiate(
     // Initially set per_address_limit if no msg
     let per_address_limit: Option<u32> = msg.per_address_limit.or(Some(STARTING_PER_ADDRESS_LIMIT));
 
-    let whitelist_addr: Option<Addr> = match msg.whitelist {
-        Some(wl) => Some(deps.api.addr_validate(&wl)?),
-        None => None,
-    };
+    let whitelist_addr = msg
+        .whitelist
+        .and_then(|w| deps.api.addr_validate(w.as_str()).ok());
 
     // default is genesis mint start time
     let default_start_time = Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME));
@@ -103,6 +102,10 @@ pub fn instantiate(
         }
         None => default_start_time,
     };
+    // TODO: refactor idea
+    // let start_time = msg.start_time.map_or(default_start_time, |st| {
+    //     std::cmp::max(st, default_start_time)
+    // });
 
     let config = Config {
         admin: info.sender.clone(),
@@ -375,27 +378,28 @@ fn _execute_mint(
         network_fee
     };
 
-    // if token_id None, find and assign one. else check token_id exists on mintable map.
-    let mintable_token_id: u64 = if token_id.is_none() {
-        let mintable_tokens_result: StdResult<Vec<u64>> = MINTABLE_TOKEN_IDS
-            .keys(deps.storage, None, None, Order::Ascending)
-            .take(1)
-            .collect();
-        let mintable_tokens = mintable_tokens_result?;
-        if mintable_tokens.is_empty() {
-            return Err(ContractError::SoldOut {});
+    let mintable_token_id: u64 = match token_id {
+        Some(token_id) => {
+            if token_id == 0 || token_id > config.num_tokens {
+                return Err(ContractError::InvalidTokenId {});
+            }
+            // If token_id not on mintable map, throw err
+            if !MINTABLE_TOKEN_IDS.has(deps.storage, token_id) {
+                return Err(ContractError::TokenIdAlreadySold { token_id });
+            }
+            token_id
         }
-        mintable_tokens[0]
-    } else if let Some(some_token_id) = token_id {
-        // If token_id not on mintable map, throw err
-        if !MINTABLE_TOKEN_IDS.has(deps.storage, some_token_id) {
-            return Err(ContractError::TokenIdAlreadySold {
-                token_id: some_token_id,
-            });
+        None => {
+            let mintable_tokens_result: StdResult<Vec<u64>> = MINTABLE_TOKEN_IDS
+                .keys(deps.storage, None, None, Order::Ascending)
+                .take(1)
+                .collect();
+            let mintable_tokens = mintable_tokens_result?;
+            if mintable_tokens.is_empty() {
+                return Err(ContractError::SoldOut {});
+            }
+            mintable_tokens[0]
         }
-        some_token_id
-    } else {
-        return Err(ContractError::InvalidTokenId {});
     };
 
     // create mint msgs
