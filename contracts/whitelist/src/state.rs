@@ -11,6 +11,7 @@ pub struct Config {
     pub end_time: Expiration,
     pub num_members: u32,
     pub unit_price: Coin,
+    pub per_address_limit: u32,
 }
 
 pub const CONFIG: Item<Config> = Item::new("config");

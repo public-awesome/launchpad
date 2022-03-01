@@ -25,6 +25,7 @@ const UNIT_PRICE: u128 = 100_000_000;
 const MINT_FEE: u128 = 10_000_000;
 const MAX_TOKEN_LIMIT: u32 = 10000;
 const WHITELIST_AMOUNT: u128 = 66_000_000;
+const WL_PER_ADDRESS_LIMIT: u32 = 1;
 const ADMIN_MINT_PRICE: u128 = 0;
 
 fn custom_mock_app() -> StargazeApp {
@@ -69,6 +70,7 @@ fn setup_whitelist_contract(
         start_time: Expiration::Never {},
         end_time: Expiration::Never {},
         unit_price: coin(WHITELIST_AMOUNT, NATIVE_DENOM),
+        per_address_limit: WL_PER_ADDRESS_LIMIT,
     };
     let whitelist_addr = router
         .instantiate_contract(
@@ -564,6 +566,21 @@ fn whitelist_access_len_add_remove_expiration() {
         &coins(WHITELIST_AMOUNT, NATIVE_DENOM),
     );
     assert!(res.is_ok());
+
+    // mint fails, over whitelist per address limit
+    let mint_msg = ExecuteMsg::Mint {};
+    let err = router
+        .execute_contract(
+            buyer.clone(),
+            minter_addr.clone(),
+            &mint_msg,
+            &coins(WHITELIST_AMOUNT, NATIVE_DENOM),
+        )
+        .unwrap_err();
+    assert_eq!(
+        err.source().unwrap().to_string(),
+        ContractError::MaxPerAddressLimitExceeded {}.to_string()
+    );
 
     // remove buyer from whitelist
     let inner_msg = UpdateMembersMsg {

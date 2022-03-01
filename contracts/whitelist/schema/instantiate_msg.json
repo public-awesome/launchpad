@@ -5,6 +5,7 @@
   "required": [
     "end_time",
     "members",
+    "per_address_limit",
     "start_time",
     "unit_price"
   ],
@@ -17,6 +18,11 @@
       "items": {
         "type": "string"
       }
+    },
+    "per_address_limit": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
     },
     "start_time": {
       "$ref": "#/definitions/Expiration"

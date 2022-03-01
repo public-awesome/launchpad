@@ -6,6 +6,7 @@
     "admin",
     "end_time",
     "num_members",
+    "per_address_limit",
     "start_time",
     "unit_price"
   ],
@@ -17,6 +18,11 @@
       "$ref": "#/definitions/Expiration"
     },
     "num_members": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    },
+    "per_address_limit": {
       "type": "integer",
       "format": "uint32",
       "minimum": 0.0

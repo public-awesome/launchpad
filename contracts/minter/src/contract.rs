@@ -19,7 +19,8 @@ use crate::msg::{
 use crate::state::{Config, CONFIG, MINTABLE_TOKEN_IDS, SG721_ADDRESS};
 use sg_std::{burn_and_distribute_fee, StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use whitelist::msg::{
-    HasMemberResponse, IsActiveResponse, QueryMsg as WhitelistQueryMsg, UnitPriceResponse,
+    ConfigResponse as WhitelistConfigResponse, HasMemberResponse, QueryMsg as WhitelistQueryMsg,
+    UnitPriceResponse,
 };
 
 pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
@@ -226,10 +227,11 @@ pub fn execute_mint_sender(
     // check if a whitelist exists and not ended
     // sender has to be whitelisted to mint
     if let Some(whitelist) = config.whitelist {
-        let res_is_active: IsActiveResponse = deps
+        let wl_config: WhitelistConfigResponse = deps
             .querier
-            .query_wasm_smart(whitelist.clone(), &WhitelistQueryMsg::IsActive {})?;
-        if res_is_active.is_active {
+            .query_wasm_smart(whitelist.clone(), &WhitelistQueryMsg::Config {})?;
+
+        if wl_config.is_active {
             let res: HasMemberResponse = deps.querier.query_wasm_smart(
                 whitelist,
                 &WhitelistQueryMsg::HasMember {
@@ -240,6 +242,18 @@ pub fn execute_mint_sender(
                 return Err(ContractError::NotWhitelisted {
                     addr: info.sender.to_string(),
                 });
+            }
+            // check wl per address limit
+            let tokens: Cw721TokensResponse = deps.querier.query_wasm_smart(
+                sg721_address.to_string(),
+                &Sg721QueryMsg::Tokens {
+                    owner: info.sender.to_string(),
+                    start_after: None,
+                    limit: Some(wl_config.per_address_limit as u32),
+                },
+            )?;
+            if tokens.tokens.len() >= wl_config.per_address_limit as usize {
+                return Err(ContractError::MaxPerAddressLimitExceeded {});
             }
         } else {
             pub_mint = true;
@@ -567,14 +581,11 @@ pub fn mint_price(deps: Deps, admin_no_fee: bool) -> Result<Coin, StdError> {
             denom: NATIVE_DENOM.to_string(),
         }
     } else if let Some(whitelist) = config.whitelist {
-        let res_is_active: IsActiveResponse = deps
+        let wl_config: WhitelistConfigResponse = deps
             .querier
-            .query_wasm_smart(whitelist.clone(), &WhitelistQueryMsg::IsActive {})?;
-        if res_is_active.is_active {
-            let unit_price: UnitPriceResponse = deps
-                .querier
-                .query_wasm_smart(whitelist, &WhitelistQueryMsg::UnitPrice {})?;
-            unit_price.unit_price
+            .query_wasm_smart(whitelist, &WhitelistQueryMsg::Config {})?;
+        if wl_config.is_active {
+            wl_config.unit_price
         } else {
             config.unit_price.clone()
         }

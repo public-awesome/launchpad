@@ -9,8 +9,9 @@ use sg_std::StargazeMsgWrapper;
 
 use crate::error::ContractError;
 use crate::msg::{
-    ExecuteMsg, HasEndedResponse, HasMemberResponse, HasStartedResponse, InstantiateMsg,
-    IsActiveResponse, MembersResponse, QueryMsg, TimeResponse, UnitPriceResponse, UpdateMembersMsg,
+    ConfigResponse, ExecuteMsg, HasEndedResponse, HasMemberResponse, HasStartedResponse,
+    InstantiateMsg, IsActiveResponse, MembersResponse, QueryMsg, TimeResponse, UnitPriceResponse,
+    UpdateMembersMsg,
 };
 use crate::state::{Config, CONFIG, WHITELIST};
 
@@ -22,6 +23,7 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 const MAX_MEMBERS: u32 = 5000;
 const CREATION_FEE: u128 = 100_000_000;
 const MIN_MINT_PRICE: u128 = 25_000_000;
+const MAX_PER_ADDRESS_LIMIT: u32 = 30;
 
 type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 
@@ -41,12 +43,27 @@ pub fn instantiate(
         ));
     }
 
+    // Check per address limit is valid
+    if msg.per_address_limit > MAX_PER_ADDRESS_LIMIT {
+        return Err(ContractError::InvalidPerAddressLimit {
+            max: MAX_PER_ADDRESS_LIMIT.to_string(),
+            got: msg.per_address_limit.to_string(),
+        });
+    }
+    if msg.per_address_limit == 0 {
+        return Err(ContractError::InvalidPerAddressLimit {
+            max: "must be > 0".to_string(),
+            got: msg.per_address_limit.to_string(),
+        });
+    }
+
     let config = Config {
         admin: info.sender.clone(),
         start_time: msg.start_time,
         end_time: msg.end_time,
         num_members: msg.members.len() as u32,
         unit_price: msg.unit_price,
+        per_address_limit: msg.per_address_limit,
     };
     CONFIG.save(deps.storage, &config)?;
 
@@ -97,6 +114,9 @@ pub fn execute(
         ExecuteMsg::UpdateStartTime(time) => execute_update_start_time(deps, env, info, time),
         ExecuteMsg::UpdateEndTime(time) => execute_update_end_time(deps, env, info, time),
         ExecuteMsg::UpdateMembers(msg) => execute_update_members(deps, env, info, msg),
+        ExecuteMsg::UpdatePerAddressLimit(per_address_limit) => {
+            execute_update_per_address_limit(deps, env, info, per_address_limit)
+        }
     }
 }
 
@@ -173,6 +193,31 @@ pub fn execute_update_members(
         .add_attribute("sender", info.sender))
 }
 
+pub fn execute_update_per_address_limit(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    per_address_limit: u32,
+) -> Result<Response, ContractError> {
+    let mut config = CONFIG.load(deps.storage)?;
+    if info.sender != config.admin {
+        return Err(ContractError::Unauthorized {});
+    }
+
+    if per_address_limit > MAX_PER_ADDRESS_LIMIT {
+        return Err(ContractError::InvalidPerAddressLimit {
+            max: MAX_PER_ADDRESS_LIMIT.to_string(),
+            got: per_address_limit.to_string(),
+        });
+    }
+
+    config.per_address_limit = per_address_limit;
+    CONFIG.save(deps.storage, &config)?;
+    Ok(Response::new()
+        .add_attribute("action", "update_per_address_limit")
+        .add_attribute("per_address_limit", per_address_limit.to_string()))
+}
+
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
@@ -184,6 +229,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::IsActive {} => to_binary(&query_is_active(deps, env)?),
         QueryMsg::HasMember { member } => to_binary(&query_has_member(deps, member)?),
         QueryMsg::UnitPrice {} => to_binary(&query_unit_price(deps)?),
+        QueryMsg::Config {} => to_binary(&query_config(deps, env)?),
     }
 }
 
@@ -247,6 +293,22 @@ fn query_has_member(deps: Deps, member: String) -> StdResult<HasMemberResponse> 
     })
 }
 
+fn query_config(deps: Deps, env: Env) -> StdResult<ConfigResponse> {
+    let per_address_limit = CONFIG.load(deps.storage)?.per_address_limit;
+    let start_time = CONFIG.load(deps.storage)?.start_time;
+    let end_time = CONFIG.load(deps.storage)?.end_time;
+    let unit_price = CONFIG.load(deps.storage)?.unit_price;
+    let is_active: bool = query_is_active(deps, env)?.is_active;
+
+    Ok(ConfigResponse {
+        per_address_limit,
+        start_time,
+        end_time,
+        unit_price,
+        is_active,
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -268,6 +330,7 @@ mod tests {
             start_time: NON_EXPIRED_HEIGHT,
             end_time: NON_EXPIRED_HEIGHT,
             unit_price: coin(UNIT_AMOUNT, NATIVE_DENOM),
+            per_address_limit: 1,
         };
         let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
         let res = instantiate(deps, mock_env(), info, msg).unwrap();
@@ -288,6 +351,7 @@ mod tests {
             start_time: NON_EXPIRED_HEIGHT,
             end_time: NON_EXPIRED_HEIGHT,
             unit_price: coin(1, NATIVE_DENOM),
+            per_address_limit: 1,
         };
         let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
         instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
@@ -300,6 +364,7 @@ mod tests {
             start_time: Expiration::AtHeight(101),
             end_time: Expiration::AtHeight(100),
             unit_price: coin(UNIT_AMOUNT, NATIVE_DENOM),
+            per_address_limit: 1,
         };
         let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
         let mut deps = mock_dependencies();
@@ -356,5 +421,34 @@ mod tests {
             .to_string(),
             err.to_string()
         );
+    }
+
+    #[test]
+    fn update_per_address_limit() {
+        let mut deps = mock_dependencies();
+        setup_contract(deps.as_mut());
+
+        let per_address_limit: u32 = 50;
+        let msg = ExecuteMsg::UpdatePerAddressLimit(per_address_limit);
+        let info = mock_info(ADMIN, &[]);
+        // let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
+        // let wl_config: ConfigResponse = query_config(deps.as_ref(), mock_env()).unwrap();
+        let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
+        assert_eq!(
+            ContractError::InvalidPerAddressLimit {
+                max: MAX_PER_ADDRESS_LIMIT.to_string(),
+                got: per_address_limit.to_string(),
+            }
+            .to_string(),
+            err.to_string()
+        );
+
+        let per_address_limit: u32 = 2;
+        let msg = ExecuteMsg::UpdatePerAddressLimit(per_address_limit);
+        let info = mock_info(ADMIN, &[]);
+        let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
+        assert_eq!(res.attributes.len(), 2);
+        let wl_config: ConfigResponse = query_config(deps.as_ref(), mock_env()).unwrap();
+        assert_eq!(wl_config.per_address_limit, per_address_limit);
     }
 }
