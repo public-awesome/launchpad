@@ -73,4 +73,8 @@ creator: {
 royalties: {
 [k: string]: unknown
 }
+} | {
+config: {
+[k: string]: unknown
+}
 })
