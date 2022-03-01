@@ -1,10 +1,9 @@
-use std::string::ParseError;
-
 use cosmwasm_std::StdError;
 use cw721_base::ContractError as Cw721ContractError;
 use cw_utils::PaymentError;
 use sg_std::fees::FeeError;
 use thiserror::Error;
+use url::ParseError;
 
 #[derive(Error, Debug)]
 pub enum ContractError {
@@ -35,9 +34,6 @@ pub enum ContractError {
     #[error("{0}")]
     Fee(#[from] FeeError),
 
-    #[error("InvalidImageUrl")]
-    InvalidImageUrl {},
-
     #[error("{0}")]
     Parse(#[from] ParseError),
 }
@@ -50,11 +46,5 @@ impl From<ContractError> for Cw721ContractError {
             ContractError::Expired {} => Cw721ContractError::Expired {},
             _ => unreachable!("cannot convert {:?} to Cw721ContractError", err),
         }
-    }
-}
-
-impl From<ParseError> for ContractError {
-    fn from(err: ParseError) -> ContractError {
-        ContractError::InvalidImageUrl {}
     }
 }

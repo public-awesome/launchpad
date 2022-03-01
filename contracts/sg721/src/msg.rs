@@ -55,7 +55,7 @@ pub enum QueryMsg {
         limit: Option<u32>,
     },
     Minter {},
-    Config {},
+    CollectionInfo {},
 }
 
 impl From<QueryMsg> for Cw721QueryMsg {
@@ -124,7 +124,7 @@ impl From<QueryMsg> for Cw721QueryMsg {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct ConfigResponse {
+pub struct CollectionInfoResponse {
     pub image: String,
     pub external_link: Option<String>,
     pub royalty: Option<RoyaltyInfo>,
