@@ -86,10 +86,9 @@ pub fn instantiate(
     // Initially set per_address_limit if no msg
     let per_address_limit: Option<u32> = msg.per_address_limit.or(Some(STARTING_PER_ADDRESS_LIMIT));
 
-    let whitelist_addr: Option<Addr> = match msg.whitelist {
-        Some(wl) => Some(deps.api.addr_validate(&wl)?),
-        None => None,
-    };
+    let whitelist_addr = msg
+        .whitelist
+        .and_then(|w| deps.api.addr_validate(w.as_str()).ok());
 
     // default is genesis mint start time
     let default_start_time = Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME));
