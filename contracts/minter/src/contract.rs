@@ -73,7 +73,7 @@ pub fn instantiate(
     if NATIVE_DENOM != msg.unit_price.denom {
         return Err(ContractError::InvalidDenom {
             expected: NATIVE_DENOM.to_string(),
-            got: msg.unit_price.denom.to_string(),
+            got: msg.unit_price.denom,
         });
     }
     if MIN_MINT_PRICE > msg.unit_price.amount.into() {
