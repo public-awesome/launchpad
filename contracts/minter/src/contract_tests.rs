@@ -110,7 +110,7 @@ fn setup_minter_contract(
             name: String::from("TEST"),
             symbol: String::from("TEST"),
             minter: creator.to_string(),
-            config: Some(CollectionInfo {
+            collection_info: Some(CollectionInfo {
                 contract_uri: Some(String::from("ipfs://url.json")),
                 creator: Some(creator.clone()),
                 royalties: Some(RoyaltyInfo {
@@ -218,7 +218,7 @@ fn initialization() {
             name: String::from("TEST"),
             symbol: String::from("TEST"),
             minter: info.sender.to_string(),
-            config: Some(CollectionInfo {
+            collection_info: Some(CollectionInfo {
                 contract_uri: Some(String::from("test")),
                 creator: Some(info.sender.clone()),
                 royalties: Some(RoyaltyInfo {
@@ -246,7 +246,7 @@ fn initialization() {
             name: String::from("TEST"),
             symbol: String::from("TEST"),
             minter: info.sender.to_string(),
-            config: Some(CollectionInfo {
+            collection_info: Some(CollectionInfo {
                 contract_uri: Some(String::from("test")),
                 creator: Some(info.sender.clone()),
                 royalties: Some(RoyaltyInfo {
@@ -273,7 +273,7 @@ fn initialization() {
             name: String::from("TEST"),
             symbol: String::from("TEST"),
             minter: info.sender.to_string(),
-            config: Some(CollectionInfo {
+            collection_info: Some(CollectionInfo {
                 contract_uri: Some(String::from("test")),
                 creator: Some(info.sender.clone()),
                 royalties: Some(RoyaltyInfo {
@@ -300,7 +300,7 @@ fn initialization() {
             name: String::from("TEST"),
             symbol: String::from("TEST"),
             minter: info.sender.to_string(),
-            config: Some(CollectionInfo {
+            collection_info: Some(CollectionInfo {
                 contract_uri: Some(String::from("test")),
                 creator: Some(info.sender.clone()),
                 royalties: Some(RoyaltyInfo {
@@ -859,7 +859,7 @@ fn test_start_time_before_genesis() {
             name: String::from("TEST"),
             symbol: String::from("TEST"),
             minter: creator.to_string(),
-            config: Some(CollectionInfo {
+            collection_info: Some(CollectionInfo {
                 contract_uri: Some(String::from("ipfs://url.json")),
                 creator: Some(creator.clone()),
                 royalties: Some(RoyaltyInfo {

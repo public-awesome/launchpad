@@ -41,6 +41,7 @@ pub fn instantiate(
 
     let fee_msgs = burn_and_distribute_fee(env, &info, CREATION_FEE)?;
 
+    // cw721 instantiation
     let info = ContractInfoResponse {
         name: msg.name,
         symbol: msg.symbol,
@@ -53,21 +54,19 @@ pub fn instantiate(
         .minter
         .save(deps.storage, &minter)?;
 
-    if let Some(ref config) = msg.config {
-        if let Some(ref royalty) = config.royalties {
-            deps.api.addr_validate(royalty.payment_address.as_str())?;
-            royalty.is_valid()?;
-        }
-        if let Some(ref contract_uri) = config.contract_uri {
-            // Check that base_token_uri is a valid IPFS uri
-            let parsed_contract_uri =
-                Url::parse(contract_uri).or(Err(ContractError::InvalidContractUri {}))?;
-            if parsed_contract_uri.scheme() != "ipfs" {
-                return Err(ContractError::InvalidContractUri {});
-            }
-        }
-        CONFIG.save(deps.storage, config)?;
+    // sg721 instantiation
+    let image_url = Url::parse(&msg.collection_info.image)?;
+
+    if let Some(ref external_link) = msg.collection_info.external_link {
+        Url::parse(external_link)?;
     }
+
+    if let Some(ref royalty) = msg.collection_info.royalties {
+        deps.api.addr_validate(royalty.payment_address.as_str())?;
+        royalty.is_valid()?;
+    }
+
+    CONFIG.save(deps.storage, &msg.collection_info)?;
 
     Ok(Response::default()
         .add_attribute("action", "instantiate")
@@ -125,7 +124,7 @@ mod tests {
             name: collection,
             symbol: String::from("BOBO"),
             minter: String::from("minter"),
-            config: Some(CollectionInfo {
+            collection_info: Some(CollectionInfo {
                 contract_uri: Some(String::from("ipfs://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json")),
                 creator: Some(Addr::unchecked(creator)),
                 royalties: None,
@@ -164,7 +163,7 @@ mod tests {
             name: collection,
             symbol: String::from("BOBO"),
             minter: String::from("minter"),
-            config: Some(CollectionInfo {
+            collection_info: Some(CollectionInfo {
                 contract_uri: Some(String::from("ipfs://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json")),
                 creator: Some(Addr::unchecked(creator.clone())),
                 royalties: Some(RoyaltyInfo {
