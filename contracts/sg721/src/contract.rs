@@ -12,10 +12,7 @@ use cw721::ContractInfoResponse;
 use cw721_base::ContractError as BaseError;
 use url::Url;
 
-use crate::msg::{
-    ConfigResponse, ContractUriResponse, CreatorResponse, ExecuteMsg, InstantiateMsg, QueryMsg,
-    RoyaltyResponse,
-};
+use crate::msg::{ConfigResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
 use crate::state::CONFIG;
 
 // version info for migration info
@@ -92,27 +89,9 @@ pub fn execute(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::ContractUri {} => to_binary(&query_contract_uri(deps)?),
-        QueryMsg::Creator {} => to_binary(&query_creator(deps)?),
-        QueryMsg::Royalties {} => to_binary(&query_royalties(deps)?),
         QueryMsg::Config {} => to_binary(&query_config(deps)?),
         _ => Sg721Contract::default().query(deps, env, msg.into()),
     }
-}
-
-fn query_contract_uri(deps: Deps) -> StdResult<ContractUriResponse> {
-    let contract_uri = CONFIG.load(deps.storage)?.contract_uri;
-    Ok(ContractUriResponse { contract_uri })
-}
-
-fn query_creator(deps: Deps) -> StdResult<CreatorResponse> {
-    let creator = CONFIG.load(deps.storage)?.creator;
-    Ok(CreatorResponse { creator })
-}
-
-fn query_royalties(deps: Deps) -> StdResult<RoyaltyResponse> {
-    let royalty = CONFIG.load(deps.storage)?.royalties;
-    Ok(RoyaltyResponse { royalty })
 }
 
 fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
@@ -130,7 +109,7 @@ fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
 mod tests {
     use super::*;
 
-    use crate::state::Config;
+    use crate::state::CollectionInfo;
     use crate::state::RoyaltyInfo;
     use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
     use cosmwasm_std::{coins, from_binary, Addr, Decimal};
@@ -146,7 +125,7 @@ mod tests {
             name: collection,
             symbol: String::from("BOBO"),
             minter: String::from("minter"),
-            config: Some(Config {
+            config: Some(CollectionInfo {
                 contract_uri: Some(String::from("ipfs://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json")),
                 creator: Some(Addr::unchecked(creator)),
                 royalties: None,
@@ -185,7 +164,7 @@ mod tests {
             name: collection,
             symbol: String::from("BOBO"),
             minter: String::from("minter"),
-            config: Some(Config {
+            config: Some(CollectionInfo {
                 contract_uri: Some(String::from("ipfs://bafyreibvxty5gjyeedk7or7tahyrzgbrwjkolpairjap3bmegvcjdipt74.ipfs.dweb.link/metadata.json")),
                 creator: Some(Addr::unchecked(creator.clone())),
                 royalties: Some(RoyaltyInfo {
