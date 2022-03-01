@@ -291,7 +291,6 @@ fn initialization() {
         num_tokens: (MAX_TOKEN_LIMIT + 1).into(),
         start_time: None,
         per_address_limit: None,
-
         whitelist: None,
         base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
         sg721_code_id: 1,
