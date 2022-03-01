@@ -23,7 +23,7 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 const MAX_MEMBERS: u32 = 5000;
 const CREATION_FEE: u128 = 100_000_000;
 const MIN_MINT_PRICE: u128 = 25_000_000;
-const MAX_PER_ADDRESS_LIMIT: u64 = 30;
+const MAX_PER_ADDRESS_LIMIT: u32 = 30;
 
 type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 
@@ -191,7 +191,7 @@ pub fn execute_update_per_address_limit(
     deps: DepsMut,
     _env: Env,
     info: MessageInfo,
-    per_address_limit: u64,
+    per_address_limit: u32,
 ) -> Result<Response, ContractError> {
     let mut config = CONFIG.load(deps.storage)?;
     if info.sender != config.admin {
@@ -422,7 +422,7 @@ mod tests {
         let mut deps = mock_dependencies();
         setup_contract(deps.as_mut());
 
-        let per_address_limit: u64 = 50;
+        let per_address_limit: u32 = 50;
         let msg = ExecuteMsg::UpdatePerAddressLimit(per_address_limit);
         let info = mock_info(ADMIN, &[]);
         // let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
@@ -437,7 +437,7 @@ mod tests {
             err.to_string()
         );
 
-        let per_address_limit = 2;
+        let per_address_limit: u32 = 2;
         let msg = ExecuteMsg::UpdatePerAddressLimit(per_address_limit);
         let info = mock_info(ADMIN, &[]);
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();

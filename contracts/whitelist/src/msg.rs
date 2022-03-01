@@ -9,7 +9,7 @@ pub struct InstantiateMsg {
     pub start_time: Expiration,
     pub end_time: Expiration,
     pub unit_price: Coin,
-    pub per_address_limit: u64,
+    pub per_address_limit: u32,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -18,7 +18,7 @@ pub enum ExecuteMsg {
     UpdateStartTime(Expiration),
     UpdateEndTime(Expiration),
     UpdateMembers(UpdateMembersMsg),
-    UpdatePerAddressLimit(u64),
+    UpdatePerAddressLimit(u32),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -78,7 +78,7 @@ pub struct UnitPriceResponse {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct ConfigResponse {
-    pub per_address_limit: u64,
+    pub per_address_limit: u32,
     pub start_time: Expiration,
     pub end_time: Expiration,
     pub unit_price: Coin,

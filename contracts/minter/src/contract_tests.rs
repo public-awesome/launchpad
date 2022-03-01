@@ -25,7 +25,7 @@ const UNIT_PRICE: u128 = 100_000_000;
 const MINT_FEE: u128 = 10_000_000;
 const MAX_TOKEN_LIMIT: u32 = 10000;
 const WHITELIST_AMOUNT: u128 = 66_000_000;
-const WL_PER_ADDRESS_LIMIT: u64 = 1;
+const WL_PER_ADDRESS_LIMIT: u32 = 1;
 const ADMIN_MINT_PRICE: u128 = 0;
 
 fn custom_mock_app() -> StargazeApp {
