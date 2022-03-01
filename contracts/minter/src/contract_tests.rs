@@ -805,9 +805,31 @@ fn mint_for_token_id_addr() {
         )
         .unwrap_err();
     assert_eq!(
+        ContractError::InvalidTokenId {}.to_string(),
+        err.source().unwrap().to_string()
+    );
+
+    let token_id = 1;
+    let mint_for_msg = ExecuteMsg::MintFor {
+        token_id,
+        recipient: buyer.clone(),
+    };
+    let err = router
+        .execute_contract(
+            creator.clone(),
+            minter_addr.clone(),
+            &mint_for_msg,
+            &coins_for_msg(Coin {
+                amount: Uint128::from(ADMIN_MINT_PRICE),
+                denom: NATIVE_DENOM.to_string(),
+            }),
+        )
+        .unwrap_err();
+    assert_eq!(
         ContractError::TokenIdAlreadySold { token_id }.to_string(),
         err.source().unwrap().to_string()
     );
+
     let mintable_num_tokens_response: MintableNumTokensResponse = router
         .wrap()
         .query_wasm_smart(minter_addr.clone(), &QueryMsg::MintableNumTokens {})

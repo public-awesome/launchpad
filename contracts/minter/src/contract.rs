@@ -380,6 +380,9 @@ fn _execute_mint(
 
     let mintable_token_id: u64 = match token_id {
         Some(token_id) => {
+            if token_id == 0 || token_id > config.num_tokens {
+                return Err(ContractError::InvalidTokenId {});
+            }
             // If token_id not on mintable map, throw err
             if !MINTABLE_TOKEN_IDS.has(deps.storage, token_id) {
                 return Err(ContractError::TokenIdAlreadySold { token_id });
