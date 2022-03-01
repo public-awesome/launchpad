@@ -74,24 +74,20 @@
         }
       }
     },
-    "Config": {
+    "CollectionInfo": {
       "type": "object",
+      "required": [
+        "image"
+      ],
       "properties": {
-        "contract_uri": {
+        "external_link": {
           "type": [
             "string",
             "null"
           ]
         },
-        "creator": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/Addr"
-            },
-            {
-              "type": "null"
-            }
-          ]
+        "image": {
+          "type": "string"
         },
         "royalties": {
           "anyOf": [
@@ -158,20 +154,14 @@
     "InstantiateMsg": {
       "type": "object",
       "required": [
+        "collection_info",
         "minter",
         "name",
         "symbol"
       ],
       "properties": {
-        "config": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/Config"
-            },
-            {
-              "type": "null"
-            }
-          ]
+        "collection_info": {
+          "$ref": "#/definitions/CollectionInfo"
         },
         "minter": {
           "type": "string"
