@@ -1,8 +1,9 @@
 use crate::multi::StargazeApp;
 use cosmwasm_std::testing::{mock_dependencies_with_balance, mock_env, mock_info};
-use cosmwasm_std::{coin, coins, Addr, Decimal, Timestamp, Uint128};
+use cosmwasm_std::{coin, coins, Addr, Decimal, Empty, Timestamp, Uint128};
 use cosmwasm_std::{Api, Coin};
 use cw721::{Cw721QueryMsg, OwnerOfResponse};
+use cw721_base::ExecuteMsg as Cw721ExecuteMsg;
 use cw_multi_test::{BankSudo, Contract, ContractWrapper, Executor, SudoMsg};
 use cw_utils::Expiration;
 use sg721::msg::InstantiateMsg as Sg721InstantiateMsg;
@@ -14,7 +15,7 @@ use whitelist::msg::{ExecuteMsg as WhitelistExecuteMsg, UpdateMembersMsg};
 use crate::contract::instantiate;
 use crate::msg::{
     ConfigResponse, ExecuteMsg, InstantiateMsg, MintPriceResponse, MintableNumTokensResponse,
-    QueryMsg, StartTimeResponse,
+    MinterAddressesResponse, QueryMsg, StartTimeResponse,
 };
 use crate::ContractError;
 
@@ -459,7 +460,8 @@ fn whitelist_access_len_add_remove_expiration() {
     let mut router = custom_mock_app();
     let (creator, buyer) = setup_accounts(&mut router).unwrap();
     let num_tokens: u64 = 1;
-    let (minter_addr, _config) = setup_minter_contract(&mut router, &creator, num_tokens).unwrap();
+    let (minter_addr, config) = setup_minter_contract(&mut router, &creator, num_tokens).unwrap();
+    let sg721_addr = config.sg721_address;
     let whitelist_addr = setup_whitelist_contract(&mut router, &creator).unwrap();
     const EXPIRATION_TIME: Timestamp = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000_000);
     // set to genesis mint start time
@@ -582,6 +584,34 @@ fn whitelist_access_len_add_remove_expiration() {
         ContractError::MaxPerAddressLimitExceeded {}.to_string()
     );
 
+    // buyer is generous and transfers to creator
+    let transfer_msg: Cw721ExecuteMsg<Empty> = Cw721ExecuteMsg::TransferNft {
+        recipient: creator.to_string(),
+        token_id: "1".to_string(),
+    };
+    let res = router.execute_contract(
+        buyer.clone(),
+        sg721_addr,
+        &transfer_msg,
+        &coins_for_msg(coin(123, NATIVE_DENOM)),
+    );
+    assert!(res.is_ok());
+
+    // mint fails
+    let mint_msg = ExecuteMsg::Mint {};
+    let err = router
+        .execute_contract(
+            buyer.clone(),
+            minter_addr.clone(),
+            &mint_msg,
+            &coins(WHITELIST_AMOUNT, NATIVE_DENOM),
+        )
+        .unwrap_err();
+    assert_eq!(
+        err.source().unwrap().to_string(),
+        ContractError::MaxPerAddressLimitExceeded {}.to_string()
+    );
+
     // remove buyer from whitelist
     let inner_msg = UpdateMembersMsg {
         add: vec![],
@@ -600,11 +630,19 @@ fn whitelist_access_len_add_remove_expiration() {
     let mint_msg = ExecuteMsg::Mint {};
     let res = router.execute_contract(
         buyer,
-        minter_addr,
+        minter_addr.clone(),
         &mint_msg,
         &coins(UNIT_PRICE, NATIVE_DENOM),
     );
     assert!(res.is_err());
+
+    // buyer minted only 1
+    let res: MinterAddressesResponse = router
+        .wrap()
+        .query_wasm_smart(minter_addr, &QueryMsg::MinterAddresses {})
+        .unwrap();
+    let minter = res.minters.first().unwrap().to_owned();
+    assert_eq!(minter, ("buyer".to_string(), 1));
 }
 
 #[test]
