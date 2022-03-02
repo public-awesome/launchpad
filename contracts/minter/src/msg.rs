@@ -35,6 +35,7 @@ pub enum QueryMsg {
     MintableNumTokens {},
     StartTime {},
     MintPrice {},
+    MinterAddresses {},
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -65,4 +66,9 @@ pub struct MintPriceResponse {
     pub public_price: Coin,
     pub whitelist_price: Option<Coin>,
     pub current_price: Coin,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct MinterAddressesResponse {
+    pub minters: Vec<(String, u32)>,
 }

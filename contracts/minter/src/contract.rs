@@ -14,9 +14,9 @@ use url::Url;
 use crate::error::ContractError;
 use crate::msg::{
     ConfigResponse, ExecuteMsg, InstantiateMsg, MintPriceResponse, MintableNumTokensResponse,
-    QueryMsg, StartTimeResponse,
+    MinterAddressesResponse, QueryMsg, StartTimeResponse,
 };
-use crate::state::{Config, CONFIG, MINTABLE_TOKEN_IDS, SG721_ADDRESS};
+use crate::state::{Config, CONFIG, MINTABLE_TOKEN_IDS, MINTER_ADDRS, SG721_ADDRESS};
 use sg_std::{burn_and_distribute_fee, StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use whitelist::msg::{
     ConfigResponse as WhitelistConfigResponse, HasMemberResponse, QueryMsg as WhitelistQueryMsg,
@@ -529,6 +529,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::StartTime {} => to_binary(&query_start_time(deps)?),
         QueryMsg::MintableNumTokens {} => to_binary(&query_mintable_num_tokens(deps)?),
         QueryMsg::MintPrice {} => to_binary(&query_mint_price(deps)?),
+        QueryMsg::MinterAddresses {} => to_binary(&query_minter_addresses(deps)?),
     }
 }
 
@@ -588,6 +589,15 @@ fn query_mint_price(deps: Deps) -> StdResult<MintPriceResponse> {
         public_price,
         whitelist_price,
     })
+}
+
+fn query_minter_addresses(deps: Deps) -> StdResult<MinterAddressesResponse> {
+    let minters = MINTER_ADDRS
+        .range(deps.storage, None, None, Order::Ascending)
+        .map(|addr| (addr.as_ref().unwrap().0.to_string(), addr.unwrap().1))
+        .collect::<Vec<(String, u32)>>();
+
+    Ok(MinterAddressesResponse { minters })
 }
 
 // Reply callback triggered from cw721 contract instantiation
