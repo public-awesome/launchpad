@@ -5,10 +5,9 @@ use cosmwasm_std::{
     MessageInfo, Order, Reply, ReplyOn, StdError, StdResult, Timestamp, Uint128, WasmMsg,
 };
 use cw2::set_contract_version;
-use cw721::TokensResponse as Cw721TokensResponse;
 use cw721_base::{msg::ExecuteMsg as Cw721ExecuteMsg, MintMsg};
 use cw_utils::{may_pay, parse_reply_instantiate_data, Expiration};
-use sg721::msg::{InstantiateMsg as Sg721InstantiateMsg, QueryMsg as Sg721QueryMsg};
+use sg721::msg::InstantiateMsg as Sg721InstantiateMsg;
 use url::Url;
 
 use crate::error::ContractError;
@@ -203,7 +202,6 @@ pub fn execute_mint_sender(
     info: MessageInfo,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
-    let sg721_address = SG721_ADDRESS.load(deps.storage)?;
     let action = "mint_sender";
     let mut pub_mint: bool = false;
 
@@ -227,15 +225,8 @@ pub fn execute_mint_sender(
                 });
             }
             // check wl per address limit
-            let tokens: Cw721TokensResponse = deps.querier.query_wasm_smart(
-                sg721_address.to_string(),
-                &Sg721QueryMsg::Tokens {
-                    owner: info.sender.to_string(),
-                    start_after: None,
-                    limit: Some(wl_config.per_address_limit as u32),
-                },
-            )?;
-            if tokens.tokens.len() >= wl_config.per_address_limit as usize {
+            let mint_count: u32 = mint_count(deps.as_ref(), info.clone())?;
+            if mint_count >= wl_config.per_address_limit {
                 return Err(ContractError::MaxPerAddressLimitExceeded {});
             }
         } else {
@@ -257,15 +248,8 @@ pub fn execute_mint_sender(
 
     // Check if already minted max per address limit
     if let Some(per_address_limit) = config.per_address_limit {
-        let tokens: Cw721TokensResponse = deps.querier.query_wasm_smart(
-            sg721_address.to_string(),
-            &Sg721QueryMsg::Tokens {
-                owner: info.sender.to_string(),
-                start_after: None,
-                limit: Some(MAX_PER_ADDRESS_LIMIT as u32),
-            },
-        )?;
-        if tokens.tokens.len() >= per_address_limit as usize {
+        let mint_count: u32 = mint_count(deps.as_ref(), info.clone())?;
+        if mint_count >= per_address_limit {
             return Err(ContractError::MaxPerAddressLimitExceeded {});
         }
     }
@@ -420,6 +404,8 @@ fn _execute_mint(
 
     // remove mintable token id from map
     MINTABLE_TOKEN_IDS.remove(deps.storage, mintable_token_id);
+    let new_mint_count: u32 = mint_count(deps.as_ref(), info.clone())? + 1;
+    MINTER_ADDRS.save(deps.storage, info.clone().sender, &new_mint_count)?;
 
     let mut seller_amount = Uint128::zero();
     // does have a fee
@@ -520,6 +506,11 @@ pub fn mint_price(deps: Deps, admin_no_fee: bool) -> Result<Coin, StdError> {
         config.unit_price.clone()
     };
     Ok(mint_price)
+}
+
+fn mint_count(deps: Deps, info: MessageInfo) -> Result<u32, StdError> {
+    let mint_count: u32 = (MINTER_ADDRS.key(info.sender).may_load(deps.storage)?).unwrap_or(0);
+    Ok(mint_count)
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
