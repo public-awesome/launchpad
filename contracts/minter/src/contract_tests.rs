@@ -179,7 +179,7 @@ fn setup_accounts(router: &mut StargazeApp) -> (Addr, Addr) {
 fn setup_block_time(router: &mut StargazeApp, nanos: u64) {
     let mut block = router.block_info();
     block.time = Timestamp::from_nanos(nanos);
-    router.set_block(block.clone());
+    router.set_block(block);
 }
 
 // deal with zero and non-zero coin amounts for msgs
