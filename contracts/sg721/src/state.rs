@@ -1,15 +1,14 @@
-use crate::ContractError;
 use cosmwasm_std::{Addr, Decimal};
 use cw_storage_plus::Item;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct CollectionInfo {
+pub struct CollectionInfo<T> {
     pub description: String,
     pub image: String,
     pub external_link: Option<String>,
-    pub royalties: Option<RoyaltyInfo>,
+    pub royalty_info: Option<T>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -18,19 +17,4 @@ pub struct RoyaltyInfo {
     pub share: Decimal,
 }
 
-impl RoyaltyInfo {
-    // Checks if RoyaltyInfo is valid
-    pub fn is_valid(&self) -> Result<bool, ContractError> {
-        if self.share > Decimal::one() {
-            return Err(ContractError::InvalidRoyalities {});
-        }
-
-        if self.share < Decimal::zero() {
-            return Err(ContractError::InvalidRoyalities {});
-        }
-
-        Ok(true)
-    }
-}
-
-pub const CONFIG: Item<CollectionInfo> = Item::new("config");
+pub const COLLECTION_INFO: Item<CollectionInfo<RoyaltyInfo>> = Item::new("collection_info");

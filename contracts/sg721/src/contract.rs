@@ -12,8 +12,10 @@ use cw721::ContractInfoResponse;
 use cw721_base::ContractError as BaseError;
 use url::Url;
 
-use crate::msg::{CollectionInfoResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
-use crate::state::CONFIG;
+use crate::msg::{
+    CollectionInfoResponse, ExecuteMsg, InstantiateMsg, QueryMsg, RoyaltyInfoResponse,
+};
+use crate::state::{CollectionInfo, RoyaltyInfo, COLLECTION_INFO};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sg-721";
@@ -66,12 +68,22 @@ pub fn instantiate(
         Url::parse(external_link)?;
     }
 
-    if let Some(ref royalty) = msg.collection_info.royalties {
-        deps.api.addr_validate(royalty.payment_address.as_str())?;
-        royalty.is_valid()?;
-    }
+    let royalty_info: Option<RoyaltyInfo> = match msg.collection_info.royalty_info {
+        Some(royalty_info) => Some(RoyaltyInfo {
+            payment_address: deps.api.addr_validate(&royalty_info.payment_address)?,
+            share: royalty_info.share_validate()?,
+        }),
+        None => None,
+    };
 
-    CONFIG.save(deps.storage, &msg.collection_info)?;
+    let collection_info = CollectionInfo {
+        description: msg.collection_info.description,
+        image: msg.collection_info.image,
+        external_link: msg.collection_info.external_link,
+        royalty_info,
+    };
+
+    COLLECTION_INFO.save(deps.storage, &collection_info)?;
 
     Ok(Response::default()
         .add_attribute("action", "instantiate")
@@ -100,12 +112,21 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
 }
 
 fn query_config(deps: Deps) -> StdResult<CollectionInfoResponse> {
-    let info = CONFIG.load(deps.storage)?;
+    let info = COLLECTION_INFO.load(deps.storage)?;
+
+    let royalty_info_res: Option<RoyaltyInfoResponse> = match info.royalty_info {
+        Some(royalty_info) => Some(RoyaltyInfoResponse {
+            payment_address: royalty_info.payment_address.to_string(),
+            share: royalty_info.share,
+        }),
+        None => None,
+    };
+
     Ok(CollectionInfoResponse {
         description: info.description,
         image: info.image,
         external_link: info.external_link,
-        royalty: info.royalties,
+        royalty: royalty_info_res,
     })
 }
 
@@ -114,9 +135,8 @@ mod tests {
     use super::*;
 
     use crate::state::CollectionInfo;
-    use crate::state::RoyaltyInfo;
     use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-    use cosmwasm_std::{coins, from_binary, Addr, Decimal};
+    use cosmwasm_std::{coins, from_binary, Decimal};
     use sg_std::NATIVE_DENOM;
 
     #[test]
@@ -132,7 +152,7 @@ mod tests {
                 description: String::from("Stargaze Monkeys"),
                 image: "https://example.com/image.png".to_string(),
                 external_link: Some("https://example.com/external.html".to_string()),
-                royalties: None,
+                royalty_info: None,
             },
         };
         let info = mock_info("creator", &coins(CREATION_FEE, NATIVE_DENOM));
@@ -167,8 +187,8 @@ mod tests {
                 description: String::from("Stargaze Monkeys"),
                 image: "https://example.com/image.png".to_string(),
                 external_link: Some("https://example.com/external.html".to_string()),
-                royalties: Some(RoyaltyInfo {
-                    payment_address: Addr::unchecked(creator.clone()),
+                royalty_info: Some(RoyaltyInfoResponse {
+                    payment_address: creator.clone(),
                     share: Decimal::percent(10),
                 }),
             },
@@ -183,8 +203,8 @@ mod tests {
         let res = query(deps.as_ref(), mock_env(), QueryMsg::CollectionInfo {}).unwrap();
         let value: CollectionInfoResponse = from_binary(&res).unwrap();
         assert_eq!(
-            Some(RoyaltyInfo {
-                payment_address: Addr::unchecked(creator),
+            Some(RoyaltyInfoResponse {
+                payment_address: creator,
                 share: Decimal::percent(10),
             }),
             value.royalty
