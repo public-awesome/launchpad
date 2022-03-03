@@ -33,8 +33,7 @@ const INSTANTIATE_SG721_REPLY_ID: u64 = 1;
 
 // governance parameters
 const MAX_TOKEN_LIMIT: u32 = 10000;
-const MAX_PER_ADDRESS_LIMIT: u32 = 30;
-const STARTING_PER_ADDRESS_LIMIT: u32 = 5;
+const MAX_PER_ADDRESS_LIMIT: u32 = 50;
 const MIN_MINT_PRICE: u128 = 50_000_000;
 const MINT_FEE_PERCENT: u32 = 10;
 
@@ -53,14 +52,12 @@ pub fn instantiate(
         });
     }
 
-    if let Some(per_address_limit) = msg.per_address_limit {
-        // Check per address limit is valid
-        if per_address_limit > MAX_PER_ADDRESS_LIMIT {
-            return Err(ContractError::InvalidPerAddressLimit {
-                max: MAX_PER_ADDRESS_LIMIT.to_string(),
-                got: per_address_limit.to_string(),
-            });
-        }
+    // Check per address limit is valid
+    if msg.per_address_limit > MAX_PER_ADDRESS_LIMIT {
+        return Err(ContractError::InvalidPerAddressLimit {
+            max: MAX_PER_ADDRESS_LIMIT.to_string(),
+            got: msg.per_address_limit.to_string(),
+        });
     }
 
     // Check that base_token_uri is a valid IPFS uri
@@ -100,7 +97,7 @@ pub fn instantiate(
         num_tokens: msg.num_tokens,
         sg721_code_id: msg.sg721_code_id,
         unit_price: msg.unit_price,
-        per_address_limit: msg.per_address_limit.unwrap_or(STARTING_PER_ADDRESS_LIMIT),
+        per_address_limit: msg.per_address_limit,
         whitelist: whitelist_addr,
         start_time,
     };
