@@ -322,14 +322,10 @@ fn _execute_mint(
     let mut msgs: Vec<CosmosMsg<StargazeMsgWrapper>> = vec![];
     let config = CONFIG.load(deps.storage)?;
     let sg721_address = SG721_ADDRESS.load(deps.storage)?;
-    let recipient_addr = if recipient.is_none() {
-        info.sender.clone()
-    } else if let Some(some_recipient) = recipient {
-        some_recipient
-    } else {
-        return Err(ContractError::InvalidAddress {
-            addr: info.sender.to_string(),
-        });
+
+    let recipient_addr = match recipient {
+        Some(some_recipient) => some_recipient,
+        None => info.sender.clone(),
     };
 
     let mint_price: Coin = mint_price(deps.as_ref(), admin_no_fee)?;
