@@ -58,11 +58,7 @@ pub enum ContractError {
     BeforeMintStartTime {},
 
     #[error("Invalid minting limit per address. max: {max}, min: 1, got: {got}")]
-    InvalidPerAddressLimit {
-        max: String,
-        min: String,
-        got: String,
-    },
+    InvalidPerAddressLimit { max: u32, min: u32, got: u32 },
 
     #[error("Max minting limit per address exceeded")]
     MaxPerAddressLimitExceeded {},
