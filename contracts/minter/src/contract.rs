@@ -418,11 +418,10 @@ pub fn execute_update_start_time(
             "Sender is not an admin".to_owned(),
         ));
     }
-    // if let Some(saved_start_time) = config.start_time {
-    //     if start_time  {
-    //         return Ok(Response::default());
-    //     }
-    // }
+
+    if config.start_time.is_expired(&env.block) {
+        return Err(ContractError::AlreadyStarted {});
+    }
 
     let default_start_time = Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME));
     let start_time = if start_time < default_start_time {

@@ -42,6 +42,9 @@ pub enum ContractError {
     #[error("Invalid token id")]
     InvalidTokenId {},
 
+    #[error("AlreadyStarted")]
+    AlreadyStarted {},
+
     #[error("Instantiate sg721 error")]
     InstantiateSg721Error {},
 
