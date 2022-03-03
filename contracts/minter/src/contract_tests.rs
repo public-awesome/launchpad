@@ -82,7 +82,7 @@ fn setup_whitelist_contract(router: &mut StargazeApp, creator: &Addr) -> Addr {
         .unwrap()
 }
 
-// Upload contract code and instantiate sale contract
+// Upload contract code and instantiate minter contract
 fn setup_minter_contract(
     router: &mut StargazeApp,
     creator: &Addr,
@@ -93,7 +93,7 @@ fn setup_minter_contract(
     let minter_code_id = router.store_code(contract_minter());
     let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
 
-    // Instantiate sale contract
+    // Instantiate minter contract
     let msg = InstantiateMsg {
         unit_price: coin(UNIT_PRICE, NATIVE_DENOM),
         num_tokens,
@@ -341,6 +341,33 @@ fn initialization() {
     };
     let res = instantiate(deps.as_mut(), mock_env(), info, msg);
     assert!(res.is_err());
+
+    // under min token limit
+    let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
+    let msg = InstantiateMsg {
+        unit_price: coin(UNIT_PRICE, NATIVE_DENOM),
+        num_tokens: 0,
+        start_time: Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME)),
+        per_address_limit: 5,
+        whitelist: None,
+        base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
+        sg721_code_id: 1,
+        sg721_instantiate_msg: Sg721InstantiateMsg {
+            name: String::from("TEST"),
+            symbol: String::from("TEST"),
+            minter: info.sender.to_string(),
+            collection_info: CollectionInfo {
+                description: String::from("Stargaze Monkeys"),
+                image: "https://example.com/image.png".to_string(),
+                external_link: Some("https://example.com/external.html".to_string()),
+                royalties: Some(RoyaltyInfo {
+                    payment_address: info.sender.clone(),
+                    share: Decimal::percent(10),
+                }),
+            },
+        },
+    };
+    instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
 }
 
 #[test]

@@ -46,8 +46,9 @@ pub fn instantiate(
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
-    if msg.num_tokens > MAX_TOKEN_LIMIT.into() {
-        return Err(ContractError::MaxTokenLimitExceeded {
+    if msg.num_tokens == 0 || msg.num_tokens > MAX_TOKEN_LIMIT.into() {
+        return Err(ContractError::InvalidNumTokens {
+            min: 1,
             max: MAX_TOKEN_LIMIT,
         });
     }
