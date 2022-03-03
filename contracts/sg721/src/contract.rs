@@ -1,9 +1,8 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{to_binary, Binary, Coin, Deps, DepsMut, Empty, Env, MessageInfo, StdResult};
+use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, StdResult};
 use cw2::set_contract_version;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+
 use sg_std::fees::burn_and_distribute_fee;
 use sg_std::StargazeMsgWrapper;
 
@@ -25,12 +24,6 @@ const CREATION_FEE: u128 = 1_000_000_000;
 
 type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 pub type Sg721Contract<'a> = cw721_base::Cw721Contract<'a, Empty, StargazeMsgWrapper>;
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct MsgFundCommunityPool {
-    pub amount: Vec<Coin>,
-    pub depositor: String,
-}
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
