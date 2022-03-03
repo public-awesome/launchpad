@@ -6,8 +6,8 @@ use cw721::{Cw721QueryMsg, OwnerOfResponse};
 use cw721_base::ExecuteMsg as Cw721ExecuteMsg;
 use cw_multi_test::{BankSudo, Contract, ContractWrapper, Executor, SudoMsg};
 use cw_utils::Expiration;
-use sg721::msg::InstantiateMsg as Sg721InstantiateMsg;
-use sg721::state::{CollectionInfo, RoyaltyInfo};
+use sg721::msg::{InstantiateMsg as Sg721InstantiateMsg, RoyaltyInfoResponse};
+use sg721::state::CollectionInfo;
 use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use whitelist::msg::InstantiateMsg as WhitelistInstantiateMsg;
 use whitelist::msg::{ExecuteMsg as WhitelistExecuteMsg, UpdateMembersMsg};
@@ -110,8 +110,8 @@ fn setup_minter_contract(
                 description: String::from("Stargaze Monkeys"),
                 image: "https://example.com/image.png".to_string(),
                 external_link: Some("https://example.com/external.html".to_string()),
-                royalties: Some(RoyaltyInfo {
-                    payment_address: creator.clone(),
+                royalty_info: Some(RoyaltyInfoResponse {
+                    payment_address: creator.to_string(),
                     share: Decimal::percent(10),
                 }),
             },
@@ -218,8 +218,8 @@ fn initialization() {
                 description: String::from("Stargaze Monkeys"),
                 image: "https://example.com/image.png".to_string(),
                 external_link: Some("https://example.com/external.html".to_string()),
-                royalties: Some(RoyaltyInfo {
-                    payment_address: info.sender.clone(),
+                royalty_info: Some(RoyaltyInfoResponse {
+                    payment_address: info.sender.to_string(),
                     share: Decimal::percent(10),
                 }),
             },
@@ -247,8 +247,8 @@ fn initialization() {
                 description: String::from("Stargaze Monkeys"),
                 image: "https://example.com/image.png".to_string(),
                 external_link: Some("https://example.com/external.html".to_string()),
-                royalties: Some(RoyaltyInfo {
-                    payment_address: info.sender.clone(),
+                royalty_info: Some(RoyaltyInfoResponse {
+                    payment_address: info.sender.to_string(),
                     share: Decimal::percent(10),
                 }),
             },
@@ -276,8 +276,8 @@ fn initialization() {
                 description: String::from("Stargaze Monkeys"),
                 image: "https://example.com/image.png".to_string(),
                 external_link: Some("https://example.com/external.html".to_string()),
-                royalties: Some(RoyaltyInfo {
-                    payment_address: info.sender.clone(),
+                royalty_info: Some(RoyaltyInfoResponse {
+                    payment_address: info.sender.to_string(),
                     share: Decimal::percent(10),
                 }),
             },
@@ -304,8 +304,8 @@ fn initialization() {
                 description: String::from("Stargaze Monkeys"),
                 image: "https://example.com/image.png".to_string(),
                 external_link: Some("https://example.com/external.html".to_string()),
-                royalties: Some(RoyaltyInfo {
-                    payment_address: info.sender.clone(),
+                royalty_info: Some(RoyaltyInfoResponse {
+                    payment_address: info.sender.to_string(),
                     share: Decimal::percent(10),
                 }),
             },
@@ -332,8 +332,8 @@ fn initialization() {
                 description: String::from("Stargaze Monkeys"),
                 image: "https://example.com/image.png".to_string(),
                 external_link: Some("https://example.com/external.html".to_string()),
-                royalties: Some(RoyaltyInfo {
-                    payment_address: info.sender.clone(),
+                royalty_info: Some(RoyaltyInfoResponse {
+                    payment_address: info.sender.to_string(),
                     share: Decimal::percent(10),
                 }),
             },
@@ -360,8 +360,8 @@ fn initialization() {
                 description: String::from("Stargaze Monkeys"),
                 image: "https://example.com/image.png".to_string(),
                 external_link: Some("https://example.com/external.html".to_string()),
-                royalties: Some(RoyaltyInfo {
-                    payment_address: info.sender.clone(),
+                royalty_info: Some(RoyaltyInfoResponse {
+                    payment_address: info.sender.to_string(),
                     share: Decimal::percent(10),
                 }),
             },
@@ -980,8 +980,8 @@ fn test_start_time_before_genesis() {
                 description: String::from("Stargaze Monkeys"),
                 image: "https://example.com/image.png".to_string(),
                 external_link: Some("https://example.com/external.html".to_string()),
-                royalties: Some(RoyaltyInfo {
-                    payment_address: creator.clone(),
+                royalty_info: Some(RoyaltyInfoResponse {
+                    payment_address: creator.to_string(),
                     share: Decimal::percent(10),
                 }),
             },
@@ -1030,7 +1030,7 @@ fn test_update_start_time() {
                 description: String::from("Stargaze Monkeys"),
                 image: "https://example.com/image.png".to_string(),
                 external_link: Some("https://example.com/external.html".to_string()),
-                royalties: None,
+                royalty_info: None,
             },
         },
     };

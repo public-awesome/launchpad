@@ -1,5 +1,5 @@
-use crate::state::{CollectionInfo, RoyaltyInfo};
-use cosmwasm_std::Empty;
+use crate::{state::CollectionInfo, ContractError};
+use cosmwasm_std::{Decimal, Empty};
 use cw721_base::msg::QueryMsg as Cw721QueryMsg;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -9,7 +9,23 @@ pub struct InstantiateMsg {
     pub name: String,
     pub symbol: String,
     pub minter: String,
-    pub collection_info: CollectionInfo,
+    pub collection_info: CollectionInfo<RoyaltyInfoResponse>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct RoyaltyInfoResponse {
+    pub payment_address: String,
+    pub share: Decimal,
+}
+
+impl RoyaltyInfoResponse {
+    pub fn share_validate(&self) -> Result<Decimal, ContractError> {
+        if self.share > Decimal::one() || self.share < Decimal::zero() {
+            return Err(ContractError::InvalidRoyalities {});
+        }
+
+        Ok(self.share)
+    }
 }
 
 pub type ExecuteMsg = cw721_base::ExecuteMsg<Empty>;
@@ -128,5 +144,5 @@ pub struct CollectionInfoResponse {
     pub description: String,
     pub image: String,
     pub external_link: Option<String>,
-    pub royalty: Option<RoyaltyInfo>,
+    pub royalty: Option<RoyaltyInfoResponse>,
 }
