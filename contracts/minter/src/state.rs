@@ -14,7 +14,7 @@ pub struct Config {
     pub unit_price: Coin,
     pub whitelist: Option<Addr>,
     pub start_time: Expiration,
-    pub per_address_limit: Option<u32>,
+    pub per_address_limit: u32,
 }
 
 pub const CONFIG: Item<Config> = Item::new("config");

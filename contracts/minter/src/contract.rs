@@ -82,29 +82,17 @@ pub fn instantiate(
         });
     }
 
-    // Initially set per_address_limit if no msg
-    let per_address_limit: Option<u32> = msg.per_address_limit.or(Some(STARTING_PER_ADDRESS_LIMIT));
-
     let whitelist_addr = msg
         .whitelist
         .and_then(|w| deps.api.addr_validate(w.as_str()).ok());
 
     // default is genesis mint start time
     let default_start_time = Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME));
-    let start_time = match msg.start_time {
-        Some(st) => {
-            if st < default_start_time {
-                default_start_time
-            } else {
-                st
-            }
-        }
-        None => default_start_time,
+    let start_time = if msg.start_time < default_start_time {
+        default_start_time
+    } else {
+        msg.start_time
     };
-    // TODO: refactor idea
-    // let start_time = msg.start_time.map_or(default_start_time, |st| {
-    //     std::cmp::max(st, default_start_time)
-    // });
 
     let config = Config {
         admin: info.sender.clone(),
@@ -112,7 +100,7 @@ pub fn instantiate(
         num_tokens: msg.num_tokens,
         sg721_code_id: msg.sg721_code_id,
         unit_price: msg.unit_price,
-        per_address_limit,
+        per_address_limit: msg.per_address_limit.unwrap_or(STARTING_PER_ADDRESS_LIMIT),
         whitelist: whitelist_addr,
         start_time,
     };
@@ -245,11 +233,9 @@ pub fn execute_mint_sender(
     }
 
     // Check if already minted max per address limit
-    if let Some(per_address_limit) = config.per_address_limit {
-        let mint_count: u32 = mint_count(deps.as_ref(), info.clone())?;
-        if mint_count >= per_address_limit {
-            return Err(ContractError::MaxPerAddressLimitExceeded {});
-        }
+    let mint_count: u32 = mint_count(deps.as_ref(), info.clone())?;
+    if mint_count >= config.per_address_limit {
+        return Err(ContractError::MaxPerAddressLimitExceeded {});
     }
 
     _execute_mint(deps, env, info, action, false, None, None)
@@ -474,7 +460,7 @@ pub fn execute_update_per_address_limit(
             got: per_address_limit.to_string(),
         });
     }
-    config.per_address_limit = Some(per_address_limit);
+    config.per_address_limit = per_address_limit;
     CONFIG.save(deps.storage, &config)?;
     Ok(Response::new()
         .add_attribute("action", "update_per_address_limit")
