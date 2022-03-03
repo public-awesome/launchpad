@@ -423,9 +423,9 @@ pub fn execute_update_start_time(
         return Err(ContractError::AlreadyStarted {});
     }
 
-    let default_start_time = Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME));
-    let start_time = if start_time < default_start_time {
-        default_start_time
+    let genesis_start_time = Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME));
+    let start_time = if start_time < genesis_start_time {
+        genesis_start_time
     } else {
         start_time
     };

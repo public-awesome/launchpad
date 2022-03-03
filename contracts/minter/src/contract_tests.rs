@@ -181,11 +181,10 @@ fn setup_accounts(router: &mut StargazeApp) -> Result<(Addr, Addr), ContractErro
 }
 
 // set blockchain time to after mint by default
-fn setup_block_time(router: &mut StargazeApp, nanos: u64) -> Result<Timestamp, ContractError> {
+fn setup_block_time(router: &mut StargazeApp, nanos: u64) {
     let mut block = router.block_info();
     block.time = Timestamp::from_nanos(nanos);
     router.set_block(block.clone());
-    Ok(block.time)
 }
 
 // deal with zero and non-zero coin amounts for msgs
@@ -323,7 +322,7 @@ fn initialization() {
 #[test]
 fn happy_path() {
     let mut router = custom_mock_app();
-    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 1).unwrap();
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 1);
     let (creator, buyer) = setup_accounts(&mut router).unwrap();
     let num_tokens: u64 = 2;
     let (minter_addr, config) = setup_minter_contract(&mut router, &creator, num_tokens).unwrap();
@@ -465,7 +464,7 @@ fn whitelist_access_len_add_remove_expiration() {
     let whitelist_addr = setup_whitelist_contract(&mut router, &creator).unwrap();
     const EXPIRATION_TIME: Timestamp = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000_000);
     // set to genesis mint start time
-    setup_block_time(&mut router, GENESIS_MINT_START_TIME).unwrap();
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME);
 
     // update whitelist_expiration fails if not admin
     let wl_msg = WhitelistExecuteMsg::UpdateEndTime(Expiration::AtTime(EXPIRATION_TIME));
@@ -644,7 +643,7 @@ fn before_start_time() {
     let num_tokens: u64 = 1;
     let (minter_addr, _) = setup_minter_contract(&mut router, &creator, num_tokens).unwrap();
     // set to before genesis mint start time
-    setup_block_time(&mut router, GENESIS_MINT_START_TIME - 10).unwrap();
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME - 10);
 
     // set start_time fails if not admin
     let start_time_msg = ExecuteMsg::UpdateStartTime(Expiration::Never {});
@@ -689,7 +688,7 @@ fn before_start_time() {
     );
 
     // set block forward, after start time. mint succeeds
-    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 10_000_000).unwrap();
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 10_000_000);
 
     // mint succeeds
     let mint_msg = ExecuteMsg::Mint {};
@@ -709,7 +708,7 @@ fn check_per_address_limit() {
     let num_tokens = 2;
     let (minter_addr, _config) = setup_minter_contract(&mut router, &creator, num_tokens).unwrap();
     // set to genesis mint start time
-    setup_block_time(&mut router, GENESIS_MINT_START_TIME).unwrap();
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME);
 
     // set limit, check unauthorized
     let per_address_limit_msg = ExecuteMsg::UpdatePerAddressLimit {
@@ -776,7 +775,7 @@ fn mint_for_token_id_addr() {
     let num_tokens: u64 = 4;
     let (minter_addr, _config) = setup_minter_contract(&mut router, &creator, num_tokens).unwrap();
     // set to genesis mint start time
-    setup_block_time(&mut router, GENESIS_MINT_START_TIME).unwrap();
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME);
 
     // try mint_for, test unauthorized
     let mint_for_msg = ExecuteMsg::MintFor {
@@ -939,6 +938,73 @@ fn test_start_time_before_genesis() {
             + &Timestamp::from_nanos(GENESIS_MINT_START_TIME).to_string()
     );
 }
+
+// #[test]
+// fn test_update_start_time() {
+//     let mut router = custom_mock_app();
+//     let (creator, _) = setup_accounts(&mut router).unwrap();
+//     let num_tokens = 10;
+
+//     // Upload contract code
+//     let sg721_code_id = router.store_code(contract_sg721());
+//     let minter_code_id = router.store_code(contract_minter());
+//     let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
+
+//     // Instantiate sale contract
+//     let msg = InstantiateMsg {
+//         unit_price: coin(UNIT_PRICE, NATIVE_DENOM),
+//         num_tokens,
+//         start_time: Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME)),
+//         per_address_limit: 5,
+//         whitelist: None,
+//         base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
+//         sg721_code_id,
+//         sg721_instantiate_msg: Sg721InstantiateMsg {
+//             name: String::from("TEST"),
+//             symbol: String::from("TEST"),
+//             minter: creator.to_string(),
+//             collection_info: CollectionInfo {
+//                 description: String::from("Stargaze Monkeys"),
+//                 image: "https://example.com/image.png".to_string(),
+//                 external_link: Some("https://example.com/external.html".to_string()),
+//                 royalties: None,
+//             },
+//         },
+//     };
+//     let minter_addr = router
+//         .instantiate_contract(
+//             minter_code_id,
+//             creator.clone(),
+//             &msg,
+//             &creation_fee,
+//             "Minter",
+//             None,
+//         )
+//         .unwrap();
+
+//     setup_block_time(&mut router, GENESIS_MINT_START_TIME);
+
+//     let msg = ExecuteMsg::UpdateStartTime(Expiration::AtTime(Timestamp::from_nanos(
+//         GENESIS_MINT_START_TIME - 100,
+//     )));
+//     let err = router
+//         .execute_contract(creator, minter_addr.clone(), &msg, &[])
+//         .unwrap_err();
+//     // assert_eq!(
+//     //     err.source().unwrap().to_string(),
+//     //     ContractError::Unauthorized("Sender is not an admin".to_string()).to_string(),
+//     // );
+
+//     // let res: StartTimeResponse = router
+//     //     .wrap()
+//     //     .query_wasm_smart(minter_addr, &QueryMsg::StartTime {})
+//     //     .unwrap();
+//     // assert_eq!(
+//     //     res.start_time,
+//     //     "expiration time: ".to_owned()
+//     //         + &Timestamp::from_nanos(GENESIS_MINT_START_TIME).to_string()
+//     // );
+// }
 
 #[test]
 fn unhappy_path() {
