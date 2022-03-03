@@ -5,8 +5,10 @@
   "required": [
     "base_token_uri",
     "num_tokens",
+    "per_address_limit",
     "sg721_code_id",
     "sg721_instantiate_msg",
+    "start_time",
     "unit_price"
   ],
   "properties": {
@@ -19,10 +21,7 @@
       "minimum": 0.0
     },
     "per_address_limit": {
-      "type": [
-        "integer",
-        "null"
-      ],
+      "type": "integer",
       "format": "uint32",
       "minimum": 0.0
     },
@@ -35,14 +34,7 @@
       "$ref": "#/definitions/InstantiateMsg"
     },
     "start_time": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/Expiration"
-        },
-        {
-          "type": "null"
-        }
-      ]
+      "$ref": "#/definitions/Expiration"
     },
     "unit_price": {
       "$ref": "#/definitions/Coin"

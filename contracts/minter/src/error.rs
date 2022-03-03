@@ -24,8 +24,8 @@ pub enum ContractError {
     #[error("IncorrectPaymentAmount {0} != {1}")]
     IncorrectPaymentAmount(Coin, Coin),
 
-    #[error("Num tokens exceeds max token limit {max}")]
-    MaxTokenLimitExceeded { max: u32 },
+    #[error("InvalidNumTokens {max}, min: 1")]
+    InvalidNumTokens { max: u32, min: u32 },
 
     #[error("Sold out")]
     SoldOut {},
@@ -42,6 +42,9 @@ pub enum ContractError {
     #[error("Invalid token id")]
     InvalidTokenId {},
 
+    #[error("AlreadyStarted")]
+    AlreadyStarted {},
+
     #[error("Instantiate sg721 error")]
     InstantiateSg721Error {},
 
@@ -54,8 +57,8 @@ pub enum ContractError {
     #[error("Minting has not started yet")]
     BeforeMintStartTime {},
 
-    #[error("Invalid minting limit per address. max: {max}, got: {got}")]
-    InvalidPerAddressLimit { max: String, got: String },
+    #[error("Invalid minting limit per address. max: {max}, min: 1, got: {got}")]
+    InvalidPerAddressLimit { max: u32, min: u32, got: u32 },
 
     #[error("Max minting limit per address exceeded")]
     MaxPerAddressLimitExceeded {},

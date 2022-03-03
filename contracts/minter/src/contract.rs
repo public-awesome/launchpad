@@ -33,8 +33,7 @@ const INSTANTIATE_SG721_REPLY_ID: u64 = 1;
 
 // governance parameters
 const MAX_TOKEN_LIMIT: u32 = 10000;
-const MAX_PER_ADDRESS_LIMIT: u32 = 30;
-const STARTING_PER_ADDRESS_LIMIT: u32 = 5;
+const MAX_PER_ADDRESS_LIMIT: u32 = 50;
 const MIN_MINT_PRICE: u128 = 50_000_000;
 const MINT_FEE_PERCENT: u32 = 10;
 
@@ -47,20 +46,20 @@ pub fn instantiate(
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
-    if msg.num_tokens > MAX_TOKEN_LIMIT.into() {
-        return Err(ContractError::MaxTokenLimitExceeded {
+    if msg.num_tokens == 0 || msg.num_tokens > MAX_TOKEN_LIMIT.into() {
+        return Err(ContractError::InvalidNumTokens {
+            min: 1,
             max: MAX_TOKEN_LIMIT,
         });
     }
 
-    if let Some(per_address_limit) = msg.per_address_limit {
-        // Check per address limit is valid
-        if per_address_limit > MAX_PER_ADDRESS_LIMIT {
-            return Err(ContractError::InvalidPerAddressLimit {
-                max: MAX_PER_ADDRESS_LIMIT.to_string(),
-                got: per_address_limit.to_string(),
-            });
-        }
+    // Check per address limit is valid
+    if msg.per_address_limit == 0 || msg.per_address_limit > MAX_PER_ADDRESS_LIMIT {
+        return Err(ContractError::InvalidPerAddressLimit {
+            max: MAX_PER_ADDRESS_LIMIT,
+            min: 1,
+            got: msg.per_address_limit,
+        });
     }
 
     // Check that base_token_uri is a valid IPFS uri
@@ -82,29 +81,17 @@ pub fn instantiate(
         });
     }
 
-    // Initially set per_address_limit if no msg
-    let per_address_limit: Option<u32> = msg.per_address_limit.or(Some(STARTING_PER_ADDRESS_LIMIT));
-
     let whitelist_addr = msg
         .whitelist
         .and_then(|w| deps.api.addr_validate(w.as_str()).ok());
 
     // default is genesis mint start time
     let default_start_time = Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME));
-    let start_time = match msg.start_time {
-        Some(st) => {
-            if st < default_start_time {
-                default_start_time
-            } else {
-                st
-            }
-        }
-        None => default_start_time,
+    let start_time = if msg.start_time < default_start_time {
+        default_start_time
+    } else {
+        msg.start_time
     };
-    // TODO: refactor idea
-    // let start_time = msg.start_time.map_or(default_start_time, |st| {
-    //     std::cmp::max(st, default_start_time)
-    // });
 
     let config = Config {
         admin: info.sender.clone(),
@@ -112,9 +99,9 @@ pub fn instantiate(
         num_tokens: msg.num_tokens,
         sg721_code_id: msg.sg721_code_id,
         unit_price: msg.unit_price,
-        per_address_limit,
+        per_address_limit: msg.per_address_limit,
         whitelist: whitelist_addr,
-        start_time: Some(start_time),
+        start_time,
     };
     CONFIG.save(deps.storage, &config)?;
 
@@ -237,21 +224,15 @@ pub fn execute_mint_sender(
     }
 
     // if there is no active whitelist right now, check public mint
-    if pub_mint {
-        if let Some(start_time) = config.start_time {
-            // Check if after start_time
-            if !start_time.is_expired(&env.block) {
-                return Err(ContractError::BeforeMintStartTime {});
-            }
-        }
+    // Check if after start_time
+    if pub_mint && !config.start_time.is_expired(&env.block) {
+        return Err(ContractError::BeforeMintStartTime {});
     }
 
     // Check if already minted max per address limit
-    if let Some(per_address_limit) = config.per_address_limit {
-        let mint_count: u32 = mint_count(deps.as_ref(), info.clone())?;
-        if mint_count >= per_address_limit {
-            return Err(ContractError::MaxPerAddressLimitExceeded {});
-        }
+    let mint_count: u32 = mint_count(deps.as_ref(), info.clone())?;
+    if mint_count >= config.per_address_limit {
+        return Err(ContractError::MaxPerAddressLimitExceeded {});
     }
 
     _execute_mint(deps, env, info, action, false, None, None)
@@ -322,14 +303,10 @@ fn _execute_mint(
     let mut msgs: Vec<CosmosMsg<StargazeMsgWrapper>> = vec![];
     let config = CONFIG.load(deps.storage)?;
     let sg721_address = SG721_ADDRESS.load(deps.storage)?;
-    let recipient_addr = if recipient.is_none() {
-        info.sender.clone()
-    } else if let Some(some_recipient) = recipient {
-        some_recipient
-    } else {
-        return Err(ContractError::InvalidAddress {
-            addr: info.sender.to_string(),
-        });
+
+    let recipient_addr = match recipient {
+        Some(some_recipient) => some_recipient,
+        None => info.sender.clone(),
     };
 
     let mint_price: Coin = mint_price(deps.as_ref(), admin_no_fee)?;
@@ -431,7 +408,7 @@ fn _execute_mint(
 
 pub fn execute_update_start_time(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
     start_time: Expiration,
 ) -> Result<Response, ContractError> {
@@ -442,14 +419,18 @@ pub fn execute_update_start_time(
         ));
     }
 
-    let default_start_time = Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME));
-    let start_time = if start_time < default_start_time {
-        default_start_time
+    if config.start_time.is_expired(&env.block) {
+        return Err(ContractError::AlreadyStarted {});
+    }
+
+    let genesis_start_time = Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME));
+    let start_time = if start_time < genesis_start_time {
+        genesis_start_time
     } else {
         start_time
     };
 
-    config.start_time = Some(start_time);
+    config.start_time = start_time;
     CONFIG.save(deps.storage, &config)?;
     Ok(Response::new()
         .add_attribute("action", "update_start_time")
@@ -469,13 +450,14 @@ pub fn execute_update_per_address_limit(
             "Sender is not an admin".to_owned(),
         ));
     }
-    if per_address_limit > MAX_PER_ADDRESS_LIMIT {
+    if per_address_limit == 0 || per_address_limit > MAX_PER_ADDRESS_LIMIT {
         return Err(ContractError::InvalidPerAddressLimit {
-            max: MAX_PER_ADDRESS_LIMIT.to_string(),
-            got: per_address_limit.to_string(),
+            max: MAX_PER_ADDRESS_LIMIT,
+            min: 1,
+            got: per_address_limit,
         });
     }
-    config.per_address_limit = Some(per_address_limit);
+    config.per_address_limit = per_address_limit;
     CONFIG.save(deps.storage, &config)?;
     Ok(Response::new()
         .add_attribute("action", "update_per_address_limit")
@@ -542,15 +524,9 @@ fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
 
 fn query_start_time(deps: Deps) -> StdResult<StartTimeResponse> {
     let config = CONFIG.load(deps.storage)?;
-    if let Some(expiration) = config.start_time {
-        Ok(StartTimeResponse {
-            start_time: expiration.to_string(),
-        })
-    } else {
-        Err(StdError::GenericErr {
-            msg: "start time not found".to_string(),
-        })
-    }
+    Ok(StartTimeResponse {
+        start_time: config.start_time.to_string(),
+    })
 }
 
 fn query_mintable_num_tokens(deps: Deps) -> StdResult<MintableNumTokensResponse> {
