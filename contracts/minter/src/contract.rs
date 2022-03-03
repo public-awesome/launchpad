@@ -53,9 +53,10 @@ pub fn instantiate(
     }
 
     // Check per address limit is valid
-    if msg.per_address_limit > MAX_PER_ADDRESS_LIMIT {
+    if msg.per_address_limit == 0 || msg.per_address_limit > MAX_PER_ADDRESS_LIMIT {
         return Err(ContractError::InvalidPerAddressLimit {
             max: MAX_PER_ADDRESS_LIMIT.to_string(),
+            min: 1.to_string(),
             got: msg.per_address_limit.to_string(),
         });
     }
@@ -448,9 +449,10 @@ pub fn execute_update_per_address_limit(
             "Sender is not an admin".to_owned(),
         ));
     }
-    if per_address_limit > MAX_PER_ADDRESS_LIMIT {
+    if per_address_limit == 0 || per_address_limit > MAX_PER_ADDRESS_LIMIT {
         return Err(ContractError::InvalidPerAddressLimit {
             max: MAX_PER_ADDRESS_LIMIT.to_string(),
+            min: 1.to_string(),
             got: per_address_limit.to_string(),
         });
     }

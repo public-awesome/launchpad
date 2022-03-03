@@ -200,6 +200,35 @@ fn initialization() {
     let res = deps.api.addr_validate(&(*addr));
     assert!(res.is_ok());
 
+    // 0 per address limit returns error
+    let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
+    let msg = InstantiateMsg {
+        unit_price: coin(UNIT_PRICE, NATIVE_DENOM),
+        num_tokens: 100,
+        start_time: Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME)),
+        per_address_limit: 0,
+        whitelist: None,
+        base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
+        sg721_code_id: 1,
+        sg721_instantiate_msg: Sg721InstantiateMsg {
+            name: String::from("TEST"),
+            symbol: String::from("TEST"),
+            minter: info.sender.to_string(),
+            collection_info: CollectionInfo {
+                description: String::from("Stargaze Monkeys"),
+                image: "https://example.com/image.png".to_string(),
+                external_link: Some("https://example.com/external.html".to_string()),
+                royalties: Some(RoyaltyInfo {
+                    payment_address: info.sender.clone(),
+                    share: Decimal::percent(10),
+                }),
+            },
+        },
+    };
+    let res = instantiate(deps.as_mut(), mock_env(), info, msg);
+    println!("{:?}", res);
+    assert!(res.is_err());
+
     // Invalid uri returns error
     let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
     let msg = InstantiateMsg {
@@ -711,6 +740,18 @@ fn check_per_address_limit() {
     };
     let res = router.execute_contract(
         buyer.clone(),
+        minter_addr.clone(),
+        &per_address_limit_msg,
+        &coins(UNIT_PRICE, NATIVE_DENOM),
+    );
+    assert!(res.is_err());
+
+    // set limit, invalid limit == 0
+    let per_address_limit_msg = ExecuteMsg::UpdatePerAddressLimit {
+        per_address_limit: 0,
+    };
+    let res = router.execute_contract(
+        creator.clone(),
         minter_addr.clone(),
         &per_address_limit_msg,
         &coins(UNIT_PRICE, NATIVE_DENOM),
