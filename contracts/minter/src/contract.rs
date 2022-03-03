@@ -114,7 +114,7 @@ pub fn instantiate(
         unit_price: msg.unit_price,
         per_address_limit,
         whitelist: whitelist_addr,
-        start_time: Some(start_time),
+        start_time,
     };
     CONFIG.save(deps.storage, &config)?;
 
@@ -238,11 +238,9 @@ pub fn execute_mint_sender(
 
     // if there is no active whitelist right now, check public mint
     if pub_mint {
-        if let Some(start_time) = config.start_time {
-            // Check if after start_time
-            if !start_time.is_expired(&env.block) {
-                return Err(ContractError::BeforeMintStartTime {});
-            }
+        // Check if after start_time
+        if !config.start_time.is_expired(&env.block) {
+            return Err(ContractError::BeforeMintStartTime {});
         }
     }
 
@@ -427,7 +425,7 @@ fn _execute_mint(
 
 pub fn execute_update_start_time(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
     start_time: Expiration,
 ) -> Result<Response, ContractError> {
@@ -437,6 +435,11 @@ pub fn execute_update_start_time(
             "Sender is not an admin".to_owned(),
         ));
     }
+    // if let Some(saved_start_time) = config.start_time {
+    //     if start_time  {
+    //         return Ok(Response::default());
+    //     }
+    // }
 
     let default_start_time = Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME));
     let start_time = if start_time < default_start_time {
@@ -445,7 +448,7 @@ pub fn execute_update_start_time(
         start_time
     };
 
-    config.start_time = Some(start_time);
+    config.start_time = start_time;
     CONFIG.save(deps.storage, &config)?;
     Ok(Response::new()
         .add_attribute("action", "update_start_time")
@@ -538,15 +541,9 @@ fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
 
 fn query_start_time(deps: Deps) -> StdResult<StartTimeResponse> {
     let config = CONFIG.load(deps.storage)?;
-    if let Some(expiration) = config.start_time {
-        Ok(StartTimeResponse {
-            start_time: expiration.to_string(),
-        })
-    } else {
-        Err(StdError::GenericErr {
-            msg: "start time not found".to_string(),
-        })
-    }
+    Ok(StartTimeResponse {
+        start_time: config.start_time.to_string(),
+    })
 }
 
 fn query_mintable_num_tokens(deps: Deps) -> StdResult<MintableNumTokensResponse> {

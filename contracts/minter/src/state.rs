@@ -13,7 +13,7 @@ pub struct Config {
     pub sg721_code_id: u64,
     pub unit_price: Coin,
     pub whitelist: Option<Addr>,
-    pub start_time: Option<Expiration>,
+    pub start_time: Expiration,
     pub per_address_limit: Option<u32>,
 }
 
