@@ -2,7 +2,7 @@ use cw_utils::Expiration;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_std::{Addr, Coin, Empty};
+use cosmwasm_std::{Addr, Coin};
 use cw_storage_plus::{Item, Map};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -19,5 +19,5 @@ pub struct Config {
 
 pub const CONFIG: Item<Config> = Item::new("config");
 pub const SG721_ADDRESS: Item<Addr> = Item::new("sg721_address");
-pub const MINTABLE_TOKEN_IDS: Map<u64, Empty> = Map::new("mt");
+pub const MINTABLE_TOKEN_IDS: Map<u64, bool> = Map::new("mt");
 pub const MINTER_ADDRS: Map<Addr, u32> = Map::new("ma");

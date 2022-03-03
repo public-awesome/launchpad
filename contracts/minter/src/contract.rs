@@ -107,7 +107,7 @@ pub fn instantiate(
 
     // save mintable token ids map
     for token_id in 1..=msg.num_tokens {
-        MINTABLE_TOKEN_IDS.save(deps.storage, token_id, &Empty {})?;
+        MINTABLE_TOKEN_IDS.save(deps.storage, token_id, &true)?;
     }
 
     let sub_msgs: Vec<SubMsg> = vec![SubMsg {

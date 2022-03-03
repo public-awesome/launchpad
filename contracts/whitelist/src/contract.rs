@@ -1,7 +1,7 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::Order;
-use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, StdResult};
+use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult};
 use cw2::set_contract_version;
 use cw_utils::Expiration;
 use sg_std::fees::burn_and_distribute_fee;
@@ -92,7 +92,7 @@ pub fn instantiate(
 
     for member in msg.members.into_iter() {
         let addr = deps.api.addr_validate(&member.clone())?;
-        WHITELIST.save(deps.storage, addr, &Empty {})?;
+        WHITELIST.save(deps.storage, addr, &true)?;
     }
 
     Ok(Response::new()
@@ -176,7 +176,7 @@ pub fn execute_update_members(
             });
         }
         let addr = deps.api.addr_validate(&add)?;
-        WHITELIST.save(deps.storage, addr, &Empty {})?;
+        WHITELIST.save(deps.storage, addr, &true)?;
         config.num_members += 1;
     }
 

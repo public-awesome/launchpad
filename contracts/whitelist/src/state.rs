@@ -1,4 +1,4 @@
-use cosmwasm_std::{Addr, Coin, Empty};
+use cosmwasm_std::{Addr, Coin};
 use cw_storage_plus::{Item, Map};
 use cw_utils::Expiration;
 use schemars::JsonSchema;
@@ -15,4 +15,4 @@ pub struct Config {
 }
 
 pub const CONFIG: Item<Config> = Item::new("config");
-pub const WHITELIST: Map<Addr, Empty> = Map::new("wl");
+pub const WHITELIST: Map<Addr, bool> = Map::new("wl");
