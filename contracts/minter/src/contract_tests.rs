@@ -60,10 +60,7 @@ pub fn contract_sg721() -> Box<dyn Contract<StargazeMsgWrapper>> {
     Box::new(contract)
 }
 
-fn setup_whitelist_contract(
-    router: &mut StargazeApp,
-    creator: &Addr,
-) -> Result<Addr, ContractError> {
+fn setup_whitelist_contract(router: &mut StargazeApp, creator: &Addr) -> Addr {
     let whitelist_code_id = router.store_code(contract_whitelist());
 
     let msg = WhitelistInstantiateMsg {
@@ -73,7 +70,7 @@ fn setup_whitelist_contract(
         unit_price: coin(WHITELIST_AMOUNT, NATIVE_DENOM),
         per_address_limit: WL_PER_ADDRESS_LIMIT,
     };
-    let whitelist_addr = router
+    router
         .instantiate_contract(
             whitelist_code_id,
             creator.clone(),
@@ -82,9 +79,7 @@ fn setup_whitelist_contract(
             "whitelist",
             None,
         )
-        .unwrap();
-
-    Ok(whitelist_addr)
+        .unwrap()
 }
 
 // Upload contract code and instantiate sale contract
@@ -92,7 +87,7 @@ fn setup_minter_contract(
     router: &mut StargazeApp,
     creator: &Addr,
     num_tokens: u64,
-) -> Result<(Addr, ConfigResponse), ContractError> {
+) -> (Addr, ConfigResponse) {
     // Upload contract code
     let sg721_code_id = router.store_code(contract_sg721());
     let minter_code_id = router.store_code(contract_minter());
@@ -138,11 +133,11 @@ fn setup_minter_contract(
         .query_wasm_smart(minter_addr.clone(), &QueryMsg::Config {})
         .unwrap();
 
-    Ok((minter_addr, config))
+    (minter_addr, config)
 }
 
 // Add a creator account with initial balances
-fn setup_accounts(router: &mut StargazeApp) -> Result<(Addr, Addr), ContractError> {
+fn setup_accounts(router: &mut StargazeApp) -> (Addr, Addr) {
     let buyer = Addr::unchecked("buyer");
     let creator = Addr::unchecked("creator");
     // 3,000 tokens
@@ -177,7 +172,7 @@ fn setup_accounts(router: &mut StargazeApp) -> Result<(Addr, Addr), ContractErro
     let buyer_native_balances = router.wrap().query_all_balances(buyer.clone()).unwrap();
     assert_eq!(buyer_native_balances, buyer_funds);
 
-    Ok((creator, buyer))
+    (creator, buyer)
 }
 
 // set blockchain time to after mint by default
@@ -323,9 +318,9 @@ fn initialization() {
 fn happy_path() {
     let mut router = custom_mock_app();
     setup_block_time(&mut router, GENESIS_MINT_START_TIME + 1);
-    let (creator, buyer) = setup_accounts(&mut router).unwrap();
+    let (creator, buyer) = setup_accounts(&mut router);
     let num_tokens: u64 = 2;
-    let (minter_addr, config) = setup_minter_contract(&mut router, &creator, num_tokens).unwrap();
+    let (minter_addr, config) = setup_minter_contract(&mut router, &creator, num_tokens);
 
     // default start time genesis mint time
     let res: StartTimeResponse = router
@@ -457,11 +452,11 @@ fn happy_path() {
 #[test]
 fn whitelist_access_len_add_remove_expiration() {
     let mut router = custom_mock_app();
-    let (creator, buyer) = setup_accounts(&mut router).unwrap();
+    let (creator, buyer) = setup_accounts(&mut router);
     let num_tokens: u64 = 1;
-    let (minter_addr, config) = setup_minter_contract(&mut router, &creator, num_tokens).unwrap();
+    let (minter_addr, config) = setup_minter_contract(&mut router, &creator, num_tokens);
     let sg721_addr = config.sg721_address;
-    let whitelist_addr = setup_whitelist_contract(&mut router, &creator).unwrap();
+    let whitelist_addr = setup_whitelist_contract(&mut router, &creator);
     const EXPIRATION_TIME: Timestamp = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000_000);
     // set to genesis mint start time
     setup_block_time(&mut router, GENESIS_MINT_START_TIME);
@@ -639,9 +634,9 @@ fn whitelist_access_len_add_remove_expiration() {
 #[test]
 fn before_start_time() {
     let mut router = custom_mock_app();
-    let (creator, buyer) = setup_accounts(&mut router).unwrap();
+    let (creator, buyer) = setup_accounts(&mut router);
     let num_tokens: u64 = 1;
-    let (minter_addr, _) = setup_minter_contract(&mut router, &creator, num_tokens).unwrap();
+    let (minter_addr, _) = setup_minter_contract(&mut router, &creator, num_tokens);
     // set to before genesis mint start time
     setup_block_time(&mut router, GENESIS_MINT_START_TIME - 10);
 
@@ -704,9 +699,9 @@ fn before_start_time() {
 #[test]
 fn check_per_address_limit() {
     let mut router = custom_mock_app();
-    let (creator, buyer) = setup_accounts(&mut router).unwrap();
+    let (creator, buyer) = setup_accounts(&mut router);
     let num_tokens = 2;
-    let (minter_addr, _config) = setup_minter_contract(&mut router, &creator, num_tokens).unwrap();
+    let (minter_addr, _config) = setup_minter_contract(&mut router, &creator, num_tokens);
     // set to genesis mint start time
     setup_block_time(&mut router, GENESIS_MINT_START_TIME);
 
@@ -771,9 +766,9 @@ fn check_per_address_limit() {
 #[test]
 fn mint_for_token_id_addr() {
     let mut router = custom_mock_app();
-    let (creator, buyer) = setup_accounts(&mut router).unwrap();
+    let (creator, buyer) = setup_accounts(&mut router);
     let num_tokens: u64 = 4;
-    let (minter_addr, _config) = setup_minter_contract(&mut router, &creator, num_tokens).unwrap();
+    let (minter_addr, _config) = setup_minter_contract(&mut router, &creator, num_tokens);
     // set to genesis mint start time
     setup_block_time(&mut router, GENESIS_MINT_START_TIME);
 
@@ -892,7 +887,7 @@ fn mint_for_token_id_addr() {
 #[test]
 fn test_start_time_before_genesis() {
     let mut router = custom_mock_app();
-    let (creator, _) = setup_accounts(&mut router).unwrap();
+    let (creator, _) = setup_accounts(&mut router);
     let num_tokens = 10;
 
     // Upload contract code
@@ -1009,9 +1004,9 @@ fn test_start_time_before_genesis() {
 #[test]
 fn unhappy_path() {
     let mut router = custom_mock_app();
-    let (creator, buyer) = setup_accounts(&mut router).unwrap();
+    let (creator, buyer) = setup_accounts(&mut router);
     let num_tokens: u64 = 1;
-    let (minter_addr, _config) = setup_minter_contract(&mut router, &creator, num_tokens).unwrap();
+    let (minter_addr, _config) = setup_minter_contract(&mut router, &creator, num_tokens);
 
     // Fails if too little funds are sent
     let mint_msg = ExecuteMsg::Mint {};
