@@ -222,11 +222,9 @@ pub fn execute_mint_sender(
     }
 
     // if there is no active whitelist right now, check public mint
-    if pub_mint {
-        // Check if after start_time
-        if !config.start_time.is_expired(&env.block) {
-            return Err(ContractError::BeforeMintStartTime {});
-        }
+    // Check if after start_time
+    if pub_mint && !config.start_time.is_expired(&env.block) {
+        return Err(ContractError::BeforeMintStartTime {});
     }
 
     // Check if already minted max per address limit
