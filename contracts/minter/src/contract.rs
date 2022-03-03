@@ -15,7 +15,9 @@ use crate::msg::{
     ConfigResponse, ExecuteMsg, InstantiateMsg, MintPriceResponse, MintableNumTokensResponse,
     QueryMsg, StartTimeResponse,
 };
-use crate::state::{Config, CONFIG, MINTABLE_TOKEN_IDS, MINTER_ADDRS, SG721_ADDRESS};
+use crate::state::{
+    Config, CONFIG, MINTABLE_NUM_TOKENS, MINTABLE_TOKEN_IDS, MINTER_ADDRS, SG721_ADDRESS,
+};
 use sg_std::{burn_and_distribute_fee, StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use whitelist::msg::{
     ConfigResponse as WhitelistConfigResponse, HasMemberResponse, QueryMsg as WhitelistQueryMsg,
@@ -104,6 +106,7 @@ pub fn instantiate(
         start_time,
     };
     CONFIG.save(deps.storage, &config)?;
+    MINTABLE_NUM_TOKENS.save(deps.storage, &msg.num_tokens)?;
 
     // save mintable token ids map
     for token_id in 1..=msg.num_tokens {
@@ -379,8 +382,10 @@ fn _execute_mint(
     });
     msgs.append(&mut vec![msg]);
 
-    // remove mintable token id from map
+    // remove mintable token id from map and decrement mintable num tokens
     MINTABLE_TOKEN_IDS.remove(deps.storage, mintable_token_id);
+    let mintable_num_tokens = MINTABLE_NUM_TOKENS.load(deps.storage)?;
+    MINTABLE_NUM_TOKENS.save(deps.storage, &(mintable_num_tokens - 1))?;
     let new_mint_count: u32 = mint_count(deps.as_ref(), info.clone())? + 1;
     MINTER_ADDRS.save(deps.storage, info.clone().sender, &new_mint_count)?;
 
@@ -530,12 +535,8 @@ fn query_start_time(deps: Deps) -> StdResult<StartTimeResponse> {
 }
 
 fn query_mintable_num_tokens(deps: Deps) -> StdResult<MintableNumTokensResponse> {
-    let count = MINTABLE_TOKEN_IDS
-        .keys(deps.storage, None, None, Order::Ascending)
-        .count();
-    Ok(MintableNumTokensResponse {
-        count: count as u64,
-    })
+    let count = MINTABLE_NUM_TOKENS.load(deps.storage)?;
+    Ok(MintableNumTokensResponse { count })
 }
 
 fn query_mint_price(deps: Deps) -> StdResult<MintPriceResponse> {
