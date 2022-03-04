@@ -10,8 +10,7 @@ use sg_std::StargazeMsgWrapper;
 use crate::error::ContractError;
 use crate::msg::{
     ConfigResponse, ExecuteMsg, HasEndedResponse, HasMemberResponse, HasStartedResponse,
-    InstantiateMsg, IsActiveResponse, MembersResponse, QueryMsg, TimeResponse, UnitPriceResponse,
-    UpdateMembersMsg,
+    InstantiateMsg, IsActiveResponse, MembersResponse, QueryMsg, UpdateMembersMsg,
 };
 use crate::state::{Config, CONFIG, WHITELIST};
 
@@ -227,37 +226,13 @@ pub fn execute_update_per_address_limit(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::StartTime {} => to_binary(&query_start_time(deps)?),
-        QueryMsg::EndTime {} => to_binary(&query_end_time(deps)?),
         QueryMsg::Members {} => to_binary(&query_members(deps)?),
         QueryMsg::HasStarted {} => to_binary(&query_has_started(deps, env)?),
         QueryMsg::HasEnded {} => to_binary(&query_has_ended(deps, env)?),
         QueryMsg::IsActive {} => to_binary(&query_is_active(deps, env)?),
         QueryMsg::HasMember { member } => to_binary(&query_has_member(deps, member)?),
-        QueryMsg::UnitPrice {} => to_binary(&query_unit_price(deps)?),
-        QueryMsg::Config {} => to_binary(&query_config(deps, env)?),
+        QueryMsg::Config {} => to_binary(&query_config(deps)?),
     }
-}
-
-fn query_unit_price(deps: Deps) -> StdResult<UnitPriceResponse> {
-    let config = CONFIG.load(deps.storage)?;
-    Ok(UnitPriceResponse {
-        unit_price: config.unit_price,
-    })
-}
-
-fn query_start_time(deps: Deps) -> StdResult<TimeResponse> {
-    let config = CONFIG.load(deps.storage)?;
-    Ok(TimeResponse {
-        time: config.start_time,
-    })
-}
-
-fn query_end_time(deps: Deps) -> StdResult<TimeResponse> {
-    let config = CONFIG.load(deps.storage)?;
-    Ok(TimeResponse {
-        time: config.end_time,
-    })
 }
 
 fn query_has_started(deps: Deps, env: Env) -> StdResult<HasStartedResponse> {
@@ -299,7 +274,7 @@ fn query_has_member(deps: Deps, member: String) -> StdResult<HasMemberResponse> 
     })
 }
 
-fn query_config(deps: Deps, env: Env) -> StdResult<ConfigResponse> {
+fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
     let config = CONFIG.load(deps.storage)?;
     Ok(ConfigResponse {
         num_members: config.num_members,
@@ -307,8 +282,6 @@ fn query_config(deps: Deps, env: Env) -> StdResult<ConfigResponse> {
         start_time: config.start_time,
         end_time: config.end_time,
         unit_price: config.unit_price,
-        is_active: config.start_time.is_expired(&env.block)
-            && !config.end_time.is_expired(&env.block),
     })
 }
 
@@ -376,7 +349,7 @@ mod tests {
         };
         let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
         let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
-        let res = query_config(deps.as_ref(), mock_env()).unwrap();
+        let res = query_config(deps.as_ref()).unwrap();
         assert_eq!(1, res.num_members);
     }
 
@@ -403,8 +376,8 @@ mod tests {
         let info = mock_info(ADMIN, &[]);
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(res.attributes.len(), 3);
-        let res = query_end_time(deps.as_ref()).unwrap();
-        assert_eq!(res.time, Expiration::AtHeight(10));
+        let res = query_config(deps.as_ref()).unwrap();
+        assert_eq!(res.end_time, Expiration::AtHeight(10));
     }
 
     #[test]
@@ -471,7 +444,7 @@ mod tests {
         let info = mock_info(ADMIN, &[]);
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(res.attributes.len(), 2);
-        let wl_config: ConfigResponse = query_config(deps.as_ref(), mock_env()).unwrap();
+        let wl_config: ConfigResponse = query_config(deps.as_ref()).unwrap();
         assert_eq!(wl_config.per_address_limit, per_address_limit);
     }
 }

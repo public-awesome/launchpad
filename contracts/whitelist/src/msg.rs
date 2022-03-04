@@ -30,14 +30,11 @@ pub struct UpdateMembersMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
-    StartTime {},
-    EndTime {},
     HasStarted {},
     HasEnded {},
     IsActive {},
     Members {},
     HasMember { member: String },
-    UnitPrice {},
     Config {},
 }
 
@@ -83,5 +80,4 @@ pub struct ConfigResponse {
     pub start_time: Expiration,
     pub end_time: Expiration,
     pub unit_price: Coin,
-    pub is_active: bool,
 }
