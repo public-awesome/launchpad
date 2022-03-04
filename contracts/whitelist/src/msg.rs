@@ -18,12 +18,18 @@ pub enum ExecuteMsg {
     UpdateStartTime(Expiration),
     UpdateEndTime(Expiration),
     AddMembers(AddMembersMsg),
+    RemoveMembers(RemoveMembersMsg),
     UpdatePerAddressLimit(u32),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct AddMembersMsg {
     pub to_add: Vec<String>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct RemoveMembersMsg {
+    pub to_remove: Vec<String>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

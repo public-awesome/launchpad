@@ -17,6 +17,9 @@ pub enum ContractError {
     #[error("DuplicateMember: {0}")]
     DuplicateMember(String),
 
+    #[error("NoMemberFound: {0}")]
+    NoMemberFound(String),
+
     #[error("InvalidStartTime {0} > {1}")]
     InvalidStartTime(Expiration, Expiration),
 

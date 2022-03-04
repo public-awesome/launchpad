@@ -11,6 +11,7 @@ use crate::error::ContractError;
 use crate::msg::{
     AddMembersMsg, ConfigResponse, ExecuteMsg, HasEndedResponse, HasMemberResponse,
     HasStartedResponse, InstantiateMsg, IsActiveResponse, MembersResponse, QueryMsg,
+    RemoveMembersMsg,
 };
 use crate::state::{Config, CONFIG, WHITELIST};
 
@@ -117,6 +118,7 @@ pub fn execute(
         ExecuteMsg::UpdateStartTime(time) => execute_update_start_time(deps, env, info, time),
         ExecuteMsg::UpdateEndTime(time) => execute_update_end_time(deps, env, info, time),
         ExecuteMsg::AddMembers(msg) => execute_add_members(deps, env, info, msg),
+        ExecuteMsg::RemoveMembers(msg) => execute_remove_members(deps, env, info, msg),
         ExecuteMsg::UpdatePerAddressLimit(per_address_limit) => {
             execute_update_per_address_limit(deps, env, info, per_address_limit)
         }
@@ -207,7 +209,34 @@ pub fn execute_add_members(
     CONFIG.save(deps.storage, &config)?;
 
     Ok(Response::new()
-        .add_attribute("action", "update_whitelist_members")
+        .add_attribute("action", "add_members")
+        .add_attribute("sender", info.sender))
+}
+
+pub fn execute_remove_members(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    msg: RemoveMembersMsg,
+) -> Result<Response, ContractError> {
+    let mut config = CONFIG.load(deps.storage)?;
+    if info.sender != config.admin {
+        return Err(ContractError::Unauthorized {});
+    }
+
+    for remove in msg.to_remove.into_iter() {
+        let addr = deps.api.addr_validate(&remove)?;
+        if !WHITELIST.has(deps.storage, addr.clone()) {
+            return Err(ContractError::NoMemberFound(addr.to_string()));
+        }
+        WHITELIST.remove(deps.storage, addr);
+        config.num_members -= 1;
+    }
+
+    CONFIG.save(deps.storage, &config)?;
+
+    Ok(Response::new()
+        .add_attribute("action", "remove_members")
         .add_attribute("sender", info.sender))
 }
 
@@ -398,17 +427,26 @@ mod tests {
         let mut deps = mock_dependencies();
         setup_contract(deps.as_mut());
 
-        let inner_msg = AddMembersMsg {
+        let add_msg = AddMembersMsg {
             to_add: vec!["adsfsa1".to_string()],
         };
-        let msg = ExecuteMsg::AddMembers(inner_msg);
+        let msg = ExecuteMsg::AddMembers(add_msg);
         let info = mock_info(ADMIN, &[]);
         let res = execute(deps.as_mut(), mock_env(), info.clone(), msg.clone()).unwrap();
         assert_eq!(res.attributes.len(), 2);
         let res = query_members(deps.as_ref()).unwrap();
         assert_eq!(res.members.len(), 2);
 
-        execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
+        execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap_err();
+
+        let remove_msg = RemoveMembersMsg {
+            to_remove: vec!["adsfsa1".to_string()],
+        };
+        let msg = ExecuteMsg::RemoveMembers(remove_msg);
+        let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
+        assert_eq!(res.attributes.len(), 2);
+        let res = query_members(deps.as_ref()).unwrap();
+        assert_eq!(res.members.len(), 1);
     }
 
     #[test]
