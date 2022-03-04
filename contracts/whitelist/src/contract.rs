@@ -1,14 +1,14 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::Order;
 use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult};
+use cosmwasm_std::{Order, Timestamp};
 use cw2::set_contract_version;
 use cw_storage_plus::Bound;
 use cw_utils::maybe_addr;
 use cw_utils::Expiration;
 
 use sg_std::fees::burn_and_distribute_fee;
-use sg_std::{StargazeMsgWrapper, NATIVE_DENOM};
+use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
 use crate::error::ContractError;
 use crate::msg::{
@@ -156,11 +156,19 @@ pub fn execute_update_start_time(
         return Err(ContractError::InvalidStartTime(start_time, config.end_time));
     }
 
+    let genesis_start_time = Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME));
+    let start_time = if start_time < genesis_start_time {
+        genesis_start_time
+    } else {
+        start_time
+    };
+
     config.start_time = start_time;
     CONFIG.save(deps.storage, &config)?;
     Ok(Response::new()
         .add_attribute("action", "update_start_time")
-        .add_attribute("start_time", start_time.to_string()))
+        .add_attribute("start_time", start_time.to_string())
+        .add_attribute("sender", info.sender))
 }
 
 pub fn execute_update_end_time(
@@ -367,11 +375,13 @@ mod tests {
 
     const NON_EXPIRED_HEIGHT: Expiration = Expiration::AtHeight(22_222);
     const EXPIRED_HEIGHT: Expiration = Expiration::AtHeight(10);
+    const GENESIS_START_TIME: Expiration =
+        Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME));
 
     fn setup_contract(deps: DepsMut) {
         let msg = InstantiateMsg {
             members: vec!["adsfsa".to_string()],
-            start_time: NON_EXPIRED_HEIGHT,
+            start_time: GENESIS_START_TIME,
             end_time: NON_EXPIRED_HEIGHT,
             unit_price: coin(UNIT_AMOUNT, NATIVE_DENOM),
             per_address_limit: 1,
@@ -448,6 +458,21 @@ mod tests {
         let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
         let mut deps = mock_dependencies();
         instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
+    }
+
+    #[test]
+    fn update_start_time() {
+        let mut deps = mock_dependencies();
+        setup_contract(deps.as_mut());
+
+        let msg = ExecuteMsg::UpdateStartTime(Expiration::AtTime(Timestamp::from_nanos(
+            GENESIS_MINT_START_TIME - 100,
+        )));
+        let info = mock_info(ADMIN, &[]);
+        let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
+        assert_eq!(res.attributes.len(), 3);
+        let res = query_config(deps.as_ref(), mock_env()).unwrap();
+        assert_eq!(res.start_time, GENESIS_START_TIME);
     }
 
     #[test]
