@@ -11,6 +11,9 @@ pub enum ContractError {
     #[error("Unauthorized")]
     Unauthorized {},
 
+    #[error("AlreadyStarted")]
+    AlreadyStarted {},
+
     #[error("InvalidStartTime {0} > {1}")]
     InvalidStartTime(Expiration, Expiration),
 

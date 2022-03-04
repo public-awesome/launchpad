@@ -149,13 +149,18 @@ pub fn execute_update_start_time(
 
 pub fn execute_update_end_time(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
     end_time: Expiration,
 ) -> Result<Response, ContractError> {
     let mut config = CONFIG.load(deps.storage)?;
     if info.sender != config.admin {
         return Err(ContractError::Unauthorized {});
+    }
+
+    // don't allow updating end time if whitelist is active
+    if config.start_time.is_expired(&env.block) {
+        return Err(ContractError::AlreadyStarted {});
     }
 
     if end_time > config.start_time {
