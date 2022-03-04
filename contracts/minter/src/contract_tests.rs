@@ -585,7 +585,7 @@ fn mint_count_query() {
     let inner_msg = AddMembersMsg {
         to_add: vec![buyer.to_string()],
     };
-    let wasm_msg = WhitelistExecuteMsg::UpdateMembers(inner_msg);
+    let wasm_msg = WhitelistExecuteMsg::AddMembers(inner_msg);
     let res = router.execute_contract(
         creator.clone(),
         whitelist_addr,
@@ -782,7 +782,7 @@ fn whitelist_access_len_add_remove_expiration() {
     let inner_msg = AddMembersMsg {
         to_add: vec![buyer.to_string()],
     };
-    let wasm_msg = WhitelistExecuteMsg::UpdateMembers(inner_msg);
+    let wasm_msg = WhitelistExecuteMsg::AddMembers(inner_msg);
     let res = router.execute_contract(
         creator.clone(),
         whitelist_addr.clone(),
@@ -875,7 +875,7 @@ fn whitelist_access_len_add_remove_expiration() {
 
     // remove buyer from whitelist
     let inner_msg = AddMembersMsg { to_add: vec![] };
-    let wasm_msg = WhitelistExecuteMsg::UpdateMembers(inner_msg);
+    let wasm_msg = WhitelistExecuteMsg::AddMembers(inner_msg);
     let res = router.execute_contract(
         creator.clone(),
         whitelist_addr,

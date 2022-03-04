@@ -17,7 +17,7 @@ pub struct InstantiateMsg {
 pub enum ExecuteMsg {
     UpdateStartTime(Expiration),
     UpdateEndTime(Expiration),
-    UpdateMembers(AddMembersMsg),
+    AddMembers(AddMembersMsg),
     UpdatePerAddressLimit(u32),
 }
 

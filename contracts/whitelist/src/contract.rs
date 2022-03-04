@@ -116,7 +116,7 @@ pub fn execute(
     match msg {
         ExecuteMsg::UpdateStartTime(time) => execute_update_start_time(deps, env, info, time),
         ExecuteMsg::UpdateEndTime(time) => execute_update_end_time(deps, env, info, time),
-        ExecuteMsg::UpdateMembers(msg) => execute_add_members(deps, env, info, msg),
+        ExecuteMsg::AddMembers(msg) => execute_add_members(deps, env, info, msg),
         ExecuteMsg::UpdatePerAddressLimit(per_address_limit) => {
             execute_update_per_address_limit(deps, env, info, per_address_limit)
         }
@@ -401,7 +401,7 @@ mod tests {
         let inner_msg = AddMembersMsg {
             to_add: vec!["adsfsa1".to_string()],
         };
-        let msg = ExecuteMsg::UpdateMembers(inner_msg);
+        let msg = ExecuteMsg::AddMembers(inner_msg);
         let info = mock_info(ADMIN, &[]);
         let res = execute(deps.as_mut(), mock_env(), info.clone(), msg.clone()).unwrap();
         assert_eq!(res.attributes.len(), 2);
@@ -422,7 +422,7 @@ mod tests {
         }
 
         let inner_msg = AddMembersMsg { to_add: members };
-        let msg = ExecuteMsg::UpdateMembers(inner_msg);
+        let msg = ExecuteMsg::AddMembers(inner_msg);
         let info = mock_info(ADMIN, &[]);
         let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
         assert_eq!(
