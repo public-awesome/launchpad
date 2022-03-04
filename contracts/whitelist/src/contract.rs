@@ -5,7 +5,7 @@ use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult
 use cw2::set_contract_version;
 use cw_utils::Expiration;
 use sg_std::fees::burn_and_distribute_fee;
-use sg_std::StargazeMsgWrapper;
+use sg_std::{StargazeMsgWrapper, NATIVE_DENOM};
 
 use crate::error::ContractError;
 use crate::msg::{
@@ -35,6 +35,10 @@ pub fn instantiate(
     mut msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+
+    if msg.unit_price.denom != NATIVE_DENOM {
+        return Err(ContractError::InvalidDenom(msg.unit_price.denom));
+    }
 
     if msg.unit_price.amount.u128() < MIN_MINT_PRICE {
         return Err(ContractError::InvalidUnitPrice(
@@ -375,6 +379,21 @@ mod tests {
         };
         let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
         instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
+    }
+
+    #[test]
+    fn improper_initialization_invalid_denom() {
+        let mut deps = mock_dependencies();
+        let msg = InstantiateMsg {
+            members: vec!["adsfsa".to_string()],
+            start_time: NON_EXPIRED_HEIGHT,
+            end_time: NON_EXPIRED_HEIGHT,
+            unit_price: coin(UNIT_AMOUNT, "not_ustars"),
+            per_address_limit: 1,
+        };
+        let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
+        let err = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
+        assert_eq!(err.to_string(), "InvalidDenom: not_ustars");
     }
 
     #[test]
