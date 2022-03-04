@@ -197,10 +197,11 @@ pub fn execute_add_members(
             });
         }
         let addr = deps.api.addr_validate(&add)?;
-        if !WHITELIST.has(deps.storage, addr.clone()) {
-            WHITELIST.save(deps.storage, addr, &true)?;
-            config.num_members += 1;
+        if WHITELIST.has(deps.storage, addr.clone()) {
+            return Err(ContractError::DuplicateMember(addr.to_string()));
         }
+        WHITELIST.save(deps.storage, addr, &true)?;
+        config.num_members += 1;
     }
 
     CONFIG.save(deps.storage, &config)?;
@@ -402,10 +403,12 @@ mod tests {
         };
         let msg = ExecuteMsg::UpdateMembers(inner_msg);
         let info = mock_info(ADMIN, &[]);
-        let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let res = execute(deps.as_mut(), mock_env(), info.clone(), msg.clone()).unwrap();
         assert_eq!(res.attributes.len(), 2);
         let res = query_members(deps.as_ref()).unwrap();
         assert_eq!(res.members.len(), 2);
+
+        execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
     }
 
     #[test]
