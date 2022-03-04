@@ -10,7 +10,7 @@ use sg721::msg::{InstantiateMsg as Sg721InstantiateMsg, RoyaltyInfoResponse};
 use sg721::state::CollectionInfo;
 use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use whitelist::msg::InstantiateMsg as WhitelistInstantiateMsg;
-use whitelist::msg::{ExecuteMsg as WhitelistExecuteMsg, UpdateMembersMsg};
+use whitelist::msg::{AddMembersMsg, ExecuteMsg as WhitelistExecuteMsg};
 
 use crate::contract::instantiate;
 use crate::msg::{
@@ -227,9 +227,7 @@ fn initialization() {
             },
         },
     };
-    let res = instantiate(deps.as_mut(), mock_env(), info, msg);
-    println!("{:?}", res);
-    assert!(res.is_err());
+    instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
 
     // Invalid uri returns error
     let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
@@ -257,8 +255,7 @@ fn initialization() {
             },
         },
     };
-    let res = instantiate(deps.as_mut(), mock_env(), info, msg);
-    assert!(res.is_err());
+    instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
 
     // invalid denom returns error
     let wrong_denom = "uosmo";
@@ -287,8 +284,7 @@ fn initialization() {
             },
         },
     };
-    let res = instantiate(deps.as_mut(), mock_env(), info, msg);
-    assert!(res.is_err());
+    instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
 
     // insufficient mint price returns error
     let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
@@ -316,8 +312,7 @@ fn initialization() {
             },
         },
     };
-    let res = instantiate(deps.as_mut(), mock_env(), info, msg);
-    assert!(res.is_err());
+    instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
 
     // over max token limit
     let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
@@ -345,8 +340,7 @@ fn initialization() {
             },
         },
     };
-    let res = instantiate(deps.as_mut(), mock_env(), info, msg);
-    assert!(res.is_err());
+    instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
 
     // under min token limit
     let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
@@ -588,11 +582,10 @@ fn mint_count_query() {
     );
     assert!(res.is_ok());
 
-    let inner_msg = UpdateMembersMsg {
-        add: vec![buyer.to_string()],
-        remove: vec![],
+    let inner_msg = AddMembersMsg {
+        to_add: vec![buyer.to_string()],
     };
-    let wasm_msg = WhitelistExecuteMsg::UpdateMembers(inner_msg);
+    let wasm_msg = WhitelistExecuteMsg::AddMembers(inner_msg);
     let res = router.execute_contract(
         creator.clone(),
         whitelist_addr,
@@ -786,11 +779,10 @@ fn whitelist_access_len_add_remove_expiration() {
     );
     assert!(res.is_err());
 
-    let inner_msg = UpdateMembersMsg {
-        add: vec![buyer.to_string()],
-        remove: vec![],
+    let inner_msg = AddMembersMsg {
+        to_add: vec![buyer.to_string()],
     };
-    let wasm_msg = WhitelistExecuteMsg::UpdateMembers(inner_msg);
+    let wasm_msg = WhitelistExecuteMsg::AddMembers(inner_msg);
     let res = router.execute_contract(
         creator.clone(),
         whitelist_addr.clone(),
@@ -882,11 +874,8 @@ fn whitelist_access_len_add_remove_expiration() {
     );
 
     // remove buyer from whitelist
-    let inner_msg = UpdateMembersMsg {
-        add: vec![],
-        remove: vec![buyer.to_string()],
-    };
-    let wasm_msg = WhitelistExecuteMsg::UpdateMembers(inner_msg);
+    let inner_msg = AddMembersMsg { to_add: vec![] };
+    let wasm_msg = WhitelistExecuteMsg::AddMembers(inner_msg);
     let res = router.execute_contract(
         creator.clone(),
         whitelist_addr,

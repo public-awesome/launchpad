@@ -5,13 +5,18 @@ update_start_time: Expiration
 } | {
 update_end_time: Expiration
 } | {
-update_members: UpdateMembersMsg
+add_members: AddMembersMsg
+} | {
+remove_members: RemoveMembersMsg
 } | {
 update_per_address_limit: number
 })
 
-export interface UpdateMembersMsg {
-add: string[]
-remove: string[]
+export interface AddMembersMsg {
+to_add: string[]
+[k: string]: unknown
+}
+export interface RemoveMembersMsg {
+to_remove: string[]
 [k: string]: unknown
 }

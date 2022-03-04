@@ -9,9 +9,9 @@ use sg_std::StargazeMsgWrapper;
 
 use crate::error::ContractError;
 use crate::msg::{
-    ConfigResponse, ExecuteMsg, HasEndedResponse, HasMemberResponse, HasStartedResponse,
-    InstantiateMsg, IsActiveResponse, MembersResponse, QueryMsg, TimeResponse, UnitPriceResponse,
-    UpdateMembersMsg,
+    AddMembersMsg, ConfigResponse, ExecuteMsg, HasEndedResponse, HasMemberResponse,
+    HasStartedResponse, InstantiateMsg, IsActiveResponse, MembersResponse, QueryMsg,
+    RemoveMembersMsg,
 };
 use crate::state::{Config, CONFIG, WHITELIST};
 
@@ -32,7 +32,7 @@ pub fn instantiate(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    msg: InstantiateMsg,
+    mut msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
@@ -56,6 +56,10 @@ pub fn instantiate(
             got: msg.per_address_limit.to_string(),
         });
     }
+
+    // remove duplicate members
+    msg.members.sort_unstable();
+    msg.members.dedup();
 
     let config = Config {
         admin: info.sender.clone(),
@@ -113,7 +117,8 @@ pub fn execute(
     match msg {
         ExecuteMsg::UpdateStartTime(time) => execute_update_start_time(deps, env, info, time),
         ExecuteMsg::UpdateEndTime(time) => execute_update_end_time(deps, env, info, time),
-        ExecuteMsg::UpdateMembers(msg) => execute_update_members(deps, env, info, msg),
+        ExecuteMsg::AddMembers(msg) => execute_add_members(deps, env, info, msg),
+        ExecuteMsg::RemoveMembers(msg) => execute_remove_members(deps, env, info, msg),
         ExecuteMsg::UpdatePerAddressLimit(per_address_limit) => {
             execute_update_per_address_limit(deps, env, info, per_address_limit)
         }
@@ -122,13 +127,22 @@ pub fn execute(
 
 pub fn execute_update_start_time(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
     start_time: Expiration,
 ) -> Result<Response, ContractError> {
     let mut config = CONFIG.load(deps.storage)?;
     if info.sender != config.admin {
         return Err(ContractError::Unauthorized {});
+    }
+
+    // don't allow updating start time if whitelist is active
+    if config.start_time.is_expired(&env.block) {
+        return Err(ContractError::AlreadyStarted {});
+    }
+
+    if start_time > config.end_time {
+        return Err(ContractError::InvalidStartTime(start_time, config.end_time));
     }
 
     config.start_time = start_time;
@@ -140,13 +154,22 @@ pub fn execute_update_start_time(
 
 pub fn execute_update_end_time(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
     end_time: Expiration,
 ) -> Result<Response, ContractError> {
     let mut config = CONFIG.load(deps.storage)?;
     if info.sender != config.admin {
         return Err(ContractError::Unauthorized {});
+    }
+
+    // don't allow updating end time if whitelist is active
+    if config.start_time.is_expired(&env.block) {
+        return Err(ContractError::AlreadyStarted {});
+    }
+
+    if end_time > config.start_time {
+        return Err(ContractError::InvalidEndTime(end_time, config.start_time));
     }
 
     config.end_time = end_time;
@@ -157,18 +180,18 @@ pub fn execute_update_end_time(
         .add_attribute("sender", info.sender))
 }
 
-pub fn execute_update_members(
+pub fn execute_add_members(
     deps: DepsMut,
     _env: Env,
     info: MessageInfo,
-    msg: UpdateMembersMsg,
+    msg: AddMembersMsg,
 ) -> Result<Response, ContractError> {
     let mut config = CONFIG.load(deps.storage)?;
     if info.sender != config.admin {
         return Err(ContractError::Unauthorized {});
     }
 
-    for add in msg.add.into_iter() {
+    for add in msg.to_add.into_iter() {
         if config.num_members >= MAX_MEMBERS {
             return Err(ContractError::MembersExceeded {
                 expected: MAX_MEMBERS,
@@ -176,12 +199,36 @@ pub fn execute_update_members(
             });
         }
         let addr = deps.api.addr_validate(&add)?;
+        if WHITELIST.has(deps.storage, addr.clone()) {
+            return Err(ContractError::DuplicateMember(addr.to_string()));
+        }
         WHITELIST.save(deps.storage, addr, &true)?;
         config.num_members += 1;
     }
 
-    for remove in msg.remove.into_iter() {
+    CONFIG.save(deps.storage, &config)?;
+
+    Ok(Response::new()
+        .add_attribute("action", "add_members")
+        .add_attribute("sender", info.sender))
+}
+
+pub fn execute_remove_members(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    msg: RemoveMembersMsg,
+) -> Result<Response, ContractError> {
+    let mut config = CONFIG.load(deps.storage)?;
+    if info.sender != config.admin {
+        return Err(ContractError::Unauthorized {});
+    }
+
+    for remove in msg.to_remove.into_iter() {
         let addr = deps.api.addr_validate(&remove)?;
+        if !WHITELIST.has(deps.storage, addr.clone()) {
+            return Err(ContractError::NoMemberFound(addr.to_string()));
+        }
         WHITELIST.remove(deps.storage, addr);
         config.num_members -= 1;
     }
@@ -189,7 +236,7 @@ pub fn execute_update_members(
     CONFIG.save(deps.storage, &config)?;
 
     Ok(Response::new()
-        .add_attribute("action", "update_whitelist_members")
+        .add_attribute("action", "remove_members")
         .add_attribute("sender", info.sender))
 }
 
@@ -221,37 +268,13 @@ pub fn execute_update_per_address_limit(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::StartTime {} => to_binary(&query_start_time(deps)?),
-        QueryMsg::EndTime {} => to_binary(&query_end_time(deps)?),
         QueryMsg::Members {} => to_binary(&query_members(deps)?),
         QueryMsg::HasStarted {} => to_binary(&query_has_started(deps, env)?),
         QueryMsg::HasEnded {} => to_binary(&query_has_ended(deps, env)?),
         QueryMsg::IsActive {} => to_binary(&query_is_active(deps, env)?),
         QueryMsg::HasMember { member } => to_binary(&query_has_member(deps, member)?),
-        QueryMsg::UnitPrice {} => to_binary(&query_unit_price(deps)?),
         QueryMsg::Config {} => to_binary(&query_config(deps, env)?),
     }
-}
-
-fn query_unit_price(deps: Deps) -> StdResult<UnitPriceResponse> {
-    let config = CONFIG.load(deps.storage)?;
-    Ok(UnitPriceResponse {
-        unit_price: config.unit_price,
-    })
-}
-
-fn query_start_time(deps: Deps) -> StdResult<TimeResponse> {
-    let config = CONFIG.load(deps.storage)?;
-    Ok(TimeResponse {
-        time: config.start_time,
-    })
-}
-
-fn query_end_time(deps: Deps) -> StdResult<TimeResponse> {
-    let config = CONFIG.load(deps.storage)?;
-    Ok(TimeResponse {
-        time: config.end_time,
-    })
 }
 
 fn query_has_started(deps: Deps, env: Env) -> StdResult<HasStartedResponse> {
@@ -296,6 +319,7 @@ fn query_has_member(deps: Deps, member: String) -> StdResult<HasMemberResponse> 
 fn query_config(deps: Deps, env: Env) -> StdResult<ConfigResponse> {
     let config = CONFIG.load(deps.storage)?;
     Ok(ConfigResponse {
+        num_members: config.num_members,
         per_address_limit: config.per_address_limit,
         start_time: config.start_time,
         end_time: config.end_time,
@@ -354,6 +378,26 @@ mod tests {
     }
 
     #[test]
+    fn improper_initialization_dedup() {
+        let mut deps = mock_dependencies();
+        let msg = InstantiateMsg {
+            members: vec![
+                "adsfsa".to_string(),
+                "adsfsa".to_string(),
+                "adsfsa".to_string(),
+            ],
+            start_time: NON_EXPIRED_HEIGHT,
+            end_time: NON_EXPIRED_HEIGHT,
+            unit_price: coin(UNIT_AMOUNT, NATIVE_DENOM),
+            per_address_limit: 1,
+        };
+        let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
+        let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let res = query_config(deps.as_ref(), mock_env()).unwrap();
+        assert_eq!(1, res.num_members);
+    }
+
+    #[test]
     fn check_start_time_after_end_time() {
         let msg = InstantiateMsg {
             members: vec!["adsfsa".to_string()],
@@ -376,8 +420,8 @@ mod tests {
         let info = mock_info(ADMIN, &[]);
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(res.attributes.len(), 3);
-        let res = query_end_time(deps.as_ref()).unwrap();
-        assert_eq!(res.time, Expiration::AtHeight(10));
+        let res = query_config(deps.as_ref(), mock_env()).unwrap();
+        assert_eq!(res.end_time, Expiration::AtHeight(10));
     }
 
     #[test]
@@ -385,16 +429,26 @@ mod tests {
         let mut deps = mock_dependencies();
         setup_contract(deps.as_mut());
 
-        let inner_msg = UpdateMembersMsg {
-            add: vec!["adsfsa1".to_string()],
-            remove: vec![],
+        let add_msg = AddMembersMsg {
+            to_add: vec!["adsfsa1".to_string()],
         };
-        let msg = ExecuteMsg::UpdateMembers(inner_msg);
+        let msg = ExecuteMsg::AddMembers(add_msg);
         let info = mock_info(ADMIN, &[]);
-        let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let res = execute(deps.as_mut(), mock_env(), info.clone(), msg.clone()).unwrap();
         assert_eq!(res.attributes.len(), 2);
         let res = query_members(deps.as_ref()).unwrap();
         assert_eq!(res.members.len(), 2);
+
+        execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap_err();
+
+        let remove_msg = RemoveMembersMsg {
+            to_remove: vec!["adsfsa1".to_string()],
+        };
+        let msg = ExecuteMsg::RemoveMembers(remove_msg);
+        let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
+        assert_eq!(res.attributes.len(), 2);
+        let res = query_members(deps.as_ref()).unwrap();
+        assert_eq!(res.members.len(), 1);
     }
 
     #[test]
@@ -402,11 +456,13 @@ mod tests {
         let mut deps = mock_dependencies();
         setup_contract(deps.as_mut());
 
-        let inner_msg = UpdateMembersMsg {
-            add: vec!["asdf".to_string(); MAX_MEMBERS as usize],
-            remove: vec![],
-        };
-        let msg = ExecuteMsg::UpdateMembers(inner_msg);
+        let mut members = vec![];
+        for i in 0..MAX_MEMBERS {
+            members.push(format!("adsfsa{}", i));
+        }
+
+        let inner_msg = AddMembersMsg { to_add: members };
+        let msg = ExecuteMsg::AddMembers(inner_msg);
         let info = mock_info(ADMIN, &[]);
         let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
         assert_eq!(
