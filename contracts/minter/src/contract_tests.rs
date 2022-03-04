@@ -14,8 +14,8 @@ use whitelist::msg::{ExecuteMsg as WhitelistExecuteMsg, UpdateMembersMsg};
 
 use crate::contract::instantiate;
 use crate::msg::{
-    ConfigResponse, ExecuteMsg, InstantiateMsg, MintPriceResponse, MintableNumTokensResponse,
-    QueryMsg, StartTimeResponse,
+    ConfigResponse, ExecuteMsg, InstantiateMsg, MintCountResponse, MintPriceResponse,
+    MintableNumTokensResponse, QueryMsg, StartTimeResponse,
 };
 use crate::ContractError;
 
@@ -423,6 +423,18 @@ fn happy_path() {
         coins(INITIAL_BALANCE - UNIT_PRICE, NATIVE_DENOM)
     );
 
+    let res: MintCountResponse = router
+        .wrap()
+        .query_wasm_smart(
+            minter_addr.clone(),
+            &QueryMsg::MintCount {
+                address: buyer.to_string(),
+            },
+        )
+        .unwrap();
+    assert_eq!(res.count, 1);
+    assert_eq!(res.adress, buyer.to_string());
+
     // Check NFT is transferred
     let query_owner_msg = Cw721QueryMsg::OwnerOf {
         token_id: String::from("1"),
@@ -460,6 +472,19 @@ fn happy_path() {
         }),
     );
     assert!(res.is_ok());
+
+    // mint count is not increased if admin mints for the user
+    let res: MintCountResponse = router
+        .wrap()
+        .query_wasm_smart(
+            minter_addr.clone(),
+            &QueryMsg::MintCount {
+                address: buyer.to_string(),
+            },
+        )
+        .unwrap();
+    assert_eq!(res.count, 1);
+    assert_eq!(res.adress, buyer.to_string());
 
     // minter contract should have no balance
     let minter_balance = router
@@ -504,7 +529,194 @@ fn happy_path() {
     );
     assert!(res.is_err());
 }
+#[test]
+fn mint_count_query() {
+    let mut router = custom_mock_app();
+    let (creator, buyer) = setup_accounts(&mut router);
+    let num_tokens: u64 = 10;
+    let (minter_addr, config) = setup_minter_contract(&mut router, &creator, num_tokens);
+    let sg721_addr = config.sg721_address;
+    let whitelist_addr = setup_whitelist_contract(&mut router, &creator);
+    const EXPIRATION_TIME: Timestamp = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000);
+    // set to genesis mint start time
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME);
+    let wl_msg = WhitelistExecuteMsg::UpdateEndTime(Expiration::AtTime(EXPIRATION_TIME));
+    let res = router.execute_contract(
+        creator.clone(),
+        whitelist_addr.clone(),
+        &wl_msg,
+        &coins(UNIT_PRICE, NATIVE_DENOM),
+    );
+    assert!(res.is_ok());
 
+    let wl_msg = WhitelistExecuteMsg::UpdateStartTime(Expiration::AtTime(Timestamp::from_nanos(0)));
+    let res = router.execute_contract(
+        creator.clone(),
+        whitelist_addr.clone(),
+        &wl_msg,
+        &coins(UNIT_PRICE, NATIVE_DENOM),
+    );
+    assert!(res.is_ok());
+    // set whitelist in minter contract
+    let set_whitelist_msg = ExecuteMsg::SetWhitelist {
+        whitelist: whitelist_addr.to_string(),
+    };
+    let res = router.execute_contract(
+        creator.clone(),
+        minter_addr.clone(),
+        &set_whitelist_msg,
+        &coins(UNIT_PRICE, NATIVE_DENOM),
+    );
+    assert!(res.is_ok());
+
+    // update per address_limit
+    let set_whitelist_msg = ExecuteMsg::UpdatePerAddressLimit {
+        per_address_limit: 3,
+    };
+    let res = router.execute_contract(
+        creator.clone(),
+        minter_addr.clone(),
+        &set_whitelist_msg,
+        &coins(UNIT_PRICE, NATIVE_DENOM),
+    );
+    assert!(res.is_ok());
+
+    let inner_msg = UpdateMembersMsg {
+        add: vec![buyer.to_string()],
+        remove: vec![],
+    };
+    let wasm_msg = WhitelistExecuteMsg::UpdateMembers(inner_msg);
+    let res = router.execute_contract(
+        creator.clone(),
+        whitelist_addr.clone(),
+        &wasm_msg,
+        &coins(UNIT_PRICE, NATIVE_DENOM),
+    );
+    assert!(res.is_ok());
+
+    // mint succeeds
+    let mint_msg = ExecuteMsg::Mint {};
+    let res = router.execute_contract(
+        buyer.clone(),
+        minter_addr.clone(),
+        &mint_msg,
+        &coins(WHITELIST_AMOUNT, NATIVE_DENOM),
+    );
+    assert!(res.is_ok());
+    // query count
+    let res: MintCountResponse = router
+        .wrap()
+        .query_wasm_smart(
+            minter_addr.clone(),
+            &QueryMsg::MintCount {
+                address: buyer.to_string(),
+            },
+        )
+        .unwrap();
+    assert_eq!(res.count, 1);
+    assert_eq!(res.adress, buyer.to_string());
+
+    // mint fails, over whitelist per address limit
+    let mint_msg = ExecuteMsg::Mint {};
+    let err = router
+        .execute_contract(
+            buyer.clone(),
+            minter_addr.clone(),
+            &mint_msg,
+            &coins(WHITELIST_AMOUNT, NATIVE_DENOM),
+        )
+        .unwrap_err();
+    assert_eq!(
+        err.source().unwrap().to_string(),
+        ContractError::MaxPerAddressLimitExceeded {}.to_string()
+    );
+
+    // set time after wl ends
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 20_000);
+
+    // public mint succeeds
+    let mint_msg = ExecuteMsg::Mint {};
+    let res = router.execute_contract(
+        buyer.clone(),
+        minter_addr.clone(),
+        &mint_msg,
+        &coins(UNIT_PRICE, NATIVE_DENOM),
+    );
+    assert!(res.is_ok());
+
+    // query count
+    let res: MintCountResponse = router
+        .wrap()
+        .query_wasm_smart(
+            minter_addr.clone(),
+            &QueryMsg::MintCount {
+                address: buyer.to_string(),
+            },
+        )
+        .unwrap();
+    assert_eq!(res.count, 2);
+    assert_eq!(res.adress, buyer.to_string());
+    let transfer_msg: Cw721ExecuteMsg<Empty> = Cw721ExecuteMsg::TransferNft {
+        recipient: creator.to_string(),
+        token_id: "1".to_string(),
+    };
+    let res = router.execute_contract(
+        buyer.clone(),
+        sg721_addr,
+        &transfer_msg,
+        &coins_for_msg(coin(123, NATIVE_DENOM)),
+    );
+    assert!(res.is_ok());
+    // mint succeeds
+    let mint_msg = ExecuteMsg::Mint {};
+    let res = router.execute_contract(
+        buyer.clone(),
+        minter_addr.clone(),
+        &mint_msg,
+        &coins(UNIT_PRICE, NATIVE_DENOM),
+    );
+    assert!(res.is_ok());
+
+    // query count
+    let res: MintCountResponse = router
+        .wrap()
+        .query_wasm_smart(
+            minter_addr.clone(),
+            &QueryMsg::MintCount {
+                address: buyer.to_string(),
+            },
+        )
+        .unwrap();
+    assert_eq!(res.count, 3);
+    assert_eq!(res.adress, buyer.to_string());
+    // mint fails
+    let mint_msg = ExecuteMsg::Mint {};
+    let err = router
+        .execute_contract(
+            buyer.clone(),
+            minter_addr.clone(),
+            &mint_msg,
+            &coins(WHITELIST_AMOUNT, NATIVE_DENOM),
+        )
+        .unwrap_err();
+    assert_eq!(
+        err.source().unwrap().to_string(),
+        ContractError::MaxPerAddressLimitExceeded {}.to_string()
+    );
+
+    // query count
+    let res: MintCountResponse = router
+        .wrap()
+        .query_wasm_smart(
+            minter_addr.clone(),
+            &QueryMsg::MintCount {
+                address: buyer.to_string(),
+            },
+        )
+        .unwrap();
+    assert_eq!(res.count, 3);
+    assert_eq!(res.adress, buyer.to_string());
+}
 #[test]
 fn whitelist_access_len_add_remove_expiration() {
     let mut router = custom_mock_app();
