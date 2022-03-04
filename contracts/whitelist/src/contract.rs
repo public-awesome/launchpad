@@ -81,7 +81,7 @@ pub fn instantiate(
         .to_u128()
         .unwrap()
         * PRICE_PER_1000_MEMBERS;
-    let payment = must_pay(&info, &NATIVE_DENOM)?;
+    let payment = must_pay(&info, NATIVE_DENOM)?;
     if payment != creation_fee.into() {
         return Err(ContractError::IncorrectCreationFee(
             payment.u128(),
@@ -333,7 +333,7 @@ pub fn execute_increase_member_limit(
     } else {
         0
     };
-    let payment = may_pay(&info, &NATIVE_DENOM)?;
+    let payment = may_pay(&info, NATIVE_DENOM)?;
     if payment != upgrade_fee.into() {
         return Err(ContractError::IncorrectCreationFee(
             payment.u128(),
