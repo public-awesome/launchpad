@@ -1,12 +1,3 @@
-#[cfg(not(feature = "library"))]
-use cosmwasm_std::entry_point;
-use cosmwasm_std::Order;
-use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult};
-use cw2::set_contract_version;
-use cw_utils::Expiration;
-use sg_std::fees::burn_and_distribute_fee;
-use sg_std::StargazeMsgWrapper;
-
 use crate::error::ContractError;
 use crate::msg::{
     ConfigResponse, ExecuteMsg, HasEndedResponse, HasMemberResponse, HasStartedResponse,
@@ -14,6 +5,16 @@ use crate::msg::{
     UpdateMembersMsg,
 };
 use crate::state::{Config, CONFIG, WHITELIST};
+#[cfg(not(feature = "library"))]
+use cosmwasm_std::entry_point;
+use cosmwasm_std::Order;
+use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult};
+use cw2::set_contract_version;
+use cw_utils::Expiration;
+use rust_decimal::prelude::ToPrimitive;
+use rust_decimal::Decimal;
+use sg_std::fees::burn_and_distribute_fee;
+use sg_std::StargazeMsgWrapper;
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sg-whitelist";
@@ -21,7 +22,7 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 // contract governance params
 const MAX_MEMBERS: u32 = 5000;
-const CREATION_FEE: u128 = 100_000_000;
+const PRICE_PER_1000_MEMBERS: u128 = 100_000_000;
 const MIN_MINT_PRICE: u128 = 25_000_000;
 const MAX_PER_ADDRESS_LIMIT: u32 = 30;
 
@@ -35,6 +36,14 @@ pub fn instantiate(
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+
+    if msg.member_limit == 0 || msg.member_limit > MAX_MEMBERS {
+        return Err(ContractError::InvalidMemberLimit {
+            min: 1,
+            max: MAX_MEMBERS,
+            got: msg.member_limit,
+        });
+    }
 
     if msg.unit_price.amount.u128() < MIN_MINT_PRICE {
         return Err(ContractError::InvalidUnitPrice(
@@ -57,6 +66,12 @@ pub fn instantiate(
         });
     }
 
+    let creation_fee = Decimal::new(msg.member_limit.into(), 3)
+        .ceil()
+        .to_u128()
+        .unwrap()
+        * PRICE_PER_1000_MEMBERS;
+
     let config = Config {
         admin: info.sender.clone(),
         start_time: msg.start_time,
@@ -64,6 +79,7 @@ pub fn instantiate(
         num_members: msg.members.len() as u32,
         unit_price: msg.unit_price,
         per_address_limit: msg.per_address_limit,
+        member_limit: msg.member_limit,
     };
     CONFIG.save(deps.storage, &config)?;
 
@@ -81,7 +97,7 @@ pub fn instantiate(
         ));
     }
 
-    let fee_msgs = burn_and_distribute_fee(env, &info, CREATION_FEE)?;
+    let fee_msgs = burn_and_distribute_fee(env, &info, creation_fee)?;
 
     if MAX_MEMBERS <= (config.num_members) {
         return Err(ContractError::MembersExceeded {
@@ -116,6 +132,9 @@ pub fn execute(
         ExecuteMsg::UpdateMembers(msg) => execute_update_members(deps, env, info, msg),
         ExecuteMsg::UpdatePerAddressLimit(per_address_limit) => {
             execute_update_per_address_limit(deps, env, info, per_address_limit)
+        }
+        ExecuteMsg::UpdateMemberLimit(member_limit) => {
+            execute_update_member_limit(deps, env, info, member_limit)
         }
     }
 }
@@ -218,6 +237,19 @@ pub fn execute_update_per_address_limit(
         .add_attribute("per_address_limit", per_address_limit.to_string()))
 }
 
+pub fn execute_update_member_limit(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    member_limit: u32,
+) -> Result<Response, ContractError> {
+    // TODO add payment if needed
+    // TODO add member
+    Ok(Response::new()
+        .add_attribute("action", "update_member_limit")
+        .add_attribute("per_address_limit", member_limit.to_string()))
+}
+
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
@@ -297,6 +329,7 @@ fn query_config(deps: Deps, env: Env) -> StdResult<ConfigResponse> {
     let config = CONFIG.load(deps.storage)?;
     Ok(ConfigResponse {
         per_address_limit: config.per_address_limit,
+        member_limit: config.member_limit,
         start_time: config.start_time,
         end_time: config.end_time,
         unit_price: config.unit_price,
@@ -327,6 +360,7 @@ mod tests {
             end_time: NON_EXPIRED_HEIGHT,
             unit_price: coin(UNIT_AMOUNT, NATIVE_DENOM),
             per_address_limit: 1,
+            member_limit: 1000,
         };
         let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
         let res = instantiate(deps, mock_env(), info, msg).unwrap();
@@ -348,6 +382,7 @@ mod tests {
             end_time: NON_EXPIRED_HEIGHT,
             unit_price: coin(1, NATIVE_DENOM),
             per_address_limit: 1,
+            member_limit: 1000,
         };
         let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
         instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
@@ -361,6 +396,7 @@ mod tests {
             end_time: Expiration::AtHeight(100),
             unit_price: coin(UNIT_AMOUNT, NATIVE_DENOM),
             per_address_limit: 1,
+            member_limit: 1000,
         };
         let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
         let mut deps = mock_dependencies();

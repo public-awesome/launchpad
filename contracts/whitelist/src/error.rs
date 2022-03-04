@@ -20,6 +20,9 @@ pub enum ContractError {
     #[error("Invalid minting limit per address. max: {max}, got: {got}")]
     InvalidPerAddressLimit { max: String, got: String },
 
+    #[error("Invalid member limit. min: {min}, max: {max}, got: {got}")]
+    InvalidMemberLimit { min: u32, max: u32, got: u32 },
+
     #[error("Max minting limit per address exceeded")]
     MaxPerAddressLimitExceeded {},
 
