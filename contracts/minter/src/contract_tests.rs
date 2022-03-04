@@ -227,9 +227,7 @@ fn initialization() {
             },
         },
     };
-    let res = instantiate(deps.as_mut(), mock_env(), info, msg);
-    println!("{:?}", res);
-    assert!(res.is_err());
+    instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
 
     // Invalid uri returns error
     let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
@@ -257,8 +255,7 @@ fn initialization() {
             },
         },
     };
-    let res = instantiate(deps.as_mut(), mock_env(), info, msg);
-    assert!(res.is_err());
+    instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
 
     // invalid denom returns error
     let wrong_denom = "uosmo";
@@ -287,8 +284,7 @@ fn initialization() {
             },
         },
     };
-    let res = instantiate(deps.as_mut(), mock_env(), info, msg);
-    assert!(res.is_err());
+    instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
 
     // insufficient mint price returns error
     let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
@@ -316,8 +312,7 @@ fn initialization() {
             },
         },
     };
-    let res = instantiate(deps.as_mut(), mock_env(), info, msg);
-    assert!(res.is_err());
+    instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
 
     // over max token limit
     let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
@@ -345,8 +340,7 @@ fn initialization() {
             },
         },
     };
-    let res = instantiate(deps.as_mut(), mock_env(), info, msg);
-    assert!(res.is_err());
+    instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
 
     // under min token limit
     let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));

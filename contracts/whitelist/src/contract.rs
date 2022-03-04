@@ -70,8 +70,6 @@ pub fn instantiate(
     };
     CONFIG.save(deps.storage, &config)?;
 
-    println!("{:?}", config);
-
     if msg.start_time > msg.end_time {
         return Err(ContractError::InvalidStartTime(
             msg.start_time,
@@ -199,8 +197,10 @@ pub fn execute_add_members(
             });
         }
         let addr = deps.api.addr_validate(&add)?;
-        WHITELIST.save(deps.storage, addr, &true)?;
-        config.num_members += 1;
+        if !WHITELIST.has(deps.storage, addr.clone()) {
+            WHITELIST.save(deps.storage, addr, &true)?;
+            config.num_members += 1;
+        }
     }
 
     CONFIG.save(deps.storage, &config)?;
