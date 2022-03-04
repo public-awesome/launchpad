@@ -5,6 +5,7 @@
   "required": [
     "end_time",
     "is_active",
+    "member_limit",
     "num_members",
     "per_address_limit",
     "start_time",
@@ -16,6 +17,11 @@
     },
     "is_active": {
       "type": "boolean"
+    },
+    "member_limit": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
     },
     "num_members": {
       "type": "integer",
