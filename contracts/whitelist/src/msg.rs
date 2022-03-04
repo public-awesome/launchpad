@@ -17,14 +17,13 @@ pub struct InstantiateMsg {
 pub enum ExecuteMsg {
     UpdateStartTime(Expiration),
     UpdateEndTime(Expiration),
-    UpdateMembers(UpdateMembersMsg),
+    UpdateMembers(AddMembersMsg),
     UpdatePerAddressLimit(u32),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct UpdateMembersMsg {
-    pub add: Vec<String>,
-    pub remove: Vec<String>,
+pub struct AddMembersMsg {
+    pub to_add: Vec<String>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

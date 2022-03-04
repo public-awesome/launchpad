@@ -10,7 +10,7 @@ use sg721::msg::{InstantiateMsg as Sg721InstantiateMsg, RoyaltyInfoResponse};
 use sg721::state::CollectionInfo;
 use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use whitelist::msg::InstantiateMsg as WhitelistInstantiateMsg;
-use whitelist::msg::{ExecuteMsg as WhitelistExecuteMsg, UpdateMembersMsg};
+use whitelist::msg::{AddMembersMsg, ExecuteMsg as WhitelistExecuteMsg};
 
 use crate::contract::instantiate;
 use crate::msg::{
@@ -786,9 +786,8 @@ fn whitelist_access_len_add_remove_expiration() {
     );
     assert!(res.is_err());
 
-    let inner_msg = UpdateMembersMsg {
-        add: vec![buyer.to_string()],
-        remove: vec![],
+    let inner_msg = AddMembersMsg {
+        to_add: vec![buyer.to_string()],
     };
     let wasm_msg = WhitelistExecuteMsg::UpdateMembers(inner_msg);
     let res = router.execute_contract(
@@ -882,10 +881,7 @@ fn whitelist_access_len_add_remove_expiration() {
     );
 
     // remove buyer from whitelist
-    let inner_msg = UpdateMembersMsg {
-        add: vec![],
-        remove: vec![buyer.to_string()],
-    };
+    let inner_msg = AddMembersMsg { to_add: vec![] };
     let wasm_msg = WhitelistExecuteMsg::UpdateMembers(inner_msg);
     let res = router.execute_contract(
         creator.clone(),
