@@ -3,9 +3,12 @@ use cosmwasm_std::entry_point;
 use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult};
 use cosmwasm_std::{Order, Timestamp};
 use cw2::set_contract_version;
+use cw_storage_plus::Bound;
+use cw_utils::maybe_addr;
 use cw_utils::Expiration;
+
 use sg_std::fees::burn_and_distribute_fee;
-use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME};
+use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
 use crate::error::ContractError;
 use crate::msg::{
@@ -25,6 +28,10 @@ const CREATION_FEE: u128 = 100_000_000;
 const MIN_MINT_PRICE: u128 = 25_000_000;
 const MAX_PER_ADDRESS_LIMIT: u32 = 30;
 
+// queries
+const PAGINATION_DEFAULT_LIMIT: u32 = 25;
+const PAGINATION_MAX_LIMIT: u32 = 100;
+
 type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -35,6 +42,10 @@ pub fn instantiate(
     mut msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+
+    if msg.unit_price.denom != NATIVE_DENOM {
+        return Err(ContractError::InvalidDenom(msg.unit_price.denom));
+    }
 
     if msg.unit_price.amount.u128() < MIN_MINT_PRICE {
         return Err(ContractError::InvalidUnitPrice(
@@ -276,7 +287,10 @@ pub fn execute_update_per_address_limit(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::Members {} => to_binary(&query_members(deps)?),
+        QueryMsg::Members { start_after, limit } => {
+            to_binary(&query_members(deps, start_after, limit)?)
+        }
+
         QueryMsg::HasStarted {} => to_binary(&query_has_started(deps, env)?),
         QueryMsg::HasEnded {} => to_binary(&query_has_ended(deps, env)?),
         QueryMsg::IsActive {} => to_binary(&query_is_active(deps, env)?),
@@ -307,9 +321,19 @@ fn query_is_active(deps: Deps, env: Env) -> StdResult<IsActiveResponse> {
     })
 }
 
-fn query_members(deps: Deps) -> StdResult<MembersResponse> {
+fn query_members(
+    deps: Deps,
+    start_after: Option<String>,
+    limit: Option<u32>,
+) -> StdResult<MembersResponse> {
+    let limit = limit
+        .unwrap_or(PAGINATION_DEFAULT_LIMIT)
+        .min(PAGINATION_MAX_LIMIT) as usize;
+    let start_addr = maybe_addr(deps.api, start_after)?;
+    let start = start_addr.map(Bound::exclusive);
     let members = WHITELIST
-        .range(deps.storage, None, None, Order::Ascending)
+        .range(deps.storage, start, None, Order::Ascending)
+        .take(limit)
         .map(|addr| addr.unwrap().0.to_string())
         .collect::<Vec<String>>();
 
@@ -388,6 +412,21 @@ mod tests {
     }
 
     #[test]
+    fn improper_initialization_invalid_denom() {
+        let mut deps = mock_dependencies();
+        let msg = InstantiateMsg {
+            members: vec!["adsfsa".to_string()],
+            start_time: NON_EXPIRED_HEIGHT,
+            end_time: NON_EXPIRED_HEIGHT,
+            unit_price: coin(UNIT_AMOUNT, "not_ustars"),
+            per_address_limit: 1,
+        };
+        let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
+        let err = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
+        assert_eq!(err.to_string(), "InvalidDenom: not_ustars");
+    }
+
+    #[test]
     fn improper_initialization_dedup() {
         let mut deps = mock_dependencies();
         let msg = InstantiateMsg {
@@ -461,7 +500,7 @@ mod tests {
         let info = mock_info(ADMIN, &[]);
         let res = execute(deps.as_mut(), mock_env(), info.clone(), msg.clone()).unwrap();
         assert_eq!(res.attributes.len(), 2);
-        let res = query_members(deps.as_ref()).unwrap();
+        let res = query_members(deps.as_ref(), None, None).unwrap();
         assert_eq!(res.members.len(), 2);
 
         execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap_err();
@@ -472,7 +511,7 @@ mod tests {
         let msg = ExecuteMsg::RemoveMembers(remove_msg);
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(res.attributes.len(), 2);
-        let res = query_members(deps.as_ref()).unwrap();
+        let res = query_members(deps.as_ref(), None, None).unwrap();
         assert_eq!(res.members.len(), 1);
     }
 
@@ -527,5 +566,64 @@ mod tests {
         assert_eq!(res.attributes.len(), 2);
         let wl_config: ConfigResponse = query_config(deps.as_ref(), mock_env()).unwrap();
         assert_eq!(wl_config.per_address_limit, per_address_limit);
+    }
+    #[test]
+    fn query_members_pagination() {
+        let mut deps = mock_dependencies();
+        let mut members = vec![];
+        for i in 0..150 {
+            members.push(format!("stars1{}", i));
+        }
+        let msg = InstantiateMsg {
+            members: members.clone(),
+            start_time: NON_EXPIRED_HEIGHT,
+            end_time: NON_EXPIRED_HEIGHT,
+            unit_price: coin(UNIT_AMOUNT, NATIVE_DENOM),
+            per_address_limit: 1,
+        };
+        let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
+        let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+        assert_eq!(2, res.messages.len());
+
+        let mut all_elements: Vec<String> = vec![];
+
+        // enforcing a min
+        let res = query_members(deps.as_ref(), None, None).unwrap();
+        assert_eq!(res.members.len(), 25);
+
+        // enforcing a max
+        let res = query_members(deps.as_ref(), None, Some(125)).unwrap();
+        assert_eq!(res.members.len(), 100);
+
+        // first fetch
+        let res = query_members(deps.as_ref(), None, Some(50)).unwrap();
+        assert_eq!(res.members.len(), 50);
+        all_elements.append(&mut res.members.clone());
+
+        // second
+        let res = query_members(
+            deps.as_ref(),
+            Some(res.members[res.members.len() - 1].clone()),
+            Some(50),
+        )
+        .unwrap();
+        assert_eq!(res.members.len(), 50);
+        all_elements.append(&mut res.members.clone());
+
+        // third
+        let res = query_members(
+            deps.as_ref(),
+            Some(res.members[res.members.len() - 1].clone()),
+            Some(50),
+        )
+        .unwrap();
+        all_elements.append(&mut res.members.clone());
+        assert_eq!(res.members.len(), 50);
+
+        // check fetched items
+        assert_eq!(all_elements.len(), 150);
+        members.sort();
+        all_elements.sort();
+        assert_eq!(members, all_elements);
     }
 }
