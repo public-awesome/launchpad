@@ -136,6 +136,10 @@ pub fn execute_update_start_time(
         return Err(ContractError::Unauthorized {});
     }
 
+    if start_time > config.end_time {
+        return Err(ContractError::InvalidStartTime(start_time, config.end_time));
+    }
+
     config.start_time = start_time;
     CONFIG.save(deps.storage, &config)?;
     Ok(Response::new()
@@ -152,6 +156,10 @@ pub fn execute_update_end_time(
     let mut config = CONFIG.load(deps.storage)?;
     if info.sender != config.admin {
         return Err(ContractError::Unauthorized {});
+    }
+
+    if end_time > config.start_time {
+        return Err(ContractError::InvalidEndTime(end_time, config.start_time));
     }
 
     config.end_time = end_time;

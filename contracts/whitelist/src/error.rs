@@ -14,6 +14,9 @@ pub enum ContractError {
     #[error("InvalidStartTime {0} > {1}")]
     InvalidStartTime(Expiration, Expiration),
 
+    #[error("InvalidEndTime {0} > {1}")]
+    InvalidEndTime(Expiration, Expiration),
+
     #[error("MembersExceeded: {expected} got {actual}")]
     MembersExceeded { expected: u32, actual: u32 },
 
