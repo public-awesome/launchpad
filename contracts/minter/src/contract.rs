@@ -12,8 +12,8 @@ use url::Url;
 
 use crate::error::ContractError;
 use crate::msg::{
-    ConfigResponse, ExecuteMsg, InstantiateMsg, MintPriceResponse, MintableNumTokensResponse,
-    QueryMsg, StartTimeResponse,
+    ConfigResponse, ExecuteMsg, InstantiateMsg, MintCountResponse, MintPriceResponse,
+    MintableNumTokensResponse, QueryMsg, StartTimeResponse,
 };
 use crate::state::{
     Config, CONFIG, MINTABLE_NUM_TOKENS, MINTABLE_TOKEN_IDS, MINTER_ADDRS, SG721_ADDRESS,
@@ -507,6 +507,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::StartTime {} => to_binary(&query_start_time(deps)?),
         QueryMsg::MintableNumTokens {} => to_binary(&query_mintable_num_tokens(deps)?),
         QueryMsg::MintPrice {} => to_binary(&query_mint_price(deps)?),
+        QueryMsg::MintCount { address } => to_binary(&query_mint_count(deps, address)?),
     }
 }
 
@@ -524,6 +525,15 @@ fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
         unit_price: config.unit_price,
         per_address_limit: config.per_address_limit,
         whitelist: config.whitelist,
+    })
+}
+
+fn query_mint_count(deps: Deps, address: String) -> StdResult<MintCountResponse> {
+    let addr = deps.api.addr_validate(&address)?;
+    let mint_count: u32 = (MINTER_ADDRS.key(addr.clone()).may_load(deps.storage)?).unwrap_or(0);
+    Ok(MintCountResponse {
+        address: addr.to_string(),
+        count: mint_count,
     })
 }
 
