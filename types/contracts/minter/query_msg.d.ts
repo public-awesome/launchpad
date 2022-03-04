@@ -14,4 +14,9 @@ start_time: {
 mint_price: {
 [k: string]: unknown
 }
+} | {
+mint_count: {
+address: string
+[k: string]: unknown
+}
 })
