@@ -17,6 +17,9 @@ pub enum ContractError {
     #[error("DuplicateMember: {0}")]
     DuplicateMember(String),
 
+    #[error("InvalidDenom: {0}")]
+    InvalidDenom(String),
+
     #[error("NoMemberFound: {0}")]
     NoMemberFound(String),
 
