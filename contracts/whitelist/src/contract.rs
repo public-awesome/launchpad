@@ -565,11 +565,13 @@ mod tests {
             Some(50),
         )
         .unwrap();
-        assert_eq!(res.members.len(), 50);
         all_elements.append(&mut res.members.clone());
+        assert_eq!(res.members.len(), 50);
 
         // check fetched items
         assert_eq!(all_elements.len(), 150);
-        assert_eq!(members.sort(), all_elements.sort());
+        members.sort();
+        all_elements.sort();
+        assert_eq!(members, all_elements);
     }
 }
