@@ -273,7 +273,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::HasEnded {} => to_binary(&query_has_ended(deps, env)?),
         QueryMsg::IsActive {} => to_binary(&query_is_active(deps, env)?),
         QueryMsg::HasMember { member } => to_binary(&query_has_member(deps, member)?),
-        QueryMsg::Config {} => to_binary(&query_config(deps)?),
+        QueryMsg::Config {} => to_binary(&query_config(deps, env)?),
     }
 }
 
@@ -316,7 +316,7 @@ fn query_has_member(deps: Deps, member: String) -> StdResult<HasMemberResponse> 
     })
 }
 
-fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
+fn query_config(deps: Deps, env: Env) -> StdResult<ConfigResponse> {
     let config = CONFIG.load(deps.storage)?;
     Ok(ConfigResponse {
         num_members: config.num_members,
@@ -324,6 +324,8 @@ fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
         start_time: config.start_time,
         end_time: config.end_time,
         unit_price: config.unit_price,
+        is_active: config.start_time.is_expired(&env.block)
+            && !config.end_time.is_expired(&env.block),
     })
 }
 
@@ -391,7 +393,7 @@ mod tests {
         };
         let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
         let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
-        let res = query_config(deps.as_ref()).unwrap();
+        let res = query_config(deps.as_ref(), mock_env()).unwrap();
         assert_eq!(1, res.num_members);
     }
 
@@ -418,7 +420,7 @@ mod tests {
         let info = mock_info(ADMIN, &[]);
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(res.attributes.len(), 3);
-        let res = query_config(deps.as_ref()).unwrap();
+        let res = query_config(deps.as_ref(), mock_env()).unwrap();
         assert_eq!(res.end_time, Expiration::AtHeight(10));
     }
 
@@ -498,7 +500,7 @@ mod tests {
         let info = mock_info(ADMIN, &[]);
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(res.attributes.len(), 2);
-        let wl_config: ConfigResponse = query_config(deps.as_ref()).unwrap();
+        let wl_config: ConfigResponse = query_config(deps.as_ref(), mock_env()).unwrap();
         assert_eq!(wl_config.per_address_limit, per_address_limit);
     }
 }
