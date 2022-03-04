@@ -582,9 +582,8 @@ fn mint_count_query() {
     );
     assert!(res.is_ok());
 
-    let inner_msg = UpdateMembersMsg {
-        add: vec![buyer.to_string()],
-        remove: vec![],
+    let inner_msg = AddMembersMsg {
+        to_add: vec![buyer.to_string()],
     };
     let wasm_msg = WhitelistExecuteMsg::UpdateMembers(inner_msg);
     let res = router.execute_contract(
