@@ -565,7 +565,7 @@ mod tests {
             Some(50),
         )
         .unwrap();
-        assert_eq!(res.members.len() - 1, 50);
+        assert_eq!(res.members.len(), 50);
         all_elements.append(&mut res.members.clone());
 
         // check fetched items
