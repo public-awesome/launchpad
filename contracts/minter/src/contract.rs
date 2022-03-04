@@ -532,7 +532,7 @@ fn query_mint_count(deps: Deps, address: String) -> StdResult<MintCountResponse>
     let addr = deps.api.addr_validate(&address)?;
     let mint_count: u32 = (MINTER_ADDRS.key(addr.clone()).may_load(deps.storage)?).unwrap_or(0);
     Ok(MintCountResponse {
-        adress: addr.to_string(),
+        address: addr.to_string(),
         count: mint_count,
     })
 }

@@ -433,7 +433,7 @@ fn happy_path() {
         )
         .unwrap();
     assert_eq!(res.count, 1);
-    assert_eq!(res.adress, buyer.to_string());
+    assert_eq!(res.address, buyer.to_string());
 
     // Check NFT is transferred
     let query_owner_msg = Cw721QueryMsg::OwnerOf {
@@ -484,7 +484,7 @@ fn happy_path() {
         )
         .unwrap();
     assert_eq!(res.count, 1);
-    assert_eq!(res.adress, buyer.to_string());
+    assert_eq!(res.address, buyer.to_string());
 
     // minter contract should have no balance
     let minter_balance = router
@@ -614,7 +614,7 @@ fn mint_count_query() {
         )
         .unwrap();
     assert_eq!(res.count, 1);
-    assert_eq!(res.adress, buyer.to_string());
+    assert_eq!(res.address, buyer.to_string());
 
     // mint fails, over whitelist per address limit
     let mint_msg = ExecuteMsg::Mint {};
@@ -655,7 +655,7 @@ fn mint_count_query() {
         )
         .unwrap();
     assert_eq!(res.count, 2);
-    assert_eq!(res.adress, buyer.to_string());
+    assert_eq!(res.address, buyer.to_string());
     let transfer_msg: Cw721ExecuteMsg<Empty> = Cw721ExecuteMsg::TransferNft {
         recipient: creator.to_string(),
         token_id: "1".to_string(),
@@ -688,7 +688,7 @@ fn mint_count_query() {
         )
         .unwrap();
     assert_eq!(res.count, 3);
-    assert_eq!(res.adress, buyer.to_string());
+    assert_eq!(res.address, buyer.to_string());
     // mint fails
     let mint_msg = ExecuteMsg::Mint {};
     let err = router
@@ -715,7 +715,7 @@ fn mint_count_query() {
         )
         .unwrap();
     assert_eq!(res.count, 3);
-    assert_eq!(res.adress, buyer.to_string());
+    assert_eq!(res.address, buyer.to_string());
 }
 #[test]
 fn whitelist_access_len_add_remove_expiration() {

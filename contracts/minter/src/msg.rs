@@ -70,6 +70,6 @@ pub struct MintPriceResponse {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct MintCountResponse {
-    pub adress: String,
+    pub address: String,
     pub count: u32,
 }
