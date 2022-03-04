@@ -11,8 +11,8 @@ use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult
 use cosmwasm_std::{Order, Timestamp};
 use cw2::set_contract_version;
 use cw_storage_plus::Bound;
-use cw_utils::maybe_addr;
 use cw_utils::Expiration;
+use cw_utils::{maybe_addr, must_pay};
 use rust_decimal::prelude::ToPrimitive;
 use rust_decimal::Decimal;
 use sg_std::fees::burn_and_distribute_fee;
@@ -81,6 +81,13 @@ pub fn instantiate(
         .to_u128()
         .unwrap()
         * PRICE_PER_1000_MEMBERS;
+    let payment = must_pay(&info, &NATIVE_DENOM)?;
+    if payment != creation_fee.into() {
+        return Err(ContractError::IncorrectCreationFee(
+            payment.u128(),
+            creation_fee,
+        ));
+    }
 
     // remove duplicate members
     msg.members.sort_unstable();
