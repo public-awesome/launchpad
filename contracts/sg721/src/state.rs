@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct CollectionInfo<T> {
+    pub creator: String,
     pub description: String,
     pub image: String,
     pub external_link: Option<String>,
