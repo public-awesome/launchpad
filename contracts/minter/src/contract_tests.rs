@@ -588,7 +588,7 @@ fn mint_count_query() {
     let wasm_msg = WhitelistExecuteMsg::UpdateMembers(inner_msg);
     let res = router.execute_contract(
         creator.clone(),
-        whitelist_addr.clone(),
+        whitelist_addr,
         &wasm_msg,
         &coins(UNIT_PRICE, NATIVE_DENOM),
     );
@@ -708,7 +708,7 @@ fn mint_count_query() {
     let res: MintCountResponse = router
         .wrap()
         .query_wasm_smart(
-            minter_addr.clone(),
+            minter_addr,
             &QueryMsg::MintCount {
                 address: buyer.to_string(),
             },
