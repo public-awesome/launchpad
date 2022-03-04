@@ -544,6 +544,14 @@ mod tests {
         let mut all_elements: Vec<String> = vec![];
 
         // enforcing a min
+        let res = query_members(deps.as_ref(), None, None).unwrap();
+        assert_eq!(res.members.len(), 25);
+
+        // enforcing a max
+        let res = query_members(deps.as_ref(), None, Some(125)).unwrap();
+        assert_eq!(res.members.len(), 100);
+
+        // first fetch
         let res = query_members(deps.as_ref(), None, Some(50)).unwrap();
         assert_eq!(res.members.len(), 50);
         all_elements.append(&mut res.members.clone());
