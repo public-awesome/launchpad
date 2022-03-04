@@ -78,6 +78,7 @@ pub struct UnitPriceResponse {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct ConfigResponse {
+    pub num_members: u32,
     pub per_address_limit: u32,
     pub start_time: Expiration,
     pub end_time: Expiration,

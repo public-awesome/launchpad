@@ -32,7 +32,7 @@ pub fn instantiate(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    msg: InstantiateMsg,
+    mut msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
@@ -57,6 +57,10 @@ pub fn instantiate(
         });
     }
 
+    // remove duplicate members
+    msg.members.sort_unstable();
+    msg.members.dedup();
+
     let config = Config {
         admin: info.sender.clone(),
         start_time: msg.start_time,
@@ -66,6 +70,8 @@ pub fn instantiate(
         per_address_limit: msg.per_address_limit,
     };
     CONFIG.save(deps.storage, &config)?;
+
+    println!("{:?}", config);
 
     if msg.start_time > msg.end_time {
         return Err(ContractError::InvalidStartTime(
@@ -296,6 +302,7 @@ fn query_has_member(deps: Deps, member: String) -> StdResult<HasMemberResponse> 
 fn query_config(deps: Deps, env: Env) -> StdResult<ConfigResponse> {
     let config = CONFIG.load(deps.storage)?;
     Ok(ConfigResponse {
+        num_members: config.num_members,
         per_address_limit: config.per_address_limit,
         start_time: config.start_time,
         end_time: config.end_time,
@@ -351,6 +358,26 @@ mod tests {
         };
         let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
         instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
+    }
+
+    #[test]
+    fn improper_initialization_dedup() {
+        let mut deps = mock_dependencies();
+        let msg = InstantiateMsg {
+            members: vec![
+                "adsfsa".to_string(),
+                "adsfsa".to_string(),
+                "adsfsa".to_string(),
+            ],
+            start_time: NON_EXPIRED_HEIGHT,
+            end_time: NON_EXPIRED_HEIGHT,
+            unit_price: coin(UNIT_AMOUNT, NATIVE_DENOM),
+            per_address_limit: 1,
+        };
+        let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
+        let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let res = query_config(deps.as_ref(), mock_env()).unwrap();
+        assert_eq!(1, res.num_members);
     }
 
     #[test]
