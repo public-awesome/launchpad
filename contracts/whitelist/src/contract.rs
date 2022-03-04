@@ -120,9 +120,9 @@ pub fn instantiate(
 
     let fee_msgs = burn_and_distribute_fee(env, &info, creation_fee)?;
 
-    if MAX_MEMBERS <= (config.num_members) {
+    if config.member_limit < config.num_members {
         return Err(ContractError::MembersExceeded {
-            expected: MAX_MEMBERS,
+            expected: config.member_limit,
             actual: config.num_members,
         });
     }
@@ -155,8 +155,8 @@ pub fn execute(
         ExecuteMsg::UpdatePerAddressLimit(per_address_limit) => {
             execute_update_per_address_limit(deps, env, info, per_address_limit)
         }
-        ExecuteMsg::UpdateMemberLimit(member_limit) => {
-            execute_update_member_limit(deps, env, info, member_limit)
+        ExecuteMsg::IncreaseMemberLimit(member_limit) => {
+            execute_increase_member_limit(deps, env, info, member_limit)
         }
     }
 }
@@ -236,9 +236,9 @@ pub fn execute_add_members(
     }
 
     for add in msg.to_add.into_iter() {
-        if config.num_members >= MAX_MEMBERS {
+        if config.num_members >= config.member_limit {
             return Err(ContractError::MembersExceeded {
-                expected: MAX_MEMBERS,
+                expected: config.member_limit,
                 actual: config.num_members,
             });
         }
@@ -309,17 +309,43 @@ pub fn execute_update_per_address_limit(
         .add_attribute("per_address_limit", per_address_limit.to_string()))
 }
 
-pub fn execute_update_member_limit(
+/// Increase member limit. Must include a fee if crossing 1000, 2000, etc member limit.
+pub fn execute_increase_member_limit(
     deps: DepsMut,
-    env: Env,
+    _env: Env,
     info: MessageInfo,
     member_limit: u32,
 ) -> Result<Response, ContractError> {
-    // TODO add payment if needed
-    // TODO add member
+    let mut config = CONFIG.load(deps.storage)?;
+    if config.member_limit > member_limit || member_limit > MAX_MEMBERS {
+        return Err(ContractError::InvalidMemberLimit {
+            min: config.member_limit,
+            max: MAX_MEMBERS,
+            got: member_limit,
+        });
+    }
+
+    // if new limit crosses 1,000 members, requires upgrade fee. Otherwise, free upgrade.
+    let old_limit = Decimal::new(config.member_limit.into(), 3).ceil();
+    let new_limit = Decimal::new(member_limit.into(), 3).ceil();
+    let upgrade_fee: u128 = if new_limit > old_limit {
+        (new_limit - old_limit).to_u128().unwrap() * PRICE_PER_1000_MEMBERS
+    } else {
+        0
+    };
+    let payment = must_pay(&info, &NATIVE_DENOM)?;
+    if payment != upgrade_fee.into() {
+        return Err(ContractError::IncorrectCreationFee(
+            payment.u128(),
+            upgrade_fee,
+        ));
+    }
+
+    config.member_limit = member_limit;
+    CONFIG.save(deps.storage, &config)?;
     Ok(Response::new()
-        .add_attribute("action", "update_member_limit")
-        .add_attribute("per_address_limit", member_limit.to_string()))
+        .add_attribute("action", "increase_member_limit")
+        .add_attribute("member_limit", member_limit.to_string()))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]

@@ -21,7 +21,7 @@ pub enum ExecuteMsg {
     AddMembers(AddMembersMsg),
     RemoveMembers(RemoveMembersMsg),
     UpdatePerAddressLimit(u32),
-    UpdateMemberLimit(u32),
+    IncreaseMemberLimit(u32),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
