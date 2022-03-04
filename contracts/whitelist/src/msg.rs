@@ -38,8 +38,13 @@ pub enum QueryMsg {
     HasStarted {},
     HasEnded {},
     IsActive {},
-    Members {},
-    HasMember { member: String },
+    Members {
+        start_after: Option<String>,
+        limit: Option<u32>,
+    },
+    HasMember {
+        member: String,
+    },
     Config {},
 }
 

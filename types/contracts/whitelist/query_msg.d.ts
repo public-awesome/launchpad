@@ -12,6 +12,8 @@ is_active: {
 }
 } | {
 members: {
+limit?: (number | null)
+start_after?: (string | null)
 [k: string]: unknown
 }
 } | {
