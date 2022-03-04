@@ -33,7 +33,7 @@
       ],
       "properties": {
         "update_members": {
-          "$ref": "#/definitions/UpdateMembersMsg"
+          "$ref": "#/definitions/AddMembersMsg"
         }
       },
       "additionalProperties": false
@@ -54,6 +54,20 @@
     }
   ],
   "definitions": {
+    "AddMembersMsg": {
+      "type": "object",
+      "required": [
+        "to_add"
+      ],
+      "properties": {
+        "to_add": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "Expiration": {
       "description": "Expiration represents a point in time when some event happens. It can compare with a BlockInfo and will return is_expired() == true once the condition is hit (and for every block in the future)",
       "oneOf": [
@@ -111,27 +125,6 @@
     "Uint64": {
       "description": "A thin wrapper around u64 that is using strings for JSON encoding/decoding, such that the full u64 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u64` to get the value out:\n\n``` # use cosmwasm_std::Uint64; let a = Uint64::from(42u64); assert_eq!(a.u64(), 42);\n\nlet b = Uint64::from(70u32); assert_eq!(b.u64(), 70); ```",
       "type": "string"
-    },
-    "UpdateMembersMsg": {
-      "type": "object",
-      "required": [
-        "add",
-        "remove"
-      ],
-      "properties": {
-        "add": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "remove": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        }
-      }
     }
   }
 }

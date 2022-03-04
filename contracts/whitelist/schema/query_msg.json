@@ -5,30 +5,6 @@
     {
       "type": "object",
       "required": [
-        "start_time"
-      ],
-      "properties": {
-        "start_time": {
-          "type": "object"
-        }
-      },
-      "additionalProperties": false
-    },
-    {
-      "type": "object",
-      "required": [
-        "end_time"
-      ],
-      "properties": {
-        "end_time": {
-          "type": "object"
-        }
-      },
-      "additionalProperties": false
-    },
-    {
-      "type": "object",
-      "required": [
         "has_started"
       ],
       "properties": {
@@ -90,18 +66,6 @@
               "type": "string"
             }
           }
-        }
-      },
-      "additionalProperties": false
-    },
-    {
-      "type": "object",
-      "required": [
-        "unit_price"
-      ],
-      "properties": {
-        "unit_price": {
-          "type": "object"
         }
       },
       "additionalProperties": false
