@@ -12,7 +12,7 @@ use cosmwasm_std::{Order, Timestamp};
 use cw2::set_contract_version;
 use cw_storage_plus::Bound;
 use cw_utils::Expiration;
-use cw_utils::{maybe_addr, must_pay};
+use cw_utils::{may_pay, maybe_addr, must_pay};
 use rust_decimal::prelude::ToPrimitive;
 use rust_decimal::Decimal;
 use sg_std::fees::burn_and_distribute_fee;
@@ -333,7 +333,7 @@ pub fn execute_increase_member_limit(
     } else {
         0
     };
-    let payment = must_pay(&info, &NATIVE_DENOM)?;
+    let payment = may_pay(&info, &NATIVE_DENOM)?;
     if payment != upgrade_fee.into() {
         return Err(ContractError::IncorrectCreationFee(
             payment.u128(),
@@ -495,6 +495,25 @@ mod tests {
     }
 
     #[test]
+    fn improper_initialization_invalid_creation_fee() {
+        let mut deps = mock_dependencies();
+        let msg = InstantiateMsg {
+            members: vec!["adsfsa".to_string()],
+            start_time: NON_EXPIRED_HEIGHT,
+            end_time: NON_EXPIRED_HEIGHT,
+            unit_price: coin(UNIT_AMOUNT, "ustars"),
+            per_address_limit: 1,
+            member_limit: 3000,
+        };
+        let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
+        let err = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
+        assert_eq!(
+            err.to_string(),
+            "IncorrectCreationFee 100000000 < 300000000"
+        );
+    }
+
+    #[test]
     fn improper_initialization_dedup() {
         let mut deps = mock_dependencies();
         let msg = InstantiateMsg {
@@ -601,8 +620,8 @@ mod tests {
         let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
         assert_eq!(
             ContractError::MembersExceeded {
-                expected: 5000,
-                actual: 5000
+                expected: 1000,
+                actual: 1000
             }
             .to_string(),
             err.to_string()
@@ -696,5 +715,40 @@ mod tests {
         members.sort();
         all_elements.sort();
         assert_eq!(members, all_elements);
+    }
+
+    #[test]
+    fn increase_member_limit() {
+        let mut deps = mock_dependencies();
+        setup_contract(deps.as_mut());
+        let res = query_config(deps.as_ref(), mock_env()).unwrap();
+        assert_eq!(1000, res.member_limit);
+
+        // needs upgrade fee
+        let msg = ExecuteMsg::IncreaseMemberLimit(1001);
+        let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
+        let res = execute(deps.as_mut(), mock_env(), info, msg);
+        assert!(res.is_ok());
+
+        // 0 upgrade fee
+        let msg = ExecuteMsg::IncreaseMemberLimit(1002);
+        let info = mock_info(ADMIN, &[coin(0, "ustars")]);
+        let res = execute(deps.as_mut(), mock_env(), info, msg);
+        assert!(res.is_ok());
+
+        // 0 upgrade fee, fails when including a fee
+        let msg = ExecuteMsg::IncreaseMemberLimit(1002);
+        let info = mock_info(ADMIN, &[coin(1, "ustars")]);
+        let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
+        assert_eq!(err.to_string(), "IncorrectCreationFee 1 < 0");
+
+        // over MAX_MEMBERS, Invalid member limit
+        let msg = ExecuteMsg::IncreaseMemberLimit(6000);
+        let info = mock_info(ADMIN, &[coin(400_000_000, "ustars")]);
+        let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
+        assert_eq!(
+            err.to_string(),
+            "Invalid member limit. min: 1002, max: 5000, got: 6000"
+        );
     }
 }
