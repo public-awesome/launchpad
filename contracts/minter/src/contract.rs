@@ -21,7 +21,6 @@ use crate::state::{
 use sg_std::{burn_and_distribute_fee, StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use whitelist::msg::{
     ConfigResponse as WhitelistConfigResponse, HasMemberResponse, QueryMsg as WhitelistQueryMsg,
-    UnitPriceResponse,
 };
 
 pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
@@ -484,6 +483,7 @@ pub fn mint_price(deps: Deps, admin_no_fee: bool) -> Result<Coin, StdError> {
         let wl_config: WhitelistConfigResponse = deps
             .querier
             .query_wasm_smart(whitelist, &WhitelistQueryMsg::Config {})?;
+
         if wl_config.is_active {
             wl_config.unit_price
         } else {
@@ -554,10 +554,10 @@ fn query_mint_price(deps: Deps) -> StdResult<MintPriceResponse> {
     let current_price = mint_price(deps, false)?;
     let public_price = config.unit_price;
     let whitelist_price: Option<Coin> = if let Some(whitelist) = config.whitelist {
-        let unit_price: UnitPriceResponse = deps
+        let wl_config: WhitelistConfigResponse = deps
             .querier
-            .query_wasm_smart(whitelist, &WhitelistQueryMsg::UnitPrice {})?;
-        Some(unit_price.unit_price)
+            .query_wasm_smart(whitelist, &WhitelistQueryMsg::Config {})?;
+        Some(wl_config.unit_price)
     } else {
         None
     };

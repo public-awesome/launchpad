@@ -3,10 +3,14 @@
   "title": "CollectionInfoResponse",
   "type": "object",
   "required": [
+    "creator",
     "description",
     "image"
   ],
   "properties": {
+    "creator": {
+      "type": "string"
+    },
     "description": {
       "type": "string"
     },

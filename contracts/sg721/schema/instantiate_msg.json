@@ -26,10 +26,14 @@
     "CollectionInfo_for_RoyaltyInfoResponse": {
       "type": "object",
       "required": [
+        "creator",
         "description",
         "image"
       ],
       "properties": {
+        "creator": {
+          "type": "string"
+        },
         "description": {
           "type": "string"
         },

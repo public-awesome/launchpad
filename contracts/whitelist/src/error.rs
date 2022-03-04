@@ -11,8 +11,23 @@ pub enum ContractError {
     #[error("Unauthorized")]
     Unauthorized {},
 
+    #[error("AlreadyStarted")]
+    AlreadyStarted {},
+
+    #[error("DuplicateMember: {0}")]
+    DuplicateMember(String),
+
+    #[error("InvalidDenom: {0}")]
+    InvalidDenom(String),
+
+    #[error("NoMemberFound: {0}")]
+    NoMemberFound(String),
+
     #[error("InvalidStartTime {0} > {1}")]
     InvalidStartTime(Expiration, Expiration),
+
+    #[error("InvalidEndTime {0} > {1}")]
+    InvalidEndTime(Expiration, Expiration),
 
     #[error("MembersExceeded: {expected} got {actual}")]
     MembersExceeded { expected: u32, actual: u32 },
