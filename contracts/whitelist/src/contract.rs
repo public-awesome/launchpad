@@ -124,7 +124,7 @@ pub fn instantiate(
             msg.start_time,
             genesis_start_time,
         ));
-    }
+    }    
 
     let fee_msgs = burn_and_distribute_fee(env, &info, creation_fee)?;
 
