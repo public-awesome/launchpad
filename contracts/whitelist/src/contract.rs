@@ -234,13 +234,17 @@ pub fn execute_add_members(
 
 pub fn execute_remove_members(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
     msg: RemoveMembersMsg,
 ) -> Result<Response, ContractError> {
     let mut config = CONFIG.load(deps.storage)?;
     if info.sender != config.admin {
         return Err(ContractError::Unauthorized {});
+    }
+
+    if config.start_time.is_expired(&env.block) {
+        return Err(ContractError::AlreadyStarted {});
     }
 
     for remove in msg.to_remove.into_iter() {
