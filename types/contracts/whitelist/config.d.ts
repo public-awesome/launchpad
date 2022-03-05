@@ -14,6 +14,7 @@ export type Addr = string
 export interface Config {
 admin: Addr
 end_time: Expiration
+member_limit: number
 num_members: number
 per_address_limit: number
 start_time: Expiration
