@@ -7,7 +7,7 @@ use crate::msg::{
 use crate::state::{Config, CONFIG, WHITELIST};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult};
+use cosmwasm_std::{to_binary, Binary, CosmosMsg, Deps, DepsMut, Env, MessageInfo, StdResult};
 use cosmwasm_std::{Order, Timestamp};
 use cw2::set_contract_version;
 use cw_storage_plus::Bound;
@@ -312,10 +312,11 @@ pub fn execute_update_per_address_limit(
 /// Increase member limit. Must include a fee if crossing 1000, 2000, etc member limit.
 pub fn execute_increase_member_limit(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
     member_limit: u32,
 ) -> Result<Response, ContractError> {
+    let mut fee_msgs: Vec<CosmosMsg<StargazeMsgWrapper>> = vec![];
     let mut config = CONFIG.load(deps.storage)?;
     if config.member_limit > member_limit || member_limit > MAX_MEMBERS {
         return Err(ContractError::InvalidMemberLimit {
@@ -341,11 +342,17 @@ pub fn execute_increase_member_limit(
         ));
     }
 
+    // add fee messages if upgrade fee
+    if upgrade_fee > 0 {
+        fee_msgs = burn_and_distribute_fee(env, &info, upgrade_fee)?;
+    }
+
     config.member_limit = member_limit;
     CONFIG.save(deps.storage, &config)?;
     Ok(Response::new()
         .add_attribute("action", "increase_member_limit")
-        .add_attribute("member_limit", member_limit.to_string()))
+        .add_attribute("member_limit", member_limit.to_string())
+        .add_messages(fee_msgs))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
