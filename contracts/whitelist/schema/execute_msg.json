@@ -63,6 +63,20 @@
         }
       },
       "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "increase_member_limit"
+      ],
+      "properties": {
+        "increase_member_limit": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        }
+      },
+      "additionalProperties": false
     }
   ],
   "definitions": {

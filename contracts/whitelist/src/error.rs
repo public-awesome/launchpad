@@ -1,5 +1,5 @@
 use cosmwasm_std::StdError;
-use cw_utils::Expiration;
+use cw_utils::{Expiration, PaymentError};
 use sg_std::fees::FeeError;
 use thiserror::Error;
 
@@ -35,6 +35,9 @@ pub enum ContractError {
     #[error("Invalid minting limit per address. max: {max}, got: {got}")]
     InvalidPerAddressLimit { max: String, got: String },
 
+    #[error("Invalid member limit. min: {min}, max: {max}, got: {got}")]
+    InvalidMemberLimit { min: u32, max: u32, got: u32 },
+
     #[error("Max minting limit per address exceeded")]
     MaxPerAddressLimitExceeded {},
 
@@ -43,4 +46,10 @@ pub enum ContractError {
 
     #[error("InvalidUnitPrice {0} < {1}")]
     InvalidUnitPrice(u128, u128),
+
+    #[error("IncorrectCreationFee {0} < {1}")]
+    IncorrectCreationFee(u128, u128),
+
+    #[error("{0}")]
+    PaymentError(#[from] PaymentError),
 }

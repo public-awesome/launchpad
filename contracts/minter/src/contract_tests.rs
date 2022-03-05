@@ -69,6 +69,7 @@ fn setup_whitelist_contract(router: &mut StargazeApp, creator: &Addr) -> Addr {
         end_time: Expiration::Never {},
         unit_price: coin(WHITELIST_AMOUNT, NATIVE_DENOM),
         per_address_limit: WL_PER_ADDRESS_LIMIT,
+        member_limit: 1000,
     };
     router
         .instantiate_contract(

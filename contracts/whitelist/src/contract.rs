@@ -1,15 +1,3 @@
-#[cfg(not(feature = "library"))]
-use cosmwasm_std::entry_point;
-use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult};
-use cosmwasm_std::{Order, Timestamp};
-use cw2::set_contract_version;
-use cw_storage_plus::Bound;
-use cw_utils::maybe_addr;
-use cw_utils::Expiration;
-
-use sg_std::fees::burn_and_distribute_fee;
-use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
-
 use crate::error::ContractError;
 use crate::msg::{
     AddMembersMsg, ConfigResponse, ExecuteMsg, HasEndedResponse, HasMemberResponse,
@@ -17,6 +5,18 @@ use crate::msg::{
     RemoveMembersMsg,
 };
 use crate::state::{Config, CONFIG, WHITELIST};
+#[cfg(not(feature = "library"))]
+use cosmwasm_std::entry_point;
+use cosmwasm_std::{to_binary, Binary, CosmosMsg, Deps, DepsMut, Env, MessageInfo, StdResult};
+use cosmwasm_std::{Order, Timestamp};
+use cw2::set_contract_version;
+use cw_storage_plus::Bound;
+use cw_utils::Expiration;
+use cw_utils::{may_pay, maybe_addr, must_pay};
+use rust_decimal::prelude::ToPrimitive;
+use rust_decimal::Decimal;
+use sg_std::fees::burn_and_distribute_fee;
+use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sg-whitelist";
@@ -24,7 +24,7 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 // contract governance params
 const MAX_MEMBERS: u32 = 5000;
-const CREATION_FEE: u128 = 100_000_000;
+const PRICE_PER_1000_MEMBERS: u128 = 100_000_000;
 const MIN_MINT_PRICE: u128 = 25_000_000;
 const MAX_PER_ADDRESS_LIMIT: u32 = 30;
 
@@ -42,6 +42,14 @@ pub fn instantiate(
     mut msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+
+    if msg.member_limit == 0 || msg.member_limit > MAX_MEMBERS {
+        return Err(ContractError::InvalidMemberLimit {
+            min: 1,
+            max: MAX_MEMBERS,
+            got: msg.member_limit,
+        });
+    }
 
     if msg.unit_price.denom != NATIVE_DENOM {
         return Err(ContractError::InvalidDenom(msg.unit_price.denom));
@@ -68,6 +76,19 @@ pub fn instantiate(
         });
     }
 
+    let creation_fee = Decimal::new(msg.member_limit.into(), 3)
+        .ceil()
+        .to_u128()
+        .unwrap()
+        * PRICE_PER_1000_MEMBERS;
+    let payment = must_pay(&info, NATIVE_DENOM)?;
+    if payment != creation_fee.into() {
+        return Err(ContractError::IncorrectCreationFee(
+            payment.u128(),
+            creation_fee,
+        ));
+    }
+
     // remove duplicate members
     msg.members.sort_unstable();
     msg.members.dedup();
@@ -79,6 +100,7 @@ pub fn instantiate(
         num_members: msg.members.len() as u32,
         unit_price: msg.unit_price,
         per_address_limit: msg.per_address_limit,
+        member_limit: msg.member_limit,
     };
     CONFIG.save(deps.storage, &config)?;
 
@@ -96,11 +118,11 @@ pub fn instantiate(
         ));
     }
 
-    let fee_msgs = burn_and_distribute_fee(env, &info, CREATION_FEE)?;
+    let fee_msgs = burn_and_distribute_fee(env, &info, creation_fee)?;
 
-    if MAX_MEMBERS <= (config.num_members) {
+    if config.member_limit < config.num_members {
         return Err(ContractError::MembersExceeded {
-            expected: MAX_MEMBERS,
+            expected: config.member_limit,
             actual: config.num_members,
         });
     }
@@ -132,6 +154,9 @@ pub fn execute(
         ExecuteMsg::RemoveMembers(msg) => execute_remove_members(deps, env, info, msg),
         ExecuteMsg::UpdatePerAddressLimit(per_address_limit) => {
             execute_update_per_address_limit(deps, env, info, per_address_limit)
+        }
+        ExecuteMsg::IncreaseMemberLimit(member_limit) => {
+            execute_increase_member_limit(deps, env, info, member_limit)
         }
     }
 }
@@ -211,9 +236,9 @@ pub fn execute_add_members(
     }
 
     for add in msg.to_add.into_iter() {
-        if config.num_members >= MAX_MEMBERS {
+        if config.num_members >= config.member_limit {
             return Err(ContractError::MembersExceeded {
-                expected: MAX_MEMBERS,
+                expected: config.member_limit,
                 actual: config.num_members,
             });
         }
@@ -288,6 +313,52 @@ pub fn execute_update_per_address_limit(
         .add_attribute("per_address_limit", per_address_limit.to_string()))
 }
 
+/// Increase member limit. Must include a fee if crossing 1000, 2000, etc member limit.
+pub fn execute_increase_member_limit(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    member_limit: u32,
+) -> Result<Response, ContractError> {
+    let mut fee_msgs: Vec<CosmosMsg<StargazeMsgWrapper>> = vec![];
+    let mut config = CONFIG.load(deps.storage)?;
+    if config.member_limit > member_limit || member_limit > MAX_MEMBERS {
+        return Err(ContractError::InvalidMemberLimit {
+            min: config.member_limit,
+            max: MAX_MEMBERS,
+            got: member_limit,
+        });
+    }
+
+    // if new limit crosses 1,000 members, requires upgrade fee. Otherwise, free upgrade.
+    let old_limit = Decimal::new(config.member_limit.into(), 3).ceil();
+    let new_limit = Decimal::new(member_limit.into(), 3).ceil();
+    let upgrade_fee: u128 = if new_limit > old_limit {
+        (new_limit - old_limit).to_u128().unwrap() * PRICE_PER_1000_MEMBERS
+    } else {
+        0
+    };
+    let payment = may_pay(&info, NATIVE_DENOM)?;
+    if payment != upgrade_fee.into() {
+        return Err(ContractError::IncorrectCreationFee(
+            payment.u128(),
+            upgrade_fee,
+        ));
+    }
+
+    // add fee messages if upgrade fee
+    if upgrade_fee > 0 {
+        fee_msgs = burn_and_distribute_fee(env, &info, upgrade_fee)?;
+    }
+
+    config.member_limit = member_limit;
+    CONFIG.save(deps.storage, &config)?;
+    Ok(Response::new()
+        .add_attribute("action", "increase_member_limit")
+        .add_attribute("member_limit", member_limit.to_string())
+        .add_messages(fee_msgs))
+}
+
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
@@ -357,6 +428,7 @@ fn query_config(deps: Deps, env: Env) -> StdResult<ConfigResponse> {
     Ok(ConfigResponse {
         num_members: config.num_members,
         per_address_limit: config.per_address_limit,
+        member_limit: config.member_limit,
         start_time: config.start_time,
         end_time: config.end_time,
         unit_price: config.unit_price,
@@ -389,6 +461,7 @@ mod tests {
             end_time: NON_EXPIRED_HEIGHT,
             unit_price: coin(UNIT_AMOUNT, NATIVE_DENOM),
             per_address_limit: 1,
+            member_limit: 1000,
         };
         let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
         let res = instantiate(deps, mock_env(), info, msg).unwrap();
@@ -410,6 +483,7 @@ mod tests {
             end_time: NON_EXPIRED_HEIGHT,
             unit_price: coin(1, NATIVE_DENOM),
             per_address_limit: 1,
+            member_limit: 1000,
         };
         let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
         instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
@@ -424,10 +498,30 @@ mod tests {
             end_time: NON_EXPIRED_HEIGHT,
             unit_price: coin(UNIT_AMOUNT, "not_ustars"),
             per_address_limit: 1,
+            member_limit: 1000,
         };
         let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
         let err = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
         assert_eq!(err.to_string(), "InvalidDenom: not_ustars");
+    }
+
+    #[test]
+    fn improper_initialization_invalid_creation_fee() {
+        let mut deps = mock_dependencies();
+        let msg = InstantiateMsg {
+            members: vec!["adsfsa".to_string()],
+            start_time: NON_EXPIRED_HEIGHT,
+            end_time: NON_EXPIRED_HEIGHT,
+            unit_price: coin(UNIT_AMOUNT, "ustars"),
+            per_address_limit: 1,
+            member_limit: 3000,
+        };
+        let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
+        let err = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
+        assert_eq!(
+            err.to_string(),
+            "IncorrectCreationFee 100000000 < 300000000"
+        );
     }
 
     #[test]
@@ -443,6 +537,7 @@ mod tests {
             end_time: NON_EXPIRED_HEIGHT,
             unit_price: coin(UNIT_AMOUNT, NATIVE_DENOM),
             per_address_limit: 1,
+            member_limit: 1000,
         };
         let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
         let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
@@ -458,6 +553,7 @@ mod tests {
             end_time: Expiration::AtHeight(100),
             unit_price: coin(UNIT_AMOUNT, NATIVE_DENOM),
             per_address_limit: 1,
+            member_limit: 1000,
         };
         let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
         let mut deps = mock_dependencies();
@@ -535,8 +631,8 @@ mod tests {
         let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
         assert_eq!(
             ContractError::MembersExceeded {
-                expected: 5000,
-                actual: 5000
+                expected: 1000,
+                actual: 1000
             }
             .to_string(),
             err.to_string()
@@ -584,6 +680,7 @@ mod tests {
             end_time: NON_EXPIRED_HEIGHT,
             unit_price: coin(UNIT_AMOUNT, NATIVE_DENOM),
             per_address_limit: 1,
+            member_limit: 1000,
         };
         let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
@@ -629,5 +726,40 @@ mod tests {
         members.sort();
         all_elements.sort();
         assert_eq!(members, all_elements);
+    }
+
+    #[test]
+    fn increase_member_limit() {
+        let mut deps = mock_dependencies();
+        setup_contract(deps.as_mut());
+        let res = query_config(deps.as_ref(), mock_env()).unwrap();
+        assert_eq!(1000, res.member_limit);
+
+        // needs upgrade fee
+        let msg = ExecuteMsg::IncreaseMemberLimit(1001);
+        let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
+        let res = execute(deps.as_mut(), mock_env(), info, msg);
+        assert!(res.is_ok());
+
+        // 0 upgrade fee
+        let msg = ExecuteMsg::IncreaseMemberLimit(1002);
+        let info = mock_info(ADMIN, &[coin(0, "ustars")]);
+        let res = execute(deps.as_mut(), mock_env(), info, msg);
+        assert!(res.is_ok());
+
+        // 0 upgrade fee, fails when including a fee
+        let msg = ExecuteMsg::IncreaseMemberLimit(1002);
+        let info = mock_info(ADMIN, &[coin(1, "ustars")]);
+        let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
+        assert_eq!(err.to_string(), "IncorrectCreationFee 1 < 0");
+
+        // over MAX_MEMBERS, Invalid member limit
+        let msg = ExecuteMsg::IncreaseMemberLimit(6000);
+        let info = mock_info(ADMIN, &[coin(400_000_000, "ustars")]);
+        let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
+        assert_eq!(
+            err.to_string(),
+            "Invalid member limit. min: 1002, max: 5000, got: 6000"
+        );
     }
 }
