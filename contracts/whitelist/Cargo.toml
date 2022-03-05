@@ -1,6 +1,6 @@
 [package]
 name = "whitelist"
-version = "0.6.0"
+version = "0.6.1"
 authors = ["Shane Vitarana <s@noreply.publicawesome.com>"]
 edition = "2018"
 

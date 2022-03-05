@@ -524,7 +524,7 @@ checksum = "a3e378b66a060d48947b590737b30a1be76706c8dd7b8ba0f2fe3989c68a853f"
 
 [[package]]
 name = "minter"
-version = "0.6.0"
+version = "0.6.1"
 dependencies = [
  "anyhow",
  "cosmwasm-schema",
@@ -746,7 +746,7 @@ dependencies = [
 
 [[package]]
 name = "sg-std"
-version = "0.6.0"
+version = "0.6.1"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -760,7 +760,7 @@ dependencies = [
 
 [[package]]
 name = "sg-utils"
-version = "0.6.0"
+version = "0.6.1"
 dependencies = [
  "bech32",
  "cosmwasm-std",
@@ -768,7 +768,7 @@ dependencies = [
 
 [[package]]
 name = "sg721"
-version = "0.6.0"
+version = "0.6.1"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -946,7 +946,7 @@ checksum = "fd6fbd9a79829dd1ad0cc20627bf1ed606756a7f77edff7b66b7064f9cb327c6"
 
 [[package]]
 name = "whitelist"
-version = "0.6.0"
+version = "0.6.1"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
