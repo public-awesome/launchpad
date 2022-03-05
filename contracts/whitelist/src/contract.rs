@@ -118,6 +118,14 @@ pub fn instantiate(
         ));
     }
 
+    let genesis_start_time = Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME));
+    if msg.start_time < genesis_start_time {
+        return Err(ContractError::InvalidStartTime(
+            msg.start_time,
+            genesis_start_time,
+        ));
+    }
+
     let fee_msgs = burn_and_distribute_fee(env, &info, creation_fee)?;
 
     if config.member_limit < config.num_members {

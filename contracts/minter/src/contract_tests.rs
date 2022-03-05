@@ -726,7 +726,7 @@ fn whitelist_access_len_add_remove_expiration() {
     let (minter_addr, config) = setup_minter_contract(&mut router, &creator, num_tokens);
     let sg721_addr = config.sg721_address;
     let whitelist_addr = setup_whitelist_contract(&mut router, &creator);
-    const EXPIRATION_TIME: Timestamp = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000_000);
+    const EXPIRATION_TIME: Timestamp = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10);
     // set to genesis mint start time
     setup_block_time(&mut router, GENESIS_MINT_START_TIME);
 
@@ -747,6 +747,7 @@ fn whitelist_access_len_add_remove_expiration() {
         &wl_msg,
         &coins(UNIT_PRICE, NATIVE_DENOM),
     );
+    println!("{:?}", res);
     assert!(res.is_ok());
 
     let wl_msg = WhitelistExecuteMsg::UpdateStartTime(Expiration::AtTime(Timestamp::from_nanos(0)));
