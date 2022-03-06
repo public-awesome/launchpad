@@ -938,7 +938,7 @@ fn before_start_time() {
     setup_block_time(&mut router, GENESIS_MINT_START_TIME - 10);
 
     // set start_time fails if not admin
-    let start_time_msg = ExecuteMsg::UpdateStartTime(Expiration::Never {});
+    let start_time_msg = ExecuteMsg::UpdateStartTime(Timestamp::from_nanos(0));
     let res = router.execute_contract(
         buyer.clone(),
         minter_addr.clone(),
@@ -948,9 +948,8 @@ fn before_start_time() {
     assert!(res.is_err());
 
     // if block before start_time, throw error
-    let start_time_msg = ExecuteMsg::UpdateStartTime(Expiration::AtTime(Timestamp::from_nanos(
-        GENESIS_MINT_START_TIME,
-    )));
+    let start_time_msg =
+        ExecuteMsg::UpdateStartTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME));
     let res = router.execute_contract(
         creator.clone(),
         minter_addr.clone(),
@@ -1292,9 +1291,7 @@ fn test_update_start_time() {
     setup_block_time(&mut router, GENESIS_MINT_START_TIME + 100);
 
     // update to a start time in the past
-    let msg = ExecuteMsg::UpdateStartTime(Expiration::AtTime(Timestamp::from_nanos(
-        GENESIS_MINT_START_TIME - 100,
-    )));
+    let msg = ExecuteMsg::UpdateStartTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME - 100));
     let err = router
         .execute_contract(creator, minter_addr, &msg, &[])
         .unwrap_err();

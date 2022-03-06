@@ -148,9 +148,7 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::Mint {} => execute_mint_sender(deps, env, info),
-        ExecuteMsg::UpdateStartTime(expiration) => {
-            execute_update_start_time(deps, env, info, expiration)
-        }
+        ExecuteMsg::UpdateStartTime(time) => execute_update_start_time(deps, env, info, time),
         ExecuteMsg::UpdatePerAddressLimit { per_address_limit } => {
             execute_update_per_address_limit(deps, env, info, per_address_limit)
         }
@@ -419,7 +417,7 @@ pub fn execute_update_start_time(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    start_time: Expiration,
+    start_time: Timestamp,
 ) -> Result<Response, ContractError> {
     let mut config = CONFIG.load(deps.storage)?;
     if info.sender != config.admin {
@@ -432,14 +430,14 @@ pub fn execute_update_start_time(
         return Err(ContractError::AlreadyStarted {});
     }
 
-    let genesis_start_time = Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME));
+    let genesis_start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
     let start_time = if start_time < genesis_start_time {
         genesis_start_time
     } else {
         start_time
     };
 
-    config.start_time = start_time;
+    config.start_time = Expiration::AtTime(start_time);
     CONFIG.save(deps.storage, &config)?;
     Ok(Response::new()
         .add_attribute("action", "update_start_time")

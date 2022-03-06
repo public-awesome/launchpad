@@ -22,7 +22,7 @@ pub struct InstantiateMsg {
 pub enum ExecuteMsg {
     Mint {},
     SetWhitelist { whitelist: String },
-    UpdateStartTime(Expiration),
+    UpdateStartTime(Timestamp),
     UpdatePerAddressLimit { per_address_limit: u32 },
     MintTo { recipient: String },
     MintFor { token_id: u64, recipient: String },
