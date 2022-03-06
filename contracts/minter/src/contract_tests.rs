@@ -959,13 +959,14 @@ fn before_start_time() {
     // If block before start_time, throw error
     let start_time_msg =
         ExecuteMsg::UpdateStartTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME));
-    let res = router.execute_contract(
-        creator.clone(),
-        minter_addr.clone(),
-        &start_time_msg,
-        &coins(UNIT_PRICE, NATIVE_DENOM),
-    );
-    assert!(res.is_ok());
+    router
+        .execute_contract(
+            creator.clone(),
+            minter_addr.clone(),
+            &start_time_msg,
+            &coins(UNIT_PRICE, NATIVE_DENOM),
+        )
+        .unwrap_err();
 
     // Buyer can't mint before start_time
     let mint_msg = ExecuteMsg::Mint {};
@@ -1303,7 +1304,7 @@ fn test_update_start_time() {
     setup_block_time(&mut router, GENESIS_MINT_START_TIME + 100);
 
     // Update to a start time in the past
-    let msg = ExecuteMsg::UpdateStartTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 1000));
+    let msg = ExecuteMsg::UpdateStartTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME - 1000));
     let err = router
         .execute_contract(creator, minter_addr, &msg, &[])
         .unwrap_err();
@@ -1328,7 +1329,7 @@ fn test_invalid_start_time() {
     let msg = InstantiateMsg {
         unit_price: coin(UNIT_PRICE, NATIVE_DENOM),
         num_tokens,
-        start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
+        start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME + 1000),
         per_address_limit: 5,
         whitelist: None,
         base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
@@ -1358,7 +1359,7 @@ fn test_invalid_start_time() {
         .unwrap();
 
     // Public mint has started
-    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 100);
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME - 1000);
 
     // Update to a start time in the past
     let msg = ExecuteMsg::UpdateStartTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME - 100));
@@ -1367,7 +1368,7 @@ fn test_invalid_start_time() {
         .unwrap_err();
     assert_eq!(
         err.source().unwrap().to_string(),
-        "InvalidStartTime 1646427599.999999900 < 1646427600.000000100",
+        "InvalidStartTime 1646427599.999999900 < 1646427599.999999000",
     );
 }
 

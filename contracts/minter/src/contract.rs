@@ -427,7 +427,7 @@ pub fn execute_update_start_time(
     }
 
     // make sure start time is in the future
-    if start_time <= env.block.time {
+    if env.block.time < start_time {
         return Err(ContractError::InvalidStartTime(start_time, env.block.time));
     }
 
