@@ -1,4 +1,4 @@
-import { Expiration } from "./shared-types";
+import { Timestamp } from "./shared-types";
 
 export type ExecuteMsg = ({
 mint: {
@@ -10,7 +10,7 @@ whitelist: string
 [k: string]: unknown
 }
 } | {
-update_start_time: Expiration
+update_start_time: Timestamp
 } | {
 update_per_address_limit: {
 per_address_limit: number
