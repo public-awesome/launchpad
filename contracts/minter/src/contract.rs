@@ -327,14 +327,6 @@ fn _execute_mint(
         ));
     }
 
-    // Guardrail against low mint price updates
-    if MIN_MINT_PRICE > mint_price.amount.into() && !admin_no_fee {
-        return Err(ContractError::InsufficientMintPrice {
-            expected: MIN_MINT_PRICE,
-            got: mint_price.amount.into(),
-        });
-    }
-
     // Create network fee msgs
     let network_fee: Uint128 = if admin_no_fee {
         Uint128::zero()
