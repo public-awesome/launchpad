@@ -1,4 +1,4 @@
-import { Coin, Expiration } from "./shared-types";
+import { Coin, Timestamp } from "./shared-types";
 
 /**
  * A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0
@@ -13,7 +13,7 @@ num_tokens: number
 per_address_limit: number
 sg721_code_id: number
 sg721_instantiate_msg: InstantiateMsg1
-start_time: Expiration
+start_time: Timestamp
 unit_price: Coin
 whitelist?: (string | null)
 [k: string]: unknown
