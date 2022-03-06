@@ -16,8 +16,8 @@ pub struct InstantiateMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
-    UpdateStartTime(Expiration),
-    UpdateEndTime(Expiration),
+    UpdateStartTime(Timestamp),
+    UpdateEndTime(Timestamp),
     AddMembers(AddMembersMsg),
     RemoveMembers(RemoveMembersMsg),
     UpdatePerAddressLimit(u32),

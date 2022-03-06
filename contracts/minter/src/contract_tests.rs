@@ -5,7 +5,6 @@ use cosmwasm_std::{Api, Coin};
 use cw721::{Cw721QueryMsg, OwnerOfResponse};
 use cw721_base::ExecuteMsg as Cw721ExecuteMsg;
 use cw_multi_test::{BankSudo, Contract, ContractWrapper, Executor, SudoMsg};
-use cw_utils::Expiration;
 use sg721::msg::{InstantiateMsg as Sg721InstantiateMsg, RoyaltyInfoResponse};
 use sg721::state::CollectionInfo;
 use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
@@ -544,7 +543,7 @@ fn mint_count_query() {
     // Set block to before genesis mint start time
     setup_block_time(&mut router, GENESIS_MINT_START_TIME - 1000);
 
-    let wl_msg = WhitelistExecuteMsg::UpdateEndTime(Expiration::AtTime(EXPIRATION_TIME));
+    let wl_msg = WhitelistExecuteMsg::UpdateEndTime(EXPIRATION_TIME);
     let res = router.execute_contract(
         creator.clone(),
         whitelist_addr.clone(),
@@ -553,7 +552,7 @@ fn mint_count_query() {
     );
     assert!(res.is_ok());
 
-    let wl_msg = WhitelistExecuteMsg::UpdateStartTime(Expiration::AtTime(Timestamp::from_nanos(0)));
+    let wl_msg = WhitelistExecuteMsg::UpdateStartTime(Timestamp::from_nanos(0));
     let res = router.execute_contract(
         creator.clone(),
         whitelist_addr.clone(),
@@ -760,7 +759,7 @@ fn whitelist_access_len_add_remove_expiration() {
     setup_block_time(&mut router, GENESIS_MINT_START_TIME - 10);
 
     // update whitelist_expiration fails if not admin
-    let wl_msg = WhitelistExecuteMsg::UpdateEndTime(Expiration::AtTime(AFTER_GENESIS_TIME));
+    let wl_msg = WhitelistExecuteMsg::UpdateEndTime(AFTER_GENESIS_TIME);
     router
         .execute_contract(
             buyer.clone(),
@@ -770,7 +769,7 @@ fn whitelist_access_len_add_remove_expiration() {
         )
         .unwrap_err();
 
-    let wl_msg = WhitelistExecuteMsg::UpdateEndTime(Expiration::AtTime(AFTER_GENESIS_TIME));
+    let wl_msg = WhitelistExecuteMsg::UpdateEndTime(AFTER_GENESIS_TIME);
     let res = router.execute_contract(
         creator.clone(),
         whitelist_addr.clone(),
@@ -779,7 +778,7 @@ fn whitelist_access_len_add_remove_expiration() {
     );
     assert!(res.is_ok());
 
-    let wl_msg = WhitelistExecuteMsg::UpdateStartTime(Expiration::AtTime(Timestamp::from_nanos(0)));
+    let wl_msg = WhitelistExecuteMsg::UpdateStartTime(Timestamp::from_nanos(0));
     let res = router.execute_contract(
         creator.clone(),
         whitelist_addr.clone(),

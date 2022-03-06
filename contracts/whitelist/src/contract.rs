@@ -173,7 +173,7 @@ pub fn execute_update_start_time(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    start_time: Expiration,
+    start_time: Timestamp,
 ) -> Result<Response, ContractError> {
     let mut config = CONFIG.load(deps.storage)?;
     if info.sender != config.admin {
@@ -184,6 +184,8 @@ pub fn execute_update_start_time(
     if config.start_time.is_expired(&env.block) {
         return Err(ContractError::AlreadyStarted {});
     }
+
+    let start_time = Expiration::AtTime(start_time);
 
     if start_time > config.end_time {
         return Err(ContractError::InvalidStartTime(start_time, config.end_time));
@@ -208,7 +210,7 @@ pub fn execute_update_end_time(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    end_time: Expiration,
+    end_time: Timestamp,
 ) -> Result<Response, ContractError> {
     let mut config = CONFIG.load(deps.storage)?;
     if info.sender != config.admin {
@@ -219,6 +221,8 @@ pub fn execute_update_end_time(
     if config.start_time.is_expired(&env.block) {
         return Err(ContractError::AlreadyStarted {});
     }
+
+    let end_time = Expiration::AtTime(end_time);
 
     if end_time < config.start_time {
         return Err(ContractError::InvalidEndTime(end_time, config.start_time));
@@ -571,9 +575,7 @@ mod tests {
         let mut deps = mock_dependencies();
         setup_contract(deps.as_mut());
 
-        let msg = ExecuteMsg::UpdateStartTime(Expiration::AtTime(Timestamp::from_nanos(
-            GENESIS_MINT_START_TIME - 100,
-        )));
+        let msg = ExecuteMsg::UpdateStartTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME - 100));
         let info = mock_info(ADMIN, &[]);
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(res.attributes.len(), 3);
@@ -586,16 +588,12 @@ mod tests {
         let mut deps = mock_dependencies();
         setup_contract(deps.as_mut());
 
-        let msg = ExecuteMsg::UpdateEndTime(Expiration::AtTime(Timestamp::from_nanos(
-            GENESIS_MINT_START_TIME + 100,
-        )));
+        let msg = ExecuteMsg::UpdateEndTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 100));
         let info = mock_info(ADMIN, &[]);
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(res.attributes.len(), 3);
 
-        let msg = ExecuteMsg::UpdateEndTime(Expiration::AtTime(Timestamp::from_nanos(
-            GENESIS_MINT_START_TIME - 100,
-        )));
+        let msg = ExecuteMsg::UpdateEndTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME - 100));
         let info = mock_info(ADMIN, &[]);
         execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
     }
