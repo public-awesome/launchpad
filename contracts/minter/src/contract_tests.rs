@@ -65,7 +65,7 @@ fn setup_whitelist_contract(router: &mut StargazeApp, creator: &Addr) -> Addr {
 
     let msg = WhitelistInstantiateMsg {
         members: vec![],
-        start_time: Expiration::Never {},
+        start_time: Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 100)),
         end_time: Expiration::Never {},
         unit_price: coin(WHITELIST_AMOUNT, NATIVE_DENOM),
         per_address_limit: WL_PER_ADDRESS_LIMIT,
@@ -726,21 +726,22 @@ fn whitelist_access_len_add_remove_expiration() {
     let (minter_addr, config) = setup_minter_contract(&mut router, &creator, num_tokens);
     let sg721_addr = config.sg721_address;
     let whitelist_addr = setup_whitelist_contract(&mut router, &creator);
-    const EXPIRATION_TIME: Timestamp = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000_000);
+    const AFTER_GENESIS_TIME: Timestamp = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 100);
     // set to genesis mint start time
-    setup_block_time(&mut router, GENESIS_MINT_START_TIME);
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 10);
 
     // update whitelist_expiration fails if not admin
-    let wl_msg = WhitelistExecuteMsg::UpdateEndTime(Expiration::AtTime(EXPIRATION_TIME));
-    let res = router.execute_contract(
-        buyer.clone(),
-        whitelist_addr.clone(),
-        &wl_msg,
-        &coins(UNIT_PRICE, NATIVE_DENOM),
-    );
-    assert!(res.is_err());
+    let wl_msg = WhitelistExecuteMsg::UpdateEndTime(Expiration::AtTime(AFTER_GENESIS_TIME));
+    router
+        .execute_contract(
+            buyer.clone(),
+            whitelist_addr.clone(),
+            &wl_msg,
+            &coins(UNIT_PRICE, NATIVE_DENOM),
+        )
+        .unwrap_err();
 
-    let wl_msg = WhitelistExecuteMsg::UpdateEndTime(Expiration::AtTime(EXPIRATION_TIME));
+    let wl_msg = WhitelistExecuteMsg::UpdateEndTime(Expiration::AtTime(AFTER_GENESIS_TIME));
     let res = router.execute_contract(
         creator.clone(),
         whitelist_addr.clone(),

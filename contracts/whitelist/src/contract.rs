@@ -118,6 +118,14 @@ pub fn instantiate(
         ));
     }
 
+    let genesis_start_time = Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME));
+    if msg.start_time < genesis_start_time {
+        return Err(ContractError::InvalidStartTime(
+            msg.start_time,
+            genesis_start_time,
+        ));
+    }
+
     let fee_msgs = burn_and_distribute_fee(env, &info, creation_fee)?;
 
     if config.member_limit < config.num_members {
@@ -212,7 +220,7 @@ pub fn execute_update_end_time(
         return Err(ContractError::AlreadyStarted {});
     }
 
-    if end_time > config.start_time {
+    if end_time < config.start_time {
         return Err(ContractError::InvalidEndTime(end_time, config.start_time));
     }
 
@@ -450,7 +458,6 @@ mod tests {
     const UNIT_AMOUNT: u128 = 100_000_000;
 
     const NON_EXPIRED_HEIGHT: Expiration = Expiration::AtHeight(22_222);
-    const EXPIRED_HEIGHT: Expiration = Expiration::AtHeight(10);
     const GENESIS_START_TIME: Expiration =
         Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME));
 
@@ -580,12 +587,18 @@ mod tests {
         let mut deps = mock_dependencies();
         setup_contract(deps.as_mut());
 
-        let msg = ExecuteMsg::UpdateEndTime(EXPIRED_HEIGHT);
+        let msg = ExecuteMsg::UpdateEndTime(Expiration::AtTime(Timestamp::from_nanos(
+            GENESIS_MINT_START_TIME + 100,
+        )));
         let info = mock_info(ADMIN, &[]);
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(res.attributes.len(), 3);
-        let res = query_config(deps.as_ref(), mock_env()).unwrap();
-        assert_eq!(res.end_time, Expiration::AtHeight(10));
+
+        let msg = ExecuteMsg::UpdateEndTime(Expiration::AtTime(Timestamp::from_nanos(
+            GENESIS_MINT_START_TIME - 100,
+        )));
+        let info = mock_info(ADMIN, &[]);
+        execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
     }
 
     #[test]
