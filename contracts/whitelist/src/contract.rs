@@ -766,13 +766,25 @@ mod tests {
         let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
         assert_eq!(err.to_string(), "IncorrectCreationFee 1 < 0");
 
+        // 0 upgrade fee
+        let msg = ExecuteMsg::IncreaseMemberLimit(2000);
+        let info = mock_info(ADMIN, &[coin(0, "ustars")]);
+        let res = execute(deps.as_mut(), mock_env(), info, msg);
+        assert!(res.is_ok());
+
+        // needs upgrade fee
+        let msg = ExecuteMsg::IncreaseMemberLimit(2001);
+        let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
+        let res = execute(deps.as_mut(), mock_env(), info, msg);
+        assert!(res.is_ok());
+
         // over MAX_MEMBERS, Invalid member limit
         let msg = ExecuteMsg::IncreaseMemberLimit(6000);
         let info = mock_info(ADMIN, &[coin(400_000_000, "ustars")]);
         let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
         assert_eq!(
             err.to_string(),
-            "Invalid member limit. min: 1002, max: 5000, got: 6000"
+            "Invalid member limit. min: 2001, max: 5000, got: 6000"
         );
     }
 }
