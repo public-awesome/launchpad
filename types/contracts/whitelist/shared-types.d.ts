@@ -1,16 +1,4 @@
 /**
- * Expiration represents a point in time when some event happens. It can compare with a BlockInfo and will return is_expired() == true once the condition is hit (and for every block in the future)
- */
-export type Expiration = ({
-    at_height: number
-    } | {
-    at_time: Timestamp
-    } | {
-    never: {
-    [k: string]: unknown
-    }
-    });
-/**
  * A point in time in nanosecond precision.
  *
  * This type can represent times from 1970-01-01T00:00:00Z to 2554-07-21T23:34:33Z.
