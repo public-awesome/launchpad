@@ -93,10 +93,13 @@ pub fn instantiate(
     msg.members.sort_unstable();
     msg.members.dedup();
 
+    let start_time = Expiration::AtTime(msg.start_time);
+    let end_time = Expiration::AtTime(msg.end_time);
+
     let config = Config {
         admin: info.sender.clone(),
-        start_time: msg.start_time,
-        end_time: msg.end_time,
+        start_time,
+        end_time,
         num_members: msg.members.len() as u32,
         unit_price: msg.unit_price,
         per_address_limit: msg.per_address_limit,
@@ -105,24 +108,21 @@ pub fn instantiate(
     CONFIG.save(deps.storage, &config)?;
 
     if msg.start_time > msg.end_time {
-        return Err(ContractError::InvalidStartTime(
-            msg.start_time,
-            msg.end_time,
-        ));
+        return Err(ContractError::InvalidStartTime(start_time, end_time));
     }
 
-    if msg.start_time.is_expired(&env.block) {
+    if start_time.is_expired(&env.block) {
         return Err(ContractError::InvalidStartTime(
             Expiration::AtTime(env.block.time),
-            msg.start_time,
+            start_time,
         ));
     }
 
-    let genesis_start_time = Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME));
+    let genesis_start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
     if msg.start_time < genesis_start_time {
         return Err(ContractError::InvalidStartTime(
-            msg.start_time,
-            genesis_start_time,
+            start_time,
+            Expiration::AtTime(genesis_start_time),
         ));
     }
 
@@ -457,15 +457,14 @@ mod tests {
     const ADMIN: &str = "admin";
     const UNIT_AMOUNT: u128 = 100_000_000;
 
-    const NON_EXPIRED_HEIGHT: Expiration = Expiration::AtHeight(22_222);
-    const GENESIS_START_TIME: Expiration =
-        Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME));
+    const GENESIS_START_TIME: Timestamp = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
+    const END_TIME: Timestamp = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 1000);
 
     fn setup_contract(deps: DepsMut) {
         let msg = InstantiateMsg {
             members: vec!["adsfsa".to_string()],
             start_time: GENESIS_START_TIME,
-            end_time: NON_EXPIRED_HEIGHT,
+            end_time: END_TIME,
             unit_price: coin(UNIT_AMOUNT, NATIVE_DENOM),
             per_address_limit: 1,
             member_limit: 1000,
@@ -486,8 +485,8 @@ mod tests {
         let mut deps = mock_dependencies();
         let msg = InstantiateMsg {
             members: vec!["adsfsa".to_string()],
-            start_time: NON_EXPIRED_HEIGHT,
-            end_time: NON_EXPIRED_HEIGHT,
+            start_time: END_TIME,
+            end_time: END_TIME,
             unit_price: coin(1, NATIVE_DENOM),
             per_address_limit: 1,
             member_limit: 1000,
@@ -501,8 +500,8 @@ mod tests {
         let mut deps = mock_dependencies();
         let msg = InstantiateMsg {
             members: vec!["adsfsa".to_string()],
-            start_time: NON_EXPIRED_HEIGHT,
-            end_time: NON_EXPIRED_HEIGHT,
+            start_time: END_TIME,
+            end_time: END_TIME,
             unit_price: coin(UNIT_AMOUNT, "not_ustars"),
             per_address_limit: 1,
             member_limit: 1000,
@@ -517,8 +516,8 @@ mod tests {
         let mut deps = mock_dependencies();
         let msg = InstantiateMsg {
             members: vec!["adsfsa".to_string()],
-            start_time: NON_EXPIRED_HEIGHT,
-            end_time: NON_EXPIRED_HEIGHT,
+            start_time: END_TIME,
+            end_time: END_TIME,
             unit_price: coin(UNIT_AMOUNT, "ustars"),
             per_address_limit: 1,
             member_limit: 3000,
@@ -540,8 +539,8 @@ mod tests {
                 "adsfsa".to_string(),
                 "adsfsa".to_string(),
             ],
-            start_time: NON_EXPIRED_HEIGHT,
-            end_time: NON_EXPIRED_HEIGHT,
+            start_time: END_TIME,
+            end_time: END_TIME,
             unit_price: coin(UNIT_AMOUNT, NATIVE_DENOM),
             per_address_limit: 1,
             member_limit: 1000,
@@ -556,8 +555,8 @@ mod tests {
     fn check_start_time_after_end_time() {
         let msg = InstantiateMsg {
             members: vec!["adsfsa".to_string()],
-            start_time: Expiration::AtHeight(101),
-            end_time: Expiration::AtHeight(100),
+            start_time: END_TIME,
+            end_time: GENESIS_START_TIME,
             unit_price: coin(UNIT_AMOUNT, NATIVE_DENOM),
             per_address_limit: 1,
             member_limit: 1000,
@@ -579,7 +578,7 @@ mod tests {
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(res.attributes.len(), 3);
         let res = query_config(deps.as_ref(), mock_env()).unwrap();
-        assert_eq!(res.start_time, GENESIS_START_TIME);
+        assert_eq!(res.start_time, Expiration::AtTime(GENESIS_START_TIME));
     }
 
     #[test]
@@ -689,8 +688,8 @@ mod tests {
         }
         let msg = InstantiateMsg {
             members: members.clone(),
-            start_time: NON_EXPIRED_HEIGHT,
-            end_time: NON_EXPIRED_HEIGHT,
+            start_time: END_TIME,
+            end_time: END_TIME,
             unit_price: coin(UNIT_AMOUNT, NATIVE_DENOM),
             per_address_limit: 1,
             member_limit: 1000,

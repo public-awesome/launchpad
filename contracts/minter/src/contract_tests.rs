@@ -65,8 +65,8 @@ fn setup_whitelist_contract(router: &mut StargazeApp, creator: &Addr) -> Addr {
 
     let msg = WhitelistInstantiateMsg {
         members: vec![],
-        start_time: Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 100)),
-        end_time: Expiration::Never {},
+        start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME + 100),
+        end_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10000000),
         unit_price: coin(WHITELIST_AMOUNT, NATIVE_DENOM),
         per_address_limit: WL_PER_ADDRESS_LIMIT,
         member_limit: 1000,

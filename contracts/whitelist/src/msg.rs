@@ -1,4 +1,4 @@
-use cosmwasm_std::Coin;
+use cosmwasm_std::{Coin, Timestamp};
 use cw_utils::Expiration;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -6,8 +6,8 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {
     pub members: Vec<String>,
-    pub start_time: Expiration,
-    pub end_time: Expiration,
+    pub start_time: Timestamp,
+    pub end_time: Timestamp,
     pub unit_price: Coin,
     pub per_address_limit: u32,
     pub member_limit: u32,
