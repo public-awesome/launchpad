@@ -541,8 +541,9 @@ fn mint_count_query() {
     let whitelist_addr = setup_whitelist_contract(&mut router, &creator);
     const EXPIRATION_TIME: Timestamp = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000);
 
-    // Set to genesis mint start time
-    setup_block_time(&mut router, GENESIS_MINT_START_TIME);
+    // Set block to before genesis mint start time
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME - 1000);
+
     let wl_msg = WhitelistExecuteMsg::UpdateEndTime(Expiration::AtTime(EXPIRATION_TIME));
     let res = router.execute_contract(
         creator.clone(),
@@ -597,6 +598,8 @@ fn mint_count_query() {
         &coins(UNIT_PRICE, NATIVE_DENOM),
     );
     assert!(res.is_ok());
+
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME);
 
     // Mint succeeds
     let mint_msg = ExecuteMsg::Mint {};
@@ -726,6 +729,31 @@ fn mint_count_query() {
     assert_eq!(res.count, 3);
     assert_eq!(res.address, buyer.to_string());
 }
+
+#[test]
+fn whitelist_already_started() {
+    let mut router = custom_mock_app();
+    let (creator, _) = setup_accounts(&mut router);
+    let num_tokens: u64 = 1;
+    let (minter_addr, _) = setup_minter_contract(&mut router, &creator, num_tokens);
+    let whitelist_addr = setup_whitelist_contract(&mut router, &creator);
+
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 101);
+
+    // set whitelist in minter contract
+    let set_whitelist_msg = ExecuteMsg::SetWhitelist {
+        whitelist: whitelist_addr.to_string(),
+    };
+    router
+        .execute_contract(
+            creator.clone(),
+            minter_addr,
+            &set_whitelist_msg,
+            &coins(UNIT_PRICE, NATIVE_DENOM),
+        )
+        .unwrap_err();
+}
+
 #[test]
 fn whitelist_access_len_add_remove_expiration() {
     let mut router = custom_mock_app();
@@ -736,8 +764,8 @@ fn whitelist_access_len_add_remove_expiration() {
     let whitelist_addr = setup_whitelist_contract(&mut router, &creator);
     const AFTER_GENESIS_TIME: Timestamp = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 100);
 
-    // Set to genesis mint start time
-    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 10);
+    // Set to just before genesis mint start time
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME - 10);
 
     // Update whitelist_expiration fails if not admin
     let wl_msg = WhitelistExecuteMsg::UpdateEndTime(Expiration::AtTime(AFTER_GENESIS_TIME));
@@ -814,6 +842,8 @@ fn whitelist_access_len_add_remove_expiration() {
             &coins(UNIT_PRICE, NATIVE_DENOM),
         )
         .unwrap_err();
+
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME);
 
     // Query mint price
     let mint_price_response: MintPriceResponse = router
