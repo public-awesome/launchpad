@@ -70,7 +70,7 @@ pub enum ContractError {
     MaxPerAddressLimitExceeded {},
 
     #[error("Token id: {token_id} already sold")]
-    TokenIdAlreadySold { token_id: u64 },
+    TokenIdAlreadySold { token_id: u32 },
 
     #[error("{0}")]
     Payment(#[from] PaymentError),

@@ -48,7 +48,7 @@ pub fn instantiate(
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
     // Check the number of tokens is more than zero and less than the max limit
-    if msg.num_tokens == 0 || msg.num_tokens > MAX_TOKEN_LIMIT.into() {
+    if msg.num_tokens == 0 || msg.num_tokens > MAX_TOKEN_LIMIT {
         return Err(ContractError::InvalidNumTokens {
             min: 1,
             max: MAX_TOKEN_LIMIT,
@@ -273,7 +273,7 @@ pub fn execute_mint_for(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    token_id: u64,
+    token_id: u32,
     recipient: String,
 ) -> Result<Response, ContractError> {
     let recipient = deps.api.addr_validate(&recipient)?;
@@ -305,7 +305,7 @@ fn _execute_mint(
     action: &str,
     admin_no_fee: bool,
     recipient: Option<Addr>,
-    token_id: Option<u64>,
+    token_id: Option<u32>,
 ) -> Result<Response, ContractError> {
     // Generalize checks and mint message creation
     // mint -> _execute_mint(recipient: None, token_id: None)
@@ -344,7 +344,7 @@ fn _execute_mint(
         network_fee
     };
 
-    let mintable_token_id: u64 = match token_id {
+    let mintable_token_id: u32 = match token_id {
         Some(token_id) => {
             if token_id == 0 || token_id > config.num_tokens {
                 return Err(ContractError::InvalidTokenId {});
@@ -356,7 +356,7 @@ fn _execute_mint(
             token_id
         }
         None => {
-            let mintable_tokens_result: StdResult<Vec<u64>> = MINTABLE_TOKEN_IDS
+            let mintable_tokens_result: StdResult<Vec<u32>> = MINTABLE_TOKEN_IDS
                 .keys(deps.storage, None, None, Order::Ascending)
                 .take(1)
                 .collect();
