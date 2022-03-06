@@ -167,7 +167,7 @@ pub fn execute(
 
 pub fn execute_set_whitelist(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
     whitelist: &str,
 ) -> Result<Response, ContractError> {
@@ -177,6 +177,11 @@ pub fn execute_set_whitelist(
             "Sender is not an admin".to_owned(),
         ));
     };
+
+    if config.start_time.is_expired(&env.block) {
+        return Err(ContractError::AlreadyStarted {});
+    }
+
     config.whitelist = Some(deps.api.addr_validate(whitelist)?);
     CONFIG.save(deps.storage, &config)?;
 
