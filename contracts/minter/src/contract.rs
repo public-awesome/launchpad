@@ -426,6 +426,11 @@ pub fn execute_update_start_time(
         ));
     }
 
+    // make sure start time is in the future
+    if start_time <= env.block.time {
+        return Err(ContractError::InvalidStartTime(start_time, env.block.time));
+    }
+
     if config.start_time.is_expired(&env.block) {
         return Err(ContractError::AlreadyStarted {});
     }

@@ -1,5 +1,5 @@
-use cosmwasm_std::{Coin, StdError};
-use cw_utils::PaymentError;
+use cosmwasm_std::{Coin, StdError, Timestamp};
+use cw_utils::{Expiration, PaymentError};
 use sg_std::fees::FeeError;
 use thiserror::Error;
 use url::ParseError;
@@ -44,6 +44,9 @@ pub enum ContractError {
 
     #[error("AlreadyStarted")]
     AlreadyStarted {},
+
+    #[error("InvalidStartTime {0} < {1}")]
+    InvalidStartTime(Timestamp, Timestamp),
 
     #[error("Instantiate sg721 error")]
     InstantiateSg721Error {},
