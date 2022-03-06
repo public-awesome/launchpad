@@ -426,7 +426,7 @@ pub fn execute_update_start_time(
         ));
     }
 
-    // make sure start time is in the future
+    // Make sure start time is in the future
     if env.block.time < start_time {
         return Err(ContractError::InvalidStartTime(start_time, env.block.time));
     }
@@ -435,13 +435,10 @@ pub fn execute_update_start_time(
         return Err(ContractError::AlreadyStarted {});
     }
 
-    // Default to Genesis start time if start time is before Genesis mint
     let genesis_start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
-    let start_time = if start_time < genesis_start_time {
-        genesis_start_time
-    } else {
-        start_time
-    };
+    if start_time < genesis_start_time {
+        return Err(ContractError::BeforeGenesisTime {});
+    }
 
     config.start_time = start_time;
     CONFIG.save(deps.storage, &config)?;

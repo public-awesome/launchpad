@@ -45,6 +45,9 @@ pub enum ContractError {
     #[error("AlreadyStarted")]
     AlreadyStarted {},
 
+    #[error("BeforeGenesisTime")]
+    BeforeGenesisTime {},
+
     #[error("InvalidStartTime {0} < {1}")]
     InvalidStartTime(Timestamp, Timestamp),
 
