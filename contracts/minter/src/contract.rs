@@ -202,11 +202,9 @@ pub fn execute_mint_sender(
     let config = CONFIG.load(deps.storage)?;
     let action = "mint_sender";
 
-    let pub_mint = check_whitelist(deps.as_ref(), &info)?;
-
     // If there is no active whitelist right now, check public mint
     // Check if after start_time
-    if pub_mint && (env.block.time < config.start_time) {
+    if is_public_mint(deps.as_ref(), &info)? && (env.block.time < config.start_time) {
         return Err(ContractError::BeforeMintStartTime {});
     }
 
@@ -221,7 +219,7 @@ pub fn execute_mint_sender(
 
 // Check if a whitelist exists and not ended
 // Sender has to be whitelisted to mint
-fn check_whitelist(deps: Deps, info: &MessageInfo) -> Result<bool, ContractError> {
+fn is_public_mint(deps: Deps, info: &MessageInfo) -> Result<bool, ContractError> {
     let config = CONFIG.load(deps.storage)?;
 
     // If there is no whitelist, there's only a public mint
