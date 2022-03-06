@@ -540,8 +540,10 @@ fn mint_count_query() {
     let sg721_addr = config.sg721_address;
     let whitelist_addr = setup_whitelist_contract(&mut router, &creator);
     const EXPIRATION_TIME: Timestamp = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000);
-    // set to genesis mint start time
-    setup_block_time(&mut router, GENESIS_MINT_START_TIME);
+
+    // Set block to before genesis mint start time
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME - 1000);
+
     let wl_msg = WhitelistExecuteMsg::UpdateEndTime(Expiration::AtTime(EXPIRATION_TIME));
     let res = router.execute_contract(
         creator.clone(),
@@ -594,6 +596,8 @@ fn mint_count_query() {
         &coins(UNIT_PRICE, NATIVE_DENOM),
     );
     assert!(res.is_ok());
+
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME);
 
     // mint succeeds
     let mint_msg = ExecuteMsg::Mint {};
@@ -727,8 +731,8 @@ fn whitelist_access_len_add_remove_expiration() {
     let sg721_addr = config.sg721_address;
     let whitelist_addr = setup_whitelist_contract(&mut router, &creator);
     const AFTER_GENESIS_TIME: Timestamp = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 100);
-    // set to genesis mint start time
-    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 10);
+
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME - 10);
 
     // update whitelist_expiration fails if not admin
     let wl_msg = WhitelistExecuteMsg::UpdateEndTime(Expiration::AtTime(AFTER_GENESIS_TIME));
@@ -803,6 +807,8 @@ fn whitelist_access_len_add_remove_expiration() {
             &coins(UNIT_PRICE, NATIVE_DENOM),
         )
         .unwrap_err();
+
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME);
 
     // query mint price
     let mint_price_response: MintPriceResponse = router
