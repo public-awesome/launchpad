@@ -47,6 +47,7 @@ pub fn instantiate(
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
+    // Check the number of tokens is more than zero and less than the max limit
     if msg.num_tokens == 0 || msg.num_tokens > MAX_TOKEN_LIMIT.into() {
         return Err(ContractError::InvalidNumTokens {
             min: 1,
@@ -69,12 +70,15 @@ pub fn instantiate(
         return Err(ContractError::InvalidBaseTokenURI {});
     }
 
+    // Check that the price is in the correct denom ('ustars')
     if NATIVE_DENOM != msg.unit_price.denom {
         return Err(ContractError::InvalidDenom {
             expected: NATIVE_DENOM.to_string(),
             got: msg.unit_price.denom,
         });
     }
+
+    // Check that the price is greater than the minimum
     if MIN_MINT_PRICE > msg.unit_price.amount.into() {
         return Err(ContractError::InsufficientMintPrice {
             expected: MIN_MINT_PRICE,
@@ -82,11 +86,12 @@ pub fn instantiate(
         });
     }
 
+    // Validate address for the optional whitelist contract
     let whitelist_addr = msg
         .whitelist
         .and_then(|w| deps.api.addr_validate(w.as_str()).ok());
 
-    // default is genesis mint start time
+    // Default start_time is genesis mint start time
     let default_start_time = Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME));
     let start_time = if msg.start_time < default_start_time {
         default_start_time
@@ -107,11 +112,12 @@ pub fn instantiate(
     CONFIG.save(deps.storage, &config)?;
     MINTABLE_NUM_TOKENS.save(deps.storage, &msg.num_tokens)?;
 
-    // save mintable token ids map
+    // Save mintable token ids map
     for token_id in 1..=msg.num_tokens {
         MINTABLE_TOKEN_IDS.save(deps.storage, token_id, &true)?;
     }
 
+    // Submessage to instantiate sg721 contract
     let sub_msgs: Vec<SubMsg> = vec![SubMsg {
         msg: WasmMsg::Instantiate {
             code_id: msg.sg721_code_id,
@@ -194,8 +200,8 @@ pub fn execute_mint_sender(
     let action = "mint_sender";
     let mut pub_mint: bool = false;
 
-    // check if a whitelist exists and not ended
-    // sender has to be whitelisted to mint
+    // Check if a whitelist exists and not ended
+    // Sender has to be whitelisted to mint
     if let Some(whitelist) = config.whitelist {
         let wl_config: WhitelistConfigResponse = deps
             .querier
@@ -213,7 +219,7 @@ pub fn execute_mint_sender(
                     addr: info.sender.to_string(),
                 });
             }
-            // check wl per address limit
+            // Check wl per address limit
             let mint_count: u32 = mint_count(deps.as_ref(), info.clone())?;
             if mint_count >= wl_config.per_address_limit {
                 return Err(ContractError::MaxPerAddressLimitExceeded {});
@@ -225,7 +231,7 @@ pub fn execute_mint_sender(
         pub_mint = true;
     }
 
-    // if there is no active whitelist right now, check public mint
+    // If there is no active whitelist right now, check public mint
     // Check if after start_time
     if pub_mint && !config.start_time.is_expired(&env.block) {
         return Err(ContractError::BeforeMintStartTime {});
@@ -298,7 +304,7 @@ fn _execute_mint(
     recipient: Option<Addr>,
     token_id: Option<u64>,
 ) -> Result<Response, ContractError> {
-    // generalize checks and mint message creation
+    // Generalize checks and mint message creation
     // mint -> _execute_mint(recipient: None, token_id: None)
     // mint_to(recipient: "friend") -> _execute_mint(Some(recipient), token_id: None)
     // mint_for(recipient: "friend2", token_id: 420) -> _execute_mint(recipient, token_id)
@@ -312,7 +318,7 @@ fn _execute_mint(
     };
 
     let mint_price: Coin = mint_price(deps.as_ref(), admin_no_fee)?;
-    // exact payment only
+    // Exact payment only accepted
     let payment = may_pay(&info, &config.unit_price.denom)?;
     if payment != mint_price.amount {
         return Err(ContractError::IncorrectPaymentAmount(
@@ -321,7 +327,7 @@ fn _execute_mint(
         ));
     }
 
-    // guardrail against low mint price updates
+    // Guardrail against low mint price updates
     if MIN_MINT_PRICE > mint_price.amount.into() && !admin_no_fee {
         return Err(ContractError::InsufficientMintPrice {
             expected: MIN_MINT_PRICE,
@@ -329,7 +335,7 @@ fn _execute_mint(
         });
     }
 
-    // create network fee msgs
+    // Create network fee msgs
     let network_fee: Uint128 = if admin_no_fee {
         Uint128::zero()
     } else {
@@ -367,7 +373,7 @@ fn _execute_mint(
         }
     };
 
-    // create mint msgs
+    // Create mint msgs
     let mint_msg = Cw721ExecuteMsg::Mint(MintMsg::<Empty> {
         token_id: mintable_token_id.to_string(),
         owner: recipient_addr.to_string(),
@@ -381,15 +387,17 @@ fn _execute_mint(
     });
     msgs.append(&mut vec![msg]);
 
-    // remove mintable token id from map and decrement mintable num tokens
+    // Remove mintable token id from map
     MINTABLE_TOKEN_IDS.remove(deps.storage, mintable_token_id);
     let mintable_num_tokens = MINTABLE_NUM_TOKENS.load(deps.storage)?;
+    // Decrement mintable num tokens
     MINTABLE_NUM_TOKENS.save(deps.storage, &(mintable_num_tokens - 1))?;
+    // Save the new mint count for the sender's address
     let new_mint_count: u32 = mint_count(deps.as_ref(), info.clone())? + 1;
     MINTER_ADDRS.save(deps.storage, info.clone().sender, &new_mint_count)?;
 
     let mut seller_amount = Uint128::zero();
-    // does have a fee
+    // Does have a fee
     if !admin_no_fee {
         seller_amount = mint_price.amount - network_fee;
         msgs.append(&mut vec![CosmosMsg::Bank(BankMsg::Send {
@@ -427,6 +435,7 @@ pub fn execute_update_start_time(
         return Err(ContractError::AlreadyStarted {});
     }
 
+    // Default to Genesis start time if start time is before Genesis mint
     let genesis_start_time = Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME));
     let start_time = if start_time < genesis_start_time {
         genesis_start_time
