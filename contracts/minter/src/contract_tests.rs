@@ -386,8 +386,7 @@ fn happy_path() {
         .unwrap();
     assert_eq!(
         res.start_time,
-        "expiration time: ".to_owned()
-            + &Timestamp::from_nanos(GENESIS_MINT_START_TIME).to_string()
+        Timestamp::from_nanos(GENESIS_MINT_START_TIME).to_string()
     );
 
     // Fail with incorrect tokens
@@ -972,8 +971,7 @@ fn before_start_time() {
         .query_wasm_smart(minter_addr.clone(), &QueryMsg::StartTime {})
         .unwrap();
     assert_eq!(
-        "expiration time: ".to_owned()
-            + &Timestamp::from_nanos(GENESIS_MINT_START_TIME).to_string(),
+        Timestamp::from_nanos(GENESIS_MINT_START_TIME).to_string(),
         start_time_response.start_time
     );
 
@@ -1237,8 +1235,7 @@ fn test_start_time_before_genesis() {
         .unwrap();
     assert_eq!(
         res.start_time,
-        "expiration time: ".to_owned()
-            + &Timestamp::from_nanos(GENESIS_MINT_START_TIME).to_string()
+        Timestamp::from_nanos(GENESIS_MINT_START_TIME).to_string()
     );
 }
 

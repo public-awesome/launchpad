@@ -2,7 +2,6 @@ use cosmwasm_std::{Addr, Coin, Timestamp};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use cw_utils::Expiration;
 use sg721::msg::InstantiateMsg as Sg721InstantiateMsg;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -46,7 +45,7 @@ pub struct ConfigResponse {
     pub per_address_limit: u32,
     pub sg721_address: Addr,
     pub sg721_code_id: u64,
-    pub start_time: Expiration,
+    pub start_time: Timestamp,
     pub unit_price: Coin,
     pub whitelist: Option<Addr>,
 }

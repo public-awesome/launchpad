@@ -6,7 +6,7 @@ use cosmwasm_std::{
 };
 use cw2::set_contract_version;
 use cw721_base::{msg::ExecuteMsg as Cw721ExecuteMsg, MintMsg};
-use cw_utils::{may_pay, parse_reply_instantiate_data, Expiration};
+use cw_utils::{may_pay, parse_reply_instantiate_data};
 use sg721::msg::InstantiateMsg as Sg721InstantiateMsg;
 use url::Url;
 
@@ -102,7 +102,7 @@ pub fn instantiate(
         unit_price: msg.unit_price,
         per_address_limit: msg.per_address_limit,
         whitelist: whitelist_addr,
-        start_time: Expiration::AtTime(start_time),
+        start_time,
     };
     CONFIG.save(deps.storage, &config)?;
     MINTABLE_NUM_TOKENS.save(deps.storage, &msg.num_tokens)?;
@@ -176,7 +176,7 @@ pub fn execute_set_whitelist(
         ));
     };
 
-    if config.start_time.is_expired(&env.block) {
+    if config.start_time <= env.block.time {
         return Err(ContractError::AlreadyStarted {});
     }
 
@@ -230,7 +230,7 @@ pub fn execute_mint_sender(
 
     // if there is no active whitelist right now, check public mint
     // Check if after start_time
-    if pub_mint && !config.start_time.is_expired(&env.block) {
+    if pub_mint && (env.block.time < config.start_time) {
         return Err(ContractError::BeforeMintStartTime {});
     }
 
@@ -431,7 +431,7 @@ pub fn execute_update_start_time(
         return Err(ContractError::InvalidStartTime(start_time, env.block.time));
     }
 
-    if config.start_time.is_expired(&env.block) {
+    if env.block.time >= config.start_time {
         return Err(ContractError::AlreadyStarted {});
     }
 
@@ -442,7 +442,7 @@ pub fn execute_update_start_time(
         start_time
     };
 
-    config.start_time = Expiration::AtTime(start_time);
+    config.start_time = start_time;
     CONFIG.save(deps.storage, &config)?;
     Ok(Response::new()
         .add_attribute("action", "update_start_time")
