@@ -1,5 +1,5 @@
 use cosmwasm_std::{Coin, StdError, Timestamp};
-use cw_utils::{Expiration, PaymentError};
+use cw_utils::PaymentError;
 use sg_std::fees::FeeError;
 use thiserror::Error;
 use url::ParseError;

@@ -1290,13 +1290,71 @@ fn test_update_start_time() {
     setup_block_time(&mut router, GENESIS_MINT_START_TIME + 100);
 
     // update to a start time in the past
-    let msg = ExecuteMsg::UpdateStartTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME - 100));
+    let msg = ExecuteMsg::UpdateStartTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 1000));
     let err = router
         .execute_contract(creator, minter_addr, &msg, &[])
         .unwrap_err();
     assert_eq!(
         err.source().unwrap().to_string(),
         ContractError::AlreadyStarted {}.to_string(),
+    );
+}
+
+#[test]
+fn test_invalid_start_time() {
+    let mut router = custom_mock_app();
+    let (creator, _) = setup_accounts(&mut router);
+    let num_tokens = 10;
+
+    // Upload contract code
+    let sg721_code_id = router.store_code(contract_sg721());
+    let minter_code_id = router.store_code(contract_minter());
+    let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
+
+    // Instantiate sale contract
+    let msg = InstantiateMsg {
+        unit_price: coin(UNIT_PRICE, NATIVE_DENOM),
+        num_tokens,
+        start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
+        per_address_limit: 5,
+        whitelist: None,
+        base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
+        sg721_code_id,
+        sg721_instantiate_msg: Sg721InstantiateMsg {
+            name: String::from("TEST"),
+            symbol: String::from("TEST"),
+            minter: creator.to_string(),
+            collection_info: CollectionInfo {
+                creator: creator.to_string(),
+                description: String::from("Stargaze Monkeys"),
+                image: "https://example.com/image.png".to_string(),
+                external_link: Some("https://example.com/external.html".to_string()),
+                royalty_info: None,
+            },
+        },
+    };
+    let minter_addr = router
+        .instantiate_contract(
+            minter_code_id,
+            creator.clone(),
+            &msg,
+            &creation_fee,
+            "Minter",
+            None,
+        )
+        .unwrap();
+
+    // public mint has started
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 100);
+
+    // update to a start time in the past
+    let msg = ExecuteMsg::UpdateStartTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME - 100));
+    let err = router
+        .execute_contract(creator, minter_addr, &msg, &[])
+        .unwrap_err();
+    assert_eq!(
+        err.source().unwrap().to_string(),
+        "InvalidStartTime 1646427599.999999900 < 1646427600.000000100",
     );
 }
 
