@@ -182,7 +182,7 @@ pub fn execute_set_whitelist(
         ));
     };
 
-    if config.start_time <= env.block.time {
+    if env.block.time >= config.start_time {
         return Err(ContractError::AlreadyStarted {});
     }
 
