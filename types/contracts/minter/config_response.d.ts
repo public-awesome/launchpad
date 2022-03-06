@@ -1,4 +1,4 @@
-import { Addr, Coin, Expiration } from "./shared-types";
+import { Addr, Coin, Timestamp } from "./shared-types";
 
 export interface ConfigResponse {
 admin: Addr
@@ -7,7 +7,7 @@ num_tokens: number
 per_address_limit: number
 sg721_address: Addr
 sg721_code_id: number
-start_time: Expiration
+start_time: Timestamp
 unit_price: Coin
 whitelist?: (Addr | null)
 [k: string]: unknown
