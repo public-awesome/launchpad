@@ -11,7 +11,6 @@ use cosmwasm_std::{to_binary, Binary, CosmosMsg, Deps, DepsMut, Env, MessageInfo
 use cosmwasm_std::{Order, Timestamp};
 use cw2::set_contract_version;
 use cw_storage_plus::Bound;
-use cw_utils::Expiration;
 use cw_utils::{may_pay, maybe_addr, must_pay};
 use rust_decimal::prelude::ToPrimitive;
 use rust_decimal::Decimal;
@@ -93,13 +92,10 @@ pub fn instantiate(
     msg.members.sort_unstable();
     msg.members.dedup();
 
-    let start_time = Expiration::AtTime(msg.start_time);
-    let end_time = Expiration::AtTime(msg.end_time);
-
     let config = Config {
         admin: info.sender.clone(),
-        start_time,
-        end_time,
+        start_time: msg.start_time,
+        end_time: msg.end_time,
         num_members: msg.members.len() as u32,
         unit_price: msg.unit_price,
         per_address_limit: msg.per_address_limit,
@@ -108,21 +104,24 @@ pub fn instantiate(
     CONFIG.save(deps.storage, &config)?;
 
     if msg.start_time > msg.end_time {
-        return Err(ContractError::InvalidStartTime(start_time, end_time));
+        return Err(ContractError::InvalidStartTime(
+            msg.start_time,
+            msg.end_time,
+        ));
     }
 
-    if start_time.is_expired(&env.block) {
+    if env.block.time >= msg.start_time {
         return Err(ContractError::InvalidStartTime(
-            Expiration::AtTime(env.block.time),
-            start_time,
+            env.block.time,
+            msg.start_time,
         ));
     }
 
     let genesis_start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
     if msg.start_time < genesis_start_time {
         return Err(ContractError::InvalidStartTime(
-            start_time,
-            Expiration::AtTime(genesis_start_time),
+            msg.start_time,
+            genesis_start_time,
         ));
     }
 
@@ -181,17 +180,15 @@ pub fn execute_update_start_time(
     }
 
     // don't allow updating start time if whitelist is active
-    if config.start_time.is_expired(&env.block) {
+    if env.block.time >= config.start_time {
         return Err(ContractError::AlreadyStarted {});
     }
-
-    let start_time = Expiration::AtTime(start_time);
 
     if start_time > config.end_time {
         return Err(ContractError::InvalidStartTime(start_time, config.end_time));
     }
 
-    let genesis_start_time = Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME));
+    let genesis_start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
     let start_time = if start_time < genesis_start_time {
         genesis_start_time
     } else {
@@ -218,11 +215,9 @@ pub fn execute_update_end_time(
     }
 
     // don't allow updating end time if whitelist is active
-    if config.start_time.is_expired(&env.block) {
+    if env.block.time >= config.start_time {
         return Err(ContractError::AlreadyStarted {});
     }
-
-    let end_time = Expiration::AtTime(end_time);
 
     if end_time < config.start_time {
         return Err(ContractError::InvalidEndTime(end_time, config.start_time));
@@ -280,7 +275,7 @@ pub fn execute_remove_members(
         return Err(ContractError::Unauthorized {});
     }
 
-    if config.start_time.is_expired(&env.block) {
+    if env.block.time >= config.start_time {
         return Err(ContractError::AlreadyStarted {});
     }
 
@@ -389,22 +384,21 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
 fn query_has_started(deps: Deps, env: Env) -> StdResult<HasStartedResponse> {
     let config = CONFIG.load(deps.storage)?;
     Ok(HasStartedResponse {
-        has_started: config.start_time.is_expired(&env.block),
+        has_started: (env.block.time >= config.start_time),
     })
 }
 
 fn query_has_ended(deps: Deps, env: Env) -> StdResult<HasEndedResponse> {
     let config = CONFIG.load(deps.storage)?;
     Ok(HasEndedResponse {
-        has_ended: config.end_time.is_expired(&env.block),
+        has_ended: (env.block.time >= config.end_time),
     })
 }
 
 fn query_is_active(deps: Deps, env: Env) -> StdResult<IsActiveResponse> {
     let config = CONFIG.load(deps.storage)?;
     Ok(IsActiveResponse {
-        is_active: config.start_time.is_expired(&env.block)
-            && !config.end_time.is_expired(&env.block),
+        is_active: (env.block.time >= config.start_time) && (env.block.time < config.end_time),
     })
 }
 
@@ -444,8 +438,7 @@ fn query_config(deps: Deps, env: Env) -> StdResult<ConfigResponse> {
         start_time: config.start_time,
         end_time: config.end_time,
         unit_price: config.unit_price,
-        is_active: config.start_time.is_expired(&env.block)
-            && !config.end_time.is_expired(&env.block),
+        is_active: (env.block.time >= config.start_time) && (env.block.time < config.end_time),
     })
 }
 
@@ -580,7 +573,7 @@ mod tests {
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(res.attributes.len(), 3);
         let res = query_config(deps.as_ref(), mock_env()).unwrap();
-        assert_eq!(res.start_time, Expiration::AtTime(GENESIS_START_TIME));
+        assert_eq!(res.start_time, GENESIS_START_TIME);
     }
 
     #[test]
