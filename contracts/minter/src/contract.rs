@@ -201,38 +201,8 @@ pub fn execute_mint_sender(
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
     let action = "mint_sender";
-    let mut pub_mint: bool = false;
 
-    // Check if a whitelist exists and not ended
-    // Sender has to be whitelisted to mint
-    if let Some(whitelist) = config.whitelist {
-        let wl_config: WhitelistConfigResponse = deps
-            .querier
-            .query_wasm_smart(whitelist.clone(), &WhitelistQueryMsg::Config {})?;
-
-        if wl_config.is_active {
-            let res: HasMemberResponse = deps.querier.query_wasm_smart(
-                whitelist,
-                &WhitelistQueryMsg::HasMember {
-                    member: info.sender.to_string(),
-                },
-            )?;
-            if !res.has_member {
-                return Err(ContractError::NotWhitelisted {
-                    addr: info.sender.to_string(),
-                });
-            }
-            // Check wl per address limit
-            let mint_count: u32 = mint_count(deps.as_ref(), info.clone())?;
-            if mint_count >= wl_config.per_address_limit {
-                return Err(ContractError::MaxPerAddressLimitExceeded {});
-            }
-        } else {
-            pub_mint = true;
-        }
-    } else {
-        pub_mint = true;
-    }
+    let pub_mint = check_whitelist(deps.as_ref(), &info)?;
 
     // If there is no active whitelist right now, check public mint
     // Check if after start_time
@@ -241,12 +211,53 @@ pub fn execute_mint_sender(
     }
 
     // Check if already minted max per address limit
-    let mint_count: u32 = mint_count(deps.as_ref(), info.clone())?;
+    let mint_count: u32 = mint_count(deps.as_ref(), &info)?;
     if mint_count >= config.per_address_limit {
         return Err(ContractError::MaxPerAddressLimitExceeded {});
     }
 
     _execute_mint(deps, env, info, action, false, None, None)
+}
+
+// Check if a whitelist exists and not ended
+// Sender has to be whitelisted to mint
+fn check_whitelist(deps: Deps, info: &MessageInfo) -> Result<bool, ContractError> {
+    let config = CONFIG.load(deps.storage)?;
+
+    // If there is no whitelist, there's only a public mint
+    if config.whitelist.is_none() {
+        return Ok(true);
+    }
+
+    let whitelist = config.whitelist.unwrap();
+
+    let wl_config: WhitelistConfigResponse = deps
+        .querier
+        .query_wasm_smart(whitelist.clone(), &WhitelistQueryMsg::Config {})?;
+
+    if !wl_config.is_active {
+        return Ok(true);
+    }
+
+    let res: HasMemberResponse = deps.querier.query_wasm_smart(
+        whitelist,
+        &WhitelistQueryMsg::HasMember {
+            member: info.sender.to_string(),
+        },
+    )?;
+    if !res.has_member {
+        return Err(ContractError::NotWhitelisted {
+            addr: info.sender.to_string(),
+        });
+    }
+
+    // Check wl per address limit
+    let mint_count: u32 = mint_count(deps, info)?;
+    if mint_count >= wl_config.per_address_limit {
+        return Err(ContractError::MaxPerAddressLimitExceeded {});
+    }
+
+    Ok(false)
 }
 
 pub fn execute_mint_to(
@@ -388,7 +399,7 @@ fn _execute_mint(
     // Decrement mintable num tokens
     MINTABLE_NUM_TOKENS.save(deps.storage, &(mintable_num_tokens - 1))?;
     // Save the new mint count for the sender's address
-    let new_mint_count: u32 = mint_count(deps.as_ref(), info.clone())? + 1;
+    let new_mint_count: u32 = mint_count(deps.as_ref(), &info)? + 1;
     MINTER_ADDRS.save(deps.storage, info.clone().sender, &new_mint_count)?;
 
     let mut seller_amount = Uint128::zero();
@@ -501,8 +512,11 @@ pub fn mint_price(deps: Deps, admin_no_fee: bool) -> Result<Coin, StdError> {
     Ok(mint_price)
 }
 
-fn mint_count(deps: Deps, info: MessageInfo) -> Result<u32, StdError> {
-    let mint_count: u32 = (MINTER_ADDRS.key(info.sender).may_load(deps.storage)?).unwrap_or(0);
+fn mint_count(deps: Deps, info: &MessageInfo) -> Result<u32, StdError> {
+    let mint_count: u32 = (MINTER_ADDRS
+        .key(info.sender.clone())
+        .may_load(deps.storage)?)
+    .unwrap_or(0);
     Ok(mint_count)
 }
 
