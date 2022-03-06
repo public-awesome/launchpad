@@ -87,7 +87,7 @@ pub fn instantiate(
         .and_then(|w| deps.api.addr_validate(w.as_str()).ok());
 
     // default is genesis mint start time
-    let default_start_time = Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME));
+    let default_start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
     let start_time = if msg.start_time < default_start_time {
         default_start_time
     } else {
@@ -102,7 +102,7 @@ pub fn instantiate(
         unit_price: msg.unit_price,
         per_address_limit: msg.per_address_limit,
         whitelist: whitelist_addr,
-        start_time,
+        start_time: Expiration::AtTime(start_time),
     };
     CONFIG.save(deps.storage, &config)?;
     MINTABLE_NUM_TOKENS.save(deps.storage, &msg.num_tokens)?;

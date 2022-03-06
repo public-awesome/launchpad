@@ -1,4 +1,4 @@
-use cosmwasm_std::{Addr, Coin};
+use cosmwasm_std::{Addr, Coin, Timestamp};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -11,7 +11,7 @@ pub struct InstantiateMsg {
     pub num_tokens: u64,
     pub sg721_code_id: u64,
     pub sg721_instantiate_msg: Sg721InstantiateMsg,
-    pub start_time: Expiration,
+    pub start_time: Timestamp,
     pub per_address_limit: u32,
     pub unit_price: Coin,
     pub whitelist: Option<String>,

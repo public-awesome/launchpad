@@ -98,7 +98,7 @@ fn setup_minter_contract(
     let msg = InstantiateMsg {
         unit_price: coin(UNIT_PRICE, NATIVE_DENOM),
         num_tokens,
-        start_time: Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME)),
+        start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
         per_address_limit: 5,
         whitelist: None,
         base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
@@ -207,7 +207,7 @@ fn initialization() {
     let msg = InstantiateMsg {
         unit_price: coin(UNIT_PRICE, NATIVE_DENOM),
         num_tokens: 100,
-        start_time: Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME)),
+        start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
         per_address_limit: 0,
         whitelist: None,
         base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
@@ -235,7 +235,7 @@ fn initialization() {
     let msg = InstantiateMsg {
         unit_price: coin(UNIT_PRICE, NATIVE_DENOM),
         num_tokens: 100,
-        start_time: Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME)),
+        start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
         per_address_limit: 5,
         whitelist: None,
         base_token_uri: "https://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
@@ -264,7 +264,7 @@ fn initialization() {
     let msg = InstantiateMsg {
         unit_price: coin(UNIT_PRICE, wrong_denom),
         num_tokens: 100,
-        start_time: Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME)),
+        start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
         per_address_limit: 5,
         whitelist: None,
         base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
@@ -292,7 +292,7 @@ fn initialization() {
     let msg = InstantiateMsg {
         unit_price: coin(1, NATIVE_DENOM),
         num_tokens: 100,
-        start_time: Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME)),
+        start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
         per_address_limit: 5,
         whitelist: None,
         base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
@@ -320,7 +320,7 @@ fn initialization() {
     let msg = InstantiateMsg {
         unit_price: coin(UNIT_PRICE, NATIVE_DENOM),
         num_tokens: (MAX_TOKEN_LIMIT + 1).into(),
-        start_time: Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME)),
+        start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
         per_address_limit: 5,
         whitelist: None,
         base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
@@ -348,7 +348,7 @@ fn initialization() {
     let msg = InstantiateMsg {
         unit_price: coin(UNIT_PRICE, NATIVE_DENOM),
         num_tokens: 0,
-        start_time: Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME)),
+        start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
         per_address_limit: 5,
         whitelist: None,
         base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
@@ -1208,7 +1208,7 @@ fn test_start_time_before_genesis() {
     let msg = InstantiateMsg {
         unit_price: coin(UNIT_PRICE, NATIVE_DENOM),
         num_tokens,
-        start_time: Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME - 100)),
+        start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME - 100),
         per_address_limit: 5,
         whitelist: None,
         base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
@@ -1259,7 +1259,7 @@ fn test_update_start_time() {
     let msg = InstantiateMsg {
         unit_price: coin(UNIT_PRICE, NATIVE_DENOM),
         num_tokens,
-        start_time: Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME)),
+        start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
         per_address_limit: 5,
         whitelist: None,
         base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
