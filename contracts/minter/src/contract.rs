@@ -490,7 +490,7 @@ pub fn mint_price(deps: Deps, admin_no_fee: bool) -> Result<Coin, StdError> {
     // else if in whitelist => whitelist price
     // else => config unit price
     let config = CONFIG.load(deps.storage)?;
-    let mint_price: Coin = if admin_no_fee {
+    let mint_price = if admin_no_fee {
         Coin {
             amount: Uint128::zero(),
             denom: NATIVE_DENOM.to_string(),
@@ -512,7 +512,7 @@ pub fn mint_price(deps: Deps, admin_no_fee: bool) -> Result<Coin, StdError> {
 }
 
 fn mint_count(deps: Deps, info: &MessageInfo) -> Result<u32, StdError> {
-    let mint_count: u32 = (MINTER_ADDRS
+    let mint_count = (MINTER_ADDRS
         .key(info.sender.clone())
         .may_load(deps.storage)?)
     .unwrap_or(0);
@@ -549,7 +549,7 @@ fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
 
 fn query_mint_count(deps: Deps, address: String) -> StdResult<MintCountResponse> {
     let addr = deps.api.addr_validate(&address)?;
-    let mint_count: u32 = (MINTER_ADDRS.key(addr.clone()).may_load(deps.storage)?).unwrap_or(0);
+    let mint_count = (MINTER_ADDRS.key(addr.clone()).may_load(deps.storage)?).unwrap_or(0);
     Ok(MintCountResponse {
         address: addr.to_string(),
         count: mint_count,
