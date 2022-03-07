@@ -374,7 +374,7 @@ fn initialization() {
 #[test]
 fn happy_path() {
     let mut router = custom_mock_app();
-    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 1);
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME - 1);
     let (creator, buyer) = setup_accounts(&mut router);
     let num_tokens = 2;
     let (minter_addr, config) = setup_minter_contract(&mut router, &creator, num_tokens);
@@ -388,6 +388,8 @@ fn happy_path() {
         res.start_time,
         Timestamp::from_nanos(GENESIS_MINT_START_TIME).to_string()
     );
+
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 1);
 
     // Fail with incorrect tokens
     let mint_msg = ExecuteMsg::Mint {};
@@ -956,18 +958,6 @@ fn before_start_time() {
     );
     assert!(res.is_err());
 
-    // If block before start_time, throw error
-    let start_time_msg =
-        ExecuteMsg::UpdateStartTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME));
-    router
-        .execute_contract(
-            creator.clone(),
-            minter_addr.clone(),
-            &start_time_msg,
-            &coins(UNIT_PRICE, NATIVE_DENOM),
-        )
-        .unwrap_err();
-
     // Buyer can't mint before start_time
     let mint_msg = ExecuteMsg::Mint {};
     let res = router.execute_contract(
@@ -1221,7 +1211,7 @@ fn test_start_time_before_genesis() {
     let msg = InstantiateMsg {
         unit_price: coin(UNIT_PRICE, NATIVE_DENOM),
         num_tokens,
-        start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME - 100),
+        start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
         per_address_limit: 5,
         whitelist: None,
         base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
@@ -1325,11 +1315,11 @@ fn test_invalid_start_time() {
     let minter_code_id = router.store_code(contract_minter());
     let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
 
-    // Instantiate sale contract
-    let msg = InstantiateMsg {
+    // Instantiate sale contract before genesis mint
+    let mut msg = InstantiateMsg {
         unit_price: coin(UNIT_PRICE, NATIVE_DENOM),
         num_tokens,
-        start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME + 1000),
+        start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME - 100),
         per_address_limit: 5,
         whitelist: None,
         base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
@@ -1347,6 +1337,45 @@ fn test_invalid_start_time() {
             },
         },
     };
+    // set time before the start_time above
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME - 1000);
+
+    let err = router
+        .instantiate_contract(
+            minter_code_id,
+            creator.clone(),
+            &msg,
+            &creation_fee,
+            "Minter",
+            None,
+        )
+        .unwrap_err();
+    assert_eq!(err.source().unwrap().to_string(), "BeforeGenesisTime");
+
+    // move date after genesis mint
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 1000);
+
+    // move start time after genesis but before current time
+    msg.start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 500);
+
+    let err = router
+        .instantiate_contract(
+            minter_code_id,
+            creator.clone(),
+            &msg,
+            &creation_fee,
+            "Minter",
+            None,
+        )
+        .unwrap_err();
+    assert_eq!(
+        err.source().unwrap().to_string(),
+        "InvalidStartTime 1646427600.000000500 < 1646427600.000001000"
+    );
+
+    // position block time before the start time
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 400);
+
     let minter_addr = router
         .instantiate_contract(
             minter_code_id,
@@ -1358,18 +1387,30 @@ fn test_invalid_start_time() {
         )
         .unwrap();
 
-    // Public mint has started
-    setup_block_time(&mut router, GENESIS_MINT_START_TIME - 1000);
-
     // Update to a start time in the past
     let msg = ExecuteMsg::UpdateStartTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME - 100));
+    let res = router.execute_contract(creator.clone(), minter_addr.clone(), &msg, &[]);
+    assert!(res.is_err());
+
+    // Update to a time after genesis but before the current block_time (GENESIS+400)
+    let msg = ExecuteMsg::UpdateStartTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 300));
+    let res = router.execute_contract(creator.clone(), minter_addr.clone(), &msg, &[]);
+    assert!(res.is_err());
+
+    // Update to a time after genesis and after current blocktime (GENESIS+400)
+    let msg = ExecuteMsg::UpdateStartTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 450));
+    let res = router.execute_contract(creator.clone(), minter_addr.clone(), &msg, &[]);
+    assert!(res.is_ok());
+
+    // position block after start time (GENESIS+450);
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 500);
+
+    // Update to a time after genesis and after current blocktime (GENESIS+400)
+    let msg = ExecuteMsg::UpdateStartTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 450));
     let err = router
         .execute_contract(creator, minter_addr, &msg, &[])
         .unwrap_err();
-    assert_eq!(
-        err.source().unwrap().to_string(),
-        "InvalidStartTime 1646427599.999999900 < 1646427599.999999000",
-    );
+    assert_eq!(err.source().unwrap().to_string(), "AlreadyStarted");
 }
 
 #[test]

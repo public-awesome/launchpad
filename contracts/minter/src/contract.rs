@@ -86,18 +86,23 @@ pub fn instantiate(
         });
     }
 
+    let genesis_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
+    // If start time is before genesis time return error
+    if msg.start_time < genesis_time {
+        return Err(ContractError::BeforeGenesisTime {});
+    }
+    // If current time is beyond the provided start time return error
+    if env.block.time > msg.start_time {
+        return Err(ContractError::InvalidStartTime(
+            msg.start_time,
+            env.block.time,
+        ));
+    }
+
     // Validate address for the optional whitelist contract
     let whitelist_addr = msg
         .whitelist
         .and_then(|w| deps.api.addr_validate(w.as_str()).ok());
-
-    // Default is genesis mint start time
-    let default_start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
-    let start_time = if msg.start_time < default_start_time {
-        default_start_time
-    } else {
-        msg.start_time
-    };
 
     let config = Config {
         admin: info.sender.clone(),
@@ -107,7 +112,7 @@ pub fn instantiate(
         unit_price: msg.unit_price,
         per_address_limit: msg.per_address_limit,
         whitelist: whitelist_addr,
-        start_time,
+        start_time: msg.start_time,
     };
     CONFIG.save(deps.storage, &config)?;
     MINTABLE_NUM_TOKENS.save(deps.storage, &msg.num_tokens)?;
@@ -435,17 +440,18 @@ pub fn execute_update_start_time(
             "Sender is not an admin".to_owned(),
         ));
     }
-
-    // Make sure start time is in the future
-    if env.block.time < start_time {
-        return Err(ContractError::InvalidStartTime(start_time, env.block.time));
-    }
-
+    // If current time is after the stored start time return error
     if env.block.time >= config.start_time {
         return Err(ContractError::AlreadyStarted {});
     }
 
+    // If current time already passed the new start_time return error
+    if env.block.time > start_time {
+        return Err(ContractError::InvalidStartTime(start_time, env.block.time));
+    }
+
     let genesis_start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
+    // If the new start_time is before genesis start time return error
     if start_time < genesis_start_time {
         return Err(ContractError::BeforeGenesisTime {});
     }
