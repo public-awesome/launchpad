@@ -498,10 +498,7 @@ pub fn mint_price(deps: Deps, admin_no_fee: bool) -> Result<Coin, StdError> {
     let config = CONFIG.load(deps.storage)?;
 
     if admin_no_fee {
-        return Ok(Coin {
-            amount: Uint128::zero(),
-            denom: NATIVE_DENOM.to_string(),
-        });
+        return Ok(coin(0, config.unit_price.denom));
     }
 
     if config.whitelist.is_none() {
