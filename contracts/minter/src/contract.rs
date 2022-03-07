@@ -434,7 +434,6 @@ fn _execute_mint(
         .add_attribute("network_fee", network_fee)
         .add_attribute("mint_price", mint_price.amount)
         .add_attribute("seller_amount", seller_amount)
-        .add_attribute("no_fee", admin_no_fee.to_string())
         .add_messages(msgs))
 }
 
