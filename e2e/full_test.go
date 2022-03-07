@@ -64,7 +64,9 @@ func TestMinter(t *testing.T) {
 
 	app := simapp.SetupWithGenesisAccounts(t, t.TempDir(), genAccs, balances...)
 
-	ctx := app.BaseApp.NewContext(false, tmproto.Header{Height: 1, ChainID: "stargaze-1", Time: time.Now().UTC()})
+	startDateTime, err := time.Parse(time.RFC3339Nano, "2022-03-07T17:00:00Z")
+	require.NoError(t, err)
+	ctx := app.BaseApp.NewContext(false, tmproto.Header{Height: 1, ChainID: "stargaze-1", Time: startDateTime})
 
 	// wasm params
 	wasmParams := app.WasmKeeper.GetParams(ctx)
@@ -149,7 +151,7 @@ func TestMinter(t *testing.T) {
 	intialTotalSupply := app.BankKeeper.GetSupply(ctx, "ustars")
 
 	instantiateMsgRaw := []byte(fmt.Sprintf(instantiateMsgTemplate, creator.Address.String(), creator.Address.String(), creator.Address.String()))
-	instantiateRes, err := msgServer.InstantiateContract(sdk.WrapSDKContext(ctx), &types.MsgInstantiateContract{
+	instantiateRes, err := msgServer.InstantiateContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgInstantiateContract{
 		Sender: creator.Address.String(),
 		Admin:  creator.Address.String(),
 		CodeID: 1,
@@ -159,6 +161,8 @@ func TestMinter(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.NotNil(t, instantiateRes)
+	require.NotEmpty(t, instantiateRes.Address)
+	minterAddress := instantiateRes.Address
 
 	// 500 STARS should have been burned
 	require.Equal(t,
@@ -171,4 +175,114 @@ func TestMinter(t *testing.T) {
 		app.DistrKeeper.GetFeePoolCommunityCoins(ctx).AmountOf("ustars").TruncateInt64(),
 	)
 
+	// Creator should have been charged 1000STARS
+	require.Equal(t,
+		app.BankKeeper.GetBalance(ctx, creator.Address, "ustars"),
+		sdk.NewInt64Coin("ustars", 1000_000_000),
+	)
+
+	// mint has not started
+	_, err = msgServer.ExecuteContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgExecuteContract{
+		Contract: minterAddress,
+		Sender:   accs[1].Address.String(),
+		Msg:      []byte(`{"mint":{}}`),
+	})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "Minting has not started yet")
+
+	afterGenesisMint, err := time.Parse(time.RFC3339Nano, "2022-03-11T21:00:01Z")
+	require.NoError(t, err)
+	ctx = app.BaseApp.NewContext(false, tmproto.Header{Height: 1, ChainID: "stargaze-1", Time: afterGenesisMint})
+
+	// mint fails with no funds
+	_, err = msgServer.ExecuteContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgExecuteContract{
+		Contract: minterAddress,
+		Sender:   accs[1].Address.String(),
+		Msg:      []byte(`{"mint":{}}`),
+	})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "IncorrectPaymentAmount 0ustars != 100000000ustars")
+
+	// mint succeeds
+	_, err = msgServer.ExecuteContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgExecuteContract{
+		Contract: minterAddress,
+		Sender:   accs[1].Address.String(),
+		Msg:      []byte(`{"mint":{}}`),
+		Funds:    sdk.NewCoins(sdk.NewInt64Coin("ustars", 100_000_000)),
+	})
+	require.NoError(t, err)
+
+	// Buyer should have 100STARS less
+	require.Equal(t,
+		sdk.NewInt64Coin("ustars", 1900_000_000),
+		app.BankKeeper.GetBalance(ctx, accs[1].Address, "ustars"),
+	)
+
+	// Creator should have earned 90%
+	require.Equal(t,
+		app.BankKeeper.GetBalance(ctx, creator.Address, "ustars"),
+		sdk.NewInt64Coin("ustars", 1090_000_000),
+	)
+
+	// 505 STARS should have been burned so far
+	require.Equal(t,
+		intialTotalSupply.Amount.Sub(sdk.NewInt(505_000_000)).String(),
+		app.BankKeeper.GetSupply(ctx, "ustars").Amount.String())
+
+	// 505 STARS should have been transferred to community pool so far
+	require.Equal(t,
+		int64(505_000_000),
+		app.DistrKeeper.GetFeePoolCommunityCoins(ctx).AmountOf("ustars").TruncateInt64(),
+	)
+
+	// // mint fails
+	// _, err = msgServer.ExecuteContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgExecuteContract{
+	// 	Contract: minterAddress,
+	// 	Sender:   accs[1].Address.String(),
+	// 	Msg:      []byte(`{"mint":{}}`),
+	// 	Funds:    sdk.NewCoins(sdk.NewInt64Coin("ustars", 100_000_000)),
+	// })
+	// require.Error(t, err)
+	// require.Contains(t, err.Error(), "Max minting limit per address exceeded")
+
+	// // Buyer should have still have only 100STARS less
+	// require.Equal(t,
+	// 	sdk.NewInt64Coin("ustars", 1900_000_000).String(),
+	// 	app.BankKeeper.GetBalance(ctx, accs[1].Address, "ustars").String(),
+	// )
+	count := 0
+	for i := 2; i < 101; i++ {
+		count++
+		_, err = msgServer.ExecuteContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgExecuteContract{
+			Contract: minterAddress,
+			Sender:   accs[i].Address.String(),
+			Msg:      []byte(`{"mint":{}}`),
+			Funds:    sdk.NewCoins(sdk.NewInt64Coin("ustars", 100_000_000)),
+		})
+		require.NoError(t, err)
+		// Buyer should have still have only 100STARS less
+		require.Equal(t,
+			sdk.NewInt64Coin("ustars", 1900_000_000).String(),
+			app.BankKeeper.GetBalance(ctx, accs[i].Address, "ustars").String(),
+		)
+	}
+	require.Equal(t, 99, count)
+
+	// 500 +  (100 * 5) STARS should have been burned so far
+	require.Equal(t,
+		intialTotalSupply.Amount.Sub(sdk.NewInt(1000_000_000)).String(),
+		app.BankKeeper.GetSupply(ctx, "ustars").Amount.String())
+
+	// 500 +  (100 * 5) STARS should have been transferred to community pool so far
+	require.Equal(t,
+		int64(1000_000_000),
+		app.DistrKeeper.GetFeePoolCommunityCoins(ctx).AmountOf("ustars").TruncateInt64(),
+	)
+
+	// Creator should have earned 90% of total sales
+	// 1000 (balance) + (100 * 90 STARS)
+	require.Equal(t,
+		sdk.NewInt64Coin("ustars", 10_000_000_000),
+		app.BankKeeper.GetBalance(ctx, creator.Address, "ustars"),
+	)
 }
