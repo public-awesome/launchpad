@@ -307,6 +307,10 @@ pub fn execute_mint_for(
     )
 }
 
+// Generalize checks and mint message creation
+// mint -> _execute_mint(recipient: None, token_id: None)
+// mint_to(recipient: "friend") -> _execute_mint(Some(recipient), token_id: None)
+// mint_for(recipient: "friend2", token_id: 420) -> _execute_mint(recipient, token_id)
 fn _execute_mint(
     deps: DepsMut,
     env: Env,
@@ -316,11 +320,6 @@ fn _execute_mint(
     recipient: Option<Addr>,
     token_id: Option<u32>,
 ) -> Result<Response, ContractError> {
-    // Generalize checks and mint message creation
-    // mint -> _execute_mint(recipient: None, token_id: None)
-    // mint_to(recipient: "friend") -> _execute_mint(Some(recipient), token_id: None)
-    // mint_for(recipient: "friend2", token_id: 420) -> _execute_mint(recipient, token_id)
-    let mut msgs: Vec<CosmosMsg<StargazeMsgWrapper>> = vec![];
     let config = CONFIG.load(deps.storage)?;
     let sg721_address = SG721_ADDRESS.load(deps.storage)?;
 
@@ -339,6 +338,8 @@ fn _execute_mint(
         ));
     }
 
+    let mut msgs: Vec<CosmosMsg<StargazeMsgWrapper>> = vec![];
+
     // Create network fee msgs
     let network_fee: Uint128 = if admin_no_fee {
         Uint128::zero()
@@ -353,7 +354,7 @@ fn _execute_mint(
         network_fee
     };
 
-    let mintable_token_id: u32 = match token_id {
+    let mintable_token_id = match token_id {
         Some(token_id) => {
             if token_id == 0 || token_id > config.num_tokens {
                 return Err(ContractError::InvalidTokenId {});
@@ -397,7 +398,7 @@ fn _execute_mint(
     // Decrement mintable num tokens
     MINTABLE_NUM_TOKENS.save(deps.storage, &(mintable_num_tokens - 1))?;
     // Save the new mint count for the sender's address
-    let new_mint_count: u32 = mint_count(deps.as_ref(), &info)? + 1;
+    let new_mint_count = mint_count(deps.as_ref(), &info)? + 1;
     MINTER_ADDRS.save(deps.storage, info.clone().sender, &new_mint_count)?;
 
     let mut seller_amount = Uint128::zero();
