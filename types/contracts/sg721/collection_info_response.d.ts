@@ -5,6 +5,6 @@ creator: string
 description: string
 external_link?: (string | null)
 image: string
-royalty?: (RoyaltyInfoResponse | null)
+royalty_info?: (RoyaltyInfoResponse | null)
 [k: string]: unknown
 }
