@@ -20,7 +20,7 @@ pub struct RoyaltyInfoResponse {
 
 impl RoyaltyInfoResponse {
     pub fn share_validate(&self) -> Result<Decimal, ContractError> {
-        if self.share > Decimal::one() || self.share < Decimal::zero() {
+        if self.share > Decimal::one() {
             return Err(ContractError::InvalidRoyalities {});
         }
 
@@ -145,5 +145,5 @@ pub struct CollectionInfoResponse {
     pub description: String,
     pub image: String,
     pub external_link: Option<String>,
-    pub royalty: Option<RoyaltyInfoResponse>,
+    pub royalty_info: Option<RoyaltyInfoResponse>,
 }

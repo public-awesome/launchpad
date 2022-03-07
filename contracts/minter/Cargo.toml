@@ -1,6 +1,6 @@
 [package]
 name = "minter"
-version = "0.7.2"
+version = "0.7.4"
 authors = ["Jake Hartnell <jake@stargaze.zone>"]
 edition = "2018"
 

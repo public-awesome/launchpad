@@ -1,6 +1,6 @@
 [package]
 name = "sg721"
-version = "0.7.2"
+version = "0.7.3"
 authors = ["Shane Vitarana <s@noreply.publicawesome.com>"]
 edition = "2018"
 

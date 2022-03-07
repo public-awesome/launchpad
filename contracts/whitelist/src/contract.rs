@@ -328,7 +328,7 @@ pub fn execute_increase_member_limit(
     member_limit: u32,
 ) -> Result<Response, ContractError> {
     let mut config = CONFIG.load(deps.storage)?;
-    if config.member_limit > member_limit || member_limit > MAX_MEMBERS {
+    if config.member_limit >= member_limit || member_limit > MAX_MEMBERS {
         return Err(ContractError::InvalidMemberLimit {
             min: config.member_limit,
             max: MAX_MEMBERS,
@@ -751,10 +751,40 @@ mod tests {
         assert!(res.is_ok());
 
         // 0 upgrade fee, fails when including a fee
+        // don't allow updating to the same number of memebers
         let msg = ExecuteMsg::IncreaseMemberLimit(1002);
+        let info = mock_info(ADMIN, &[coin(1, "ustars")]);
+        execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
+
+        // 0 upgrade fee, fails when including a fee
+        let msg = ExecuteMsg::IncreaseMemberLimit(1003);
         let info = mock_info(ADMIN, &[coin(1, "ustars")]);
         let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
         assert_eq!(err.to_string(), "IncorrectCreationFee 1 < 0");
+
+        // 0 upgrade fee
+        let msg = ExecuteMsg::IncreaseMemberLimit(1502);
+        let info = mock_info(ADMIN, &[coin(0, "ustars")]);
+        let res = execute(deps.as_mut(), mock_env(), info, msg);
+        assert!(res.is_ok());
+
+        // 0 upgrade fee
+        let msg = ExecuteMsg::IncreaseMemberLimit(2000);
+        let info = mock_info(ADMIN, &[coin(0, "ustars")]);
+        let res = execute(deps.as_mut(), mock_env(), info, msg);
+        assert!(res.is_ok());
+
+        // needs upgrade fee
+        let msg = ExecuteMsg::IncreaseMemberLimit(2002);
+        let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
+        let res = execute(deps.as_mut(), mock_env(), info, msg);
+        assert!(res.is_ok());
+
+        // needs upgrade fee
+        let msg = ExecuteMsg::IncreaseMemberLimit(4002);
+        let info = mock_info(ADMIN, &[coin(200_000_000, "ustars")]);
+        let res = execute(deps.as_mut(), mock_env(), info, msg);
+        assert!(res.is_ok());
 
         // over MAX_MEMBERS, Invalid member limit
         let msg = ExecuteMsg::IncreaseMemberLimit(6000);
@@ -762,7 +792,7 @@ mod tests {
         let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
         assert_eq!(
             err.to_string(),
-            "Invalid member limit. min: 1002, max: 5000, got: 6000"
+            "Invalid member limit. min: 4002, max: 5000, got: 6000"
         );
     }
 }

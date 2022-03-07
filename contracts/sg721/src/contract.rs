@@ -123,7 +123,7 @@ fn query_config(deps: Deps) -> StdResult<CollectionInfoResponse> {
         description: info.description,
         image: info.image,
         external_link: info.external_link,
-        royalty: royalty_info_res,
+        royalty_info: royalty_info_res,
     })
 }
 
@@ -168,7 +168,7 @@ mod tests {
             "https://example.com/external.html",
             value.external_link.unwrap()
         );
-        assert_eq!(None, value.royalty);
+        assert_eq!(None, value.royalty_info);
     }
 
     #[test]
@@ -206,7 +206,7 @@ mod tests {
                 payment_address: creator,
                 share: Decimal::percent(10),
             }),
-            value.royalty
+            value.royalty_info
         );
     }
 }
