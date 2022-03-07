@@ -1358,7 +1358,7 @@ fn test_invalid_start_time() {
     // move start time after genesis but before current time
     msg.start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 500);
 
-    let err = router
+    router
         .instantiate_contract(
             minter_code_id,
             creator.clone(),
@@ -1368,10 +1368,6 @@ fn test_invalid_start_time() {
             None,
         )
         .unwrap_err();
-    assert_eq!(
-        err.source().unwrap().to_string(),
-        "InvalidStartTime 1646427600.000000500 < 1646427600.000001000"
-    );
 
     // position block time before the start time
     setup_block_time(&mut router, GENESIS_MINT_START_TIME + 400);
