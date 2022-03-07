@@ -769,8 +769,14 @@ mod tests {
         assert!(res.is_ok());
 
         // needs upgrade fee
+        let msg = ExecuteMsg::IncreaseMemberLimit(2002);
+        let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
+        let res = execute(deps.as_mut(), mock_env(), info, msg);
+        assert!(res.is_ok());
+
+        // needs upgrade fee
         let msg = ExecuteMsg::IncreaseMemberLimit(4002);
-        let info = mock_info(ADMIN, &[coin(300_000_000, "ustars")]);
+        let info = mock_info(ADMIN, &[coin(200_000_000, "ustars")]);
         let res = execute(deps.as_mut(), mock_env(), info, msg);
         assert!(res.is_ok());
 
