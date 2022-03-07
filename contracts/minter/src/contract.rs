@@ -191,6 +191,10 @@ pub fn execute_set_whitelist(
         return Err(ContractError::AlreadyStarted {});
     }
 
+    if config.whitelist.is_some() {
+        return Err(ContractError::WhitelistAlreadySet {});
+    }
+
     config.whitelist = Some(deps.api.addr_validate(whitelist)?);
     CONFIG.save(deps.storage, &config)?;
 
