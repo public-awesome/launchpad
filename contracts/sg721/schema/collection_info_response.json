@@ -23,7 +23,7 @@
     "image": {
       "type": "string"
     },
-    "royalty": {
+    "royalty_info": {
       "anyOf": [
         {
           "$ref": "#/definitions/RoyaltyInfoResponse"

@@ -145,5 +145,5 @@ pub struct CollectionInfoResponse {
     pub description: String,
     pub image: String,
     pub external_link: Option<String>,
-    pub royalty: Option<RoyaltyInfoResponse>,
+    pub royalty_info: Option<RoyaltyInfoResponse>,
 }
