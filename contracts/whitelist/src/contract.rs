@@ -327,7 +327,6 @@ pub fn execute_increase_member_limit(
     info: MessageInfo,
     member_limit: u32,
 ) -> Result<Response, ContractError> {
-    let mut fee_msgs: Vec<CosmosMsg<StargazeMsgWrapper>> = vec![];
     let mut config = CONFIG.load(deps.storage)?;
     if config.member_limit > member_limit || member_limit > MAX_MEMBERS {
         return Err(ContractError::InvalidMemberLimit {
@@ -353,10 +352,11 @@ pub fn execute_increase_member_limit(
         ));
     }
 
-    // add fee messages if upgrade fee
-    if upgrade_fee > 0 {
-        fee_msgs = burn_and_distribute_fee(env, &info, upgrade_fee)?;
-    }
+    let fee_msgs = if upgrade_fee > 0 {
+        burn_and_distribute_fee(env, &info, upgrade_fee)?
+    } else {
+        vec![]
+    };
 
     config.member_limit = member_limit;
     CONFIG.save(deps.storage, &config)?;
