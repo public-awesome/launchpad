@@ -740,7 +740,7 @@ fn whitelist_already_started() {
 }
 
 #[test]
-fn whitelist_already_set() {
+fn whitelist_can_update_before_start() {
     let mut router = custom_mock_app();
     let (creator, _) = setup_accounts(&mut router);
     let num_tokens = 1;
@@ -762,14 +762,15 @@ fn whitelist_already_set() {
         )
         .unwrap();
 
+    // can set twice before starting
     router
         .execute_contract(
             creator.clone(),
-            minter_addr,
+            minter_addr.clone(),
             &set_whitelist_msg,
             &coins(UNIT_PRICE, NATIVE_DENOM),
         )
-        .unwrap_err();
+        .unwrap();
 }
 
 #[test]

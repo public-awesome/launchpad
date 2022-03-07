@@ -48,8 +48,8 @@ pub enum ContractError {
     #[error("BeforeGenesisTime")]
     BeforeGenesisTime {},
 
-    #[error("WhitelistAlreadySet")]
-    WhitelistAlreadySet {},
+    #[error("WhitelistAlreadyStarted")]
+    WhitelistAlreadyStarted {},
 
     #[error("InvalidStartTime {0} < {1}")]
     InvalidStartTime(Timestamp, Timestamp),
