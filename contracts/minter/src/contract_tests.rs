@@ -766,7 +766,7 @@ fn whitelist_can_update_before_start() {
     router
         .execute_contract(
             creator.clone(),
-            minter_addr.clone(),
+            minter_addr,
             &set_whitelist_msg,
             &coins(UNIT_PRICE, NATIVE_DENOM),
         )
