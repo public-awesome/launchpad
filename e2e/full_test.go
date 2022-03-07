@@ -145,6 +145,9 @@ func TestMinter(t *testing.T) {
 		}
 	  }	  
 	`
+
+	intialTotalSupply := app.BankKeeper.GetSupply(ctx, "ustars")
+
 	instantiateMsgRaw := []byte(fmt.Sprintf(instantiateMsgTemplate, creator.Address.String(), creator.Address.String(), creator.Address.String()))
 	instantiateRes, err := msgServer.InstantiateContract(sdk.WrapSDKContext(ctx), &types.MsgInstantiateContract{
 		Sender: creator.Address.String(),
@@ -156,5 +159,16 @@ func TestMinter(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.NotNil(t, instantiateRes)
+
+	// 500 STARS should have been burned
+	require.Equal(t,
+		intialTotalSupply.Amount.Sub(sdk.NewInt(500_000_000)).String(),
+		app.BankKeeper.GetSupply(ctx, "ustars").Amount.String())
+
+	// 500 STARS should have been transferred to community pool
+	require.Equal(t,
+		int64(500_000_000),
+		app.DistrKeeper.GetFeePoolCommunityCoins(ctx).AmountOf("ustars").TruncateInt64(),
+	)
 
 }
