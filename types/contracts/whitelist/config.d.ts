@@ -1,4 +1,4 @@
-import { Coin, Expiration } from "./shared-types";
+import { Coin, Timestamp } from "./shared-types";
 
 /**
  * A human readable address.
@@ -13,11 +13,11 @@ export type Addr = string
 
 export interface Config {
 admin: Addr
-end_time: Expiration
+end_time: Timestamp
 member_limit: number
 num_members: number
 per_address_limit: number
-start_time: Expiration
+start_time: Timestamp
 unit_price: Coin
 [k: string]: unknown
 }

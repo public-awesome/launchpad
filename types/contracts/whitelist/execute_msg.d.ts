@@ -1,9 +1,9 @@
-import { Expiration } from "./shared-types";
+import { Timestamp } from "./shared-types";
 
 export type ExecuteMsg = ({
-update_start_time: Expiration
+update_start_time: Timestamp
 } | {
-update_end_time: Expiration
+update_end_time: Timestamp
 } | {
 add_members: AddMembersMsg
 } | {

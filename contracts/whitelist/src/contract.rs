@@ -11,7 +11,6 @@ use cosmwasm_std::{to_binary, Binary, CosmosMsg, Deps, DepsMut, Env, MessageInfo
 use cosmwasm_std::{Order, Timestamp};
 use cw2::set_contract_version;
 use cw_storage_plus::Bound;
-use cw_utils::Expiration;
 use cw_utils::{may_pay, maybe_addr, must_pay};
 use rust_decimal::prelude::ToPrimitive;
 use rust_decimal::Decimal;
@@ -111,14 +110,14 @@ pub fn instantiate(
         ));
     }
 
-    if msg.start_time.is_expired(&env.block) {
+    if env.block.time >= msg.start_time {
         return Err(ContractError::InvalidStartTime(
-            Expiration::AtTime(env.block.time),
+            env.block.time,
             msg.start_time,
         ));
     }
 
-    let genesis_start_time = Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME));
+    let genesis_start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
     if msg.start_time < genesis_start_time {
         return Err(ContractError::InvalidStartTime(
             msg.start_time,
@@ -173,7 +172,7 @@ pub fn execute_update_start_time(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    start_time: Expiration,
+    start_time: Timestamp,
 ) -> Result<Response, ContractError> {
     let mut config = CONFIG.load(deps.storage)?;
     if info.sender != config.admin {
@@ -181,7 +180,7 @@ pub fn execute_update_start_time(
     }
 
     // don't allow updating start time if whitelist is active
-    if config.start_time.is_expired(&env.block) {
+    if env.block.time >= config.start_time {
         return Err(ContractError::AlreadyStarted {});
     }
 
@@ -189,7 +188,7 @@ pub fn execute_update_start_time(
         return Err(ContractError::InvalidStartTime(start_time, config.end_time));
     }
 
-    let genesis_start_time = Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME));
+    let genesis_start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
     let start_time = if start_time < genesis_start_time {
         genesis_start_time
     } else {
@@ -208,7 +207,7 @@ pub fn execute_update_end_time(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    end_time: Expiration,
+    end_time: Timestamp,
 ) -> Result<Response, ContractError> {
     let mut config = CONFIG.load(deps.storage)?;
     if info.sender != config.admin {
@@ -216,7 +215,7 @@ pub fn execute_update_end_time(
     }
 
     // don't allow updating end time if whitelist is active
-    if config.start_time.is_expired(&env.block) {
+    if env.block.time >= config.start_time {
         return Err(ContractError::AlreadyStarted {});
     }
 
@@ -276,7 +275,7 @@ pub fn execute_remove_members(
         return Err(ContractError::Unauthorized {});
     }
 
-    if config.start_time.is_expired(&env.block) {
+    if env.block.time >= config.start_time {
         return Err(ContractError::AlreadyStarted {});
     }
 
@@ -385,22 +384,21 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
 fn query_has_started(deps: Deps, env: Env) -> StdResult<HasStartedResponse> {
     let config = CONFIG.load(deps.storage)?;
     Ok(HasStartedResponse {
-        has_started: config.start_time.is_expired(&env.block),
+        has_started: (env.block.time >= config.start_time),
     })
 }
 
 fn query_has_ended(deps: Deps, env: Env) -> StdResult<HasEndedResponse> {
     let config = CONFIG.load(deps.storage)?;
     Ok(HasEndedResponse {
-        has_ended: config.end_time.is_expired(&env.block),
+        has_ended: (env.block.time >= config.end_time),
     })
 }
 
 fn query_is_active(deps: Deps, env: Env) -> StdResult<IsActiveResponse> {
     let config = CONFIG.load(deps.storage)?;
     Ok(IsActiveResponse {
-        is_active: config.start_time.is_expired(&env.block)
-            && !config.end_time.is_expired(&env.block),
+        is_active: (env.block.time >= config.start_time) && (env.block.time < config.end_time),
     })
 }
 
@@ -440,8 +438,7 @@ fn query_config(deps: Deps, env: Env) -> StdResult<ConfigResponse> {
         start_time: config.start_time,
         end_time: config.end_time,
         unit_price: config.unit_price,
-        is_active: config.start_time.is_expired(&env.block)
-            && !config.end_time.is_expired(&env.block),
+        is_active: (env.block.time >= config.start_time) && (env.block.time < config.end_time),
     })
 }
 
@@ -457,15 +454,14 @@ mod tests {
     const ADMIN: &str = "admin";
     const UNIT_AMOUNT: u128 = 100_000_000;
 
-    const NON_EXPIRED_HEIGHT: Expiration = Expiration::AtHeight(22_222);
-    const GENESIS_START_TIME: Expiration =
-        Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME));
+    const GENESIS_START_TIME: Timestamp = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
+    const END_TIME: Timestamp = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 1000);
 
     fn setup_contract(deps: DepsMut) {
         let msg = InstantiateMsg {
             members: vec!["adsfsa".to_string()],
             start_time: GENESIS_START_TIME,
-            end_time: NON_EXPIRED_HEIGHT,
+            end_time: END_TIME,
             unit_price: coin(UNIT_AMOUNT, NATIVE_DENOM),
             per_address_limit: 1,
             member_limit: 1000,
@@ -486,8 +482,8 @@ mod tests {
         let mut deps = mock_dependencies();
         let msg = InstantiateMsg {
             members: vec!["adsfsa".to_string()],
-            start_time: NON_EXPIRED_HEIGHT,
-            end_time: NON_EXPIRED_HEIGHT,
+            start_time: END_TIME,
+            end_time: END_TIME,
             unit_price: coin(1, NATIVE_DENOM),
             per_address_limit: 1,
             member_limit: 1000,
@@ -501,8 +497,8 @@ mod tests {
         let mut deps = mock_dependencies();
         let msg = InstantiateMsg {
             members: vec!["adsfsa".to_string()],
-            start_time: NON_EXPIRED_HEIGHT,
-            end_time: NON_EXPIRED_HEIGHT,
+            start_time: END_TIME,
+            end_time: END_TIME,
             unit_price: coin(UNIT_AMOUNT, "not_ustars"),
             per_address_limit: 1,
             member_limit: 1000,
@@ -517,8 +513,8 @@ mod tests {
         let mut deps = mock_dependencies();
         let msg = InstantiateMsg {
             members: vec!["adsfsa".to_string()],
-            start_time: NON_EXPIRED_HEIGHT,
-            end_time: NON_EXPIRED_HEIGHT,
+            start_time: END_TIME,
+            end_time: END_TIME,
             unit_price: coin(UNIT_AMOUNT, "ustars"),
             per_address_limit: 1,
             member_limit: 3000,
@@ -540,8 +536,8 @@ mod tests {
                 "adsfsa".to_string(),
                 "adsfsa".to_string(),
             ],
-            start_time: NON_EXPIRED_HEIGHT,
-            end_time: NON_EXPIRED_HEIGHT,
+            start_time: END_TIME,
+            end_time: END_TIME,
             unit_price: coin(UNIT_AMOUNT, NATIVE_DENOM),
             per_address_limit: 1,
             member_limit: 1000,
@@ -556,8 +552,8 @@ mod tests {
     fn check_start_time_after_end_time() {
         let msg = InstantiateMsg {
             members: vec!["adsfsa".to_string()],
-            start_time: Expiration::AtHeight(101),
-            end_time: Expiration::AtHeight(100),
+            start_time: END_TIME,
+            end_time: GENESIS_START_TIME,
             unit_price: coin(UNIT_AMOUNT, NATIVE_DENOM),
             per_address_limit: 1,
             member_limit: 1000,
@@ -572,9 +568,7 @@ mod tests {
         let mut deps = mock_dependencies();
         setup_contract(deps.as_mut());
 
-        let msg = ExecuteMsg::UpdateStartTime(Expiration::AtTime(Timestamp::from_nanos(
-            GENESIS_MINT_START_TIME - 100,
-        )));
+        let msg = ExecuteMsg::UpdateStartTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME - 100));
         let info = mock_info(ADMIN, &[]);
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(res.attributes.len(), 3);
@@ -587,16 +581,12 @@ mod tests {
         let mut deps = mock_dependencies();
         setup_contract(deps.as_mut());
 
-        let msg = ExecuteMsg::UpdateEndTime(Expiration::AtTime(Timestamp::from_nanos(
-            GENESIS_MINT_START_TIME + 100,
-        )));
+        let msg = ExecuteMsg::UpdateEndTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 100));
         let info = mock_info(ADMIN, &[]);
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(res.attributes.len(), 3);
 
-        let msg = ExecuteMsg::UpdateEndTime(Expiration::AtTime(Timestamp::from_nanos(
-            GENESIS_MINT_START_TIME - 100,
-        )));
+        let msg = ExecuteMsg::UpdateEndTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME - 100));
         let info = mock_info(ADMIN, &[]);
         execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
     }
@@ -689,8 +679,8 @@ mod tests {
         }
         let msg = InstantiateMsg {
             members: members.clone(),
-            start_time: NON_EXPIRED_HEIGHT,
-            end_time: NON_EXPIRED_HEIGHT,
+            start_time: END_TIME,
+            end_time: END_TIME,
             unit_price: coin(UNIT_AMOUNT, NATIVE_DENOM),
             per_address_limit: 1,
             member_limit: 1000,

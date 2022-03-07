@@ -1,5 +1,5 @@
-use cosmwasm_std::StdError;
-use cw_utils::{Expiration, PaymentError};
+use cosmwasm_std::{StdError, Timestamp};
+use cw_utils::PaymentError;
 use sg_std::fees::FeeError;
 use thiserror::Error;
 
@@ -24,10 +24,10 @@ pub enum ContractError {
     NoMemberFound(String),
 
     #[error("InvalidStartTime {0} > {1}")]
-    InvalidStartTime(Expiration, Expiration),
+    InvalidStartTime(Timestamp, Timestamp),
 
     #[error("InvalidEndTime {0} > {1}")]
-    InvalidEndTime(Expiration, Expiration),
+    InvalidEndTime(Timestamp, Timestamp),
 
     #[error("MembersExceeded: {expected} got {actual}")]
     MembersExceeded { expected: u32, actual: u32 },

@@ -6,7 +6,7 @@ use cosmwasm_std::{
 };
 use cw2::set_contract_version;
 use cw721_base::{msg::ExecuteMsg as Cw721ExecuteMsg, MintMsg};
-use cw_utils::{may_pay, parse_reply_instantiate_data, Expiration};
+use cw_utils::{may_pay, parse_reply_instantiate_data};
 use sg721::msg::InstantiateMsg as Sg721InstantiateMsg;
 use url::Url;
 
@@ -91,8 +91,8 @@ pub fn instantiate(
         .whitelist
         .and_then(|w| deps.api.addr_validate(w.as_str()).ok());
 
-    // Default start_time is genesis mint start time
-    let default_start_time = Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME));
+    // Default is genesis mint start time
+    let default_start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
     let start_time = if msg.start_time < default_start_time {
         default_start_time
     } else {
@@ -154,9 +154,7 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::Mint {} => execute_mint_sender(deps, env, info),
-        ExecuteMsg::UpdateStartTime(expiration) => {
-            execute_update_start_time(deps, env, info, expiration)
-        }
+        ExecuteMsg::UpdateStartTime(time) => execute_update_start_time(deps, env, info, time),
         ExecuteMsg::UpdatePerAddressLimit { per_address_limit } => {
             execute_update_per_address_limit(deps, env, info, per_address_limit)
         }
@@ -184,7 +182,7 @@ pub fn execute_set_whitelist(
         ));
     };
 
-    if config.start_time.is_expired(&env.block) {
+    if env.block.time >= config.start_time {
         return Err(ContractError::AlreadyStarted {});
     }
 
@@ -238,7 +236,7 @@ pub fn execute_mint_sender(
 
     // If there is no active whitelist right now, check public mint
     // Check if after start_time
-    if pub_mint && !config.start_time.is_expired(&env.block) {
+    if pub_mint && (env.block.time < config.start_time) {
         return Err(ContractError::BeforeMintStartTime {});
     }
 
@@ -419,7 +417,7 @@ pub fn execute_update_start_time(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    start_time: Expiration,
+    start_time: Timestamp,
 ) -> Result<Response, ContractError> {
     let mut config = CONFIG.load(deps.storage)?;
     if info.sender != config.admin {
@@ -428,17 +426,19 @@ pub fn execute_update_start_time(
         ));
     }
 
-    if config.start_time.is_expired(&env.block) {
+    // Make sure start time is in the future
+    if env.block.time < start_time {
+        return Err(ContractError::InvalidStartTime(start_time, env.block.time));
+    }
+
+    if env.block.time >= config.start_time {
         return Err(ContractError::AlreadyStarted {});
     }
 
-    // Default to Genesis start time if start time is before Genesis mint
-    let genesis_start_time = Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME));
-    let start_time = if start_time < genesis_start_time {
-        genesis_start_time
-    } else {
-        start_time
-    };
+    let genesis_start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
+    if start_time < genesis_start_time {
+        return Err(ContractError::BeforeGenesisTime {});
+    }
 
     config.start_time = start_time;
     CONFIG.save(deps.storage, &config)?;

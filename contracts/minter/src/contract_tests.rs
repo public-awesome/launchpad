@@ -5,7 +5,6 @@ use cosmwasm_std::{Api, Coin};
 use cw721::{Cw721QueryMsg, OwnerOfResponse};
 use cw721_base::ExecuteMsg as Cw721ExecuteMsg;
 use cw_multi_test::{BankSudo, Contract, ContractWrapper, Executor, SudoMsg};
-use cw_utils::Expiration;
 use sg721::msg::{InstantiateMsg as Sg721InstantiateMsg, RoyaltyInfoResponse};
 use sg721::state::CollectionInfo;
 use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
@@ -65,8 +64,8 @@ fn setup_whitelist_contract(router: &mut StargazeApp, creator: &Addr) -> Addr {
 
     let msg = WhitelistInstantiateMsg {
         members: vec![],
-        start_time: Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 100)),
-        end_time: Expiration::Never {},
+        start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME + 100),
+        end_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10000000),
         unit_price: coin(WHITELIST_AMOUNT, NATIVE_DENOM),
         per_address_limit: WL_PER_ADDRESS_LIMIT,
         member_limit: 1000,
@@ -98,7 +97,7 @@ fn setup_minter_contract(
     let msg = InstantiateMsg {
         unit_price: coin(UNIT_PRICE, NATIVE_DENOM),
         num_tokens,
-        start_time: Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME)),
+        start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
         per_address_limit: 5,
         whitelist: None,
         base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
@@ -207,7 +206,7 @@ fn initialization() {
     let msg = InstantiateMsg {
         unit_price: coin(UNIT_PRICE, NATIVE_DENOM),
         num_tokens: 100,
-        start_time: Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME)),
+        start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
         per_address_limit: 0,
         whitelist: None,
         base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
@@ -235,7 +234,7 @@ fn initialization() {
     let msg = InstantiateMsg {
         unit_price: coin(UNIT_PRICE, NATIVE_DENOM),
         num_tokens: 100,
-        start_time: Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME)),
+        start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
         per_address_limit: 5,
         whitelist: None,
         base_token_uri: "https://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
@@ -264,7 +263,7 @@ fn initialization() {
     let msg = InstantiateMsg {
         unit_price: coin(UNIT_PRICE, wrong_denom),
         num_tokens: 100,
-        start_time: Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME)),
+        start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
         per_address_limit: 5,
         whitelist: None,
         base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
@@ -292,7 +291,7 @@ fn initialization() {
     let msg = InstantiateMsg {
         unit_price: coin(1, NATIVE_DENOM),
         num_tokens: 100,
-        start_time: Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME)),
+        start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
         per_address_limit: 5,
         whitelist: None,
         base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
@@ -320,7 +319,7 @@ fn initialization() {
     let msg = InstantiateMsg {
         unit_price: coin(UNIT_PRICE, NATIVE_DENOM),
         num_tokens: (MAX_TOKEN_LIMIT + 1).into(),
-        start_time: Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME)),
+        start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
         per_address_limit: 5,
         whitelist: None,
         base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
@@ -348,7 +347,7 @@ fn initialization() {
     let msg = InstantiateMsg {
         unit_price: coin(UNIT_PRICE, NATIVE_DENOM),
         num_tokens: 0,
-        start_time: Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME)),
+        start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
         per_address_limit: 5,
         whitelist: None,
         base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
@@ -387,8 +386,7 @@ fn happy_path() {
         .unwrap();
     assert_eq!(
         res.start_time,
-        "expiration time: ".to_owned()
-            + &Timestamp::from_nanos(GENESIS_MINT_START_TIME).to_string()
+        Timestamp::from_nanos(GENESIS_MINT_START_TIME).to_string()
     );
 
     // Fail with incorrect tokens
@@ -544,7 +542,7 @@ fn mint_count_query() {
     // Set block to before genesis mint start time
     setup_block_time(&mut router, GENESIS_MINT_START_TIME - 1000);
 
-    let wl_msg = WhitelistExecuteMsg::UpdateEndTime(Expiration::AtTime(EXPIRATION_TIME));
+    let wl_msg = WhitelistExecuteMsg::UpdateEndTime(EXPIRATION_TIME);
     let res = router.execute_contract(
         creator.clone(),
         whitelist_addr.clone(),
@@ -553,7 +551,7 @@ fn mint_count_query() {
     );
     assert!(res.is_ok());
 
-    let wl_msg = WhitelistExecuteMsg::UpdateStartTime(Expiration::AtTime(Timestamp::from_nanos(0)));
+    let wl_msg = WhitelistExecuteMsg::UpdateStartTime(Timestamp::from_nanos(0));
     let res = router.execute_contract(
         creator.clone(),
         whitelist_addr.clone(),
@@ -768,7 +766,7 @@ fn whitelist_access_len_add_remove_expiration() {
     setup_block_time(&mut router, GENESIS_MINT_START_TIME - 10);
 
     // Update whitelist_expiration fails if not admin
-    let wl_msg = WhitelistExecuteMsg::UpdateEndTime(Expiration::AtTime(AFTER_GENESIS_TIME));
+    let wl_msg = WhitelistExecuteMsg::UpdateEndTime(AFTER_GENESIS_TIME);
     router
         .execute_contract(
             buyer.clone(),
@@ -779,7 +777,7 @@ fn whitelist_access_len_add_remove_expiration() {
         .unwrap_err();
 
     // Update whitelist_expiration succeeds when from admin
-    let wl_msg = WhitelistExecuteMsg::UpdateEndTime(Expiration::AtTime(AFTER_GENESIS_TIME));
+    let wl_msg = WhitelistExecuteMsg::UpdateEndTime(AFTER_GENESIS_TIME);
     let res = router.execute_contract(
         creator.clone(),
         whitelist_addr.clone(),
@@ -788,7 +786,7 @@ fn whitelist_access_len_add_remove_expiration() {
     );
     assert!(res.is_ok());
 
-    let wl_msg = WhitelistExecuteMsg::UpdateStartTime(Expiration::AtTime(Timestamp::from_nanos(0)));
+    let wl_msg = WhitelistExecuteMsg::UpdateStartTime(Timestamp::from_nanos(0));
     let res = router.execute_contract(
         creator.clone(),
         whitelist_addr.clone(),
@@ -949,7 +947,7 @@ fn before_start_time() {
     setup_block_time(&mut router, GENESIS_MINT_START_TIME - 10);
 
     // Set start_time fails if not admin
-    let start_time_msg = ExecuteMsg::UpdateStartTime(Expiration::Never {});
+    let start_time_msg = ExecuteMsg::UpdateStartTime(Timestamp::from_nanos(0));
     let res = router.execute_contract(
         buyer.clone(),
         minter_addr.clone(),
@@ -959,16 +957,16 @@ fn before_start_time() {
     assert!(res.is_err());
 
     // If block before start_time, throw error
-    let start_time_msg = ExecuteMsg::UpdateStartTime(Expiration::AtTime(Timestamp::from_nanos(
-        GENESIS_MINT_START_TIME,
-    )));
-    let res = router.execute_contract(
-        creator.clone(),
-        minter_addr.clone(),
-        &start_time_msg,
-        &coins(UNIT_PRICE, NATIVE_DENOM),
-    );
-    assert!(res.is_ok());
+    let start_time_msg =
+        ExecuteMsg::UpdateStartTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME));
+    router
+        .execute_contract(
+            creator.clone(),
+            minter_addr.clone(),
+            &start_time_msg,
+            &coins(UNIT_PRICE, NATIVE_DENOM),
+        )
+        .unwrap_err();
 
     // Buyer can't mint before start_time
     let mint_msg = ExecuteMsg::Mint {};
@@ -986,8 +984,7 @@ fn before_start_time() {
         .query_wasm_smart(minter_addr.clone(), &QueryMsg::StartTime {})
         .unwrap();
     assert_eq!(
-        "expiration time: ".to_owned()
-            + &Timestamp::from_nanos(GENESIS_MINT_START_TIME).to_string(),
+        Timestamp::from_nanos(GENESIS_MINT_START_TIME).to_string(),
         start_time_response.start_time
     );
 
@@ -1224,7 +1221,7 @@ fn test_start_time_before_genesis() {
     let msg = InstantiateMsg {
         unit_price: coin(UNIT_PRICE, NATIVE_DENOM),
         num_tokens,
-        start_time: Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME - 100)),
+        start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME - 100),
         per_address_limit: 5,
         whitelist: None,
         base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
@@ -1255,8 +1252,7 @@ fn test_start_time_before_genesis() {
         .unwrap();
     assert_eq!(
         res.start_time,
-        "expiration time: ".to_owned()
-            + &Timestamp::from_nanos(GENESIS_MINT_START_TIME).to_string()
+        Timestamp::from_nanos(GENESIS_MINT_START_TIME).to_string()
     );
 }
 
@@ -1275,7 +1271,7 @@ fn test_update_start_time() {
     let msg = InstantiateMsg {
         unit_price: coin(UNIT_PRICE, NATIVE_DENOM),
         num_tokens,
-        start_time: Expiration::AtTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME)),
+        start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
         per_address_limit: 5,
         whitelist: None,
         base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
@@ -1307,16 +1303,72 @@ fn test_update_start_time() {
     // Public mint has started
     setup_block_time(&mut router, GENESIS_MINT_START_TIME + 100);
 
-    // Update to a start time in the past fails
-    let msg = ExecuteMsg::UpdateStartTime(Expiration::AtTime(Timestamp::from_nanos(
-        GENESIS_MINT_START_TIME - 100,
-    )));
+    // Update to a start time in the past
+    let msg = ExecuteMsg::UpdateStartTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME - 1000));
     let err = router
         .execute_contract(creator, minter_addr, &msg, &[])
         .unwrap_err();
     assert_eq!(
         err.source().unwrap().to_string(),
         ContractError::AlreadyStarted {}.to_string(),
+    );
+}
+
+#[test]
+fn test_invalid_start_time() {
+    let mut router = custom_mock_app();
+    let (creator, _) = setup_accounts(&mut router);
+    let num_tokens = 10;
+
+    // Upload contract code
+    let sg721_code_id = router.store_code(contract_sg721());
+    let minter_code_id = router.store_code(contract_minter());
+    let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
+
+    // Instantiate sale contract
+    let msg = InstantiateMsg {
+        unit_price: coin(UNIT_PRICE, NATIVE_DENOM),
+        num_tokens,
+        start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME + 1000),
+        per_address_limit: 5,
+        whitelist: None,
+        base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
+        sg721_code_id,
+        sg721_instantiate_msg: Sg721InstantiateMsg {
+            name: String::from("TEST"),
+            symbol: String::from("TEST"),
+            minter: creator.to_string(),
+            collection_info: CollectionInfo {
+                creator: creator.to_string(),
+                description: String::from("Stargaze Monkeys"),
+                image: "https://example.com/image.png".to_string(),
+                external_link: Some("https://example.com/external.html".to_string()),
+                royalty_info: None,
+            },
+        },
+    };
+    let minter_addr = router
+        .instantiate_contract(
+            minter_code_id,
+            creator.clone(),
+            &msg,
+            &creation_fee,
+            "Minter",
+            None,
+        )
+        .unwrap();
+
+    // Public mint has started
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME - 1000);
+
+    // Update to a start time in the past
+    let msg = ExecuteMsg::UpdateStartTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME - 100));
+    let err = router
+        .execute_contract(creator, minter_addr, &msg, &[])
+        .unwrap_err();
+    assert_eq!(
+        err.source().unwrap().to_string(),
+        "InvalidStartTime 1646427599.999999900 < 1646427599.999999000",
     );
 }
 
