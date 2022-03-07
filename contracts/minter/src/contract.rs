@@ -545,15 +545,15 @@ fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
     let sg721_address = SG721_ADDRESS.load(deps.storage)?;
 
     Ok(ConfigResponse {
-        admin: config.admin,
+        admin: config.admin.to_string(),
         base_token_uri: config.base_token_uri,
-        sg721_address,
+        sg721_address: sg721_address.to_string(),
         sg721_code_id: config.sg721_code_id,
         num_tokens: config.num_tokens,
         start_time: config.start_time,
         unit_price: config.unit_price,
         per_address_limit: config.per_address_limit,
-        whitelist: config.whitelist,
+        whitelist: config.whitelist.map(|w| w.to_string()),
     })
 }
 

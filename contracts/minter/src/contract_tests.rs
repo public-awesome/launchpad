@@ -537,7 +537,7 @@ fn mint_count_query() {
     let (creator, buyer) = setup_accounts(&mut router);
     let num_tokens = 10;
     let (minter_addr, config) = setup_minter_contract(&mut router, &creator, num_tokens);
-    let sg721_addr = config.sg721_address;
+    let sg721_addr = Addr::unchecked(config.sg721_address);
     let whitelist_addr = setup_whitelist_contract(&mut router, &creator);
     const EXPIRATION_TIME: Timestamp = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000);
 
@@ -895,7 +895,7 @@ fn whitelist_access_len_add_remove_expiration() {
     };
     let res = router.execute_contract(
         buyer.clone(),
-        sg721_addr,
+        Addr::unchecked(sg721_addr),
         &transfer_msg,
         &coins_for_msg(coin(123, NATIVE_DENOM)),
     );
