@@ -191,6 +191,16 @@ pub fn execute_set_whitelist(
         return Err(ContractError::AlreadyStarted {});
     }
 
+    if let Some(wl) = config.whitelist {
+        let res: WhitelistConfigResponse = deps
+            .querier
+            .query_wasm_smart(wl, &WhitelistQueryMsg::Config {})?;
+
+        if res.is_active {
+            return Err(ContractError::WhitelistAlreadyStarted {});
+        }
+    }
+
     config.whitelist = Some(deps.api.addr_validate(whitelist)?);
     CONFIG.save(deps.storage, &config)?;
 

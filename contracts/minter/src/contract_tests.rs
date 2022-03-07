@@ -740,6 +740,40 @@ fn whitelist_already_started() {
 }
 
 #[test]
+fn whitelist_can_update_before_start() {
+    let mut router = custom_mock_app();
+    let (creator, _) = setup_accounts(&mut router);
+    let num_tokens = 1;
+    let (minter_addr, _) = setup_minter_contract(&mut router, &creator, num_tokens);
+    let whitelist_addr = setup_whitelist_contract(&mut router, &creator);
+
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME - 1000);
+
+    // set whitelist in minter contract
+    let set_whitelist_msg = ExecuteMsg::SetWhitelist {
+        whitelist: whitelist_addr.to_string(),
+    };
+    router
+        .execute_contract(
+            creator.clone(),
+            minter_addr.clone(),
+            &set_whitelist_msg,
+            &coins(UNIT_PRICE, NATIVE_DENOM),
+        )
+        .unwrap();
+
+    // can set twice before starting
+    router
+        .execute_contract(
+            creator.clone(),
+            minter_addr,
+            &set_whitelist_msg,
+            &coins(UNIT_PRICE, NATIVE_DENOM),
+        )
+        .unwrap();
+}
+
+#[test]
 fn whitelist_access_len_add_remove_expiration() {
     let mut router = custom_mock_app();
     let (creator, buyer) = setup_accounts(&mut router);
