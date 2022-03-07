@@ -485,30 +485,34 @@ pub fn execute_update_per_address_limit(
         .add_attribute("limit", per_address_limit.to_string()))
 }
 
+// if admin_no_fee => no fee,
+// else if in whitelist => whitelist price
+// else => config unit price
 pub fn mint_price(deps: Deps, admin_no_fee: bool) -> Result<Coin, StdError> {
-    // if admin_no_fee => no fee,
-    // else if in whitelist => whitelist price
-    // else => config unit price
     let config = CONFIG.load(deps.storage)?;
-    let mint_price = if admin_no_fee {
-        Coin {
+
+    if admin_no_fee {
+        return Ok(Coin {
             amount: Uint128::zero(),
             denom: NATIVE_DENOM.to_string(),
-        }
-    } else if let Some(whitelist) = config.whitelist {
-        let wl_config: WhitelistConfigResponse = deps
-            .querier
-            .query_wasm_smart(whitelist, &WhitelistQueryMsg::Config {})?;
+        });
+    }
 
-        if wl_config.is_active {
-            wl_config.unit_price
-        } else {
-            config.unit_price.clone()
-        }
+    if config.whitelist.is_none() {
+        return Ok(config.unit_price);
+    }
+
+    let whitelist = config.whitelist.unwrap();
+
+    let wl_config: WhitelistConfigResponse = deps
+        .querier
+        .query_wasm_smart(whitelist, &WhitelistQueryMsg::Config {})?;
+
+    if wl_config.is_active {
+        Ok(wl_config.unit_price)
     } else {
-        config.unit_price.clone()
-    };
-    Ok(mint_price)
+        Ok(config.unit_price)
+    }
 }
 
 fn mint_count(deps: Deps, info: &MessageInfo) -> Result<u32, StdError> {
