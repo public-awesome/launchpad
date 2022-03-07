@@ -328,7 +328,7 @@ pub fn execute_increase_member_limit(
     member_limit: u32,
 ) -> Result<Response, ContractError> {
     let mut config = CONFIG.load(deps.storage)?;
-    if config.member_limit > member_limit || member_limit > MAX_MEMBERS {
+    if config.member_limit >= member_limit || member_limit > MAX_MEMBERS {
         return Err(ContractError::InvalidMemberLimit {
             min: config.member_limit,
             max: MAX_MEMBERS,
@@ -751,7 +751,13 @@ mod tests {
         assert!(res.is_ok());
 
         // 0 upgrade fee, fails when including a fee
+        // don't allow updating to the same number of memebers
         let msg = ExecuteMsg::IncreaseMemberLimit(1002);
+        let info = mock_info(ADMIN, &[coin(1, "ustars")]);
+        execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
+
+        // 0 upgrade fee, fails when including a fee
+        let msg = ExecuteMsg::IncreaseMemberLimit(1003);
         let info = mock_info(ADMIN, &[coin(1, "ustars")]);
         let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
         assert_eq!(err.to_string(), "IncorrectCreationFee 1 < 0");
