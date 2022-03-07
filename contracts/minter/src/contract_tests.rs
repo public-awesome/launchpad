@@ -86,7 +86,7 @@ fn setup_whitelist_contract(router: &mut StargazeApp, creator: &Addr) -> Addr {
 fn setup_minter_contract(
     router: &mut StargazeApp,
     creator: &Addr,
-    num_tokens: u64,
+    num_tokens: u32,
 ) -> (Addr, ConfigResponse) {
     // Upload contract code
     let sg721_code_id = router.store_code(contract_sg721());
@@ -318,7 +318,7 @@ fn initialization() {
     let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
     let msg = InstantiateMsg {
         unit_price: coin(UNIT_PRICE, NATIVE_DENOM),
-        num_tokens: (MAX_TOKEN_LIMIT + 1).into(),
+        num_tokens: (MAX_TOKEN_LIMIT + 1),
         start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
         per_address_limit: 5,
         whitelist: None,
@@ -376,7 +376,7 @@ fn happy_path() {
     let mut router = custom_mock_app();
     setup_block_time(&mut router, GENESIS_MINT_START_TIME + 1);
     let (creator, buyer) = setup_accounts(&mut router);
-    let num_tokens: u64 = 2;
+    let num_tokens = 2;
     let (minter_addr, config) = setup_minter_contract(&mut router, &creator, num_tokens);
 
     // Default start time genesis mint time
@@ -533,7 +533,7 @@ fn happy_path() {
 fn mint_count_query() {
     let mut router = custom_mock_app();
     let (creator, buyer) = setup_accounts(&mut router);
-    let num_tokens: u64 = 10;
+    let num_tokens = 10;
     let (minter_addr, config) = setup_minter_contract(&mut router, &creator, num_tokens);
     let sg721_addr = config.sg721_address;
     let whitelist_addr = setup_whitelist_contract(&mut router, &creator);
@@ -732,7 +732,7 @@ fn mint_count_query() {
 fn whitelist_already_started() {
     let mut router = custom_mock_app();
     let (creator, _) = setup_accounts(&mut router);
-    let num_tokens: u64 = 1;
+    let num_tokens = 1;
     let (minter_addr, _) = setup_minter_contract(&mut router, &creator, num_tokens);
     let whitelist_addr = setup_whitelist_contract(&mut router, &creator);
 
@@ -756,7 +756,7 @@ fn whitelist_already_started() {
 fn whitelist_access_len_add_remove_expiration() {
     let mut router = custom_mock_app();
     let (creator, buyer) = setup_accounts(&mut router);
-    let num_tokens: u64 = 1;
+    let num_tokens = 1;
     let (minter_addr, config) = setup_minter_contract(&mut router, &creator, num_tokens);
     let sg721_addr = config.sg721_address;
     let whitelist_addr = setup_whitelist_contract(&mut router, &creator);
@@ -940,7 +940,7 @@ fn whitelist_access_len_add_remove_expiration() {
 fn before_start_time() {
     let mut router = custom_mock_app();
     let (creator, buyer) = setup_accounts(&mut router);
-    let num_tokens: u64 = 1;
+    let num_tokens = 1;
     let (minter_addr, _) = setup_minter_contract(&mut router, &creator, num_tokens);
 
     // Set to before genesis mint start time
@@ -1086,7 +1086,7 @@ fn check_per_address_limit() {
 fn mint_for_token_id_addr() {
     let mut router = custom_mock_app();
     let (creator, buyer) = setup_accounts(&mut router);
-    let num_tokens: u64 = 4;
+    let num_tokens = 4;
     let (minter_addr, _config) = setup_minter_contract(&mut router, &creator, num_tokens);
 
     // Set to genesis mint start time
@@ -1376,7 +1376,7 @@ fn test_invalid_start_time() {
 fn unhappy_path() {
     let mut router = custom_mock_app();
     let (creator, buyer) = setup_accounts(&mut router);
-    let num_tokens: u64 = 1;
+    let num_tokens = 1;
     let (minter_addr, _config) = setup_minter_contract(&mut router, &creator, num_tokens);
 
     // Fails if too little funds are sent

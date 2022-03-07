@@ -48,7 +48,7 @@ pub fn instantiate(
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
     // Check the number of tokens is more than zero and less than the max limit
-    if msg.num_tokens == 0 || msg.num_tokens > MAX_TOKEN_LIMIT.into() {
+    if msg.num_tokens == 0 || msg.num_tokens > MAX_TOKEN_LIMIT {
         return Err(ContractError::InvalidNumTokens {
             min: 1,
             max: MAX_TOKEN_LIMIT,
@@ -201,52 +201,61 @@ pub fn execute_mint_sender(
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
     let action = "mint_sender";
-    let mut pub_mint: bool = false;
-
-    // Check if a whitelist exists and not ended
-    // Sender has to be whitelisted to mint
-    if let Some(whitelist) = config.whitelist {
-        let wl_config: WhitelistConfigResponse = deps
-            .querier
-            .query_wasm_smart(whitelist.clone(), &WhitelistQueryMsg::Config {})?;
-
-        if wl_config.is_active {
-            let res: HasMemberResponse = deps.querier.query_wasm_smart(
-                whitelist,
-                &WhitelistQueryMsg::HasMember {
-                    member: info.sender.to_string(),
-                },
-            )?;
-            if !res.has_member {
-                return Err(ContractError::NotWhitelisted {
-                    addr: info.sender.to_string(),
-                });
-            }
-            // Check wl per address limit
-            let mint_count: u32 = mint_count(deps.as_ref(), info.clone())?;
-            if mint_count >= wl_config.per_address_limit {
-                return Err(ContractError::MaxPerAddressLimitExceeded {});
-            }
-        } else {
-            pub_mint = true;
-        }
-    } else {
-        pub_mint = true;
-    }
 
     // If there is no active whitelist right now, check public mint
     // Check if after start_time
-    if pub_mint && (env.block.time < config.start_time) {
+    if is_public_mint(deps.as_ref(), &info)? && (env.block.time < config.start_time) {
         return Err(ContractError::BeforeMintStartTime {});
     }
 
     // Check if already minted max per address limit
-    let mint_count: u32 = mint_count(deps.as_ref(), info.clone())?;
+    let mint_count = mint_count(deps.as_ref(), &info)?;
     if mint_count >= config.per_address_limit {
         return Err(ContractError::MaxPerAddressLimitExceeded {});
     }
 
     _execute_mint(deps, env, info, action, false, None, None)
+}
+
+// Check if a whitelist exists and not ended
+// Sender has to be whitelisted to mint
+fn is_public_mint(deps: Deps, info: &MessageInfo) -> Result<bool, ContractError> {
+    let config = CONFIG.load(deps.storage)?;
+
+    // If there is no whitelist, there's only a public mint
+    if config.whitelist.is_none() {
+        return Ok(true);
+    }
+
+    let whitelist = config.whitelist.unwrap();
+
+    let wl_config: WhitelistConfigResponse = deps
+        .querier
+        .query_wasm_smart(whitelist.clone(), &WhitelistQueryMsg::Config {})?;
+
+    if !wl_config.is_active {
+        return Ok(true);
+    }
+
+    let res: HasMemberResponse = deps.querier.query_wasm_smart(
+        whitelist,
+        &WhitelistQueryMsg::HasMember {
+            member: info.sender.to_string(),
+        },
+    )?;
+    if !res.has_member {
+        return Err(ContractError::NotWhitelisted {
+            addr: info.sender.to_string(),
+        });
+    }
+
+    // Check wl per address limit
+    let mint_count = mint_count(deps, info)?;
+    if mint_count >= wl_config.per_address_limit {
+        return Err(ContractError::MaxPerAddressLimitExceeded {});
+    }
+
+    Ok(false)
 }
 
 pub fn execute_mint_to(
@@ -273,7 +282,7 @@ pub fn execute_mint_for(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    token_id: u64,
+    token_id: u32,
     recipient: String,
 ) -> Result<Response, ContractError> {
     let recipient = deps.api.addr_validate(&recipient)?;
@@ -298,6 +307,10 @@ pub fn execute_mint_for(
     )
 }
 
+// Generalize checks and mint message creation
+// mint -> _execute_mint(recipient: None, token_id: None)
+// mint_to(recipient: "friend") -> _execute_mint(Some(recipient), token_id: None)
+// mint_for(recipient: "friend2", token_id: 420) -> _execute_mint(recipient, token_id)
 fn _execute_mint(
     deps: DepsMut,
     env: Env,
@@ -305,13 +318,8 @@ fn _execute_mint(
     action: &str,
     admin_no_fee: bool,
     recipient: Option<Addr>,
-    token_id: Option<u64>,
+    token_id: Option<u32>,
 ) -> Result<Response, ContractError> {
-    // Generalize checks and mint message creation
-    // mint -> _execute_mint(recipient: None, token_id: None)
-    // mint_to(recipient: "friend") -> _execute_mint(Some(recipient), token_id: None)
-    // mint_for(recipient: "friend2", token_id: 420) -> _execute_mint(recipient, token_id)
-    let mut msgs: Vec<CosmosMsg<StargazeMsgWrapper>> = vec![];
     let config = CONFIG.load(deps.storage)?;
     let sg721_address = SG721_ADDRESS.load(deps.storage)?;
 
@@ -330,6 +338,8 @@ fn _execute_mint(
         ));
     }
 
+    let mut msgs: Vec<CosmosMsg<StargazeMsgWrapper>> = vec![];
+
     // Create network fee msgs
     let network_fee: Uint128 = if admin_no_fee {
         Uint128::zero()
@@ -344,7 +354,7 @@ fn _execute_mint(
         network_fee
     };
 
-    let mintable_token_id: u64 = match token_id {
+    let mintable_token_id = match token_id {
         Some(token_id) => {
             if token_id == 0 || token_id > config.num_tokens {
                 return Err(ContractError::InvalidTokenId {});
@@ -356,7 +366,7 @@ fn _execute_mint(
             token_id
         }
         None => {
-            let mintable_tokens_result: StdResult<Vec<u64>> = MINTABLE_TOKEN_IDS
+            let mintable_tokens_result: StdResult<Vec<u32>> = MINTABLE_TOKEN_IDS
                 .keys(deps.storage, None, None, Order::Ascending)
                 .take(1)
                 .collect();
@@ -388,7 +398,7 @@ fn _execute_mint(
     // Decrement mintable num tokens
     MINTABLE_NUM_TOKENS.save(deps.storage, &(mintable_num_tokens - 1))?;
     // Save the new mint count for the sender's address
-    let new_mint_count: u32 = mint_count(deps.as_ref(), info.clone())? + 1;
+    let new_mint_count = mint_count(deps.as_ref(), &info)? + 1;
     MINTER_ADDRS.save(deps.storage, info.clone().sender, &new_mint_count)?;
 
     let mut seller_amount = Uint128::zero();
@@ -475,34 +485,41 @@ pub fn execute_update_per_address_limit(
         .add_attribute("limit", per_address_limit.to_string()))
 }
 
+// if admin_no_fee => no fee,
+// else if in whitelist => whitelist price
+// else => config unit price
 pub fn mint_price(deps: Deps, admin_no_fee: bool) -> Result<Coin, StdError> {
-    // if admin_no_fee => no fee,
-    // else if in whitelist => whitelist price
-    // else => config unit price
     let config = CONFIG.load(deps.storage)?;
-    let mint_price: Coin = if admin_no_fee {
-        Coin {
+
+    if admin_no_fee {
+        return Ok(Coin {
             amount: Uint128::zero(),
             denom: NATIVE_DENOM.to_string(),
-        }
-    } else if let Some(whitelist) = config.whitelist {
-        let wl_config: WhitelistConfigResponse = deps
-            .querier
-            .query_wasm_smart(whitelist, &WhitelistQueryMsg::Config {})?;
+        });
+    }
 
-        if wl_config.is_active {
-            wl_config.unit_price
-        } else {
-            config.unit_price.clone()
-        }
+    if config.whitelist.is_none() {
+        return Ok(config.unit_price);
+    }
+
+    let whitelist = config.whitelist.unwrap();
+
+    let wl_config: WhitelistConfigResponse = deps
+        .querier
+        .query_wasm_smart(whitelist, &WhitelistQueryMsg::Config {})?;
+
+    if wl_config.is_active {
+        Ok(wl_config.unit_price)
     } else {
-        config.unit_price.clone()
-    };
-    Ok(mint_price)
+        Ok(config.unit_price)
+    }
 }
 
-fn mint_count(deps: Deps, info: MessageInfo) -> Result<u32, StdError> {
-    let mint_count: u32 = (MINTER_ADDRS.key(info.sender).may_load(deps.storage)?).unwrap_or(0);
+fn mint_count(deps: Deps, info: &MessageInfo) -> Result<u32, StdError> {
+    let mint_count = (MINTER_ADDRS
+        .key(info.sender.clone())
+        .may_load(deps.storage)?)
+    .unwrap_or(0);
     Ok(mint_count)
 }
 
@@ -536,7 +553,7 @@ fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
 
 fn query_mint_count(deps: Deps, address: String) -> StdResult<MintCountResponse> {
     let addr = deps.api.addr_validate(&address)?;
-    let mint_count: u32 = (MINTER_ADDRS.key(addr.clone()).may_load(deps.storage)?).unwrap_or(0);
+    let mint_count = (MINTER_ADDRS.key(addr.clone()).may_load(deps.storage)?).unwrap_or(0);
     Ok(MintCountResponse {
         address: addr.to_string(),
         count: mint_count,
