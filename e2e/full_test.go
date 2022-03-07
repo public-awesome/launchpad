@@ -120,23 +120,25 @@ func TestMinter(t *testing.T) {
 	{
 		"base_token_uri": "ipfs://...",
 		"num_tokens": 100,
-		"sg721_code_id": 2,
+		"sg721_code_id": 3,
 		"sg721_instantiate_msg": {
 		  "name": "Collection Name",
 		  "symbol": "SYM",
 		  "minter": "%s",
-		  "config": {
+		  "collection_info": {
 			"contract_uri": "ipfs://...",
 			"creator": "%s",
-			"royalties": {
+			"description": "Stargaze Monkeys",
+			"image": "https://example.com/image.png",
+			"external_link" : "https://stargaze.zone",
+			"royalty_info": {
 			  "payment_address": "%s",
 			  "share": "0.1"
 			}
 		  }
 		},
-		"start_time": {
-		  "at_time": "1646258400000000000"
-		},
+		"start_time": "1647032400000000000",
+		"per_address_limit": 1,
 		"unit_price": {
 		  "amount": "100000000",
 		  "denom": "ustars"
