@@ -99,7 +99,7 @@ func GetAccountsAndBalances(accs []Account) ([]authtypes.GenesisAccount, []bankt
 		}
 		balance := banktypes.Balance{
 			Address: a.Address.String(),
-			Coins:   sdk.NewCoins(sdk.NewInt64Coin("ustars", 2000_000_000)),
+			Coins:   sdk.NewCoins(sdk.NewInt64Coin("ustars", 2_000_000_000)),
 		}
 		genAccs = append(genAccs, &genAcc)
 		balances = append(balances, balance)
@@ -208,7 +208,7 @@ func TestMinter(t *testing.T) {
 	// Creator should have been charged 1000STARS
 	require.Equal(t,
 		app.BankKeeper.GetBalance(ctx, creator.Address, "ustars"),
-		sdk.NewInt64Coin("ustars", 1000_000_000),
+		sdk.NewInt64Coin("ustars", 1_000_000_000),
 	)
 
 	// mint has not started
@@ -244,14 +244,14 @@ func TestMinter(t *testing.T) {
 
 	// Buyer should have 100STARS less
 	require.Equal(t,
-		sdk.NewInt64Coin("ustars", 1900_000_000),
+		sdk.NewInt64Coin("ustars", 1_900_000_000),
 		app.BankKeeper.GetBalance(ctx, accs[1].Address, "ustars"),
 	)
 
 	// Creator should have earned 90%
 	require.Equal(t,
 		app.BankKeeper.GetBalance(ctx, creator.Address, "ustars"),
-		sdk.NewInt64Coin("ustars", 1090_000_000),
+		sdk.NewInt64Coin("ustars", 1_090_000_000),
 	)
 
 	// 505 STARS should have been burned so far
