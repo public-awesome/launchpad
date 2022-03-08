@@ -1,6 +1,6 @@
 [package]
 name = "sg-utils"
-version = "0.6.1"
+version = "0.8.0"
 edition = "2021"
 authors = ["Shane Vitarana <s@noreply.com>"]
 description = "Common utilities for Stargaze contract"
