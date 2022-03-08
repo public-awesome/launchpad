@@ -265,21 +265,6 @@ func TestMinter(t *testing.T) {
 		app.DistrKeeper.GetFeePoolCommunityCoins(ctx).AmountOf("ustars").TruncateInt64(),
 	)
 
-	// // mint fails
-	// _, err = msgServer.ExecuteContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgExecuteContract{
-	// 	Contract: minterAddress,
-	// 	Sender:   accs[1].Address.String(),
-	// 	Msg:      []byte(`{"mint":{}}`),
-	// 	Funds:    sdk.NewCoins(sdk.NewInt64Coin("ustars", 100_000_000)),
-	// })
-	// require.Error(t, err)
-	// require.Contains(t, err.Error(), "Max minting limit per address exceeded")
-
-	// // Buyer should have still have only 100STARS less
-	// require.Equal(t,
-	// 	sdk.NewInt64Coin("ustars", 1900_000_000).String(),
-	// 	app.BankKeeper.GetBalance(ctx, accs[1].Address, "ustars").String(),
-	// )
 	count := 0
 	for i := 2; i < 101; i++ {
 		count++
