@@ -187,7 +187,7 @@ func TestMinter(t *testing.T) {
 		CodeID: 1,
 		Label:  "Minter",
 		Msg:    instantiateMsgRaw,
-		Funds:  sdk.NewCoins(sdk.NewInt64Coin("ustars", 1000_000_000)),
+		Funds:  sdk.NewCoins(sdk.NewInt64Coin("ustars", 1_000_000_000)),
 	})
 	require.NoError(t, err)
 	require.NotNil(t, instantiateRes)
@@ -285,12 +285,12 @@ func TestMinter(t *testing.T) {
 
 	// 500 +  (100 * 5) STARS should have been burned so far
 	require.Equal(t,
-		intialTotalSupply.Amount.Sub(sdk.NewInt(1000_000_000)).String(),
+		intialTotalSupply.Amount.Sub(sdk.NewInt(1_000_000_000)).String(),
 		app.BankKeeper.GetSupply(ctx, "ustars").Amount.String())
 
 	// 500 +  (100 * 5) STARS should have been transferred to community pool so far
 	require.Equal(t,
-		int64(1000_000_000),
+		int64(1_000_000_000),
 		app.DistrKeeper.GetFeePoolCommunityCoins(ctx).AmountOf("ustars").TruncateInt64(),
 	)
 
@@ -407,7 +407,7 @@ func TestWhitelistMinter(t *testing.T) {
 	// Creator should have been charged 100STARS
 	require.Equal(t,
 		app.BankKeeper.GetBalance(ctx, creator.Address, "ustars"),
-		sdk.NewInt64Coin("ustars", 1900_000_000),
+		sdk.NewInt64Coin("ustars", 1_900_000_000),
 	)
 
 	// MINTER
@@ -430,7 +430,7 @@ func TestWhitelistMinter(t *testing.T) {
 		CodeID: 1,
 		Label:  "Minter",
 		Msg:    instantiateMinterMsgRaw,
-		Funds:  sdk.NewCoins(sdk.NewInt64Coin("ustars", 1000_000_000)),
+		Funds:  sdk.NewCoins(sdk.NewInt64Coin("ustars", 1_000_000_000)),
 	})
 	require.NoError(t, err)
 	require.NotNil(t, instantiateMinterRes)
