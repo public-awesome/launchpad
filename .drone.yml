@@ -3,22 +3,27 @@ kind: pipeline
 type: docker
 name: default-build
 
+platform:
+  os: linux
+  arch: amd64
+
 workspace:
   path: /code
+
 steps:
-  - name: proposal
+  - name: build-contracts
     image: cosmwasm/workspace-optimizer:0.12.5
+
+volumes:
+  - name: cache
+    temp: {}
+
+node:
+  runner: integration
+
 trigger:
   branch:
     - main
   event:
     - pull_request
     - push
-
-volumes:
-  - name: cache
-    temp: {}
-node:
-  runner: integration
----
-
