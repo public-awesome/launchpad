@@ -508,7 +508,7 @@ func TestWhitelistMinter(t *testing.T) {
 		require.NoError(t, err)
 		// Buyer should have still have only 50STARS less
 		require.Equal(t,
-			sdk.NewInt64Coin("ustars", 1950_000_000).String(),
+			sdk.NewInt64Coin("ustars", 1_950_000_000).String(),
 			app.BankKeeper.GetBalance(ctx, accs[i].Address, "ustars").String(),
 		)
 	}
@@ -529,7 +529,7 @@ func TestWhitelistMinter(t *testing.T) {
 
 	// Buyer should have 150STARS less
 	require.Equal(t,
-		sdk.NewInt64Coin("ustars", 1850_000_000).String(),
+		sdk.NewInt64Coin("ustars", 1_850_000_000).String(),
 		app.BankKeeper.GetBalance(ctx, accs[1].Address, "ustars").String(),
 	)
 
@@ -547,7 +547,7 @@ func TestWhitelistMinter(t *testing.T) {
 		require.NoError(t, err)
 		// Buyer should have still have only 50STARS less
 		require.Equal(t,
-			sdk.NewInt64Coin("ustars", 1900_000_000).String(),
+			sdk.NewInt64Coin("ustars", 1_900_000_000).String(),
 			app.BankKeeper.GetBalance(ctx, accs[i].Address, "ustars").String(),
 		)
 	}
