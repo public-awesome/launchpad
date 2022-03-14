@@ -44,8 +44,8 @@ cosmwasm-std = { version = "1.0.0-beta5" }
 cosmwasm-storage = { version = "1.0.0-beta5" }
 cw2 = "0.12.1"
 cw-utils = "0.12.1"
-minter = { path = "../minter" }
-sg-std = { path = "../../packages/sg-std"}
+minter = { path = "../minter", features = ["library"] }
+sg-std = { path = "../../packages/sg-std" }
 schemars = "0.8"
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0" }
