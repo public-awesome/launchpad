@@ -1,16 +1,15 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 
-use cosmwasm_std::{Addr, DepsMut, Env, MessageInfo, Response};
+use cosmwasm_std::{Addr, DepsMut, Env, MessageInfo};
 use cw2::set_contract_version;
 use minter::msg::{MintCountResponse, QueryMsg};
 use sg_std::{create_claim_for_msg, StargazeMsgWrapper};
 
 use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, InstantiateMsg};
-/* pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
-pub type SubMsg = cosmwasm_std::SubMsg<StargazeMsgWrapper>;
- */
+pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
+
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:claim";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -32,7 +31,7 @@ pub fn execute(
     _env: Env,
     info: MessageInfo,
     msg: ExecuteMsg,
-) -> Result<Response<StargazeMsgWrapper>, ContractError> {
+) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::ClaimMintNFT { minter_address } => {
             try_claim_mint_nft(deps, info.sender, minter_address)
@@ -44,7 +43,7 @@ pub fn try_claim_mint_nft(
     deps: DepsMut,
     sender: Addr,
     minter: String,
-) -> Result<Response<StargazeMsgWrapper>, ContractError> {
+) -> Result<Response, ContractError> {
     let minter_addr = deps.api.addr_validate(&minter)?;
     let count_response: MintCountResponse = deps.querier.query_wasm_smart(
         minter_addr.clone(),
