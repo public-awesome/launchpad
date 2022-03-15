@@ -227,7 +227,7 @@ func TestClaim(t *testing.T) {
 	balance = app.BankKeeper.GetBalance(ctx, accs[1].Address, "ustars")
 	perAction := claimRecords[0].InitialClaimableAmount.AmountOf(claimtypes.DefaultClaimDenom).Quo(sdk.NewInt(int64(len(claimRecords[0].ActionCompleted))))
 
-	require.Greater(t, perAction.Int64(), int64(0))
+	require.Equal(t, perAction.Int64(), int64(200_000_000))
 	expectedBalance := perAction.Add(sdk.NewInt(1_900_000_000)) // user already had 19000
 	require.Equal(t,
 		expectedBalance.String(),

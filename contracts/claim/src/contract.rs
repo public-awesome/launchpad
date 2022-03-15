@@ -4,14 +4,14 @@ use cosmwasm_std::entry_point;
 use cosmwasm_std::{Addr, DepsMut, Env, MessageInfo};
 use cw2::set_contract_version;
 use minter::msg::{MintCountResponse, QueryMsg};
-use sg_std::{create_claim_for_msg, StargazeMsgWrapper};
+use sg_std::{create_claim_for_msg, ClaimAction, StargazeMsgWrapper};
 
 use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, InstantiateMsg};
 pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 
 // version info for migration info
-const CONTRACT_NAME: &str = "crates.io:claim";
+const CONTRACT_NAME: &str = "crates.io:sg-claim";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -22,7 +22,7 @@ pub fn instantiate(
     _msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-    Ok(Response::new().add_attribute("method", "instantiate"))
+    Ok(Response::new().add_attribute("action", "instantiate"))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -34,12 +34,12 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::ClaimMintNFT { minter_address } => {
-            try_claim_mint_nft(deps, info.sender, minter_address)
+            execute_claim_mint_nft(deps, info.sender, minter_address)
         }
     }
 }
 
-pub fn try_claim_mint_nft(
+pub fn execute_claim_mint_nft(
     deps: DepsMut,
     sender: Addr,
     minter: String,
@@ -55,10 +55,10 @@ pub fn try_claim_mint_nft(
         return Err(ContractError::NoMinting {});
     }
 
-    let msg = create_claim_for_msg(sender.to_string(), sg_std::ClaimAction::MintNFT);
+    let msg = create_claim_for_msg(sender.to_string(), ClaimAction::MintNFT);
     Ok(Response::new()
         .add_message(msg)
-        .add_attribute("method", "claim_mint_nft")
+        .add_attribute("action", "claim_mint_nft")
         .add_attribute("sender", sender.to_string())
         .add_attribute("minter", minter))
 }
