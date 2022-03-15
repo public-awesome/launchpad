@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ExecuteMsg",
+  "oneOf": [
+    {
+      "type": "object",
+      "required": [
+        "claim_mint_nft"
+      ],
+      "properties": {
+        "claim_mint_nft": {
+          "type": "object",
+          "required": [
+            "minter_address"
+          ],
+          "properties": {
+            "minter_address": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  ]
+}
