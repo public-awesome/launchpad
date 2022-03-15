@@ -2,13 +2,18 @@ module github.com/public-awesome/stargaze-contracts
 
 go 1.17
 
-require github.com/public-awesome/stargaze/v3 v3.0.0
+require (
+	github.com/CosmWasm/wasmd v0.23.0
+	github.com/cosmos/cosmos-sdk v0.45.1
+	github.com/public-awesome/stargaze/v3 v3.0.0
+	github.com/stretchr/testify v1.7.0
+	github.com/tendermint/tendermint v0.34.15
+)
 
 require (
 	filippo.io/edwards25519 v1.0.0-beta.2 // indirect
 	github.com/99designs/keyring v1.1.6 // indirect
 	github.com/ChainSafe/go-schnorrkel v0.0.0-20200405005733-88cbf1b4c40d // indirect
-	github.com/CosmWasm/wasmd v0.23.0 // indirect
 	github.com/CosmWasm/wasmvm v1.0.0-beta5 // indirect
 	github.com/DataDog/zstd v1.4.5 // indirect
 	github.com/Workiva/go-datastructures v1.0.53 // indirect
@@ -21,7 +26,6 @@ require (
 	github.com/coinbase/rosetta-sdk-go v0.7.0 // indirect
 	github.com/confio/ics23/go v0.6.6 // indirect
 	github.com/cosmos/btcutil v1.0.4 // indirect
-	github.com/cosmos/cosmos-sdk v0.45.1 // indirect
 	github.com/cosmos/go-bip39 v1.0.0 // indirect
 	github.com/cosmos/iavl v0.17.3 // indirect
 	github.com/cosmos/ibc-go/v2 v2.0.3 // indirect
@@ -94,7 +98,6 @@ require (
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.10.1 // indirect
-	github.com/stretchr/testify v1.7.0 // indirect
 	github.com/subosito/gotenv v1.2.0 // indirect
 	github.com/syndtr/goleveldb v1.0.1-0.20200815110645-5c35d600f0ca // indirect
 	github.com/tecbot/gorocksdb v0.0.0-20191217155057-f0fad39f321c // indirect
@@ -102,7 +105,6 @@ require (
 	github.com/tendermint/crypto v0.0.0-20191022145703-50d29ede1e15 // indirect
 	github.com/tendermint/go-amino v0.16.0 // indirect
 	github.com/tendermint/spm v0.1.9 // indirect
-	github.com/tendermint/tendermint v0.34.15 // indirect
 	github.com/tendermint/tm-db v0.6.6 // indirect
 	github.com/zondax/hid v0.9.0 // indirect
 	go.etcd.io/bbolt v1.3.6 // indirect

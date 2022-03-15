@@ -51,7 +51,7 @@ sg721 = { path = "../sg721", features = ["library"] }
 thiserror = { version = "1.0" }
 url = "2.2.0"
 sg-std = { path = "../../packages/sg-std" }
-whitelist = { path = "../whitelist" }
+whitelist = { path = "../whitelist", features = ["library"]}
 cw721 = "0.12.0"
 cw721-base = { version = "0.12.0", features = ["library"] }
 

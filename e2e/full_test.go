@@ -8,7 +8,6 @@ import (
 	"time"
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	"github.com/CosmWasm/wasmd/x/wasm/types"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -132,7 +131,7 @@ func TestMinter(t *testing.T) {
 	require.NoError(t, err)
 
 	msgServer := wasmkeeper.NewMsgServerImpl(wasmkeeper.NewDefaultPermissionKeeper(app.WasmKeeper))
-	res, err := msgServer.StoreCode(sdk.WrapSDKContext(ctx), &types.MsgStoreCode{
+	res, err := msgServer.StoreCode(sdk.WrapSDKContext(ctx), &wasmtypes.MsgStoreCode{
 		Sender:       addr1.String(),
 		WASMByteCode: b,
 	})
@@ -144,7 +143,7 @@ func TestMinter(t *testing.T) {
 	b, err = ioutil.ReadFile("contracts/whitelist.wasm")
 	require.NoError(t, err)
 
-	res, err = msgServer.StoreCode(sdk.WrapSDKContext(ctx), &types.MsgStoreCode{
+	res, err = msgServer.StoreCode(sdk.WrapSDKContext(ctx), &wasmtypes.MsgStoreCode{
 		Sender:       addr1.String(),
 		WASMByteCode: b,
 	})
@@ -156,7 +155,7 @@ func TestMinter(t *testing.T) {
 	b, err = ioutil.ReadFile("contracts/sg721.wasm")
 	require.NoError(t, err)
 
-	res, err = msgServer.StoreCode(sdk.WrapSDKContext(ctx), &types.MsgStoreCode{
+	res, err = msgServer.StoreCode(sdk.WrapSDKContext(ctx), &wasmtypes.MsgStoreCode{
 		Sender:       addr1.String(),
 		WASMByteCode: b,
 	})
@@ -328,7 +327,7 @@ func TestWhitelistMinter(t *testing.T) {
 	require.NoError(t, err)
 
 	msgServer := wasmkeeper.NewMsgServerImpl(wasmkeeper.NewDefaultPermissionKeeper(app.WasmKeeper))
-	res, err := msgServer.StoreCode(sdk.WrapSDKContext(ctx), &types.MsgStoreCode{
+	res, err := msgServer.StoreCode(sdk.WrapSDKContext(ctx), &wasmtypes.MsgStoreCode{
 		Sender:       addr1.String(),
 		WASMByteCode: b,
 	})
@@ -340,7 +339,7 @@ func TestWhitelistMinter(t *testing.T) {
 	b, err = ioutil.ReadFile("contracts/whitelist.wasm")
 	require.NoError(t, err)
 
-	res, err = msgServer.StoreCode(sdk.WrapSDKContext(ctx), &types.MsgStoreCode{
+	res, err = msgServer.StoreCode(sdk.WrapSDKContext(ctx), &wasmtypes.MsgStoreCode{
 		Sender:       addr1.String(),
 		WASMByteCode: b,
 	})
@@ -352,7 +351,7 @@ func TestWhitelistMinter(t *testing.T) {
 	b, err = ioutil.ReadFile("contracts/sg721.wasm")
 	require.NoError(t, err)
 
-	res, err = msgServer.StoreCode(sdk.WrapSDKContext(ctx), &types.MsgStoreCode{
+	res, err = msgServer.StoreCode(sdk.WrapSDKContext(ctx), &wasmtypes.MsgStoreCode{
 		Sender:       addr1.String(),
 		WASMByteCode: b,
 	})
