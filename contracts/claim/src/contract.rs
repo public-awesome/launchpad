@@ -46,7 +46,7 @@ pub fn try_claim_mint_nft(
 ) -> Result<Response, ContractError> {
     let minter_addr = deps.api.addr_validate(&minter)?;
     let count_response: MintCountResponse = deps.querier.query_wasm_smart(
-        minter_addr.clone(),
+        minter_addr,
         &QueryMsg::MintCount {
             address: sender.to_string(),
         },
@@ -56,9 +56,9 @@ pub fn try_claim_mint_nft(
     }
 
     let msg = create_claim_for_msg(sender.to_string(), sg_std::ClaimAction::MintNFT);
-    return Ok(Response::new()
+    Ok(Response::new()
         .add_message(msg)
         .add_attribute("method", "claim_mint_nft")
         .add_attribute("sender", sender.to_string())
-        .add_attribute("minter", minter));
+        .add_attribute("minter", minter))
 }
