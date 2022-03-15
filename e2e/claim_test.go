@@ -193,6 +193,9 @@ func TestClaim(t *testing.T) {
 	})
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "address is not allowed to claim")
+	claim, err := app.ClaimKeeper.GetClaimRecord(ctx, addr1)
+	require.NoError(t, err)
+	require.False(t, claim.ActionCompleted[claimtypes.ActionMintNFT])
 
 	app.ClaimKeeper.SetParams(ctx, claimtypes.Params{
 		AirdropEnabled:     true,
@@ -230,4 +233,24 @@ func TestClaim(t *testing.T) {
 		expectedBalance.String(),
 		balance.Amount.String(),
 	)
+
+	claim, err = app.ClaimKeeper.GetClaimRecord(ctx, addr1)
+	require.NoError(t, err)
+	require.True(t, claim.ActionCompleted[claimtypes.ActionMintNFT])
+
+	claimMsgRaw = []byte(fmt.Sprintf(claimMsgTemplate, minterAddress))
+	_, err = msgServer.ExecuteContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgExecuteContract{
+		Contract: claimAddress,
+		Sender:   accs[1].Address.String(),
+		Msg:      claimMsgRaw,
+	})
+	require.NoError(t, err)
+
+	balance = app.BankKeeper.GetBalance(ctx, accs[1].Address, "ustars")
+	require.Equal(t,
+		expectedBalance.String(),
+		balance.Amount.String(),
+		"balance should stay the same",
+	)
+
 }
