@@ -1,7 +1,7 @@
 [package]
 authors = ["Shane Vitarana"]
 edition = "2018"
-name = "sg721-ics721"
+name = "ics721"
 version = "0.1.0"
 
 exclude = [
@@ -40,16 +40,16 @@ optimize = """docker run --rm -v "$(pwd)":/code \
 """
 
 [dependencies]
-cosmwasm-std = {version = "1.0.0-beta", features = ["stargate"]}
-cosmwasm-storage = {version = "1.0.0-beta"}
+cosmwasm-std = { version = "1.0.0-beta", features = ["stargate"] }
+cosmwasm-storage = { version = "1.0.0-beta" }
 cw-storage-plus = "0.11"
 cw-utils = "0.11"
 cw2 = "0.11"
 cw20-ics20 = { version = "0.11", features = ["library"] }
 cw721 = "0.11"
 schemars = "0.8.8"
-serde = {version = "1.0.133", default-features = false, features = ["derive"]}
-thiserror = {version = "1.0.30"}
+serde = { version = "1.0.133", default-features = false, features = ["derive"] }
+thiserror = { version = "1.0.30" }
 
 [dev-dependencies]
-cosmwasm-schema = {version = "1.0.0-beta"}
+cosmwasm-schema = { version = "1.0.0-beta" }
