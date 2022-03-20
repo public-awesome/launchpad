@@ -235,12 +235,16 @@ pub fn execute_add_members(
     deps: DepsMut,
     _env: Env,
     info: MessageInfo,
-    msg: AddMembersMsg,
+    mut msg: AddMembersMsg,
 ) -> Result<Response, ContractError> {
     let mut config = CONFIG.load(deps.storage)?;
     if info.sender != config.admin {
         return Err(ContractError::Unauthorized {});
     }
+
+    // remove duplicate members
+    msg.to_add.sort_unstable();
+    msg.to_add.dedup();
 
     for add in msg.to_add.into_iter() {
         if config.num_members >= config.member_limit {
@@ -596,8 +600,9 @@ mod tests {
         let mut deps = mock_dependencies();
         setup_contract(deps.as_mut());
 
+        // dedupe addrs
         let add_msg = AddMembersMsg {
-            to_add: vec!["adsfsa1".to_string()],
+            to_add: vec!["adsfsa1".to_string(), "adsfsa1".to_string()],
         };
         let msg = ExecuteMsg::AddMembers(add_msg);
         let info = mock_info(ADMIN, &[]);
