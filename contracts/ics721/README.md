@@ -1,6 +1,6 @@
-# SG721 ICS721
+# ICS721
 
-This is an _IBC Enabled_ contract that allows sending SG721 NFTs from one CosmWasm chain over the ICS721 (draft) standard to another CosmWasm chain.
+This is an _IBC Enabled_ contract that allows sending NFTs from one CosmWasm chain over the ICS721 (draft) standard to another CosmWasm chain.
 
 It can be extended to also send NFTs from a CosmWasm chain to the native NFT module on a Cosmos SDK chain that doesn't have CosmWasm support.
 
