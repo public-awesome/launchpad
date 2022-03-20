@@ -1,6 +1,9 @@
 use cosmwasm_std::StdError;
 use cw721_base::ContractError as Cw721ContractError;
+use cw_utils::PaymentError;
+use sg_std::fees::FeeError;
 use thiserror::Error;
+use url::ParseError;
 
 #[derive(Error, Debug)]
 pub enum ContractError {
@@ -9,6 +12,9 @@ pub enum ContractError {
 
     #[error("Unauthorized")]
     Unauthorized {},
+
+    #[error("InvalidCreationFee")]
+    InvalidCreationFee {},
 
     #[error("token_id already claimed")]
     Claimed {},
@@ -21,6 +27,18 @@ pub enum ContractError {
 
     #[error("Invalid Royalities")]
     InvalidRoyalities {},
+
+    #[error("Description too long")]
+    DescriptionTooLong {},
+
+    #[error("{0}")]
+    Payment(#[from] PaymentError),
+
+    #[error("{0}")]
+    Fee(#[from] FeeError),
+
+    #[error("{0}")]
+    Parse(#[from] ParseError),
 }
 
 impl From<ContractError> for Cw721ContractError {

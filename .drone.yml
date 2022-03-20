@@ -1,0 +1,35 @@
+---
+kind: pipeline
+type: docker
+name: default-build
+
+platform:
+  os: linux
+  arch: amd64
+
+workspace:
+  path: /code
+
+steps:
+  - name: build-contracts
+    image: cosmwasm/workspace-optimizer:0.12.5
+  - name: full_test
+    image: publicawesome/golang:1.17.7-devtooling
+    commands:
+      - mkdir -p e2e/contracts
+      - cp artifacts/*.wasm e2e/contracts/
+      - cd e2e/
+      - go test . -v
+volumes:
+  - name: cache
+    temp: {}
+
+node:
+  runner: integration
+
+trigger:
+  branch:
+    - main
+  event:
+    - pull_request
+    - push
