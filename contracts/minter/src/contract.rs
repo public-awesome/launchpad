@@ -159,6 +159,9 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::Mint {} => execute_mint_sender(deps, env, info),
+        ExecuteMsg::UpdateBaseTokenURI { base_token_uri } => {
+            execute_update_base_token_uri(deps, env, info, base_token_uri)
+        }
         ExecuteMsg::UpdateStartTime(time) => execute_update_start_time(deps, env, info, time),
         ExecuteMsg::UpdatePerAddressLimit { per_address_limit } => {
             execute_update_per_address_limit(deps, env, info, per_address_limit)
@@ -435,6 +438,44 @@ fn _execute_mint(
         .add_attribute("mint_price", mint_price.amount)
         .add_attribute("seller_amount", seller_amount)
         .add_messages(msgs))
+}
+
+pub fn execute_update_base_token_uri(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    base_token_uri: String,
+) -> Result<Response, ContractError> {
+    let config = CONFIG.load(deps.storage)?;
+    let sg721_address = SG721_ADDRESS.load(deps.storage)?;
+
+    // Check only admin
+    if info.sender != config.admin {
+        return Err(ContractError::Unauthorized(
+            "Sender is not an admin".to_owned(),
+        ));
+    }
+
+    // Validate base token uri
+    let parsed_token_uri = Url::parse(&base_token_uri)?;
+    if parsed_token_uri.scheme() != "ipfs" {
+        return Err(ContractError::InvalidBaseTokenURI {});
+    }
+
+    // Create update msgs
+    let update_uri_msg = Cw721ExecuteMsg::UpdateBaseTokenURI(UpdateBaseTokenURIMsg::<Empty> {
+        base_token_uri: Some(format!("{}", base_token_uri)),
+    });
+    let msg = CosmosMsg::Wasm(WasmMsg::Execute {
+        contract_addr: sg721_address.to_string(),
+        msg: to_binary(&update_uri_msg)?,
+        funds: vec![],
+    });
+
+    Ok(Response::default()
+        .add_attribute("action", "update_base_token_uri")
+        .add_attribute("base_token_uri", base_token_uri)
+        .add_message(msg))
 }
 
 pub fn execute_update_start_time(

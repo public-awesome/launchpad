@@ -20,11 +20,24 @@ pub struct InstantiateMsg {
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
     Mint {},
-    SetWhitelist { whitelist: String },
+    SetWhitelist {
+        whitelist: String,
+    },
+    #[serde(rename = "update_base_token_uri")]
+    UpdateBaseTokenURI {
+        base_token_uri: String,
+    },
     UpdateStartTime(Timestamp),
-    UpdatePerAddressLimit { per_address_limit: u32 },
-    MintTo { recipient: String },
-    MintFor { token_id: u32, recipient: String },
+    UpdatePerAddressLimit {
+        per_address_limit: u32,
+    },
+    MintTo {
+        recipient: String,
+    },
+    MintFor {
+        token_id: u32,
+        recipient: String,
+    },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
