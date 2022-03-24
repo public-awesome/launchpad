@@ -414,10 +414,7 @@ fn happy_path() {
     // Balances are correct
     // The creator should get the unit price - mint fee for the mint above
     let creator_balances = router.wrap().query_all_balances(creator.clone()).unwrap();
-    assert_eq!(
-        creator_balances,
-        coins(INITIAL_BALANCE + UNIT_PRICE - MINT_FEE, NATIVE_DENOM)
-    );
+    assert_eq!(creator_balances, coins(INITIAL_BALANCE, NATIVE_DENOM));
     // The buyer's tokens should reduce by unit price
     let buyer_balances = router.wrap().query_all_balances(buyer.clone()).unwrap();
     assert_eq!(
@@ -488,12 +485,13 @@ fn happy_path() {
     assert_eq!(res.count, 1);
     assert_eq!(res.address, buyer.to_string());
 
-    // Minter contract should have no balance
+    // Minter contract should have a balance
     let minter_balance = router
         .wrap()
         .query_all_balances(minter_addr.clone())
         .unwrap();
-    assert_eq!(0, minter_balance.len());
+    assert_eq!(1, minter_balance.len());
+    assert_eq!(minter_balance[0].amount.u128(), UNIT_PRICE - MINT_FEE);
 
     // Check that NFT is transferred
     let query_owner_msg = Cw721QueryMsg::OwnerOf {
