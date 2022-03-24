@@ -171,7 +171,36 @@ pub fn execute(
         ExecuteMsg::SetWhitelist { whitelist } => {
             execute_set_whitelist(deps, env, info, &whitelist)
         }
+        ExecuteMsg::Withdraw {} => execute_withdraw(deps, env, info),
     }
+}
+
+pub fn execute_withdraw(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+) -> Result<Response, ContractError> {
+    let config = CONFIG.load(deps.storage)?;
+    if config.admin != info.sender {
+        return Err(ContractError::Unauthorized(
+            "Sender is not an admin".to_owned(),
+        ));
+    };
+
+    // query balance from the contract
+    let balance = deps
+        .querier
+        .query_balance(env.contract.address, NATIVE_DENOM)?;
+
+    // send contract balance to creator
+    let send_msg = CosmosMsg::Bank(BankMsg::Send {
+        to_address: info.sender.to_string(),
+        amount: vec![balance],
+    });
+
+    Ok(Response::default()
+        .add_attribute("action", "withdraw")
+        .add_message(send_msg))
 }
 
 pub fn execute_set_whitelist(
