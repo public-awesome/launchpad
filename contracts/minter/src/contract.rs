@@ -406,7 +406,7 @@ fn _execute_mint(
     if !admin_no_fee {
         seller_amount = mint_price.amount - network_fee;
         msgs.append(&mut vec![CosmosMsg::Bank(BankMsg::Send {
-            to_address: config.admin.to_string(),
+            to_address: env.contract.address.to_string(),
             amount: vec![coin(seller_amount.u128(), config.unit_price.denom)],
         })]);
     };
