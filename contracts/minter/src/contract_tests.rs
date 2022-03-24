@@ -1107,12 +1107,13 @@ fn mint_for_token_id_addr() {
     );
     assert!(res.is_ok());
 
-    // Minter contract should have no balance
+    // Minter contract should have a balance
     let minter_balance = router
         .wrap()
         .query_all_balances(minter_addr.clone())
         .unwrap();
-    assert_eq!(0, minter_balance.len());
+    assert_eq!(minter_balance[0].amount.u128(), UNIT_PRICE - MINT_FEE);
+    assert_eq!(1, minter_balance.len());
 
     // Mint fails, invalid token_id
     let token_id = 0;
