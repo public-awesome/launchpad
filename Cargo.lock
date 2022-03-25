@@ -763,6 +763,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "sg-multi-test"
+version = "0.8.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-utils",
+ "cw721",
+ "cw721-base",
+ "schemars",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
 name = "sg-std"
 version = "0.8.0"
 dependencies = [

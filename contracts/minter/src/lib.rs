@@ -1,8 +1,6 @@
 pub mod contract;
 #[cfg(test)]
 mod contract_tests;
-#[cfg(test)]
-pub mod multi;
 
 mod error;
 pub mod msg;
