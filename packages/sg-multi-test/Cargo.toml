@@ -2,7 +2,6 @@
 name = "sg-multi-test"
 version = "0.8.0"
 edition = "2021"
-
 authors = [
     "Jorge Hernandez <jorge@publicawesome.com>",
     "Shane Vitarana <s@noreply.publicawesome.com>",
@@ -11,15 +10,6 @@ description = "Integration test helpers for Stargaze custom contracts"
 license = "Apache-2.0"
 repository = "https://github.com/public-awesome/contracts"
 homepage = "https://stargaze.zone"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-
-[features]
-# for more explicit tests, cargo test --features=backtraces
-backtraces = ["cosmwasm-std/backtraces"]
-# use library feature to disable all instantiate/execute/query exports
-library = []
 
 [dependencies]
 anyhow = "1"
