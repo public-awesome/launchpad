@@ -21,6 +21,7 @@ const CONTRACT_NAME: &str = "crates.io:sg-721";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 const CREATION_FEE: u128 = 1_000_000_000;
+const MAX_DESCRIPTION_LENGTH: u32 = 512;
 
 type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 pub type Sg721Contract<'a> = cw721_base::Cw721Contract<'a, Empty, StargazeMsgWrapper>;
@@ -51,7 +52,7 @@ pub fn instantiate(
         .save(deps.storage, &minter)?;
 
     // sg721 instantiation
-    if msg.collection_info.description.len() > 256 {
+    if msg.collection_info.description.len() > MAX_DESCRIPTION_LENGTH as usize {
         return Err(ContractError::DescriptionTooLong {});
     }
 
