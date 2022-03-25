@@ -226,8 +226,6 @@ fn parse_voucher_contract_address<'a>(
     remote_endpoint: &IbcEndpoint,
 ) -> Result<&'a str, ContractError> {
     let split_class_id: Vec<&str> = voucher_class_id.splitn(3, '/').collect();
-    println!("split class id is {:?}", split_class_id);
-    println!("remote endpoint {:?}", remote_endpoint.port_id);
     if split_class_id.len() != 3 {
         // only accept NFTs originating from this chain
         // https://github.com/public-awesome/contracts/issues/56
@@ -265,10 +263,8 @@ fn do_ibc_packet_receive(deps: DepsMut, packet: &IbcPacket) -> Result<Ics721Pack
     // state and make sure we have a record of sending it.
     // If we find it, remove it from state and return Ok.
     // If we don't find it, return Err.
-    println!("looking to channel state weith channel: {} contract_addr {} token_ids {}", channel.clone(), contract_addr.clone(), &msg.token_ids[0].clone());
     let state =
         CHANNEL_STATE.may_load(deps.storage, (&channel, contract_addr, &msg.token_ids[0]))?;
-    println!("state found is {:?}", state.clone());
     match state {
         Some(_) => CHANNEL_STATE.remove(deps.storage, (&channel, contract_addr, &msg.token_ids[0])),
         None => {
@@ -322,7 +318,6 @@ fn on_packet_success(deps: DepsMut, packet: IbcPacket) -> Result<IbcBasicRespons
     ];
 
     let channel = packet.src.channel_id;
-    println!("about to save attributes {:?}", (&channel, &msg.class_id, &msg.token_ids[0]));
     CHANNEL_STATE.save(
         deps.storage,
         (&channel, &msg.class_id, &msg.token_ids[0]),
