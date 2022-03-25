@@ -22,13 +22,6 @@ pub const ICS721_ORDERING: IbcOrder = IbcOrder::Unordered;
 #[path = "ibc_test.rs"]
 mod ibc_test;
 
-// #[cfg(test)]
-// #[path = "ibc_test.rs"]
-// mod ibc_test_util;
-
-// #[cfg(test)]
-// #[path = "ibc_test.rs"]
-// mod ibc_test_util;
 
 // TODO: need to define proto for chain to parse this?
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug, Default)]
