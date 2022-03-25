@@ -1445,6 +1445,12 @@ fn can_withdraw() {
 
     setup_block_time(&mut router, GENESIS_MINT_START_TIME + 1);
 
+    // withdraw with a zero balance
+    let withdraw_msg = ExecuteMsg::Withdraw {};
+    router
+        .execute_contract(creator.clone(), minter_addr.clone(), &withdraw_msg, &[])
+        .unwrap_err();
+
     // do a mint
     let mint_msg = ExecuteMsg::Mint {};
     let res = router.execute_contract(
@@ -1463,7 +1469,6 @@ fn can_withdraw() {
     assert_eq!(minter_balance[0].amount.u128(), UNIT_PRICE - MINT_FEE);
 
     // withdraw
-    let withdraw_msg = ExecuteMsg::Withdraw {};
     let res = router.execute_contract(creator.clone(), minter_addr.clone(), &withdraw_msg, &[]);
     assert!(res.is_ok());
 

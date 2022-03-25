@@ -191,6 +191,9 @@ pub fn execute_withdraw(
     let balance = deps
         .querier
         .query_balance(env.contract.address, NATIVE_DENOM)?;
+    if balance.amount.is_zero() {
+        return Err(ContractError::ZeroBalance {});
+    }
 
     // send contract balance to creator
     let send_msg = CosmosMsg::Bank(BankMsg::Send {
