@@ -1445,8 +1445,13 @@ fn can_withdraw() {
 
     setup_block_time(&mut router, GENESIS_MINT_START_TIME + 1);
 
-    // withdraw with a zero balance
+    // someone who isn't the creator cannot withdraw
     let withdraw_msg = ExecuteMsg::Withdraw {};
+    router
+        .execute_contract(buyer.clone(), minter_addr.clone(), &withdraw_msg, &[])
+        .unwrap_err();
+
+    // withdraw with a zero balance
     router
         .execute_contract(creator.clone(), minter_addr.clone(), &withdraw_msg, &[])
         .unwrap_err();
