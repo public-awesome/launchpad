@@ -1,1 +1,1 @@
-mod multi;
+pub mod multi;

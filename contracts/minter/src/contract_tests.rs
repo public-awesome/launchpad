@@ -1,4 +1,3 @@
-use crate::multi::StargazeApp;
 use cosmwasm_std::testing::{mock_dependencies_with_balance, mock_env, mock_info};
 use cosmwasm_std::{coin, coins, Addr, Decimal, Empty, Timestamp, Uint128};
 use cosmwasm_std::{Api, Coin};
@@ -7,6 +6,7 @@ use cw721_base::ExecuteMsg as Cw721ExecuteMsg;
 use cw_multi_test::{BankSudo, Contract, ContractWrapper, Executor, SudoMsg};
 use sg721::msg::{InstantiateMsg as Sg721InstantiateMsg, RoyaltyInfoResponse};
 use sg721::state::CollectionInfo;
+use sg_multi_test::multi::StargazeApp;
 use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use whitelist::msg::InstantiateMsg as WhitelistInstantiateMsg;
 use whitelist::msg::{AddMembersMsg, ExecuteMsg as WhitelistExecuteMsg};

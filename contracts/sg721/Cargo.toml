@@ -37,7 +37,7 @@ cw2 = "0.12.1"
 schemars = "0.8.8"
 serde = { version = "1.0.133", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0.30" }
-sg-std = { path = "../../packages/sg-std" }
+sg-std = "0.8.1"
 url = "2.2.2"
 cw721 = "0.12.0"
 cw721-base = { version = "0.12.0", features = ["library"] }
