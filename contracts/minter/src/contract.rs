@@ -433,16 +433,6 @@ fn _execute_mint(
     let new_mint_count = mint_count(deps.as_ref(), &info)? + 1;
     MINTER_ADDRS.save(deps.storage, info.clone().sender, &new_mint_count)?;
 
-    let mut seller_amount = Uint128::zero();
-    // Does have a fee
-    if !admin_no_fee {
-        seller_amount = mint_price.amount - network_fee;
-        msgs.append(&mut vec![CosmosMsg::Bank(BankMsg::Send {
-            to_address: env.contract.address.to_string(),
-            amount: vec![coin(seller_amount.u128(), config.unit_price.denom)],
-        })]);
-    };
-
     Ok(Response::default()
         .add_attribute("action", action)
         .add_attribute("sender", info.sender)
@@ -450,7 +440,6 @@ fn _execute_mint(
         .add_attribute("token_id", mintable_token_id.to_string())
         .add_attribute("network_fee", network_fee)
         .add_attribute("mint_price", mint_price.amount)
-        .add_attribute("seller_amount", seller_amount)
         .add_messages(msgs))
 }
 
