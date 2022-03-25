@@ -22,6 +22,14 @@ pub const ICS721_ORDERING: IbcOrder = IbcOrder::Unordered;
 #[path = "ibc_test.rs"]
 mod ibc_test;
 
+// #[cfg(test)]
+// #[path = "ibc_test.rs"]
+// mod ibc_test_util;
+
+// #[cfg(test)]
+// #[path = "ibc_test.rs"]
+// mod ibc_test_util;
+
 // TODO: need to define proto for chain to parse this?
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug, Default)]
 pub struct Ics721Packet {
@@ -90,7 +98,7 @@ fn ack_fail(err: String) -> Binary {
     to_binary(&res).unwrap()
 }
 
-pub const SEND_NFT_ID: u64 = 1338;
+const SEND_NFT_ID: u64 = 1338;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn reply(_deps: DepsMut, _env: Env, reply: Reply) -> Result<Response, ContractError> {
@@ -225,6 +233,8 @@ fn parse_voucher_contract_address<'a>(
     remote_endpoint: &IbcEndpoint,
 ) -> Result<&'a str, ContractError> {
     let split_class_id: Vec<&str> = voucher_class_id.splitn(3, '/').collect();
+    println!("split class id is {:?}", split_class_id);
+    println!("remote endpoint {:?}", remote_endpoint.port_id);
     if split_class_id.len() != 3 {
         // only accept NFTs originating from this chain
         // https://github.com/public-awesome/contracts/issues/56
