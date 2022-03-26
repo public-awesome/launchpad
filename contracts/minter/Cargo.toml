@@ -50,7 +50,7 @@ serde = { version = "1.0", default-features = false, features = ["derive"] }
 sg721 = { path = "../sg721", features = ["library"] }
 thiserror = { version = "1.0" }
 url = "2.2.0"
-sg-std = "0.8.1"
+sg-std = "0.9.0"
 whitelist = { path = "../whitelist", features = ["library"] }
 cw721 = "0.12.0"
 cw721-base = { version = "0.12.0", features = ["library"] }
