@@ -52,8 +52,8 @@ thiserror = { version = "1.0" }
 url = "2.2.0"
 sg-std = "0.9.0"
 whitelist = { path = "../whitelist", features = ["library"] }
-cw721 = "0.12.0"
-cw721-base = { version = "0.12.0", features = ["library"] }
+cw721 = "0.13.1"
+cw721-base = { version = "0.13.1", features = ["library"] }
 
 [dev-dependencies]
 cosmwasm-schema = { version = "1.0.0-beta7" }

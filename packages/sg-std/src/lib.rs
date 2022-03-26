@@ -1,4 +1,4 @@
-pub mod fees;
+mod fees;
 mod msg;
 mod query;
 mod route;
@@ -12,7 +12,7 @@ pub use msg::{
     StargazeMsgWrapper,
 };
 
-pub use fees::burn_and_distribute_fee;
+pub use fees::{burn_and_distribute_fee, FeeError};
 pub use query::StargazeQuery;
 pub use route::StargazeRoute;
 

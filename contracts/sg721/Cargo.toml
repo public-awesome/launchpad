@@ -39,8 +39,8 @@ serde = { version = "1.0.133", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0.30" }
 sg-std = "0.9.0"
 url = "2.2.2"
-cw721 = "0.12.0"
-cw721-base = { version = "0.12.0", features = ["library"] }
+cw721 = "0.13.1"
+cw721-base = { version = "0.13.1", features = ["library"] }
 
 [dev-dependencies]
 cosmwasm-schema = { version = "1.0.0-beta7" }
