@@ -29,13 +29,13 @@ pub type Sg721Contract<'a> = cw721_base::Cw721Contract<'a, Empty, StargazeMsgWra
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
-    env: Env,
+    _env: Env,
     info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
-    let fee_msgs = burn_and_distribute_fee(env, &info, CREATION_FEE)?;
+    let fee_msgs = burn_and_distribute_fee(&info, CREATION_FEE)?;
 
     // cw721 instantiation
     let info = ContractInfoResponse {

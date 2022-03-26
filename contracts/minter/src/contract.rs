@@ -163,11 +163,11 @@ pub fn execute(
         ExecuteMsg::UpdatePerAddressLimit { per_address_limit } => {
             execute_update_per_address_limit(deps, env, info, per_address_limit)
         }
-        ExecuteMsg::MintTo { recipient } => execute_mint_to(deps, env, info, recipient),
+        ExecuteMsg::MintTo { recipient } => execute_mint_to(deps, info, recipient),
         ExecuteMsg::MintFor {
             token_id,
             recipient,
-        } => execute_mint_for(deps, env, info, token_id, recipient),
+        } => execute_mint_for(deps, info, token_id, recipient),
         ExecuteMsg::SetWhitelist { whitelist } => {
             execute_set_whitelist(deps, env, info, &whitelist)
         }
@@ -229,7 +229,7 @@ pub fn execute_mint_sender(
         return Err(ContractError::MaxPerAddressLimitExceeded {});
     }
 
-    _execute_mint(deps, env, info, action, false, None, None)
+    _execute_mint(deps, info, action, false, None, None)
 }
 
 // Check if a whitelist exists and not ended
@@ -275,7 +275,6 @@ fn is_public_mint(deps: Deps, info: &MessageInfo) -> Result<bool, ContractError>
 
 pub fn execute_mint_to(
     deps: DepsMut,
-    env: Env,
     info: MessageInfo,
     recipient: String,
 ) -> Result<Response, ContractError> {
@@ -290,12 +289,11 @@ pub fn execute_mint_to(
         ));
     }
 
-    _execute_mint(deps, env, info, action, true, Some(recipient), None)
+    _execute_mint(deps, info, action, true, Some(recipient), None)
 }
 
 pub fn execute_mint_for(
     deps: DepsMut,
-    env: Env,
     info: MessageInfo,
     token_id: u32,
     recipient: String,
@@ -311,15 +309,7 @@ pub fn execute_mint_for(
         ));
     }
 
-    _execute_mint(
-        deps,
-        env,
-        info,
-        action,
-        true,
-        Some(recipient),
-        Some(token_id),
-    )
+    _execute_mint(deps, info, action, true, Some(recipient), Some(token_id))
 }
 
 // Generalize checks and mint message creation
@@ -328,7 +318,6 @@ pub fn execute_mint_for(
 // mint_for(recipient: "friend2", token_id: 420) -> _execute_mint(recipient, token_id)
 fn _execute_mint(
     deps: DepsMut,
-    env: Env,
     info: MessageInfo,
     action: &str,
     admin_no_fee: bool,
@@ -361,11 +350,7 @@ fn _execute_mint(
     } else {
         let fee_percent = Decimal::percent(MINT_FEE_PERCENT as u64);
         let network_fee = mint_price.amount * fee_percent;
-        msgs.append(&mut burn_and_distribute_fee(
-            env,
-            &info,
-            network_fee.u128(),
-        )?);
+        msgs.append(&mut burn_and_distribute_fee(&info, network_fee.u128())?);
         network_fee
     };
 

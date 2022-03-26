@@ -1,5 +1,5 @@
 use crate::{create_fund_community_pool_msg, StargazeMsgWrapper, NATIVE_DENOM};
-use cosmwasm_std::{coins, BankMsg, CosmosMsg, Decimal, Env, MessageInfo, Uint128};
+use cosmwasm_std::{coins, BankMsg, CosmosMsg, Decimal, MessageInfo, Uint128};
 use cw_utils::{must_pay, PaymentError};
 use thiserror::Error;
 
@@ -8,7 +8,6 @@ const FEE_BURN_PERCENT: u64 = 50;
 
 type SubMsg = CosmosMsg<StargazeMsgWrapper>;
 pub fn burn_and_distribute_fee(
-    _env: Env,
     info: &MessageInfo,
     fee_amount: u128,
 ) -> Result<Vec<SubMsg>, FeeError> {
