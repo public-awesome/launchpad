@@ -114,10 +114,31 @@ mod ibc_test   {
             "local-sender",
         );
         // we get a fail cache (ack) for a send
-        let msg = IbcPacketAckMsg::new(IbcAcknowledgement::new(ack_fail("Packet Fail".to_string())), sent_packet);
+        let msg = IbcPacketAckMsg::new(IbcAcknowledgement::new(ack_fail("Ibc Packet Fail".to_string())), sent_packet);
         let res = ibc_packet_ack(deps, mock_env(), msg).unwrap();
         return res
     }
+
+    fn send_sg721_fail_res(deps: DepsMut, send_channel: String, contract_addr: String,
+        token_ids: Vec<&str>, token_uris: Vec<&str>) -> Result<IbcBasicResponse, ContractError> {
+
+        // prepare some mock packets
+        let sent_packet = mock_sent_packet(
+            &send_channel,
+            &contract_addr,
+            token_ids.clone(),
+            token_uris.clone(),
+            "local-sender",
+        );
+        // we get a fail cache (ack) for a send
+        let msg = IbcPacketAckMsg::new(IbcAcknowledgement::new(ack_fail("Packet Fail".to_string())), sent_packet);
+        let ibc_response = ibc_packet_ack(deps, mock_env(), msg);
+        match ibc_response {
+            Ok(ibc_response) => Ok(ibc_response),
+            Err(ibc_response) => Err(ContractError::NoForeignTokens {}) 
+        }
+    }
+
 
 
     fn check_query_channel_state(deps: DepsMut, send_channel: String, connection_id: String, 
@@ -200,6 +221,10 @@ mod ibc_test   {
         send_sg721_success(deps.as_mut(), send_channel.to_string(), 
             contract_addr.to_string(), token_ids.clone(), token_uris.clone());
 
+        //channel state holding token_id 1 after send
+        let exists = CHANNEL_STATE.may_load(&deps.storage, (send_channel, contract_addr, "1"));
+        assert_eq!(exists, Ok(Some(Empty {})));
+
         let recv_packet = mock_receive_packet(
             send_channel,
             contract_addr,
@@ -210,7 +235,11 @@ mod ibc_test   {
 
         let packet_receive = IbcPacketReceiveMsg::new(recv_packet.clone());
         let res = ibc_packet_receive(deps.as_mut(), mock_env(), packet_receive).unwrap();
-        
+
+        //channel state now removed token id 1 after receive
+        let exists = CHANNEL_STATE.may_load(&deps.storage, (send_channel, contract_addr, "1"));
+        assert_eq!(exists, Ok(None));
+
         let res_attributes = [
             Attribute { key: "action".to_string(), value: "receive".to_string() }, 
             Attribute { key: "sender".to_string(), value: "remote-sender".to_string() },
@@ -228,7 +257,7 @@ mod ibc_test   {
          connection_id.to_string(),  counterparty_port_id.to_string(), 
          counterparty_channel_id.to_string()); 
     }
-
+    
 
     #[test]
     fn test_receive_sg721_empty() {
@@ -316,7 +345,7 @@ mod ibc_test   {
     }
 
     #[test]
-    fn test_send_sg721_fail() {
+    fn test_send_sg721_fail_ibc_packet() {
         let send_channel = "channel-9";
         let mut deps = setup(&["channel-1", "channel-7", send_channel]);
         let contract_addr = "transfer-nft/abc/def";
@@ -356,16 +385,39 @@ mod ibc_test   {
              Attribute { key: "receiver".to_string(), value: "remote-rcpt".to_string() }, 
              Attribute { key: "contract_addr".to_string(), value: "my-nft".to_string() }, 
              Attribute { key: "success".to_string(), value: "false".to_string() },
-            Attribute { key: "error".to_string(), value: "Packet Fail".to_string() }];
+            Attribute { key: "error".to_string(), value: "Ibc Packet Fail".to_string() }];
         assert_eq!(res.attributes, res_attributes);
         
     }
 
-    // to add: 
-    // println!("State class ids {}", _state.class_ids);
-    // println!("State info is {}", _state.info);
-    // assert_eq!(_state.balances, vec![Amount::cw20(987654321, cw721_addr)]);
-    // assert_eq!(_state.total_sent, vec![Amount::cw20(987654321, cw721_addr)]);
+    #[test]
+    fn test_send_sg721_fail_foreign_token() {
+        let send_channel = "channel-9";
+        let mut deps = setup(&["channel-1", "channel-7", send_channel]);
+        let contract_addr = "transfer-nft/abc/def";
+        let token_ids = vec!["1", "2", "3"];
+        let token_uris = vec![
+            "https://metadata-url.com/my-metadata1",
+            "https://metadata-url.com/my-metadata2",
+            "https://metadata-url.com/my-metadata3",
+        ];
+
+        let ibc_packet =  mock_sent_packet(
+            &send_channel,
+            &contract_addr,
+            token_ids.clone(),
+            token_uris.clone(),
+            "local-sender",
+        );
+
+        let res = send_sg721_fail_res(deps.as_mut(), send_channel.to_string(), 
+        contract_addr.to_string(), token_ids.clone(), token_uris.clone());
+
+        let error_str: String = res.unwrap_err().to_string();
+        let expected_error_msg = "Only accepts tokens that originate on this chain, not native tokens of remote chain";
+        assert_eq!(error_str, expected_error_msg);
+    }
+
 
     // // cannot receive more than we sent
     // let msg = IbcPacketReceiveMsg::new(recv_high_packet);
