@@ -593,6 +593,21 @@ func TestWhitelistMinter(t *testing.T) {
 		app.DistrKeeper.GetFeePoolCommunityCoins(ctx).AmountOf("ustars").TruncateInt64(),
 	)
 
+	// Creator should have their initial balance before withdrawal
+	// 900 (balance)
+	require.Equal(t,
+		sdk.NewInt64Coin("ustars", 900_000_000),
+		app.BankKeeper.GetBalance(ctx, creator.Address, "ustars"),
+	)
+
+	// withdraw succeeds
+	_, err = msgServer.ExecuteContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgExecuteContract{
+		Contract: minterAddress,
+		Sender:   creator.Address.String(),
+		Msg:      []byte(`{"withdraw":{}}`),
+	})
+	require.NoError(t, err)
+
 	// Creator should have earned 90% of total sales
 	// 900 (balance)
 	// 50STARS * 90% * 50 sold = 2,250
