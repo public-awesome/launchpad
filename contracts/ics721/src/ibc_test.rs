@@ -1,3 +1,4 @@
+
 #[cfg(test)]
 mod ibc_test   {
     use super::super::{*};
@@ -134,8 +135,8 @@ mod ibc_test   {
         let msg = IbcPacketAckMsg::new(IbcAcknowledgement::new(ack_fail("Packet Fail".to_string())), sent_packet);
         let ibc_response = ibc_packet_ack(deps, mock_env(), msg);
         match ibc_response {
-            Ok(ibc_response) => Ok(ibc_response),
-            Err(ibc_response) => Err(ContractError::NoForeignTokens {}) 
+            Ok(_ibc_response) => Ok(_ibc_response),
+            Err(_ibc_response) => Err(ContractError::NoForeignTokens {}) 
         }
     }
 
@@ -402,7 +403,7 @@ mod ibc_test   {
             "https://metadata-url.com/my-metadata3",
         ];
 
-        let ibc_packet =  mock_sent_packet(
+        let _ibc_packet =  mock_sent_packet(
             &send_channel,
             &contract_addr,
             token_ids.clone(),
@@ -418,6 +419,57 @@ mod ibc_test   {
         assert_eq!(error_str, expected_error_msg);
     }
 
+    #[test]
+    fn test_parse_voucher_contract_address_success() {
+
+    let send_channel = "channel-9";
+    let contract_port = "ibc:wasm1234567890abcdef"; 
+
+    let endpoint_1 = IbcEndpoint {
+            port_id: contract_port.to_string(),
+            channel_id: send_channel.to_string(),
+       };
+    
+    let voucher_class_id = "ibc:wasm1234567890abcdef/channel-9/my-nft";
+    let parse_result = parse_voucher_contract_address(&voucher_class_id, &endpoint_1);
+    assert_eq!(parse_result.unwrap().to_string(), "my-nft");
+    }
+
+    #[test]
+    fn test_parse_voucher_contract_address_fail_other_port() {
+
+    let send_channel = "channel-9";
+    let contract_port = "ibc:wasm1234567890abcdef"; 
+
+    let endpoint_1 = IbcEndpoint {
+            port_id: contract_port.to_string(),
+            channel_id: send_channel.to_string(),
+       };
+    
+    let voucher_class_id = "other-port/channel-9/my-nft";
+    let parse_result = parse_voucher_contract_address(&voucher_class_id, &endpoint_1);
+    
+    let error_msg = parse_result.unwrap_err().to_string();
+    assert_eq!(error_msg, "Parsed port from denom (other-port) doesn't match packet"); 
+    }
+
+    #[test]
+    fn test_parse_voucher_contract_address_fail_other_channel() {
+
+    let send_channel = "channel-9";
+    let contract_port = "ibc:wasm1234567890abcdef"; 
+
+    let endpoint_1 = IbcEndpoint {
+            port_id: contract_port.to_string(),
+            channel_id: send_channel.to_string(),
+       };
+    
+    let voucher_class_id = "ibc:wasm1234567890abcdef/other-channel/my-nft";
+    let parse_result = parse_voucher_contract_address(&voucher_class_id, &endpoint_1);
+    
+    let error_msg = parse_result.unwrap_err().to_string();
+    assert_eq!(error_msg, "Parsed channel from denom (other-channel) doesn't match packet"); 
+    }
 
     // // cannot receive more than we sent
     // let msg = IbcPacketReceiveMsg::new(recv_high_packet);
