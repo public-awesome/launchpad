@@ -247,10 +247,10 @@ func TestMinter(t *testing.T) {
 		app.BankKeeper.GetBalance(ctx, accs[1].Address, "ustars"),
 	)
 
-	// Creator should have earned 90%
+	// Creator should have the same amount they started with since it hasn't been withdrawn yet
 	require.Equal(t,
 		app.BankKeeper.GetBalance(ctx, creator.Address, "ustars"),
-		sdk.NewInt64Coin("ustars", 1_090_000_000),
+		sdk.NewInt64Coin("ustars", 1_000_000_000),
 	)
 
 	// 505 STARS should have been burned so far
@@ -293,12 +293,27 @@ func TestMinter(t *testing.T) {
 		app.DistrKeeper.GetFeePoolCommunityCoins(ctx).AmountOf("ustars").TruncateInt64(),
 	)
 
+	// Creator should have the same balance before withdrawal
+	require.Equal(t,
+		sdk.NewInt64Coin("ustars", 1_000_000_000),
+		app.BankKeeper.GetBalance(ctx, creator.Address, "ustars"),
+	)
+
+	// withdraw succeeds
+	_, err = msgServer.ExecuteContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgExecuteContract{
+		Contract: minterAddress,
+		Sender:   creator.Address.String(),
+		Msg:      []byte(`{"withdraw":{}}`),
+	})
+	require.NoError(t, err)
+
 	// Creator should have earned 90% of total sales
 	// 1000 (balance) + (100 * 90 STARS)
 	require.Equal(t,
 		sdk.NewInt64Coin("ustars", 10_000_000_000),
 		app.BankKeeper.GetBalance(ctx, creator.Address, "ustars"),
 	)
+
 }
 
 func TestWhitelistMinter(t *testing.T) {
@@ -561,6 +576,7 @@ func TestWhitelistMinter(t *testing.T) {
 	})
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "Sold out")
+	// TODO: fake refund since test failed
 
 	// Check Supply
 	// - 50 whitelist fee
@@ -578,13 +594,28 @@ func TestWhitelistMinter(t *testing.T) {
 		app.DistrKeeper.GetFeePoolCommunityCoins(ctx).AmountOf("ustars").TruncateInt64(),
 	)
 
+	// Creator should have their initial balance before withdrawal
+	// 900 (balance)
+	require.Equal(t,
+		sdk.NewInt64Coin("ustars", 900_000_000),
+		app.BankKeeper.GetBalance(ctx, creator.Address, "ustars"),
+	)
+
+	// withdraw succeeds
+	_, err = msgServer.ExecuteContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgExecuteContract{
+		Contract: minterAddress,
+		Sender:   creator.Address.String(),
+		Msg:      []byte(`{"withdraw":{}}`),
+	})
+	require.NoError(t, err)
+
 	// Creator should have earned 90% of total sales
 	// 900 (balance)
 	// 50STARS * 90% * 50 sold = 2,250
-	// 100STARS * 90% * 50 sold = 4,500
-	// should have 7,650 STARS
+	// 100STARS * 90% * 50 sold = 4,500 + 100 (1 failed mint)
+	// should have 7,750 STARS
 	require.Equal(t,
-		sdk.NewInt64Coin("ustars", 7_650_000_000),
+		sdk.NewInt64Coin("ustars", 7_750_000_000),
 		app.BankKeeper.GetBalance(ctx, creator.Address, "ustars"),
 	)
 
