@@ -1,22 +1,18 @@
 use anyhow::{bail, Result as AnyResult};
 use cosmwasm_std::testing::{MockApi, MockQuerier, MockStorage};
-use cosmwasm_std::{BankMsg, OwnedDeps};
-use std::fmt::Debug;
-use std::marker::PhantomData;
-
-use schemars::JsonSchema;
-use serde::de::DeserializeOwned;
-
-use std::ops::{Deref, DerefMut};
-
 use cosmwasm_std::{
     Addr, Api, Binary, BlockInfo, CustomQuery, Empty, Querier, QuerierResult, Storage,
 };
+use cosmwasm_std::{BankMsg, OwnedDeps};
 use cw_multi_test::{
     App, AppResponse, BankKeeper, BasicAppBuilder, CosmosRouter, Module, WasmKeeper,
 };
-
+use schemars::JsonSchema;
+use serde::de::DeserializeOwned;
 use sg_std::{StargazeMsgWrapper, StargazeQuery};
+use std::fmt::Debug;
+use std::marker::PhantomData;
+use std::ops::{Deref, DerefMut};
 
 pub struct StargazeModule {}
 
