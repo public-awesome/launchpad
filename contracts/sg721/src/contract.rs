@@ -97,7 +97,22 @@ pub fn execute(
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, BaseError> {
-    Sg721Contract::default().execute(deps, env, info, msg)
+    match msg {
+        ExecuteMsg::UpdateTokenURIs { base_token_uri } => {
+            execute_update_token_uris(deps, env, info, base_token_uri)
+        }
+        _ => Sg721Contract::default().execute(deps, env, info, msg),
+    }
+}
+
+fn execute_update_token_uris(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    base_token_uri: String,
+) -> Result<Response, BaseError> {
+    // Sg721Contract::default().tokens.update(desp.storage,&token_id, &msg)
+    Ok(Response::new())
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]

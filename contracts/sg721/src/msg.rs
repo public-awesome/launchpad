@@ -1,6 +1,8 @@
 use crate::{state::CollectionInfo, ContractError};
 use cosmwasm_std::{Decimal, Empty};
-use cw721_base::msg::QueryMsg as Cw721QueryMsg;
+use cw721_base::msg::{
+    ExecuteMsg as Cw721ExecuteMsg, MintMsg as Cw721MintMsg, QueryMsg as Cw721QueryMsg,
+};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -28,7 +30,20 @@ impl RoyaltyInfoResponse {
     }
 }
 
-pub type ExecuteMsg = cw721_base::ExecuteMsg<Empty>;
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum ExecuteMsg {
+    UpdateTokenURIs { base_token_uri: String },
+    Mint(Cw721MintMsg<Empty>),
+}
+impl From<ExecuteMsg> for Cw721ExecuteMsg<Empty> {
+    fn from(msg: ExecuteMsg) -> Cw721ExecuteMsg<Empty> {
+        match msg {
+            ExecuteMsg::Mint(Cw721MintMsg) => Cw721ExecuteMsg::Mint(Cw721MintMsg),
+            _ => unreachable!("cannot convert {:?} to Cw721ExecuteMsg", msg),
+        }
+    }
+}
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
