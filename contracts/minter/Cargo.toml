@@ -47,10 +47,10 @@ cw2 = "0.13.1"
 cw-utils = "0.13.1"
 schemars = "0.8"
 serde = { version = "1.0", default-features = false, features = ["derive"] }
-sg721 = { version = "0.8.2", features = ["library"] }
+sg721 = { path = "../sg721", features = ["library"] }
 thiserror = { version = "1.0" }
 url = "2.2.0"
-sg-std = "0.9.0"
+sg-std = { path = "../../packages/sg-std" }
 whitelist = { path = "../whitelist", features = ["library"] }
 cw721 = "0.13.1"
 cw721-base = { version = "0.13.1", features = ["library"] }

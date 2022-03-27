@@ -14,7 +14,7 @@ use cw_storage_plus::Bound;
 use cw_utils::{may_pay, maybe_addr, must_pay};
 use rust_decimal::prelude::ToPrimitive;
 use rust_decimal::Decimal;
-use sg_std::fees::burn_and_distribute_fee;
+use sg_std::burn_and_distribute_fee;
 use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
 // version info for migration info
