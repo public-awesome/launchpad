@@ -851,7 +851,7 @@ dependencies = [
 
 [[package]]
 name = "sg721"
-version = "0.8.0"
+version = "0.9.1"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
