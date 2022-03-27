@@ -12,6 +12,10 @@ pub use msg::{
     StargazeMsgWrapper,
 };
 
+pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
+pub type SubMsg = cosmwasm_std::SubMsg<StargazeMsgWrapper>;
+pub type CosmosMsg = cosmwasm_std::CosmosMsg<StargazeMsgWrapper>;
+
 pub use fees::{burn_and_distribute_fee, FeeError};
 pub use query::StargazeQuery;
 pub use route::StargazeRoute;
