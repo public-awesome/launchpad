@@ -594,7 +594,7 @@ dependencies = [
  "schemars",
  "serde",
  "sg-multi-test",
- "sg-std 0.9.1",
+ "sg-std 0.9.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg721",
  "thiserror",
  "url",
@@ -863,7 +863,7 @@ dependencies = [
  "cw721-base",
  "schemars",
  "serde",
- "sg-std 0.9.1",
+ "sg-std 0.9.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "thiserror",
  "url",
 ]
@@ -1041,7 +1041,7 @@ dependencies = [
  "rust_decimal",
  "schemars",
  "serde",
- "sg-std 0.9.1",
+ "sg-std 0.9.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "thiserror",
 ]
 
