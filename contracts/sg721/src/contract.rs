@@ -9,6 +9,7 @@ use sg_std::StargazeMsgWrapper;
 use crate::ContractError;
 use cw721::ContractInfoResponse;
 use cw721_base::ContractError as BaseError;
+use cw721_base::TokenInfo as Cw721TokenInfo;
 use url::Url;
 
 use crate::msg::{
@@ -101,7 +102,9 @@ pub fn execute(
         ExecuteMsg::UpdateTokenURIs { base_token_uri } => {
             execute_update_token_uris(deps, env, info, base_token_uri)
         }
-        _ => Sg721Contract::default().execute(deps, env, info, msg),
+        //TODO change back to Sg721Contract
+        // _ => Sg721Contract::default().execute(deps, env, info, msg),
+        _ => Ok(Response::default()),
     }
 }
 
@@ -111,7 +114,28 @@ fn execute_update_token_uris(
     info: MessageInfo,
     base_token_uri: String,
 ) -> Result<Response, BaseError> {
-    // Sg721Contract::default().tokens.update(desp.storage,&token_id, &msg)
+    let minter = Sg721Contract::default().minter.load(deps.storage)?;
+    // TODO add frozen state
+    // let frozen = FROZEN.load(deps.storage)?;
+    if info.sender != minter {
+        Err(BaseError::Unauthorized {});
+    }
+
+    // TODO add frozen state check
+    // if frozen {
+    //     Err(ContractError::Frozen {});
+    // }
+
+    let token_id = "1".to_string();
+    let msg = Cw721MintMsg {
+        token_id,
+        owner: "asdfasdf".to_string(),
+        token_uri: Some(format!("{}/{}", base_token_uri, token_id)),
+        extension: None,
+    };
+    Sg721Contract::default()
+        .tokens
+        .update(deps.storage, &"1", &msg);
     Ok(Response::new())
 }
 

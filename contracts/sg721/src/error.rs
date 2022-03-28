@@ -31,6 +31,12 @@ pub enum ContractError {
     #[error("Description too long")]
     DescriptionTooLong {},
 
+    #[error("Cannot update token uri after contract freeze")]
+    Frozen {},
+
+    #[error["Token id not found {got}"]]
+    TokenNotFound { got: String },
+
     #[error("{0}")]
     Payment(#[from] PaymentError),
 
