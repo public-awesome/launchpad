@@ -114,11 +114,12 @@ fn execute_update_token_uris(
     info: MessageInfo,
     base_token_uri: String,
 ) -> Result<Response, BaseError> {
-    let minter = Sg721Contract::default().minter.load(deps.storage)?;
+    let sg721_contract = Sg721Contract::default();
+    let minter = sg721_contract.minter.load(deps.storage)?;
     // TODO add frozen state
     // let frozen = FROZEN.load(deps.storage)?;
     if info.sender != minter {
-        Err(BaseError::Unauthorized {});
+        return Err(BaseError::Unauthorized {});
     }
 
     // TODO add frozen state check
@@ -127,15 +128,17 @@ fn execute_update_token_uris(
     // }
 
     let token_id = "1".to_string();
-    let msg = Cw721MintMsg {
-        token_id,
-        owner: "asdfasdf".to_string(),
-        token_uri: Some(format!("{}/{}", base_token_uri, token_id)),
-        extension: None,
-    };
-    Sg721Contract::default()
+
+    sg721_contract
         .tokens
-        .update(deps.storage, &"1", &msg);
+        .update(deps.storage, &token_id, |token| match token {
+            Some(mut token_info) => {
+                token_info.token_uri = Some(format!("{}/{}", base_token_uri, token_id));
+                token_info.extension = Empty {};
+                Ok(token_info)
+            }
+            None => return Err(ContractError::TokenNotFound { got: token_id }),
+        });
     Ok(Response::new())
 }
 
