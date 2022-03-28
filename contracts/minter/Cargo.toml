@@ -40,22 +40,22 @@ optimize = """docker run --rm -v "$(pwd)":/code \
 """
 
 [dependencies]
-cosmwasm-std = { version = "1.0.0-beta5" }
-cosmwasm-storage = { version = "1.0.0-beta5" }
-cw-storage-plus = "0.12.1"
-cw2 = "0.12.1"
-cw-utils = "0.12.1"
+cosmwasm-std = { version = "1.0.0-beta7" }
+cosmwasm-storage = { version = "1.0.0-beta7" }
+cw-storage-plus = "0.13.1"
+cw2 = "0.13.1"
+cw-utils = "0.13.1"
 schemars = "0.8"
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 sg721 = { path = "../sg721", features = ["library"] }
 thiserror = { version = "1.0" }
 url = "2.2.0"
-sg-std = { path = "../../packages/sg-std" }
+sg-std = "0.9.1"
 whitelist = { path = "../whitelist", features = ["library"] }
-cw721 = "0.12.0"
-cw721-base = { version = "0.12.0", features = ["library"] }
+cw721 = "0.13.1"
+cw721-base = { version = "0.13.1", features = ["library"] }
 
 [dev-dependencies]
-cosmwasm-schema = { version = "1.0.0-beta5" }
-cw-multi-test = "0.12.1"
-anyhow = "1"
+cosmwasm-schema = { version = "1.0.0-beta7" }
+cw-multi-test = "0.13.1"
+sg-multi-test = { path = "../../packages/sg-multi-test" }
