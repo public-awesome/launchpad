@@ -30,6 +30,7 @@ impl RoyaltyInfoResponse {
     }
 }
 
+// TODO add other msgs from cw721
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
@@ -39,7 +40,7 @@ pub enum ExecuteMsg {
 impl From<ExecuteMsg> for Cw721ExecuteMsg<Empty> {
     fn from(msg: ExecuteMsg) -> Cw721ExecuteMsg<Empty> {
         match msg {
-            ExecuteMsg::Mint(Cw721MintMsg) => Cw721ExecuteMsg::Mint(Cw721MintMsg),
+            ExecuteMsg::Mint(cw721_mint_msg) => Cw721ExecuteMsg::Mint(cw721_mint_msg),
             _ => unreachable!("cannot convert {:?} to Cw721ExecuteMsg", msg),
         }
     }

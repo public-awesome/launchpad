@@ -9,7 +9,6 @@ use sg_std::StargazeMsgWrapper;
 use crate::ContractError;
 use cw721::ContractInfoResponse;
 use cw721_base::ContractError as BaseError;
-use cw721_base::TokenInfo as Cw721TokenInfo;
 use url::Url;
 
 use crate::msg::{
@@ -94,23 +93,22 @@ pub fn instantiate(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
     deps: DepsMut,
-    env: Env,
+    _env: Env,
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, BaseError> {
     match msg {
         ExecuteMsg::UpdateTokenURIs { base_token_uri } => {
-            execute_update_token_uris(deps, env, info, base_token_uri)
+            execute_update_token_uris(deps, info, base_token_uri)
         }
-        //TODO change back to Sg721Contract
+        // TODO add back Sg721Contract::default() msgs
         // _ => Sg721Contract::default().execute(deps, env, info, msg),
-        _ => Ok(Response::default()),
+        _ => Ok(Response::new()),
     }
 }
 
 fn execute_update_token_uris(
     deps: DepsMut,
-    env: Env,
     info: MessageInfo,
     base_token_uri: String,
 ) -> Result<Response, BaseError> {
@@ -131,14 +129,14 @@ fn execute_update_token_uris(
 
     sg721_contract
         .tokens
-        .update(deps.storage, &token_id, |token| match token {
+        .update(deps.storage, &token_id.clone(), |token| match token {
             Some(mut token_info) => {
                 token_info.token_uri = Some(format!("{}/{}", base_token_uri, token_id));
                 token_info.extension = Empty {};
                 Ok(token_info)
             }
             None => return Err(ContractError::TokenNotFound { got: token_id }),
-        });
+        })?;
     Ok(Response::new())
 }
 
