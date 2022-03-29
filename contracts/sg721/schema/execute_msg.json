@@ -1,8 +1,28 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "ExecuteMsg_for_Empty",
-  "description": "This is like Cw721ExecuteMsg but we add a Mint command for an owner to make this stand-alone. You will likely want to remove mint and use other control logic in any contract that inherits this.",
+  "title": "ExecuteMsg",
   "oneOf": [
+    {
+      "description": "Update token uris for all tokens \"{base_token_uri}/{token_id}\"",
+      "type": "object",
+      "required": [
+        "update_token_u_r_is"
+      ],
+      "properties": {
+        "update_token_u_r_is": {
+          "type": "object",
+          "required": [
+            "base_token_uri"
+          ],
+          "properties": {
+            "base_token_uri": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
     {
       "description": "Transfer is a base message to move a token to another account without triggering actions",
       "type": "object",
