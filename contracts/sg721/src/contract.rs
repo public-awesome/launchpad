@@ -101,9 +101,7 @@ pub fn execute(
         ExecuteMsg::UpdateTokenURIs { base_token_uri } => {
             execute_update_token_uris(deps, info, base_token_uri)
         }
-        // TODO add back Sg721Contract::default() msgs
-        // _ => Sg721Contract::default().execute(deps, env, info, msg),
-        _ => Ok(Response::new()),
+        _ => Sg721Contract::default().execute(deps, _env, info, msg.into()),
     }
 }
 
