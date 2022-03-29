@@ -18,6 +18,10 @@ use crate::state::{Config, CHANNEL_INFO, CHANNEL_STATE, CONFIG};
 const CONTRACT_NAME: &str = "crates.io:sg721-ics721";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
+#[cfg(test)]
+#[path = "contract_test.rs"]
+mod contract_test;
+
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
@@ -149,7 +153,6 @@ fn query_list(deps: Deps) -> StdResult<ListChannelsResponse> {
 
 pub fn query_channel(deps: Deps, id: String) -> StdResult<ChannelResponse> {
     let info = CHANNEL_INFO.load(deps.storage, &id)?;
-
     let _class_ids: StdResult<Vec<_>> = CHANNEL_STATE
         .sub_prefix(&id)
         .range(deps.storage, None, None, Order::Ascending)
@@ -157,14 +160,20 @@ pub fn query_channel(deps: Deps, id: String) -> StdResult<ChannelResponse> {
             let (class_id_token_id, _) = r?;
             // TODO: extract class_id out of Vec<u8>
             // https://github.com/public-awesome/contracts/issues/60
-            Ok(class_id_token_id)
+            Ok(class_id_token_id.0)
         })
-        // TODO: filter duplicates
         .collect();
 
+    println!("class ids {:?}", _class_ids);
+    let mut class_ids_resp = _class_ids.unwrap();
+    let class_ids_resp = {
+        class_ids_resp.sort();
+        class_ids_resp.dedup();
+        class_ids_resp
+    };
     Ok(ChannelResponse {
         info,
-        class_ids: vec![],
+        class_ids: class_ids_resp,
     })
 }
 
@@ -177,44 +186,3 @@ pub fn query_tokens(
     todo!()
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::test_helpers::*;
-
-    use cosmwasm_std::testing::mock_env;
-    use cosmwasm_std::{from_binary, StdError};
-
-    #[test]
-    fn setup_and_query() {
-        let deps = setup(&["channel-3", "channel-7"]);
-
-        let raw_list = query(deps.as_ref(), mock_env(), QueryMsg::ListChannels {}).unwrap();
-        let list_res: ListChannelsResponse = from_binary(&raw_list).unwrap();
-        assert_eq!(2, list_res.channels.len());
-        assert_eq!(mock_channel_info("channel-3"), list_res.channels[0]);
-        assert_eq!(mock_channel_info("channel-7"), list_res.channels[1]);
-
-        let raw_channel = query(
-            deps.as_ref(),
-            mock_env(),
-            QueryMsg::Channel {
-                id: "channel-3".to_string(),
-            },
-        )
-        .unwrap();
-        let chan_res: ChannelResponse = from_binary(&raw_channel).unwrap();
-        assert_eq!(chan_res.info, mock_channel_info("channel-3"));
-        assert_eq!(0, chan_res.class_ids.len());
-
-        let err = query(
-            deps.as_ref(),
-            mock_env(),
-            QueryMsg::Channel {
-                id: "channel-10".to_string(),
-            },
-        )
-        .unwrap_err();
-        assert_eq!(err, StdError::not_found("cw20_ics20::state::ChannelInfo"));
-    }
-}
