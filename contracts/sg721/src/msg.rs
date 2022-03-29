@@ -106,7 +106,7 @@ impl From<ExecuteMsg> for Cw721ExecuteMsg<Empty> {
                 Cw721ExecuteMsg::ApproveAll { operator, expires }
             }
             ExecuteMsg::RevokeAll { operator } => Cw721ExecuteMsg::RevokeAll { operator },
-            ExecuteMsg::Mint(mint_msg) => Cw721ExecuteMsg::Mint(mint_msg.into()),
+            ExecuteMsg::Mint(mint_msg) => Cw721ExecuteMsg::Mint(mint_msg),
             ExecuteMsg::Burn { token_id } => Cw721ExecuteMsg::Burn { token_id },
             _ => unreachable!("cannot convert {:?} to Cw721ExecuteMsg", msg),
         }

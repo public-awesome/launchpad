@@ -133,7 +133,7 @@ fn execute_update_token_uris(
                 token_info.extension = Empty {};
                 Ok(token_info)
             }
-            None => return Err(ContractError::TokenNotFound { got: token_id }),
+            None => Err(ContractError::TokenNotFound { got: token_id }),
         })?;
     Ok(Response::new())
 }
@@ -299,7 +299,7 @@ mod tests {
         // confirm response is the same
         let res: NftInfoResponse<Empty> =
             from_binary(&query(deps.as_ref(), mock_env(), query_msg.clone()).unwrap()).unwrap();
-        assert_eq!(res.token_uri, Some(token_uri.clone()));
+        assert_eq!(res.token_uri, Some(token_uri));
 
         // update base token uri
         let new_base_token_uri: String = "ipfs://new_base_token_uri_hash".to_string();
