@@ -33,6 +33,8 @@ impl RoyaltyInfoResponse {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
+    /// Freeze contract from updating token uris
+    Freeze {},
     /// Update token uris for all tokens "{base_token_uri}/{token_id}"
     UpdateTokenURIs { base_token_uri: String },
     /// Transfer is a base message to move a token to another account without triggering actions

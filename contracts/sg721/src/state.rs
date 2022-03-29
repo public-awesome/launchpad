@@ -19,3 +19,4 @@ pub struct RoyaltyInfo {
 }
 
 pub const COLLECTION_INFO: Item<CollectionInfo<RoyaltyInfo>> = Item::new("collection_info");
+pub const FROZEN: Item<bool> = Item::new("frozen");

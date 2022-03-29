@@ -6,6 +6,7 @@ use cw2::set_contract_version;
 use sg_std::burn_and_distribute_fee;
 use sg_std::StargazeMsgWrapper;
 
+use crate::state::FROZEN;
 use crate::ContractError;
 use cw721::ContractInfoResponse;
 use cw721_base::ContractError as BaseError;
@@ -81,6 +82,7 @@ pub fn instantiate(
     };
 
     COLLECTION_INFO.save(deps.storage, &collection_info)?;
+    FROZEN.save(deps.storage, &false)?;
 
     Ok(Response::default()
         .add_attribute("action", "instantiate")
@@ -98,6 +100,7 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> Result<Response, BaseError> {
     match msg {
+        ExecuteMsg::Freeze {} => execute_freeze(deps, info),
         ExecuteMsg::UpdateTokenURIs { base_token_uri } => {
             execute_update_token_uris(deps, info, base_token_uri)
         }
@@ -105,6 +108,18 @@ pub fn execute(
     }
 }
 
+fn execute_freeze(deps: DepsMut, info: MessageInfo) -> Result<Response, BaseError> {
+    let sg721_contract = Sg721Contract::default();
+    let minter = sg721_contract.minter.load(deps.storage)?;
+
+    if info.sender != minter {
+        return Err(BaseError::Unauthorized {});
+    }
+
+    FROZEN.save(deps.storage, &true)?;
+
+    Ok(Response::new().add_attribute("action", "freeze"))
+}
 fn execute_update_token_uris(
     deps: DepsMut,
     info: MessageInfo,
@@ -112,16 +127,15 @@ fn execute_update_token_uris(
 ) -> Result<Response, BaseError> {
     let sg721_contract = Sg721Contract::default();
     let minter = sg721_contract.minter.load(deps.storage)?;
-    // TODO add frozen state
-    // let frozen = FROZEN.load(deps.storage)?;
+    let frozen = FROZEN.load(deps.storage)?;
+
     if info.sender != minter {
         return Err(BaseError::Unauthorized {});
     }
 
-    // TODO add frozen state check
-    // if frozen {
-    //     Err(ContractError::Frozen {});
-    // }
+    if frozen {
+        return Err(ContractError::Frozen {});
+    }
 
     let token_id = "1".to_string();
 
@@ -135,7 +149,9 @@ fn execute_update_token_uris(
             }
             None => Err(ContractError::TokenNotFound { got: token_id }),
         })?;
-    Ok(Response::new())
+    Ok(Response::new()
+        .add_attribute("action", "update_token_uri".to_string())
+        .add_attribute("new_base_token_uri", base_token_uri.to_string()))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -273,8 +289,7 @@ mod tests {
             },
         };
         let info = mock_info("creator", &coins(CREATION_FEE, NATIVE_DENOM));
-        let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
-        println!("{:?}", res);
+        let _ = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
         // mint nft
         let token_id = "1".to_string();
@@ -309,7 +324,7 @@ mod tests {
         let _ = execute(
             deps.as_mut(),
             mock_env(),
-            allowed,
+            allowed.clone(),
             exec_update_token_uris_msg,
         )
         .unwrap();
@@ -320,6 +335,21 @@ mod tests {
         assert_eq!(
             res.token_uri,
             Some(format!("{}/{}", new_base_token_uri, token_id))
+        );
+
+        // freeze contract
+        let even_newer_base_token_uri: String = "ipfs://even_newer_base_token_uri_hash".to_string();
+        let exec_update_token_uris_msg = ExecuteMsg::UpdateTokenURIs {
+            base_token_uri: even_newer_base_token_uri.clone(),
+        };
+        // error when trying to update token_uri after freeze
+        let err = execute(
+            deps.as_mut(),
+            mock_env(),
+            allowed,
+            exec_update_token_uris_msg,
         )
+        .unwrap_err();
+        assert_eq!(err.to_string(), ContractError::Frozen {}.to_string());
     }
 }
