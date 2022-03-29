@@ -1,19 +1,17 @@
 #[cfg(test)]
 mod contact_test {
-    use super::super::{*};
+    use super::super::*;
     use crate::test_helpers::*;
 
     use cosmwasm_std::testing::mock_env;
-    use cosmwasm_std::{
-        from_binary, StdError
-    };
-    use cosmwasm_std::{
-         IbcEndpoint
-    };
+    use cosmwasm_std::IbcEndpoint;
+    use cosmwasm_std::{from_binary, Coin, StdError};
+    use cw2::{get_contract_version, ContractVersion};
     use cw20_ics20::state::ChannelInfo;
 
+    use cosmwasm_std::testing::mock_dependencies;
+
     fn test_setup(deps: Deps, channel_0: String, channel_1: String) {
-        // let deps = setup(&["channel-3", "channel-7"]);
         let raw_list = query(deps, mock_env(), QueryMsg::ListChannels {}).unwrap();
         let list_res: ListChannelsResponse = from_binary(&raw_list).unwrap();
         assert_eq!(2, list_res.channels.len());
@@ -307,5 +305,42 @@ mod contact_test {
             ],
         });
         assert_eq!(result, expected_response);
+    }
+
+    #[test]
+    fn test_instantiate() {
+        let mut deps = mock_dependencies();
+
+        let sender_address: Addr = Addr::unchecked("stars1zedxv25ah8fksmg2lzrndrpkvsjqgk4zt5ff7n");
+        let coin = Coin::new(128, "testing-coin");
+        let initial_funds = vec![coin];
+        let info_msg: MessageInfo = MessageInfo {
+            sender: sender_address,
+            funds: initial_funds,
+        };
+        let instantiate_msg = InstantiateMsg {
+            default_timeout: 1000,
+        };
+
+        let contract_version_before = get_contract_version(&deps.storage).unwrap_err();
+        let expected_contract_version_before: StdError = StdError::NotFound {
+            kind: "cw2::ContractVersion".to_string(),
+        };
+        assert_eq!(contract_version_before, expected_contract_version_before);
+
+        let result = instantiate(deps.as_mut(), mock_env(), info_msg, instantiate_msg);
+        let expected_result: Result<Response, ContractError> = Ok(Response::default());
+        assert_eq!(result.unwrap(), expected_result.unwrap());
+
+        let contract_version_after = get_contract_version(&deps.storage);
+        let expected_contract_version = Ok(ContractVersion {
+            contract: "crates.io:sg721-ics721".to_string(),
+            version: "0.1.0".to_string(),
+        });
+        assert_eq!(contract_version_after, expected_contract_version);
+        let expected_config = Some(Config {
+            default_timeout: 1000,
+        });
+        assert_eq!(CONFIG.may_load(&deps.storage), Ok(expected_config));
     }
 }
