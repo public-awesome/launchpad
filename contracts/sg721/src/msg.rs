@@ -1,8 +1,6 @@
 use crate::{state::CollectionInfo, ContractError};
 use cosmwasm_std::{Binary, Decimal, Empty};
-use cw721_base::msg::{
-    ExecuteMsg as Cw721ExecuteMsg, MintMsg as Cw721MintMsg, QueryMsg as Cw721QueryMsg,
-};
+use cw721_base::msg::{ExecuteMsg as Cw721ExecuteMsg, MintMsg, QueryMsg as Cw721QueryMsg};
 use cw_utils::Expiration;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -65,7 +63,7 @@ pub enum ExecuteMsg {
     RevokeAll { operator: String },
 
     /// Mint a new NFT, can only be called by the contract minter
-    Mint(Cw721MintMsg<Empty>),
+    Mint(MintMsg<Empty>),
 
     /// Burn an NFT the sender has access to
     Burn { token_id: String },
