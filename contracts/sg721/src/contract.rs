@@ -279,7 +279,7 @@ mod tests {
         println!("{:?}", res);
 
         // mint nft
-        let token_id = "petrify".to_string();
+        let token_id = "1".to_string();
         let token_uri = "https://www.merriam-webster.com/dictionary/petrify".to_string();
 
         let exec_mint_msg = Cw721ExecuteMsg::Mint(MintMsg::<Empty> {
@@ -291,7 +291,7 @@ mod tests {
 
         let allowed = mock_info(MINTER, &[]);
         let _ = Sg721Contract::default()
-            .execute(deps.as_mut(), mock_env(), allowed, exec_mint_msg)
+            .execute(deps.as_mut(), mock_env(), allowed.clone(), exec_mint_msg)
             .unwrap();
 
         let query_msg: QueryMsg = QueryMsg::NftInfo {
@@ -300,7 +300,7 @@ mod tests {
 
         // confirm response is the same
         let res: NftInfoResponse<Empty> =
-            from_binary(&query(deps.as_ref(), mock_env(), query_msg).unwrap()).unwrap();
+            from_binary(&query(deps.as_ref(), mock_env(), query_msg.clone()).unwrap()).unwrap();
         assert_eq!(res.token_uri, Some(token_uri.clone()));
 
         // update base token uri
@@ -308,15 +308,20 @@ mod tests {
         let exec_update_token_uris_msg = ExecuteMsg::UpdateTokenURIs {
             base_token_uri: new_base_token_uri.clone(),
         };
-        let _ = Sg721Contract::default()
-            .execute(
-                deps.as_mut(),
-                mock_env(),
-                allowed,
-                exec_update_token_uris_msg,
-            )
-            .unwrap();
+        let _ = execute(
+            deps.as_mut(),
+            mock_env(),
+            allowed,
+            exec_update_token_uris_msg,
+        )
+        .unwrap();
 
-        // assert_eq!(token_uri, format!("{}/{}", new_base_token_uri, token_id))
+        let res: NftInfoResponse<Empty> =
+            from_binary(&query(deps.as_ref(), mock_env(), query_msg).unwrap()).unwrap();
+
+        assert_eq!(
+            res.token_uri,
+            Some(format!("{}/{}", new_base_token_uri, token_id))
+        )
     }
 }
