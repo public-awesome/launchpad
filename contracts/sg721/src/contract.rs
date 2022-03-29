@@ -175,7 +175,12 @@ mod tests {
     use crate::state::CollectionInfo;
     use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
     use cosmwasm_std::{coins, from_binary, Decimal};
+    use cw721::NftInfoResponse;
+    use cw721_base::{ExecuteMsg as Cw721ExecuteMsg, MintMsg};
     use sg_std::NATIVE_DENOM;
+
+    const CREATOR: &str = "creator";
+    const MINTER: &str = "minter";
 
     #[test]
     fn proper_initialization_no_royalties() {
@@ -185,9 +190,9 @@ mod tests {
         let msg = InstantiateMsg {
             name: collection,
             symbol: String::from("BOBO"),
-            minter: String::from("minter"),
+            minter: MINTER.to_string(),
             collection_info: CollectionInfo {
-                creator: String::from("creator"),
+                creator: CREATOR.to_string(),
                 description: String::from("Stargaze Monkeys"),
                 image: "https://example.com/image.png".to_string(),
                 external_link: Some("https://example.com/external.html".to_string()),
@@ -249,5 +254,69 @@ mod tests {
             }),
             value.royalty_info
         );
+    }
+
+    #[test]
+    fn update_token_uris() {
+        // init contract
+        let mut deps = mock_dependencies();
+        let collection = String::from("collection_mint");
+
+        let msg = InstantiateMsg {
+            name: collection,
+            symbol: String::from("BOBO"),
+            minter: MINTER.to_string(),
+            collection_info: CollectionInfo {
+                creator: CREATOR.to_string(),
+                description: String::from("Stargaze Monkeys"),
+                image: "https://example.com/image.png".to_string(),
+                external_link: None,
+                royalty_info: None,
+            },
+        };
+        let info = mock_info("creator", &coins(CREATION_FEE, NATIVE_DENOM));
+        let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+        println!("{:?}", res);
+
+        // mint nft
+        let token_id = "petrify".to_string();
+        let token_uri = "https://www.merriam-webster.com/dictionary/petrify".to_string();
+
+        let exec_mint_msg = Cw721ExecuteMsg::Mint(MintMsg::<Empty> {
+            token_id: token_id.clone(),
+            owner: String::from("medusa"),
+            token_uri: Some(token_uri.clone()),
+            extension: Empty {},
+        });
+
+        let allowed = mock_info(MINTER, &[]);
+        let _ = Sg721Contract::default()
+            .execute(deps.as_mut(), mock_env(), allowed, exec_mint_msg)
+            .unwrap();
+
+        let query_msg: QueryMsg = QueryMsg::NftInfo {
+            token_id: (&token_id).to_string(),
+        };
+
+        // confirm response is the same
+        let res: NftInfoResponse<Empty> =
+            from_binary(&query(deps.as_ref(), mock_env(), query_msg).unwrap()).unwrap();
+        assert_eq!(res.token_uri, Some(token_uri.clone()));
+
+        // update base token uri
+        let new_base_token_uri: String = "ipfs://new_base_token_uri_hash".to_string();
+        let exec_update_token_uris_msg = ExecuteMsg::UpdateTokenURIs {
+            base_token_uri: new_base_token_uri.clone(),
+        };
+        let _ = Sg721Contract::default()
+            .execute(
+                deps.as_mut(),
+                mock_env(),
+                allowed,
+                exec_update_token_uris_msg,
+            )
+            .unwrap();
+
+        // assert_eq!(token_uri, format!("{}/{}", new_base_token_uri, token_id))
     }
 }
