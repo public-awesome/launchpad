@@ -98,7 +98,7 @@ pub fn execute(
     _env: Env,
     info: MessageInfo,
     msg: ExecuteMsg,
-) -> Result<Response, BaseError> {
+) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::Freeze {} => execute_freeze(deps, info),
         ExecuteMsg::UpdateTokenURIs { base_token_uri } => {
@@ -108,12 +108,12 @@ pub fn execute(
     }
 }
 
-fn execute_freeze(deps: DepsMut, info: MessageInfo) -> Result<Response, BaseError> {
+fn execute_freeze(deps: DepsMut, info: MessageInfo) -> Result<Response, ContractError> {
     let sg721_contract = Sg721Contract::default();
     let minter = sg721_contract.minter.load(deps.storage)?;
 
     if info.sender != minter {
-        return Err(BaseError::Unauthorized {});
+        return Err(ContractError::Unauthorized {});
     }
 
     FROZEN.save(deps.storage, &true)?;
@@ -124,13 +124,13 @@ fn execute_update_token_uris(
     deps: DepsMut,
     info: MessageInfo,
     base_token_uri: String,
-) -> Result<Response, BaseError> {
+) -> Result<Response, ContractError> {
     let sg721_contract = Sg721Contract::default();
     let minter = sg721_contract.minter.load(deps.storage)?;
     let frozen = FROZEN.load(deps.storage)?;
 
     if info.sender != minter {
-        return Err(BaseError::Unauthorized {});
+        return Err(ContractError::Unauthorized {});
     }
 
     if frozen {
