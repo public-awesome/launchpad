@@ -1,13 +1,13 @@
-
 #[cfg(test)]
-mod ibc_testing{
-    use super::super::{*};
+mod ibc_testing {
+    use super::super::*;
     use crate::test_helpers::*;
-    
+
     use crate::contract::query_channel;
     use cosmwasm_std::testing::mock_env;
-    use cosmwasm_std::{to_vec, IbcAcknowledgement, IbcEndpoint, IbcTimeout, Timestamp, Attribute, ReplyOn};
-
+    use cosmwasm_std::{
+        to_vec, Attribute, IbcAcknowledgement, IbcEndpoint, IbcTimeout, ReplyOn, Timestamp,
+    };
 
     pub fn mock_sent_packet(
         my_channel: &str,
@@ -84,10 +84,13 @@ mod ibc_testing{
         )
     }
 
-
-    fn send_sg721_success(deps: DepsMut, send_channel: String, contract_addr: String,
-        token_ids: Vec<&str>, token_uris: Vec<&str>) -> IbcBasicResponse {
-
+    fn send_sg721_success(
+        deps: DepsMut,
+        send_channel: String,
+        contract_addr: String,
+        token_ids: Vec<&str>,
+        token_uris: Vec<&str>,
+    ) -> IbcBasicResponse {
         // prepare some mock packets
         let sent_packet = mock_sent_packet(
             &send_channel,
@@ -102,9 +105,13 @@ mod ibc_testing{
         ibc_packet_ack(deps, mock_env(), msg).unwrap()
     }
 
-    fn send_sg721_fail(deps: DepsMut, send_channel: String, contract_addr: String,
-        token_ids: Vec<&str>, token_uris: Vec<&str>) -> IbcBasicResponse {
-
+    fn send_sg721_fail(
+        deps: DepsMut,
+        send_channel: String,
+        contract_addr: String,
+        token_ids: Vec<&str>,
+        token_uris: Vec<&str>,
+    ) -> IbcBasicResponse {
         // prepare some mock packets
         let sent_packet = mock_sent_packet(
             &send_channel,
@@ -114,13 +121,20 @@ mod ibc_testing{
             "local-sender",
         );
         // we get a fail cache (ack) for a send
-        let msg = IbcPacketAckMsg::new(IbcAcknowledgement::new(ack_fail("Ibc Packet Fail".to_string())), sent_packet);
+        let msg = IbcPacketAckMsg::new(
+            IbcAcknowledgement::new(ack_fail("Ibc Packet Fail".to_string())),
+            sent_packet,
+        );
         ibc_packet_ack(deps, mock_env(), msg).unwrap()
     }
 
-    fn send_sg721_fail_res(deps: DepsMut, send_channel: String, contract_addr: String,
-        token_ids: Vec<&str>, token_uris: Vec<&str>) -> Result<IbcBasicResponse, ContractError> {
-
+    fn send_sg721_fail_res(
+        deps: DepsMut,
+        send_channel: String,
+        contract_addr: String,
+        token_ids: Vec<&str>,
+        token_uris: Vec<&str>,
+    ) -> Result<IbcBasicResponse, ContractError> {
         // prepare some mock packets
         let sent_packet = mock_sent_packet(
             &send_channel,
@@ -130,32 +144,37 @@ mod ibc_testing{
             "local-sender",
         );
         // we get a fail cache (ack) for a send
-        let msg = IbcPacketAckMsg::new(IbcAcknowledgement::new(ack_fail("Packet Fail".to_string())), sent_packet);
+        let msg = IbcPacketAckMsg::new(
+            IbcAcknowledgement::new(ack_fail("Packet Fail".to_string())),
+            sent_packet,
+        );
         let ibc_response = ibc_packet_ack(deps, mock_env(), msg);
         match ibc_response {
             Ok(_ibc_response) => Ok(_ibc_response),
-            Err(_ibc_response) => Err(ContractError::NoForeignTokens {}) 
+            Err(_ibc_response) => Err(ContractError::NoForeignTokens {}),
         }
     }
 
+    fn check_query_channel_state(
+        deps: DepsMut,
+        send_channel: String,
+        connection_id: String,
+        counterparty_port_id: String,
+        counterparty_channel_id: String,
+    ) {
+        // query channel state|_|
+        let _state = query_channel(deps.as_ref(), send_channel.to_string()).unwrap();
+        let channel_info = _state.info;
 
+        let state_channel_id = channel_info.id;
+        let state_counterparty_port_id = channel_info.counterparty_endpoint.port_id;
+        let state_counterparty_channel_id = channel_info.counterparty_endpoint.channel_id;
+        let state_connection_id = channel_info.connection_id;
 
-    fn check_query_channel_state(deps: DepsMut, send_channel: String, connection_id: String, 
-        counterparty_port_id: String, counterparty_channel_id: String) {
-            // query channel state|_|
-            let _state = query_channel(deps.as_ref(), send_channel.to_string()).unwrap(); 
-            let channel_info = _state.info;
-    
-            let state_channel_id = channel_info.id;
-            let state_counterparty_port_id = channel_info.counterparty_endpoint.port_id;
-            let state_counterparty_channel_id = channel_info.counterparty_endpoint.channel_id;
-            let state_connection_id = channel_info.connection_id;
-    
-            assert_eq!(state_channel_id, send_channel);
-            assert_eq!(state_connection_id, connection_id);
-            assert_eq!(state_counterparty_port_id, counterparty_port_id);
-            assert_eq!(state_counterparty_channel_id, counterparty_channel_id);
-
+        assert_eq!(state_channel_id, send_channel);
+        assert_eq!(state_connection_id, connection_id);
+        assert_eq!(state_counterparty_port_id, counterparty_port_id);
+        assert_eq!(state_counterparty_channel_id, counterparty_channel_id);
     }
 
     #[test]
@@ -204,7 +223,6 @@ mod ibc_testing{
         SubMsg::reply_on_error(exec, SEND_NFT_ID)
     }
 
-
     #[test]
     fn test_receive_sg721_success() {
         let send_channel = "channel-9";
@@ -217,8 +235,13 @@ mod ibc_testing{
             "https://metadata-url.com/my-metadata3",
         ];
 
-        send_sg721_success(deps.as_mut(), send_channel.to_string(), 
-            contract_addr.to_string(), token_ids.clone(), token_uris.clone());
+        send_sg721_success(
+            deps.as_mut(),
+            send_channel.to_string(),
+            contract_addr.to_string(),
+            token_ids.clone(),
+            token_uris.clone(),
+        );
 
         //channel state holding token_id 1 after send
         let exists = CHANNEL_STATE.may_load(&deps.storage, (send_channel, contract_addr, "1"));
@@ -240,23 +263,45 @@ mod ibc_testing{
         assert_eq!(exists, Ok(None));
 
         let res_attributes = [
-            Attribute { key: "action".to_string(), value: "receive".to_string() }, 
-            Attribute { key: "sender".to_string(), value: "remote-sender".to_string() },
-            Attribute { key: "receiver".to_string(), value: "local-rcpt".to_string() }, 
-            Attribute { key: "contract_address".to_string(), value: "collection-addr".to_string() },
-            Attribute { key: "token_ids".to_string(), value: "1,2,3".to_string() },
-            Attribute { key: "success".to_string(), value: "true".to_string() }];
+            Attribute {
+                key: "action".to_string(),
+                value: "receive".to_string(),
+            },
+            Attribute {
+                key: "sender".to_string(),
+                value: "remote-sender".to_string(),
+            },
+            Attribute {
+                key: "receiver".to_string(),
+                value: "local-rcpt".to_string(),
+            },
+            Attribute {
+                key: "contract_address".to_string(),
+                value: "collection-addr".to_string(),
+            },
+            Attribute {
+                key: "token_ids".to_string(),
+                value: "1,2,3".to_string(),
+            },
+            Attribute {
+                key: "success".to_string(),
+                value: "true".to_string(),
+            },
+        ];
 
         assert_eq!(res.attributes, res_attributes);
 
         let connection_id = "connection-2";
         let counterparty_port_id = "transfer-nft";
         let counterparty_channel_id = "channel-95";
-        check_query_channel_state(deps.as_mut(), send_channel.to_string(),
-         connection_id.to_string(),  counterparty_port_id.to_string(), 
-         counterparty_channel_id.to_string()); 
+        check_query_channel_state(
+            deps.as_mut(),
+            send_channel.to_string(),
+            connection_id.to_string(),
+            counterparty_port_id.to_string(),
+            counterparty_channel_id.to_string(),
+        );
     }
-    
 
     #[test]
     fn test_receive_sg721_empty() {
@@ -285,9 +330,19 @@ mod ibc_testing{
         let res = ibc_packet_receive(deps.as_mut(), mock_env(), msg).unwrap();
 
         let result_attributes = [
-            Attribute { key: "action".to_string(), value: "receive".to_string() },
-             Attribute { key: "success".to_string(), value: "false".to_string() },
-              Attribute { key: "error".to_string(), value: "NoSuchNft".to_string() }];
+            Attribute {
+                key: "action".to_string(),
+                value: "receive".to_string(),
+            },
+            Attribute {
+                key: "success".to_string(),
+                value: "false".to_string(),
+            },
+            Attribute {
+                key: "error".to_string(),
+                value: "NoSuchNft".to_string(),
+            },
+        ];
         assert_eq!(res.attributes, result_attributes);
 
         assert!(res.messages.is_empty());
@@ -305,9 +360,13 @@ mod ibc_testing{
         let connection_id = "connection-2";
         let counterparty_port_id = "transfer-nft";
         let counterparty_channel_id = "channel-95";
-        check_query_channel_state(deps.as_mut(), send_channel.to_string(),
-         connection_id.to_string(),  counterparty_port_id.to_string(), 
-         counterparty_channel_id.to_string()); 
+        check_query_channel_state(
+            deps.as_mut(),
+            send_channel.to_string(),
+            connection_id.to_string(),
+            counterparty_port_id.to_string(),
+            counterparty_channel_id.to_string(),
+        );
     }
 
     #[test]
@@ -322,25 +381,50 @@ mod ibc_testing{
             "https://metadata-url.com/my-metadata3",
         ];
 
-        let res = send_sg721_success(deps.as_mut(), send_channel.to_string(), 
-        contract_addr.to_string(), token_ids.clone(), token_uris.clone());
+        let res = send_sg721_success(
+            deps.as_mut(),
+            send_channel.to_string(),
+            contract_addr.to_string(),
+            token_ids.clone(),
+            token_uris.clone(),
+        );
 
         assert_eq!(0, res.messages.len());
-        
+
         let result_attributes = [
-            Attribute { key: "action".to_string(), value: "acknowledge".to_string() },
-            Attribute { key: "sender".to_string(), value: "local-sender".to_string() },
-            Attribute { key: "receiver".to_string(), value: "remote-rcpt".to_string() }, 
-            Attribute { key: "contract_addr".to_string(), value: "collection-addr".to_string() }, 
-            Attribute { key: "success".to_string(), value: "true".to_string() }];
+            Attribute {
+                key: "action".to_string(),
+                value: "acknowledge".to_string(),
+            },
+            Attribute {
+                key: "sender".to_string(),
+                value: "local-sender".to_string(),
+            },
+            Attribute {
+                key: "receiver".to_string(),
+                value: "remote-rcpt".to_string(),
+            },
+            Attribute {
+                key: "contract_addr".to_string(),
+                value: "collection-addr".to_string(),
+            },
+            Attribute {
+                key: "success".to_string(),
+                value: "true".to_string(),
+            },
+        ];
         assert_eq!(res.attributes, result_attributes);
-        
+
         let connection_id = "connection-2";
         let counterparty_port_id = "transfer-nft";
         let counterparty_channel_id = "channel-95";
-        check_query_channel_state(deps.as_mut(), send_channel.to_string(),
-         connection_id.to_string(),  counterparty_port_id.to_string(), 
-         counterparty_channel_id.to_string()); 
+        check_query_channel_state(
+            deps.as_mut(),
+            send_channel.to_string(),
+            connection_id.to_string(),
+            counterparty_port_id.to_string(),
+            counterparty_channel_id.to_string(),
+        );
     }
 
     #[test]
@@ -355,7 +439,7 @@ mod ibc_testing{
             "https://metadata-url.com/my-metadata3",
         ];
 
-        let ibc_packet =  mock_sent_packet(
+        let ibc_packet = mock_sent_packet(
             send_channel,
             contract_addr,
             token_ids.clone(),
@@ -363,30 +447,53 @@ mod ibc_testing{
             "local-sender",
         );
 
-        let mut contract_addr = ibc_packet.src.port_id.to_string(); 
+        let mut contract_addr = ibc_packet.src.port_id.to_string();
         contract_addr += "/";
-        contract_addr +=  &ibc_packet.src.channel_id; 
+        contract_addr += &ibc_packet.src.channel_id;
         contract_addr += "/my-nft";
 
-        let res = send_sg721_fail(deps.as_mut(), send_channel.to_string(), 
-        contract_addr, token_ids.clone(), token_uris.clone());
-        
+        let res = send_sg721_fail(
+            deps.as_mut(),
+            send_channel.to_string(),
+            contract_addr,
+            token_ids.clone(),
+            token_uris.clone(),
+        );
+
         let reply_on = &res.messages[0].reply_on;
         let wasm_msg = &res.messages[0].msg;
 
         assert_eq!(reply_on, &ReplyOn::Error);
-        let wasm_str = format!("{:?}", wasm_msg); 
+        let wasm_str = format!("{:?}", wasm_msg);
         assert!(wasm_str.contains("contract_addr: \"my-nft\""));
-        
+
         let res_attributes = [
-            Attribute { key: "action".to_string(), value: "acknowledge".to_string() },
-             Attribute { key: "sender".to_string(), value: "local-sender".to_string() }, 
-             Attribute { key: "receiver".to_string(), value: "remote-rcpt".to_string() }, 
-             Attribute { key: "contract_addr".to_string(), value: "my-nft".to_string() }, 
-             Attribute { key: "success".to_string(), value: "false".to_string() },
-            Attribute { key: "error".to_string(), value: "Ibc Packet Fail".to_string() }];
+            Attribute {
+                key: "action".to_string(),
+                value: "acknowledge".to_string(),
+            },
+            Attribute {
+                key: "sender".to_string(),
+                value: "local-sender".to_string(),
+            },
+            Attribute {
+                key: "receiver".to_string(),
+                value: "remote-rcpt".to_string(),
+            },
+            Attribute {
+                key: "contract_addr".to_string(),
+                value: "my-nft".to_string(),
+            },
+            Attribute {
+                key: "success".to_string(),
+                value: "false".to_string(),
+            },
+            Attribute {
+                key: "error".to_string(),
+                value: "Ibc Packet Fail".to_string(),
+            },
+        ];
         assert_eq!(res.attributes, res_attributes);
-        
     }
 
     #[test]
@@ -401,7 +508,7 @@ mod ibc_testing{
             "https://metadata-url.com/my-metadata3",
         ];
 
-        let _ibc_packet =  mock_sent_packet(
+        let _ibc_packet = mock_sent_packet(
             send_channel,
             contract_addr,
             token_ids.clone(),
@@ -409,63 +516,166 @@ mod ibc_testing{
             "local-sender",
         );
 
-        let res = send_sg721_fail_res(deps.as_mut(), send_channel.to_string(), 
-        contract_addr.to_string(), token_ids.clone(), token_uris.clone());
+        let res = send_sg721_fail_res(
+            deps.as_mut(),
+            send_channel.to_string(),
+            contract_addr.to_string(),
+            token_ids.clone(),
+            token_uris.clone(),
+        );
 
         let error_str: String = res.unwrap_err().to_string();
-        let expected_error_msg = "Only accepts tokens that originate on this chain, not native tokens of remote chain";
+        let expected_error_msg =
+            "Only accepts tokens that originate on this chain, not native tokens of remote chain";
         assert_eq!(error_str, expected_error_msg);
     }
 
     #[test]
     fn test_parse_voucher_contract_address_success() {
+        let send_channel = "channel-9";
+        let contract_port = "ibc:wasm1234567890abcdef";
 
-    let send_channel = "channel-9";
-    let contract_port = "ibc:wasm1234567890abcdef"; 
-
-    let endpoint_1 = IbcEndpoint {
+        let endpoint_1 = IbcEndpoint {
             port_id: contract_port.to_string(),
             channel_id: send_channel.to_string(),
-       };
-    
-    let voucher_class_id = "ibc:wasm1234567890abcdef/channel-9/my-nft";
-    let parse_result = parse_voucher_contract_address(voucher_class_id, &endpoint_1);
-    assert_eq!(parse_result.unwrap().to_string(), "my-nft");
+        };
+
+        let voucher_class_id = "ibc:wasm1234567890abcdef/channel-9/my-nft";
+        let parse_result = parse_voucher_contract_address(voucher_class_id, &endpoint_1);
+        assert_eq!(parse_result.unwrap().to_string(), "my-nft");
     }
 
     #[test]
     fn test_parse_voucher_contract_address_fail_other_port() {
+        let send_channel = "channel-9";
+        let contract_port = "ibc:wasm1234567890abcdef";
 
-    let send_channel = "channel-9";
-    let contract_port = "ibc:wasm1234567890abcdef"; 
-
-    let endpoint_1 = IbcEndpoint {
+        let endpoint_1 = IbcEndpoint {
             port_id: contract_port.to_string(),
             channel_id: send_channel.to_string(),
-       };
-    
-    let voucher_class_id = "other-port/channel-9/my-nft";
-    let parse_result = parse_voucher_contract_address(voucher_class_id, &endpoint_1);
-    
-    let error_msg = parse_result.unwrap_err().to_string();
-    assert_eq!(error_msg, "Parsed port from denom (other-port) doesn't match packet"); 
+        };
+
+        let voucher_class_id = "other-port/channel-9/my-nft";
+        let parse_result = parse_voucher_contract_address(voucher_class_id, &endpoint_1);
+
+        let error_msg = parse_result.unwrap_err().to_string();
+        assert_eq!(
+            error_msg,
+            "Parsed port from denom (other-port) doesn't match packet"
+        );
     }
 
     #[test]
     fn test_parse_voucher_contract_address_fail_other_channel() {
+        let send_channel = "channel-9";
+        let contract_port = "ibc:wasm1234567890abcdef";
 
-    let send_channel = "channel-9";
-    let contract_port = "ibc:wasm1234567890abcdef"; 
-
-    let endpoint_1 = IbcEndpoint {
+        let endpoint_1 = IbcEndpoint {
             port_id: contract_port.to_string(),
             channel_id: send_channel.to_string(),
-       };
-    
-    let voucher_class_id = "ibc:wasm1234567890abcdef/other-channel/my-nft";
-    let parse_result = parse_voucher_contract_address(voucher_class_id, &endpoint_1);
-    
-    let error_msg = parse_result.unwrap_err().to_string();
-    assert_eq!(error_msg, "Parsed channel from denom (other-channel) doesn't match packet"); 
+        };
+
+        let voucher_class_id = "ibc:wasm1234567890abcdef/other-channel/my-nft";
+        let parse_result = parse_voucher_contract_address(voucher_class_id, &endpoint_1);
+
+        let error_msg = parse_result.unwrap_err().to_string();
+        assert_eq!(
+            error_msg,
+            "Parsed channel from denom (other-channel) doesn't match packet"
+        );
     }
+
+    #[test]
+    fn test_enforce_order_and_version_success() {
+        let send_channel = "channel-9";
+        let counterparty_send_channel = "channel-7";
+        let counterparty_contract_port = "ibc:stars123abc";
+        let contract_port = "ibc:wasm1234567890abcdef";
+
+        let endpoint_1 = IbcEndpoint {
+            port_id: contract_port.to_string(),
+            channel_id: send_channel.to_string(),
+        };
+
+        let endpoint_2 = IbcEndpoint {
+            port_id: counterparty_contract_port.to_string(),
+            channel_id: counterparty_send_channel.to_string(),
+        };
+
+        let ibc_channel = cosmwasm_std::IbcChannel::new(
+            endpoint_1,
+            endpoint_2,
+            IbcOrder::Unordered,
+            ICS721_VERSION,
+            "connection-2".to_string(),
+        );
+        let result = enforce_order_and_version(&ibc_channel, Some(ICS721_VERSION));
+        assert_eq!(result.unwrap(), ());
+    }
+
+    #[test]
+    fn test_enforce_order_and_version_ibc_channel_wrong_version_fail() {
+        let send_channel = "channel-9";
+        let counterparty_send_channel = "channel-7";
+        let counterparty_contract_port = "ibc:stars123abc";
+        let contract_port = "ibc:wasm1234567890abcdef";
+
+        let endpoint_1 = IbcEndpoint {
+            port_id: contract_port.to_string(),
+            channel_id: send_channel.to_string(),
+        };
+
+        let endpoint_2 = IbcEndpoint {
+            port_id: counterparty_contract_port.to_string(),
+            channel_id: counterparty_send_channel.to_string(),
+        };
+
+        let ibc_channel = cosmwasm_std::IbcChannel::new(
+            endpoint_1,
+            endpoint_2,
+            IbcOrder::Unordered,
+            "very_fake_version",
+            "connection-2".to_string(),
+        );
+
+        let result = enforce_order_and_version(&ibc_channel, Some(ICS721_VERSION));
+        assert_eq!(
+            result.unwrap_err().to_string(),
+            "Only supports channel with ibc version ics721-1, got very_fake_version"
+        );
+    }
+
+    #[test]
+    fn test_enforce_order_and_version_counterparty_version_wrong_version_fail() {
+        let send_channel = "channel-9";
+        let counterparty_send_channel = "channel-7";
+        let counterparty_contract_port = "ibc:stars123abc";
+        let contract_port = "ibc:wasm1234567890abcdef";
+
+        let endpoint_1 = IbcEndpoint {
+            port_id: contract_port.to_string(),
+            channel_id: send_channel.to_string(),
+        };
+
+        let endpoint_2 = IbcEndpoint {
+            port_id: counterparty_contract_port.to_string(),
+            channel_id: counterparty_send_channel.to_string(),
+        };
+
+        let ibc_channel = cosmwasm_std::IbcChannel::new(
+            endpoint_1,
+            endpoint_2,
+            IbcOrder::Unordered,
+            ICS721_VERSION,
+            "connection-2".to_string(),
+        );
+
+        let result =
+            enforce_order_and_version(&ibc_channel, Some("very_fake_version_counterparty"));
+        assert_eq!(
+            result.unwrap_err().to_string(),
+            "Only supports channel with ibc version ics721-1, got very_fake_version_counterparty"
+        );
+    }  
+    
 }

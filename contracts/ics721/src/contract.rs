@@ -158,13 +158,10 @@ pub fn query_channel(deps: Deps, id: String) -> StdResult<ChannelResponse> {
         .range(deps.storage, None, None, Order::Ascending)
         .map(|r| {
             let (class_id_token_id, _) = r?;
-            // TODO: extract class_id out of Vec<u8>
-            // https://github.com/public-awesome/contracts/issues/60
             Ok(class_id_token_id.0)
         })
         .collect();
 
-    println!("class ids {:?}", _class_ids);
     let mut class_ids_resp = _class_ids.unwrap();
     let class_ids_resp = {
         class_ids_resp.sort();
