@@ -1,5 +1,5 @@
 #[cfg(test)]
-mod contact_test {
+mod contact_testing {
     use super::super::*;
     use crate::{test_helpers::*};
 
@@ -454,7 +454,7 @@ mod contact_test {
                 value: "1,2,3".into(),
             },
         ];
-        let result_clone = result.unwrap().clone();
+        let result_clone = result.unwrap();
         assert_eq!(result_clone.attributes, expected_result);
         assert_eq!(result_clone.messages.len(), 1);
     }
@@ -567,7 +567,7 @@ mod contact_test {
                 value: "1,2,3".into(),
             },
         ];
-        let result_clone = result.unwrap().clone();
+        let result_clone = result.unwrap();
         assert_eq!(result_clone.attributes, expected_result);
         assert_eq!(result_clone.messages.len(), 1);
     }

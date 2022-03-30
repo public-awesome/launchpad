@@ -1,6 +1,6 @@
 
 #[cfg(test)]
-mod ibc_test   {
+mod ibc_testing{
     use super::super::{*};
     use crate::test_helpers::*;
     
@@ -99,8 +99,7 @@ mod ibc_test   {
 
         // we get a success cache (ack) for a send
         let msg = IbcPacketAckMsg::new(IbcAcknowledgement::new(ack_success()), sent_packet);
-        let res = ibc_packet_ack(deps, mock_env(), msg).unwrap();
-        return res
+        ibc_packet_ack(deps, mock_env(), msg).unwrap()
     }
 
     fn send_sg721_fail(deps: DepsMut, send_channel: String, contract_addr: String,
@@ -116,8 +115,7 @@ mod ibc_test   {
         );
         // we get a fail cache (ack) for a send
         let msg = IbcPacketAckMsg::new(IbcAcknowledgement::new(ack_fail("Ibc Packet Fail".to_string())), sent_packet);
-        let res = ibc_packet_ack(deps, mock_env(), msg).unwrap();
-        return res
+        ibc_packet_ack(deps, mock_env(), msg).unwrap()
     }
 
     fn send_sg721_fail_res(deps: DepsMut, send_channel: String, contract_addr: String,
@@ -153,10 +151,10 @@ mod ibc_test   {
             let state_counterparty_channel_id = channel_info.counterparty_endpoint.channel_id;
             let state_connection_id = channel_info.connection_id;
     
-            assert_eq!(state_channel_id, send_channel.to_string());
-            assert_eq!(state_connection_id, connection_id.to_string());
-            assert_eq!(state_counterparty_port_id, counterparty_port_id.to_string());
-            assert_eq!(state_counterparty_channel_id, counterparty_channel_id.to_string());
+            assert_eq!(state_channel_id, send_channel);
+            assert_eq!(state_connection_id, connection_id);
+            assert_eq!(state_counterparty_port_id, counterparty_port_id);
+            assert_eq!(state_counterparty_channel_id, counterparty_channel_id);
 
     }
 
@@ -234,7 +232,7 @@ mod ibc_test   {
             "local-rcpt",
         );
 
-        let packet_receive = IbcPacketReceiveMsg::new(recv_packet.clone());
+        let packet_receive = IbcPacketReceiveMsg::new(recv_packet);
         let res = ibc_packet_receive(deps.as_mut(), mock_env(), packet_receive).unwrap();
 
         //channel state now removed token id 1 after receive
@@ -358,8 +356,8 @@ mod ibc_test   {
         ];
 
         let ibc_packet =  mock_sent_packet(
-            &send_channel,
-            &contract_addr,
+            send_channel,
+            contract_addr,
             token_ids.clone(),
             token_uris.clone(),
             "local-sender",
@@ -367,7 +365,7 @@ mod ibc_test   {
 
         let mut contract_addr = ibc_packet.src.port_id.to_string(); 
         contract_addr += "/";
-        contract_addr +=  &ibc_packet.src.channel_id.to_string(); 
+        contract_addr +=  &ibc_packet.src.channel_id; 
         contract_addr += "/my-nft";
 
         let res = send_sg721_fail(deps.as_mut(), send_channel.to_string(), 
@@ -404,8 +402,8 @@ mod ibc_test   {
         ];
 
         let _ibc_packet =  mock_sent_packet(
-            &send_channel,
-            &contract_addr,
+            send_channel,
+            contract_addr,
             token_ids.clone(),
             token_uris.clone(),
             "local-sender",
@@ -431,7 +429,7 @@ mod ibc_test   {
        };
     
     let voucher_class_id = "ibc:wasm1234567890abcdef/channel-9/my-nft";
-    let parse_result = parse_voucher_contract_address(&voucher_class_id, &endpoint_1);
+    let parse_result = parse_voucher_contract_address(voucher_class_id, &endpoint_1);
     assert_eq!(parse_result.unwrap().to_string(), "my-nft");
     }
 
@@ -447,7 +445,7 @@ mod ibc_test   {
        };
     
     let voucher_class_id = "other-port/channel-9/my-nft";
-    let parse_result = parse_voucher_contract_address(&voucher_class_id, &endpoint_1);
+    let parse_result = parse_voucher_contract_address(voucher_class_id, &endpoint_1);
     
     let error_msg = parse_result.unwrap_err().to_string();
     assert_eq!(error_msg, "Parsed port from denom (other-port) doesn't match packet"); 
@@ -465,32 +463,9 @@ mod ibc_test   {
        };
     
     let voucher_class_id = "ibc:wasm1234567890abcdef/other-channel/my-nft";
-    let parse_result = parse_voucher_contract_address(&voucher_class_id, &endpoint_1);
+    let parse_result = parse_voucher_contract_address(voucher_class_id, &endpoint_1);
     
     let error_msg = parse_result.unwrap_err().to_string();
     assert_eq!(error_msg, "Parsed channel from denom (other-channel) doesn't match packet"); 
     }
-
-    // // cannot receive more than we sent
-    // let msg = IbcPacketReceiveMsg::new(recv_high_packet);
-    // let res = ibc_packet_receive(deps.as_mut(), mock_env(), msg).unwrap();
-    // assert!(res.messages.is_empty());
-    // let ack: Ics20Ack = from_binary(&res.acknowledgement).unwrap();
-    // assert_eq!(ack, no_funds);
-
-    // // we can receive less than we sent
-    // let msg = IbcPacketReceiveMsg::new(recv_packet);
-    // let res = ibc_packet_receive(deps.as_mut(), mock_env(), msg).unwrap();
-    // assert_eq!(1, res.messages.len());
-    // assert_eq!(
-    //     cw20_payment(876543210, cw721_addr, "local-rcpt"),
-    //     res.messages[0]
-    // );
-    // let ack: Ics20Ack = from_binary(&res.acknowledgement).unwrap();
-    // matches!(ack, Ics20Ack::Result(_));
-
-    // // query channel state
-    // let state = query_channel(deps.as_ref(), send_channel.to_string()).unwrap();
-    // assert_eq!(state.balances, vec![Amount::cw20(111111111, cw721_addr)]);
-    // assert_eq!(state.total_sent, vec![Amount::cw20(987654321, cw721_addr)]);
 }
