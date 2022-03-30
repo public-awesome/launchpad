@@ -1,11 +1,13 @@
 #[cfg(test)]
 mod contact_test {
+    use std::convert::TryInto;
+
     use super::super::*;
-    use crate::test_helpers::*;
+    use crate::{ibc, test_helpers::*};
 
     use cosmwasm_std::testing::mock_env;
-    use cosmwasm_std::IbcEndpoint;
-    use cosmwasm_std::{from_binary, Coin, StdError};
+    use cosmwasm_std::{from_binary, to_binary, Attribute, Coin, IbcMsg, StdError};
+    use cosmwasm_std::{CosmosMsg, IbcEndpoint};
     use cw2::{get_contract_version, ContractVersion};
     use cw20_ics20::state::ChannelInfo;
 
@@ -342,5 +344,293 @@ mod contact_test {
             default_timeout: 1000,
         });
         assert_eq!(CONFIG.may_load(&deps.storage), Ok(expected_config));
+    }
+
+    #[test]
+    fn test_execute_transfer_success() {
+        let mut deps = setup(&["channel-3", "channel-7"]);
+        test_setup(
+            deps.as_ref(),
+            "channel-3".to_string(),
+            "channel-7".to_string(),
+        );
+
+        let transfer_msg = TransferMsg {
+            channel: "channel-3".to_string(),
+            class_id: "abc/123/collection-addr".to_string(),
+            class_uri: Some("abc/456/collection-addr".to_string()),
+            token_ids: vec!["1".to_string(), "2".to_string(), "3".to_string()],
+            token_uris: vec![
+                "https://metadata-url.com/my-metadata1".to_string(),
+                "https://metadata-url.com/my-metadata2".to_string(),
+                "https://metadata-url.com/my-metadata3".to_string(),
+            ],
+            remote_address: "stars1zedxv25ah8fksmg2lzrndrpkvsjqgk4zt5ff7n".to_string(),
+            timeout: Some(1000),
+        };
+        let sender_address: Addr = Addr::unchecked("wasm1fucynrfkrt684pm8jrt8la5h2csvs5cnldcgqc");
+        let result = execute_transfer(deps.as_mut(), mock_env(), transfer_msg, sender_address);
+        let expected_result = [
+            Attribute {
+                key: "action".into(),
+                value: "transfer".into(),
+            },
+            Attribute {
+                key: "sender".into(),
+                value: "wasm1fucynrfkrt684pm8jrt8la5h2csvs5cnldcgqc".into(),
+            },
+            Attribute {
+                key: "receiver".into(),
+                value: "stars1zedxv25ah8fksmg2lzrndrpkvsjqgk4zt5ff7n".into(),
+            },
+            Attribute {
+                key: "class_id".into(),
+                value: "cosmos2contract".into(),
+            },
+            Attribute {
+                key: "token_ids".into(),
+                value: "1,2,3".into(),
+            },
+        ];
+        assert_eq!(result.unwrap().attributes, expected_result);
+    }
+
+    #[test]
+    fn test_execute_receive_success() {
+        let mut deps = setup(&["channel-3", "channel-7"]);
+        test_setup(
+            deps.as_ref(),
+            "channel-3".to_string(),
+            "channel-7".to_string(),
+        );
+
+        let sender_address_str = "wasm1fucynrfkrt684pm8jrt8la5h2csvs5cnldcgqc";
+        let sender_address: Addr = Addr::unchecked(sender_address_str);
+
+        let transfer_msg = TransferMsg {
+            channel: "channel-3".to_string(),
+            class_id: "abc/123/collection-addr".to_string(),
+            class_uri: Some("abc/456/collection-addr".to_string()),
+            token_ids: vec!["1".to_string(), "2".to_string(), "3".to_string()],
+            token_uris: vec![
+                "https://metadata-url.com/my-metadata1".to_string(),
+                "https://metadata-url.com/my-metadata2".to_string(),
+                "https://metadata-url.com/my-metadata3".to_string(),
+            ],
+            remote_address: "stars1zedxv25ah8fksmg2lzrndrpkvsjqgk4zt5ff7n".to_string(),
+            timeout: Some(1000),
+        };
+
+        let cw721_receive_msg = Cw721ReceiveMsg {
+            sender: sender_address_str.to_string(),
+            token_id: "1".to_string(),
+            msg: to_binary(&transfer_msg).unwrap(),
+        };
+
+        let initial_funds = vec![];
+        let info_msg: MessageInfo = MessageInfo {
+            sender: sender_address,
+            funds: initial_funds,
+        };
+
+        let result = execute_receive(deps.as_mut(), mock_env(), info_msg, cw721_receive_msg);
+        let expected_result = [
+            Attribute {
+                key: "action".into(),
+                value: "transfer".into(),
+            },
+            Attribute {
+                key: "sender".into(),
+                value: "wasm1fucynrfkrt684pm8jrt8la5h2csvs5cnldcgqc".into(),
+            },
+            Attribute {
+                key: "receiver".into(),
+                value: "stars1zedxv25ah8fksmg2lzrndrpkvsjqgk4zt5ff7n".into(),
+            },
+            Attribute {
+                key: "class_id".into(),
+                value: "cosmos2contract".into(),
+            },
+            Attribute {
+                key: "token_ids".into(),
+                value: "1,2,3".into(),
+            },
+        ];
+        let result_clone = result.unwrap().clone();
+        assert_eq!(result_clone.attributes, expected_result);
+        assert_eq!(result_clone.messages.len(), 1);
+    }
+
+    #[test]
+    fn test_execute_receive_payment_fail() {
+        let mut deps = setup(&["channel-3", "channel-7"]);
+        test_setup(
+            deps.as_ref(),
+            "channel-3".to_string(),
+            "channel-7".to_string(),
+        );
+
+        let sender_address_str = "wasm1fucynrfkrt684pm8jrt8la5h2csvs5cnldcgqc";
+        let sender_address: Addr = Addr::unchecked(sender_address_str);
+
+        let transfer_msg = TransferMsg {
+            channel: "channel-3".to_string(),
+            class_id: "abc/123/collection-addr".to_string(),
+            class_uri: Some("abc/456/collection-addr".to_string()),
+            token_ids: vec!["1".to_string(), "2".to_string(), "3".to_string()],
+            token_uris: vec![
+                "https://metadata-url.com/my-metadata1".to_string(),
+                "https://metadata-url.com/my-metadata2".to_string(),
+                "https://metadata-url.com/my-metadata3".to_string(),
+            ],
+            remote_address: "stars1zedxv25ah8fksmg2lzrndrpkvsjqgk4zt5ff7n".to_string(),
+            timeout: Some(1000),
+        };
+
+        let cw721_receive_msg = Cw721ReceiveMsg {
+            sender: sender_address_str.to_string(),
+            token_id: "1".to_string(),
+            msg: to_binary(&transfer_msg).unwrap(),
+        };
+
+        let coin = Coin::new(128, "testing-coin");
+        let initial_funds = vec![coin];
+        let info_msg: MessageInfo = MessageInfo {
+            sender: sender_address,
+            funds: initial_funds,
+        };
+        use cw20_ics20::ContractError::Payment;
+        use cw_utils::PaymentError;
+        let result =
+            execute_receive(deps.as_mut(), mock_env(), info_msg, cw721_receive_msg).unwrap_err();
+
+        let expected_result: cw20_ics20::ContractError = Payment(PaymentError::NonPayable {});
+        assert_eq!(result.to_string(), expected_result.to_string());
+    }
+
+    #[test]
+    fn test_execute_to_execute_receive_success() {
+        let mut deps = setup(&["channel-3", "channel-7"]);
+        test_setup(
+            deps.as_ref(),
+            "channel-3".to_string(),
+            "channel-7".to_string(),
+        );
+
+        let sender_address_str = "wasm1fucynrfkrt684pm8jrt8la5h2csvs5cnldcgqc";
+        let sender_address: Addr = Addr::unchecked(sender_address_str);
+
+        let transfer_msg = TransferMsg {
+            channel: "channel-3".to_string(),
+            class_id: "abc/123/collection-addr".to_string(),
+            class_uri: Some("abc/456/collection-addr".to_string()),
+            token_ids: vec!["1".to_string(), "2".to_string(), "3".to_string()],
+            token_uris: vec![
+                "https://metadata-url.com/my-metadata1".to_string(),
+                "https://metadata-url.com/my-metadata2".to_string(),
+                "https://metadata-url.com/my-metadata3".to_string(),
+            ],
+            remote_address: "stars1zedxv25ah8fksmg2lzrndrpkvsjqgk4zt5ff7n".to_string(),
+            timeout: Some(1000),
+        };
+
+        let cw721_receive_msg = ExecuteMsg::Receive(Cw721ReceiveMsg {
+            sender: sender_address_str.to_string(),
+            token_id: "1".to_string(),
+            msg: to_binary(&transfer_msg).unwrap(),
+        });
+
+        let initial_funds = vec![];
+        let info_msg: MessageInfo = MessageInfo {
+            sender: sender_address,
+            funds: initial_funds,
+        };
+
+        let result = execute(deps.as_mut(), mock_env(), info_msg, cw721_receive_msg);
+        let expected_result = [
+            Attribute {
+                key: "action".into(),
+                value: "transfer".into(),
+            },
+            Attribute {
+                key: "sender".into(),
+                value: "wasm1fucynrfkrt684pm8jrt8la5h2csvs5cnldcgqc".into(),
+            },
+            Attribute {
+                key: "receiver".into(),
+                value: "stars1zedxv25ah8fksmg2lzrndrpkvsjqgk4zt5ff7n".into(),
+            },
+            Attribute {
+                key: "class_id".into(),
+                value: "cosmos2contract".into(),
+            },
+            Attribute {
+                key: "token_ids".into(),
+                value: "1,2,3".into(),
+            },
+        ];
+        let result_clone = result.unwrap().clone();
+        assert_eq!(result_clone.attributes, expected_result);
+        assert_eq!(result_clone.messages.len(), 1);
+    }
+
+    #[test]
+    fn test_execute_to_execute_transfer_success() {
+        let mut deps = setup(&["channel-3", "channel-7"]);
+        test_setup(
+            deps.as_ref(),
+            "channel-3".to_string(),
+            "channel-7".to_string(),
+        );
+
+        let transfer_msg = ExecuteMsg::Transfer(TransferMsg {
+            channel: "channel-3".to_string(),
+            class_id: "abc/123/collection-addr".to_string(),
+            class_uri: Some("abc/456/collection-addr".to_string()),
+            token_ids: vec!["1".to_string(), "2".to_string(), "3".to_string()],
+            token_uris: vec![
+                "https://metadata-url.com/my-metadata1".to_string(),
+                "https://metadata-url.com/my-metadata2".to_string(),
+                "https://metadata-url.com/my-metadata3".to_string(),
+            ],
+            remote_address: "stars1zedxv25ah8fksmg2lzrndrpkvsjqgk4zt5ff7n".to_string(),
+            timeout: Some(1000),
+        });
+        let sender_address: Addr = Addr::unchecked("wasm1fucynrfkrt684pm8jrt8la5h2csvs5cnldcgqc");
+        let initial_funds = vec![];
+        let info_msg: MessageInfo = MessageInfo {
+            sender: sender_address,
+            funds: initial_funds,
+        };
+
+        let result = execute(deps.as_mut(), mock_env(), info_msg, transfer_msg);
+        let expected_results = [
+            Attribute {
+                key: "action".into(),
+                value: "transfer".into(),
+            },
+            Attribute {
+                key: "sender".into(),
+                value: "wasm1fucynrfkrt684pm8jrt8la5h2csvs5cnldcgqc".into(),
+            },
+            Attribute {
+                key: "receiver".into(),
+                value: "stars1zedxv25ah8fksmg2lzrndrpkvsjqgk4zt5ff7n".into(),
+            },
+            Attribute {
+                key: "class_id".into(),
+                value: "cosmos2contract".into(),
+            },
+            Attribute {
+                key: "token_ids".into(),
+                value: "1,2,3".into(),
+            },
+        ];
+        assert_eq!(result.unwrap().attributes, expected_results);
+    }
+
+    #[test]
+    fn test_transfer_packet_fail() {
+        // TODO need to implement packet validation in order to fail the transfer
     }
 }
