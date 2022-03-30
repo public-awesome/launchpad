@@ -36,6 +36,7 @@ pub enum ExecuteMsg {
     /// Freeze contract from updating token uris
     Freeze {},
     /// Update token uris for all tokens "{base_token_uri}/{token_id}"
+    #[serde(rename = "update_token_uris")]
     UpdateTokenURIs { base_token_uri: String },
     /// Transfer is a base message to move a token to another account without triggering actions
     TransferNft { recipient: String, token_id: String },
