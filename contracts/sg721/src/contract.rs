@@ -1,8 +1,10 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
+use cosmwasm_std::from_binary;
 use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, StdResult};
 use cw2::set_contract_version;
 
+use cw721::TokensResponse;
 use sg_std::burn_and_distribute_fee;
 use sg_std::StargazeMsgWrapper;
 
@@ -94,17 +96,17 @@ pub fn instantiate(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::Freeze {} => execute_freeze(deps, info),
         ExecuteMsg::UpdateTokenURIs { base_token_uri } => {
-            execute_update_token_uris(deps, info, base_token_uri)
+            execute_update_token_uris(deps, env, info, base_token_uri)
         }
         _ => Sg721Contract::default()
-            .execute(deps, _env, info, msg.into())
+            .execute(deps, env, info, msg.into())
             .map_err(ContractError::from),
     }
 }
@@ -123,6 +125,7 @@ fn execute_freeze(deps: DepsMut, info: MessageInfo) -> Result<Response, Contract
 }
 fn execute_update_token_uris(
     deps: DepsMut,
+    env: Env,
     info: MessageInfo,
     base_token_uri: String,
 ) -> Result<Response, ContractError> {
@@ -138,18 +141,29 @@ fn execute_update_token_uris(
         return Err(ContractError::Frozen {});
     }
 
-    let token_id = "1".to_string();
+    // iterate through all tokens
+    let all_tokens_msg = QueryMsg::AllTokens {
+        start_after: None,
+        limit: None,
+    };
+    let tokens_response: TokensResponse =
+        from_binary(&query(deps.as_ref(), env, all_tokens_msg).unwrap()).unwrap();
+    for token_id in tokens_response.tokens {
+        // update each token uri
+        sg721_contract
+            .tokens
+            .update(deps.storage, &token_id, |token| match token {
+                Some(mut token_info) => {
+                    token_info.token_uri = Some(format!("{}/{}", base_token_uri, token_id));
+                    token_info.extension = Empty {};
+                    Ok(token_info)
+                }
+                None => Err(ContractError::TokenNotFound {
+                    got: token_id.to_string(),
+                }),
+            })?;
+    }
 
-    sg721_contract
-        .tokens
-        .update(deps.storage, &token_id.clone(), |token| match token {
-            Some(mut token_info) => {
-                token_info.token_uri = Some(format!("{}/{}", base_token_uri, token_id));
-                token_info.extension = Empty {};
-                Ok(token_info)
-            }
-            None => Err(ContractError::TokenNotFound { got: token_id }),
-        })?;
     Ok(Response::new()
         .add_attribute("action", "update_token_uri".to_string())
         .add_attribute("new_base_token_uri", base_token_uri.to_string()))
