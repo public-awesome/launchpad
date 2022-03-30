@@ -9,7 +9,6 @@ use sg_std::StargazeMsgWrapper;
 use crate::state::FROZEN;
 use crate::ContractError;
 use cw721::ContractInfoResponse;
-use cw721_base::ContractError as BaseError;
 use url::Url;
 
 use crate::msg::{
@@ -104,7 +103,9 @@ pub fn execute(
         ExecuteMsg::UpdateTokenURIs { base_token_uri } => {
             execute_update_token_uris(deps, info, base_token_uri)
         }
-        _ => Sg721Contract::default().execute(deps, _env, info, msg.into()),
+        _ => Sg721Contract::default()
+            .execute(deps, _env, info, msg.into())
+            .map_err(ContractError::from),
     }
 }
 
@@ -338,6 +339,9 @@ mod tests {
         );
 
         // freeze contract
+        let freeze_msg = ExecuteMsg::Freeze {};
+        let _ = execute(deps.as_mut(), mock_env(), allowed.clone(), freeze_msg).unwrap();
+
         let even_newer_base_token_uri: String = "ipfs://even_newer_base_token_uri_hash".to_string();
         let exec_update_token_uris_msg = ExecuteMsg::UpdateTokenURIs {
             base_token_uri: even_newer_base_token_uri.clone(),

@@ -1,5 +1,4 @@
 use cosmwasm_std::StdError;
-use cw721_base::ContractError as Cw721ContractError;
 use cw_utils::PaymentError;
 use sg_std::FeeError;
 use thiserror::Error;
@@ -34,6 +33,9 @@ pub enum ContractError {
     #[error("Cannot update token uri after contract freeze")]
     Frozen {},
 
+    #[error("{0}")]
+    BaseError(cw721_base::ContractError),
+
     #[error["Token id not found {got}"]]
     TokenNotFound { got: String },
 
@@ -47,13 +49,13 @@ pub enum ContractError {
     Parse(#[from] ParseError),
 }
 
-impl From<ContractError> for Cw721ContractError {
-    fn from(err: ContractError) -> Cw721ContractError {
+impl From<cw721_base::ContractError> for ContractError {
+    fn from(err: cw721_base::ContractError) -> Self {
         match err {
-            ContractError::Unauthorized {} => Cw721ContractError::Unauthorized {},
-            ContractError::Claimed {} => Cw721ContractError::Claimed {},
-            ContractError::Expired {} => Cw721ContractError::Expired {},
-            _ => unreachable!("cannot convert {:?} to Cw721ContractError", err),
+            cw721_base::ContractError::Unauthorized {} => Self::Unauthorized {},
+            cw721_base::ContractError::Claimed {} => Self::Claimed {},
+            cw721_base::ContractError::Expired {} => Self::Expired {},
+            err => Self::BaseError(err),
         }
     }
 }
