@@ -1,5 +1,6 @@
 #[cfg(test)]
 mod ibc_testing {
+
     use super::super::*;
     use crate::test_helpers::*;
 
@@ -676,6 +677,56 @@ mod ibc_testing {
             result.unwrap_err().to_string(),
             "Only supports channel with ibc version ics721-1, got very_fake_version_counterparty"
         );
-    }  
-    
+    }
+
+    #[test]
+    fn test_channel_connect() {
+        let send_channel = "channel-9";
+        let counterparty_send_channel = "channel-7";
+        let counterparty_contract_port = "ibc:stars123abc";
+        let contract_port = "ibc:wasm1234567890abcdef";
+
+        use cosmwasm_std::testing::mock_dependencies;
+        let mut deps = mock_dependencies();
+
+        let endpoint_1 = IbcEndpoint {
+            port_id: contract_port.to_string(),
+            channel_id: send_channel.to_string(),
+        };
+
+        let endpoint_2 = IbcEndpoint {
+            port_id: counterparty_contract_port.to_string(),
+            channel_id: counterparty_send_channel.to_string(),
+        };
+
+        let ibc_channel = cosmwasm_std::IbcChannel::new(
+            endpoint_1,
+            endpoint_2,
+            IbcOrder::Unordered,
+            ICS721_VERSION,
+            "connection-2".to_string(),
+        );
+
+        let channel_connect_msg = IbcChannelConnectMsg::OpenAck {
+            channel: (ibc_channel),
+            counterparty_version: (ICS721_VERSION.to_string()),
+        };
+
+        let channel_info_data = CHANNEL_INFO.may_load(&deps.storage, &send_channel);
+        assert_eq!(channel_info_data.unwrap(), None);
+
+        let result = ibc_channel_connect(deps.as_mut(), mock_env(), channel_connect_msg);
+        assert_eq!(result.unwrap(), IbcBasicResponse::default());
+
+        let channel_info_data = CHANNEL_INFO.may_load(&deps.storage, &send_channel);
+        let expected_channel_data = ChannelInfo {
+            id: "channel-9".into(),
+            counterparty_endpoint: IbcEndpoint {
+                port_id: "ibc:stars123abc".into(),
+                channel_id: "channel-7".into(),
+            },
+            connection_id: "connection-2".into(),
+        };
+        assert_eq!(channel_info_data.unwrap().unwrap(), expected_channel_data);
+    }
 }
