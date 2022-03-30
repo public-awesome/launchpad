@@ -1,13 +1,15 @@
 #[cfg(test)]
 mod ibc_testing {
 
+    use cosmwasm_std::CosmosMsg::Wasm;
+    use cosmwasm_std::WasmMsg::Execute;
     use super::super::*;
     use crate::test_helpers::*;
 
     use crate::contract::query_channel;
     use cosmwasm_std::testing::mock_env;
     use cosmwasm_std::{
-        to_vec, Attribute, IbcAcknowledgement, IbcEndpoint, IbcTimeout, ReplyOn, Timestamp,
+        to_vec, Attribute, IbcAcknowledgement, IbcEndpoint, IbcTimeout, ReplyOn, Timestamp
     };
 
     pub fn mock_sent_packet(
@@ -728,5 +730,57 @@ mod ibc_testing {
             connection_id: "connection-2".into(),
         };
         assert_eq!(channel_info_data.unwrap().unwrap(), expected_channel_data);
+    }
+
+    #[test]
+    fn test_send_tokens() {
+        let send_channel = "channel-9";
+        let mut deps = setup(&["channel-1", "channel-7", send_channel]);
+        let contract_addr = "collection-addr";
+        let token_ids = vec!["1", "2", "3"];
+        let token_uris = vec![
+            "https://metadata-url.com/my-metadata1",
+            "https://metadata-url.com/my-metadata2",
+            "https://metadata-url.com/my-metadata3",
+        ];
+
+        send_sg721_success(
+            deps.as_mut(),
+            send_channel.to_string(),
+            contract_addr.to_string(),
+            token_ids.clone(),
+            token_uris.clone(),
+        );
+
+        let exists = CHANNEL_STATE.may_load(&deps.storage, (send_channel, contract_addr, "1"));
+        assert_eq!(exists, Ok(Some(Empty {})));
+
+        let result = send_tokens(
+            contract_addr,
+            vec!["1".into(), "2".into(), "3".into()],
+            vec![
+                "https://metadata-url.com/my-metadata1".into(),
+                "https://metadata-url.com/my-metadata2".into(),
+                "https://metadata-url.com/my-metadata3".into(),
+            ],
+            "local-rcpt".into(),
+        );
+
+        let cw721_msg = Cw721ExecuteMsg::TransferNft {
+            recipient: "local-rcpt".into(),
+            token_id: "1".into(),
+        };
+
+        let submsg: cosmwasm_std::SubMsg<Empty> = SubMsg {
+            id: SEND_NFT_ID,
+            msg: Wasm(Execute {
+                contract_addr: "collection-addr".into(),
+                msg: to_binary(&cw721_msg).unwrap(),
+                funds: vec![],
+            }),
+            gas_limit: None,
+            reply_on: cosmwasm_std::ReplyOn::Error,
+        };
+        assert_eq!(result, submsg);
     }
 }

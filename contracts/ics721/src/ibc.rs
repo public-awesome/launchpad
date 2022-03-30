@@ -20,7 +20,7 @@ pub const ICS721_ORDERING: IbcOrder = IbcOrder::Unordered;
 
 #[cfg(test)]
 #[path = "ibc_test.rs"]
-mod ibc_test;
+mod ibc_testing;
 
 
 // TODO: need to define proto for chain to parse this?
