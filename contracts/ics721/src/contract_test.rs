@@ -1,13 +1,11 @@
 #[cfg(test)]
 mod contact_test {
-    use std::convert::TryInto;
-
     use super::super::*;
-    use crate::{ibc, test_helpers::*};
+    use crate::{test_helpers::*};
 
     use cosmwasm_std::testing::mock_env;
-    use cosmwasm_std::{from_binary, to_binary, Attribute, Coin, IbcMsg, StdError};
-    use cosmwasm_std::{CosmosMsg, IbcEndpoint};
+    use cosmwasm_std::{from_binary, to_binary, Attribute, Coin, StdError};
+    use cosmwasm_std::{IbcEndpoint};
     use cw2::{get_contract_version, ContractVersion};
     use cw20_ics20::state::ChannelInfo;
 
@@ -535,7 +533,7 @@ mod contact_test {
         };
 
         let cw721_receive_msg = ExecuteMsg::Receive(Cw721ReceiveMsg {
-            sender: sender_address_str.to_string(),
+            sender: "sender_address_receive_path".to_string(),
             token_id: "1".to_string(),
             msg: to_binary(&transfer_msg).unwrap(),
         });
@@ -554,7 +552,7 @@ mod contact_test {
             },
             Attribute {
                 key: "sender".into(),
-                value: "wasm1fucynrfkrt684pm8jrt8la5h2csvs5cnldcgqc".into(),
+                value: "sender_address_receive_path".into(),
             },
             Attribute {
                 key: "receiver".into(),
