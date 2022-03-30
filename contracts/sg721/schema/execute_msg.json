@@ -3,6 +3,19 @@
   "title": "ExecuteMsg",
   "oneOf": [
     {
+      "description": "Freeze contract from updating token uris",
+      "type": "object",
+      "required": [
+        "freeze"
+      ],
+      "properties": {
+        "freeze": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
       "description": "Update token uris for all tokens \"{base_token_uri}/{token_id}\"",
       "type": "object",
       "required": [

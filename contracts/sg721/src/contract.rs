@@ -344,7 +344,7 @@ mod tests {
 
         let even_newer_base_token_uri: String = "ipfs://even_newer_base_token_uri_hash".to_string();
         let exec_update_token_uris_msg = ExecuteMsg::UpdateTokenURIs {
-            base_token_uri: even_newer_base_token_uri.clone(),
+            base_token_uri: even_newer_base_token_uri,
         };
         // error when trying to update token_uri after freeze
         let err = execute(
