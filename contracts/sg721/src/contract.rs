@@ -307,7 +307,7 @@ mod tests {
         let _ = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
         // mint nft
-        let token_id = "1".to_string();
+        let token_id = "copypasta".to_string();
         let token_uri = "https://www.merriam-webster.com/dictionary/petrify".to_string();
 
         let exec_mint_msg = Cw721ExecuteMsg::Mint(MintMsg::<Empty> {
