@@ -36,7 +36,7 @@ const INSTANTIATE_SG721_REPLY_ID: u64 = 1;
 const MAX_TOKEN_LIMIT: u32 = 10000;
 const MAX_PER_ADDRESS_LIMIT: u32 = 50;
 const MIN_MINT_PRICE: u128 = 50_000_000;
-const MIN_AIRDROP_MINT_PRICE: u128 = 15_000_000;
+const AIRDROP_MINT_PRICE: u128 = 15_000_000;
 const MINT_FEE_PERCENT: u32 = 10;
 const AIRDROP_MINT_FEE_PERCENT: u32 = 100;
 
@@ -514,7 +514,7 @@ pub fn mint_price(deps: Deps, admin_airdrop_fee: bool) -> Result<Coin, StdError>
     let config = CONFIG.load(deps.storage)?;
 
     if admin_airdrop_fee {
-        return Ok(coin(MIN_AIRDROP_MINT_PRICE, config.unit_price.denom));
+        return Ok(coin(AIRDROP_MINT_PRICE, config.unit_price.denom));
     }
 
     if config.whitelist.is_none() {
