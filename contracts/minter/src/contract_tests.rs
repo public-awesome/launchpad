@@ -26,7 +26,7 @@ const MINT_FEE: u128 = 10_000_000;
 const MAX_TOKEN_LIMIT: u32 = 10000;
 const WHITELIST_AMOUNT: u128 = 66_000_000;
 const WL_PER_ADDRESS_LIMIT: u32 = 1;
-const ADMIN_MINT_PRICE: u128 = 0;
+const ADMIN_MINT_PRICE: u128 = 15_000_000;
 
 fn custom_mock_app() -> StargazeApp {
     StargazeApp::default()
@@ -1164,6 +1164,27 @@ fn mint_for_token_id_addr() {
         .query_wasm_smart(minter_addr.clone(), &QueryMsg::MintableNumTokens {})
         .unwrap();
     assert_eq!(mintable_num_tokens_response.count, 3);
+
+    // Mint fails, wrong admin airdrop price
+    let err = router
+        .execute_contract(
+            creator.clone(),
+            minter_addr.clone(),
+            &mint_for_msg,
+            &coins_for_msg(Coin {
+                amount: Uint128::from(ADMIN_MINT_PRICE - 1),
+                denom: NATIVE_DENOM.to_string(),
+            }),
+        )
+        .unwrap_err();
+    assert_eq!(
+        ContractError::IncorrectPaymentAmount(
+            coin(ADMIN_MINT_PRICE - 1, NATIVE_DENOM.to_string()),
+            coin(ADMIN_MINT_PRICE, NATIVE_DENOM.to_string())
+        )
+        .to_string(),
+        err.source().unwrap().to_string()
+    );
 
     // Test mint_for token_id 2 then normal mint
     let token_id = 2;
