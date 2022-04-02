@@ -580,7 +580,7 @@ checksum = "a3e378b66a060d48947b590737b30a1be76706c8dd7b8ba0f2fe3989c68a853f"
 
 [[package]]
 name = "minter"
-version = "0.9.0"
+version = "0.10.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -594,7 +594,7 @@ dependencies = [
  "schemars",
  "serde",
  "sg-multi-test",
- "sg-std 0.9.1",
+ "sg-std 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg721",
  "thiserror",
  "url",
@@ -802,22 +802,21 @@ dependencies = [
 
 [[package]]
 name = "sg-multi-test"
-version = "0.9.1"
+version = "0.10.0"
 dependencies = [
  "anyhow",
  "cosmwasm-std",
  "cw-multi-test",
  "schemars",
  "serde",
- "sg-std 0.9.1",
+ "sg-std 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "sg-std"
-version = "0.9.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2e4dab81e38da9061bc643a23e97b39bf7a0176989d17420905e642b71b65445"
+version = "0.10.0"
 dependencies = [
+ "cosmwasm-schema",
  "cosmwasm-std",
  "cw-utils 0.13.1",
  "cw721",
@@ -830,8 +829,9 @@ dependencies = [
 [[package]]
 name = "sg-std"
 version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a8dc3a391362d850e4278f5f96f1ae1d37d90b96ec4a518ebb7fe52c0025d90d"
 dependencies = [
- "cosmwasm-schema",
  "cosmwasm-std",
  "cw-utils 0.13.1",
  "cw721",
@@ -851,7 +851,7 @@ dependencies = [
 
 [[package]]
 name = "sg721"
-version = "0.9.1"
+version = "0.10.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -863,7 +863,7 @@ dependencies = [
  "cw721-base",
  "schemars",
  "serde",
- "sg-std 0.9.1",
+ "sg-std 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "thiserror",
  "url",
 ]
@@ -1029,7 +1029,7 @@ checksum = "fd6fbd9a79829dd1ad0cc20627bf1ed606756a7f77edff7b66b7064f9cb327c6"
 
 [[package]]
 name = "whitelist"
-version = "0.8.0"
+version = "0.10.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -1041,7 +1041,7 @@ dependencies = [
  "rust_decimal",
  "schemars",
  "serde",
- "sg-std 0.9.1",
+ "sg-std 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "thiserror",
 ]
 
