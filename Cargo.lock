@@ -580,7 +580,7 @@ checksum = "a3e378b66a060d48947b590737b30a1be76706c8dd7b8ba0f2fe3989c68a853f"
 
 [[package]]
 name = "minter"
-version = "0.9.0"
+version = "0.10.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -802,7 +802,7 @@ dependencies = [
 
 [[package]]
 name = "sg-multi-test"
-version = "0.9.1"
+version = "0.10.0"
 dependencies = [
  "anyhow",
  "cosmwasm-std",
@@ -1029,7 +1029,7 @@ checksum = "fd6fbd9a79829dd1ad0cc20627bf1ed606756a7f77edff7b66b7064f9cb327c6"
 
 [[package]]
 name = "whitelist"
-version = "0.8.0"
+version = "0.10.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
