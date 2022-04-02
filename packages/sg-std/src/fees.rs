@@ -7,15 +7,19 @@ use thiserror::Error;
 const FEE_BURN_PERCENT: u64 = 50;
 
 type SubMsg = CosmosMsg<StargazeMsgWrapper>;
-pub fn burn_and_distribute_fee(
-    info: &MessageInfo,
-    fee_amount: u128,
-) -> Result<Vec<SubMsg>, FeeError> {
+
+/// Burn and distribute fees and return an error if the fee is not enough
+pub fn checked_fair_burn(info: &MessageInfo, fee_amount: u128) -> Result<Vec<SubMsg>, FeeError> {
     let payment = must_pay(info, NATIVE_DENOM)?;
     if payment.u128() < fee_amount {
         return Err(FeeError::InsufficientFee(fee_amount, payment.u128()));
     };
 
+    Ok(fair_burn(fee_amount))
+}
+
+/// Burn and distribute fees, assuming the right fee is passed in
+pub fn fair_burn(fee_amount: u128) -> Vec<SubMsg> {
     // calculate the fee to burn
     // burn half the fee
     let burn_percent = Decimal::percent(FEE_BURN_PERCENT);
@@ -27,7 +31,7 @@ pub fn burn_and_distribute_fee(
     let fund_community_pool_msg =
         create_fund_community_pool_msg(coins(fee_amount - burn_fee.u128(), NATIVE_DENOM));
 
-    Ok(vec![CosmosMsg::Bank(fee_burn_msg), fund_community_pool_msg])
+    return vec![CosmosMsg::Bank(fee_burn_msg), fund_community_pool_msg];
 }
 
 #[derive(Error, Debug, PartialEq)]
