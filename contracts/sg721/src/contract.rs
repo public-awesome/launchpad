@@ -3,7 +3,7 @@ use cosmwasm_std::entry_point;
 use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, StdResult};
 use cw2::set_contract_version;
 
-use sg_std::burn_and_distribute_fee;
+use sg_std::checked_fair_burn;
 use sg_std::StargazeMsgWrapper;
 
 use crate::ContractError;
@@ -35,7 +35,7 @@ pub fn instantiate(
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
-    let fee_msgs = burn_and_distribute_fee(&info, CREATION_FEE)?;
+    let fee_msgs = checked_fair_burn(&info, CREATION_FEE)?;
 
     // cw721 instantiation
     let info = ContractInfoResponse {

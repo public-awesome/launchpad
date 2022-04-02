@@ -1,6 +1,6 @@
 [package]
 name = "sg721"
-version = "0.9.1"
+version = "0.10.0"
 authors = ["Shane Vitarana <s@noreply.publicawesome.com>"]
 edition = "2018"
 description = "Stargaze NFT collection contract"
@@ -41,7 +41,7 @@ cw2 = "0.13.1"
 schemars = "0.8.8"
 serde = { version = "1.0.133", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0.30" }
-sg-std = "0.9.1"
+sg-std = "0.10.0"
 url = "2.2.2"
 cw721 = "0.13.1"
 cw721-base = { version = "0.13.1", features = ["library"] }
