@@ -354,7 +354,7 @@ fn _execute_mint(
     deps: DepsMut,
     info: MessageInfo,
     action: &str,
-    admin_airdrop_fee: bool,
+    is_admin: bool,
     recipient: Option<Addr>,
     token_id: Option<u32>,
 ) -> Result<Response, ContractError> {
@@ -366,7 +366,7 @@ fn _execute_mint(
         None => info.sender.clone(),
     };
 
-    let mint_price: Coin = mint_price(deps.as_ref(), admin_airdrop_fee)?;
+    let mint_price: Coin = mint_price(deps.as_ref(), is_admin)?;
     // Exact payment only accepted
     let payment = may_pay(&info, &config.unit_price.denom)?;
     if payment != mint_price.amount {
@@ -379,7 +379,7 @@ fn _execute_mint(
     let mut msgs: Vec<CosmosMsg<StargazeMsgWrapper>> = vec![];
 
     // Create network fee msgs
-    let fee_percent = if admin_airdrop_fee {
+    let fee_percent = if is_admin {
         Decimal::percent(AIRDROP_MINT_FEE_PERCENT as u64)
     } else {
         Decimal::percent(MINT_FEE_PERCENT as u64)
@@ -510,10 +510,10 @@ pub fn execute_update_per_address_limit(
 // if admin_no_fee => no fee,
 // else if in whitelist => whitelist price
 // else => config unit price
-pub fn mint_price(deps: Deps, admin_airdrop_fee: bool) -> Result<Coin, StdError> {
+pub fn mint_price(deps: Deps, is_admin: bool) -> Result<Coin, StdError> {
     let config = CONFIG.load(deps.storage)?;
 
-    if admin_airdrop_fee {
+    if is_admin {
         return Ok(coin(AIRDROP_MINT_PRICE, config.unit_price.denom));
     }
 
