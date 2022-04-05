@@ -18,7 +18,7 @@ use crate::msg::{
 use crate::state::{
     Config, CONFIG, MINTABLE_NUM_TOKENS, MINTABLE_TOKEN_IDS, MINTER_ADDRS, SG721_ADDRESS,
 };
-use sg_std::{burn_and_distribute_fee, StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
+use sg_std::{checked_fair_burn, StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use whitelist::msg::{
     ConfigResponse as WhitelistConfigResponse, HasMemberResponse, QueryMsg as WhitelistQueryMsg,
 };
@@ -385,7 +385,7 @@ fn _execute_mint(
         Decimal::percent(MINT_FEE_PERCENT as u64)
     };
     let network_fee = mint_price.amount * fee_percent;
-    msgs.append(&mut burn_and_distribute_fee(&info, network_fee.u128())?);
+    msgs.append(&mut checked_fair_burn(&info, network_fee.u128())?);
 
     let mintable_token_id = match token_id {
         Some(token_id) => {
