@@ -1,7 +1,7 @@
 use cosmwasm_std::testing::{mock_dependencies_with_balance, mock_env, mock_info};
 use cosmwasm_std::{coin, coins, Addr, Decimal, Empty, Timestamp, Uint128};
 use cosmwasm_std::{Api, Coin};
-use cw721::{Cw721QueryMsg, OwnerOfResponse};
+use cw721::{Cw721QueryMsg, OwnerOfResponse, TokensResponse};
 use cw721_base::ExecuteMsg as Cw721ExecuteMsg;
 use cw_multi_test::{BankSudo, Contract, ContractWrapper, Executor, SudoMsg};
 use sg721::msg::{InstantiateMsg as Sg721InstantiateMsg, RoyaltyInfoResponse};
@@ -1069,7 +1069,7 @@ fn mint_for_token_id_addr() {
     let mut router = custom_mock_app();
     let (creator, buyer) = setup_accounts(&mut router);
     let num_tokens = 4;
-    let (minter_addr, _config) = setup_minter_contract(&mut router, &creator, num_tokens);
+    let (minter_addr, config) = setup_minter_contract(&mut router, &creator, num_tokens);
 
     // Set to genesis mint start time
     setup_block_time(&mut router, GENESIS_MINT_START_TIME);
@@ -1096,8 +1096,8 @@ fn mint_for_token_id_addr() {
     );
 
     // Test token id already sold
-    // 1. mint token_id 1
-    // 2. mint_for token_id 1
+    // 1. random mint token_id
+    // 2. mint_for same token_id
     let mint_msg = ExecuteMsg::Mint {};
     let res = router.execute_contract(
         buyer.clone(),
@@ -1106,6 +1106,18 @@ fn mint_for_token_id_addr() {
         &coins(UNIT_PRICE, NATIVE_DENOM),
     );
     assert!(res.is_ok());
+
+    // get random mint token_id
+    let tokens_msg = Cw721QueryMsg::Tokens {
+        owner: buyer.clone().to_string(),
+        start_after: None,
+        limit: None,
+    };
+    let res: TokensResponse = router
+        .wrap()
+        .query_wasm_smart(config.sg721_address.clone(), &tokens_msg)
+        .unwrap();
+    let sold_token_id: u32 = res.tokens[0].parse::<u32>().unwrap();
 
     // Minter contract should have a balance
     let minter_balance = router
@@ -1116,7 +1128,7 @@ fn mint_for_token_id_addr() {
     assert_eq!(1, minter_balance.len());
 
     // Mint fails, invalid token_id
-    let token_id = 0;
+    let token_id: u32 = 0;
     let mint_for_msg = ExecuteMsg::MintFor {
         token_id,
         recipient: buyer.to_string(),
@@ -1138,9 +1150,8 @@ fn mint_for_token_id_addr() {
     );
 
     // Mint fails, token_id already sold
-    let token_id = 1;
     let mint_for_msg = ExecuteMsg::MintFor {
-        token_id,
+        token_id: sold_token_id.clone(),
         recipient: buyer.to_string(),
     };
     let err = router
@@ -1155,7 +1166,10 @@ fn mint_for_token_id_addr() {
         )
         .unwrap_err();
     assert_eq!(
-        ContractError::TokenIdAlreadySold { token_id }.to_string(),
+        ContractError::TokenIdAlreadySold {
+            token_id: sold_token_id
+        }
+        .to_string(),
         err.source().unwrap().to_string()
     );
 
