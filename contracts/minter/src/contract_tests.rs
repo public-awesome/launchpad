@@ -434,9 +434,10 @@ fn happy_path() {
     assert_eq!(res.count, 1);
     assert_eq!(res.address, buyer.to_string());
 
-    // Check NFT is transferred
+    // Check NFT owned by buyer
+    // Random mint token_id 2
     let query_owner_msg = Cw721QueryMsg::OwnerOf {
-        token_id: String::from("1"),
+        token_id: String::from("2"),
         include_expired: None,
     };
     let res: OwnerOfResponse = router
