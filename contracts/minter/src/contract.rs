@@ -1,3 +1,5 @@
+use std::convert::TryInto;
+
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
@@ -7,7 +9,11 @@ use cosmwasm_std::{
 use cw2::set_contract_version;
 use cw721_base::{msg::ExecuteMsg as Cw721ExecuteMsg, MintMsg};
 use cw_utils::{may_pay, parse_reply_instantiate_data};
+use rand_core::SeedableRng;
+use rand_xoshiro::Xoshiro128PlusPlus;
 use sg721::msg::InstantiateMsg as Sg721InstantiateMsg;
+use sha2::{Digest, Sha256};
+use shuffle::{fy::FisherYates, shuffler::Shuffler};
 use url::Url;
 
 use crate::error::ContractError;
@@ -163,11 +169,11 @@ pub fn execute(
         ExecuteMsg::UpdatePerAddressLimit { per_address_limit } => {
             execute_update_per_address_limit(deps, env, info, per_address_limit)
         }
-        ExecuteMsg::MintTo { recipient } => execute_mint_to(deps, info, recipient),
+        ExecuteMsg::MintTo { recipient } => execute_mint_to(deps, env, info, recipient),
         ExecuteMsg::MintFor {
             token_id,
             recipient,
-        } => execute_mint_for(deps, info, token_id, recipient),
+        } => execute_mint_for(deps, env, info, token_id, recipient),
         ExecuteMsg::SetWhitelist { whitelist } => {
             execute_set_whitelist(deps, env, info, &whitelist)
         }
@@ -261,7 +267,7 @@ pub fn execute_mint_sender(
         return Err(ContractError::MaxPerAddressLimitExceeded {});
     }
 
-    _execute_mint(deps, info, action, false, None, None)
+    _execute_mint(deps, &env, info, action, false, None, None)
 }
 
 // Check if a whitelist exists and not ended
@@ -307,6 +313,7 @@ fn is_public_mint(deps: Deps, info: &MessageInfo) -> Result<bool, ContractError>
 
 pub fn execute_mint_to(
     deps: DepsMut,
+    env: Env,
     info: MessageInfo,
     recipient: String,
 ) -> Result<Response, ContractError> {
@@ -321,11 +328,12 @@ pub fn execute_mint_to(
         ));
     }
 
-    _execute_mint(deps, info, action, true, Some(recipient), None)
+    _execute_mint(deps, &env, info, action, true, Some(recipient), None)
 }
 
 pub fn execute_mint_for(
     deps: DepsMut,
+    env: Env,
     info: MessageInfo,
     token_id: u32,
     recipient: String,
@@ -341,7 +349,15 @@ pub fn execute_mint_for(
         ));
     }
 
-    _execute_mint(deps, info, action, true, Some(recipient), Some(token_id))
+    _execute_mint(
+        deps,
+        &env,
+        info,
+        action,
+        true,
+        Some(recipient),
+        Some(token_id),
+    )
 }
 
 // Generalize checks and mint message creation
@@ -350,6 +366,7 @@ pub fn execute_mint_for(
 // mint_for(recipient: "friend2", token_id: 420) -> _execute_mint(recipient, token_id)
 fn _execute_mint(
     deps: DepsMut,
+    env: &Env,
     info: MessageInfo,
     action: &str,
     admin_no_fee: bool,
@@ -398,15 +415,8 @@ fn _execute_mint(
             token_id
         }
         None => {
-            let mintable_tokens_result: StdResult<Vec<u32>> = MINTABLE_TOKEN_IDS
-                .keys(deps.storage, None, None, Order::Ascending)
-                .take(1)
-                .collect();
-            let mintable_tokens = mintable_tokens_result?;
-            if mintable_tokens.is_empty() {
-                return Err(ContractError::SoldOut {});
-            }
-            mintable_tokens[0]
+            let token_id: u32 = random_mintable_token_id(deps.as_ref(), env, info.sender.clone())?;
+            token_id
         }
     };
 
@@ -441,6 +451,39 @@ fn _execute_mint(
         .add_attribute("network_fee", network_fee)
         .add_attribute("mint_price", mint_price.amount)
         .add_messages(msgs))
+}
+
+fn random_mintable_token_id(deps: Deps, env: &Env, sender: Addr) -> Result<u32, ContractError> {
+    // not cryptographically secure random
+    // TODO add random beacon input to sha256 step
+    let transaction_index: u32 = if let Some(transaction) = &env.transaction {
+        transaction.index
+    } else {
+        return Err(ContractError::NoEnvTransactionIndex {});
+    };
+    let height: u64 = env.block.height;
+    let sha256 = Sha256::digest(format!("{}{}{}", sender, transaction_index, height).into_bytes());
+    let randomness: Vec<u8> = sha256.to_vec();
+    let randomness: [u8; 16] = randomness[0..16].try_into().unwrap(); // Cut first 16 bytes from 32 byte value
+
+    // A PRNG that is not cryptographically secure.
+    // See https://docs.rs/rand/0.8.5/rand/rngs/struct.SmallRng.html
+    // where this is used for 32 bit systems.
+    // We don't use the SmallRng in order to get the same implementation
+    // in unit tests (64 bit dev machines) and the real contract (32 bit Wasm)
+    let mut rng = Xoshiro128PlusPlus::from_seed(randomness);
+    let mintable_tokens_result: StdResult<Vec<u32>> = MINTABLE_TOKEN_IDS
+        .keys(deps.storage, None, None, Order::Ascending)
+        .collect();
+    let mut mintable_tokens = mintable_tokens_result.unwrap();
+    if mintable_tokens.is_empty() {
+        return Err(ContractError::SoldOut {});
+    }
+    let mut shuffler = FisherYates::default();
+    shuffler
+        .shuffle(&mut mintable_tokens, &mut rng)
+        .map_err(StdError::generic_err)?;
+    Ok(mintable_tokens[0] as u32)
 }
 
 pub fn execute_update_start_time(

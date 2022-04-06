@@ -83,6 +83,9 @@ pub enum ContractError {
 
     #[error("{0}")]
     Fee(#[from] FeeError),
+
+    #[error("NoEnvTransactionIndex")]
+    NoEnvTransactionIndex {},
 }
 
 impl From<ParseError> for ContractError {
