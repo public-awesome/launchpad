@@ -613,7 +613,12 @@ mod ibc_testing {
             "connection-2".to_string(),
         );
         let result = enforce_order_and_version(&ibc_channel, Some(ICS721_VERSION));
-        assert_eq!(result.unwrap(), ());
+        match result {
+            Ok(_val) => (),
+            Err(e) => {
+                panic!("enforce_order_and_version returned error {:?}", e);
+            }
+        }
     }
 
     #[test]
@@ -714,13 +719,13 @@ mod ibc_testing {
             counterparty_version: (ICS721_VERSION.to_string()),
         };
 
-        let channel_info_data = CHANNEL_INFO.may_load(&deps.storage, &send_channel);
+        let channel_info_data = CHANNEL_INFO.may_load(&deps.storage, send_channel);
         assert_eq!(channel_info_data.unwrap(), None);
 
         let result = ibc_channel_connect(deps.as_mut(), mock_env(), channel_connect_msg);
         assert_eq!(result.unwrap(), IbcBasicResponse::default());
 
-        let channel_info_data = CHANNEL_INFO.may_load(&deps.storage, &send_channel);
+        let channel_info_data = CHANNEL_INFO.may_load(&deps.storage, send_channel);
         let expected_channel_data = ChannelInfo {
             id: "channel-9".into(),
             counterparty_endpoint: IbcEndpoint {
