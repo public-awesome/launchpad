@@ -1111,13 +1111,13 @@ fn mint_for_token_id_addr() {
 
     // get random mint token_id
     let tokens_msg = Cw721QueryMsg::Tokens {
-        owner: buyer.clone().to_string(),
+        owner: buyer.to_string(),
         start_after: None,
         limit: None,
     };
     let res: TokensResponse = router
         .wrap()
-        .query_wasm_smart(config.sg721_address.clone(), &tokens_msg)
+        .query_wasm_smart(config.sg721_address, &tokens_msg)
         .unwrap();
     let sold_token_id: u32 = res.tokens[0].parse::<u32>().unwrap();
 
@@ -1153,7 +1153,7 @@ fn mint_for_token_id_addr() {
 
     // Mint fails, token_id already sold
     let mint_for_msg = ExecuteMsg::MintFor {
-        token_id: sold_token_id.clone(),
+        token_id: sold_token_id,
         recipient: buyer.to_string(),
     };
     let err = router
