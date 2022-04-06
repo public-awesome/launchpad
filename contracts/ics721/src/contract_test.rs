@@ -1,11 +1,11 @@
 #[cfg(test)]
 mod contact_testing {
     use super::super::*;
-    use crate::{test_helpers::*};
+    use crate::test_helpers::*;
 
     use cosmwasm_std::testing::mock_env;
+    use cosmwasm_std::IbcEndpoint;
     use cosmwasm_std::{from_binary, to_binary, Attribute, Coin, StdError};
-    use cosmwasm_std::{IbcEndpoint};
     use cw2::{get_contract_version, ContractVersion};
     use cw20_ics20::state::ChannelInfo;
 

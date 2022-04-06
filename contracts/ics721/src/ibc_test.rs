@@ -1,15 +1,15 @@
 #[cfg(test)]
 mod ibc_testing {
 
-    use cosmwasm_std::CosmosMsg::Wasm;
-    use cosmwasm_std::WasmMsg::Execute;
     use super::super::*;
     use crate::test_helpers::*;
+    use cosmwasm_std::CosmosMsg::Wasm;
+    use cosmwasm_std::WasmMsg::Execute;
 
     use crate::contract::query_channel;
     use cosmwasm_std::testing::mock_env;
     use cosmwasm_std::{
-        to_vec, Attribute, IbcAcknowledgement, IbcEndpoint, IbcTimeout, ReplyOn, Timestamp
+        to_vec, Attribute, IbcAcknowledgement, IbcEndpoint, IbcTimeout, ReplyOn, Timestamp,
     };
 
     pub fn mock_sent_packet(

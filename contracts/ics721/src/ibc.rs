@@ -14,14 +14,12 @@ use cosmwasm_std::{
 use crate::error::{ContractError, Never};
 use crate::state::{CHANNEL_INFO, CHANNEL_STATE};
 
-
 pub const ICS721_VERSION: &str = "ics721-1";
 pub const ICS721_ORDERING: IbcOrder = IbcOrder::Unordered;
 
 #[cfg(test)]
 #[path = "ibc_test.rs"]
 mod ibc_testing;
-
 
 // TODO: need to define proto for chain to parse this?
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug, Default)]
@@ -74,8 +72,6 @@ impl Ics721Packet {
         Ok(())
     }
 }
-
-
 
 // TODO: copy pasta, make parent public
 // create a serialized success message
@@ -370,4 +366,4 @@ fn send_tokens(
         funds: vec![],
     };
     SubMsg::reply_on_error(exec, SEND_NFT_ID)
-  }
+}
