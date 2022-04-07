@@ -259,16 +259,30 @@ fn do_ibc_packet_receive(deps: DepsMut, packet: &IbcPacket) -> Result<Ics721Pack
     // state and make sure we have a record of sending it.
     // If we find it, remove it from state and return Ok.
     // If we don't find it, return Err.
-    let state =
-        CHANNEL_STATE.may_load(deps.storage, (&channel, contract_addr, &msg.token_ids[0]))?;
-    match state {
-        Some(_) => CHANNEL_STATE.remove(deps.storage, (&channel, contract_addr, &msg.token_ids[0])),
-        None => {
-            return Err(ContractError::NoSuchNft {
-                class_id: msg.class_id,
-            })
-        }
-    };
+    for token_id in &msg.token_ids {
+        let state = CHANNEL_STATE.may_load(deps.storage, (&channel, contract_addr, token_id))?;
+        match state {
+            Some(_) => (),
+            None => {
+                return Err(ContractError::NoSuchNft {
+                    class_id: msg.class_id,
+                })
+            }
+        };
+    }
+    for token_id in &msg.token_ids {
+        CHANNEL_STATE.remove(deps.storage, (&channel, contract_addr, token_id));
+    }
+    ("Some data");
+
+    // match state {
+    //     Some(_) => CHANNEL_STATE.remove(deps.storage, (&channel, contract_addr, &msg.token_ids[0])),
+    //     None => {
+    //         return Err(ContractError::NoSuchNft {
+    //             class_id: msg.class_id,
+    //         })
+    //     }
+    // };
 
     Ok(msg)
 }
@@ -314,12 +328,14 @@ fn on_packet_success(deps: DepsMut, packet: IbcPacket) -> Result<IbcBasicRespons
     ];
 
     let channel = packet.src.channel_id;
-    CHANNEL_STATE.save(
-        deps.storage,
-        (&channel, &msg.class_id, &msg.token_ids[0]),
-        &Empty {},
-    )?;
+    for token in &msg.token_ids { 
 
+        CHANNEL_STATE.save(
+            deps.storage,
+            (&channel, &msg.class_id, token),
+            &Empty {},
+        )?;
+    }
     Ok(IbcBasicResponse::new().add_attributes(attributes))
 }
 
@@ -356,13 +372,17 @@ fn send_tokens(
     recipient: String,
 ) -> SubMsg {
     // TODO: need a `TransferFullNft` or `TransferRemoteNft` that includes token_uri
-    let msg = Cw721ExecuteMsg::TransferNft {
-        recipient,
-        token_id: token_ids[0].clone(),
-    };
+    let mut msgs: Vec<Cw721ExecuteMsg> = Vec::new();
+    for token_id in token_ids {
+        let msg = Cw721ExecuteMsg::TransferNft {
+            recipient: recipient.clone(),
+            token_id: token_id.clone()
+        };
+        msgs.push(msg);
+    }
     let exec = WasmMsg::Execute {
         contract_addr: contract_addr.to_string(),
-        msg: to_binary(&msg).unwrap(),
+        msg: to_binary(&msgs).unwrap(),
         funds: vec![],
     };
     SubMsg::reply_on_error(exec, SEND_NFT_ID)
