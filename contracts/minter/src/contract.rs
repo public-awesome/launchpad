@@ -484,9 +484,6 @@ fn random_mintable_token_id(deps: Deps, env: &Env, sender: Addr) -> Result<u32, 
         .keys(deps.storage, None, None, Order::Ascending)
         .collect();
     let mut mintable_tokens = mintable_tokens_result.unwrap();
-    if mintable_tokens.is_empty() {
-        return Err(ContractError::SoldOut {});
-    }
     let mut shuffler = FisherYates::default();
     shuffler
         .shuffle(&mut mintable_tokens, &mut rng)
