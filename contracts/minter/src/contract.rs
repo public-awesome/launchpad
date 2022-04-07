@@ -373,11 +373,11 @@ fn _execute_mint(
     recipient: Option<Addr>,
     token_id: Option<u32>,
 ) -> Result<Response, ContractError> {
-    let mintable_result: StdResult<Vec<u32>> = MINTABLE_TOKEN_IDS
+    let mintable = MINTABLE_TOKEN_IDS
         .keys(deps.storage, None, None, Order::Ascending)
-        .take(1)
-        .collect();
-    if mintable_result.unwrap().is_empty() {
+        .next()
+        .is_some();
+    if !mintable {
         return Err(ContractError::SoldOut {});
     }
 
