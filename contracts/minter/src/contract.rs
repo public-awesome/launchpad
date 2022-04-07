@@ -373,6 +373,14 @@ fn _execute_mint(
     recipient: Option<Addr>,
     token_id: Option<u32>,
 ) -> Result<Response, ContractError> {
+    let mintable_result: StdResult<Vec<u32>> = MINTABLE_TOKEN_IDS
+        .keys(deps.storage, None, None, Order::Ascending)
+        .take(1)
+        .collect();
+    if mintable_result.unwrap().is_empty() {
+        return Err(ContractError::SoldOut {});
+    }
+
     let config = CONFIG.load(deps.storage)?;
     let sg721_address = SG721_ADDRESS.load(deps.storage)?;
 
