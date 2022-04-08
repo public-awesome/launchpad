@@ -6,6 +6,7 @@ pub const NATIVE_DENOM: &str = "ustars";
 // 3/11/2022 16:00:00 ET
 pub const GENESIS_MINT_START_TIME: u64 = 1647032400000000000;
 
+use cw_storage_plus::Map;
 pub use msg::{
     create_claim_for_msg, create_fund_community_pool_msg, ClaimAction, StargazeMsg,
     StargazeMsgWrapper,
@@ -22,3 +23,5 @@ pub use route::StargazeRoute;
 // "stargaze" support on the chain they run on.
 #[no_mangle]
 extern "C" fn requires_stargaze() {}
+
+pub const PARAM_U32: Map<&str, u32> = Map::new("u32");

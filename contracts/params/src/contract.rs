@@ -38,9 +38,14 @@ pub fn execute(
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
+    // TODO: can only be called by governance?
     match msg {
         ExecuteMsg::Increment {} => try_increment(deps),
         ExecuteMsg::Reset { count } => try_reset(deps, info, count),
+        ExecuteMsg::Registeru32 { key, value } => todo!(),
+        ExecuteMsg::Registeru64 { key, value } => todo!(),
+        ExecuteMsg::RegisterUint128 { key, value } => todo!(),
+        ExecuteMsg::RegisterAddr { key, value } => todo!(),
     }
 }
 
