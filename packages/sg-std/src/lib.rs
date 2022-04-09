@@ -1,4 +1,5 @@
 mod msg;
+mod params;
 mod query;
 mod route;
 
@@ -16,6 +17,7 @@ pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 pub type SubMsg = cosmwasm_std::SubMsg<StargazeMsgWrapper>;
 pub type CosmosMsg = cosmwasm_std::CosmosMsg<StargazeMsgWrapper>;
 
+pub use params::query_param_u32;
 pub use query::StargazeQuery;
 pub use route::StargazeRoute;
 

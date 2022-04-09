@@ -854,6 +854,7 @@ dependencies = [
  "cw721-base",
  "schemars",
  "serde",
+ "sg2",
  "thiserror",
 ]
 
@@ -880,12 +881,8 @@ dependencies = [
 name = "sg2"
 version = "0.11.0"
 dependencies = [
- "cosmwasm-std",
- "cw-utils 0.13.1",
  "schemars",
  "serde",
- "sg-std 0.11.0",
- "thiserror",
 ]
 
 [[package]]
