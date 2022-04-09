@@ -1,19 +1,19 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "QueryMsg",
+  "title": "SudoMsg",
   "oneOf": [
     {
-      "description": "Gets a param by key Return type: `ParamResponse`",
       "type": "object",
       "required": [
-        "get_paramu32"
+        "update_paramu32"
       ],
       "properties": {
-        "get_paramu32": {
+        "update_paramu32": {
           "type": "object",
           "required": [
             "contract_name",
-            "key"
+            "key",
+            "value"
           ],
           "properties": {
             "contract_name": {
@@ -21,6 +21,11 @@
             },
             "key": {
               "type": "string"
+            },
+            "value": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
             }
           }
         }

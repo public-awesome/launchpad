@@ -3,8 +3,7 @@ use std::fs::create_dir_all;
 
 use cosmwasm_schema::{export_schema, remove_schemas, schema_for};
 
-use params::msg::{CountResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
-use params::state::State;
+use params::msg::{ExecuteMsg, InstantiateMsg, ParamResponseu32, QueryMsg, SudoMsg};
 
 fn main() {
     let mut out_dir = current_dir().unwrap();
@@ -14,7 +13,7 @@ fn main() {
 
     export_schema(&schema_for!(InstantiateMsg), &out_dir);
     export_schema(&schema_for!(ExecuteMsg), &out_dir);
+    export_schema(&schema_for!(SudoMsg), &out_dir);
     export_schema(&schema_for!(QueryMsg), &out_dir);
-    export_schema(&schema_for!(State), &out_dir);
-    export_schema(&schema_for!(CountResponse), &out_dir);
+    export_schema(&schema_for!(ParamResponseu32), &out_dir);
 }
