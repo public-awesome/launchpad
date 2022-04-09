@@ -850,6 +850,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "sg1"
+version = "0.10.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-utils 0.13.1",
+ "cw721",
+ "cw721-base",
+ "schemars",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
 name = "sg721"
 version = "0.10.0"
 dependencies = [
