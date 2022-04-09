@@ -273,17 +273,6 @@ fn do_ibc_packet_receive(deps: DepsMut, packet: &IbcPacket) -> Result<Ics721Pack
     for token_id in &msg.token_ids {
         CHANNEL_STATE.remove(deps.storage, (&channel, contract_addr, token_id));
     }
-    ("Some data");
-
-    // match state {
-    //     Some(_) => CHANNEL_STATE.remove(deps.storage, (&channel, contract_addr, &msg.token_ids[0])),
-    //     None => {
-    //         return Err(ContractError::NoSuchNft {
-    //             class_id: msg.class_id,
-    //         })
-    //     }
-    // };
-
     Ok(msg)
 }
 
@@ -362,9 +351,7 @@ fn on_packet_failure(
         .add_submessage(msg))
 }
 
-// TODO: The standard allows sending more than one token at a time.
-// We are just sending one for now.
-// https://github.com/public-awesome/contracts/issues/64
+
 fn send_tokens(
     contract_addr: &str,
     token_ids: Vec<String>,
@@ -379,6 +366,7 @@ fn send_tokens(
             token_id: token_id.clone()
         };
         msgs.push(msg);
+
     }
     let exec = WasmMsg::Execute {
         contract_addr: contract_addr.to_string(),
