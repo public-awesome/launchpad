@@ -1,0 +1,18 @@
+[package]
+name = "sg2"
+version = "0.11.0"
+edition = "2021"
+
+authors = ["Shane Vitarana <s@noreply.publicawesome.com>"]
+description = "Definition and types for the SG2 interface"
+license = "Apache-2.0"
+repository = "https://github.com/public-awesome/stargaze-contracts"
+homepage = "https://stargaze.zone"
+
+[dependencies]
+cosmwasm-std = { version = "1.0.0-beta7" }
+cw-utils = "0.13.1"
+serde = { version = "1.0.133", default-features = false, features = ["derive"] }
+sg-std = { version = "0.11.0", path = "../sg-std" }
+thiserror = "1.0.30"
+schemars = "0.8.8"
