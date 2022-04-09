@@ -1,18 +1,8 @@
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use cw_storage_plus::Map;
 
-use cosmwasm_std::{Addr, Uint128};
-use cw_storage_plus::{Item, Map};
+/// (contract_name, param_key) -> param_value
+pub const U32: Map<(String, String), u32> = Map::new("u32");
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct State {
-    pub count: i32,
-    pub owner: Addr,
-}
-
-pub const STATE: Item<State> = Item::new("state");
-
-pub const PARAM_U32: Map<&str, u32> = Map::new("u32");
-pub const PARAM_U64: Map<&str, u64> = Map::new("u64");
-pub const PARAM_UINT128: Map<&str, Uint128> = Map::new("uint128");
-pub const PARAM_ADDR: Map<&str, Addr> = Map::new("addr");
+// const U64: Map<&str, u64> = Map::new("u64");
+// const UINT128: Map<&str, Uint128> = Map::new("uint128");
+// const ADDR: Map<&str, Addr> = Map::new("addr");
