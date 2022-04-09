@@ -860,6 +860,7 @@ dependencies = [
  "cw721-base",
  "schemars",
  "serde",
+ "sg-std 0.10.0",
  "thiserror",
 ]
 

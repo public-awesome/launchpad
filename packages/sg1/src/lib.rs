@@ -1,6 +1,6 @@
-use crate::NATIVE_DENOM;
 use cosmwasm_std::{coins, BankMsg, CosmosMsg, Decimal, MessageInfo, Uint128};
 use cw_utils::{must_pay, PaymentError};
+use sg_std::{create_fund_community_pool_msg, StargazeMsgWrapper, NATIVE_DENOM};
 use thiserror::Error;
 
 // governance parameters

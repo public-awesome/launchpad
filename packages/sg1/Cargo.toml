@@ -16,6 +16,7 @@ cw721 = "0.13.1"
 cw721-base = { version = "0.13.1", features = ["library"] }
 schemars = "0.8.8"
 serde = { version = "1.0.133", default-features = false, features = ["derive"] }
+sg-std = { version = "0.10.0", path = "../sg-std" }
 thiserror = "1.0.30"
 
 [dev-dependencies]
