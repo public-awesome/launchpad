@@ -10,7 +10,7 @@ use crate::msg::{InstantiateMsg, ParamResponseu32, QueryMsg, SudoMsg};
 use crate::state::U32;
 
 // version info for migration info
-const CONTRACT_NAME: &str = "crates.io:params";
+const CONTRACT_NAME: &str = "crates.io:paramstore";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 // TODO: make sure this can only be sudo initialized
