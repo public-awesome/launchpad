@@ -267,7 +267,7 @@ pub fn execute_mint_sender(
         return Err(ContractError::MaxPerAddressLimitExceeded {});
     }
 
-    _execute_mint(deps, &env, info, action, false, None, None)
+    _execute_mint(deps, env, info, action, false, None, None)
 }
 
 // Check if a whitelist exists and not ended
@@ -328,7 +328,7 @@ pub fn execute_mint_to(
         ));
     }
 
-    _execute_mint(deps, &env, info, action, true, Some(recipient), None)
+    _execute_mint(deps, env, info, action, true, Some(recipient), None)
 }
 
 pub fn execute_mint_for(
@@ -351,7 +351,7 @@ pub fn execute_mint_for(
 
     _execute_mint(
         deps,
-        &env,
+        env,
         info,
         action,
         true,
@@ -366,7 +366,7 @@ pub fn execute_mint_for(
 // mint_for(recipient: "friend2", token_id: 420) -> _execute_mint(recipient, token_id)
 fn _execute_mint(
     deps: DepsMut,
-    env: &Env,
+    env: Env,
     info: MessageInfo,
     action: &str,
     admin_no_fee: bool,
@@ -461,14 +461,15 @@ fn _execute_mint(
         .add_messages(msgs))
 }
 
-fn random_mintable_token_id(deps: Deps, env: &Env, sender: Addr) -> Result<u32, ContractError> {
+fn random_mintable_token_id(deps: Deps, env: Env, sender: Addr) -> Result<u32, ContractError> {
     // not cryptographically secure random
     // TODO add random beacon input to sha256 step
-    let transaction_index: u32 = if let Some(transaction) = &env.transaction {
+    let transaction_index: u32 = if let Some(transaction) = env.transaction {
         transaction.index
     } else {
         return Err(ContractError::NoEnvTransactionIndex {});
     };
+
     let height: u64 = env.block.height;
     let sha256 = Sha256::digest(format!("{}{}{}", sender, transaction_index, height).into_bytes());
     let randomness: Vec<u8> = sha256.to_vec();
