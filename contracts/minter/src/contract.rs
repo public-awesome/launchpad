@@ -609,6 +609,8 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::MintableNumTokens {} => to_binary(&query_mintable_num_tokens(deps)?),
         QueryMsg::MintPrice {} => to_binary(&query_mint_price(deps)?),
         QueryMsg::MintCount { address } => to_binary(&query_mint_count(deps, address)?),
+        // TODO: remove (debug only)
+        QueryMsg::MintableTokens  {} => to_binary(&query_mintable_tokens(deps)?),
     }
 }
 
@@ -643,6 +645,20 @@ fn query_start_time(deps: Deps) -> StdResult<StartTimeResponse> {
     Ok(StartTimeResponse {
         start_time: config.start_time.to_string(),
     })
+}
+
+// TODO: remove (debug only)
+fn query_mintable_tokens(deps: Deps) -> StdResult<MintableTokensResponse> {
+   let first =  MINTABLE_TOKEN_IDS
+    .keys(deps.storage, None, None, Order::Ascending)
+    .take(50)
+    .collect::<StdResult<Vec<_>>>()?;
+
+    let last =  MINTABLE_TOKEN_IDS
+    .keys(deps.storage, None, None, Order::Ascending)
+    .take(50)
+    .collect::<StdResult<Vec<_>>>()?;
+    Ok(MintableTokensResponse { first,last })
 }
 
 fn query_mintable_num_tokens(deps: Deps) -> StdResult<MintableNumTokensResponse> {
