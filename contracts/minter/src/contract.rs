@@ -267,7 +267,7 @@ pub fn execute_mint_sender(
         return Err(ContractError::MaxPerAddressLimitExceeded {});
     }
 
-    _execute_mint(deps, &env, info, action, false, None, None)
+    _execute_mint(deps, env, info, action, false, None, None)
 }
 
 // Check if a whitelist exists and not ended
@@ -328,7 +328,7 @@ pub fn execute_mint_to(
         ));
     }
 
-    _execute_mint(deps, &env, info, action, true, Some(recipient), None)
+    _execute_mint(deps, env, info, action, true, Some(recipient), None)
 }
 
 pub fn execute_mint_for(
@@ -351,7 +351,7 @@ pub fn execute_mint_for(
 
     _execute_mint(
         deps,
-        &env,
+        env,
         info,
         action,
         true,
@@ -366,7 +366,7 @@ pub fn execute_mint_for(
 // mint_for(recipient: "friend2", token_id: 420) -> _execute_mint(recipient, token_id)
 fn _execute_mint(
     deps: DepsMut,
-    env: &Env,
+    env: Env,
     info: MessageInfo,
     action: &str,
     admin_no_fee: bool,
@@ -461,34 +461,32 @@ fn _execute_mint(
         .add_messages(msgs))
 }
 
-fn random_mintable_token_id(deps: Deps, env: &Env, sender: Addr) -> Result<u32, ContractError> {
-    // not cryptographically secure random
-    // TODO add random beacon input to sha256 step
-    let transaction_index: u32 = if let Some(transaction) = &env.transaction {
-        transaction.index
-    } else {
-        return Err(ContractError::NoEnvTransactionIndex {});
-    };
-    let height: u64 = env.block.height;
-    let sha256 = Sha256::digest(format!("{}{}{}", sender, transaction_index, height).into_bytes());
-    let randomness: Vec<u8> = sha256.to_vec();
-    let randomness: [u8; 16] = randomness[0..16].try_into().unwrap(); // Cut first 16 bytes from 32 byte value
+fn random_mintable_token_id(deps: Deps, env: Env, sender: Addr) -> Result<u32, ContractError> {
+    let tx_index = env
+        .transaction
+        .map(|tx| tx.index)
+        .ok_or(ContractError::NoEnvTransactionIndex {})?;
 
-    // A PRNG that is not cryptographically secure.
+    let sha256 = Sha256::digest(format!("{}{}{}", sender, tx_index, env.block.height).into_bytes());
+    // Cut first 16 bytes from 32 byte value
+    let randomness: [u8; 16] = sha256.to_vec()[0..16].try_into().unwrap();
+
+    let mut mintable_tokens = MINTABLE_TOKEN_IDS
+        .keys(deps.storage, None, None, Order::Ascending)
+        .collect::<StdResult<Vec<_>>>()?;
+
     // See https://docs.rs/rand/0.8.5/rand/rngs/struct.SmallRng.html
     // where this is used for 32 bit systems.
     // We don't use the SmallRng in order to get the same implementation
     // in unit tests (64 bit dev machines) and the real contract (32 bit Wasm)
     let mut rng = Xoshiro128PlusPlus::from_seed(randomness);
-    let mintable_tokens_result: StdResult<Vec<u32>> = MINTABLE_TOKEN_IDS
-        .keys(deps.storage, None, None, Order::Ascending)
-        .collect();
-    let mut mintable_tokens = mintable_tokens_result.unwrap();
+
     let mut shuffler = FisherYates::default();
     shuffler
         .shuffle(&mut mintable_tokens, &mut rng)
         .map_err(StdError::generic_err)?;
-    Ok(mintable_tokens[0] as u32)
+
+    Ok(mintable_tokens[0])
 }
 
 pub fn execute_update_start_time(
