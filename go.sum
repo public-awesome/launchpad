@@ -841,8 +841,8 @@ github.com/prometheus/tsdb v0.6.2-0.20190402121629-4f204dcbc150/go.mod h1:qhTCs0
 github.com/prometheus/tsdb v0.7.1/go.mod h1:qhTCs0VvXwvX/y3TZrWD7rabWM+ijKTux40TwIPHuXU=
 github.com/public-awesome/spm v0.1.9-stargaze.0.20220218155531-af173fcd55c7 h1:gREyabF5pvMOXbYUtzVQy3qsZLqGppwElvUTuzXw1gQ=
 github.com/public-awesome/spm v0.1.9-stargaze.0.20220218155531-af173fcd55c7/go.mod h1:nWdsWsUUXUl/VjUlaOUp/xOZlG/tzJ02P6MAPYAIuKE=
-github.com/public-awesome/stargaze/v4 v4.0.0-beta.0 h1:02GSyLQzsDmpHIk8dImrljumtDujE5FzMZZCD9iypqc=
-github.com/public-awesome/stargaze/v4 v4.0.0-beta.0/go.mod h1:uc8WWNB+Uj2j8XpbgCbRZ1IHw12rOEWARspUtO7OHgU=
+github.com/public-awesome/stargaze/v4 v4.0.0 h1:muUAjS9sB4/ZljRCRHZuFCg3V4lNdgLd0v8qXCcjH7Q=
+github.com/public-awesome/stargaze/v4 v4.0.0/go.mod h1:uc8WWNB+Uj2j8XpbgCbRZ1IHw12rOEWARspUtO7OHgU=
 github.com/rakyll/statik v0.1.7 h1:OF3QCZUuyPxuGEP7B4ypUa7sB/iHtqOTDYZXGM8KOdQ=
 github.com/rakyll/statik v0.1.7/go.mod h1:AlZONWzMtEnMs7W4e/1LURLiI49pIMmp6V9Unghqrcc=
 github.com/rcrowley/go-metrics v0.0.0-20181016184325-3113b8401b8a/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=
