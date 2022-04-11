@@ -1,4 +1,3 @@
-mod fees;
 mod msg;
 mod query;
 mod route;
@@ -16,7 +15,6 @@ pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 pub type SubMsg = cosmwasm_std::SubMsg<StargazeMsgWrapper>;
 pub type CosmosMsg = cosmwasm_std::CosmosMsg<StargazeMsgWrapper>;
 
-pub use fees::{checked_fair_burn, fair_burn, FeeError};
 pub use query::StargazeQuery;
 pub use route::StargazeRoute;
 
