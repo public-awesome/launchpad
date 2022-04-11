@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/CosmWasm/wasmd v0.25.0
 	github.com/cosmos/cosmos-sdk v0.45.2
-	github.com/public-awesome/stargaze/v4 v4.0.0-beta.0
+	github.com/public-awesome/stargaze/v4 v4.0.0
 	github.com/stretchr/testify v1.7.1
 	github.com/tendermint/tendermint v0.34.16
 )
