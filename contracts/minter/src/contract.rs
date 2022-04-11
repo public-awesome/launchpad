@@ -19,10 +19,11 @@ use url::Url;
 use crate::error::ContractError;
 use crate::msg::{
     ConfigResponse, ExecuteMsg, InstantiateMsg, MintCountResponse, MintPriceResponse,
-    MintableNumTokensResponse, QueryMsg, StartTimeResponse, MintableTokensResponse,
+    MintableNumTokensResponse, MintableTokensResponse, QueryMsg, StartTimeResponse,
 };
 use crate::state::{
-    Config, CONFIG, MINTABLE_NUM_TOKENS, MINTABLE_TOKEN_IDS, MINTER_ADDRS, SG721_ADDRESS,
+    increment_tokens, tokens, Config, TokenInfo, CONFIG, MINTABLE_NUM_TOKENS, MINTER_ADDRS,
+    SG721_ADDRESS,
 };
 use sg_std::{checked_fair_burn, StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use whitelist::msg::{
@@ -126,7 +127,16 @@ pub fn instantiate(
     let token_list = random_token_list(&env, msg.num_tokens)?;
     // Save mintable token ids map
     for token_id in token_list {
-        MINTABLE_TOKEN_IDS.save(deps.storage, token_id, &true)?;
+        let count = increment_tokens(deps.storage)?;
+        // MINTABLE_TOKEN_IDS.save(deps.storage, count, &token_id)?;
+        tokens().save(
+            deps.storage,
+            count,
+            &TokenInfo {
+                id: token_id,
+                minted: true,
+            },
+        )?;
     }
 
     // Submessage to instantiate sg721 contract
@@ -374,13 +384,12 @@ fn _execute_mint(
     recipient: Option<Addr>,
     token_id: Option<u32>,
 ) -> Result<Response, ContractError> {
-    let mintable = MINTABLE_TOKEN_IDS
-        .keys(deps.storage, None, None, Order::Ascending)
-        .next()
-        .is_some();
-    if !mintable {
-        return Err(ContractError::SoldOut {});
-    }
+    // Return sold out error if mintable token at index 0 doesn't exist
+    tokens()
+        .idx
+        .token_ids
+        .item(deps.storage, 0)
+        .map_err(|_| ContractError::SoldOut {})?;
 
     let config = CONFIG.load(deps.storage)?;
     let sg721_address = SG721_ADDRESS.load(deps.storage)?;
@@ -418,9 +427,9 @@ fn _execute_mint(
                 return Err(ContractError::InvalidTokenId {});
             }
             // If token_id not on mintable map, throw err
-            if !MINTABLE_TOKEN_IDS.has(deps.storage, token_id) {
-                return Err(ContractError::TokenIdAlreadySold { token_id });
-            }
+            tokens()
+                .load(deps.storage, token_id)
+                .map_err(|_| ContractError::TokenIdAlreadySold { token_id })?;
             token_id
         }
         None => {
@@ -444,7 +453,7 @@ fn _execute_mint(
     msgs.append(&mut vec![msg]);
 
     // Remove mintable token id from map
-    MINTABLE_TOKEN_IDS.remove(deps.storage, mintable_token_id);
+    tokens().remove(deps.storage, mintable_token_id)?;
     let mintable_num_tokens = MINTABLE_NUM_TOKENS.load(deps.storage)?;
     // Decrement mintable num tokens
     MINTABLE_NUM_TOKENS.save(deps.storage, &(mintable_num_tokens - 1))?;
@@ -495,7 +504,9 @@ fn random_mintable_token_id(deps: Deps, env: Env, sender: Addr) -> Result<u32, C
         rem = num_tokens;
     }
     let n = r % rem;
-    let mintable_tokens = MINTABLE_TOKEN_IDS
+    let mintable_tokens = tokens()
+        .idx
+        .token_ids
         .keys(deps.storage, None, None, order)
         .skip(n as usize)
         .take(1)
@@ -610,7 +621,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::MintPrice {} => to_binary(&query_mint_price(deps)?),
         QueryMsg::MintCount { address } => to_binary(&query_mint_count(deps, address)?),
         // TODO: remove (debug only)
-        QueryMsg::MintableTokens  {} => to_binary(&query_mintable_tokens(deps)?),
+        QueryMsg::MintableTokens {} => to_binary(&query_mintable_tokens(deps)?),
     }
 }
 
@@ -649,16 +660,16 @@ fn query_start_time(deps: Deps) -> StdResult<StartTimeResponse> {
 
 // TODO: remove (debug only)
 fn query_mintable_tokens(deps: Deps) -> StdResult<MintableTokensResponse> {
-   let first =  MINTABLE_TOKEN_IDS
-    .keys(deps.storage, None, None, Order::Ascending)
-    .take(50)
-    .collect::<StdResult<Vec<_>>>()?;
+    let first = tokens()
+        .keys(deps.storage, None, None, Order::Ascending)
+        .take(50)
+        .collect::<StdResult<Vec<_>>>()?;
 
-    let last =  MINTABLE_TOKEN_IDS
-    .keys(deps.storage, None, None, Order::Descending)
-    .take(50)
-    .collect::<StdResult<Vec<_>>>()?;
-    Ok(MintableTokensResponse { first,last })
+    let last = tokens()
+        .keys(deps.storage, None, None, Order::Descending)
+        .take(50)
+        .collect::<StdResult<Vec<_>>>()?;
+    Ok(MintableTokensResponse { first, last })
 }
 
 fn query_mintable_num_tokens(deps: Deps) -> StdResult<MintableNumTokensResponse> {

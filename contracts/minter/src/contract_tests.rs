@@ -983,6 +983,7 @@ fn before_start_time() {
         &mint_msg,
         &coins(UNIT_PRICE, NATIVE_DENOM),
     );
+    println!("{:?}", res);
     assert!(res.is_ok());
 }
 
