@@ -9,7 +9,7 @@ use cosmwasm_std::{
 use cw2::set_contract_version;
 use cw721_base::{msg::ExecuteMsg as Cw721ExecuteMsg, MintMsg};
 use cw_utils::{may_pay, parse_reply_instantiate_data};
-use rand_core::SeedableRng;
+use rand_core::{RngCore, SeedableRng};
 use rand_xoshiro::Xoshiro128PlusPlus;
 use sg721::msg::InstantiateMsg as Sg721InstantiateMsg;
 use sha2::{Digest, Sha256};
@@ -19,7 +19,7 @@ use url::Url;
 use crate::error::ContractError;
 use crate::msg::{
     ConfigResponse, ExecuteMsg, InstantiateMsg, MintCountResponse, MintPriceResponse,
-    MintableNumTokensResponse, QueryMsg, StartTimeResponse,
+    MintableNumTokensResponse, QueryMsg, StartTimeResponse, MintableTokensResponse,
 };
 use crate::state::{
     Config, CONFIG, MINTABLE_NUM_TOKENS, MINTABLE_TOKEN_IDS, MINTER_ADDRS, SG721_ADDRESS,
@@ -123,8 +123,9 @@ pub fn instantiate(
     CONFIG.save(deps.storage, &config)?;
     MINTABLE_NUM_TOKENS.save(deps.storage, &msg.num_tokens)?;
 
+    let token_list = random_token_list(&env, msg.num_tokens)?;
     // Save mintable token ids map
-    for token_id in 1..=msg.num_tokens {
+    for token_id in token_list {
         MINTABLE_TOKEN_IDS.save(deps.storage, token_id, &true)?;
     }
 
@@ -461,31 +462,44 @@ fn _execute_mint(
         .add_messages(msgs))
 }
 
-fn random_mintable_token_id(deps: Deps, env: Env, sender: Addr) -> Result<u32, ContractError> {
-    let tx_index = env
-        .transaction
-        .map(|tx| tx.index)
-        .ok_or(ContractError::NoEnvTransactionIndex {})?;
+pub fn random_token_list(env: &Env, num_tokens: u32) -> Result<Vec<u32>, ContractError> {
+    let mut tokens: Vec<u32> = (1..num_tokens).collect::<Vec<u32>>();
+    let sha256 = Sha256::digest(format!("{}{}", env.block.height, num_tokens).into_bytes());
+    // Cut first 16 bytes from 32 byte value
+    let randomness: [u8; 16] = sha256.to_vec()[0..16].try_into().unwrap();
+    let mut rng = Xoshiro128PlusPlus::from_seed(randomness);
+    let mut shuffler = FisherYates::default();
+    shuffler
+        .shuffle(&mut tokens, &mut rng)
+        .map_err(StdError::generic_err)?;
+    Ok(tokens)
+}
 
-    let sha256 = Sha256::digest(format!("{}{}{}", sender, tx_index, env.block.height).into_bytes());
+fn random_mintable_token_id(deps: Deps, env: Env, sender: Addr) -> Result<u32, ContractError> {
+    let num_tokens = MINTABLE_NUM_TOKENS.load(deps.storage)?;
+    let sha256 =
+        Sha256::digest(format!("{}{}{}", sender, num_tokens, env.block.height).into_bytes());
     // Cut first 16 bytes from 32 byte value
     let randomness: [u8; 16] = sha256.to_vec()[0..16].try_into().unwrap();
 
-    let mut mintable_tokens = MINTABLE_TOKEN_IDS
-        .keys(deps.storage, None, None, Order::Ascending)
-        .collect::<StdResult<Vec<_>>>()?;
-
-    // See https://docs.rs/rand/0.8.5/rand/rngs/struct.SmallRng.html
-    // where this is used for 32 bit systems.
-    // We don't use the SmallRng in order to get the same implementation
-    // in unit tests (64 bit dev machines) and the real contract (32 bit Wasm)
     let mut rng = Xoshiro128PlusPlus::from_seed(randomness);
 
-    let mut shuffler = FisherYates::default();
-    shuffler
-        .shuffle(&mut mintable_tokens, &mut rng)
-        .map_err(StdError::generic_err)?;
+    let r = rng.next_u32();
 
+    let order = match r % 2 {
+        1 => Order::Descending,
+        _ => Order::Ascending,
+    };
+    let mut rem = 50;
+    if rem > num_tokens {
+        rem = num_tokens;
+    }
+    let n = r % rem;
+    let mintable_tokens = MINTABLE_TOKEN_IDS
+        .keys(deps.storage, None, None, order)
+        .skip(n as usize)
+        .take(1)
+        .collect::<StdResult<Vec<_>>>()?;
     Ok(mintable_tokens[0])
 }
 
