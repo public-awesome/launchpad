@@ -4,8 +4,8 @@ mod contact_testing {
     use crate::test_helpers::*;
 
     use cosmwasm_std::testing::mock_env;
-    use cosmwasm_std::IbcEndpoint;
     use cosmwasm_std::{from_binary, to_binary, Attribute, Coin, StdError};
+    use cosmwasm_std::{CosmosMsg, IbcEndpoint};
     use cw2::{get_contract_version, ContractVersion};
     use cw20_ics20::state::ChannelInfo;
 
@@ -367,7 +367,12 @@ mod contact_testing {
             timeout: Some(1000),
         };
         let sender_address: Addr = Addr::unchecked("wasm1fucynrfkrt684pm8jrt8la5h2csvs5cnldcgqc");
-        let result = execute_transfer(deps.as_mut(), mock_env(), transfer_msg, sender_address);
+        let result = execute_transfer(
+            deps.as_mut(),
+            mock_env(),
+            transfer_msg.clone(),
+            sender_address.clone(),
+        );
         let expected_result = [
             Attribute {
                 key: "action".into(),
@@ -390,7 +395,32 @@ mod contact_testing {
                 value: "1,2,3".into(),
             },
         ];
-        assert_eq!(result.unwrap().attributes, expected_result);
+        let expected_ics721_packet = Ics721Packet::new(
+            mock_env().contract.address.as_ref(),
+            None,
+            transfer_msg
+                .token_ids
+                .iter()
+                .map(|s| s.as_ref())
+                .collect::<Vec<&str>>(),
+            transfer_msg
+                .token_uris
+                .iter()
+                .map(|s| s.as_ref())
+                .collect::<Vec<&str>>(),
+            &sender_address.to_string(),
+            &transfer_msg.clone().remote_address,
+        );
+        let result_msg = &result.unwrap();
+        let ibc_msg = &result_msg.messages[0].msg;
+        match ibc_msg.clone() {
+            CosmosMsg::Ibc(IbcMsg::SendPacket { data, .. }) => {
+                let expected_binary = to_binary(&expected_ics721_packet).unwrap();
+                assert_eq!(expected_binary, data);
+            }
+            _ => panic!("Did not receive a CosmosMsg"),
+        }
+        assert_eq!(result_msg.attributes, expected_result);
     }
 
     #[test]
@@ -454,9 +484,34 @@ mod contact_testing {
                 value: "1,2,3".into(),
             },
         ];
-        let result_clone = result.unwrap();
-        assert_eq!(result_clone.attributes, expected_result);
-        assert_eq!(result_clone.messages.len(), 1);
+        let expected_ics721_packet = Ics721Packet::new(
+            mock_env().contract.address.as_ref(),
+            None,
+            transfer_msg
+                .token_ids
+                .iter()
+                .map(|s| s.as_ref())
+                .collect::<Vec<&str>>(),
+            transfer_msg
+                .token_uris
+                .iter()
+                .map(|s| s.as_ref())
+                .collect::<Vec<&str>>(),
+            &sender_address_str,
+            &transfer_msg.clone().remote_address,
+        );
+        let result_msg = &result.unwrap();
+        let ibc_msg = &result_msg.messages[0].msg;
+        match ibc_msg.clone() {
+            CosmosMsg::Ibc(IbcMsg::SendPacket { data, .. }) => {
+                let expected_binary = to_binary(&expected_ics721_packet).unwrap();
+                assert_eq!(expected_binary, data);
+            }
+            _ => panic!("Did not receive a CosmosMsg"),
+        }
+
+        assert_eq!(result_msg.attributes, expected_result);
+        assert_eq!(result_msg.messages.len(), 1);
     }
 
     #[test]
@@ -531,9 +586,10 @@ mod contact_testing {
             remote_address: "stars1zedxv25ah8fksmg2lzrndrpkvsjqgk4zt5ff7n".to_string(),
             timeout: Some(1000),
         };
-
+        
+        let cw_721_receive_sender = "sender_address_receive_path";
         let cw721_receive_msg = ExecuteMsg::Receive(Cw721ReceiveMsg {
-            sender: "sender_address_receive_path".to_string(),
+            sender: cw_721_receive_sender.to_string(),
             token_id: "1".to_string(),
             msg: to_binary(&transfer_msg).unwrap(),
         });
@@ -567,9 +623,35 @@ mod contact_testing {
                 value: "1,2,3".into(),
             },
         ];
-        let result_clone = result.unwrap();
-        assert_eq!(result_clone.attributes, expected_result);
-        assert_eq!(result_clone.messages.len(), 1);
+
+        let expected_ics721_packet = Ics721Packet::new(
+            mock_env().contract.address.as_ref(),
+            None,
+            transfer_msg
+                .token_ids
+                .iter()
+                .map(|s| s.as_ref())
+                .collect::<Vec<&str>>(),
+            transfer_msg
+                .token_uris
+                .iter()
+                .map(|s| s.as_ref())
+                .collect::<Vec<&str>>(),
+                &cw_721_receive_sender,
+            &transfer_msg.clone().remote_address,
+        );
+        let result_msg = &result.unwrap();
+        let ibc_msg = &result_msg.messages[0].msg;
+        match ibc_msg.clone() {
+            CosmosMsg::Ibc(IbcMsg::SendPacket { data, .. }) => {
+                let expected_binary = to_binary(&expected_ics721_packet).unwrap();
+                assert_eq!(expected_binary, data);
+            }
+            _ => panic!("Did not receive a CosmosMsg"),
+        }
+
+        assert_eq!(result_msg.attributes, expected_result);
+        assert_eq!(result_msg.messages.len(), 1);
     }
 
     #[test]
