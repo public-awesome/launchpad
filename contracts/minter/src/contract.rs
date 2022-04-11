@@ -655,7 +655,7 @@ fn query_mintable_tokens(deps: Deps) -> StdResult<MintableTokensResponse> {
     .collect::<StdResult<Vec<_>>>()?;
 
     let last =  MINTABLE_TOKEN_IDS
-    .keys(deps.storage, None, None, Order::Ascending)
+    .keys(deps.storage, None, None, Order::Descending)
     .take(50)
     .collect::<StdResult<Vec<_>>>()?;
     Ok(MintableTokensResponse { first,last })
