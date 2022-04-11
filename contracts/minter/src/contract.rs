@@ -471,15 +471,15 @@ fn random_mintable_token_id(deps: Deps, env: Env, sender: Addr) -> Result<u32, C
     // Cut first 16 bytes from 32 byte value
     let randomness: [u8; 16] = sha256.to_vec()[0..16].try_into().unwrap();
 
+    let mut mintable_tokens = MINTABLE_TOKEN_IDS
+        .keys(deps.storage, None, None, Order::Ascending)
+        .collect::<StdResult<Vec<_>>>()?;
+
     // See https://docs.rs/rand/0.8.5/rand/rngs/struct.SmallRng.html
     // where this is used for 32 bit systems.
     // We don't use the SmallRng in order to get the same implementation
     // in unit tests (64 bit dev machines) and the real contract (32 bit Wasm)
     let mut rng = Xoshiro128PlusPlus::from_seed(randomness);
-    let mintable_tokens_result: StdResult<Vec<u32>> = MINTABLE_TOKEN_IDS
-        .keys(deps.storage, None, None, Order::Ascending)
-        .collect();
-    let mut mintable_tokens = mintable_tokens_result?;
 
     let mut shuffler = FisherYates::default();
     shuffler
