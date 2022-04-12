@@ -586,7 +586,6 @@ mod contact_testing {
             remote_address: "stars1zedxv25ah8fksmg2lzrndrpkvsjqgk4zt5ff7n".to_string(),
             timeout: Some(1000),
         };
-        
         let cw_721_receive_sender = "sender_address_receive_path";
         let cw721_receive_msg = ExecuteMsg::Receive(Cw721ReceiveMsg {
             sender: cw_721_receive_sender.to_string(),
@@ -637,7 +636,7 @@ mod contact_testing {
                 .iter()
                 .map(|s| s.as_ref())
                 .collect::<Vec<&str>>(),
-                cw_721_receive_sender,
+            cw_721_receive_sender,
             &transfer_msg.clone().remote_address,
         );
         let result_msg = &result.unwrap();

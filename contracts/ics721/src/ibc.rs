@@ -317,13 +317,8 @@ fn on_packet_success(deps: DepsMut, packet: IbcPacket) -> Result<IbcBasicRespons
     ];
 
     let channel = packet.src.channel_id;
-    for token in &msg.token_ids { 
-
-        CHANNEL_STATE.save(
-            deps.storage,
-            (&channel, &msg.class_id, token),
-            &Empty {},
-        )?;
+    for token in &msg.token_ids {
+        CHANNEL_STATE.save(deps.storage, (&channel, &msg.class_id, token), &Empty {})?;
     }
     Ok(IbcBasicResponse::new().add_attributes(attributes))
 }
@@ -351,7 +346,6 @@ fn on_packet_failure(
         .add_submessage(msg))
 }
 
-
 fn send_tokens(
     contract_addr: &str,
     token_ids: Vec<String>,
@@ -363,10 +357,9 @@ fn send_tokens(
     for token_id in token_ids {
         let msg = Cw721ExecuteMsg::TransferNft {
             recipient: recipient.clone(),
-            token_id: token_id.clone()
+            token_id: token_id.clone(),
         };
         msgs.push(msg);
-
     }
     let exec = WasmMsg::Execute {
         contract_addr: contract_addr.to_string(),

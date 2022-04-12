@@ -577,7 +577,7 @@ mod ibc_testing {
         contract_addr += "/";
         contract_addr += &ibc_packet.src.channel_id;
         contract_addr += "/";
-        contract_addr+= nft_name;
+        contract_addr += nft_name;
 
         let res = send_sg721_fail(
             deps.as_mut(),
