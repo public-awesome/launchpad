@@ -497,7 +497,7 @@ mod contact_testing {
                 .iter()
                 .map(|s| s.as_ref())
                 .collect::<Vec<&str>>(),
-            &sender_address_str,
+            sender_address_str,
             &transfer_msg.clone().remote_address,
         );
         let result_msg = &result.unwrap();
@@ -637,7 +637,7 @@ mod contact_testing {
                 .iter()
                 .map(|s| s.as_ref())
                 .collect::<Vec<&str>>(),
-                &cw_721_receive_sender,
+                cw_721_receive_sender,
             &transfer_msg.clone().remote_address,
         );
         let result_msg = &result.unwrap();
