@@ -11,7 +11,7 @@ mod contact_testing {
 
     use cosmwasm_std::testing::mock_dependencies;
 
-    fn test_setup(deps: Deps, channel_0: String, channel_1: String) {
+    fn check_setup(deps: Deps, channel_0: String, channel_1: String) {
         let raw_list = query(deps, mock_env(), QueryMsg::ListChannels {}).unwrap();
         let list_res: ListChannelsResponse = from_binary(&raw_list).unwrap();
         assert_eq!(2, list_res.channels.len());
@@ -20,14 +20,18 @@ mod contact_testing {
     }
 
     #[test]
-    fn test_query_success() {
+    fn test_valid_setup() {
         let deps = setup(&["channel-3", "channel-7"]);
-        test_setup(
+        check_setup(
             deps.as_ref(),
             "channel-3".to_string(),
             "channel-7".to_string(),
         );
+    }
 
+    #[test]
+    fn test_query_success() {
+        let deps = setup(&["channel-3", "channel-7"]);
         let raw_channel = query(
             deps.as_ref(),
             mock_env(),
@@ -43,12 +47,6 @@ mod contact_testing {
     #[test]
     fn test_query_fail() {
         let deps = setup(&["channel-3", "channel-7"]);
-        test_setup(
-            deps.as_ref(),
-            "channel-3".to_string(),
-            "channel-7".to_string(),
-        );
-
         let err = query(
             deps.as_ref(),
             mock_env(),
@@ -63,12 +61,6 @@ mod contact_testing {
     #[test]
     fn test_query_channel_list_success() {
         let deps = setup(&["channel-3", "channel-7"]);
-        test_setup(
-            deps.as_ref(),
-            "channel-3".to_string(),
-            "channel-7".to_string(),
-        );
-
         let result = query_list(deps.as_ref());
 
         let expected_list: StdResult<ListChannelsResponse> = Ok(ListChannelsResponse {
@@ -96,12 +88,6 @@ mod contact_testing {
     #[test]
     fn test_query_channel_list_empty() {
         let mut deps = setup(&["channel-3", "channel-7"]);
-        test_setup(
-            deps.as_ref(),
-            "channel-3".to_string(),
-            "channel-7".to_string(),
-        );
-
         CHANNEL_INFO.remove(&mut deps.storage, "channel-3");
         CHANNEL_INFO.remove(&mut deps.storage, "channel-7");
         let result = query_list(deps.as_ref());
@@ -114,12 +100,6 @@ mod contact_testing {
     #[test]
     fn test_query_channel_success() {
         let mut deps = setup(&["channel-3", "channel-7"]);
-        test_setup(
-            deps.as_ref(),
-            "channel-3".to_string(),
-            "channel-7".to_string(),
-        );
-
         let info = ChannelInfo {
             id: "channel-1".to_string(),
             counterparty_endpoint: IbcEndpoint {
@@ -160,11 +140,6 @@ mod contact_testing {
     #[test]
     fn test_query_channel_not_found_error() {
         let mut deps = setup(&["channel-3", "channel-7"]);
-        test_setup(
-            deps.as_ref(),
-            "channel-3".to_string(),
-            "channel-7".to_string(),
-        );
 
         let info = ChannelInfo {
             id: "channel-1".to_string(),
@@ -198,12 +173,6 @@ mod contact_testing {
     #[test]
     fn test_query_channel_duplicates_filtered() {
         let mut deps = setup(&["channel-3", "channel-7"]);
-        test_setup(
-            deps.as_ref(),
-            "channel-3".to_string(),
-            "channel-7".to_string(),
-        );
-
         let info = ChannelInfo {
             id: "channel-1".to_string(),
             counterparty_endpoint: IbcEndpoint {
@@ -252,12 +221,6 @@ mod contact_testing {
     #[test]
     fn test_query_channel_multiple_success() {
         let mut deps = setup(&["channel-3", "channel-7"]);
-        test_setup(
-            deps.as_ref(),
-            "channel-3".to_string(),
-            "channel-7".to_string(),
-        );
-
         let info = ChannelInfo {
             id: "channel-1".to_string(),
             counterparty_endpoint: IbcEndpoint {
@@ -347,12 +310,6 @@ mod contact_testing {
     #[test]
     fn test_execute_transfer_success() {
         let mut deps = setup(&["channel-3", "channel-7"]);
-        test_setup(
-            deps.as_ref(),
-            "channel-3".to_string(),
-            "channel-7".to_string(),
-        );
-
         let transfer_msg = TransferMsg {
             channel: "channel-3".to_string(),
             class_id: "abc/123/collection-addr".to_string(),
@@ -426,12 +383,6 @@ mod contact_testing {
     #[test]
     fn test_execute_receive_success() {
         let mut deps = setup(&["channel-3", "channel-7"]);
-        test_setup(
-            deps.as_ref(),
-            "channel-3".to_string(),
-            "channel-7".to_string(),
-        );
-
         let sender_address_str = "wasm1fucynrfkrt684pm8jrt8la5h2csvs5cnldcgqc";
         let sender_address: Addr = Addr::unchecked(sender_address_str);
 
@@ -517,12 +468,6 @@ mod contact_testing {
     #[test]
     fn test_execute_receive_payment_fail() {
         let mut deps = setup(&["channel-3", "channel-7"]);
-        test_setup(
-            deps.as_ref(),
-            "channel-3".to_string(),
-            "channel-7".to_string(),
-        );
-
         let sender_address_str = "wasm1fucynrfkrt684pm8jrt8la5h2csvs5cnldcgqc";
         let sender_address: Addr = Addr::unchecked(sender_address_str);
 
@@ -564,12 +509,6 @@ mod contact_testing {
     #[test]
     fn test_execute_to_execute_receive_success() {
         let mut deps = setup(&["channel-3", "channel-7"]);
-        test_setup(
-            deps.as_ref(),
-            "channel-3".to_string(),
-            "channel-7".to_string(),
-        );
-
         let sender_address_str = "wasm1fucynrfkrt684pm8jrt8la5h2csvs5cnldcgqc";
         let sender_address: Addr = Addr::unchecked(sender_address_str);
 
@@ -656,12 +595,6 @@ mod contact_testing {
     #[test]
     fn test_execute_to_execute_transfer_success() {
         let mut deps = setup(&["channel-3", "channel-7"]);
-        test_setup(
-            deps.as_ref(),
-            "channel-3".to_string(),
-            "channel-7".to_string(),
-        );
-
         let transfer_msg = ExecuteMsg::Transfer(TransferMsg {
             channel: "channel-3".to_string(),
             class_id: "abc/123/collection-addr".to_string(),
