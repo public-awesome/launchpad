@@ -2,6 +2,7 @@
 mod contact_testing {
     use super::super::*;
     use crate::test_helpers::*;
+    use crate::test_constants::*;
 
     use cosmwasm_std::testing::mock_env;
     use cosmwasm_std::{from_binary, to_binary, Attribute, Coin, StdError};
@@ -11,47 +12,44 @@ mod contact_testing {
 
     use cosmwasm_std::testing::mock_dependencies;
 
-    fn check_setup(deps: Deps, channel_0: String, channel_1: String) {
+
+    fn check_setup(deps: Deps, channel_0: ChannelSetupData, channel_1: ChannelSetupData) {
         let raw_list = query(deps, mock_env(), QueryMsg::ListChannels {}).unwrap();
         let list_res: ListChannelsResponse = from_binary(&raw_list).unwrap();
         assert_eq!(2, list_res.channels.len());
-        assert_eq!(mock_channel_info(&channel_0), list_res.channels[0]);
-        assert_eq!(mock_channel_info(&channel_1), list_res.channels[1]);
+        assert_eq!(mock_channel_info(channel_0), list_res.channels[0]);
+        assert_eq!(mock_channel_info(channel_1), list_res.channels[1]);
     }
 
     #[test]
     fn test_valid_setup() {
-        let deps = setup(&["channel-3", "channel-7"]);
-        check_setup(
-            deps.as_ref(),
-            "channel-3".to_string(),
-            "channel-7".to_string(),
-        );
+        let deps = setup(&[TEST_CHANNEL_0_DATA, TEST_CHANNEL_1_DATA]);
+        check_setup(deps.as_ref(),TEST_CHANNEL_0_DATA, TEST_CHANNEL_1_DATA);
     }
 
     #[test]
     fn test_query_success() {
-        let deps = setup(&["channel-3", "channel-7"]);
+        let deps = setup(&[TEST_CHANNEL_0_DATA, TEST_CHANNEL_1_DATA]);
         let raw_channel = query(
             deps.as_ref(),
             mock_env(),
             QueryMsg::Channel {
-                id: "channel-3".to_string(),
+                id: CHANNEL_FROM_STARS_TO_OMNI.to_string(),
             },
         )
         .unwrap();
         let chan_res: ChannelResponse = from_binary(&raw_channel).unwrap();
-        assert_eq!(chan_res.info, mock_channel_info("channel-3"));
+        assert_eq!(chan_res.info, mock_channel_info(TEST_CHANNEL_0_DATA));
         assert_eq!(0, chan_res.class_ids.len());
     }
     #[test]
     fn test_query_fail() {
-        let deps = setup(&["channel-3", "channel-7"]);
+        let deps = setup(&[TEST_CHANNEL_0_DATA, TEST_CHANNEL_1_DATA]);
         let err = query(
             deps.as_ref(),
             mock_env(),
             QueryMsg::Channel {
-                id: "channel-10".to_string(),
+                id: "fake-channel".to_string(),
             },
         )
         .unwrap_err();
@@ -60,36 +58,37 @@ mod contact_testing {
 
     #[test]
     fn test_query_channel_list_success() {
-        let deps = setup(&["channel-3", "channel-7"]);
+        let deps = setup(&[TEST_CHANNEL_0_DATA, TEST_CHANNEL_1_DATA]);
         let result = query_list(deps.as_ref());
 
         let expected_list: StdResult<ListChannelsResponse> = Ok(ListChannelsResponse {
             channels: vec![
                 ChannelInfo {
-                    id: "channel-3".to_string(),
+                    id: CHANNEL_FROM_STARS_TO_OMNI.to_string(),
                     counterparty_endpoint: IbcEndpoint {
-                        port_id: "transfer-nft".to_string(),
-                        channel_id: "channel-35".to_string(),
+                        port_id: REMOTE_PORT.to_string(),
+                        channel_id: CHANNEL_FROM_OMNI_TO_STARS.to_string(),
                     },
-                    connection_id: "connection-2".to_string(),
+                    connection_id: CONNECTION_0.to_string(),
                 },
                 ChannelInfo {
-                    id: "channel-7".to_string(),
+                    id: CHANNEL_FROM_STARS_TO_GB.to_string(),
                     counterparty_endpoint: IbcEndpoint {
-                        port_id: "transfer-nft".to_string(),
-                        channel_id: "channel-75".to_string(),
+                        port_id: REMOTE_PORT.to_string(),
+                        channel_id: CHANNEL_FROM_GB_TO_STARS.to_string(),
                     },
-                    connection_id: "connection-2".to_string(),
+                    connection_id: CONNECTION_1.to_string(),
                 },
             ],
         });
         assert_eq!(result, expected_list);
     }
+    
     #[test]
     fn test_query_channel_list_empty() {
-        let mut deps = setup(&["channel-3", "channel-7"]);
-        CHANNEL_INFO.remove(&mut deps.storage, "channel-3");
-        CHANNEL_INFO.remove(&mut deps.storage, "channel-7");
+        let mut deps = setup(&[TEST_CHANNEL_0_DATA, TEST_CHANNEL_1_DATA]);
+        CHANNEL_INFO.remove(&mut deps.storage, CHANNEL_FROM_STARS_TO_OMNI);
+        CHANNEL_INFO.remove(&mut deps.storage, CHANNEL_FROM_STARS_TO_GB);
         let result = query_list(deps.as_ref());
 
         let expected_list: StdResult<ListChannelsResponse> =
@@ -99,17 +98,17 @@ mod contact_testing {
 
     #[test]
     fn test_query_channel_success() {
-        let mut deps = setup(&["channel-3", "channel-7"]);
-        let info = ChannelInfo {
-            id: "channel-1".to_string(),
+        let mut deps = setup(&[TEST_CHANNEL_0_DATA, TEST_CHANNEL_1_DATA]);
+        let new_channel_info = ChannelInfo {
+            id: "new-channel".to_string(),
             counterparty_endpoint: IbcEndpoint {
-                port_id: ("counterparty-port1".to_string()),
-                channel_id: ("counterparty-channel-1".to_string()),
+                port_id: ("new-counterparty-port1".to_string()),
+                channel_id: ("new-counterparty-channel-1".to_string()),
             },
-            connection_id: "connection-id-1".to_string(),
+            connection_id: "new-channel-connection".to_string(),
         };
         CHANNEL_INFO
-            .save(deps.as_mut().storage, "99", &info)
+            .save(deps.as_mut().storage, "new-channel-key", &new_channel_info)
             .unwrap();
 
         let contract_addr = "abc/123/collection-addr";
@@ -117,20 +116,20 @@ mod contact_testing {
         CHANNEL_STATE
             .save(
                 deps.as_mut().storage,
-                ("99", contract_addr, "1"),
+                ("new-channel-key", contract_addr, "1"),
                 &cosmwasm_std::Empty {},
             )
             .unwrap();
 
-        let result = query_channel(deps.as_ref(), "99".to_string());
+        let result = query_channel(deps.as_ref(), "new-channel-key".to_string());
         let expected_response = Ok(ChannelResponse {
             info: ChannelInfo {
-                id: "channel-1".to_string(),
+                id: "new-channel".to_string(),
                 counterparty_endpoint: IbcEndpoint {
-                    port_id: "counterparty-port1".to_string(),
-                    channel_id: "counterparty-channel-1".to_string(),
+                    port_id: "new-counterparty-port1".to_string(),
+                    channel_id: "new-counterparty-channel-1".to_string(),
                 },
-                connection_id: "connection-id-1".to_string(),
+                connection_id: "new-channel-connection".to_string(),
             },
             class_ids: vec!["abc/123/collection-addr".to_string()],
         });
@@ -139,18 +138,18 @@ mod contact_testing {
 
     #[test]
     fn test_query_channel_not_found_error() {
-        let mut deps = setup(&["channel-3", "channel-7"]);
+        let mut deps = setup(&[TEST_CHANNEL_0_DATA, TEST_CHANNEL_1_DATA]);
 
-        let info = ChannelInfo {
-            id: "channel-1".to_string(),
+        let new_channel_info = ChannelInfo {
+            id: "new-channel".to_string(),
             counterparty_endpoint: IbcEndpoint {
-                port_id: ("counterparty-port1".to_string()),
-                channel_id: ("counterparty-channel-1".to_string()),
+                port_id: ("new-counterparty-port1".to_string()),
+                channel_id: ("new-counterparty-channel-1".to_string()),
             },
-            connection_id: "connection-id-1".to_string(),
+            connection_id: "new-channel-connection".to_string(),
         };
         CHANNEL_INFO
-            .save(deps.as_mut().storage, "99", &info)
+            .save(deps.as_mut().storage, "new-channel-key", &new_channel_info)
             .unwrap();
 
         let contract_addr = "abc/123/collection-addr";
@@ -158,7 +157,7 @@ mod contact_testing {
         CHANNEL_STATE
             .save(
                 deps.as_mut().storage,
-                ("99", contract_addr, "1"),
+                ("new-channel-key", contract_addr, "1"),
                 &cosmwasm_std::Empty {},
             )
             .unwrap();
@@ -172,46 +171,45 @@ mod contact_testing {
 
     #[test]
     fn test_query_channel_duplicates_filtered() {
-        let mut deps = setup(&["channel-3", "channel-7"]);
-        let info = ChannelInfo {
-            id: "channel-1".to_string(),
+        let mut deps = setup(&[TEST_CHANNEL_0_DATA, TEST_CHANNEL_1_DATA]);
+        let new_channel_info = ChannelInfo {
+            id: "new-channel".to_string(),
             counterparty_endpoint: IbcEndpoint {
-                port_id: ("counterparty-port1".to_string()),
-                channel_id: ("counterparty-channel-1".to_string()),
+                port_id: ("new-counterparty-port1".to_string()),
+                channel_id: ("new-counterparty-channel-1".to_string()),
             },
-            connection_id: "connection-id-1".to_string(),
+            connection_id: "new-channel-connection".to_string(),
         };
         CHANNEL_INFO
-            .save(deps.as_mut().storage, "99", &info)
+            .save(deps.as_mut().storage, "new-channel-key", &new_channel_info)
             .unwrap();
 
         let contract_addr = "abc/123/collection-addr";
-
         CHANNEL_STATE
             .save(
                 deps.as_mut().storage,
-                ("99", contract_addr, "1"),
+                ("new-channel-key", contract_addr, "1"),
                 &cosmwasm_std::Empty {},
             )
             .unwrap();
 
-        CHANNEL_STATE
+            CHANNEL_STATE
             .save(
                 deps.as_mut().storage,
-                ("99", contract_addr, "2"),
+                ("new-channel-key", contract_addr, "2"),
                 &cosmwasm_std::Empty {},
             )
             .unwrap();
 
-        let result = query_channel(deps.as_ref(), "99".to_string());
+        let result = query_channel(deps.as_ref(), "new-channel-key".to_string());
         let expected_response = Ok(ChannelResponse {
             info: ChannelInfo {
-                id: "channel-1".to_string(),
+                id: "new-channel".to_string(),
                 counterparty_endpoint: IbcEndpoint {
-                    port_id: "counterparty-port1".to_string(),
-                    channel_id: "counterparty-channel-1".to_string(),
+                    port_id: ("new-counterparty-port1".to_string()),
+                    channel_id: ("new-counterparty-channel-1".to_string()),
                 },
-                connection_id: "connection-id-1".to_string(),
+                connection_id: "new-channel-connection".to_string(),
             },
             class_ids: vec!["abc/123/collection-addr".to_string()],
         });
@@ -220,17 +218,17 @@ mod contact_testing {
 
     #[test]
     fn test_query_channel_multiple_success() {
-        let mut deps = setup(&["channel-3", "channel-7"]);
-        let info = ChannelInfo {
-            id: "channel-1".to_string(),
+        let mut deps = setup(&[TEST_CHANNEL_0_DATA, TEST_CHANNEL_1_DATA]);
+        let new_channel_info = ChannelInfo {
+            id: "new-channel".to_string(),
             counterparty_endpoint: IbcEndpoint {
-                port_id: ("counterparty-port1".to_string()),
-                channel_id: ("counterparty-channel-1".to_string()),
+                port_id: ("new-counterparty-port1".to_string()),
+                channel_id: ("new-counterparty-channel-1".to_string()),
             },
-            connection_id: "connection-id-1".to_string(),
+            connection_id: "new-channel-connection".to_string(),
         };
         CHANNEL_INFO
-            .save(deps.as_mut().storage, "99", &info)
+            .save(deps.as_mut().storage, "new-channel-key", &new_channel_info)
             .unwrap();
 
         let contract_addr = "abc/123/collection-addr";
@@ -239,7 +237,7 @@ mod contact_testing {
         CHANNEL_STATE
             .save(
                 deps.as_mut().storage,
-                ("99", contract_addr, "1"),
+                ("new-channel-key", contract_addr, "1"),
                 &cosmwasm_std::Empty {},
             )
             .unwrap();
@@ -247,20 +245,20 @@ mod contact_testing {
         CHANNEL_STATE
             .save(
                 deps.as_mut().storage,
-                ("99", contract_addr2, "1"),
+                ("new-channel-key", contract_addr2, "1"),
                 &cosmwasm_std::Empty {},
             )
             .unwrap();
 
-        let result = query_channel(deps.as_ref(), "99".to_string());
+        let result = query_channel(deps.as_ref(), "new-channel-key".to_string());
         let expected_response = Ok(ChannelResponse {
             info: ChannelInfo {
-                id: "channel-1".to_string(),
+                id: "new-channel".to_string(),
                 counterparty_endpoint: IbcEndpoint {
-                    port_id: "counterparty-port1".to_string(),
-                    channel_id: "counterparty-channel-1".to_string(),
+                    port_id: ("new-counterparty-port1".to_string()),
+                    channel_id: ("new-counterparty-channel-1".to_string()),
                 },
-                connection_id: "connection-id-1".to_string(),
+                connection_id: "new-channel-connection".to_string(),
             },
             class_ids: vec![
                 "abc/123/collection-addr".to_string(),
@@ -309,9 +307,9 @@ mod contact_testing {
 
     #[test]
     fn test_execute_transfer_success() {
-        let mut deps = setup(&["channel-3", "channel-7"]);
+        let mut deps = setup(&[TEST_CHANNEL_0_DATA, TEST_CHANNEL_1_DATA]);
         let transfer_msg = TransferMsg {
-            channel: "channel-3".to_string(),
+            channel: CHANNEL_FROM_STARS_TO_OMNI.to_string(),
             class_id: "abc/123/collection-addr".to_string(),
             class_uri: Some("abc/456/collection-addr".to_string()),
             token_ids: vec!["1".to_string(), "2".to_string(), "3".to_string()],
@@ -382,12 +380,12 @@ mod contact_testing {
 
     #[test]
     fn test_execute_receive_success() {
-        let mut deps = setup(&["channel-3", "channel-7"]);
+        let mut deps = setup(&[TEST_CHANNEL_0_DATA, TEST_CHANNEL_1_DATA]);
         let sender_address_str = "wasm1fucynrfkrt684pm8jrt8la5h2csvs5cnldcgqc";
         let sender_address: Addr = Addr::unchecked(sender_address_str);
 
         let transfer_msg = TransferMsg {
-            channel: "channel-3".to_string(),
+            channel: CHANNEL_FROM_STARS_TO_OMNI.to_string(),
             class_id: "abc/123/collection-addr".to_string(),
             class_uri: Some("abc/456/collection-addr".to_string()),
             token_ids: vec!["1".to_string(), "2".to_string(), "3".to_string()],
@@ -467,12 +465,12 @@ mod contact_testing {
 
     #[test]
     fn test_execute_receive_payment_fail() {
-        let mut deps = setup(&["channel-3", "channel-7"]);
+        let mut deps = setup(&[TEST_CHANNEL_0_DATA, TEST_CHANNEL_1_DATA]);
         let sender_address_str = "wasm1fucynrfkrt684pm8jrt8la5h2csvs5cnldcgqc";
         let sender_address: Addr = Addr::unchecked(sender_address_str);
 
         let transfer_msg = TransferMsg {
-            channel: "channel-3".to_string(),
+            channel: CHANNEL_FROM_STARS_TO_OMNI.to_string(),
             class_id: "abc/123/collection-addr".to_string(),
             class_uri: Some("abc/456/collection-addr".to_string()),
             token_ids: vec!["1".to_string(), "2".to_string(), "3".to_string()],
@@ -508,12 +506,12 @@ mod contact_testing {
 
     #[test]
     fn test_execute_to_execute_receive_success() {
-        let mut deps = setup(&["channel-3", "channel-7"]);
+        let mut deps = setup(&[TEST_CHANNEL_0_DATA, TEST_CHANNEL_1_DATA]);
         let sender_address_str = "wasm1fucynrfkrt684pm8jrt8la5h2csvs5cnldcgqc";
         let sender_address: Addr = Addr::unchecked(sender_address_str);
 
         let transfer_msg = TransferMsg {
-            channel: "channel-3".to_string(),
+            channel: CHANNEL_FROM_STARS_TO_OMNI.to_string(),
             class_id: "abc/123/collection-addr".to_string(),
             class_uri: Some("abc/456/collection-addr".to_string()),
             token_ids: vec!["1".to_string(), "2".to_string(), "3".to_string()],
@@ -594,9 +592,9 @@ mod contact_testing {
 
     #[test]
     fn test_execute_to_execute_transfer_success() {
-        let mut deps = setup(&["channel-3", "channel-7"]);
+        let mut deps = setup(&[TEST_CHANNEL_0_DATA, TEST_CHANNEL_1_DATA]);
         let transfer_msg = ExecuteMsg::Transfer(TransferMsg {
-            channel: "channel-3".to_string(),
+            channel: CHANNEL_FROM_STARS_TO_OMNI.to_string(),
             class_id: "abc/123/collection-addr".to_string(),
             class_uri: Some("abc/456/collection-addr".to_string()),
             token_ids: vec!["1".to_string(), "2".to_string(), "3".to_string()],

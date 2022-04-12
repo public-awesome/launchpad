@@ -4,6 +4,7 @@ mod ibc_testing {
     use std::vec;
 
     use super::super::*;
+    use crate::test_constants::{TEST_CHANNEL_0_DATA, TEST_CHANNEL_1_DATA, CHANNEL_FROM_STARS_TO_OMNI, CONNECTION_0, CHANNEL_FROM_OMNI_TO_STARS};
     use crate::test_helpers::*;
     use cosmwasm_std::CosmosMsg::Wasm;
     use cosmwasm_std::WasmMsg::Execute;
@@ -13,6 +14,7 @@ mod ibc_testing {
     use cosmwasm_std::{
         to_vec, Attribute, IbcAcknowledgement, IbcEndpoint, IbcTimeout, ReplyOn, Timestamp,
     };
+    use cosmwasm_std::testing::mock_dependencies;
 
     pub fn mock_sent_packet(
         my_channel: &str,
@@ -230,11 +232,11 @@ mod ibc_testing {
 
     #[test]
     fn test_query_channel() {
-        let send_channel = "channel-9";
-        let mut deps = setup(&["channel-1", "channel-7", send_channel]);
-        let connection_id = "connection-2";
-        let counterparty_port_id = "transfer-nft";
-        let counterparty_channel_id = "channel-95";
+        let send_channel = CHANNEL_FROM_STARS_TO_OMNI;
+        let mut deps = setup(&[TEST_CHANNEL_0_DATA, TEST_CHANNEL_1_DATA]);
+        let connection_id = CONNECTION_0;
+        let counterparty_port_id = REMOTE_PORT;
+        let counterparty_channel_id = CHANNEL_FROM_OMNI_TO_STARS;
         check_query_channel_state(
             deps.as_mut(),
             send_channel.to_string(),
@@ -246,8 +248,8 @@ mod ibc_testing {
 
     #[test]
     fn test_receive_sg721_multiple_success() {
-        let send_channel = "channel-9";
-        let mut deps = setup(&["channel-1", "channel-7", send_channel]);
+        let send_channel = CHANNEL_FROM_STARS_TO_OMNI;
+        let mut deps = setup(&[TEST_CHANNEL_0_DATA, TEST_CHANNEL_1_DATA]);
         let contract_addr = "collection-addr";
         let token_ids = vec!["1", "2", "3"];
         let token_uris = vec![
@@ -359,8 +361,8 @@ mod ibc_testing {
 
     #[test]
     fn test_receive_sg721_single_success() {
-        let send_channel = "channel-9";
-        let mut deps = setup(&["channel-1", "channel-7", send_channel]);
+        let send_channel = CHANNEL_FROM_STARS_TO_OMNI;
+        let mut deps = setup(&[TEST_CHANNEL_0_DATA, TEST_CHANNEL_1_DATA]);
         let contract_addr = "collection-addr";
         let token_ids = vec!["1"];
         let token_uris = vec![
@@ -450,8 +452,8 @@ mod ibc_testing {
 
     #[test]
     fn test_receive_sg721_empty() {
-        let send_channel = "channel-9";
-        let mut deps = setup(&["channel-1", "channel-7", send_channel]);
+        let send_channel = CHANNEL_FROM_STARS_TO_OMNI;
+        let mut deps = setup(&[TEST_CHANNEL_0_DATA, TEST_CHANNEL_1_DATA]);
 
         let contract_addr = "collection-addr";
         let token_ids = vec!["1", "2", "3"];
@@ -505,8 +507,8 @@ mod ibc_testing {
 
     #[test]
     fn test_send_sg721_success() {
-        let send_channel = "channel-9";
-        let mut deps = setup(&["channel-1", "channel-7", send_channel]);
+        let send_channel = CHANNEL_FROM_STARS_TO_OMNI;
+        let mut deps = setup(&[TEST_CHANNEL_0_DATA, TEST_CHANNEL_1_DATA]);
         let contract_addr = "collection-addr";
         let token_ids = vec!["1", "2", "3"];
         let token_uris = vec![
@@ -554,8 +556,8 @@ mod ibc_testing {
 
     #[test]
     fn test_send_sg721_fail_ibc_packet() {
-        let send_channel = "channel-9";
-        let mut deps = setup(&["channel-1", "channel-7", send_channel]);
+        let send_channel = CHANNEL_FROM_STARS_TO_OMNI;
+        let mut deps = setup(&[TEST_CHANNEL_0_DATA, TEST_CHANNEL_1_DATA]);
         let contract_addr = "transfer-nft/abc/def";
         let token_ids = vec!["1", "2", "3"];
         let token_uris = vec![
@@ -641,8 +643,8 @@ mod ibc_testing {
 
     #[test]
     fn test_send_sg721_fail_foreign_token() {
-        let send_channel = "channel-9";
-        let mut deps = setup(&["channel-1", "channel-7", send_channel]);
+        let send_channel = CHANNEL_FROM_STARS_TO_OMNI;
+        let mut deps = setup(&[TEST_CHANNEL_0_DATA, TEST_CHANNEL_1_DATA]);
         let contract_addr = "transfer-nft/abc/def";
         let token_ids = vec!["1", "2", "3"];
         let token_uris = vec![
@@ -675,7 +677,7 @@ mod ibc_testing {
 
     #[test]
     fn test_parse_voucher_contract_address_success() {
-        let send_channel = "channel-9";
+        let send_channel = CHANNEL_FROM_STARS_TO_OMNI;
         let contract_port = "ibc:wasm1234567890abcdef";
 
         let endpoint_1 = IbcEndpoint {
@@ -683,14 +685,14 @@ mod ibc_testing {
             channel_id: send_channel.to_string(),
         };
 
-        let voucher_class_id = "ibc:wasm1234567890abcdef/channel-9/my-nft";
+        let voucher_class_id = &format!("ibc:wasm1234567890abcdef/{}/my-nft", CHANNEL_FROM_STARS_TO_OMNI);
         let parse_result = parse_voucher_contract_address(voucher_class_id, &endpoint_1);
         assert_eq!(parse_result.unwrap().to_string(), "my-nft");
     }
 
     #[test]
     fn test_parse_voucher_contract_address_fail_other_port() {
-        let send_channel = "channel-9";
+        let send_channel = CHANNEL_FROM_STARS_TO_OMNI;
         let contract_port = "ibc:wasm1234567890abcdef";
 
         let endpoint_1 = IbcEndpoint {
@@ -698,7 +700,7 @@ mod ibc_testing {
             channel_id: send_channel.to_string(),
         };
 
-        let voucher_class_id = "other-port/channel-9/my-nft";
+        let voucher_class_id = &format!("other-port/{}/my-nft", CHANNEL_FROM_STARS_TO_OMNI);
         let parse_result = parse_voucher_contract_address(voucher_class_id, &endpoint_1);
 
         let error_msg = parse_result.unwrap_err().to_string();
@@ -710,7 +712,7 @@ mod ibc_testing {
 
     #[test]
     fn test_parse_voucher_contract_address_fail_other_channel() {
-        let send_channel = "channel-9";
+        let send_channel = CHANNEL_FROM_STARS_TO_OMNI;
         let contract_port = "ibc:wasm1234567890abcdef";
 
         let endpoint_1 = IbcEndpoint {
@@ -730,8 +732,8 @@ mod ibc_testing {
 
     #[test]
     fn test_enforce_order_and_version_success() {
-        let send_channel = "channel-9";
-        let counterparty_send_channel = "channel-7";
+        let send_channel = CHANNEL_FROM_STARS_TO_OMNI;
+        let counterparty_send_channel = CHANNEL_FROM_OMNI_TO_STARS;
         let counterparty_contract_port = "ibc:stars123abc";
         let contract_port = "ibc:wasm1234567890abcdef";
 
@@ -750,7 +752,7 @@ mod ibc_testing {
             endpoint_2,
             IbcOrder::Unordered,
             ICS721_VERSION,
-            "connection-2".to_string(),
+            CONNECTION_0.to_string(),
         );
         let result = enforce_order_and_version(&ibc_channel, Some(ICS721_VERSION));
         match result {
@@ -763,8 +765,8 @@ mod ibc_testing {
 
     #[test]
     fn test_enforce_order_and_version_ibc_channel_wrong_version_fail() {
-        let send_channel = "channel-9";
-        let counterparty_send_channel = "channel-7";
+        let send_channel = CHANNEL_FROM_STARS_TO_OMNI;
+        let counterparty_send_channel = CHANNEL_FROM_OMNI_TO_STARS;
         let counterparty_contract_port = "ibc:stars123abc";
         let contract_port = "ibc:wasm1234567890abcdef";
 
@@ -783,7 +785,7 @@ mod ibc_testing {
             endpoint_2,
             IbcOrder::Unordered,
             "very_fake_version",
-            "connection-2".to_string(),
+            CONNECTION_0.to_string(),
         );
 
         let result = enforce_order_and_version(&ibc_channel, Some(ICS721_VERSION));
@@ -795,8 +797,8 @@ mod ibc_testing {
 
     #[test]
     fn test_enforce_order_and_version_counterparty_version_wrong_version_fail() {
-        let send_channel = "channel-9";
-        let counterparty_send_channel = "channel-7";
+        let send_channel = CHANNEL_FROM_STARS_TO_OMNI;
+        let counterparty_send_channel = CHANNEL_FROM_OMNI_TO_STARS;
         let counterparty_contract_port = "ibc:stars123abc";
         let contract_port = "ibc:wasm1234567890abcdef";
 
@@ -815,7 +817,7 @@ mod ibc_testing {
             endpoint_2,
             IbcOrder::Unordered,
             ICS721_VERSION,
-            "connection-2".to_string(),
+            CONNECTION_0.to_string(),
         );
 
         let result =
@@ -828,12 +830,11 @@ mod ibc_testing {
 
     #[test]
     fn test_channel_connect() {
-        let send_channel = "channel-9";
-        let counterparty_send_channel = "channel-7";
+        let send_channel = CHANNEL_FROM_STARS_TO_OMNI;
+        let counterparty_send_channel = CHANNEL_FROM_OMNI_TO_STARS;
         let counterparty_contract_port = "ibc:stars123abc";
         let contract_port = "ibc:wasm1234567890abcdef";
 
-        use cosmwasm_std::testing::mock_dependencies;
         let mut deps = mock_dependencies();
 
         let endpoint_1 = IbcEndpoint {
@@ -851,7 +852,7 @@ mod ibc_testing {
             endpoint_2,
             IbcOrder::Unordered,
             ICS721_VERSION,
-            "connection-2".to_string(),
+            CONNECTION_0.to_string(),
         );
 
         let channel_connect_msg = IbcChannelConnectMsg::OpenAck {
@@ -867,20 +868,20 @@ mod ibc_testing {
 
         let channel_info_data = CHANNEL_INFO.may_load(&deps.storage, send_channel);
         let expected_channel_data = ChannelInfo {
-            id: "channel-9".into(),
+            id: CHANNEL_FROM_STARS_TO_OMNI.into(),
             counterparty_endpoint: IbcEndpoint {
                 port_id: "ibc:stars123abc".into(),
-                channel_id: "channel-7".into(),
+                channel_id: CHANNEL_FROM_OMNI_TO_STARS.into(),
             },
-            connection_id: "connection-2".into(),
+            connection_id: CONNECTION_0.into(),
         };
         assert_eq!(channel_info_data.unwrap().unwrap(), expected_channel_data);
     }
 
     #[test]
     fn test_send_tokens_single() {
-        let send_channel = "channel-9";
-        let mut deps = setup(&["channel-1", "channel-7", send_channel]);
+        let send_channel = CHANNEL_FROM_STARS_TO_OMNI;
+        let mut deps = setup(&[TEST_CHANNEL_0_DATA, TEST_CHANNEL_1_DATA]);
         let contract_addr = "collection-addr";
         let token_ids = vec!["1", "2", "3"];
         let token_uris = vec![
@@ -931,8 +932,8 @@ mod ibc_testing {
 
     #[test]
     fn test_send_tokens_multiple() {
-        let send_channel = "channel-9";
-        let mut deps = setup(&["channel-1", "channel-7", send_channel]);
+        let send_channel = CHANNEL_FROM_STARS_TO_OMNI;
+        let mut deps = setup(&[TEST_CHANNEL_0_DATA, TEST_CHANNEL_1_DATA]);
         let contract_addr = "collection-addr";
         let token_ids = vec!["1", "2", "3"];
         let token_uris = vec![
