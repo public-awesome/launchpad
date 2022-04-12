@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod ibc_testing {
 
-    use std::{vec};
+    use std::vec;
 
     use super::super::*;
     use crate::test_helpers::*;
@@ -11,8 +11,7 @@ mod ibc_testing {
     use crate::contract::query_channel;
     use cosmwasm_std::testing::mock_env;
     use cosmwasm_std::{
-        to_vec, Attribute, IbcAcknowledgement, IbcEndpoint, IbcTimeout, ReplyOn,
-        Timestamp,
+        to_vec, Attribute, IbcAcknowledgement, IbcEndpoint, IbcTimeout, ReplyOn, Timestamp,
     };
 
     pub fn mock_sent_packet(
@@ -230,6 +229,22 @@ mod ibc_testing {
     }
 
     #[test]
+    fn test_query_channel() {
+        let send_channel = "channel-9";
+        let mut deps = setup(&["channel-1", "channel-7", send_channel]);
+        let connection_id = "connection-2";
+        let counterparty_port_id = "transfer-nft";
+        let counterparty_channel_id = "channel-95";
+        check_query_channel_state(
+            deps.as_mut(),
+            send_channel.to_string(),
+            connection_id.to_string(),
+            counterparty_port_id.to_string(),
+            counterparty_channel_id.to_string(),
+        );
+    }
+
+    #[test]
     fn test_receive_sg721_multiple_success() {
         let send_channel = "channel-9";
         let mut deps = setup(&["channel-1", "channel-7", send_channel]);
@@ -283,7 +298,6 @@ mod ibc_testing {
         assert_eq!(exists, Ok(None));
         let exists = CHANNEL_STATE.may_load(&deps.storage, (send_channel, contract_addr, "3"));
         assert_eq!(exists, Ok(None));
-
 
         let cw721_execute_msgs = [
             Cw721ExecuteMsg::TransferNft {
@@ -341,17 +355,6 @@ mod ibc_testing {
         ];
 
         assert_eq!(res.attributes, res_attributes);
-
-        let connection_id = "connection-2";
-        let counterparty_port_id = "transfer-nft";
-        let counterparty_channel_id = "channel-95";
-        check_query_channel_state(
-            deps.as_mut(),
-            send_channel.to_string(),
-            connection_id.to_string(),
-            counterparty_port_id.to_string(),
-            counterparty_channel_id.to_string(),
-        );
     }
 
     #[test]
@@ -378,7 +381,7 @@ mod ibc_testing {
             token_uris.clone(),
         );
 
-        // channel state now has 3 token ids
+        // channel state now has 1 token id
         let exists = CHANNEL_STATE.may_load(&deps.storage, (send_channel, contract_addr, "1"));
         assert_eq!(exists, Ok(Some(Empty {})));
 
@@ -393,16 +396,14 @@ mod ibc_testing {
         let packet_receive = IbcPacketReceiveMsg::new(recv_packet);
         let res = ibc_packet_receive(deps.as_mut(), mock_env(), packet_receive).unwrap();
 
-        // after receive token ids 1,2, and 3 are now removed from channel state
+        // after receive token id 1 is now removed from channel state
         let exists = CHANNEL_STATE.may_load(&deps.storage, (send_channel, contract_addr, "1"));
         assert_eq!(exists, Ok(None));
 
-        let cw721_execute_msgs = [
-            Cw721ExecuteMsg::TransferNft {
-                recipient: "local-rcpt".into(),
-                token_id: "1".into(),
-            }
-        ];
+        let cw721_execute_msgs = [Cw721ExecuteMsg::TransferNft {
+            recipient: "local-rcpt".into(),
+            token_id: "1".into(),
+        }];
 
         let expected_return: SubMsg = SubMsg {
             id: 1338,
@@ -445,17 +446,6 @@ mod ibc_testing {
         ];
 
         assert_eq!(res.attributes, res_attributes);
-
-        let connection_id = "connection-2";
-        let counterparty_port_id = "transfer-nft";
-        let counterparty_channel_id = "channel-95";
-        check_query_channel_state(
-            deps.as_mut(),
-            send_channel.to_string(),
-            connection_id.to_string(),
-            counterparty_port_id.to_string(),
-            counterparty_channel_id.to_string(),
-        );
     }
 
     #[test]
@@ -511,17 +501,6 @@ mod ibc_testing {
             .to_string(),
         );
         assert_eq!(ack, no_such_nft);
-
-        let connection_id = "connection-2";
-        let counterparty_port_id = "transfer-nft";
-        let counterparty_channel_id = "channel-95";
-        check_query_channel_state(
-            deps.as_mut(),
-            send_channel.to_string(),
-            connection_id.to_string(),
-            counterparty_port_id.to_string(),
-            counterparty_channel_id.to_string(),
-        );
     }
 
     #[test]
@@ -544,42 +523,33 @@ mod ibc_testing {
             token_uris.clone(),
         );
 
-        assert_eq!(0, res.messages.len());
-
-        let result_attributes = [
-            Attribute {
-                key: "action".to_string(),
-                value: "acknowledge".to_string(),
-            },
-            Attribute {
-                key: "sender".to_string(),
-                value: "local-sender".to_string(),
-            },
-            Attribute {
-                key: "receiver".to_string(),
-                value: "remote-rcpt".to_string(),
-            },
-            Attribute {
-                key: "contract_addr".to_string(),
-                value: "collection-addr".to_string(),
-            },
-            Attribute {
-                key: "success".to_string(),
-                value: "true".to_string(),
-            },
-        ];
-        assert_eq!(res.attributes, result_attributes);
-
-        let connection_id = "connection-2";
-        let counterparty_port_id = "transfer-nft";
-        let counterparty_channel_id = "channel-95";
-        check_query_channel_state(
-            deps.as_mut(),
-            send_channel.to_string(),
-            connection_id.to_string(),
-            counterparty_port_id.to_string(),
-            counterparty_channel_id.to_string(),
+        let ibc_expected_response = IbcBasicResponse::new().add_attributes(
+            [
+                Attribute {
+                    key: "action".to_string(),
+                    value: "acknowledge".to_string(),
+                },
+                Attribute {
+                    key: "sender".to_string(),
+                    value: "local-sender".to_string(),
+                },
+                Attribute {
+                    key: "receiver".to_string(),
+                    value: "remote-rcpt".to_string(),
+                },
+                Attribute {
+                    key: "contract_addr".to_string(),
+                    value: "collection-addr".to_string(),
+                },
+                Attribute {
+                    key: "success".to_string(),
+                    value: "true".to_string(),
+                },
+            ]
+            .to_vec(),
         );
+
+        assert_eq!(res, ibc_expected_response);
     }
 
     #[test]
@@ -602,27 +572,45 @@ mod ibc_testing {
             "local-sender",
         );
 
+        let nft_name = "my-nft";
         let mut contract_addr = ibc_packet.src.port_id.to_string();
         contract_addr += "/";
         contract_addr += &ibc_packet.src.channel_id;
-        contract_addr += "/my-nft";
+        contract_addr += "/";
+        contract_addr+= nft_name;
 
         let res = send_sg721_fail(
             deps.as_mut(),
             send_channel.to_string(),
-            contract_addr,
+            contract_addr.clone(),
             token_ids.clone(),
             token_uris.clone(),
         );
 
-        let reply_on = &res.messages[0].reply_on;
-        let wasm_msg = &res.messages[0].msg;
+        let expected_cw721_execute_msgs = [
+            Cw721ExecuteMsg::TransferNft {
+                recipient: "local-sender".into(),
+                token_id: "1".into(),
+            },
+            Cw721ExecuteMsg::TransferNft {
+                recipient: "local-sender".into(),
+                token_id: "2".into(),
+            },
+            Cw721ExecuteMsg::TransferNft {
+                recipient: "local-sender".into(),
+                token_id: "3".into(),
+            },
+        ];
 
-        assert_eq!(reply_on, &ReplyOn::Error);
-        let wasm_str = format!("{:?}", wasm_msg);
-        assert!(wasm_str.contains("contract_addr: \"my-nft\""));
+        let wasm_msg = WasmMsg::Execute {
+            contract_addr: nft_name.into(),
+            msg: to_binary(&expected_cw721_execute_msgs).unwrap(),
+            funds: vec![],
+        };
+        let expected_sub_msg = SubMsg::reply_on_error(wasm_msg, SEND_NFT_ID);
+        assert_eq!(res.messages[0], expected_sub_msg);
 
-        let res_attributes = [
+        let expoected_attributes = [
             Attribute {
                 key: "action".to_string(),
                 value: "acknowledge".to_string(),
@@ -648,7 +636,7 @@ mod ibc_testing {
                 value: "Ibc Packet Fail".to_string(),
             },
         ];
-        assert_eq!(res.attributes, res_attributes);
+        assert_eq!(res.attributes, expoected_attributes);
     }
 
     #[test]
