@@ -20,10 +20,10 @@ pub const DEFAULT_TIMEOUT: u64 = 3600; // 1 hour,
 pub const CONTRACT_PORT: &str = "ibc:wasm1234567890abcdef";
 pub const REMOTE_PORT: &str = "transfer-nft";
 
-pub struct ChannelSetupData <'a> {
-    pub source_channel:  &'a str,
-    pub dest_channel:  &'a str,
-    pub connection:  &'a str
+pub struct ChannelSetupData<'a> {
+    pub source_channel: &'a str,
+    pub dest_channel: &'a str,
+    pub connection: &'a str,
 }
 
 pub fn mock_channel(channel_data: ChannelSetupData) -> IbcChannel {
@@ -62,7 +62,9 @@ pub fn add_channel(mut deps: DepsMut, channel_setup: ChannelSetupData) {
     ibc_channel_connect(deps.branch(), mock_env(), connect_msg).unwrap();
 }
 
-pub fn setup(channel_setup_data: &[ChannelSetupData]) -> OwnedDeps<MockStorage, MockApi, MockQuerier> {
+pub fn setup(
+    channel_setup_data: &[ChannelSetupData],
+) -> OwnedDeps<MockStorage, MockApi, MockQuerier> {
     let mut deps = mock_dependencies();
 
     // instantiate an empty contract
@@ -74,11 +76,14 @@ pub fn setup(channel_setup_data: &[ChannelSetupData]) -> OwnedDeps<MockStorage, 
     assert_eq!(0, res.messages.len());
 
     for channel_setup in channel_setup_data {
-        add_channel(deps.as_mut(), 
-        ChannelSetupData {
-            source_channel: channel_setup.source_channel,
-            dest_channel: channel_setup.dest_channel,
-            connection: channel_setup.connection})
+        add_channel(
+            deps.as_mut(),
+            ChannelSetupData {
+                source_channel: channel_setup.source_channel,
+                dest_channel: channel_setup.dest_channel,
+                connection: channel_setup.connection,
+            },
+        )
     }
     deps
 }

@@ -1,8 +1,8 @@
 #[cfg(test)]
 mod contact_testing {
     use super::super::*;
-    use crate::test_helpers::*;
     use crate::test_constants::*;
+    use crate::test_helpers::*;
 
     use cosmwasm_std::testing::mock_env;
     use cosmwasm_std::{from_binary, to_binary, Attribute, Coin, StdError};
@@ -11,7 +11,6 @@ mod contact_testing {
     use cw20_ics20::state::ChannelInfo;
 
     use cosmwasm_std::testing::mock_dependencies;
-
 
     fn check_setup(deps: Deps, channel_0: ChannelSetupData, channel_1: ChannelSetupData) {
         let raw_list = query(deps, mock_env(), QueryMsg::ListChannels {}).unwrap();
@@ -24,7 +23,7 @@ mod contact_testing {
     #[test]
     fn test_valid_setup() {
         let deps = setup(&[TEST_CHANNEL_0_DATA, TEST_CHANNEL_1_DATA]);
-        check_setup(deps.as_ref(),TEST_CHANNEL_0_DATA, TEST_CHANNEL_1_DATA);
+        check_setup(deps.as_ref(), TEST_CHANNEL_0_DATA, TEST_CHANNEL_1_DATA);
     }
 
     #[test]
@@ -83,7 +82,7 @@ mod contact_testing {
         });
         assert_eq!(result, expected_list);
     }
-    
+
     #[test]
     fn test_query_channel_list_empty() {
         let mut deps = setup(&[TEST_CHANNEL_0_DATA, TEST_CHANNEL_1_DATA]);
@@ -193,7 +192,7 @@ mod contact_testing {
             )
             .unwrap();
 
-            CHANNEL_STATE
+        CHANNEL_STATE
             .save(
                 deps.as_mut().storage,
                 ("new-channel-key", contract_addr, "2"),

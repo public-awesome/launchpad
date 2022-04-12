@@ -4,17 +4,20 @@ mod ibc_testing {
     use std::vec;
 
     use super::super::*;
-    use crate::test_constants::{TEST_CHANNEL_0_DATA, TEST_CHANNEL_1_DATA, CHANNEL_FROM_STARS_TO_OMNI, CONNECTION_0, CHANNEL_FROM_OMNI_TO_STARS};
+    use crate::test_constants::{
+        CHANNEL_FROM_OMNI_TO_STARS, CHANNEL_FROM_STARS_TO_OMNI, CONNECTION_0, TEST_CHANNEL_0_DATA,
+        TEST_CHANNEL_1_DATA,
+    };
     use crate::test_helpers::*;
     use cosmwasm_std::CosmosMsg::Wasm;
     use cosmwasm_std::WasmMsg::Execute;
 
     use crate::contract::query_channel;
+    use cosmwasm_std::testing::mock_dependencies;
     use cosmwasm_std::testing::mock_env;
     use cosmwasm_std::{
         to_vec, Attribute, IbcAcknowledgement, IbcEndpoint, IbcTimeout, ReplyOn, Timestamp,
     };
-    use cosmwasm_std::testing::mock_dependencies;
 
     pub fn mock_sent_packet(
         my_channel: &str,
@@ -685,7 +688,10 @@ mod ibc_testing {
             channel_id: send_channel.to_string(),
         };
 
-        let voucher_class_id = &format!("ibc:wasm1234567890abcdef/{}/my-nft", CHANNEL_FROM_STARS_TO_OMNI);
+        let voucher_class_id = &format!(
+            "ibc:wasm1234567890abcdef/{}/my-nft",
+            CHANNEL_FROM_STARS_TO_OMNI
+        );
         let parse_result = parse_voucher_contract_address(voucher_class_id, &endpoint_1);
         assert_eq!(parse_result.unwrap().to_string(), "my-nft");
     }
