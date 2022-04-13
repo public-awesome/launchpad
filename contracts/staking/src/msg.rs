@@ -3,14 +3,26 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct InstantiateMsg {
-    pub count: i32,
-}
+pub struct InstantiateMsg {}
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
-    Delegate { validator: String },
+    /// Delegate funds to a Stargaze validator
+    Delegate {
+        validator: String,
+    },
+    // Start the undelegation process
+    Undelegate {
+        validator: String,
+        amount: Uint128,
+    },
+    // Redelegate {
+    //     old_validator: String,
+    //     new_validator: String,
+    // },
+    // Find all undelegations that have expired. Delete them from the map and send to the sender.
+    // Withdraw {},
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

@@ -1,11 +1,11 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coin, to_binary, Addr, Binary, CosmosMsg, Deps, DepsMut, Env, MessageInfo, Order, Response,
-    StakingMsg, StdResult,
+    coin, to_binary, Addr, Binary, ContractResult, CosmosMsg, Deps, DepsMut, Empty, Env, Event,
+    MessageInfo, Order, Response, StakingMsg, StdResult, SubMsg, Uint128,
 };
 use cw2::set_contract_version;
-use cw_utils::must_pay;
+use cw_utils::{must_pay, nonpayable};
 use sg_std::NATIVE_DENOM;
 
 use crate::error::ContractError;
@@ -21,7 +21,7 @@ pub fn instantiate(
     deps: DepsMut,
     _env: Env,
     info: MessageInfo,
-    msg: InstantiateMsg,
+    _msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
@@ -42,6 +42,9 @@ pub fn execute(
     match msg {
         ExecuteMsg::Delegate { validator } => {
             execute_delegate(deps, info, api.addr_validate(&validator)?)
+        }
+        ExecuteMsg::Undelegate { validator, amount } => {
+            execute_undelegate(deps, info, api.addr_validate(&validator)?, amount)
         }
     }
 }
@@ -75,6 +78,36 @@ pub fn execute_delegate(
         .add_message(stake_msg))
 }
 
+pub fn execute_undelegate(
+    deps: DepsMut,
+    info: MessageInfo,
+    validator: Addr,
+    amount: Uint128,
+) -> Result<Response, ContractError> {
+    nonpayable(&info)?;
+
+    STAKE.update(
+        deps.storage,
+        (&info.sender, &validator),
+        |existing_stake| -> Result<_, ContractError> {
+            match existing_stake {
+                Some(stake) => Ok(stake - amount),
+                None => Ok(amount),
+            }
+        },
+    )?;
+
+    let undelegate_msg = CosmosMsg::Staking(StakingMsg::Undelegate {
+        validator: validator.to_string(),
+        amount: coin(amount.u128(), NATIVE_DENOM),
+    });
+
+    Ok(Response::default()
+        .add_attribute("action", "delegate")
+        .add_attribute("validator", validator)
+        .add_message(undelegate_msg))
+}
+
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     let api = deps.api;
@@ -106,7 +139,7 @@ mod tests {
     fn proper_initialization() {
         let mut deps = mock_dependencies_with_balance(&coins(2, "token"));
 
-        let msg = InstantiateMsg { count: 17 };
+        let msg = InstantiateMsg {};
         let info = mock_info("creator", &coins(1000, "earth"));
 
         // we can just call .unwrap() to assert this was a success
@@ -123,7 +156,7 @@ mod tests {
     fn increment() {
         let mut deps = mock_dependencies_with_balance(&coins(2, "token"));
 
-        let msg = InstantiateMsg { count: 17 };
+        let msg = InstantiateMsg {};
         let info = mock_info("creator", &coins(2, "token"));
         let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
@@ -142,7 +175,7 @@ mod tests {
     fn reset() {
         let mut deps = mock_dependencies_with_balance(&coins(2, "token"));
 
-        let msg = InstantiateMsg { count: 17 };
+        let msg = InstantiateMsg {};
         let info = mock_info("creator", &coins(2, "token"));
         let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
