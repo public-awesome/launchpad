@@ -14,7 +14,7 @@ steps:
   - name: build-contracts
     image: cosmwasm/workspace-optimizer:0.12.5
   - name: full_test
-    image: publicawesome/golang:1.17.7-devtooling
+    image: publicawesome/golang:1.18.0-devtooling
     commands:
       - mkdir -p e2e/contracts
       - cp artifacts/*.wasm e2e/contracts/

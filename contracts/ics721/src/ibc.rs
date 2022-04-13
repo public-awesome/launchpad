@@ -5,10 +5,10 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use cosmwasm_std::{
-    attr, entry_point, from_binary, to_binary, Binary, ContractResult, DepsMut, Empty, Env,
-    IbcBasicResponse, IbcChannel, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg,
-    IbcEndpoint, IbcOrder, IbcPacket, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
-    IbcReceiveResponse, Reply, Response, SubMsg, WasmMsg,
+    attr, entry_point, from_binary, to_binary, Binary, DepsMut, Empty, Env, IbcBasicResponse,
+    IbcChannel, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg, IbcEndpoint, IbcOrder,
+    IbcPacket, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse,
+    Reply, Response, SubMsg, SubMsgResult, WasmMsg,
 };
 
 use crate::error::{ContractError, Never};
@@ -95,8 +95,8 @@ pub fn reply(_deps: DepsMut, _env: Env, reply: Reply) -> Result<Response, Contra
         return Err(ContractError::UnknownReplyId { id: reply.id });
     }
     let res = match reply.result {
-        ContractResult::Ok(_) => Response::new(),
-        ContractResult::Err(err) => {
+        SubMsgResult::Ok(_) => Response::new(),
+        SubMsgResult::Err(err) => {
             // encode an acknowledgement error
             Response::new().set_data(ack_fail(err))
         }
