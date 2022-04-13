@@ -2,7 +2,7 @@
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     from_binary, to_binary, Addr, Binary, Deps, DepsMut, Env, IbcMsg, IbcQuery, MessageInfo, Order,
-    PortIdResponse, Response, StdResult,
+    PortIdResponse, Response, StdResult, StdError
 };
 use cw2::set_contract_version;
 use cw20_ics20::msg::{ListChannelsResponse, PortResponse};
@@ -162,16 +162,18 @@ pub fn query_channel(deps: Deps, id: String) -> StdResult<ChannelResponse> {
         })
         .collect();
 
-    let mut class_ids_resp = _class_ids.unwrap();
-    let class_ids_resp = {
-        class_ids_resp.sort();
-        class_ids_resp.dedup();
-        class_ids_resp
-    };
-    Ok(ChannelResponse {
-        info,
-        class_ids: class_ids_resp,
-    })
+    let class_ids_resp = _class_ids;
+    match class_ids_resp {
+        Ok(mut class_id_vec) => Ok(ChannelResponse {
+            info,
+            class_ids: {
+                class_id_vec.sort();
+                class_id_vec.dedup();
+                class_id_vec
+            },
+        }),
+        Err(msg) => Err(StdError::GenericErr { msg: msg.to_string() })
+    }
 }
 
 // TODO: https://github.com/public-awesome/contracts/issues/59

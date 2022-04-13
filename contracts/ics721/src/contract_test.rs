@@ -460,7 +460,7 @@ mod contact_testing {
     }
 
     #[test]
-    fn test_execute_receive_payment_fail() {
+    fn test_execute_receive_nonpayable_fail() {
         let mut deps = setup(&["channel-3", "channel-7"]);
         test_setup(
             deps.as_ref(),
