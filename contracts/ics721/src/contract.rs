@@ -172,7 +172,7 @@ pub fn query_channel(deps: Deps, id: String) -> StdResult<ChannelResponse> {
                 class_id_vec
             },
         }),
-        Err(msg) => Err(msg)
+        Err(msg) => Err(msg),
     }
 }
 
