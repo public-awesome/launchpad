@@ -5,14 +5,14 @@ use cosmwasm_std::{
     to_binary, Addr, CosmosMsg, CustomQuery, Querier, QuerierWrapper, StdResult, WasmMsg, WasmQuery,
 };
 
-use crate::msg::{CountResponse, ExecuteMsg, QueryMsg};
+use crate::msg::{DelegationsResponse, ExecuteMsg, QueryMsg};
 
-/// CwTemplateContract is a wrapper around Addr that provides a lot of helpers
+/// SgStakingContract is a wrapper around Addr that provides a lot of helpers
 /// for working with this.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct CwTemplateContract(pub Addr);
+pub struct SgStakingContract(pub Addr);
 
-impl CwTemplateContract {
+impl SgStakingContract {
     pub fn addr(&self) -> Addr {
         self.0.clone()
     }
@@ -27,20 +27,24 @@ impl CwTemplateContract {
         .into())
     }
 
-    /// Get Count
-    pub fn count<Q, T, CQ>(&self, querier: &Q) -> StdResult<CountResponse>
+    /// Get Delegations
+    pub fn delegations<Q, T, CQ>(
+        &self,
+        querier: &Q,
+        address: String,
+    ) -> StdResult<DelegationsResponse>
     where
         Q: Querier,
         T: Into<String>,
         CQ: CustomQuery,
     {
-        let msg = QueryMsg::GetCount {};
+        let msg = QueryMsg::Delegations { address };
         let query = WasmQuery::Smart {
             contract_addr: self.addr().into(),
             msg: to_binary(&msg)?,
         }
         .into();
-        let res: CountResponse = QuerierWrapper::<CQ>::new(querier).query(&query)?;
+        let res: DelegationsResponse = QuerierWrapper::<CQ>::new(querier).query(&query)?;
         Ok(res)
     }
 }

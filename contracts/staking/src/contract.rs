@@ -1,11 +1,16 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
+use cosmwasm_std::{
+    coin, to_binary, Addr, Binary, CosmosMsg, Deps, DepsMut, Env, MessageInfo, Order, Response,
+    StakingMsg, StdResult,
+};
 use cw2::set_contract_version;
+use cw_utils::must_pay;
+use sg_std::NATIVE_DENOM;
 
 use crate::error::ContractError;
-use crate::msg::{CountResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
-use crate::state::{State, STATE};
+use crate::msg::{Delegation, DelegationsResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
+use crate::state::STAKE;
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:staking";
@@ -18,17 +23,11 @@ pub fn instantiate(
     info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
-    let state = State {
-        count: msg.count,
-        owner: info.sender.clone(),
-    };
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-    STATE.save(deps.storage, &state)?;
 
     Ok(Response::new()
         .add_attribute("method", "instantiate")
-        .add_attribute("owner", info.sender)
-        .add_attribute("count", msg.count.to_string()))
+        .add_attribute("owner", info.sender))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -38,42 +37,63 @@ pub fn execute(
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
+    let api = deps.api;
+
     match msg {
-        ExecuteMsg::Increment {} => try_increment(deps),
-        ExecuteMsg::Reset { count } => try_reset(deps, info, count),
+        ExecuteMsg::Delegate { validator } => {
+            execute_delegate(deps, info, api.addr_validate(&validator)?)
+        }
     }
 }
 
-pub fn try_increment(deps: DepsMut) -> Result<Response, ContractError> {
-    STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
-        state.count += 1;
-        Ok(state)
-    })?;
+pub fn execute_delegate(
+    deps: DepsMut,
+    info: MessageInfo,
+    validator: Addr,
+) -> Result<Response, ContractError> {
+    let amount = must_pay(&info, NATIVE_DENOM)?;
 
-    Ok(Response::new().add_attribute("method", "try_increment"))
-}
+    STAKE.update(
+        deps.storage,
+        (&info.sender, &validator),
+        |existing_stake| -> Result<_, ContractError> {
+            match existing_stake {
+                Some(stake) => Ok(stake + amount),
+                None => Ok(amount),
+            }
+        },
+    )?;
 
-pub fn try_reset(deps: DepsMut, info: MessageInfo, count: i32) -> Result<Response, ContractError> {
-    STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
-        if info.sender != state.owner {
-            return Err(ContractError::Unauthorized {});
-        }
-        state.count = count;
-        Ok(state)
-    })?;
-    Ok(Response::new().add_attribute("method", "reset"))
+    let stake_msg = CosmosMsg::Staking(StakingMsg::Delegate {
+        validator: validator.to_string(),
+        amount: coin(amount.u128(), NATIVE_DENOM),
+    });
+
+    Ok(Response::default()
+        .add_attribute("action", "delegate")
+        .add_attribute("validator", validator)
+        .add_message(stake_msg))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
+    let api = deps.api;
+
     match msg {
-        QueryMsg::GetCount {} => to_binary(&query_count(deps)?),
+        QueryMsg::Delegations { address } => {
+            to_binary(&query_delegated(deps, api.addr_validate(&address)?)?)
+        }
     }
 }
 
-fn query_count(deps: Deps) -> StdResult<CountResponse> {
-    let state = STATE.load(deps.storage)?;
-    Ok(CountResponse { count: state.count })
+fn query_delegated(deps: Deps, address: Addr) -> StdResult<DelegationsResponse> {
+    let delegations = STAKE
+        .prefix(&address)
+        .range(deps.storage, None, None, Order::Ascending)
+        .map(|item| item.map(|(validator, stake)| Delegation { validator, stake }))
+        .collect::<StdResult<Vec<_>>>()?;
+
+    Ok(DelegationsResponse { delegations })
 }
 
 #[cfg(test)]
@@ -93,10 +113,10 @@ mod tests {
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(0, res.messages.len());
 
-        // it worked, let's query the state
-        let res = query(deps.as_ref(), mock_env(), QueryMsg::GetCount {}).unwrap();
-        let value: CountResponse = from_binary(&res).unwrap();
-        assert_eq!(17, value.count);
+        // // it worked, let's query the state
+        // let res = query(deps.as_ref(), mock_env(), QueryMsg::GetCount {}).unwrap();
+        // let value: CountResponse = from_binary(&res).unwrap();
+        // assert_eq!(17, value.count);
     }
 
     #[test]
@@ -107,15 +127,15 @@ mod tests {
         let info = mock_info("creator", &coins(2, "token"));
         let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
-        // beneficiary can release it
-        let info = mock_info("anyone", &coins(2, "token"));
-        let msg = ExecuteMsg::Increment {};
-        let _res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
+        // // beneficiary can release it
+        // let info = mock_info("anyone", &coins(2, "token"));
+        // let msg = ExecuteMsg::Increment {};
+        // let _res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
 
-        // should increase counter by 1
-        let res = query(deps.as_ref(), mock_env(), QueryMsg::GetCount {}).unwrap();
-        let value: CountResponse = from_binary(&res).unwrap();
-        assert_eq!(18, value.count);
+        // // should increase counter by 1
+        // let res = query(deps.as_ref(), mock_env(), QueryMsg::GetCount {}).unwrap();
+        // let value: CountResponse = from_binary(&res).unwrap();
+        // assert_eq!(18, value.count);
     }
 
     #[test]
@@ -126,23 +146,23 @@ mod tests {
         let info = mock_info("creator", &coins(2, "token"));
         let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
-        // beneficiary can release it
-        let unauth_info = mock_info("anyone", &coins(2, "token"));
-        let msg = ExecuteMsg::Reset { count: 5 };
-        let res = execute(deps.as_mut(), mock_env(), unauth_info, msg);
-        match res {
-            Err(ContractError::Unauthorized {}) => {}
-            _ => panic!("Must return unauthorized error"),
-        }
+        // // beneficiary can release it
+        // let unauth_info = mock_info("anyone", &coins(2, "token"));
+        // let msg = ExecuteMsg::Reset { count: 5 };
+        // let res = execute(deps.as_mut(), mock_env(), unauth_info, msg);
+        // match res {
+        //     Err(ContractError::Unauthorized {}) => {}
+        //     _ => panic!("Must return unauthorized error"),
+        // }
 
-        // only the original creator can reset the counter
-        let auth_info = mock_info("creator", &coins(2, "token"));
-        let msg = ExecuteMsg::Reset { count: 5 };
-        let _res = execute(deps.as_mut(), mock_env(), auth_info, msg).unwrap();
+        // // only the original creator can reset the counter
+        // let auth_info = mock_info("creator", &coins(2, "token"));
+        // let msg = ExecuteMsg::Reset { count: 5 };
+        // let _res = execute(deps.as_mut(), mock_env(), auth_info, msg).unwrap();
 
-        // should now be 5
-        let res = query(deps.as_ref(), mock_env(), QueryMsg::GetCount {}).unwrap();
-        let value: CountResponse = from_binary(&res).unwrap();
-        assert_eq!(5, value.count);
+        // // should now be 5
+        // let res = query(deps.as_ref(), mock_env(), QueryMsg::GetCount {}).unwrap();
+        // let value: CountResponse = from_binary(&res).unwrap();
+        // assert_eq!(5, value.count);
     }
 }
