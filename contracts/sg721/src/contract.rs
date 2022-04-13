@@ -3,7 +3,7 @@ use cosmwasm_std::entry_point;
 use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, StdResult};
 use cw2::set_contract_version;
 
-use sg_std::fees::burn_and_distribute_fee;
+use sg_std::checked_fair_burn;
 use sg_std::StargazeMsgWrapper;
 
 use crate::ContractError;
@@ -21,6 +21,7 @@ const CONTRACT_NAME: &str = "crates.io:sg-721";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 const CREATION_FEE: u128 = 1_000_000_000;
+const MAX_DESCRIPTION_LENGTH: u32 = 512;
 
 type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 pub type Sg721Contract<'a> = cw721_base::Cw721Contract<'a, Empty, StargazeMsgWrapper>;
@@ -28,13 +29,13 @@ pub type Sg721Contract<'a> = cw721_base::Cw721Contract<'a, Empty, StargazeMsgWra
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
-    env: Env,
+    _env: Env,
     info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
-    let fee_msgs = burn_and_distribute_fee(env, &info, CREATION_FEE)?;
+    let fee_msgs = checked_fair_burn(&info, CREATION_FEE)?;
 
     // cw721 instantiation
     let info = ContractInfoResponse {
@@ -51,7 +52,7 @@ pub fn instantiate(
         .save(deps.storage, &minter)?;
 
     // sg721 instantiation
-    if msg.collection_info.description.len() > 256 {
+    if msg.collection_info.description.len() > MAX_DESCRIPTION_LENGTH as usize {
         return Err(ContractError::DescriptionTooLong {});
     }
 

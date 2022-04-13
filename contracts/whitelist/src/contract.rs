@@ -14,7 +14,7 @@ use cw_storage_plus::Bound;
 use cw_utils::{may_pay, maybe_addr, must_pay};
 use rust_decimal::prelude::ToPrimitive;
 use rust_decimal::Decimal;
-use sg_std::fees::burn_and_distribute_fee;
+use sg_std::checked_fair_burn;
 use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
 // version info for migration info
@@ -125,7 +125,7 @@ pub fn instantiate(
         ));
     }
 
-    let fee_msgs = burn_and_distribute_fee(env, &info, creation_fee)?;
+    let fee_msgs = checked_fair_burn(&info, creation_fee)?;
 
     if config.member_limit < config.num_members {
         return Err(ContractError::MembersExceeded {
@@ -160,10 +160,10 @@ pub fn execute(
         ExecuteMsg::AddMembers(msg) => execute_add_members(deps, env, info, msg),
         ExecuteMsg::RemoveMembers(msg) => execute_remove_members(deps, env, info, msg),
         ExecuteMsg::UpdatePerAddressLimit(per_address_limit) => {
-            execute_update_per_address_limit(deps, env, info, per_address_limit)
+            execute_update_per_address_limit(deps, info, per_address_limit)
         }
         ExecuteMsg::IncreaseMemberLimit(member_limit) => {
-            execute_increase_member_limit(deps, env, info, member_limit)
+            execute_increase_member_limit(deps, info, member_limit)
         }
     }
 }
@@ -301,7 +301,6 @@ pub fn execute_remove_members(
 
 pub fn execute_update_per_address_limit(
     deps: DepsMut,
-    _env: Env,
     info: MessageInfo,
     per_address_limit: u32,
 ) -> Result<Response, ContractError> {
@@ -327,7 +326,6 @@ pub fn execute_update_per_address_limit(
 /// Increase member limit. Must include a fee if crossing 1000, 2000, etc member limit.
 pub fn execute_increase_member_limit(
     deps: DepsMut,
-    env: Env,
     info: MessageInfo,
     member_limit: u32,
 ) -> Result<Response, ContractError> {
@@ -357,7 +355,7 @@ pub fn execute_increase_member_limit(
     }
 
     let fee_msgs = if upgrade_fee > 0 {
-        burn_and_distribute_fee(env, &info, upgrade_fee)?
+        checked_fair_burn(&info, upgrade_fee)?
     } else {
         vec![]
     };
