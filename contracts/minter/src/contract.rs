@@ -2,7 +2,7 @@
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     coin, to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut, Empty, Env,
-    MessageInfo, Order, Reply, ReplyOn, StdError, StdResult, Timestamp, Uint128, WasmMsg,
+    MessageInfo, Order, Reply, ReplyOn, StdError, StdResult, Timestamp, WasmMsg,
 };
 use cw2::set_contract_version;
 use cw721_base::{msg::ExecuteMsg as Cw721ExecuteMsg, MintMsg};
@@ -18,7 +18,7 @@ use crate::msg::{
 use crate::state::{
     Config, CONFIG, MINTABLE_NUM_TOKENS, MINTABLE_TOKEN_IDS, MINTER_ADDRS, SG721_ADDRESS,
 };
-use sg_std::{burn_and_distribute_fee, StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
+use sg_std::{checked_fair_burn, StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use whitelist::msg::{
     ConfigResponse as WhitelistConfigResponse, HasMemberResponse, QueryMsg as WhitelistQueryMsg,
 };
@@ -36,7 +36,10 @@ const INSTANTIATE_SG721_REPLY_ID: u64 = 1;
 const MAX_TOKEN_LIMIT: u32 = 10000;
 const MAX_PER_ADDRESS_LIMIT: u32 = 50;
 const MIN_MINT_PRICE: u128 = 50_000_000;
+const AIRDROP_MINT_PRICE: u128 = 15_000_000;
 const MINT_FEE_PERCENT: u32 = 10;
+// 100% airdrop fee goes to fair burn
+const AIRDROP_MINT_FEE_PERCENT: u32 = 100;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -163,15 +166,47 @@ pub fn execute(
         ExecuteMsg::UpdatePerAddressLimit { per_address_limit } => {
             execute_update_per_address_limit(deps, env, info, per_address_limit)
         }
-        ExecuteMsg::MintTo { recipient } => execute_mint_to(deps, env, info, recipient),
+        ExecuteMsg::MintTo { recipient } => execute_mint_to(deps, info, recipient),
         ExecuteMsg::MintFor {
             token_id,
             recipient,
-        } => execute_mint_for(deps, env, info, token_id, recipient),
+        } => execute_mint_for(deps, info, token_id, recipient),
         ExecuteMsg::SetWhitelist { whitelist } => {
             execute_set_whitelist(deps, env, info, &whitelist)
         }
+        ExecuteMsg::Withdraw {} => execute_withdraw(deps, env, info),
     }
+}
+
+pub fn execute_withdraw(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+) -> Result<Response, ContractError> {
+    let config = CONFIG.load(deps.storage)?;
+    if config.admin != info.sender {
+        return Err(ContractError::Unauthorized(
+            "Sender is not an admin".to_owned(),
+        ));
+    };
+
+    // query balance from the contract
+    let balance = deps
+        .querier
+        .query_balance(env.contract.address, NATIVE_DENOM)?;
+    if balance.amount.is_zero() {
+        return Err(ContractError::ZeroBalance {});
+    }
+
+    // send contract balance to creator
+    let send_msg = CosmosMsg::Bank(BankMsg::Send {
+        to_address: info.sender.to_string(),
+        amount: vec![balance],
+    });
+
+    Ok(Response::default()
+        .add_attribute("action", "withdraw")
+        .add_message(send_msg))
 }
 
 pub fn execute_set_whitelist(
@@ -229,7 +264,7 @@ pub fn execute_mint_sender(
         return Err(ContractError::MaxPerAddressLimitExceeded {});
     }
 
-    _execute_mint(deps, env, info, action, false, None, None)
+    _execute_mint(deps, info, action, false, None, None)
 }
 
 // Check if a whitelist exists and not ended
@@ -275,7 +310,6 @@ fn is_public_mint(deps: Deps, info: &MessageInfo) -> Result<bool, ContractError>
 
 pub fn execute_mint_to(
     deps: DepsMut,
-    env: Env,
     info: MessageInfo,
     recipient: String,
 ) -> Result<Response, ContractError> {
@@ -290,12 +324,11 @@ pub fn execute_mint_to(
         ));
     }
 
-    _execute_mint(deps, env, info, action, true, Some(recipient), None)
+    _execute_mint(deps, info, action, true, Some(recipient), None)
 }
 
 pub fn execute_mint_for(
     deps: DepsMut,
-    env: Env,
     info: MessageInfo,
     token_id: u32,
     recipient: String,
@@ -311,15 +344,7 @@ pub fn execute_mint_for(
         ));
     }
 
-    _execute_mint(
-        deps,
-        env,
-        info,
-        action,
-        true,
-        Some(recipient),
-        Some(token_id),
-    )
+    _execute_mint(deps, info, action, true, Some(recipient), Some(token_id))
 }
 
 // Generalize checks and mint message creation
@@ -328,10 +353,9 @@ pub fn execute_mint_for(
 // mint_for(recipient: "friend2", token_id: 420) -> _execute_mint(recipient, token_id)
 fn _execute_mint(
     deps: DepsMut,
-    env: Env,
     info: MessageInfo,
     action: &str,
-    admin_no_fee: bool,
+    is_admin: bool,
     recipient: Option<Addr>,
     token_id: Option<u32>,
 ) -> Result<Response, ContractError> {
@@ -343,7 +367,7 @@ fn _execute_mint(
         None => info.sender.clone(),
     };
 
-    let mint_price: Coin = mint_price(deps.as_ref(), admin_no_fee)?;
+    let mint_price: Coin = mint_price(deps.as_ref(), is_admin)?;
     // Exact payment only accepted
     let payment = may_pay(&info, &config.unit_price.denom)?;
     if payment != mint_price.amount {
@@ -356,18 +380,13 @@ fn _execute_mint(
     let mut msgs: Vec<CosmosMsg<StargazeMsgWrapper>> = vec![];
 
     // Create network fee msgs
-    let network_fee: Uint128 = if admin_no_fee {
-        Uint128::zero()
+    let fee_percent = if is_admin {
+        Decimal::percent(AIRDROP_MINT_FEE_PERCENT as u64)
     } else {
-        let fee_percent = Decimal::percent(MINT_FEE_PERCENT as u64);
-        let network_fee = mint_price.amount * fee_percent;
-        msgs.append(&mut burn_and_distribute_fee(
-            env,
-            &info,
-            network_fee.u128(),
-        )?);
-        network_fee
+        Decimal::percent(MINT_FEE_PERCENT as u64)
     };
+    let network_fee = mint_price.amount * fee_percent;
+    msgs.append(&mut checked_fair_burn(&info, network_fee.u128())?);
 
     let mintable_token_id = match token_id {
         Some(token_id) => {
@@ -416,16 +435,6 @@ fn _execute_mint(
     let new_mint_count = mint_count(deps.as_ref(), &info)? + 1;
     MINTER_ADDRS.save(deps.storage, info.clone().sender, &new_mint_count)?;
 
-    let mut seller_amount = Uint128::zero();
-    // Does have a fee
-    if !admin_no_fee {
-        seller_amount = mint_price.amount - network_fee;
-        msgs.append(&mut vec![CosmosMsg::Bank(BankMsg::Send {
-            to_address: config.admin.to_string(),
-            amount: vec![coin(seller_amount.u128(), config.unit_price.denom)],
-        })]);
-    };
-
     Ok(Response::default()
         .add_attribute("action", action)
         .add_attribute("sender", info.sender)
@@ -433,7 +442,6 @@ fn _execute_mint(
         .add_attribute("token_id", mintable_token_id.to_string())
         .add_attribute("network_fee", network_fee)
         .add_attribute("mint_price", mint_price.amount)
-        .add_attribute("seller_amount", seller_amount)
         .add_messages(msgs))
 }
 
@@ -503,11 +511,11 @@ pub fn execute_update_per_address_limit(
 // if admin_no_fee => no fee,
 // else if in whitelist => whitelist price
 // else => config unit price
-pub fn mint_price(deps: Deps, admin_no_fee: bool) -> Result<Coin, StdError> {
+pub fn mint_price(deps: Deps, is_admin: bool) -> Result<Coin, StdError> {
     let config = CONFIG.load(deps.storage)?;
 
-    if admin_no_fee {
-        return Ok(coin(0, config.unit_price.denom));
+    if is_admin {
+        return Ok(coin(AIRDROP_MINT_PRICE, config.unit_price.denom));
     }
 
     if config.whitelist.is_none() {
