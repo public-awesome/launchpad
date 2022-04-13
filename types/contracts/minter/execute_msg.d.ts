@@ -28,7 +28,8 @@ token_id: number
 [k: string]: unknown
 }
 } | {
-withdraw: {
+withdraw_stake: {
+validator: string
 [k: string]: unknown
 }
 })
