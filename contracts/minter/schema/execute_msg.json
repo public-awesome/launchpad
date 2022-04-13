@@ -117,11 +117,19 @@
     {
       "type": "object",
       "required": [
-        "withdraw"
+        "withdraw_stake"
       ],
       "properties": {
-        "withdraw": {
-          "type": "object"
+        "withdraw_stake": {
+          "type": "object",
+          "required": [
+            "validator"
+          ],
+          "properties": {
+            "validator": {
+              "type": "string"
+            }
+          }
         }
       },
       "additionalProperties": false
