@@ -2,7 +2,7 @@
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     from_binary, to_binary, Addr, Binary, Deps, DepsMut, Env, IbcMsg, IbcQuery, MessageInfo, Order,
-    PortIdResponse, Response, StdResult, StdError
+    PortIdResponse, Response, StdResult,
 };
 use cw2::set_contract_version;
 use cw20_ics20::msg::{ListChannelsResponse, PortResponse};
@@ -172,7 +172,7 @@ pub fn query_channel(deps: Deps, id: String) -> StdResult<ChannelResponse> {
                 class_id_vec
             },
         }),
-        Err(msg) => Err(StdError::GenericErr { msg: msg.to_string() })
+        Err(msg) => Err(msg)
     }
 }
 
