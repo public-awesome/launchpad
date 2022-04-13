@@ -1,8 +1,8 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coin, to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut, Empty, Env,
-    MessageInfo, Order, Reply, ReplyOn, StdError, StdResult, Timestamp, WasmMsg,
+    coin, to_binary, Addr, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut, Empty, Env,
+    MessageInfo, Order, Reply, ReplyOn, StakingMsg, StdError, StdResult, Timestamp, WasmMsg,
 };
 use cw2::set_contract_version;
 use cw721_base::{msg::ExecuteMsg as Cw721ExecuteMsg, MintMsg};
@@ -160,6 +160,8 @@ pub fn execute(
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
+    let api = deps.api;
+
     match msg {
         ExecuteMsg::Mint {} => execute_mint_sender(deps, env, info),
         ExecuteMsg::UpdateStartTime(time) => execute_update_start_time(deps, env, info, time),
@@ -174,14 +176,17 @@ pub fn execute(
         ExecuteMsg::SetWhitelist { whitelist } => {
             execute_set_whitelist(deps, env, info, &whitelist)
         }
-        ExecuteMsg::Withdraw {} => execute_withdraw(deps, env, info),
+        ExecuteMsg::WithdrawStake { validator } => {
+            execute_withdraw_stake(deps, env, info, api.addr_validate(&validator)?)
+        }
     }
 }
 
-pub fn execute_withdraw(
+pub fn execute_withdraw_stake(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
+    validator: Addr,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
     if config.admin != info.sender {
@@ -198,15 +203,14 @@ pub fn execute_withdraw(
         return Err(ContractError::ZeroBalance {});
     }
 
-    // send contract balance to creator
-    let send_msg = CosmosMsg::Bank(BankMsg::Send {
-        to_address: info.sender.to_string(),
-        amount: vec![balance],
+    let stake_msg = CosmosMsg::Staking(StakingMsg::Delegate {
+        validator: validator.to_string(),
+        amount: balance,
     });
 
     Ok(Response::default()
         .add_attribute("action", "withdraw")
-        .add_message(send_msg))
+        .add_message(stake_msg))
 }
 
 pub fn execute_set_whitelist(

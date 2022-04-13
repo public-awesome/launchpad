@@ -1467,7 +1467,9 @@ fn can_withdraw() {
     setup_block_time(&mut router, GENESIS_MINT_START_TIME + 1);
 
     // someone who isn't the creator cannot withdraw
-    let withdraw_msg = ExecuteMsg::Withdraw {};
+    let withdraw_msg = ExecuteMsg::WithdrawStake {
+        validator: "validator".to_string(),
+    };
     router
         .execute_contract(buyer.clone(), minter_addr.clone(), &withdraw_msg, &[])
         .unwrap_err();
@@ -1496,6 +1498,7 @@ fn can_withdraw() {
 
     // withdraw
     let res = router.execute_contract(creator.clone(), minter_addr.clone(), &withdraw_msg, &[]);
+    println!("{:?}", res);
     assert!(res.is_ok());
 
     // Minter contract should have no balance
