@@ -463,7 +463,7 @@ mod contact_testing {
     }
 
     #[test]
-    fn test_execute_receive_payment_fail() {
+    fn test_execute_receive_nonpayable_fail() {
         let mut deps = setup(&[TEST_CHANNEL_0_DATA, TEST_CHANNEL_1_DATA]);
         let sender_address_str = "wasm1fucynrfkrt684pm8jrt8la5h2csvs5cnldcgqc";
         let sender_address: Addr = Addr::unchecked(sender_address_str);

@@ -161,16 +161,18 @@ pub fn query_channel(deps: Deps, id: String) -> StdResult<ChannelResponse> {
         })
         .collect();
 
-    let mut class_ids_resp = _class_ids.unwrap();
-    let class_ids_resp = {
-        class_ids_resp.sort();
-        class_ids_resp.dedup();
-        class_ids_resp
-    };
-    Ok(ChannelResponse {
-        info,
-        class_ids: class_ids_resp,
-    })
+    let class_ids_resp = _class_ids;
+    match class_ids_resp {
+        Ok(mut class_id_vec) => Ok(ChannelResponse {
+            info,
+            class_ids: {
+                class_id_vec.sort();
+                class_id_vec.dedup();
+                class_id_vec
+            },
+        }),
+        Err(msg) => Err(msg),
+    }
 }
 
 // TODO: https://github.com/public-awesome/contracts/issues/59
