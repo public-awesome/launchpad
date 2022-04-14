@@ -36,8 +36,6 @@ pub enum QueryMsg {
     StartTime {},
     MintPrice {},
     MintCount { address: String },
-    // TODO: remove (debug only)
-    MintableTokens{},
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -58,11 +56,7 @@ pub struct MintableNumTokensResponse {
     pub count: u32,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct MintableTokensResponse {
-    pub first: Vec<u32>,
-    pub last:  Vec<u32>,
-}
+
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct StartTimeResponse {

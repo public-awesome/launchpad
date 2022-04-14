@@ -15,11 +15,10 @@ use sg721::msg::InstantiateMsg as Sg721InstantiateMsg;
 use sha2::{Digest, Sha256};
 use shuffle::{fy::FisherYates, shuffler::Shuffler};
 use url::Url;
-
 use crate::error::ContractError;
 use crate::msg::{
     ConfigResponse, ExecuteMsg, InstantiateMsg, MintCountResponse, MintPriceResponse,
-    MintableNumTokensResponse, QueryMsg, StartTimeResponse, MintableTokensResponse,
+    MintableNumTokensResponse, QueryMsg, StartTimeResponse,
 };
 use crate::state::{
     Config, CONFIG, MINTABLE_NUM_TOKENS, MINTABLE_TOKEN_IDS, MINTER_ADDRS, SG721_ADDRESS,
@@ -609,8 +608,6 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::MintableNumTokens {} => to_binary(&query_mintable_num_tokens(deps)?),
         QueryMsg::MintPrice {} => to_binary(&query_mint_price(deps)?),
         QueryMsg::MintCount { address } => to_binary(&query_mint_count(deps, address)?),
-        // TODO: remove (debug only)
-        QueryMsg::MintableTokens  {} => to_binary(&query_mintable_tokens(deps)?),
     }
 }
 
@@ -647,19 +644,6 @@ fn query_start_time(deps: Deps) -> StdResult<StartTimeResponse> {
     })
 }
 
-// TODO: remove (debug only)
-fn query_mintable_tokens(deps: Deps) -> StdResult<MintableTokensResponse> {
-   let first =  MINTABLE_TOKEN_IDS
-    .keys(deps.storage, None, None, Order::Ascending)
-    .take(50)
-    .collect::<StdResult<Vec<_>>>()?;
-
-    let last =  MINTABLE_TOKEN_IDS
-    .keys(deps.storage, None, None, Order::Descending)
-    .take(50)
-    .collect::<StdResult<Vec<_>>>()?;
-    Ok(MintableTokensResponse { first,last })
-}
 
 fn query_mintable_num_tokens(deps: Deps) -> StdResult<MintableNumTokensResponse> {
     let count = MINTABLE_NUM_TOKENS.load(deps.storage)?;
