@@ -462,7 +462,7 @@ fn _execute_mint(
 }
 
 pub fn random_token_list(env: &Env, num_tokens: u32) -> Result<Vec<u32>, ContractError> {
-    let mut tokens: Vec<u32> = (1..num_tokens).collect::<Vec<u32>>();
+    let mut tokens: Vec<u32> = (1..=num_tokens).collect::<Vec<u32>>();
     let sha256 = Sha256::digest(format!("{}{}", env.block.height, num_tokens).into_bytes());
     // Cut first 16 bytes from 32 byte value
     let randomness: [u8; 16] = sha256.to_vec()[0..16].try_into().unwrap();
@@ -643,7 +643,6 @@ fn query_start_time(deps: Deps) -> StdResult<StartTimeResponse> {
         start_time: config.start_time.to_string(),
     })
 }
-
 
 fn query_mintable_num_tokens(deps: Deps) -> StdResult<MintableNumTokensResponse> {
     let count = MINTABLE_NUM_TOKENS.load(deps.storage)?;

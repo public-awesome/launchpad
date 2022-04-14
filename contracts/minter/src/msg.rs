@@ -56,8 +56,6 @@ pub struct MintableNumTokensResponse {
     pub count: u32,
 }
 
-
-
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct StartTimeResponse {
     pub start_time: String,
