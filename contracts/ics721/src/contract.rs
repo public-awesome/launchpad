@@ -99,7 +99,6 @@ pub fn execute_transfer(
     );
     packet.validate()?;
 
-    // prepare message
     let msg = IbcMsg::SendPacket {
         channel_id: msg.channel,
         data: to_binary(&packet)?,

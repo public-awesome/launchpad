@@ -1,12 +1,19 @@
 #[cfg(test)]
 mod ibc_testing {
 
+    use std::vec;
+
     use super::super::*;
+    use crate::test_constants::{
+        CHANNEL_FROM_OMNI_TO_STARS, CHANNEL_FROM_STARS_TO_OMNI, CONNECTION_0, TEST_CHANNEL_0_DATA,
+        TEST_CHANNEL_1_DATA,
+    };
     use crate::test_helpers::*;
     use cosmwasm_std::CosmosMsg::Wasm;
     use cosmwasm_std::WasmMsg::Execute;
 
     use crate::contract::query_channel;
+    use cosmwasm_std::testing::mock_dependencies;
     use cosmwasm_std::testing::mock_env;
     use cosmwasm_std::{
         to_vec, Attribute, IbcAcknowledgement, IbcEndpoint, IbcTimeout, ReplyOn, Timestamp,
@@ -227,9 +234,25 @@ mod ibc_testing {
     }
 
     #[test]
-    fn test_receive_sg721_success() {
-        let send_channel = "channel-9";
-        let mut deps = setup(&["channel-1", "channel-7", send_channel]);
+    fn test_query_channel() {
+        let send_channel = CHANNEL_FROM_STARS_TO_OMNI;
+        let mut deps = setup(&[TEST_CHANNEL_0_DATA, TEST_CHANNEL_1_DATA]);
+        let connection_id = CONNECTION_0;
+        let counterparty_port_id = REMOTE_PORT;
+        let counterparty_channel_id = CHANNEL_FROM_OMNI_TO_STARS;
+        check_query_channel_state(
+            deps.as_mut(),
+            send_channel.to_string(),
+            connection_id.to_string(),
+            counterparty_port_id.to_string(),
+            counterparty_channel_id.to_string(),
+        );
+    }
+
+    #[test]
+    fn test_receive_sg721_multiple_success() {
+        let send_channel = CHANNEL_FROM_STARS_TO_OMNI;
+        let mut deps = setup(&[TEST_CHANNEL_0_DATA, TEST_CHANNEL_1_DATA]);
         let contract_addr = "collection-addr";
         let token_ids = vec!["1", "2", "3"];
         let token_uris = vec![
@@ -237,6 +260,14 @@ mod ibc_testing {
             "https://metadata-url.com/my-metadata2",
             "https://metadata-url.com/my-metadata3",
         ];
+
+        // before tokens are sent, they are not on the channel state
+        let exists = CHANNEL_STATE.may_load(&deps.storage, (send_channel, contract_addr, "1"));
+        assert_eq!(exists, Ok(None));
+        let exists = CHANNEL_STATE.may_load(&deps.storage, (send_channel, contract_addr, "2"));
+        assert_eq!(exists, Ok(None));
+        let exists = CHANNEL_STATE.may_load(&deps.storage, (send_channel, contract_addr, "3"));
+        assert_eq!(exists, Ok(None));
 
         send_sg721_success(
             deps.as_mut(),
@@ -246,8 +277,12 @@ mod ibc_testing {
             token_uris.clone(),
         );
 
-        //channel state holding token_id 1 after send
+        // channel state now has 3 token ids
         let exists = CHANNEL_STATE.may_load(&deps.storage, (send_channel, contract_addr, "1"));
+        assert_eq!(exists, Ok(Some(Empty {})));
+        let exists = CHANNEL_STATE.may_load(&deps.storage, (send_channel, contract_addr, "2"));
+        assert_eq!(exists, Ok(Some(Empty {})));
+        let exists = CHANNEL_STATE.may_load(&deps.storage, (send_channel, contract_addr, "3"));
         assert_eq!(exists, Ok(Some(Empty {})));
 
         let recv_packet = mock_receive_packet(
@@ -261,9 +296,40 @@ mod ibc_testing {
         let packet_receive = IbcPacketReceiveMsg::new(recv_packet);
         let res = ibc_packet_receive(deps.as_mut(), mock_env(), packet_receive).unwrap();
 
-        //channel state now removed token id 1 after receive
+        // after receive token ids 1,2, and 3 are now removed from channel state
         let exists = CHANNEL_STATE.may_load(&deps.storage, (send_channel, contract_addr, "1"));
         assert_eq!(exists, Ok(None));
+        let exists = CHANNEL_STATE.may_load(&deps.storage, (send_channel, contract_addr, "2"));
+        assert_eq!(exists, Ok(None));
+        let exists = CHANNEL_STATE.may_load(&deps.storage, (send_channel, contract_addr, "3"));
+        assert_eq!(exists, Ok(None));
+
+        let cw721_execute_msgs = [
+            Cw721ExecuteMsg::TransferNft {
+                recipient: "local-rcpt".into(),
+                token_id: "1".into(),
+            },
+            Cw721ExecuteMsg::TransferNft {
+                recipient: "local-rcpt".into(),
+                token_id: "2".into(),
+            },
+            Cw721ExecuteMsg::TransferNft {
+                recipient: "local-rcpt".into(),
+                token_id: "3".into(),
+            },
+        ];
+
+        let expected_return: SubMsg = SubMsg {
+            id: 1338,
+            msg: Wasm(Execute {
+                contract_addr: "collection-addr".into(),
+                msg: to_binary(&cw721_execute_msgs).unwrap(),
+                funds: [].into(),
+            }),
+            gas_limit: None,
+            reply_on: ReplyOn::Error,
+        };
+        assert_eq!(res.messages[0], expected_return);
 
         let res_attributes = [
             Attribute {
@@ -272,6 +338,7 @@ mod ibc_testing {
             },
             Attribute {
                 key: "sender".to_string(),
+
                 value: "remote-sender".to_string(),
             },
             Attribute {
@@ -293,23 +360,103 @@ mod ibc_testing {
         ];
 
         assert_eq!(res.attributes, res_attributes);
+    }
 
-        let connection_id = "connection-2";
-        let counterparty_port_id = "transfer-nft";
-        let counterparty_channel_id = "channel-95";
-        check_query_channel_state(
+    #[test]
+    fn test_receive_sg721_single_success() {
+        let send_channel = CHANNEL_FROM_STARS_TO_OMNI;
+        let mut deps = setup(&[TEST_CHANNEL_0_DATA, TEST_CHANNEL_1_DATA]);
+        let contract_addr = "collection-addr";
+        let token_ids = vec!["1"];
+        let token_uris = vec![
+            "https://metadata-url.com/my-metadata1",
+            "https://metadata-url.com/my-metadata2",
+            "https://metadata-url.com/my-metadata3",
+        ];
+
+        // before tokens are sent, they are not on the channel state
+        let exists = CHANNEL_STATE.may_load(&deps.storage, (send_channel, contract_addr, "1"));
+        assert_eq!(exists, Ok(None));
+
+        send_sg721_success(
             deps.as_mut(),
             send_channel.to_string(),
-            connection_id.to_string(),
-            counterparty_port_id.to_string(),
-            counterparty_channel_id.to_string(),
+            contract_addr.to_string(),
+            token_ids.clone(),
+            token_uris.clone(),
         );
+
+        // channel state now has 1 token id
+        let exists = CHANNEL_STATE.may_load(&deps.storage, (send_channel, contract_addr, "1"));
+        assert_eq!(exists, Ok(Some(Empty {})));
+
+        let recv_packet = mock_receive_packet(
+            send_channel,
+            contract_addr,
+            token_ids,
+            token_uris,
+            "local-rcpt",
+        );
+
+        let packet_receive = IbcPacketReceiveMsg::new(recv_packet);
+        let res = ibc_packet_receive(deps.as_mut(), mock_env(), packet_receive).unwrap();
+
+        // after receive token id 1 is now removed from channel state
+        let exists = CHANNEL_STATE.may_load(&deps.storage, (send_channel, contract_addr, "1"));
+        assert_eq!(exists, Ok(None));
+
+        let cw721_execute_msgs = [Cw721ExecuteMsg::TransferNft {
+            recipient: "local-rcpt".into(),
+            token_id: "1".into(),
+        }];
+
+        let expected_return: SubMsg = SubMsg {
+            id: 1338,
+            msg: Wasm(Execute {
+                contract_addr: "collection-addr".into(),
+                msg: to_binary(&cw721_execute_msgs).unwrap(),
+                funds: [].into(),
+            }),
+            gas_limit: None,
+            reply_on: ReplyOn::Error,
+        };
+        assert_eq!(res.messages[0], expected_return);
+
+        let res_attributes = [
+            Attribute {
+                key: "action".to_string(),
+                value: "receive".to_string(),
+            },
+            Attribute {
+                key: "sender".to_string(),
+
+                value: "remote-sender".to_string(),
+            },
+            Attribute {
+                key: "receiver".to_string(),
+                value: "local-rcpt".to_string(),
+            },
+            Attribute {
+                key: "contract_address".to_string(),
+                value: "collection-addr".to_string(),
+            },
+            Attribute {
+                key: "token_ids".to_string(),
+                value: "1".to_string(),
+            },
+            Attribute {
+                key: "success".to_string(),
+                value: "true".to_string(),
+            },
+        ];
+
+        assert_eq!(res.attributes, res_attributes);
     }
 
     #[test]
     fn test_receive_sg721_empty() {
-        let send_channel = "channel-9";
-        let mut deps = setup(&["channel-1", "channel-7", send_channel]);
+        let send_channel = CHANNEL_FROM_STARS_TO_OMNI;
+        let mut deps = setup(&[TEST_CHANNEL_0_DATA, TEST_CHANNEL_1_DATA]);
 
         let contract_addr = "collection-addr";
         let token_ids = vec!["1", "2", "3"];
@@ -359,23 +506,12 @@ mod ibc_testing {
             .to_string(),
         );
         assert_eq!(ack, no_such_nft);
-
-        let connection_id = "connection-2";
-        let counterparty_port_id = "transfer-nft";
-        let counterparty_channel_id = "channel-95";
-        check_query_channel_state(
-            deps.as_mut(),
-            send_channel.to_string(),
-            connection_id.to_string(),
-            counterparty_port_id.to_string(),
-            counterparty_channel_id.to_string(),
-        );
     }
 
     #[test]
     fn test_send_sg721_success() {
-        let send_channel = "channel-9";
-        let mut deps = setup(&["channel-1", "channel-7", send_channel]);
+        let send_channel = CHANNEL_FROM_STARS_TO_OMNI;
+        let mut deps = setup(&[TEST_CHANNEL_0_DATA, TEST_CHANNEL_1_DATA]);
         let contract_addr = "collection-addr";
         let token_ids = vec!["1", "2", "3"];
         let token_uris = vec![
@@ -392,48 +528,39 @@ mod ibc_testing {
             token_uris.clone(),
         );
 
-        assert_eq!(0, res.messages.len());
-
-        let result_attributes = [
-            Attribute {
-                key: "action".to_string(),
-                value: "acknowledge".to_string(),
-            },
-            Attribute {
-                key: "sender".to_string(),
-                value: "local-sender".to_string(),
-            },
-            Attribute {
-                key: "receiver".to_string(),
-                value: "remote-rcpt".to_string(),
-            },
-            Attribute {
-                key: "contract_addr".to_string(),
-                value: "collection-addr".to_string(),
-            },
-            Attribute {
-                key: "success".to_string(),
-                value: "true".to_string(),
-            },
-        ];
-        assert_eq!(res.attributes, result_attributes);
-
-        let connection_id = "connection-2";
-        let counterparty_port_id = "transfer-nft";
-        let counterparty_channel_id = "channel-95";
-        check_query_channel_state(
-            deps.as_mut(),
-            send_channel.to_string(),
-            connection_id.to_string(),
-            counterparty_port_id.to_string(),
-            counterparty_channel_id.to_string(),
+        let ibc_expected_response = IbcBasicResponse::new().add_attributes(
+            [
+                Attribute {
+                    key: "action".to_string(),
+                    value: "acknowledge".to_string(),
+                },
+                Attribute {
+                    key: "sender".to_string(),
+                    value: "local-sender".to_string(),
+                },
+                Attribute {
+                    key: "receiver".to_string(),
+                    value: "remote-rcpt".to_string(),
+                },
+                Attribute {
+                    key: "contract_addr".to_string(),
+                    value: "collection-addr".to_string(),
+                },
+                Attribute {
+                    key: "success".to_string(),
+                    value: "true".to_string(),
+                },
+            ]
+            .to_vec(),
         );
+
+        assert_eq!(res, ibc_expected_response);
     }
 
     #[test]
     fn test_send_sg721_fail_ibc_packet() {
-        let send_channel = "channel-9";
-        let mut deps = setup(&["channel-1", "channel-7", send_channel]);
+        let send_channel = CHANNEL_FROM_STARS_TO_OMNI;
+        let mut deps = setup(&[TEST_CHANNEL_0_DATA, TEST_CHANNEL_1_DATA]);
         let contract_addr = "transfer-nft/abc/def";
         let token_ids = vec!["1", "2", "3"];
         let token_uris = vec![
@@ -450,27 +577,45 @@ mod ibc_testing {
             "local-sender",
         );
 
+        let nft_name = "my-nft";
         let mut contract_addr = ibc_packet.src.port_id.to_string();
         contract_addr += "/";
         contract_addr += &ibc_packet.src.channel_id;
-        contract_addr += "/my-nft";
+        contract_addr += "/";
+        contract_addr += nft_name;
 
         let res = send_sg721_fail(
             deps.as_mut(),
             send_channel.to_string(),
-            contract_addr,
+            contract_addr.clone(),
             token_ids.clone(),
             token_uris.clone(),
         );
 
-        let reply_on = &res.messages[0].reply_on;
-        let wasm_msg = &res.messages[0].msg;
+        let expected_cw721_execute_msgs = [
+            Cw721ExecuteMsg::TransferNft {
+                recipient: "local-sender".into(),
+                token_id: "1".into(),
+            },
+            Cw721ExecuteMsg::TransferNft {
+                recipient: "local-sender".into(),
+                token_id: "2".into(),
+            },
+            Cw721ExecuteMsg::TransferNft {
+                recipient: "local-sender".into(),
+                token_id: "3".into(),
+            },
+        ];
 
-        assert_eq!(reply_on, &ReplyOn::Error);
-        let wasm_str = format!("{:?}", wasm_msg);
-        assert!(wasm_str.contains("contract_addr: \"my-nft\""));
+        let wasm_msg = WasmMsg::Execute {
+            contract_addr: nft_name.into(),
+            msg: to_binary(&expected_cw721_execute_msgs).unwrap(),
+            funds: vec![],
+        };
+        let expected_sub_msg = SubMsg::reply_on_error(wasm_msg, SEND_NFT_ID);
+        assert_eq!(res.messages[0], expected_sub_msg);
 
-        let res_attributes = [
+        let expoected_attributes = [
             Attribute {
                 key: "action".to_string(),
                 value: "acknowledge".to_string(),
@@ -496,13 +641,13 @@ mod ibc_testing {
                 value: "Ibc Packet Fail".to_string(),
             },
         ];
-        assert_eq!(res.attributes, res_attributes);
+        assert_eq!(res.attributes, expoected_attributes);
     }
 
     #[test]
     fn test_send_sg721_fail_foreign_token() {
-        let send_channel = "channel-9";
-        let mut deps = setup(&["channel-1", "channel-7", send_channel]);
+        let send_channel = CHANNEL_FROM_STARS_TO_OMNI;
+        let mut deps = setup(&[TEST_CHANNEL_0_DATA, TEST_CHANNEL_1_DATA]);
         let contract_addr = "transfer-nft/abc/def";
         let token_ids = vec!["1", "2", "3"];
         let token_uris = vec![
@@ -535,7 +680,7 @@ mod ibc_testing {
 
     #[test]
     fn test_parse_voucher_contract_address_success() {
-        let send_channel = "channel-9";
+        let send_channel = CHANNEL_FROM_STARS_TO_OMNI;
         let contract_port = "ibc:wasm1234567890abcdef";
 
         let endpoint_1 = IbcEndpoint {
@@ -543,14 +688,17 @@ mod ibc_testing {
             channel_id: send_channel.to_string(),
         };
 
-        let voucher_class_id = "ibc:wasm1234567890abcdef/channel-9/my-nft";
+        let voucher_class_id = &format!(
+            "ibc:wasm1234567890abcdef/{}/my-nft",
+            CHANNEL_FROM_STARS_TO_OMNI
+        );
         let parse_result = parse_voucher_contract_address(voucher_class_id, &endpoint_1);
         assert_eq!(parse_result.unwrap().to_string(), "my-nft");
     }
 
     #[test]
     fn test_parse_voucher_contract_address_fail_other_port() {
-        let send_channel = "channel-9";
+        let send_channel = CHANNEL_FROM_STARS_TO_OMNI;
         let contract_port = "ibc:wasm1234567890abcdef";
 
         let endpoint_1 = IbcEndpoint {
@@ -558,7 +706,7 @@ mod ibc_testing {
             channel_id: send_channel.to_string(),
         };
 
-        let voucher_class_id = "other-port/channel-9/my-nft";
+        let voucher_class_id = &format!("other-port/{}/my-nft", CHANNEL_FROM_STARS_TO_OMNI);
         let parse_result = parse_voucher_contract_address(voucher_class_id, &endpoint_1);
 
         let error_msg = parse_result.unwrap_err().to_string();
@@ -570,7 +718,7 @@ mod ibc_testing {
 
     #[test]
     fn test_parse_voucher_contract_address_fail_other_channel() {
-        let send_channel = "channel-9";
+        let send_channel = CHANNEL_FROM_STARS_TO_OMNI;
         let contract_port = "ibc:wasm1234567890abcdef";
 
         let endpoint_1 = IbcEndpoint {
@@ -590,8 +738,8 @@ mod ibc_testing {
 
     #[test]
     fn test_enforce_order_and_version_success() {
-        let send_channel = "channel-9";
-        let counterparty_send_channel = "channel-7";
+        let send_channel = CHANNEL_FROM_STARS_TO_OMNI;
+        let counterparty_send_channel = CHANNEL_FROM_OMNI_TO_STARS;
         let counterparty_contract_port = "ibc:stars123abc";
         let contract_port = "ibc:wasm1234567890abcdef";
 
@@ -610,7 +758,7 @@ mod ibc_testing {
             endpoint_2,
             IbcOrder::Unordered,
             ICS721_VERSION,
-            "connection-2".to_string(),
+            CONNECTION_0.to_string(),
         );
         let result = enforce_order_and_version(&ibc_channel, Some(ICS721_VERSION));
         match result {
@@ -623,8 +771,8 @@ mod ibc_testing {
 
     #[test]
     fn test_enforce_order_and_version_ibc_channel_wrong_version_fail() {
-        let send_channel = "channel-9";
-        let counterparty_send_channel = "channel-7";
+        let send_channel = CHANNEL_FROM_STARS_TO_OMNI;
+        let counterparty_send_channel = CHANNEL_FROM_OMNI_TO_STARS;
         let counterparty_contract_port = "ibc:stars123abc";
         let contract_port = "ibc:wasm1234567890abcdef";
 
@@ -643,7 +791,7 @@ mod ibc_testing {
             endpoint_2,
             IbcOrder::Unordered,
             "very_fake_version",
-            "connection-2".to_string(),
+            CONNECTION_0.to_string(),
         );
 
         let result = enforce_order_and_version(&ibc_channel, Some(ICS721_VERSION));
@@ -655,8 +803,8 @@ mod ibc_testing {
 
     #[test]
     fn test_enforce_order_and_version_counterparty_version_wrong_version_fail() {
-        let send_channel = "channel-9";
-        let counterparty_send_channel = "channel-7";
+        let send_channel = CHANNEL_FROM_STARS_TO_OMNI;
+        let counterparty_send_channel = CHANNEL_FROM_OMNI_TO_STARS;
         let counterparty_contract_port = "ibc:stars123abc";
         let contract_port = "ibc:wasm1234567890abcdef";
 
@@ -675,7 +823,7 @@ mod ibc_testing {
             endpoint_2,
             IbcOrder::Unordered,
             ICS721_VERSION,
-            "connection-2".to_string(),
+            CONNECTION_0.to_string(),
         );
 
         let result =
@@ -688,12 +836,11 @@ mod ibc_testing {
 
     #[test]
     fn test_channel_connect() {
-        let send_channel = "channel-9";
-        let counterparty_send_channel = "channel-7";
+        let send_channel = CHANNEL_FROM_STARS_TO_OMNI;
+        let counterparty_send_channel = CHANNEL_FROM_OMNI_TO_STARS;
         let counterparty_contract_port = "ibc:stars123abc";
         let contract_port = "ibc:wasm1234567890abcdef";
 
-        use cosmwasm_std::testing::mock_dependencies;
         let mut deps = mock_dependencies();
 
         let endpoint_1 = IbcEndpoint {
@@ -711,7 +858,7 @@ mod ibc_testing {
             endpoint_2,
             IbcOrder::Unordered,
             ICS721_VERSION,
-            "connection-2".to_string(),
+            CONNECTION_0.to_string(),
         );
 
         let channel_connect_msg = IbcChannelConnectMsg::OpenAck {
@@ -727,20 +874,72 @@ mod ibc_testing {
 
         let channel_info_data = CHANNEL_INFO.may_load(&deps.storage, send_channel);
         let expected_channel_data = ChannelInfo {
-            id: "channel-9".into(),
+            id: CHANNEL_FROM_STARS_TO_OMNI.into(),
             counterparty_endpoint: IbcEndpoint {
                 port_id: "ibc:stars123abc".into(),
-                channel_id: "channel-7".into(),
+                channel_id: CHANNEL_FROM_OMNI_TO_STARS.into(),
             },
-            connection_id: "connection-2".into(),
+            connection_id: CONNECTION_0.into(),
         };
         assert_eq!(channel_info_data.unwrap().unwrap(), expected_channel_data);
     }
 
     #[test]
-    fn test_send_tokens() {
-        let send_channel = "channel-9";
-        let mut deps = setup(&["channel-1", "channel-7", send_channel]);
+    fn test_send_tokens_single() {
+        let send_channel = CHANNEL_FROM_STARS_TO_OMNI;
+        let mut deps = setup(&[TEST_CHANNEL_0_DATA, TEST_CHANNEL_1_DATA]);
+        let contract_addr = "collection-addr";
+        let token_ids = vec!["1", "2", "3"];
+        let token_uris = vec![
+            "https://metadata-url.com/my-metadata1",
+            "https://metadata-url.com/my-metadata2",
+            "https://metadata-url.com/my-metadata3",
+        ];
+
+        send_sg721_success(
+            deps.as_mut(),
+            send_channel.to_string(),
+            contract_addr.to_string(),
+            token_ids.clone(),
+            token_uris.clone(),
+        );
+
+        let exists = CHANNEL_STATE.may_load(&deps.storage, (send_channel, contract_addr, "1"));
+        assert_eq!(exists, Ok(Some(Empty {})));
+
+        let result = send_tokens(
+            contract_addr,
+            vec!["1".into()],
+            vec![
+                "https://metadata-url.com/my-metadata1".into(),
+                "https://metadata-url.com/my-metadata2".into(),
+                "https://metadata-url.com/my-metadata3".into(),
+            ],
+            "local-rcpt".into(),
+        );
+
+        let cw721_msg_1 = Cw721ExecuteMsg::TransferNft {
+            recipient: "local-rcpt".into(),
+            token_id: "1".into(),
+        };
+        let msgs: Vec<Cw721ExecuteMsg> = vec![cw721_msg_1];
+        let submsg: cosmwasm_std::SubMsg<Empty> = SubMsg {
+            id: SEND_NFT_ID,
+            msg: Wasm(Execute {
+                contract_addr: "collection-addr".into(),
+                msg: to_binary(&msgs).unwrap(),
+                funds: vec![],
+            }),
+            gas_limit: None,
+            reply_on: cosmwasm_std::ReplyOn::Error,
+        };
+        assert_eq!(result, submsg);
+    }
+
+    #[test]
+    fn test_send_tokens_multiple() {
+        let send_channel = CHANNEL_FROM_STARS_TO_OMNI;
+        let mut deps = setup(&[TEST_CHANNEL_0_DATA, TEST_CHANNEL_1_DATA]);
         let contract_addr = "collection-addr";
         let token_ids = vec!["1", "2", "3"];
         let token_uris = vec![
@@ -771,16 +970,24 @@ mod ibc_testing {
             "local-rcpt".into(),
         );
 
-        let cw721_msg = Cw721ExecuteMsg::TransferNft {
+        let cw721_msg_1 = Cw721ExecuteMsg::TransferNft {
             recipient: "local-rcpt".into(),
             token_id: "1".into(),
         };
-
+        let cw721_msg_2 = Cw721ExecuteMsg::TransferNft {
+            recipient: "local-rcpt".into(),
+            token_id: "2".into(),
+        };
+        let cw721_msg_3 = Cw721ExecuteMsg::TransferNft {
+            recipient: "local-rcpt".into(),
+            token_id: "3".into(),
+        };
+        let msgs: Vec<Cw721ExecuteMsg> = vec![cw721_msg_1, cw721_msg_2, cw721_msg_3];
         let submsg: cosmwasm_std::SubMsg<Empty> = SubMsg {
             id: SEND_NFT_ID,
             msg: Wasm(Execute {
                 contract_addr: "collection-addr".into(),
-                msg: to_binary(&cw721_msg).unwrap(),
+                msg: to_binary(&msgs).unwrap(),
                 funds: vec![],
             }),
             gas_limit: None,
