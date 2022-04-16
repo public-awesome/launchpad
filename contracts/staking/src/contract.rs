@@ -1,8 +1,8 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coin, to_binary, Addr, Binary, ContractResult, CosmosMsg, Deps, DepsMut, Empty, Env, Event,
-    MessageInfo, Order, Response, StakingMsg, StdResult, SubMsg, Uint128,
+    coin, to_binary, Addr, Binary, ContractResult, CosmosMsg, Deps, DepsMut, DistributionMsg,
+    Empty, Env, Event, MessageInfo, Order, Response, StakingMsg, StdResult, SubMsg, Uint128,
 };
 use cw2::set_contract_version;
 use cw_utils::{must_pay, nonpayable};
@@ -45,6 +45,9 @@ pub fn execute(
         }
         ExecuteMsg::Undelegate { validator, amount } => {
             execute_undelegate(deps, info, api.addr_validate(&validator)?, amount)
+        }
+        ExecuteMsg::Claim { validator } => {
+            execute_claim(deps, info, api.addr_validate(&validator)?)
         }
     }
 }
@@ -103,9 +106,26 @@ pub fn execute_undelegate(
     });
 
     Ok(Response::default()
-        .add_attribute("action", "delegate")
+        .add_attribute("action", "undelegate")
         .add_attribute("validator", validator)
         .add_message(undelegate_msg))
+}
+
+pub fn execute_claim(
+    _deps: DepsMut,
+    info: MessageInfo,
+    validator: Addr,
+) -> Result<Response, ContractError> {
+    nonpayable(&info)?;
+
+    let withdraw_reward_msg = CosmosMsg::Distribution(DistributionMsg::WithdrawDelegatorReward {
+        validator: validator.to_string(),
+    });
+
+    Ok(Response::default()
+        .add_attribute("action", "claim")
+        .add_attribute("validator", validator)
+        .add_message(withdraw_reward_msg))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]

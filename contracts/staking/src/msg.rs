@@ -21,6 +21,9 @@ pub enum ExecuteMsg {
     //     old_validator: String,
     //     new_validator: String,
     // },
+    Claim {
+        validator: String,
+    },
     // Find all undelegations that have expired. Delete them from the map and send to the sender.
     // Withdraw {},
 }
