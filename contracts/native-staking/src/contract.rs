@@ -10,7 +10,7 @@ use sg_std::NATIVE_DENOM;
 
 use crate::error::ContractError;
 use crate::msg::{Delegation, DelegationsResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
-use crate::state::STAKE;
+use crate::state::{Stake, STAKE};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:staking";
@@ -33,18 +33,25 @@ pub fn instantiate(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     let api = deps.api;
 
     match msg {
-        ExecuteMsg::Delegate { validator } => {
-            execute_delegate(deps, info, api.addr_validate(&validator)?)
-        }
+        ExecuteMsg::Delegate {
+            validator,
+            min_duration,
+        } => execute_delegate(
+            deps,
+            env,
+            info,
+            api.addr_validate(&validator)?,
+            min_duration,
+        ),
         ExecuteMsg::Undelegate { validator, amount } => {
-            execute_undelegate(deps, info, api.addr_validate(&validator)?, amount)
+            execute_undelegate(deps, env, info, api.addr_validate(&validator)?, amount)
         }
         ExecuteMsg::Redelegate {
             src_validator,
@@ -65,8 +72,10 @@ pub fn execute(
 
 pub fn execute_delegate(
     deps: DepsMut,
+    env: Env,
     info: MessageInfo,
     validator: Addr,
+    min_duration: u64,
 ) -> Result<Response, ContractError> {
     let amount = must_pay(&info, NATIVE_DENOM)?;
 
@@ -75,8 +84,14 @@ pub fn execute_delegate(
         (&info.sender, &validator),
         |existing_stake| -> Result<_, ContractError> {
             match existing_stake {
-                Some(stake) => Ok(stake + amount),
-                None => Ok(amount),
+                Some(stake) => Ok(Stake {
+                    amount: stake.amount + amount,
+                    end_time: stake.end_time,
+                }),
+                None => Ok(Stake {
+                    amount,
+                    end_time: env.block.time.plus_seconds(min_duration * 24 * 60 * 60),
+                }),
             }
         },
     )?;
@@ -98,6 +113,7 @@ pub fn execute_delegate(
 
 pub fn execute_undelegate(
     deps: DepsMut,
+    env: Env,
     info: MessageInfo,
     validator: Addr,
     amount: Uint128,
@@ -109,11 +125,23 @@ pub fn execute_undelegate(
         (&info.sender, &validator),
         |existing_stake| -> Result<_, ContractError> {
             match existing_stake {
-                Some(stake) => Ok(stake - amount),
-                None => Ok(amount),
+                None => Err(ContractError::DelegationNotFound {}),
+                Some(stake) => {
+                    if stake.end_time < env.block.time {
+                        return Err(ContractError::MinDurationNotPassed {});
+                    }
+                    Ok(Stake {
+                        amount: stake.amount - amount,
+                        end_time: stake.end_time,
+                    })
+                }
             }
         },
     )?;
+
+    if STAKE.load(deps.storage, (&info.sender, &validator))?.amount == Uint128::zero() {
+        STAKE.remove(deps.storage, (&info.sender, &validator));
+    }
 
     let undelegate_msg = CosmosMsg::Staking(StakingMsg::Undelegate {
         validator: validator.to_string(),
@@ -148,7 +176,7 @@ pub fn execute_redelegate(
 
     STAKE.update(
         deps.storage,
-        (&info.sender, &src_validator),
+        (&info.sender, &dst_validator),
         |existing_stake| -> Result<_, ContractError> {
             match existing_stake {
                 Some(stake) => Ok(stake + amount),

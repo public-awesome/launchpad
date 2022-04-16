@@ -10,6 +10,12 @@ pub enum ContractError {
     #[error("Unauthorized")]
     Unauthorized {},
 
+    #[error("DelegationNotFound")]
+    DelegationNotFound {},
+
+    #[error("MinDurationNotPassed")]
+    MinDurationNotPassed {},
+
     #[error("Custom Error val: {val:?}")]
     CustomError { val: String },
 

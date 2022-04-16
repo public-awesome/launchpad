@@ -10,7 +10,11 @@ pub struct InstantiateMsg {}
 pub enum ExecuteMsg {
     /// Delegate funds to a Stargaze validator.
     /// Also sets the withdraw address to the sender.
-    Delegate { validator: String },
+    /// `min_duration` is in days.
+    Delegate {
+        validator: String,
+        min_duration: u64,
+    },
     /// Starts the undelegation process
     Undelegate { validator: String, amount: Uint128 },
     /// Redelegate stake from one validator to another

@@ -1,12 +1,13 @@
-use cosmwasm_std::{Addr, Uint128};
+use cosmwasm_std::{Addr, Timestamp, Uint128};
 use cw_storage_plus::Map;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
-/// address -> balance
-pub const BALANCE: Map<&Addr, Uint128> = Map::new("b");
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct Stake {
+    pub end_time: Timestamp,
+    pub amount: Uint128,
+}
 
 /// (address, validator) -> stake amount
-pub const STAKE: Map<(&Addr, &Addr), Uint128> = Map::new("s");
-
-// TODO: store `end_time` as `Timestamp`
-/// (address, validator) -> stake amount
-pub const UNDELEGATIONS: Map<(&Addr, &Addr), Uint128> = Map::new("u");
+pub const STAKE: Map<(&Addr, &Addr), Stake> = Map::new("s");
