@@ -1,8 +1,8 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coin, to_binary, Addr, Binary, ContractResult, CosmosMsg, Deps, DepsMut, DistributionMsg,
-    Empty, Env, Event, MessageInfo, Order, Response, StakingMsg, StdResult, SubMsg, Uint128,
+    coin, to_binary, Addr, Binary, CosmosMsg, Deps, DepsMut, DistributionMsg, Env, MessageInfo,
+    Order, Response, StakingMsg, StdResult, Uint128,
 };
 use cw2::set_contract_version;
 use cw_utils::{must_pay, nonpayable};
@@ -46,6 +46,17 @@ pub fn execute(
         ExecuteMsg::Undelegate { validator, amount } => {
             execute_undelegate(deps, info, api.addr_validate(&validator)?, amount)
         }
+        ExecuteMsg::Redelegate {
+            src_validator,
+            dst_validator,
+            amount,
+        } => execute_redelegate(
+            deps,
+            info,
+            api.addr_validate(&src_validator)?,
+            api.addr_validate(&dst_validator)?,
+            amount,
+        ),
         ExecuteMsg::Claim { validator } => {
             execute_claim(deps, info, api.addr_validate(&validator)?)
         }
@@ -75,10 +86,14 @@ pub fn execute_delegate(
         amount: coin(amount.u128(), NATIVE_DENOM),
     });
 
+    let set_withdraw_address_msg = CosmosMsg::Distribution(DistributionMsg::SetWithdrawAddress {
+        address: info.sender.to_string(),
+    });
+
     Ok(Response::default()
         .add_attribute("action", "delegate")
         .add_attribute("validator", validator)
-        .add_message(stake_msg))
+        .add_messages(vec![stake_msg, set_withdraw_address_msg]))
 }
 
 pub fn execute_undelegate(
@@ -109,6 +124,50 @@ pub fn execute_undelegate(
         .add_attribute("action", "undelegate")
         .add_attribute("validator", validator)
         .add_message(undelegate_msg))
+}
+
+pub fn execute_redelegate(
+    deps: DepsMut,
+    info: MessageInfo,
+    src_validator: Addr,
+    dst_validator: Addr,
+    amount: Uint128,
+) -> Result<Response, ContractError> {
+    nonpayable(&info)?;
+
+    STAKE.update(
+        deps.storage,
+        (&info.sender, &src_validator),
+        |existing_stake| -> Result<_, ContractError> {
+            match existing_stake {
+                Some(stake) => Ok(stake - amount),
+                None => Ok(amount),
+            }
+        },
+    )?;
+
+    STAKE.update(
+        deps.storage,
+        (&info.sender, &src_validator),
+        |existing_stake| -> Result<_, ContractError> {
+            match existing_stake {
+                Some(stake) => Ok(stake + amount),
+                None => Ok(amount),
+            }
+        },
+    )?;
+
+    let redelegate_msg = CosmosMsg::Staking(StakingMsg::Redelegate {
+        src_validator: src_validator.to_string(),
+        dst_validator: dst_validator.to_string(),
+        amount: coin(amount.u128(), NATIVE_DENOM),
+    });
+
+    Ok(Response::default()
+        .add_attribute("action", "redelegate")
+        .add_attribute("src_validator", src_validator)
+        .add_attribute("dst_validator", dst_validator)
+        .add_message(redelegate_msg))
 }
 
 pub fn execute_claim(

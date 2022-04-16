@@ -8,24 +8,20 @@ pub struct InstantiateMsg {}
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
-    /// Delegate funds to a Stargaze validator
-    Delegate {
-        validator: String,
-    },
-    // Start the undelegation process
-    Undelegate {
-        validator: String,
+    /// Delegate funds to a Stargaze validator.
+    /// Also sets the withdraw address to the sender.
+    Delegate { validator: String },
+    /// Starts the undelegation process
+    Undelegate { validator: String, amount: Uint128 },
+    /// Redelegate stake from one validator to another
+    Redelegate {
+        src_validator: String,
+        dst_validator: String,
         amount: Uint128,
     },
-    // Redelegate {
-    //     old_validator: String,
-    //     new_validator: String,
-    // },
-    Claim {
-        validator: String,
-    },
-    // Find all undelegations that have expired. Delete them from the map and send to the sender.
-    // Withdraw {},
+    /// Claim rewards from a validator
+    /// Rewards go to the withdraw address, not the contract.
+    Claim { validator: String },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
