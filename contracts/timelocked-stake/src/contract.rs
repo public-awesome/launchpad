@@ -31,10 +31,13 @@ pub fn instantiate(
         end_time: env.block.time.plus_seconds(msg.min_duration),
         amount: must_pay(&info, NATIVE_DENOM)?,
     };
-
     STAKE.save(deps.storage, &stake)?;
 
     Ok(Response::new()
+        .add_message(StakingMsg::Delegate {
+            validator: msg.validator,
+            amount: coin(stake.amount.u128(), NATIVE_DENOM),
+        })
         .add_attribute("action", "instantiate")
         .add_attribute("owner", info.sender))
 }
@@ -49,168 +52,58 @@ pub fn execute(
     let api = deps.api;
 
     match msg {
-        ExecuteMsg::Delegate {
-            validator,
-            min_duration,
-        } => execute_delegate(
-            deps,
-            env,
-            info,
-            api.addr_validate(&validator)?,
-            min_duration,
-        ),
-        ExecuteMsg::Undelegate { validator, amount } => {
-            execute_undelegate(deps, env, info, api.addr_validate(&validator)?, amount)
+        ExecuteMsg::Undelegate {} => execute_undelegate(deps, env, info),
+        ExecuteMsg::Redelegate { dst_validator } => {
+            execute_redelegate(deps, info, api.addr_validate(&dst_validator)?)
         }
-        ExecuteMsg::Redelegate {
-            src_validator,
-            dst_validator,
-            amount,
-        } => execute_redelegate(
-            deps,
-            info,
-            api.addr_validate(&src_validator)?,
-            api.addr_validate(&dst_validator)?,
-            amount,
-        ),
-        ExecuteMsg::Claim { validator } => {
-            execute_claim(deps, info, api.addr_validate(&validator)?)
-        }
+        ExecuteMsg::Claim {} => execute_claim(deps, info),
     }
-}
-
-pub fn execute_delegate(
-    deps: DepsMut,
-    env: Env,
-    info: MessageInfo,
-    validator: Addr,
-    min_duration: u64,
-) -> Result<Response, ContractError> {
-    let amount = must_pay(&info, NATIVE_DENOM)?;
-
-    // deps.querier.query_all_delegations(delegator)
-
-    STAKE.update(
-        deps.storage,
-        (&info.sender, &validator),
-        |existing_stake| -> Result<_, ContractError> {
-            match existing_stake {
-                Some(stake) => Ok(Stake {
-                    amount: stake.amount + amount,
-                    end_time: stake.end_time,
-                }),
-                None => Ok(Stake {
-                    amount,
-                    end_time: env.block.time.plus_seconds(min_duration * 24 * 60 * 60),
-                }),
-            }
-        },
-    )?;
-
-    let stake_msg = CosmosMsg::Staking(StakingMsg::Delegate {
-        validator: validator.to_string(),
-        amount: coin(amount.u128(), NATIVE_DENOM),
-    });
-
-    let set_withdraw_address_msg = CosmosMsg::Distribution(DistributionMsg::SetWithdrawAddress {
-        address: info.sender.to_string(),
-    });
-
-    Ok(Response::default()
-        .add_attribute("action", "delegate")
-        .add_attribute("validator", validator)
-        .add_messages(vec![stake_msg, set_withdraw_address_msg]))
 }
 
 pub fn execute_undelegate(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    validator: Addr,
-    amount: Uint128,
 ) -> Result<Response, ContractError> {
     nonpayable(&info)?;
 
-    STAKE.update(
-        deps.storage,
-        (&info.sender, &validator),
-        |existing_stake| -> Result<_, ContractError> {
-            match existing_stake {
-                None => Err(ContractError::DelegationNotFound {}),
-                Some(stake) => {
-                    if stake.end_time < env.block.time {
-                        return Err(ContractError::MinDurationNotPassed {});
-                    }
-                    Ok(Stake {
-                        amount: stake.amount - amount,
-                        end_time: stake.end_time,
-                    })
-                }
-            }
-        },
-    )?;
+    let stake = STAKE.load(deps.storage)?;
 
-    if STAKE.load(deps.storage, (&info.sender, &validator))?.amount == Uint128::zero() {
-        STAKE.remove(deps.storage, (&info.sender, &validator));
+    if env.block.time < stake.end_time {
+        return Err(ContractError::StakeNotExpired {});
     }
 
-    let undelegate_msg = CosmosMsg::Staking(StakingMsg::Undelegate {
-        validator: validator.to_string(),
-        amount: coin(amount.u128(), NATIVE_DENOM),
-    });
+    // TODO: what if this delegation has been slashed, would this undelegation amount still work?
 
     Ok(Response::default()
-        .add_attribute("action", "undelegate")
-        .add_attribute("validator", validator)
-        .add_message(undelegate_msg))
+        .add_message(StakingMsg::Undelegate {
+            validator: stake.validator.to_string(),
+            amount: coin(stake.amount.u128(), NATIVE_DENOM),
+        })
+        .add_attribute("action", "undelegate"))
 }
 
+/// Redelegate to a new validator. Also updates the validator in storage.
 pub fn execute_redelegate(
     deps: DepsMut,
     info: MessageInfo,
-    src_validator: Addr,
     dst_validator: Addr,
-    amount: Uint128,
 ) -> Result<Response, ContractError> {
     nonpayable(&info)?;
 
-    // 1. check if src delegation exists -- if not, return error
-    // 2. subtract amount from src delegation
-    // 3. check if dst delegation exists with the same time -- if so, add amount to it
-    // 4. if not, create new dst delegation with the same `end_time` as src delegation
-    // 5. remove src delegation if amount is zero
-
-    // 1 + 2
-    let mut src_stake = STAKE.load(deps.storage, (&info.sender, &src_validator))?;
-    src_stake.amount -= amount;
-
-    // 3 + 4
-    let mut dst_stake = STAKE.load(deps.storage, (&info.sender, &dst_validator))?;
-    if dst_stake.end_time == src_stake.end_time {
-        dst_stake.amount += amount;
-        STAKE.save(deps.storage, (&info.sender, &dst_validator), &dst_stake)?;
-    } else {
-        dst_stake = Stake {
-            amount,
-            end_time: src_stake.end_time,
-        };
-        STAKE.save(deps.storage, (&info.sender, &dst_validator), &dst_stake)?;
-    }
-
-    // 5
-    if src_stake.amount == Uint128::zero() {
-        STAKE.remove(deps.storage, (&info.sender, &src_validator));
-    }
+    let mut stake = STAKE.load(deps.storage)?;
 
     let redelegate_msg = CosmosMsg::Staking(StakingMsg::Redelegate {
-        src_validator: src_validator.to_string(),
+        src_validator: stake.validator.to_string(),
         dst_validator: dst_validator.to_string(),
-        amount: coin(amount.u128(), NATIVE_DENOM),
+        amount: coin(stake.amount.u128(), NATIVE_DENOM),
     });
+
+    stake.validator = dst_validator;
+    STAKE.save(deps.storage, &stake)?;
 
     Ok(Response::default()
         .add_attribute("action", "redelegate")
-        .add_attribute("src_validator", src_validator)
         .add_attribute("dst_validator", dst_validator)
         .add_message(redelegate_msg))
 }

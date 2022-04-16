@@ -13,8 +13,8 @@ pub enum ContractError {
     #[error("DelegationNotFound")]
     DelegationNotFound {},
 
-    #[error("MinDurationNotPassed")]
-    MinDurationNotPassed {},
+    #[error("StakeNotExpired")]
+    StakeNotExpired {},
 
     #[error("Custom Error val: {val:?}")]
     CustomError { val: String },
