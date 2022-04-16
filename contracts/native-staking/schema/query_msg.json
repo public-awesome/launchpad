@@ -1,15 +1,24 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "QueryMsg",
-  "anyOf": [
+  "oneOf": [
     {
+      "description": "Return type: `DelegationsResponse`",
       "type": "object",
       "required": [
-        "get_count"
+        "delegations"
       ],
       "properties": {
-        "get_count": {
-          "type": "object"
+        "delegations": {
+          "type": "object",
+          "required": [
+            "address"
+          ],
+          "properties": {
+            "address": {
+              "type": "string"
+            }
+          }
         }
       },
       "additionalProperties": false
