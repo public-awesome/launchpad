@@ -13,20 +13,29 @@ use crate::msg::{Delegation, DelegationsResponse, ExecuteMsg, InstantiateMsg, Qu
 use crate::state::{Stake, STAKE};
 
 // version info for migration info
-const CONTRACT_NAME: &str = "crates.io:staking";
+const CONTRACT_NAME: &str = "crates.io:native-staking";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
-    _msg: InstantiateMsg,
+    msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
+    let stake = Stake {
+        owner: info.sender,
+        validator: deps.api.addr_validate(&msg.validator)?,
+        end_time: env.block.time.plus_seconds(msg.min_duration),
+        amount: must_pay(&info, NATIVE_DENOM)?,
+    };
+
+    STAKE.save(deps.storage, &stake)?;
+
     Ok(Response::new()
-        .add_attribute("method", "instantiate")
+        .add_attribute("action", "instantiate")
         .add_attribute("owner", info.sender))
 }
 
@@ -79,7 +88,7 @@ pub fn execute_delegate(
 ) -> Result<Response, ContractError> {
     let amount = must_pay(&info, NATIVE_DENOM)?;
 
-    // deps.querier.query_delegation(delegator, validator)
+    // deps.querier.query_all_delegations(delegator)
 
     STAKE.update(
         deps.storage,
