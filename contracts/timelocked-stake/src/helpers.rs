@@ -38,7 +38,7 @@ impl SgStakingContract {
         T: Into<String>,
         CQ: CustomQuery,
     {
-        let msg = QueryMsg::Delegations { address };
+        let msg = QueryMsg::Delegations {};
         let query = WasmQuery::Smart {
             contract_addr: self.addr().into(),
             msg: to_binary(&msg)?,

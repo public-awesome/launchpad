@@ -1,8 +1,8 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coin, to_binary, Addr, Binary, CosmosMsg, Deps, DepsMut, DistributionMsg, Env, MessageInfo,
-    Order, Response, StakingMsg, StdResult, Uint128,
+    coin, to_binary, Addr, BankMsg, Binary, CosmosMsg, Deps, DepsMut, Env, MessageInfo, Order,
+    Response, StakingMsg, StdResult,
 };
 use cw2::set_contract_version;
 use cw_utils::{must_pay, nonpayable};
@@ -13,7 +13,7 @@ use crate::msg::{Delegation, DelegationsResponse, ExecuteMsg, InstantiateMsg, Qu
 use crate::state::{Stake, STAKE};
 
 // version info for migration info
-const CONTRACT_NAME: &str = "crates.io:native-staking";
+const CONTRACT_NAME: &str = "crates.io:sg-timelocked-stake";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -30,6 +30,7 @@ pub fn instantiate(
         validator: deps.api.addr_validate(&msg.validator)?,
         end_time: env.block.time.plus_seconds(msg.min_duration),
         amount: must_pay(&info, NATIVE_DENOM)?,
+        min_withdrawal: msg.min_withdrawal,
     };
     STAKE.save(deps.storage, &stake)?;
 
@@ -56,7 +57,7 @@ pub fn execute(
         ExecuteMsg::Redelegate { dst_validator } => {
             execute_redelegate(deps, info, api.addr_validate(&dst_validator)?)
         }
-        ExecuteMsg::Claim {} => execute_claim(deps, info),
+        ExecuteMsg::Claim {} => execute_claim(deps, env, info),
     }
 }
 
@@ -68,6 +69,7 @@ pub fn execute_undelegate(
     nonpayable(&info)?;
 
     let stake = STAKE.load(deps.storage)?;
+    STAKE.remove(deps.storage);
 
     if env.block.time < stake.end_time {
         return Err(ContractError::StakeNotExpired {});
@@ -109,20 +111,27 @@ pub fn execute_redelegate(
 }
 
 pub fn execute_claim(
-    _deps: DepsMut,
+    deps: DepsMut,
+    env: Env,
     info: MessageInfo,
-    validator: Addr,
 ) -> Result<Response, ContractError> {
     nonpayable(&info)?;
 
-    let withdraw_reward_msg = CosmosMsg::Distribution(DistributionMsg::WithdrawDelegatorReward {
-        validator: validator.to_string(),
-    });
+    let stake = STAKE.load(deps.storage)?;
+
+    let balance = deps
+        .querier
+        .query_balance(&env.contract.address, NATIVE_DENOM)?;
+    if balance.amount < stake.min_withdrawal {
+        return Err(ContractError::BalanceTooSmall {});
+    }
 
     Ok(Response::default()
         .add_attribute("action", "claim")
-        .add_attribute("validator", validator)
-        .add_message(withdraw_reward_msg))
+        .add_message(BankMsg::Send {
+            to_address: stake.owner.to_string(),
+            amount: vec![coin(balance.amount.u128(), NATIVE_DENOM)],
+        }))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]

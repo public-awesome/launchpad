@@ -9,6 +9,8 @@ pub struct Stake {
     pub validator: Addr,
     pub end_time: Timestamp,
     pub amount: Uint128,
+    /// This is the minimum amount we will pull out to reinvest + claim
+    pub min_withdrawal: Uint128,
 }
 
 pub const STAKE: Item<Stake> = Item::new("stake");

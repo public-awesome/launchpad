@@ -16,6 +16,9 @@ pub enum ContractError {
     #[error("StakeNotExpired")]
     StakeNotExpired {},
 
+    #[error("BalanceTooSmall")]
+    BalanceTooSmall {},
+
     #[error("Custom Error val: {val:?}")]
     CustomError { val: String },
 

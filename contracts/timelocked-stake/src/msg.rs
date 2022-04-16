@@ -8,6 +8,8 @@ use serde::{Deserialize, Serialize};
 pub struct InstantiateMsg {
     pub validator: String,
     pub min_duration: u64,
+    /// This is the minimum amount we will pull out to reinvest + claim
+    pub min_withdrawal: Uint128,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
