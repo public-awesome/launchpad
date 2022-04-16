@@ -1,15 +1,15 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coin, to_binary, Addr, BankMsg, Binary, CosmosMsg, Deps, DepsMut, Env, MessageInfo, Order,
-    Response, StakingMsg, StdResult,
+    coin, to_binary, Addr, BankMsg, Binary, CosmosMsg, Deps, DepsMut, DistributionMsg, Env,
+    MessageInfo, Response, StakingMsg, StdResult, WasmMsg,
 };
 use cw2::set_contract_version;
 use cw_utils::{must_pay, nonpayable};
 use sg_std::NATIVE_DENOM;
 
 use crate::error::ContractError;
-use crate::msg::{Delegation, DelegationsResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
+use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg, StakeResponse};
 use crate::state::{Stake, STAKE};
 
 // version info for migration info
@@ -58,6 +58,8 @@ pub fn execute(
             execute_redelegate(deps, info, api.addr_validate(&dst_validator)?)
         }
         ExecuteMsg::Claim {} => execute_claim(deps, env, info),
+        ExecuteMsg::Reinvest {} => execute_reinvest(deps, env, info),
+        ExecuteMsg::_Delegate {} => _execute_delegate(deps, env, info),
     }
 }
 
@@ -69,6 +71,9 @@ pub fn execute_undelegate(
     nonpayable(&info)?;
 
     let stake = STAKE.load(deps.storage)?;
+    if stake.owner != info.sender {
+        return Err(ContractError::Unauthorized {});
+    }
     STAKE.remove(deps.storage);
 
     if env.block.time < stake.end_time {
@@ -94,6 +99,9 @@ pub fn execute_redelegate(
     nonpayable(&info)?;
 
     let mut stake = STAKE.load(deps.storage)?;
+    if stake.owner != info.sender {
+        return Err(ContractError::Unauthorized {});
+    }
 
     let redelegate_msg = CosmosMsg::Staking(StakingMsg::Redelegate {
         src_validator: stake.validator.to_string(),
@@ -118,6 +126,9 @@ pub fn execute_claim(
     nonpayable(&info)?;
 
     let stake = STAKE.load(deps.storage)?;
+    if stake.owner != info.sender {
+        return Err(ContractError::Unauthorized {});
+    }
 
     let balance = deps
         .querier
@@ -134,31 +145,71 @@ pub fn execute_claim(
         }))
 }
 
+/// Reinvest withdraws all pending rewards, then issues a callback to itself to delegate.
+/// It reinvests new earnings (and anything else that accumulated)
+pub fn execute_reinvest(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+) -> Result<Response, ContractError> {
+    nonpayable(&info)?;
+
+    let stake = STAKE.load(deps.storage)?;
+    if stake.owner != info.sender {
+        return Err(ContractError::Unauthorized {});
+    }
+
+    let res = Response::new()
+        .add_message(DistributionMsg::WithdrawDelegatorReward {
+            validator: stake.validator.to_string(),
+        })
+        .add_message(WasmMsg::Execute {
+            contract_addr: env.contract.address.to_string(),
+            msg: to_binary(&ExecuteMsg::_Delegate {})?,
+            funds: vec![],
+        });
+    Ok(res)
+}
+
+pub fn _execute_delegate(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+) -> Result<Response, ContractError> {
+    // this is just meant as a call-back to ourself
+    if info.sender != env.contract.address {
+        return Err(ContractError::Unauthorized {});
+    }
+
+    let balance = deps
+        .querier
+        .query_balance(&env.contract.address, NATIVE_DENOM)?;
+
+    let mut stake = STAKE.load(deps.storage)?;
+    stake.amount += balance.amount;
+    STAKE.save(deps.storage, &stake)?;
+
+    let res = Response::new()
+        .add_message(StakingMsg::Delegate {
+            validator: stake.validator.to_string(),
+            amount: balance,
+        })
+        .add_attribute("action", "reinvest")
+        .add_attribute("amount", balance.amount);
+    Ok(res)
+}
+
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
-    let api = deps.api;
-
     match msg {
-        QueryMsg::Delegations { address } => {
-            to_binary(&query_delegated(deps, api.addr_validate(&address)?)?)
-        }
+        QueryMsg::Stake {} => to_binary(&query_stake(deps)),
     }
 }
 
-fn query_delegated(deps: Deps, address: Addr) -> StdResult<DelegationsResponse> {
-    let delegations = STAKE
-        .prefix(&address)
-        .range(deps.storage, None, None, Order::Ascending)
-        .map(|item| {
-            item.map(|(validator, stake)| Delegation {
-                validator,
-                stake: stake.amount,
-                end_time: stake.end_time,
-            })
-        })
-        .collect::<StdResult<Vec<_>>>()?;
+fn query_stake(deps: Deps) -> StdResult<StakeResponse> {
+    let stake = STAKE.load(deps.storage)?;
 
-    Ok(DelegationsResponse { delegations })
+    Ok(StakeResponse { stake })
 }
 
 #[cfg(test)]
@@ -169,14 +220,14 @@ mod tests {
 
     #[test]
     fn proper_initialization() {
-        let mut deps = mock_dependencies_with_balance(&coins(2, "token"));
+        // let mut deps = mock_dependencies_with_balance(&coins(2, "token"));
 
-        let msg = InstantiateMsg {};
-        let info = mock_info("creator", &coins(1000, "earth"));
+        // let msg = InstantiateMsg {};
+        // let info = mock_info("creator", &coins(1000, "earth"));
 
-        // we can just call .unwrap() to assert this was a success
-        let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(0, res.messages.len());
+        // // we can just call .unwrap() to assert this was a success
+        // let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+        // assert_eq!(0, res.messages.len());
 
         // // it worked, let's query the state
         // let res = query(deps.as_ref(), mock_env(), QueryMsg::GetCount {}).unwrap();
@@ -186,11 +237,11 @@ mod tests {
 
     #[test]
     fn increment() {
-        let mut deps = mock_dependencies_with_balance(&coins(2, "token"));
+        // let mut deps = mock_dependencies_with_balance(&coins(2, "token"));
 
-        let msg = InstantiateMsg {};
-        let info = mock_info("creator", &coins(2, "token"));
-        let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+        // let msg = InstantiateMsg {};
+        // let info = mock_info("creator", &coins(2, "token"));
+        // let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
         // // beneficiary can release it
         // let info = mock_info("anyone", &coins(2, "token"));
@@ -201,33 +252,5 @@ mod tests {
         // let res = query(deps.as_ref(), mock_env(), QueryMsg::GetCount {}).unwrap();
         // let value: CountResponse = from_binary(&res).unwrap();
         // assert_eq!(18, value.count);
-    }
-
-    #[test]
-    fn reset() {
-        let mut deps = mock_dependencies_with_balance(&coins(2, "token"));
-
-        let msg = InstantiateMsg {};
-        let info = mock_info("creator", &coins(2, "token"));
-        let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
-
-        // // beneficiary can release it
-        // let unauth_info = mock_info("anyone", &coins(2, "token"));
-        // let msg = ExecuteMsg::Reset { count: 5 };
-        // let res = execute(deps.as_mut(), mock_env(), unauth_info, msg);
-        // match res {
-        //     Err(ContractError::Unauthorized {}) => {}
-        //     _ => panic!("Must return unauthorized error"),
-        // }
-
-        // // only the original creator can reset the counter
-        // let auth_info = mock_info("creator", &coins(2, "token"));
-        // let msg = ExecuteMsg::Reset { count: 5 };
-        // let _res = execute(deps.as_mut(), mock_env(), auth_info, msg).unwrap();
-
-        // // should now be 5
-        // let res = query(deps.as_ref(), mock_env(), QueryMsg::GetCount {}).unwrap();
-        // let value: CountResponse = from_binary(&res).unwrap();
-        // assert_eq!(5, value.count);
     }
 }

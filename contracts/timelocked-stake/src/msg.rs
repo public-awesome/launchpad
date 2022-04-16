@@ -1,6 +1,8 @@
-use cosmwasm_std::{Addr, Timestamp, Uint128};
+use cosmwasm_std::Uint128;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+
+use crate::state::Stake;
 
 /// Delegate funds to a Stargaze validator.
 /// `min_duration` is in days.
@@ -23,23 +25,18 @@ pub enum ExecuteMsg {
     Claim {},
     /// Withdraw rewards and delegate to the validator
     Reinvest {},
+    /// Private message to delegate as part of `Reinvest {}`
+    _Delegate {},
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
-    /// Return type: `DelegationsResponse`
-    Delegations {},
+    /// Return type: `StakeResponse`
+    Stake {},
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct Delegation {
-    pub validator: Addr,
-    pub stake: Uint128,
-    pub end_time: Timestamp,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct DelegationsResponse {
-    pub delegations: Vec<Delegation>,
+pub struct StakeResponse {
+    pub stake: Stake,
 }

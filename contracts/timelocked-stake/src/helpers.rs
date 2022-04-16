@@ -5,7 +5,7 @@ use cosmwasm_std::{
     to_binary, Addr, CosmosMsg, CustomQuery, Querier, QuerierWrapper, StdResult, WasmMsg, WasmQuery,
 };
 
-use crate::msg::{DelegationsResponse, ExecuteMsg, QueryMsg};
+use crate::msg::{ExecuteMsg, QueryMsg, StakeResponse};
 
 /// SgStakingContract is a wrapper around Addr that provides a lot of helpers
 /// for working with this.
@@ -27,24 +27,20 @@ impl SgStakingContract {
         .into())
     }
 
-    /// Get Delegations
-    pub fn delegations<Q, T, CQ>(
-        &self,
-        querier: &Q,
-        address: String,
-    ) -> StdResult<DelegationsResponse>
+    /// Get stake
+    pub fn stake<Q, T, CQ>(&self, querier: &Q, address: String) -> StdResult<StakeResponse>
     where
         Q: Querier,
         T: Into<String>,
         CQ: CustomQuery,
     {
-        let msg = QueryMsg::Delegations {};
+        let msg = QueryMsg::Stake {};
         let query = WasmQuery::Smart {
             contract_addr: self.addr().into(),
             msg: to_binary(&msg)?,
         }
         .into();
-        let res: DelegationsResponse = QuerierWrapper::<CQ>::new(querier).query(&query)?;
+        let res: StakeResponse = QuerierWrapper::<CQ>::new(querier).query(&query)?;
         Ok(res)
     }
 }
