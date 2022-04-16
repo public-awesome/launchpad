@@ -211,8 +211,8 @@ fn query_delegated(deps: Deps, address: Addr) -> StdResult<DelegationsResponse> 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use cosmwasm_std::coins;
     use cosmwasm_std::testing::{mock_dependencies_with_balance, mock_env, mock_info};
-    use cosmwasm_std::{coins, from_binary};
 
     #[test]
     fn proper_initialization() {
