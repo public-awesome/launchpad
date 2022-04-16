@@ -1,4 +1,4 @@
-use cosmwasm_std::{Addr, Uint128};
+use cosmwasm_std::{Addr, Timestamp, Uint128};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -23,6 +23,7 @@ pub enum ExecuteMsg {
         dst_validator: String,
         amount: Uint128,
     },
+    // TODO: use claims controller?
     /// Claim rewards from a validator
     /// Rewards go to the withdraw address, not the contract.
     Claim { validator: String },
@@ -39,6 +40,7 @@ pub enum QueryMsg {
 pub struct Delegation {
     pub validator: Addr,
     pub stake: Uint128,
+    pub end_time: Timestamp,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

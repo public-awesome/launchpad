@@ -79,6 +79,8 @@ pub fn execute_delegate(
 ) -> Result<Response, ContractError> {
     let amount = must_pay(&info, NATIVE_DENOM)?;
 
+    // deps.querier.query_delegation(delegator, validator)
+
     STAKE.update(
         deps.storage,
         (&info.sender, &validator),
@@ -163,27 +165,33 @@ pub fn execute_redelegate(
 ) -> Result<Response, ContractError> {
     nonpayable(&info)?;
 
-    STAKE.update(
-        deps.storage,
-        (&info.sender, &src_validator),
-        |existing_stake| -> Result<_, ContractError> {
-            match existing_stake {
-                Some(stake) => Ok(stake - amount),
-                None => Ok(amount),
-            }
-        },
-    )?;
+    // 1. check if src delegation exists -- if not, return error
+    // 2. subtract amount from src delegation
+    // 3. check if dst delegation exists with the same time -- if so, add amount to it
+    // 4. if not, create new dst delegation with the same `end_time` as src delegation
+    // 5. remove src delegation if amount is zero
 
-    STAKE.update(
-        deps.storage,
-        (&info.sender, &dst_validator),
-        |existing_stake| -> Result<_, ContractError> {
-            match existing_stake {
-                Some(stake) => Ok(stake + amount),
-                None => Ok(amount),
-            }
-        },
-    )?;
+    // 1 + 2
+    let mut src_stake = STAKE.load(deps.storage, (&info.sender, &src_validator))?;
+    src_stake.amount -= amount;
+
+    // 3 + 4
+    let mut dst_stake = STAKE.load(deps.storage, (&info.sender, &dst_validator))?;
+    if dst_stake.end_time == src_stake.end_time {
+        dst_stake.amount += amount;
+        STAKE.save(deps.storage, (&info.sender, &dst_validator), &dst_stake)?;
+    } else {
+        dst_stake = Stake {
+            amount,
+            end_time: src_stake.end_time,
+        };
+        STAKE.save(deps.storage, (&info.sender, &dst_validator), &dst_stake)?;
+    }
+
+    // 5
+    if src_stake.amount == Uint128::zero() {
+        STAKE.remove(deps.storage, (&info.sender, &src_validator));
+    }
 
     let redelegate_msg = CosmosMsg::Staking(StakingMsg::Redelegate {
         src_validator: src_validator.to_string(),
@@ -230,7 +238,13 @@ fn query_delegated(deps: Deps, address: Addr) -> StdResult<DelegationsResponse> 
     let delegations = STAKE
         .prefix(&address)
         .range(deps.storage, None, None, Order::Ascending)
-        .map(|item| item.map(|(validator, stake)| Delegation { validator, stake }))
+        .map(|item| {
+            item.map(|(validator, stake)| Delegation {
+                validator,
+                stake: stake.amount,
+                end_time: stake.end_time,
+            })
+        })
         .collect::<StdResult<Vec<_>>>()?;
 
     Ok(DelegationsResponse { delegations })
