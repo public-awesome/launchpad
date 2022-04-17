@@ -23,7 +23,7 @@ impl ToStars for str {
 
 impl ToStars for Addr {
     fn to_stars(&self) -> Result<String, Error> {
-        let decoded = decode_and_convert(&self.to_string())?;
+        let decoded = decode_and_convert(self.as_ref())?;
         convert_and_encode(PREFIX.to_string(), decoded.1)
     }
 }
