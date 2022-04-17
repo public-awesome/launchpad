@@ -65,3 +65,35 @@ pub enum FeeError {
     #[error("{0}")]
     Payment(#[from] PaymentError),
 }
+
+#[cfg(test)]
+mod tests {
+    use cosmwasm_std::{coins, Addr, BankMsg};
+
+    use crate::{fair_burn, SubMsg};
+
+    #[test]
+    fn check_fair_burn_no_dev_rewards() {
+        let msgs = fair_burn(1000u128, None);
+        let burn_msg = SubMsg::Bank(BankMsg::Burn {
+            amount: coins(500, "ustars".to_string()),
+        });
+        assert_eq!(msgs.len(), 2);
+        assert_eq!(msgs[0], burn_msg);
+    }
+
+    #[test]
+    fn check_fair_burn_with_dev_rewards() {
+        let msgs = fair_burn(1000u128, Some(Addr::unchecked("geordi")));
+        let bank_msg = SubMsg::Bank(BankMsg::Send {
+            to_address: "geordi".to_string(),
+            amount: coins(100, "ustars".to_string()),
+        });
+        let burn_msg = SubMsg::Bank(BankMsg::Burn {
+            amount: coins(400, "ustars".to_string()),
+        });
+        assert_eq!(msgs.len(), 3);
+        assert_eq!(msgs[0], bank_msg);
+        assert_eq!(msgs[1], burn_msg);
+    }
+}
