@@ -10,6 +10,7 @@
   ],
   "properties": {
     "min_duration": {
+      "description": "During of timelock",
       "type": "integer",
       "format": "uint64",
       "minimum": 0.0
@@ -23,6 +24,7 @@
       ]
     },
     "validator": {
+      "description": "Address of validator to stake to",
       "type": "string"
     }
   },

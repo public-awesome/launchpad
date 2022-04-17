@@ -3,13 +3,13 @@
   "title": "ExecuteMsg",
   "oneOf": [
     {
-      "description": "Starts the undelegation process",
+      "description": "Starts the unbonding process",
       "type": "object",
       "required": [
-        "undelegate"
+        "unbond"
       ],
       "properties": {
-        "undelegate": {
+        "unbond": {
           "type": "object"
         }
       },
@@ -37,7 +37,7 @@
       "additionalProperties": false
     },
     {
-      "description": "Claim rewards from validator",
+      "description": "Claim balance from the contract",
       "type": "object",
       "required": [
         "claim"

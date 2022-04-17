@@ -1,5 +1,5 @@
 export type ExecuteMsg = ({
-undelegate: {
+unbond: {
 [k: string]: unknown
 }
 } | {

@@ -39,13 +39,25 @@ stake: Stake
 [k: string]: unknown
 }
 export interface Stake {
+/**
+ * Amount of tokens to stake
+ */
 amount: Uint128
+/**
+ * Time when lockup period ends
+ */
 end_time: Timestamp
 /**
  * This is the minimum amount we will pull out to reinvest + claim
  */
 min_withdrawal: Uint128
+/**
+ * Address of the staker
+ */
 owner: Addr
+/**
+ * Validator to stake to
+ */
 validator: Addr
 [k: string]: unknown
 }

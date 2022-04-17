@@ -26,10 +26,20 @@
       ],
       "properties": {
         "amount": {
-          "$ref": "#/definitions/Uint128"
+          "description": "Amount of tokens to stake",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Uint128"
+            }
+          ]
         },
         "end_time": {
-          "$ref": "#/definitions/Timestamp"
+          "description": "Time when lockup period ends",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Timestamp"
+            }
+          ]
         },
         "min_withdrawal": {
           "description": "This is the minimum amount we will pull out to reinvest + claim",
@@ -40,10 +50,20 @@
           ]
         },
         "owner": {
-          "$ref": "#/definitions/Addr"
+          "description": "Address of the staker",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Addr"
+            }
+          ]
         },
         "validator": {
-          "$ref": "#/definitions/Addr"
+          "description": "Validator to stake to",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Addr"
+            }
+          ]
         }
       }
     },
