@@ -1,6 +1,5 @@
 export type QueryMsg = {
-delegations: {
-address: string
+stake: {
 [k: string]: unknown
 }
 }
