@@ -1,8 +1,8 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coin, to_binary, Addr, BankMsg, Binary, CosmosMsg, Deps, DepsMut, DistributionMsg, Env,
-    MessageInfo, Response, StakingMsg, StdResult, WasmMsg,
+    coin, to_binary, Addr, BalanceResponse, BankMsg, Binary, CosmosMsg, Deps, DepsMut,
+    DistributionMsg, Env, MessageInfo, Response, StakingMsg, StdResult, WasmMsg,
 };
 use cw2::set_contract_version;
 use cw_utils::{must_pay, nonpayable};
@@ -26,7 +26,7 @@ pub fn instantiate(
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
     let stake = Stake {
-        owner: info.sender,
+        owner: info.sender.clone(),
         validator: deps.api.addr_validate(&msg.validator)?,
         end_time: env.block.time.plus_seconds(msg.min_duration),
         amount: must_pay(&info, NATIVE_DENOM)?,
@@ -109,7 +109,7 @@ pub fn execute_redelegate(
         amount: coin(stake.amount.u128(), NATIVE_DENOM),
     });
 
-    stake.validator = dst_validator;
+    stake.validator = dst_validator.clone();
     STAKE.save(deps.storage, &stake)?;
 
     Ok(Response::default()
@@ -192,7 +192,7 @@ pub fn _execute_delegate(
     let res = Response::new()
         .add_message(StakingMsg::Delegate {
             validator: stake.validator.to_string(),
-            amount: balance,
+            amount: balance.clone(),
         })
         .add_attribute("action", "reinvest")
         .add_attribute("amount", balance.amount);
@@ -200,9 +200,10 @@ pub fn _execute_delegate(
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
+pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::Stake {} => to_binary(&query_stake(deps)),
+        QueryMsg::Stake {} => to_binary(&query_stake(deps)?),
+        QueryMsg::Balance {} => to_binary(&query_balance(deps, env)?),
     }
 }
 
@@ -210,6 +211,14 @@ fn query_stake(deps: Deps) -> StdResult<StakeResponse> {
     let stake = STAKE.load(deps.storage)?;
 
     Ok(StakeResponse { stake })
+}
+
+fn query_balance(deps: Deps, env: Env) -> StdResult<BalanceResponse> {
+    let amount = deps
+        .querier
+        .query_balance(&env.contract.address, NATIVE_DENOM)?;
+
+    Ok(BalanceResponse { amount })
 }
 
 #[cfg(test)]

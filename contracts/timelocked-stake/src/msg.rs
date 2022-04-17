@@ -8,7 +8,9 @@ use crate::state::Stake;
 /// `min_duration` is in days.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {
+    /// Address of validator to stake to
     pub validator: String,
+    /// During of timelock
     pub min_duration: u64,
     /// This is the minimum amount we will pull out to reinvest + claim
     pub min_withdrawal: Uint128,
@@ -34,6 +36,8 @@ pub enum ExecuteMsg {
 pub enum QueryMsg {
     /// Return type: `StakeResponse`
     Stake {},
+    /// Return type: `cosmwasm_std::BalanceResponse`
+    Balance {},
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
