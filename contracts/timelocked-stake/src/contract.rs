@@ -159,6 +159,13 @@ pub fn execute_reinvest(
         return Err(ContractError::Unauthorized {});
     }
 
+    let balance = deps
+        .querier
+        .query_balance(&env.contract.address, NATIVE_DENOM)?;
+    if balance.amount < stake.min_withdrawal {
+        return Err(ContractError::BalanceTooSmall {});
+    }
+
     let res = Response::new()
         .add_message(DistributionMsg::WithdrawDelegatorReward {
             validator: stake.validator.to_string(),
@@ -167,7 +174,8 @@ pub fn execute_reinvest(
             contract_addr: env.contract.address.to_string(),
             msg: to_binary(&ExecuteMsg::_Delegate {})?,
             funds: vec![],
-        });
+        })
+        .add_attribute("action", "reinvest");
     Ok(res)
 }
 
@@ -194,7 +202,7 @@ pub fn _execute_delegate(
             validator: stake.validator.to_string(),
             amount: balance.clone(),
         })
-        .add_attribute("action", "reinvest")
+        .add_attribute("action", "_delegate")
         .add_attribute("amount", balance.amount);
     Ok(res)
 }
