@@ -918,7 +918,7 @@ dependencies = [
 
 [[package]]
 name = "sg1"
-version = "0.11.0"
+version = "0.12.0"
 dependencies = [
  "cosmwasm-std",
  "cw-utils 0.13.2",
