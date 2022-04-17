@@ -842,23 +842,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "sg-timelocked-stake"
-version = "0.1.0"
-dependencies = [
- "cosmwasm-schema",
- "cosmwasm-std",
- "cosmwasm-storage",
- "cw-multi-test",
- "cw-storage-plus 0.13.1",
- "cw-utils 0.13.2",
- "cw2 0.13.1",
- "schemars",
- "serde",
- "sg-std 0.11.0",
- "thiserror",
-]
-
-[[package]]
 name = "sg-utils"
 version = "0.8.0"
 dependencies = [
@@ -969,6 +952,23 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "timelocked-stake"
+version = "0.1.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cosmwasm-storage",
+ "cw-multi-test",
+ "cw-storage-plus 0.13.1",
+ "cw-utils 0.13.2",
+ "cw2 0.13.1",
+ "schemars",
+ "serde",
+ "sg-std 0.11.0",
+ "thiserror",
 ]
 
 [[package]]

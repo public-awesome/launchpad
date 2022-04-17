@@ -3,7 +3,7 @@ use std::fs::create_dir_all;
 
 use cosmwasm_schema::{export_schema, remove_schemas, schema_for};
 
-use sg_timelocked_stake::msg::{ExecuteMsg, InstantiateMsg, QueryMsg, StakeResponse};
+use timelocked_stake::msg::{ExecuteMsg, InstantiateMsg, QueryMsg, StakeResponse};
 
 fn main() {
     let mut out_dir = current_dir().unwrap();
