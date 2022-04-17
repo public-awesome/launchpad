@@ -53,7 +53,7 @@ pub fn execute(
     let api = deps.api;
 
     match msg {
-        ExecuteMsg::Undelegate {} => execute_undelegate(deps, env, info),
+        ExecuteMsg::Unbond {} => execute_unbond(deps, env, info),
         ExecuteMsg::Redelegate { dst_validator } => {
             execute_redelegate(deps, info, api.addr_validate(&dst_validator)?)
         }
@@ -63,7 +63,7 @@ pub fn execute(
     }
 }
 
-pub fn execute_undelegate(
+pub fn execute_unbond(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,

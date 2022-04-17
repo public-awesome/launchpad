@@ -19,11 +19,11 @@ pub struct InstantiateMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
-    /// Starts the undelegation process
-    Undelegate {},
+    /// Starts the unbonding process
+    Unbond {},
     /// Redelegate stake from one validator to another
     Redelegate { dst_validator: String },
-    /// Claim rewards from validator
+    /// Claim balance from the contract
     Claim {},
     /// Withdraw rewards and delegate to the validator
     Reinvest {},
