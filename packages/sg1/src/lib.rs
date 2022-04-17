@@ -13,21 +13,21 @@ type SubMsg = CosmosMsg<StargazeMsgWrapper>;
 pub fn checked_fair_burn(
     info: &MessageInfo,
     fee: u128,
-    dev: Option<Addr>,
+    developer: Option<Addr>,
 ) -> Result<Vec<SubMsg>, FeeError> {
     let payment = must_pay(info, NATIVE_DENOM)?;
     if payment.u128() < fee {
         return Err(FeeError::InsufficientFee(fee, payment.u128()));
     };
 
-    Ok(fair_burn(fee, dev))
+    Ok(fair_burn(fee, developer))
 }
 
 /// Burn and distribute fees, assuming the right fee is passed in
-pub fn fair_burn(fee: u128, dev: Option<Addr>) -> Vec<SubMsg> {
+pub fn fair_burn(fee: u128, developer: Option<Addr>) -> Vec<SubMsg> {
     let mut msgs: Vec<SubMsg> = vec![];
 
-    let (burn_percent, dev_fee) = match dev {
+    let (burn_percent, dev_fee) = match developer {
         Some(dev) => {
             let dev_fee = (Uint128::from(fee) * Decimal::percent(DEV_INCENTIVE_PERCENT)).u128();
             let msg = BankMsg::Send {
