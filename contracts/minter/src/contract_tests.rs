@@ -435,9 +435,9 @@ fn happy_path() {
     assert_eq!(res.address, buyer.to_string());
 
     // Check NFT owned by buyer
-    // Random mint token_id 2
+    // Random mint token_id 1
     let query_owner_msg = Cw721QueryMsg::OwnerOf {
-        token_id: String::from("2"),
+        token_id: String::from("1"),
         include_expired: None,
     };
     let res: OwnerOfResponse = router
@@ -650,10 +650,10 @@ fn mint_count_query() {
     assert_eq!(res.address, buyer.to_string());
 
     // Buyer transfers NFT to creator
-    // random mint token id: 4
+    // random mint token id: 3
     let transfer_msg: Cw721ExecuteMsg<Empty> = Cw721ExecuteMsg::TransferNft {
         recipient: creator.to_string(),
-        token_id: "4".to_string(),
+        token_id: "3".to_string(),
     };
     let res = router.execute_contract(
         buyer.clone(),
