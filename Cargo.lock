@@ -967,7 +967,7 @@ dependencies = [
  "cw2 0.13.1",
  "schemars",
  "serde",
- "sg-std 0.11.0",
+ "sg-std 0.10.0",
  "thiserror",
 ]
 

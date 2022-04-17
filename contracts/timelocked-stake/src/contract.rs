@@ -231,9 +231,9 @@ fn query_balance(deps: Deps, env: Env) -> StdResult<BalanceResponse> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use cosmwasm_std::coins;
-    use cosmwasm_std::testing::{mock_dependencies_with_balance, mock_env, mock_info};
+    // use super::*;
+    // use cosmwasm_std::coins;
+    // use cosmwasm_std::testing::{mock_dependencies_with_balance, mock_env, mock_info};
 
     #[test]
     fn proper_initialization() {
