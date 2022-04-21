@@ -73,7 +73,7 @@ dependencies = [
  "minter",
  "schemars",
  "serde",
- "sg-std 0.11.0",
+ "sg-std 0.11.1",
  "thiserror",
 ]
 
@@ -765,7 +765,7 @@ dependencies = [
  "cw4 0.12.1",
  "schemars",
  "serde",
- "sg-std 0.11.0",
+ "sg-std 0.11.1",
  "thiserror",
 ]
 
@@ -896,7 +896,7 @@ dependencies = [
 
 [[package]]
 name = "sg-std"
-version = "0.11.0"
+version = "0.11.1"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -910,7 +910,7 @@ dependencies = [
 
 [[package]]
 name = "sg-utils"
-version = "0.8.0"
+version = "0.11.1"
 dependencies = [
  "bech32",
  "cosmwasm-std",
@@ -918,12 +918,12 @@ dependencies = [
 
 [[package]]
 name = "sg1"
-version = "0.11.0"
+version = "0.11.1"
 dependencies = [
  "cosmwasm-std",
  "cw-utils 0.13.2",
  "serde",
- "sg-std 0.11.0",
+ "sg-std 0.11.1",
  "thiserror",
 ]
 
