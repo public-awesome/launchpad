@@ -1,6 +1,6 @@
 [package]
 name = "sg721"
-version = "0.10.0"
+version = "0.12.0"
 authors = ["Shane Vitarana <s@noreply.publicawesome.com>"]
 edition = "2018"
 description = "Stargaze NFT collection contract"
