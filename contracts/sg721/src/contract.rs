@@ -3,7 +3,7 @@ use cosmwasm_std::entry_point;
 use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, StdResult};
 use cw2::set_contract_version;
 
-use sg_std::checked_fair_burn;
+use sg1::checked_fair_burn;
 use sg_std::StargazeMsgWrapper;
 
 use crate::ContractError;

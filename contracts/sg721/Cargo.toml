@@ -45,6 +45,7 @@ sg-std = "0.11.1"
 url = "2.2.2"
 cw721 = "0.13.1"
 cw721-base = { version = "0.13.1", features = ["library"] }
+sg1 = { version = "0.11.1", path = "../../packages/sg1" }
 
 [dev-dependencies]
 cosmwasm-schema = { version = "1.0.0-beta8" }
