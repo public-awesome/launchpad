@@ -4,13 +4,13 @@ use cosmwasm_std::{
     attr, coin, to_binary, Addr, BankMsg, Binary, Coin, Deps, DepsMut, Env, MessageInfo, Order,
     Response, StdResult, SubMsg, Uint128,
 };
-use cw0::maybe_addr;
 use cw2::set_contract_version;
 use cw4::{
     Member, MemberChangedHookMsg, MemberDiff, MemberListResponse, MemberResponse,
     TotalWeightResponse,
 };
 use cw_storage_plus::Bound;
+use cw_utils::maybe_addr;
 
 use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
