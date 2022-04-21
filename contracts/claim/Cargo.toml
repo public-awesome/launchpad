@@ -47,7 +47,7 @@ cw-utils = "0.13.2"
 schemars = "0.8"
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 minter = { path = "../minter", features = ["library"] }
-sg-std = { version = "0.12.0", path = "../../packages/sg-std" }
+sg-std = "0.12.0"
 thiserror = { version = "1.0" }
 
 [dev-dependencies]
