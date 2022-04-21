@@ -1,6 +1,6 @@
 [package]
 name = "claim"
-version = "0.1.0"
+version = "0.12.0"
 authors = ["jhernandezb <jorge@publicawesome.com>"]
 edition = "2018"
 
@@ -14,17 +14,6 @@ exclude = [
 
 [lib]
 crate-type = ["cdylib", "rlib"]
-
-[profile.release]
-opt-level = 3
-debug = false
-rpath = false
-lto = true
-debug-assertions = false
-codegen-units = 1
-panic = 'abort'
-incremental = false
-overflow-checks = true
 
 [features]
 # for more explicit tests, cargo test --features=backtraces

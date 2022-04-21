@@ -1,6 +1,6 @@
 [package]
 name = "minter"
-version = "0.10.0"
+version = "0.12.0"
 authors = ["Jake Hartnell <jake@stargaze.zone>"]
 edition = "2018"
 
@@ -14,17 +14,6 @@ exclude = [
 
 [lib]
 crate-type = ["cdylib", "rlib"]
-
-[profile.release]
-opt-level = 3
-debug = false
-rpath = false
-lto = true
-debug-assertions = false
-codegen-units = 1
-panic = 'abort'
-incremental = false
-overflow-checks = true
 
 [features]
 # for more explicit tests, cargo test --features=backtraces
@@ -59,4 +48,4 @@ sg1 = { version = "0.12.0", path = "../../packages/sg1" }
 [dev-dependencies]
 cosmwasm-schema = { version = "1.0.0-beta8" }
 cw-multi-test = "0.13.2"
-sg-multi-test = { path = "../../packages/sg-multi-test" }
+sg-multi-test = "0.12.0"

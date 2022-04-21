@@ -295,7 +295,7 @@ mod contact_testing {
         let contract_version_after = get_contract_version(&deps.storage);
         let expected_contract_version = Ok(ContractVersion {
             contract: "crates.io:sg721-ics721".to_string(),
-            version: "0.1.0".to_string(),
+            version: "0.12.0".to_string(),
         });
         assert_eq!(contract_version_after, expected_contract_version);
         let expected_config = Some(Config {
