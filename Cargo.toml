@@ -1,6 +1,10 @@
 [workspace]
 members = ["contracts/*"]
 
+[profile.release.package.cw2981-royalties]
+codegen-units = 1
+incremental = false
+
 [profile.release]
 rpath = false
 lto = true
