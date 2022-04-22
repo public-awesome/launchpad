@@ -1,25 +1,5 @@
 [workspace]
-members = ["packages/*", "contracts/*"]
-
-[profile.release.package.sg721]
-codegen-units = 1
-incremental = false
-
-[profile.release.package.whitelist]
-codegen-units = 1
-incremental = false
-
-[profile.release.package.royalty-group]
-codegen-units = 1
-incremental = false
-
-[profile.release.package.sg-utils]
-codegen-units = 1
-incremental = false
-
-[profile.release.package.sg-std]
-codegen-units = 1
-incremental = false
+members = ["contracts/*"]
 
 [profile.release]
 rpath = false

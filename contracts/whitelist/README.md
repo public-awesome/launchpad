@@ -1,1 +1,0 @@
-# Whitelist contract
