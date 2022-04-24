@@ -8,6 +8,7 @@ use sg_std::{create_claim_for_msg, ClaimAction, StargazeMsgWrapper};
 
 use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, InstantiateMsg, SaleFinalizedHookMsg};
+use crate::state::{Config, MarketplaceContract, CONFIG};
 pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 
 // version info for migration info
@@ -19,11 +20,19 @@ pub fn instantiate(
     deps: DepsMut,
     _env: Env,
     _info: MessageInfo,
-    _msg: InstantiateMsg,
+    msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
-    set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+    let marketplace =
+        MarketplaceContract(deps.api.addr_validate(&msg.marketplace_addr).map_err(|_| {
+            ContractError::InvalidMarketplace {
+                addr: msg.marketplace_addr.clone(),
+            }
+        })?);
 
-    // TODO: init with marketplace contract address for running hook
+    let cfg = Config { marketplace };
+    CONFIG.save(deps.storage, &cfg)?;
+
+    set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
     Ok(Response::new().add_attribute("action", "instantiate"))
 }
@@ -44,7 +53,7 @@ pub fn execute(
             token_id,
             seller,
             buyer,
-        }) => execute_claim_buy_nft(deps, collection, token_id, seller, buyer),
+        }) => execute_claim_buy_nft(deps, info, collection, token_id, seller, buyer),
     }
 }
 
@@ -74,12 +83,16 @@ pub fn execute_claim_mint_nft(
 
 pub fn execute_claim_buy_nft(
     deps: DepsMut,
+    info: MessageInfo,
     collection: String,
     token_id: u32,
     seller: String,
     buyer: String,
 ) -> Result<Response, ContractError> {
-    // TODO: check against calling contract
+    let cfg = CONFIG.load(deps.storage)?;
+    if info.sender != cfg.marketplace.addr() {
+        return Err(ContractError::Unauthorized {});
+    }
 
     let buyer = deps.api.addr_validate(&buyer)?;
     let msg = create_claim_for_msg(buyer.to_string(), ClaimAction::BidNFT);
