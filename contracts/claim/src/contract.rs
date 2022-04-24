@@ -106,3 +106,5 @@ pub fn execute_claim_buy_nft(
         .add_attribute("buyer", buyer);
     Ok(res)
 }
+
+// TODO: add tests for hook
