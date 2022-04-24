@@ -1,7 +1,7 @@
 [package]
 name = "sg-controllers"
-version = "0.12.1"
-authors = ["Shane Vitarana <s@users.noreply.github.com>"]
+version = "0.12.0"
+authors = ["Shane Vitarana <s@users.noreply.publicawesome.com>"]
 edition = "2018"
 description = "Common controllers we can reuse in many contracts"
 license = "Apache-2.0"
