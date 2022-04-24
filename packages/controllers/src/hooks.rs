@@ -1,8 +1,9 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use sg_std::SubMsg;
 use thiserror::Error;
 
-use cosmwasm_std::{Addr, CustomQuery, Deps, StdError, StdResult, Storage, SubMsg};
+use cosmwasm_std::{Addr, CustomQuery, Deps, StdError, StdResult, Storage};
 use cw_storage_plus::Item;
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
