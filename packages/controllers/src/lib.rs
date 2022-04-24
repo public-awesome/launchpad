@@ -1,3 +1,3 @@
 mod hooks;
 
-pub use hooks::{HookError, Hooks};
+pub use hooks::{HookError, Hooks, HooksResponse};
