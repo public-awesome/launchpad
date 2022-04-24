@@ -7,7 +7,7 @@ use minter::msg::{MintCountResponse, QueryMsg};
 use sg_std::{create_claim_for_msg, ClaimAction, StargazeMsgWrapper};
 
 use crate::error::ContractError;
-use crate::msg::{ExecuteMsg, InstantiateMsg};
+use crate::msg::{ExecuteMsg, InstantiateMsg, SaleFinalizedHookMsg};
 pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 
 // version info for migration info
@@ -22,6 +22,9 @@ pub fn instantiate(
     _msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+
+    // TODO: init with marketplace contract address for running hook
+
     Ok(Response::new().add_attribute("action", "instantiate"))
 }
 
@@ -36,6 +39,12 @@ pub fn execute(
         ExecuteMsg::ClaimMintNFT { minter_address } => {
             execute_claim_mint_nft(deps, info.sender, minter_address)
         }
+        ExecuteMsg::SaleFinalizedHook(SaleFinalizedHookMsg {
+            collection,
+            token_id,
+            seller,
+            buyer,
+        }) => execute_claim_buy_nft(deps, collection, token_id, seller, buyer),
     }
 }
 
@@ -61,4 +70,26 @@ pub fn execute_claim_mint_nft(
         .add_attribute("action", "claim_mint_nft")
         .add_attribute("sender", sender.to_string())
         .add_attribute("minter", minter))
+}
+
+pub fn execute_claim_buy_nft(
+    deps: DepsMut,
+    collection: String,
+    token_id: u32,
+    seller: String,
+    buyer: String,
+) -> Result<Response, ContractError> {
+    // TODO: check against calling contract
+
+    let buyer = deps.api.addr_validate(&buyer)?;
+    let msg = create_claim_for_msg(buyer.to_string(), ClaimAction::BidNFT);
+
+    let res = Response::new()
+        .add_message(msg)
+        .add_attribute("action", "claim_buy_nft")
+        .add_attribute("collection", collection)
+        .add_attribute("token_id", token_id.to_string())
+        .add_attribute("seller", seller)
+        .add_attribute("buyer", buyer);
+    Ok(res)
 }
