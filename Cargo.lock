@@ -796,6 +796,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "sg-controllers"
+version = "0.12.1"
+dependencies = [
+ "cosmwasm-std",
+ "cw-storage-plus",
+ "schemars",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
 name = "sg-multi-test"
 version = "0.12.0"
 dependencies = [
