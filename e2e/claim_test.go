@@ -113,7 +113,6 @@ func TestClaim(t *testing.T) {
 			creator.Address.String(),
 		),
 	)
-	fmt.Println(string(instantiateMsgRaw))
 
 	// instantiate marketplace
 	instantiateRes, err := msgServer.InstantiateContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgInstantiateContract{
@@ -189,7 +188,7 @@ func TestClaim(t *testing.T) {
 		Admin:  creator.Address.String(),
 		CodeID: 2,
 		Label:  "Claim",
-		Msg:    []byte("{}"),
+		Msg:    []byte(`{"marketplace_addr":"` + marketplaceAddress + `"}`),
 	})
 	require.NoError(t, err)
 	require.NotNil(t, instantiateRes)
