@@ -109,4 +109,3 @@ pub fn execute_claim_buy_nft(
 
 // TODO: add tests for hook after open sourcing Marketplace
 // https://github.com/public-awesome/stargaze-contracts/issues/241
-
