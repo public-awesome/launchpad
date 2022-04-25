@@ -1,6 +1,6 @@
 [package]
 name = "claim"
-version = "0.12.2"
+version = "0.12.3"
 authors = ["jhernandezb <jorge@publicawesome.com>"]
 edition = "2018"
 
