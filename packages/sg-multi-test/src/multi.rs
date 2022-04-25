@@ -64,7 +64,7 @@ impl Module for StargazeModule {
                 Ok(AppResponse::default())
             }
             _ => {
-                bail!("not implemented")
+                bail!("stargaze msg not implemented")
             }
         }
     }

@@ -232,14 +232,15 @@ mod tests {
             token_id: TOKEN_ID,
             expires: router.block_info().time.plus_seconds(MIN_EXPIRY + 1),
         };
-        let _res = router.execute_contract(
+        let res = router.execute_contract(
             bidder,
             marketplace_addr,
             &set_bid_msg,
             &coins(100, NATIVE_DENOM),
         );
         // TODO: this fails, maybe multitest doesn't support hooks yet?
-        // assert!(res.is_ok());
+        println!("{:?}", res);
+        assert!(res.is_ok());
 
         // // Check NFT is transferred
         // let query_owner_msg = Cw721QueryMsg::OwnerOf {
