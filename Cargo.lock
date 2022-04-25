@@ -71,11 +71,15 @@ dependencies = [
  "cw-storage-plus",
  "cw-utils",
  "cw2",
+ "cw721",
+ "cw721-base",
  "minter",
  "schemars",
  "serde",
  "sg-marketplace",
+ "sg-multi-test 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg-std 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg721 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "thiserror",
 ]
 

@@ -47,3 +47,7 @@ sg-marketplace = { version = "0.1.3", git = "https://github.com/public-awesome/m
 cosmwasm-schema = { version = "1.0.0-beta8" }
 cw-multi-test = "0.13.2"
 anyhow = "1"
+sg721 = { version = "0.12.0", features = ["library"] }
+cw721 = "0.13.2"
+cw721-base = { version = "0.13.2", features = ["library"] }
+sg-multi-test = "0.12.0"

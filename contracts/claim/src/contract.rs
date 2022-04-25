@@ -1,7 +1,7 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 
-use cosmwasm_std::{Addr, DepsMut, Env, MessageInfo};
+use cosmwasm_std::{to_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, StdResult};
 use cw2::set_contract_version;
 use minter::msg::{MintCountResponse, QueryMsg};
 use sg_marketplace::msg::SaleFinalizedHookMsg;
@@ -107,6 +107,12 @@ pub fn execute_claim_buy_nft(
         .add_attribute("seller", seller)
         .add_attribute("buyer", buyer);
     Ok(res)
+}
+
+/// Needed for multitest
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn query(_deps: Deps, _env: Env, _msg: QueryMsg) -> StdResult<Binary> {
+    Ok((to_binary(&"queries not implemented".to_string())).unwrap())
 }
 
 // TODO: add tests for hook after publishing Marketplace code

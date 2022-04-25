@@ -83,6 +83,7 @@ func TestClaim(t *testing.T) {
 	require.Equal(t, res.CodeID, uint64(3))
 
 	// marketplace
+	// TODO: replace with downloading from github when new version is released
 	b, err = ioutil.ReadFile("contracts/sg_marketplace.wasm")
 	require.NoError(t, err)
 	// resp, err := grab.Get("./contracts/", "https://github.com/public-awesome/marketplace/releases/download/v0.4.0/sg_marketplace.wasm")
