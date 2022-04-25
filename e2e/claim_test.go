@@ -3,10 +3,12 @@ package e2e_test
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"testing"
 	"time"
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	"github.com/cavaliergopher/grab/v3"
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -83,16 +85,13 @@ func TestClaim(t *testing.T) {
 	require.Equal(t, res.CodeID, uint64(3))
 
 	// marketplace
-	// TODO: replace with downloading from github when new version is released
-	b, err = ioutil.ReadFile("contracts/sg_marketplace.wasm")
+	resp, err := grab.Get("./contracts/", "https://github.com/public-awesome/marketplace/releases/download/v0.5.0/sg_marketplace.wasm")
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Download saved to", resp.Filename)
+	b, err = resp.Bytes()
 	require.NoError(t, err)
-	// resp, err := grab.Get("./contracts/", "https://github.com/public-awesome/marketplace/releases/download/v0.4.0/sg_marketplace.wasm")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// fmt.Println("Download saved to", resp.Filename)
-	// b, err = resp.Bytes()
-	// require.NoError(t, err)
 
 	res, err = msgServer.StoreCode(sdk.WrapSDKContext(ctx), &wasmtypes.MsgStoreCode{
 		Sender:       addr1.String(),
