@@ -114,6 +114,3 @@ pub fn execute_claim_buy_nft(
 pub fn query(_deps: Deps, _env: Env, _msg: QueryMsg) -> StdResult<Binary> {
     Ok((to_binary(&"queries not implemented".to_string())).unwrap())
 }
-
-// TODO: add tests for hook after publishing Marketplace code
-// https://github.com/public-awesome/stargaze-contracts/issues/241
