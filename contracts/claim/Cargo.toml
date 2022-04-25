@@ -39,6 +39,7 @@ minter = { path = "../minter", features = ["library"] }
 sg-std = "0.12.0"
 thiserror = { version = "1.0" }
 cw-storage-plus = "0.13.2"
+sg-marketplace = { git = "https://github.com/public-awesome/marketplace", branch = "shanev/update-lib" }
 
 [dev-dependencies]
 cosmwasm-schema = { version = "1.0.0-beta8" }

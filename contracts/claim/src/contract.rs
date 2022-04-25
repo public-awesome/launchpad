@@ -4,11 +4,12 @@ use cosmwasm_std::entry_point;
 use cosmwasm_std::{Addr, DepsMut, Env, MessageInfo};
 use cw2::set_contract_version;
 use minter::msg::{MintCountResponse, QueryMsg};
+use sg_marketplace::MarketplaceContract;
 use sg_std::{create_claim_for_msg, ClaimAction, StargazeMsgWrapper};
 
 use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, InstantiateMsg, SaleFinalizedHookMsg};
-use crate::state::{Config, MarketplaceContract, CONFIG};
+use crate::state::{Config, CONFIG};
 pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 
 // version info for migration info
@@ -107,5 +108,5 @@ pub fn execute_claim_buy_nft(
     Ok(res)
 }
 
-// TODO: add tests for hook after open sourcing Marketplace
+// TODO: add tests for hook after publishing Marketplace code
 // https://github.com/public-awesome/stargaze-contracts/issues/241

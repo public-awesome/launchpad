@@ -74,6 +74,7 @@ dependencies = [
  "minter",
  "schemars",
  "serde",
+ "sg-marketplace",
  "sg-std 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "thiserror",
 ]
@@ -805,6 +806,42 @@ dependencies = [
  "schemars",
  "serde",
  "sg-std 0.12.0",
+ "thiserror",
+]
+
+[[package]]
+name = "sg-controllers"
+version = "0.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8139d4ec93b30e68b5fe598076bf80bc778e950e1b1af6e7cd7a38da439bbc79"
+dependencies = [
+ "cosmwasm-std",
+ "cw-storage-plus",
+ "schemars",
+ "serde",
+ "sg-std 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "thiserror",
+]
+
+[[package]]
+name = "sg-marketplace"
+version = "0.1.1"
+source = "git+https://github.com/public-awesome/marketplace?branch=shanev/update-lib#adb1f1009e6108308a6cbf0620bb8d6b29a3531b"
+dependencies = [
+ "cosmwasm-std",
+ "cosmwasm-storage",
+ "cw-storage-plus",
+ "cw-utils",
+ "cw2",
+ "cw20",
+ "cw721",
+ "cw721-base",
+ "schemars",
+ "serde",
+ "sg-controllers 0.12.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg-std 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg1 0.12.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg721 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "thiserror",
 ]
 
