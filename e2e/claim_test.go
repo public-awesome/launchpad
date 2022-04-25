@@ -103,13 +103,39 @@ func TestClaim(t *testing.T) {
 
 	creator := accs[0]
 
+	instantiateMsgRaw := []byte(
+		fmt.Sprintf(instantiateMarketplaceTemplate,
+			2,
+			86400,
+			15552000,
+			86400,
+			15552000,
+			creator.Address.String(),
+		),
+	)
+	fmt.Println(string(instantiateMsgRaw))
+
+	// instantiate marketplace
+	instantiateRes, err := msgServer.InstantiateContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgInstantiateContract{
+		Sender: creator.Address.String(),
+		Admin:  creator.Address.String(),
+		CodeID: 4,
+		Label:  "Marketplace",
+		Msg:    instantiateMsgRaw,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, instantiateRes)
+	require.NotEmpty(t, instantiateRes.Address)
+	marketplaceAddress := instantiateRes.Address
+	require.NotEmpty(t, marketplaceAddress)
+
 	// minter
 	afterGenesisMint, err := time.Parse(time.RFC3339Nano, "2022-03-11T21:00:01Z")
 	require.NoError(t, err)
 	genesisMintDateTime, err := time.Parse(time.RFC3339Nano, "2022-03-11T21:00:00Z")
 	require.NoError(t, err)
 
-	instantiateMsgRaw := []byte(
+	instantiateMsgRaw = []byte(
 		fmt.Sprintf(instantiateMinterTemplate,
 			creator.Address.String(),
 			creator.Address.String(),
@@ -119,7 +145,7 @@ func TestClaim(t *testing.T) {
 			1, // limit 1
 		),
 	)
-	instantiateRes, err := msgServer.InstantiateContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgInstantiateContract{
+	instantiateRes, err = msgServer.InstantiateContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgInstantiateContract{
 		Sender: creator.Address.String(),
 		Admin:  creator.Address.String(),
 		CodeID: 1,
