@@ -60,14 +60,6 @@ func TestClaim(t *testing.T) {
 	require.NotNil(t, res)
 	require.Equal(t, res.CodeID, uint64(1))
 
-	// marketplace
-	resp, err := grab.Get("./contracts/", "https://github.com/public-awesome/marketplace/releases/download/v0.4.0/sg_marketplace.wasm")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Println("Download saved to", resp.Filename)
-
 	// claim
 	b, err = ioutil.ReadFile("contracts/claim.wasm")
 	require.NoError(t, err)
@@ -91,6 +83,23 @@ func TestClaim(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, res)
 	require.Equal(t, res.CodeID, uint64(3))
+
+	// marketplace
+	resp, err := grab.Get("./contracts/", "https://github.com/public-awesome/marketplace/releases/download/v0.4.0/sg_marketplace.wasm")
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Download saved to", resp.Filename)
+	b, err = resp.Bytes()
+	require.NoError(t, err)
+
+	res, err = msgServer.StoreCode(sdk.WrapSDKContext(ctx), &wasmtypes.MsgStoreCode{
+		Sender:       addr1.String(),
+		WASMByteCode: b,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+	require.Equal(t, res.CodeID, uint64(4))
 
 	creator := accs[0]
 
