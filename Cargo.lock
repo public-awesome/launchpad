@@ -76,6 +76,7 @@ dependencies = [
  "minter",
  "schemars",
  "serde",
+ "sg-controllers 0.12.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg-marketplace",
  "sg-multi-test 0.12.1",
  "sg-std 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -830,7 +831,7 @@ dependencies = [
 [[package]]
 name = "sg-marketplace"
 version = "0.5.0"
-source = "git+https://github.com/public-awesome/marketplace#bfab827cdff84f76f4a637edb3920042c1606b4c"
+source = "git+https://github.com/public-awesome/marketplace?branch=shanev/fix-hook#bb998c507dae6bbc816bb3a4f06c5a9122b22d84"
 dependencies = [
  "cosmwasm-std",
  "cosmwasm-storage",

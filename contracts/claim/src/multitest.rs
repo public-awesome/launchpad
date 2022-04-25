@@ -39,17 +39,17 @@ pub fn contract_claim() -> Box<dyn Contract<StargazeMsgWrapper>> {
 
 #[cfg(test)]
 mod tests {
+    use cw721::{Cw721QueryMsg, OwnerOfResponse};
     use cw_multi_test::Executor;
-    use sg_marketplace::msg::{ExecuteMsg, SudoMsg};
-
+    use sg_marketplace::msg::{ExecuteMsg, SudoMsg, QueryMsg};
     use crate::msg::InstantiateMsg;
-
     use super::*;
     use cosmwasm_std::{coin, coins, Addr, Coin, Decimal, Empty};
     use sg721::msg::{InstantiateMsg as Sg721InstantiateMsg, RoyaltyInfoResponse};
     use sg721::state::CollectionInfo;
     use sg_multi_test::StargazeApp;
     use sg_std::NATIVE_DENOM;
+    use sg_controllers::HooksResponse;
 
     const TOKEN_ID: u32 = 123;
     const CREATION_FEE: u128 = 1_000_000_000;
@@ -195,12 +195,20 @@ mod tests {
         let (marketplace_addr, collection_addr, claims_addr) =
             setup_contracts(&mut router, &creator).unwrap();
 
-        // setup sale finalized hook
-        let add_hook_msg = SudoMsg::AddSaleFinalizedHook {
-            hook: claims_addr.to_string(),
-        };
-        let res = router.wasm_sudo(marketplace_addr.clone(), &add_hook_msg);
-        assert!(res.is_ok());
+        // // setup sale finalized hook
+        // let add_hook_msg = SudoMsg::AddSaleFinalizedHook {
+        //     hook: claims_addr.to_string(),
+        // };
+        // let res = router.wasm_sudo(marketplace_addr.clone(), &add_hook_msg);
+        // assert!(res.is_ok());
+
+        // // query to check if hook was added
+        // let query_hooks_msg = QueryMsg::SaleFinalizedHooks {};
+        // let res: HooksResponse = router
+        //     .wrap()
+        //     .query_wasm_smart(marketplace_addr.clone(), &query_hooks_msg)
+        //     .unwrap();
+        // assert_eq!(res.hooks, vec![claims_addr.to_string()]);
 
         // Mint NFT for creator
         mint_nft_for_creator(&mut router, &creator, &collection_addr);
@@ -233,24 +241,23 @@ mod tests {
             expires: router.block_info().time.plus_seconds(MIN_EXPIRY + 1),
         };
         let res = router.execute_contract(
-            bidder,
+            bidder.clone(),
             marketplace_addr,
             &set_bid_msg,
             &coins(100, NATIVE_DENOM),
         );
-        // TODO: this fails, maybe multitest doesn't support hooks yet?
         println!("{:?}", res);
         assert!(res.is_ok());
 
-        // // Check NFT is transferred
-        // let query_owner_msg = Cw721QueryMsg::OwnerOf {
-        //     token_id: TOKEN_ID.to_string(),
-        //     include_expired: None,
-        // };
-        // let res: OwnerOfResponse = router
-        //     .wrap()
-        //     .query_wasm_smart(collection_addr, &query_owner_msg)
-        //     .unwrap();
-        // assert_eq!(res.owner, bidder.to_string());
+        // Check NFT is transferred
+        let query_owner_msg = Cw721QueryMsg::OwnerOf {
+            token_id: TOKEN_ID.to_string(),
+            include_expired: None,
+        };
+        let res: OwnerOfResponse = router
+            .wrap()
+            .query_wasm_smart(collection_addr, &query_owner_msg)
+            .unwrap();
+        assert_eq!(res.owner, bidder.to_string());
     }
 }
