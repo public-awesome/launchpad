@@ -3,10 +3,12 @@ package e2e_test
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"testing"
 	"time"
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	"github.com/cavaliergopher/grab/v3"
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -57,6 +59,14 @@ func TestClaim(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, res)
 	require.Equal(t, res.CodeID, uint64(1))
+
+	// marketplace
+	resp, err := grab.Get("./contracts/", "https://github.com/public-awesome/marketplace/releases/download/v0.4.0/sg_marketplace.wasm")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("Download saved to", resp.Filename)
 
 	// claim
 	b, err = ioutil.ReadFile("contracts/claim.wasm")
