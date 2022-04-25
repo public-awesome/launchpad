@@ -4,11 +4,12 @@ use cosmwasm_std::entry_point;
 use cosmwasm_std::{Addr, DepsMut, Env, MessageInfo};
 use cw2::set_contract_version;
 use minter::msg::{MintCountResponse, QueryMsg};
+use sg_marketplace::msg::SaleFinalizedHookMsg;
 use sg_marketplace::MarketplaceContract;
 use sg_std::{create_claim_for_msg, ClaimAction, StargazeMsgWrapper};
 
 use crate::error::ContractError;
-use crate::msg::{ExecuteMsg, InstantiateMsg, SaleFinalizedHookMsg};
+use crate::msg::{ExecuteMsg, InstantiateMsg};
 use crate::state::{Config, CONFIG};
 pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 
