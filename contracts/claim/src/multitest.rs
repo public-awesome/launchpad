@@ -39,17 +39,17 @@ pub fn contract_claim() -> Box<dyn Contract<StargazeMsgWrapper>> {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+    use crate::msg::InstantiateMsg;
+    use cosmwasm_std::{coin, coins, Addr, Coin, Decimal, Empty};
     use cw721::{Cw721QueryMsg, OwnerOfResponse};
     use cw_multi_test::Executor;
-    use sg_marketplace::msg::{ExecuteMsg, SudoMsg, QueryMsg};
-    use crate::msg::InstantiateMsg;
-    use super::*;
-    use cosmwasm_std::{coin, coins, Addr, Coin, Decimal, Empty};
     use sg721::msg::{InstantiateMsg as Sg721InstantiateMsg, RoyaltyInfoResponse};
     use sg721::state::CollectionInfo;
+    use sg_controllers::HooksResponse;
+    use sg_marketplace::msg::{ExecuteMsg, QueryMsg, SudoMsg};
     use sg_multi_test::StargazeApp;
     use sg_std::NATIVE_DENOM;
-    use sg_controllers::HooksResponse;
 
     const TOKEN_ID: u32 = 123;
     const CREATION_FEE: u128 = 1_000_000_000;
