@@ -246,7 +246,7 @@ mod tests {
             &set_bid_msg,
             &coins(100, NATIVE_DENOM),
         );
-        println!("{:?}", res);
+        // println!("{:?}", res);
         assert!(res.is_ok());
 
         // Check NFT is transferred
