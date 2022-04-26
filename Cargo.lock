@@ -61,7 +61,7 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
 name = "claim"
-version = "0.12.4"
+version = "0.13.0"
 dependencies = [
  "anyhow",
  "cosmwasm-schema",
@@ -78,7 +78,7 @@ dependencies = [
  "serde",
  "sg-controllers 0.12.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg-marketplace",
- "sg-multi-test 0.12.1",
+ "sg-multi-test 0.13.0",
  "sg-std 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg721 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "thiserror",
@@ -830,8 +830,8 @@ dependencies = [
 
 [[package]]
 name = "sg-marketplace"
-version = "0.5.0"
-source = "git+https://github.com/public-awesome/marketplace?branch=shanev/fix-hook#bb998c507dae6bbc816bb3a4f06c5a9122b22d84"
+version = "0.5.1"
+source = "git+https://github.com/public-awesome/marketplace#33b9ecfc66360b4b18cb047c3f084990f5e40c89"
 dependencies = [
  "cosmwasm-std",
  "cosmwasm-storage",
@@ -866,7 +866,7 @@ dependencies = [
 
 [[package]]
 name = "sg-multi-test"
-version = "0.12.1"
+version = "0.13.0"
 dependencies = [
  "anyhow",
  "cosmwasm-std",
