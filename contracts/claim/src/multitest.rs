@@ -247,7 +247,10 @@ mod tests {
             &coins(100, NATIVE_DENOM),
         );
         assert!(res.is_ok());
-        assert_eq!("sale_finalized", res.unwrap().events[1].attributes[1].value);
+        let res = res.unwrap();
+        assert_eq!(res.events.len(), 8);
+        assert_eq!("sale_finalized", res.events[1].attributes[1].value);
+        assert_eq!("claim_buy_nft", res.events[7].attributes[1].value);
 
         // Check NFT is transferred
         let query_owner_msg = Cw721QueryMsg::OwnerOf {
