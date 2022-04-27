@@ -3,10 +3,12 @@ package e2e_test
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"testing"
 	"time"
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	"github.com/cavaliergopher/grab/v3"
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -82,7 +84,49 @@ func TestClaim(t *testing.T) {
 	require.NotNil(t, res)
 	require.Equal(t, res.CodeID, uint64(3))
 
+	// marketplace
+	resp, err := grab.Get("./contracts/", "https://github.com/public-awesome/marketplace/releases/download/v0.5.0/sg_marketplace.wasm")
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Download saved to", resp.Filename)
+	b, err = resp.Bytes()
+	require.NoError(t, err)
+
+	res, err = msgServer.StoreCode(sdk.WrapSDKContext(ctx), &wasmtypes.MsgStoreCode{
+		Sender:       addr1.String(),
+		WASMByteCode: b,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+	require.Equal(t, res.CodeID, uint64(4))
+
 	creator := accs[0]
+
+	instantiateMsgRaw := []byte(
+		fmt.Sprintf(instantiateMarketplaceTemplate,
+			2,
+			86400,
+			15552000,
+			86400,
+			15552000,
+			creator.Address.String(),
+		),
+	)
+
+	// instantiate marketplace
+	instantiateRes, err := msgServer.InstantiateContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgInstantiateContract{
+		Sender: creator.Address.String(),
+		Admin:  creator.Address.String(),
+		CodeID: 4,
+		Label:  "Marketplace",
+		Msg:    instantiateMsgRaw,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, instantiateRes)
+	require.NotEmpty(t, instantiateRes.Address)
+	marketplaceAddress := instantiateRes.Address
+	require.NotEmpty(t, marketplaceAddress)
 
 	// minter
 	afterGenesisMint, err := time.Parse(time.RFC3339Nano, "2022-03-11T21:00:01Z")
@@ -90,7 +134,7 @@ func TestClaim(t *testing.T) {
 	genesisMintDateTime, err := time.Parse(time.RFC3339Nano, "2022-03-11T21:00:00Z")
 	require.NoError(t, err)
 
-	instantiateMsgRaw := []byte(
+	instantiateMsgRaw = []byte(
 		fmt.Sprintf(instantiateMinterTemplate,
 			creator.Address.String(),
 			creator.Address.String(),
@@ -100,7 +144,7 @@ func TestClaim(t *testing.T) {
 			1, // limit 1
 		),
 	)
-	instantiateRes, err := msgServer.InstantiateContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgInstantiateContract{
+	instantiateRes, err = msgServer.InstantiateContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgInstantiateContract{
 		Sender: creator.Address.String(),
 		Admin:  creator.Address.String(),
 		CodeID: 1,
@@ -144,7 +188,7 @@ func TestClaim(t *testing.T) {
 		Admin:  creator.Address.String(),
 		CodeID: 2,
 		Label:  "Claim",
-		Msg:    []byte("{}"),
+		Msg:    []byte(`{"marketplace_addr":"` + marketplaceAddress + `"}`),
 	})
 	require.NoError(t, err)
 	require.NotNil(t, instantiateRes)

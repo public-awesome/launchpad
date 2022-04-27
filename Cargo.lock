@@ -4,9 +4,9 @@ version = 3
 
 [[package]]
 name = "anyhow"
-version = "1.0.56"
+version = "1.0.57"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4361135be9122e0870de935d7c439aef945b9f9ddd4199a553b5270b49c82a27"
+checksum = "08f9b8508dccb7687a1d6c4ce66b2b0ecef467c94667de27d8d7fe1f8d2a9cdc"
 
 [[package]]
 name = "arrayvec"
@@ -61,19 +61,26 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
 name = "claim"
-version = "0.12.0"
+version = "0.13.0"
 dependencies = [
  "anyhow",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cosmwasm-storage",
  "cw-multi-test",
+ "cw-storage-plus",
  "cw-utils",
  "cw2",
+ "cw721",
+ "cw721-base",
  "minter",
  "schemars",
  "serde",
+ "sg-controllers 0.12.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg-marketplace",
+ "sg-multi-test 0.13.0",
  "sg-std 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg721 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "thiserror",
 ]
 
@@ -556,9 +563,9 @@ dependencies = [
 
 [[package]]
 name = "libc"
-version = "0.2.123"
+version = "0.2.124"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cb691a747a7ab48abc15c5b42066eaafde10dc427e3b6ee2a1cf43db04c763bd"
+checksum = "21a41fed9d98f27ab1c6d161da622a4fa35e8a54a8adc24bbf3ddd0ef70b0e50"
 
 [[package]]
 name = "matches"
@@ -568,7 +575,7 @@ checksum = "a3e378b66a060d48947b590737b30a1be76706c8dd7b8ba0f2fe3989c68a853f"
 
 [[package]]
 name = "minter"
-version = "0.12.0"
+version = "0.12.4"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -581,7 +588,7 @@ dependencies = [
  "cw721-base",
  "schemars",
  "serde",
- "sg-multi-test 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg-multi-test 0.12.0",
  "sg-std 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg1 0.12.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg721 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -796,8 +803,58 @@ dependencies = [
 ]
 
 [[package]]
+name = "sg-controllers"
+version = "0.12.1"
+dependencies = [
+ "cosmwasm-std",
+ "cw-storage-plus",
+ "schemars",
+ "serde",
+ "sg-std 0.12.0",
+ "thiserror",
+]
+
+[[package]]
+name = "sg-controllers"
+version = "0.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8139d4ec93b30e68b5fe598076bf80bc778e950e1b1af6e7cd7a38da439bbc79"
+dependencies = [
+ "cosmwasm-std",
+ "cw-storage-plus",
+ "schemars",
+ "serde",
+ "sg-std 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "thiserror",
+]
+
+[[package]]
+name = "sg-marketplace"
+version = "0.6.0"
+source = "git+https://github.com/public-awesome/marketplace?branch=shanev/add-reply#0e21a0aa608e4c6d0c34b600741a32dbdfd7898c"
+dependencies = [
+ "cosmwasm-std",
+ "cosmwasm-storage",
+ "cw-storage-plus",
+ "cw-utils",
+ "cw2",
+ "cw20",
+ "cw721",
+ "cw721-base",
+ "schemars",
+ "serde",
+ "sg-controllers 0.12.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg-std 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg1 0.12.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg721 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "thiserror",
+]
+
+[[package]]
 name = "sg-multi-test"
 version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "377a727f43cf3deb4c8dc1543534134f7cbd47578fb42a9adf2f35e433598daf"
 dependencies = [
  "anyhow",
  "cosmwasm-std",
@@ -809,9 +866,7 @@ dependencies = [
 
 [[package]]
 name = "sg-multi-test"
-version = "0.12.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "377a727f43cf3deb4c8dc1543534134f7cbd47578fb42a9adf2f35e433598daf"
+version = "0.13.0"
 dependencies = [
  "anyhow",
  "cosmwasm-std",
@@ -1000,9 +1055,9 @@ dependencies = [
 
 [[package]]
 name = "tinyvec"
-version = "1.5.1"
+version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2c1c1d5a42b6245520c249549ec267180beaffcc0615401ac8e31853d4b6d8d2"
+checksum = "87cc5ceb3875bb20c2890005a4e226a4651264a5c75edb2421b52861a0a0cb50"
 dependencies = [
  "tinyvec_macros",
 ]
@@ -1033,9 +1088,9 @@ dependencies = [
 
 [[package]]
 name = "unicode-bidi"
-version = "0.3.7"
+version = "0.3.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1a01404663e3db436ed2746d9fefef640d868edae3cceb81c3b8d5732fda678f"
+checksum = "099b7128301d285f79ddd55b9a83d5e6b9e97c92e0ea0daebee7263e932de992"
 
 [[package]]
 name = "unicode-normalization"

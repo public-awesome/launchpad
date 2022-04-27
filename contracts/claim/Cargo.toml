@@ -1,6 +1,6 @@
 [package]
 name = "claim"
-version = "0.12.0"
+version = "0.13.0"
 authors = ["jhernandezb <jorge@publicawesome.com>"]
 edition = "2018"
 
@@ -38,8 +38,17 @@ serde = { version = "1.0", default-features = false, features = ["derive"] }
 minter = { path = "../minter", features = ["library"] }
 sg-std = "0.12.0"
 thiserror = { version = "1.0" }
+cw-storage-plus = "0.13.2"
+sg-marketplace = { git = "https://github.com/public-awesome/marketplace", branch = "shanev/add-reply", features = [
+  "library",
+] }
 
 [dev-dependencies]
 cosmwasm-schema = { version = "1.0.0-beta8" }
 cw-multi-test = "0.13.2"
 anyhow = "1"
+sg721 = { version = "0.12.0", features = ["library"] }
+cw721 = "0.13.2"
+cw721-base = { version = "0.13.2", features = ["library"] }
+sg-multi-test = { version = "0.13.0", path = "../../packages/sg-multi-test" }
+sg-controllers = "0.12.1"

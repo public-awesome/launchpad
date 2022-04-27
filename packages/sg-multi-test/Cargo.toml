@@ -1,6 +1,6 @@
 [package]
 name = "sg-multi-test"
-version = "0.12.0"
+version = "0.13.0"
 edition = "2021"
 authors = ["Jorge Hernandez <jorge@publicawesome.com>"]
 description = "Integration test helpers for Stargaze custom contracts"

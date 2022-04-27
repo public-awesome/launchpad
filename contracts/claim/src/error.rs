@@ -8,4 +8,10 @@ pub enum ContractError {
 
     #[error("NoMinting")]
     NoMinting {},
+
+    #[error("Unauthorized")]
+    Unauthorized {},
+
+    #[error("Marketplace contract invalid address '{addr}'")]
+    InvalidMarketplace { addr: String },
 }
