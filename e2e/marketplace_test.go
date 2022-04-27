@@ -29,6 +29,12 @@ func TestMarketplace(t *testing.T) {
 	require.NoError(t, err)
 	ctx := app.BaseApp.NewContext(false, tmproto.Header{Height: 1, ChainID: "stargaze-1", Time: startDateTime})
 
+	// wasm params
+	wasmParams := app.WasmKeeper.GetParams(ctx)
+	wasmParams.CodeUploadAccess = wasmtypes.AllowEverybody
+	wasmParams.MaxWasmCodeSize = 1000 * 1024 * 4 // 4MB
+	app.WasmKeeper.SetParams(ctx, wasmParams)
+
 	// download latest marketplace code
 	out, err := os.Create("contracts/sg_marketplace.wasm")
 	require.NoError(t, err)
@@ -50,7 +56,7 @@ func TestMarketplace(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.NotNil(t, res)
-	require.Equal(t, res.CodeID, uint64(4))
+	require.Equal(t, res.CodeID, uint64(1))
 
 	creator := accs[0]
 
