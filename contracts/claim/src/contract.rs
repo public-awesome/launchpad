@@ -1,7 +1,7 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 
-use cosmwasm_std::{to_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, StdResult};
+use cosmwasm_std::{to_binary, Addr, Binary, Coin, Deps, DepsMut, Env, MessageInfo, StdResult};
 use cw2::set_contract_version;
 use minter::msg::{MintCountResponse, QueryMsg};
 use sg_marketplace::msg::SaleFinalizedHookMsg;
@@ -53,9 +53,10 @@ pub fn execute(
         ExecuteMsg::SaleFinalizedHook(SaleFinalizedHookMsg {
             collection,
             token_id,
+            price,
             seller,
             buyer,
-        }) => execute_claim_buy_nft(deps, info, collection, token_id, seller, buyer),
+        }) => execute_claim_buy_nft(deps, info, collection, token_id, price, seller, buyer),
     }
 }
 
@@ -88,6 +89,7 @@ pub fn execute_claim_buy_nft(
     info: MessageInfo,
     collection: String,
     token_id: u32,
+    price: Coin,
     seller: String,
     buyer: String,
 ) -> Result<Response, ContractError> {
@@ -104,6 +106,7 @@ pub fn execute_claim_buy_nft(
         .add_attribute("action", "claim_buy_nft")
         .add_attribute("collection", collection)
         .add_attribute("token_id", token_id.to_string())
+        .add_attribute("price", price.to_string())
         .add_attribute("seller", seller)
         .add_attribute("buyer", buyer);
     Ok(res)

@@ -830,8 +830,8 @@ dependencies = [
 
 [[package]]
 name = "sg-marketplace"
-version = "0.5.1"
-source = "git+https://github.com/public-awesome/marketplace#33b9ecfc66360b4b18cb047c3f084990f5e40c89"
+version = "0.6.0"
+source = "git+https://github.com/public-awesome/marketplace?branch=shanev/add-reply#9e3fb6895967ab8d47e3f468e55f93ce6102d5a3"
 dependencies = [
  "cosmwasm-std",
  "cosmwasm-storage",
