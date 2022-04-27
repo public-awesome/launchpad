@@ -43,7 +43,6 @@ sg-marketplace = { git = "https://github.com/public-awesome/marketplace", branch
   "library",
 ] }
 
-
 [dev-dependencies]
 cosmwasm-schema = { version = "1.0.0-beta8" }
 cw-multi-test = "0.13.2"
