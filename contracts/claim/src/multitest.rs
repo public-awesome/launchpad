@@ -248,8 +248,6 @@ mod tests {
             &set_bid_msg,
             &coins(100, NATIVE_DENOM),
         );
-        println!("{:?}", res);
-
         assert!(res.is_ok());
         let res = res.unwrap();
         assert_eq!(res.events.len(), 8);
