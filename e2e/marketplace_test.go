@@ -32,18 +32,19 @@ var (
 		}
 		`
 
-	// instantiateAskTemplate = `
-	// 	{
-	// 		"collection": "%s",
-	// 		"token_id": "%d",
-	// 		"price": {
-	// 			"amount": "%d",
-	// 			"denom": "ustars"
-	// 		},
-	// 		"funds_recipient": null,
-	// 		"expires": %d
-	// 	}
-	// 	`
+	executeAskTemplate = `
+		{
+			"set_ask": {
+				"collection": "%s",
+				"token_id": %d,
+				"price": {
+					"amount": "%d",
+					"denom": "ustars"
+				},
+				"expires": %d	
+			}
+		}
+		`
 )
 
 func TestMarketplace(t *testing.T) {
@@ -67,8 +68,8 @@ func TestMarketplace(t *testing.T) {
 	pub1 := priv1.PubKey()
 	addr1 := sdk.AccAddress(pub1.Address())
 
-	// minter
-	b, err := ioutil.ReadFile("contracts/minter.wasm")
+	// sg721
+	b, err := ioutil.ReadFile("contracts/sg721.wasm")
 	require.NoError(t, err)
 
 	msgServer := wasmkeeper.NewMsgServerImpl(wasmkeeper.NewDefaultPermissionKeeper(app.WasmKeeper))
@@ -79,30 +80,6 @@ func TestMarketplace(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, res)
 	require.Equal(t, res.CodeID, uint64(1))
-
-	// whitelist
-	b, err = ioutil.ReadFile("contracts/whitelist.wasm")
-	require.NoError(t, err)
-
-	res, err = msgServer.StoreCode(sdk.WrapSDKContext(ctx), &wasmtypes.MsgStoreCode{
-		Sender:       addr1.String(),
-		WASMByteCode: b,
-	})
-	require.NoError(t, err)
-	require.NotNil(t, res)
-	require.Equal(t, res.CodeID, uint64(2))
-
-	// sg721
-	b, err = ioutil.ReadFile("contracts/sg721.wasm")
-	require.NoError(t, err)
-
-	res, err = msgServer.StoreCode(sdk.WrapSDKContext(ctx), &wasmtypes.MsgStoreCode{
-		Sender:       addr1.String(),
-		WASMByteCode: b,
-	})
-	require.NoError(t, err)
-	require.NotNil(t, res)
-	require.Equal(t, res.CodeID, uint64(3))
 
 	creator := accs[0]
 
@@ -117,7 +94,7 @@ func TestMarketplace(t *testing.T) {
 	instantiateRes, err := msgServer.InstantiateContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgInstantiateContract{
 		Sender: creator.Address.String(),
 		Admin:  creator.Address.String(),
-		CodeID: 3,
+		CodeID: 1,
 		Label:  "SG721",
 		Msg:    instantiateMsgRaw,
 		Funds:  sdk.NewCoins(sdk.NewInt64Coin("ustars", 1_000_000_000)),
@@ -125,35 +102,7 @@ func TestMarketplace(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, instantiateRes)
 	require.NotEmpty(t, instantiateRes.Address)
-	// collectionAddress := instantiateRes.Address
-
-	// // minter
-
-	// genesisMintDateTime, err := time.Parse(time.RFC3339Nano, "2022-03-11T21:00:00Z")
-	// require.NoError(t, err)
-
-	// instantiateMsgRaw = []byte(
-	// 	fmt.Sprintf(instantiateMinterTemplate,
-	// 		creator.Address.String(),
-	// 		creator.Address.String(),
-	// 		creator.Address.String(),
-	// 		genesisMintDateTime.UnixNano(),
-	// 		"null",
-	// 		1, // limit 1
-	// 	),
-	// )
-	// instantiateRes, err := msgServer.InstantiateContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgInstantiateContract{
-	// 	Sender: creator.Address.String(),
-	// 	Admin:  creator.Address.String(),
-	// 	CodeID: 1,
-	// 	Label:  "Minter",
-	// 	Msg:    instantiateMsgRaw,
-	// 	Funds:  sdk.NewCoins(sdk.NewInt64Coin("ustars", 1_000_000_000)),
-	// })
-	// require.NoError(t, err)
-	// require.NotNil(t, instantiateRes)
-	// require.NotEmpty(t, instantiateRes.Address)
-	// minterAddress := instantiateRes.Address
+	collectionAddress := instantiateRes.Address
 
 	// download latest marketplace code
 	out, err := os.Create("contracts/sg_marketplace.wasm")
@@ -175,7 +124,7 @@ func TestMarketplace(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.NotNil(t, res)
-	require.Equal(t, res.CodeID, uint64(4))
+	require.Equal(t, res.CodeID, uint64(2))
 
 	instantiateMsgRaw = []byte(
 		fmt.Sprintf(instantiateMarketplaceTemplate,
@@ -191,7 +140,7 @@ func TestMarketplace(t *testing.T) {
 	instantiateRes, err = msgServer.InstantiateContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgInstantiateContract{
 		Sender: addr1.String(),
 		Admin:  addr1.String(),
-		CodeID: 4,
+		CodeID: 2,
 		Label:  "Marketplace",
 		Msg:    instantiateMsgRaw,
 	})
@@ -201,26 +150,19 @@ func TestMarketplace(t *testing.T) {
 	marketplaceAddress := instantiateRes.Address
 	require.NotEmpty(t, marketplaceAddress)
 
-	// go to the future
-	afterGenesisMint, err := time.Parse(time.RFC3339Nano, "2022-03-11T21:00:01Z")
+	// execute an ask on the marketplace
+	executeMsgRaw := fmt.Sprintf(executeAskTemplate,
+		collectionAddress,
+		1,
+		10000000,
+		24*60*60,
+	)
+	fmt.Println(executeMsgRaw)
+	_, err = msgServer.ExecuteContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgExecuteContract{
+		Contract: marketplaceAddress,
+		Sender:   accs[1].Address.String(),
+		Msg:      []byte(executeMsgRaw),
+	})
 	require.NoError(t, err)
-	ctx = app.BaseApp.NewContext(false, tmproto.Header{Height: 1, ChainID: "stargaze-1", Time: afterGenesisMint})
 
-	// // mint succeeds
-	// _, err = msgServer.ExecuteContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgExecuteContract{
-	// 	Contract: minterAddress,
-	// 	Sender:   accs[1].Address.String(),
-	// 	Msg:      []byte(`{"mint":{}}`),
-	// 	Funds:    sdk.NewCoins(sdk.NewInt64Coin("ustars", 100_000_000)),
-	// })
-	// require.NoError(t, err)
-
-	// state, err := app.WasmKeeper.QuerySmart(ctx, sdk.AccAddress(minterAddress), []byte(`{"mint":{}}`))
-	// fmt.Println(state)
-	// list NFT on marketplace by setting an Ask
-	// instantiateMsgRaw = []byte(
-	// 	fmt.Sprintf(instantiateAskTemplate,
-	// 	)
-
-	// TODO: no need to mint, just deploy an sg721
 }
