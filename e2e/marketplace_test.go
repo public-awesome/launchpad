@@ -157,9 +157,19 @@ func TestMarketplace(t *testing.T) {
 	require.NotEmpty(t, instantiateRes.Address)
 	collectionAddress := instantiateRes.Address
 
-	// mint an NFT
+	// mint two NFTs
 	executeMsgRaw := fmt.Sprintf(executeMintTemplate,
 		1,
+		creator.Address.String(),
+	)
+	_, err = msgServer.ExecuteContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgExecuteContract{
+		Contract: collectionAddress,
+		Sender:   creator.Address.String(),
+		Msg:      []byte(executeMsgRaw),
+	})
+	require.NoError(t, err)
+	executeMsgRaw = fmt.Sprintf(executeMintTemplate,
+		2,
 		creator.Address.String(),
 	)
 	_, err = msgServer.ExecuteContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgExecuteContract{
@@ -273,6 +283,17 @@ func TestMarketplace(t *testing.T) {
 		Msg:      []byte(executeMsgRaw),
 	})
 	require.NoError(t, err)
+	// approve the NFT
+	executeMsgRaw = fmt.Sprintf(executeApproveTemplate,
+		marketplaceAddress,
+		2,
+	)
+	_, err = msgServer.ExecuteContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgExecuteContract{
+		Contract: collectionAddress,
+		Sender:   creator.Address.String(),
+		Msg:      []byte(executeMsgRaw),
+	})
+	require.NoError(t, err)
 
 	// execute an ask on the marketplace
 	expires := startDateTime.Add(time.Hour * 24 * 30)
@@ -323,5 +344,47 @@ func TestMarketplace(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, claim.ActionCompleted[claimtypes.ActionBidNFT])
 
-	// TODO: add another test to make sure action cannot be claimed twice
+	// add another test to make sure action cannot be claimed twice
+
+	// execute an ask on the marketplace
+	executeMsgRaw = fmt.Sprintf(executeAskTemplate,
+		collectionAddress,
+		2,
+		1_000_000_000,
+		expires.UnixNano(),
+	)
+	_, err = msgServer.ExecuteContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgExecuteContract{
+		Contract: marketplaceAddress,
+		Sender:   creator.Address.String(),
+		Msg:      []byte(executeMsgRaw),
+	})
+	require.NoError(t, err)
+
+	// execute a bid on the marketplace
+	executeMsgRaw = fmt.Sprintf(executeBidTemplate,
+		collectionAddress,
+		2,
+		expires.UnixNano(),
+	)
+	_, err = msgServer.ExecuteContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgExecuteContract{
+		Contract: marketplaceAddress,
+		Sender:   bidder.Address.String(),
+		Msg:      []byte(executeMsgRaw),
+		Funds:    sdk.NewCoins(sdk.NewInt64Coin("ustars", 1_000_000_000)),
+	})
+	// sale finalized hook should have been called
+	// NFT should have been transferred to bidder
+	require.NoError(t, err)
+
+	// buyer's should lose amount of bid (1,000)
+	balance = app.BankKeeper.GetBalance(ctx, bidder.Address, "ustars")
+	require.Equal(t,
+		"200000000",
+		balance.Amount.String(),
+	)
+
+	claim, err = app.ClaimKeeper.GetClaimRecord(ctx, bidder.Address)
+	require.NoError(t, err)
+	require.True(t, claim.ActionCompleted[claimtypes.ActionBidNFT])
+
 }
