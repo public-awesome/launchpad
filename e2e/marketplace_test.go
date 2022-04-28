@@ -31,7 +31,6 @@ var (
 			}
 		}
 		`
-
 	executeAskTemplate = `
 		{
 			"set_ask": {
@@ -45,6 +44,15 @@ var (
 			}
 		}
 		`
+	executeBidTemplate = `
+		{
+			"set_bid": {
+				"collection": "%s",
+				"token_id": %d,
+				"expires": "%d"	
+			}
+		}
+		`
 	executeMintTemplate = `
 		{
 			"mint": {
@@ -54,7 +62,6 @@ var (
 			}
 		}
 		`
-
 	executeApproveTemplate = `
 		{
 			"approve": {
@@ -194,7 +201,7 @@ func TestMarketplace(t *testing.T) {
 	require.NoError(t, err)
 
 	// execute an ask on the marketplace
-	expires, _ := time.Parse(time.RFC3339Nano, "2025-03-11T21:00:00Z")
+	expires := startDateTime.Add(time.Hour * 24 * 30)
 	executeMsgRaw = fmt.Sprintf(executeAskTemplate,
 		collectionAddress,
 		1,
@@ -205,6 +212,20 @@ func TestMarketplace(t *testing.T) {
 		Contract: marketplaceAddress,
 		Sender:   creator.Address.String(),
 		Msg:      []byte(executeMsgRaw),
+	})
+	require.NoError(t, err)
+
+	// execute a bid on the marketplace
+	executeMsgRaw = fmt.Sprintf(executeBidTemplate,
+		collectionAddress,
+		1,
+		expires.UnixNano(),
+	)
+	_, err = msgServer.ExecuteContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgExecuteContract{
+		Contract: marketplaceAddress,
+		Sender:   creator.Address.String(),
+		Msg:      []byte(executeMsgRaw),
+		Funds:    sdk.NewCoins(sdk.NewInt64Coin("ustars", 1_000_000_000)),
 	})
 	require.NoError(t, err)
 
