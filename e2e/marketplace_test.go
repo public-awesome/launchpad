@@ -13,6 +13,7 @@ import (
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/public-awesome/stargaze/v4/testutil/simapp"
+	claimtypes "github.com/public-awesome/stargaze/v4/x/claim/types"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
@@ -71,6 +72,13 @@ var (
 			}
 		}
 		`
+	executeSaleFinalizedHookTemplate = `
+		{
+			"add_sale_finalized_hook": { 
+				"hook": "%s"
+			}
+		}
+		`
 )
 
 func TestMarketplace(t *testing.T) {
@@ -93,6 +101,25 @@ func TestMarketplace(t *testing.T) {
 	priv1 := secp256k1.GenPrivKey()
 	pub1 := priv1.PubKey()
 	addr1 := sdk.AccAddress(pub1.Address())
+
+	// claim module setup
+	app.ClaimKeeper.CreateModuleAccount(ctx, sdk.NewCoin(claimtypes.DefaultClaimDenom, sdk.NewInt(5000_000_000)))
+	app.ClaimKeeper.SetParams(ctx, claimtypes.Params{
+		AirdropEnabled:     true,
+		AirdropStartTime:   startDateTime,
+		DurationUntilDecay: claimtypes.DefaultDurationUntilDecay,
+		DurationOfDecay:    claimtypes.DefaultDurationOfDecay,
+		ClaimDenom:         claimtypes.DefaultClaimDenom,
+	})
+	claimRecords := []claimtypes.ClaimRecord{
+		{
+			Address:                addr1.String(),
+			InitialClaimableAmount: sdk.NewCoins(sdk.NewInt64Coin(claimtypes.DefaultClaimDenom, 1_000_000_000)),
+			ActionCompleted:        []bool{false, false, false, false, false},
+		},
+	}
+	err = app.ClaimKeeper.SetClaimRecords(ctx, claimRecords)
+	require.NoError(t, err)
 
 	// sg721
 	b, err := ioutil.ReadFile("contracts/sg721.wasm")
@@ -188,6 +215,46 @@ func TestMarketplace(t *testing.T) {
 	marketplaceAddress := instantiateRes.Address
 	require.NotEmpty(t, marketplaceAddress)
 
+	// allow marketplace to call claim contract
+	app.ClaimKeeper.SetParams(ctx, claimtypes.Params{
+		AirdropEnabled:     true,
+		AirdropStartTime:   startDateTime,
+		DurationUntilDecay: claimtypes.DefaultDurationUntilDecay,
+		DurationOfDecay:    claimtypes.DefaultDurationOfDecay,
+		ClaimDenom:         claimtypes.DefaultClaimDenom,
+		AllowedClaimers: []claimtypes.ClaimAuthorization{
+			{
+				ContractAddress: marketplaceAddress,
+				Action:          claimtypes.ActionBidNFT,
+			},
+		},
+	})
+
+	// claim
+	b, err = ioutil.ReadFile("contracts/claim.wasm")
+	require.NoError(t, err)
+
+	res, err = msgServer.StoreCode(sdk.WrapSDKContext(ctx), &wasmtypes.MsgStoreCode{
+		Sender:       addr1.String(),
+		WASMByteCode: b,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+	require.Equal(t, res.CodeID, uint64(3))
+
+	instantiateRes, err = msgServer.InstantiateContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgInstantiateContract{
+		Sender: creator.Address.String(),
+		Admin:  creator.Address.String(),
+		CodeID: 3,
+		Label:  "Claim",
+		Msg:    []byte(`{"marketplace_addr":"` + marketplaceAddress + `"}`),
+	})
+	require.NoError(t, err)
+	require.NotNil(t, instantiateRes)
+	require.NotEmpty(t, instantiateRes.Address)
+	claimAddress := instantiateRes.Address
+	require.NotEmpty(t, claimAddress)
+
 	// approve the NFT
 	executeMsgRaw = fmt.Sprintf(executeApproveTemplate,
 		marketplaceAddress,
@@ -205,7 +272,7 @@ func TestMarketplace(t *testing.T) {
 	executeMsgRaw = fmt.Sprintf(executeAskTemplate,
 		collectionAddress,
 		1,
-		10000000,
+		1_000_000_000,
 		expires.UnixNano(),
 	)
 	_, err = msgServer.ExecuteContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgExecuteContract{
@@ -214,6 +281,19 @@ func TestMarketplace(t *testing.T) {
 		Msg:      []byte(executeMsgRaw),
 	})
 	require.NoError(t, err)
+
+	// set sales finalized hook on marketplace
+	executeMsgRaw = fmt.Sprintf(executeSaleFinalizedHookTemplate, claimAddress)
+	fmt.Println(executeMsgRaw)
+	_, err = app.WasmKeeper.Sudo(ctx, sdk.AccAddress(marketplaceAddress), []byte(executeMsgRaw))
+	require.NoError(t, err)
+
+	// check intial balance of buyer / airdrop claimer
+	balance := app.BankKeeper.GetBalance(ctx, accs[1].Address, "ustars")
+	require.Equal(t,
+		"2000000000",
+		balance.Amount.String(),
+	)
 
 	// execute a bid on the marketplace
 	executeMsgRaw = fmt.Sprintf(executeBidTemplate,
@@ -223,10 +303,20 @@ func TestMarketplace(t *testing.T) {
 	)
 	_, err = msgServer.ExecuteContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgExecuteContract{
 		Contract: marketplaceAddress,
-		Sender:   creator.Address.String(),
+		Sender:   accs[1].Address.String(),
 		Msg:      []byte(executeMsgRaw),
 		Funds:    sdk.NewCoins(sdk.NewInt64Coin("ustars", 1_000_000_000)),
 	})
 	require.NoError(t, err)
 
+	// TODO: buyer's should lose amount of bid + airdrop claim amount
+	balance = app.BankKeeper.GetBalance(ctx, accs[1].Address, "ustars")
+	require.Equal(t,
+		"1000000000",
+		balance.Amount.String(),
+	)
+
+	claim, err := app.ClaimKeeper.GetClaimRecord(ctx, addr1)
+	require.NoError(t, err)
+	require.True(t, claim.ActionCompleted[claimtypes.ActionBidNFT])
 }
