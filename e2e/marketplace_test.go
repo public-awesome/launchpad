@@ -41,7 +41,26 @@ var (
 					"amount": "%d",
 					"denom": "ustars"
 				},
-				"expires": %d	
+				"expires": "%d"	
+			}
+		}
+		`
+	executeMintTemplate = `
+		{
+			"mint": {
+				"token_id": "%d",
+				"owner": "%s",
+				"extension": {}
+			}
+		}
+		`
+
+	executeApproveTemplate = `
+		{
+			"approve": {
+				"spender": "%s",
+				"token_id": "%d",
+				"expires": null
 			}
 		}
 		`
@@ -104,6 +123,18 @@ func TestMarketplace(t *testing.T) {
 	require.NotEmpty(t, instantiateRes.Address)
 	collectionAddress := instantiateRes.Address
 
+	// mint an NFT
+	executeMsgRaw := fmt.Sprintf(executeMintTemplate,
+		1,
+		creator.Address.String(),
+	)
+	_, err = msgServer.ExecuteContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgExecuteContract{
+		Contract: collectionAddress,
+		Sender:   creator.Address.String(),
+		Msg:      []byte(executeMsgRaw),
+	})
+	require.NoError(t, err)
+
 	// download latest marketplace code
 	out, err := os.Create("contracts/sg_marketplace.wasm")
 	require.NoError(t, err)
@@ -150,17 +181,29 @@ func TestMarketplace(t *testing.T) {
 	marketplaceAddress := instantiateRes.Address
 	require.NotEmpty(t, marketplaceAddress)
 
+	// approve the NFT
+	executeMsgRaw = fmt.Sprintf(executeApproveTemplate,
+		marketplaceAddress,
+		1,
+	)
+	_, err = msgServer.ExecuteContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgExecuteContract{
+		Contract: collectionAddress,
+		Sender:   creator.Address.String(),
+		Msg:      []byte(executeMsgRaw),
+	})
+	require.NoError(t, err)
+
 	// execute an ask on the marketplace
-	executeMsgRaw := fmt.Sprintf(executeAskTemplate,
+	expires, _ := time.Parse(time.RFC3339Nano, "2025-03-11T21:00:00Z")
+	executeMsgRaw = fmt.Sprintf(executeAskTemplate,
 		collectionAddress,
 		1,
 		10000000,
-		24*60*60,
+		expires.UnixNano(),
 	)
-	fmt.Println(executeMsgRaw)
 	_, err = msgServer.ExecuteContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgExecuteContract{
 		Contract: marketplaceAddress,
-		Sender:   accs[1].Address.String(),
+		Sender:   creator.Address.String(),
 		Msg:      []byte(executeMsgRaw),
 	})
 	require.NoError(t, err)
