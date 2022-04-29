@@ -42,14 +42,15 @@ pub fn contract_claim() -> Box<dyn Contract<StargazeMsgWrapper>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::msg::{ExecuteMsg, InstantiateMsg};
+    use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
     use cosmwasm_std::{coin, coins, Addr, Coin, Decimal, Empty};
     use cw721::{Cw721QueryMsg, OwnerOfResponse};
+    use cw_controllers::AdminResponse;
     use cw_multi_test::Executor;
     use sg721::msg::{InstantiateMsg as Sg721InstantiateMsg, RoyaltyInfoResponse};
     use sg721::state::CollectionInfo;
     use sg_controllers::HooksResponse;
-    use sg_marketplace::msg::{ExecuteMsg as MktExecuteMsg, QueryMsg, SudoMsg};
+    use sg_marketplace::msg::{ExecuteMsg as MktExecuteMsg, QueryMsg as MktQueryMsg, SudoMsg};
     use sg_multi_test::StargazeApp;
     use sg_std::NATIVE_DENOM;
 
@@ -206,7 +207,7 @@ mod tests {
         assert!(res.is_ok());
 
         // query to check if hook was added
-        let query_hooks_msg = QueryMsg::SaleFinalizedHooks {};
+        let query_hooks_msg = MktQueryMsg::SaleFinalizedHooks {};
         let res: HooksResponse = router
             .wrap()
             .query_wasm_smart(marketplace_addr.clone(), &query_hooks_msg)
@@ -278,7 +279,14 @@ mod tests {
         let msg = ExecuteMsg::UpdateAdmin {
             admin: Some("new_admin".to_string()),
         };
-        let res = router.execute_contract(creator.clone(), claims_addr, &msg, &[]);
+        let res = router.execute_contract(creator.clone(), claims_addr.clone(), &msg, &[]);
         assert!(res.is_ok());
+
+        let query_msg = QueryMsg::Admin {};
+        let res: AdminResponse = router
+            .wrap()
+            .query_wasm_smart(claims_addr, &query_msg)
+            .unwrap();
+        assert_eq!(res.admin, Some("new_admin".to_string()));
     }
 }
