@@ -1,3 +1,4 @@
+use cw_controllers::Admin;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -9,5 +10,6 @@ pub struct Config {
     pub marketplace: MarketplaceContract,
 }
 
-// unique items
 pub const CONFIG: Item<Config> = Item::new("config");
+
+pub const ADMIN: Admin = Admin::new("admin");
