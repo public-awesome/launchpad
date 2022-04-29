@@ -69,7 +69,41 @@ pub fn execute(
         ExecuteMsg::UpdateAdmin { admin } => {
             Ok(ADMIN.execute_update_admin(deps, info, maybe_addr(api, admin)?)?)
         }
+        ExecuteMsg::UpdateMarketplace { marketplace_addr } => {
+            execute_update_marketplace(deps, info, marketplace_addr)
+        }
     }
+}
+
+pub fn execute_update_marketplace(
+    deps: DepsMut,
+    info: MessageInfo,
+    marketplace_addr: Option<String>,
+) -> Result<Response, ContractError> {
+    ADMIN.assert_admin(deps.as_ref(), &info.sender)?;
+
+    match marketplace_addr {
+        Some(marketplace_addr) => {
+            let marketplace =
+                MarketplaceContract(deps.api.addr_validate(&marketplace_addr).map_err(|_| {
+                    ContractError::InvalidMarketplace {
+                        addr: marketplace_addr.clone(),
+                    }
+                })?);
+            let cfg = Config {
+                marketplace: Some(marketplace),
+            };
+            CONFIG.save(deps.storage, &cfg)?;
+        }
+        None => {
+            let cfg = Config { marketplace: None };
+            CONFIG.save(deps.storage, &cfg)?;
+        }
+    }
+
+    Ok(Response::new()
+        .add_attribute("action", "update_marketplace")
+        .add_attribute("sender", info.sender.to_string()))
 }
 
 pub fn execute_claim_mint_nft(

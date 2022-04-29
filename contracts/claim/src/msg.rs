@@ -20,4 +20,7 @@ pub enum ExecuteMsg {
     UpdateAdmin {
         admin: Option<String>,
     },
+    UpdateMarketplace {
+        marketplace_addr: Option<String>,
+    },
 }
