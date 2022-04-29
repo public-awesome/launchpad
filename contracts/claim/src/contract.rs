@@ -53,6 +53,8 @@ pub fn execute(
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
+    let api = deps.api;
+
     match msg {
         ExecuteMsg::ClaimMintNFT { minter_address } => {
             execute_claim_mint_nft(deps, info.sender, minter_address)
@@ -64,6 +66,9 @@ pub fn execute(
             seller,
             buyer,
         }) => execute_claim_buy_nft(deps, info, collection, token_id, price, seller, buyer),
+        ExecuteMsg::UpdateAdmin { admin } => {
+            Ok(ADMIN.execute_update_admin(deps, info, maybe_addr(api, admin)?)?)
+        }
     }
 }
 

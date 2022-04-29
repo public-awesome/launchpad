@@ -16,4 +16,8 @@ pub enum ExecuteMsg {
         minter_address: String,
     },
     SaleFinalizedHook(SaleFinalizedHookMsg),
+    /// Change the admin
+    UpdateAdmin {
+        admin: Option<String>,
+    },
 }
