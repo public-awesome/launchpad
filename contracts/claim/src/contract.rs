@@ -4,14 +4,14 @@ use cosmwasm_std::entry_point;
 use cosmwasm_std::{to_binary, Addr, Binary, Coin, Deps, DepsMut, Env, MessageInfo, StdResult};
 use cw2::set_contract_version;
 use cw_utils::maybe_addr;
-use minter::msg::{MintCountResponse, QueryMsg};
+use minter::msg::{MintCountResponse, QueryMsg as MinterQueryMsg};
 use sg_marketplace::msg::SaleFinalizedHookMsg;
 use sg_marketplace::MarketplaceContract;
 use sg_std::{create_claim_for_msg, ClaimAction, StargazeMsgWrapper};
 
 use crate::error::ContractError;
-use crate::msg::{ExecuteMsg, InstantiateMsg};
-use crate::state::{Config, ADMIN, CONFIG};
+use crate::msg::{ExecuteMsg, InstantiateMsg, MarketplaceResponse, QueryMsg};
+use crate::state::{ADMIN, MARKETPLACE};
 pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 
 // version info for migration info
@@ -35,10 +35,7 @@ pub fn instantiate(
                     addr: marketplace_addr.clone(),
                 }
             })?);
-        let cfg = Config {
-            marketplace: Some(marketplace),
-        };
-        CONFIG.save(deps.storage, &cfg)?;
+        MARKETPLACE.save(deps.storage, &marketplace)?;
     }
 
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
@@ -91,14 +88,10 @@ pub fn execute_update_marketplace(
                         addr: marketplace_addr.clone(),
                     }
                 })?);
-            let cfg = Config {
-                marketplace: Some(marketplace),
-            };
-            CONFIG.save(deps.storage, &cfg)?;
+            MARKETPLACE.save(deps.storage, &marketplace)?;
         }
         None => {
-            let cfg = Config { marketplace: None };
-            CONFIG.save(deps.storage, &cfg)?;
+            MARKETPLACE.remove(deps.storage);
         }
     }
 
@@ -115,7 +108,7 @@ pub fn execute_claim_mint_nft(
     let minter_addr = deps.api.addr_validate(&minter)?;
     let count_response: MintCountResponse = deps.querier.query_wasm_smart(
         minter_addr,
-        &QueryMsg::MintCount {
+        &MinterQueryMsg::MintCount {
             address: sender.to_string(),
         },
     )?;
@@ -140,8 +133,8 @@ pub fn execute_claim_buy_nft(
     seller: String,
     buyer: String,
 ) -> Result<Response, ContractError> {
-    let cfg = CONFIG.load(deps.storage)?;
-    let marketplace = cfg.marketplace.ok_or(ContractError::MarketplaceNotSet {})?;
+    let marketplace = MARKETPLACE.load(deps.storage)?;
+
     if info.sender != marketplace.addr() {
         return Err(ContractError::Unauthorized {});
     }
@@ -160,8 +153,18 @@ pub fn execute_claim_buy_nft(
     Ok(res)
 }
 
-/// Needed for multitest
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(_deps: Deps, _env: Env, _msg: QueryMsg) -> StdResult<Binary> {
-    Ok((to_binary(&"queries not implemented".to_string())).unwrap())
+pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
+    match msg {
+        QueryMsg::Admin {} => to_binary(&ADMIN.query_admin(deps)?),
+        QueryMsg::Marketplace {} => to_binary(&query_marketplace(deps)?),
+    }
+}
+
+fn query_marketplace(deps: Deps) -> StdResult<MarketplaceResponse> {
+    let marketplace = MARKETPLACE.may_load(deps.storage)?;
+
+    Ok(MarketplaceResponse {
+        marketplace: marketplace.map(|marketplace| marketplace.addr()),
+    })
 }

@@ -1,3 +1,4 @@
+use cosmwasm_std::Addr;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use sg_marketplace::msg::SaleFinalizedHookMsg;
@@ -24,4 +25,18 @@ pub enum ExecuteMsg {
     UpdateMarketplace {
         marketplace_addr: Option<String>,
     },
+}
+
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
+#[serde(rename_all = "snake_case")]
+pub enum QueryMsg {
+    /// Return MarketplaceResponse
+    Marketplace {},
+    /// Return AdminResponse
+    Admin {},
+}
+
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
+pub struct MarketplaceResponse {
+    pub marketplace: Option<Addr>,
 }
