@@ -75,6 +75,7 @@ pub fn execute(
     }
 }
 
+/// Only the admin can update the marketplace address
 pub fn execute_update_marketplace(
     deps: DepsMut,
     info: MessageInfo,
