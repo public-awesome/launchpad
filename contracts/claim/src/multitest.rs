@@ -42,14 +42,14 @@ pub fn contract_claim() -> Box<dyn Contract<StargazeMsgWrapper>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::msg::InstantiateMsg;
+    use crate::msg::{ExecuteMsg, InstantiateMsg};
     use cosmwasm_std::{coin, coins, Addr, Coin, Decimal, Empty};
     use cw721::{Cw721QueryMsg, OwnerOfResponse};
     use cw_multi_test::Executor;
     use sg721::msg::{InstantiateMsg as Sg721InstantiateMsg, RoyaltyInfoResponse};
     use sg721::state::CollectionInfo;
     use sg_controllers::HooksResponse;
-    use sg_marketplace::msg::{ExecuteMsg, QueryMsg, SudoMsg};
+    use sg_marketplace::msg::{ExecuteMsg as MktExecuteMsg, QueryMsg, SudoMsg};
     use sg_multi_test::StargazeApp;
     use sg_std::NATIVE_DENOM;
 
@@ -117,7 +117,7 @@ mod tests {
         let claim_id = router.store_code(contract_claim());
         let msg = InstantiateMsg {
             marketplace_addr: Some(marketplace_addr.to_string()),
-            admin: None,
+            admin: Some(creator.to_string()),
         };
         let claims = router
             .instantiate_contract(claim_id, creator.clone(), &msg, &[], "claims", None)
@@ -227,7 +227,7 @@ mod tests {
         assert!(res.is_ok());
 
         // An asking price is made by the creator
-        let set_ask = ExecuteMsg::SetAsk {
+        let set_ask = MktExecuteMsg::SetAsk {
             collection: collection_addr.to_string(),
             token_id: TOKEN_ID,
             price: coin(100, NATIVE_DENOM),
@@ -238,7 +238,7 @@ mod tests {
         assert!(res.is_ok());
 
         // Bidder makes bid
-        let set_bid_msg = ExecuteMsg::SetBid {
+        let set_bid_msg = MktExecuteMsg::SetBid {
             collection: collection_addr.to_string(),
             token_id: TOKEN_ID,
             expires: router.block_info().time.plus_seconds(MIN_EXPIRY + 1),
@@ -265,5 +265,20 @@ mod tests {
             .query_wasm_smart(collection_addr, &query_owner_msg)
             .unwrap();
         assert_eq!(res.owner, bidder.to_string());
+    }
+
+    #[test]
+    fn check_update_admin() {
+        let mut router = custom_mock_app();
+        // Setup intial accounts
+        let (_owner, _, creator) = setup_accounts(&mut router).unwrap();
+        // Instantiate and configure contracts
+        let (_, _, claims_addr) = setup_contracts(&mut router, &creator).unwrap();
+
+        let msg = ExecuteMsg::UpdateAdmin {
+            admin: Some("new_admin".to_string()),
+        };
+        let res = router.execute_contract(creator.clone(), claims_addr, &msg, &[]);
+        assert!(res.is_ok());
     }
 }
