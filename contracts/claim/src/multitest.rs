@@ -1,5 +1,6 @@
 #![cfg(test)]
 use crate::error::ContractError;
+use crate::msg::MarketplaceResponse;
 use cw721_base::msg::{ExecuteMsg as Cw721ExecuteMsg, MintMsg};
 use cw_multi_test::{BankSudo, Contract, ContractWrapper, SudoMsg as CwSudoMsg};
 use sg_multi_test::StargazeApp;
@@ -269,7 +270,7 @@ mod tests {
     }
 
     #[test]
-    fn check_update_admin() {
+    fn check_update_admin_and_queries() {
         let mut router = custom_mock_app();
         // Setup intial accounts
         let (_owner, _, creator) = setup_accounts(&mut router).unwrap();
@@ -285,8 +286,15 @@ mod tests {
         let query_msg = QueryMsg::Admin {};
         let res: AdminResponse = router
             .wrap()
-            .query_wasm_smart(claims_addr, &query_msg)
+            .query_wasm_smart(claims_addr.clone(), &query_msg)
             .unwrap();
         assert_eq!(res.admin, Some("new_admin".to_string()));
+
+        let query_msg = QueryMsg::Marketplace {};
+        let res: MarketplaceResponse = router
+            .wrap()
+            .query_wasm_smart(claims_addr, &query_msg)
+            .unwrap();
+        assert_eq!(res.marketplace, Some(Addr::unchecked("contract0")));
     }
 }
