@@ -116,7 +116,8 @@ mod tests {
         // setup claim contract
         let claim_id = router.store_code(contract_claim());
         let msg = InstantiateMsg {
-            marketplace_addr: marketplace_addr.to_string(),
+            marketplace_addr: Some(marketplace_addr.to_string()),
+            admin: None,
         };
         let claims = router
             .instantiate_contract(claim_id, creator.clone(), &msg, &[], "claims", None)

@@ -12,6 +12,9 @@ pub enum ContractError {
     #[error("Unauthorized")]
     Unauthorized {},
 
+    #[error("Marketplace not set")]
+    MarketplaceNotSet {},
+
     #[error("Marketplace contract invalid address '{addr}'")]
     InvalidMarketplace { addr: String },
 }

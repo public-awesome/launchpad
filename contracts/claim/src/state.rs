@@ -7,7 +7,7 @@ use sg_marketplace::MarketplaceContract;
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 pub struct Config {
-    pub marketplace: MarketplaceContract,
+    pub marketplace: Option<MarketplaceContract>,
 }
 
 pub const CONFIG: Item<Config> = Item::new("config");

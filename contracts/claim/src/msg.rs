@@ -4,7 +4,8 @@ use sg_marketplace::msg::SaleFinalizedHookMsg;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {
-    pub marketplace_addr: String,
+    pub marketplace_addr: Option<String>,
+    pub admin: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

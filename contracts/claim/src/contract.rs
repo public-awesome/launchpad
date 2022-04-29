@@ -3,6 +3,7 @@ use cosmwasm_std::entry_point;
 
 use cosmwasm_std::{to_binary, Addr, Binary, Coin, Deps, DepsMut, Env, MessageInfo, StdResult};
 use cw2::set_contract_version;
+use cw_utils::maybe_addr;
 use minter::msg::{MintCountResponse, QueryMsg};
 use sg_marketplace::msg::SaleFinalizedHookMsg;
 use sg_marketplace::MarketplaceContract;
@@ -10,7 +11,7 @@ use sg_std::{create_claim_for_msg, ClaimAction, StargazeMsgWrapper};
 
 use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, InstantiateMsg};
-use crate::state::{Config, CONFIG};
+use crate::state::{Config, ADMIN, CONFIG};
 pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 
 // version info for migration info
@@ -19,20 +20,26 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
-    deps: DepsMut,
+    mut deps: DepsMut,
     _env: Env,
     _info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
-    let marketplace =
-        MarketplaceContract(deps.api.addr_validate(&msg.marketplace_addr).map_err(|_| {
-            ContractError::InvalidMarketplace {
-                addr: msg.marketplace_addr.clone(),
-            }
-        })?);
+    let api = deps.api;
+    ADMIN.set(deps.branch(), maybe_addr(api, msg.admin)?)?;
 
-    let cfg = Config { marketplace };
-    CONFIG.save(deps.storage, &cfg)?;
+    if let Some(marketplace_addr) = msg.marketplace_addr {
+        let marketplace =
+            MarketplaceContract(deps.api.addr_validate(&marketplace_addr).map_err(|_| {
+                ContractError::InvalidMarketplace {
+                    addr: marketplace_addr.clone(),
+                }
+            })?);
+        let cfg = Config {
+            marketplace: Some(marketplace),
+        };
+        CONFIG.save(deps.storage, &cfg)?;
+    }
 
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
@@ -94,7 +101,8 @@ pub fn execute_claim_buy_nft(
     buyer: String,
 ) -> Result<Response, ContractError> {
     let cfg = CONFIG.load(deps.storage)?;
-    if info.sender != cfg.marketplace.addr() {
+    let marketplace = cfg.marketplace.ok_or(ContractError::MarketplaceNotSet {})?;
+    if info.sender != marketplace.addr() {
         return Err(ContractError::Unauthorized {});
     }
 
