@@ -4,7 +4,8 @@ use sg_marketplace::msg::SaleFinalizedHookMsg;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {
-    pub marketplace_addr: String,
+    pub marketplace_addr: Option<String>,
+    pub admin: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -15,4 +16,12 @@ pub enum ExecuteMsg {
         minter_address: String,
     },
     SaleFinalizedHook(SaleFinalizedHookMsg),
+    /// Change or clear the admin
+    UpdateAdmin {
+        admin: Option<String>,
+    },
+    /// Only the admin can update the marketplace address
+    UpdateMarketplace {
+        marketplace_addr: Option<String>,
+    },
 }

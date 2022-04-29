@@ -42,6 +42,7 @@ cw-storage-plus = "0.13.2"
 sg-marketplace = { git = "https://github.com/public-awesome/marketplace", version = "0.7.0", features = [
   "library",
 ] }
+cw-controllers = "0.13.2"
 
 [dev-dependencies]
 cosmwasm-schema = { version = "1.0.0-beta8" }

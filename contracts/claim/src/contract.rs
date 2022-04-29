@@ -3,6 +3,7 @@ use cosmwasm_std::entry_point;
 
 use cosmwasm_std::{to_binary, Addr, Binary, Coin, Deps, DepsMut, Env, MessageInfo, StdResult};
 use cw2::set_contract_version;
+use cw_utils::maybe_addr;
 use minter::msg::{MintCountResponse, QueryMsg};
 use sg_marketplace::msg::SaleFinalizedHookMsg;
 use sg_marketplace::MarketplaceContract;
@@ -10,7 +11,7 @@ use sg_std::{create_claim_for_msg, ClaimAction, StargazeMsgWrapper};
 
 use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, InstantiateMsg};
-use crate::state::{Config, CONFIG};
+use crate::state::{Config, ADMIN, CONFIG};
 pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 
 // version info for migration info
@@ -19,20 +20,26 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
-    deps: DepsMut,
+    mut deps: DepsMut,
     _env: Env,
     _info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
-    let marketplace =
-        MarketplaceContract(deps.api.addr_validate(&msg.marketplace_addr).map_err(|_| {
-            ContractError::InvalidMarketplace {
-                addr: msg.marketplace_addr.clone(),
-            }
-        })?);
+    let api = deps.api;
+    ADMIN.set(deps.branch(), maybe_addr(api, msg.admin)?)?;
 
-    let cfg = Config { marketplace };
-    CONFIG.save(deps.storage, &cfg)?;
+    if let Some(marketplace_addr) = msg.marketplace_addr {
+        let marketplace =
+            MarketplaceContract(deps.api.addr_validate(&marketplace_addr).map_err(|_| {
+                ContractError::InvalidMarketplace {
+                    addr: marketplace_addr.clone(),
+                }
+            })?);
+        let cfg = Config {
+            marketplace: Some(marketplace),
+        };
+        CONFIG.save(deps.storage, &cfg)?;
+    }
 
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
@@ -46,6 +53,8 @@ pub fn execute(
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
+    let api = deps.api;
+
     match msg {
         ExecuteMsg::ClaimMintNFT { minter_address } => {
             execute_claim_mint_nft(deps, info.sender, minter_address)
@@ -57,7 +66,45 @@ pub fn execute(
             seller,
             buyer,
         }) => execute_claim_buy_nft(deps, info, collection, token_id, price, seller, buyer),
+        ExecuteMsg::UpdateAdmin { admin } => {
+            Ok(ADMIN.execute_update_admin(deps, info, maybe_addr(api, admin)?)?)
+        }
+        ExecuteMsg::UpdateMarketplace { marketplace_addr } => {
+            execute_update_marketplace(deps, info, marketplace_addr)
+        }
     }
+}
+
+/// Only the admin can update the marketplace address
+pub fn execute_update_marketplace(
+    deps: DepsMut,
+    info: MessageInfo,
+    marketplace_addr: Option<String>,
+) -> Result<Response, ContractError> {
+    ADMIN.assert_admin(deps.as_ref(), &info.sender)?;
+
+    match marketplace_addr {
+        Some(marketplace_addr) => {
+            let marketplace =
+                MarketplaceContract(deps.api.addr_validate(&marketplace_addr).map_err(|_| {
+                    ContractError::InvalidMarketplace {
+                        addr: marketplace_addr.clone(),
+                    }
+                })?);
+            let cfg = Config {
+                marketplace: Some(marketplace),
+            };
+            CONFIG.save(deps.storage, &cfg)?;
+        }
+        None => {
+            let cfg = Config { marketplace: None };
+            CONFIG.save(deps.storage, &cfg)?;
+        }
+    }
+
+    Ok(Response::new()
+        .add_attribute("action", "update_marketplace")
+        .add_attribute("sender", info.sender.to_string()))
 }
 
 pub fn execute_claim_mint_nft(
@@ -94,7 +141,8 @@ pub fn execute_claim_buy_nft(
     buyer: String,
 ) -> Result<Response, ContractError> {
     let cfg = CONFIG.load(deps.storage)?;
-    if info.sender != cfg.marketplace.addr() {
+    let marketplace = cfg.marketplace.ok_or(ContractError::MarketplaceNotSet {})?;
+    if info.sender != marketplace.addr() {
         return Err(ContractError::Unauthorized {});
     }
 

@@ -1,3 +1,4 @@
+use cw_controllers::Admin;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -6,8 +7,9 @@ use sg_marketplace::MarketplaceContract;
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 pub struct Config {
-    pub marketplace: MarketplaceContract,
+    pub marketplace: Option<MarketplaceContract>,
 }
 
-// unique items
 pub const CONFIG: Item<Config> = Item::new("config");
+
+pub const ADMIN: Admin = Admin::new("admin");
