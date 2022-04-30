@@ -20,6 +20,15 @@ import (
 )
 
 var (
+	instantiateMarketplaceTemplate = `
+	{
+		"trading_fee_basis_points": %d,
+		"ask_expiry": [%d, %d],
+		"bid_expiry": [%d, %d],
+		"operators": ["%s"]
+	}
+	`
+
 	instantiateSG721Template = `
 		{
 			"name": "%s",
@@ -201,23 +210,22 @@ func TestMarketplace(t *testing.T) {
 	require.NotNil(t, res)
 	require.Equal(t, res.CodeID, uint64(2))
 
-	instantiateMsgRaw = []byte(
-		fmt.Sprintf(instantiateMarketplaceTemplate,
-			2,
-			86400,
-			15552000,
-			86400,
-			15552000,
-			creator.Address.String(),
-		),
+	instantiateMsgRawString := fmt.Sprintf(instantiateMarketplaceTemplate,
+		200,
+		86400,
+		15552000,
+		86400,
+		15552000,
+		creator.Address.String(),
 	)
+	fmt.Println(instantiateMsgRawString)
 	// instantiate marketplace
 	instantiateRes, err = msgServer.InstantiateContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgInstantiateContract{
 		Sender: addr1.String(),
 		Admin:  addr1.String(),
 		CodeID: 2,
 		Label:  "Marketplace",
-		Msg:    instantiateMsgRaw,
+		Msg:    []byte(instantiateMsgRawString),
 	})
 	require.NoError(t, err)
 	require.NotNil(t, instantiateRes)
