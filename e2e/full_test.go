@@ -65,15 +65,6 @@ var (
 			}
 		  }	  
 		`
-
-	instantiateMarketplaceTemplate = `
-		{
-			"trading_fee_percent": %d,
-			"ask_expiry": [%d, %d],
-			"bid_expiry": [%d, %d],
-			"operators": ["%s"]
-		}
-		`
 )
 
 type Account struct {
