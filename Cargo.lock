@@ -591,7 +591,7 @@ dependencies = [
  "serde",
  "sg-multi-test 0.12.0",
  "sg-std 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sg1 0.12.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg1 0.12.1",
  "sg721 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "thiserror",
  "url",
@@ -846,7 +846,7 @@ dependencies = [
  "serde",
  "sg-controllers 0.12.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg-std 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sg1 0.12.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg1 0.12.1",
  "sg721 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "thiserror",
 ]
@@ -917,6 +917,8 @@ dependencies = [
 [[package]]
 name = "sg1"
 version = "0.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4b9b26273bdcfd32e1f8adfd99a4d168717fa5adc570c8b67b4081037791e212"
 dependencies = [
  "cosmwasm-std",
  "cw-utils",
@@ -927,9 +929,7 @@ dependencies = [
 
 [[package]]
 name = "sg1"
-version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4b9b26273bdcfd32e1f8adfd99a4d168717fa5adc570c8b67b4081037791e212"
+version = "0.13.0"
 dependencies = [
  "cosmwasm-std",
  "cw-utils",
@@ -953,7 +953,7 @@ dependencies = [
  "schemars",
  "serde",
  "sg-std 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sg1 0.12.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg1 0.12.1",
  "thiserror",
  "url",
 ]
@@ -974,7 +974,7 @@ dependencies = [
  "schemars",
  "serde",
  "sg-std 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sg1 0.12.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg1 0.12.1",
  "thiserror",
  "url",
 ]
@@ -1153,7 +1153,7 @@ dependencies = [
  "schemars",
  "serde",
  "sg-std 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sg1 0.12.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg1 0.12.1",
  "thiserror",
 ]
 
