@@ -1,4 +1,4 @@
-use cosmwasm_std::{coins, Addr, BankMsg, Decimal, MessageInfo, Uint128};
+use cosmwasm_std::{coins, Addr, BankMsg, Decimal, Event, MessageInfo, Uint128};
 use cw_utils::{must_pay, PaymentError};
 use sg_std::{create_fund_community_pool_msg, Response, SubMsg, NATIVE_DENOM};
 use thiserror::Error;
@@ -6,6 +6,13 @@ use thiserror::Error;
 // governance parameters
 const FEE_BURN_PERCENT: u64 = 50;
 const DEV_INCENTIVE_PERCENT: u64 = 10;
+
+pub struct FairBurnEvent {
+    pub burn_amount: Uint128,
+    pub dev: Option<Addr>,
+    pub dev_amount: Option<Uint128>,
+    pub dist_amount: Uint128,
+}
 
 /// Burn and distribute fees and return an error if the fee is not enough
 pub fn checked_fair_burn(
