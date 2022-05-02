@@ -1,5 +1,7 @@
-use cosmwasm_std::{coins, Addr, BankMsg, Decimal, Event, MessageInfo, Uint128};
+use cosmwasm_std::{attr, coins, Addr, BankMsg, Decimal, MessageInfo, Uint128};
 use cw_utils::{must_pay, PaymentError};
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 use sg_std::{create_fund_community_pool_msg, Response, SubMsg, NATIVE_DENOM};
 use thiserror::Error;
 
@@ -7,11 +9,38 @@ use thiserror::Error;
 const FEE_BURN_PERCENT: u64 = 50;
 const DEV_INCENTIVE_PERCENT: u64 = 10;
 
-pub struct FairBurnEvent {
+/// This defines a set of attributes which should be added to `Response`.
+pub trait Event {
+    /// Append attributes to response
+    fn add_attributes(&self, response: &mut Response);
+}
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, Default)]
+// #[non_exhaustive]
+pub struct FairBurnEvent<'a> {
     pub burn_amount: Uint128,
-    pub dev: Option<Addr>,
+    pub dev: Option<&'a str>,
     pub dev_amount: Option<Uint128>,
     pub dist_amount: Uint128,
+}
+
+impl<'a> FairBurnEvent<'a> {
+    fn new() -> Self {
+        Default::default()
+    }
+}
+
+impl<'a> Event for FairBurnEvent<'a> {
+    fn add_attributes(&self, rsp: &mut Response) {
+        rsp.attributes.push(attr("action", "fair_burn"));
+        rsp.attributes.push(attr("burn_amount", self.burn_amount));
+        if let Some(dev) = self.dev {
+            rsp.attributes.push(attr("dev", dev.to_string()));
+        }
+        if let Some(dev_amount) = self.dev_amount {
+            rsp.attributes.push(attr("dev_amount", dev_amount));
+        }
+        rsp.attributes.push(attr("dist_amount", self.dist_amount));
+    }
 }
 
 /// Burn and distribute fees and return an error if the fee is not enough
@@ -33,6 +62,8 @@ pub fn checked_fair_burn(
 
 /// Burn and distribute fees, assuming the right fee is passed in
 pub fn fair_burn(fee: u128, developer: Option<Addr>, res: &mut Response) {
+    let mut event = FairBurnEvent::new();
+
     let (burn_percent, dev_fee) = match developer {
         Some(dev) => {
             let dev_fee = (Uint128::from(fee) * Decimal::percent(DEV_INCENTIVE_PERCENT)).u128();
@@ -40,6 +71,8 @@ pub fn fair_burn(fee: u128, developer: Option<Addr>, res: &mut Response) {
                 to_address: dev.to_string(),
                 amount: coins(dev_fee, NATIVE_DENOM),
             }));
+            event.dev = Some(dev);
+            event.dev_amount = Some(Uint128::from(dev_fee));
             (
                 Decimal::percent(FEE_BURN_PERCENT - DEV_INCENTIVE_PERCENT),
                 dev_fee,
@@ -55,11 +88,16 @@ pub fn fair_burn(fee: u128, developer: Option<Addr>, res: &mut Response) {
         .push(SubMsg::new(BankMsg::Burn { amount: burn_coin }));
 
     // Send other half to community pool
+    let dist_amount = fee - (burn_fee + dev_fee);
     res.messages
         .push(SubMsg::new(create_fund_community_pool_msg(coins(
-            fee - (burn_fee + dev_fee),
+            dist_amount,
             NATIVE_DENOM,
         ))));
+
+    event.burn_amount = Uint128::from(burn_fee);
+    event.dist_amount = Uint128::from(dist_amount);
+    event.add_attributes(res);
 }
 
 #[derive(Error, Debug, PartialEq)]
