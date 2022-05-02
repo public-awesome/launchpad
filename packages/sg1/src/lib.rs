@@ -1,40 +1,38 @@
-use cosmwasm_std::{coins, Addr, BankMsg, CosmosMsg, Decimal, MessageInfo, Uint128};
+use cosmwasm_std::{coins, Addr, BankMsg, Decimal, MessageInfo, Uint128};
 use cw_utils::{must_pay, PaymentError};
-use sg_std::{create_fund_community_pool_msg, StargazeMsgWrapper, NATIVE_DENOM};
+use sg_std::{create_fund_community_pool_msg, Response, SubMsg, NATIVE_DENOM};
 use thiserror::Error;
 
 // governance parameters
 const FEE_BURN_PERCENT: u64 = 50;
 const DEV_INCENTIVE_PERCENT: u64 = 10;
 
-type SubMsg = CosmosMsg<StargazeMsgWrapper>;
-
 /// Burn and distribute fees and return an error if the fee is not enough
 pub fn checked_fair_burn(
     info: &MessageInfo,
     fee: u128,
     developer: Option<Addr>,
-) -> Result<Vec<SubMsg>, FeeError> {
+    res: &mut Response,
+) -> Result<(), FeeError> {
     let payment = must_pay(info, NATIVE_DENOM)?;
     if payment.u128() < fee {
         return Err(FeeError::InsufficientFee(fee, payment.u128()));
     };
 
-    Ok(fair_burn(fee, developer))
+    fair_burn(fee, developer, res);
+
+    Ok(())
 }
 
 /// Burn and distribute fees, assuming the right fee is passed in
-pub fn fair_burn(fee: u128, developer: Option<Addr>) -> Vec<SubMsg> {
-    let mut msgs: Vec<SubMsg> = vec![];
-
+pub fn fair_burn(fee: u128, developer: Option<Addr>, res: &mut Response) {
     let (burn_percent, dev_fee) = match developer {
         Some(dev) => {
             let dev_fee = (Uint128::from(fee) * Decimal::percent(DEV_INCENTIVE_PERCENT)).u128();
-            let msg = BankMsg::Send {
+            res.messages.push(SubMsg::new(BankMsg::Send {
                 to_address: dev.to_string(),
                 amount: coins(dev_fee, NATIVE_DENOM),
-            };
-            msgs.push(SubMsg::Bank(msg));
+            }));
             (
                 Decimal::percent(FEE_BURN_PERCENT - DEV_INCENTIVE_PERCENT),
                 dev_fee,
@@ -46,15 +44,15 @@ pub fn fair_burn(fee: u128, developer: Option<Addr>) -> Vec<SubMsg> {
     // burn half the fee
     let burn_fee = (Uint128::from(fee) * burn_percent).u128();
     let burn_coin = coins(burn_fee, NATIVE_DENOM);
-    msgs.push(SubMsg::Bank(BankMsg::Burn { amount: burn_coin }));
+    res.messages
+        .push(SubMsg::new(BankMsg::Burn { amount: burn_coin }));
 
     // Send other half to community pool
-    msgs.push(create_fund_community_pool_msg(coins(
-        fee - (burn_fee + dev_fee),
-        NATIVE_DENOM,
-    )));
-
-    msgs
+    res.messages
+        .push(SubMsg::new(create_fund_community_pool_msg(coins(
+            fee - (burn_fee + dev_fee),
+            NATIVE_DENOM,
+        ))));
 }
 
 #[derive(Error, Debug, PartialEq)]
