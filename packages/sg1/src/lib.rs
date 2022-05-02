@@ -1,47 +1,11 @@
-use cosmwasm_std::{attr, coins, Addr, BankMsg, Decimal, MessageInfo, Uint128};
+use cosmwasm_std::{coins, Addr, BankMsg, Decimal, Event, MessageInfo, Uint128};
 use cw_utils::{must_pay, PaymentError};
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 use sg_std::{create_fund_community_pool_msg, Response, SubMsg, NATIVE_DENOM};
 use thiserror::Error;
 
 // governance parameters
 const FEE_BURN_PERCENT: u64 = 50;
 const DEV_INCENTIVE_PERCENT: u64 = 10;
-
-/// This defines a set of attributes which should be added to `Response`.
-pub trait Event {
-    /// Append attributes to response
-    fn add_attributes(&self, response: &mut Response);
-}
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, Default)]
-// #[non_exhaustive]
-pub struct FairBurnEvent<'a> {
-    pub burn_amount: Uint128,
-    pub dev: Option<&'a str>,
-    pub dev_amount: Option<Uint128>,
-    pub dist_amount: Uint128,
-}
-
-impl<'a> FairBurnEvent<'a> {
-    fn new() -> Self {
-        Default::default()
-    }
-}
-
-impl<'a> Event for FairBurnEvent<'a> {
-    fn add_attributes(&self, rsp: &mut Response) {
-        rsp.attributes.push(attr("action", "fair_burn"));
-        rsp.attributes.push(attr("burn_amount", self.burn_amount));
-        if let Some(dev) = self.dev {
-            rsp.attributes.push(attr("dev", dev.to_string()));
-        }
-        if let Some(dev_amount) = self.dev_amount {
-            rsp.attributes.push(attr("dev_amount", dev_amount));
-        }
-        rsp.attributes.push(attr("dist_amount", self.dist_amount));
-    }
-}
 
 /// Burn and distribute fees and return an error if the fee is not enough
 pub fn checked_fair_burn(
@@ -62,7 +26,7 @@ pub fn checked_fair_burn(
 
 /// Burn and distribute fees, assuming the right fee is passed in
 pub fn fair_burn(fee: u128, developer: Option<Addr>, res: &mut Response) {
-    let mut event = FairBurnEvent::new();
+    let mut event = Event::new("fair_burn");
 
     let (burn_percent, dev_fee) = match developer {
         Some(dev) => {
@@ -71,8 +35,8 @@ pub fn fair_burn(fee: u128, developer: Option<Addr>, res: &mut Response) {
                 to_address: dev.to_string(),
                 amount: coins(dev_fee, NATIVE_DENOM),
             }));
-            event.dev = Some(dev);
-            event.dev_amount = Some(Uint128::from(dev_fee));
+            event = event.add_attribute("dev", dev.to_string());
+            event = event.add_attribute("dev_amount", Uint128::from(dev_fee).to_string());
             (
                 Decimal::percent(FEE_BURN_PERCENT - DEV_INCENTIVE_PERCENT),
                 dev_fee,
@@ -95,9 +59,9 @@ pub fn fair_burn(fee: u128, developer: Option<Addr>, res: &mut Response) {
             NATIVE_DENOM,
         ))));
 
-    event.burn_amount = Uint128::from(burn_fee);
-    event.dist_amount = Uint128::from(dist_amount);
-    event.add_attributes(res);
+    event = event.add_attribute("burn_amount", Uint128::from(burn_fee).to_string());
+    event = event.add_attribute("dist_amount", Uint128::from(dist_amount).to_string());
+    res.events.push(event);
 }
 
 #[derive(Error, Debug, PartialEq)]
@@ -112,31 +76,36 @@ pub enum FeeError {
 #[cfg(test)]
 mod tests {
     use cosmwasm_std::{coins, Addr, BankMsg};
+    use sg_std::Response;
 
     use crate::{fair_burn, SubMsg};
 
     #[test]
     fn check_fair_burn_no_dev_rewards() {
-        let msgs = fair_burn(1000u128, None);
-        let burn_msg = SubMsg::Bank(BankMsg::Burn {
+        let mut res = Response::new();
+
+        fair_burn(1000u128, None, &mut res);
+        let burn_msg = SubMsg::new(BankMsg::Burn {
             amount: coins(500, "ustars".to_string()),
         });
-        assert_eq!(msgs.len(), 2);
-        assert_eq!(msgs[0], burn_msg);
+        assert_eq!(res.messages.len(), 2);
+        assert_eq!(res.messages[0], burn_msg);
     }
 
     #[test]
     fn check_fair_burn_with_dev_rewards() {
-        let msgs = fair_burn(1000u128, Some(Addr::unchecked("geordi")));
-        let bank_msg = SubMsg::Bank(BankMsg::Send {
+        let mut res = Response::new();
+
+        fair_burn(1000u128, Some(Addr::unchecked("geordi")), &mut res);
+        let bank_msg = SubMsg::new(BankMsg::Send {
             to_address: "geordi".to_string(),
             amount: coins(100, "ustars".to_string()),
         });
-        let burn_msg = SubMsg::Bank(BankMsg::Burn {
+        let burn_msg = SubMsg::new(BankMsg::Burn {
             amount: coins(400, "ustars".to_string()),
         });
-        assert_eq!(msgs.len(), 3);
-        assert_eq!(msgs[0], bank_msg);
-        assert_eq!(msgs[1], burn_msg);
+        assert_eq!(res.messages.len(), 3);
+        assert_eq!(res.messages[0], bank_msg);
+        assert_eq!(res.messages[1], burn_msg);
     }
 }
