@@ -1,7 +1,7 @@
 use cosmwasm_std::Addr;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use sg_marketplace::msg::SaleFinalizedHookMsg;
+use sg_marketplace::msg::SaleHookMsg;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {
@@ -16,7 +16,7 @@ pub enum ExecuteMsg {
     ClaimMintNFT {
         minter_address: String,
     },
-    SaleFinalizedHook(SaleFinalizedHookMsg),
+    SaleHook(SaleHookMsg),
     /// Change or clear the admin
     UpdateAdmin {
         admin: Option<String>,

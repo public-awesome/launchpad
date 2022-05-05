@@ -201,14 +201,14 @@ mod tests {
             setup_contracts(&mut router, &creator).unwrap();
 
         // setup sale finalized hook
-        let add_hook_msg = SudoMsg::AddSaleFinalizedHook {
+        let add_hook_msg = SudoMsg::AddSaleHook {
             hook: claims_addr.to_string(),
         };
         let res = router.wasm_sudo(marketplace_addr.clone(), &add_hook_msg);
         assert!(res.is_ok());
 
         // query to check if hook was added
-        let query_hooks_msg = MktQueryMsg::SaleFinalizedHooks {};
+        let query_hooks_msg = MktQueryMsg::SaleHooks {};
         let res: HooksResponse = router
             .wrap()
             .query_wasm_smart(marketplace_addr.clone(), &query_hooks_msg)
