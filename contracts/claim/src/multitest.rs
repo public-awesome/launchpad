@@ -54,6 +54,7 @@ mod tests {
     use sg_controllers::HooksResponse;
     use sg_marketplace::msg::{ExecuteMsg as MktExecuteMsg, QueryMsg as MktQueryMsg, SudoMsg};
     use sg_marketplace::state::SaleType;
+    use sg_marketplace::ExpiryRange;
     use sg_multi_test::StargazeApp;
     use sg_std::NATIVE_DENOM;
 
