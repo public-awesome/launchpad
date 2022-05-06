@@ -44,14 +44,16 @@ pub fn contract_claim() -> Box<dyn Contract<StargazeMsgWrapper>> {
 mod tests {
     use super::*;
     use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
-    use cosmwasm_std::{coin, coins, Addr, Coin, Decimal, Empty};
+    use cosmwasm_std::{coin, coins, Addr, Coin, Decimal, Empty, Uint128};
     use cw721::{Cw721QueryMsg, OwnerOfResponse};
     use cw_controllers::AdminResponse;
     use cw_multi_test::Executor;
+    use cw_utils::Duration;
     use sg721::msg::{InstantiateMsg as Sg721InstantiateMsg, RoyaltyInfoResponse};
     use sg721::state::CollectionInfo;
     use sg_controllers::HooksResponse;
     use sg_marketplace::msg::{ExecuteMsg as MktExecuteMsg, QueryMsg as MktQueryMsg, SudoMsg};
+    use sg_marketplace::state::SaleType;
     use sg_multi_test::StargazeApp;
     use sg_std::NATIVE_DENOM;
 
@@ -59,9 +61,11 @@ mod tests {
     const CREATION_FEE: u128 = 1_000_000_000;
     const INITIAL_BALANCE: u128 = 2000;
     // Governance parameters
-    const TRADING_FEE_PERCENT: u32 = 2; // 2%
+    const TRADING_FEE_BPS: u64 = 200; // 2%
     const MIN_EXPIRY: u64 = 24 * 60 * 60; // 24 hours (in seconds)
     const MAX_EXPIRY: u64 = 180 * 24 * 60 * 60; // 6 months (in seconds)
+    const MAX_FINDERS_FEE_BPS: u64 = 1000; // 10%
+    const BID_REMOVAL_REWARD_BPS: u64 = 500; // 5%
 
     // Instantiates all needed contracts for testing
     fn setup_contracts(
@@ -72,9 +76,14 @@ mod tests {
         let marketplace_id = router.store_code(contract_marketplace());
         let msg = sg_marketplace::msg::InstantiateMsg {
             operators: vec!["operator".to_string()],
-            trading_fee_percent: TRADING_FEE_PERCENT,
-            ask_expiry: (MIN_EXPIRY, MAX_EXPIRY),
-            bid_expiry: (MIN_EXPIRY, MAX_EXPIRY),
+            trading_fee_bps: TRADING_FEE_BPS,
+            ask_expiry: ExpiryRange::new(MIN_EXPIRY, MAX_EXPIRY),
+            bid_expiry: ExpiryRange::new(MIN_EXPIRY, MAX_EXPIRY),
+            sale_hook: None,
+            max_finders_fee_bps: MAX_FINDERS_FEE_BPS,
+            min_price: Uint128::from(5u128),
+            stale_bid_duration: Duration::Time(100),
+            bid_removal_reward_bps: BID_REMOVAL_REWARD_BPS,
         };
         let marketplace_addr = router
             .instantiate_contract(
@@ -230,11 +239,14 @@ mod tests {
 
         // An asking price is made by the creator
         let set_ask = MktExecuteMsg::SetAsk {
+            sale_type: SaleType::FixedPrice,
             collection: collection_addr.to_string(),
             token_id: TOKEN_ID,
             price: coin(100, NATIVE_DENOM),
             funds_recipient: None,
+            reserve_for: None,
             expires: router.block_info().time.plus_seconds(MIN_EXPIRY + 1),
+            finders_fee_bps: Some(0),
         };
         let res = router.execute_contract(creator.clone(), marketplace_addr.clone(), &set_ask, &[]);
         assert!(res.is_ok());
@@ -243,7 +255,9 @@ mod tests {
         let set_bid_msg = MktExecuteMsg::SetBid {
             collection: collection_addr.to_string(),
             token_id: TOKEN_ID,
+            finders_fee_bps: None,
             expires: router.block_info().time.plus_seconds(MIN_EXPIRY + 1),
+            finder: None,
         };
         let res = router.execute_contract(
             bidder.clone(),
