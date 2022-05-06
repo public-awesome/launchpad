@@ -228,7 +228,6 @@ func TestMarketplace(t *testing.T) {
 		15552000,
 		500,
 	)
-	fmt.Println(instantiateMsgRawString)
 	// instantiate marketplace
 	instantiateRes, err = msgServer.InstantiateContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgInstantiateContract{
 		Sender: addr1.String(),
