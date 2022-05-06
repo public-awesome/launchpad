@@ -29,8 +29,8 @@ optimize = """docker run --rm -v "$(pwd)":/code \
 """
 
 [dependencies]
-cosmwasm-std = { version = "1.0.0-beta8" }
-cosmwasm-storage = { version = "1.0.0-beta8" }
+cosmwasm-std = { version = "1.0.0-rc.0" }
+cosmwasm-storage = { version = "1.0.0-rc.0" }
 cw2 = "0.13.2"
 cw-utils = "0.13.2"
 schemars = "0.8"
@@ -39,13 +39,13 @@ minter = { path = "../minter", features = ["library"] }
 sg-std = "0.12.0"
 thiserror = { version = "1.0" }
 cw-storage-plus = "0.13.2"
-sg-marketplace = { git = "https://github.com/public-awesome/marketplace", version = "0.7.0", features = [
+sg-marketplace = { git = "https://github.com/public-awesome/marketplace", version = "0.13.0", features = [
   "library",
 ] }
 cw-controllers = "0.13.2"
 
 [dev-dependencies]
-cosmwasm-schema = { version = "1.0.0-beta8" }
+cosmwasm-schema = { version = "1.0.0-rc.0" }
 cw-multi-test = "0.13.2"
 anyhow = "1"
 sg721 = { version = "0.12.0", features = ["library"] }

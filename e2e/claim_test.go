@@ -111,12 +111,16 @@ func TestClaim(t *testing.T) {
 
 	instantiateMsgRaw := []byte(
 		fmt.Sprintf(instantiateMarketplaceTemplate,
-			2,
+			200,
 			86400,
 			15552000,
 			86400,
 			15552000,
 			creator.Address.String(),
+			500,
+			5000000,
+			15552000,
+			500,
 		),
 	)
 

@@ -5,7 +5,7 @@ use cosmwasm_std::{to_binary, Addr, Binary, Coin, Deps, DepsMut, Env, MessageInf
 use cw2::set_contract_version;
 use cw_utils::maybe_addr;
 use minter::msg::{MintCountResponse, QueryMsg as MinterQueryMsg};
-use sg_marketplace::msg::SaleFinalizedHookMsg;
+use sg_marketplace::msg::SaleHookMsg;
 use sg_marketplace::MarketplaceContract;
 use sg_std::{create_claim_for_msg, ClaimAction, StargazeMsgWrapper};
 
@@ -56,7 +56,7 @@ pub fn execute(
         ExecuteMsg::ClaimMintNFT { minter_address } => {
             execute_claim_mint_nft(deps, info.sender, minter_address)
         }
-        ExecuteMsg::SaleFinalizedHook(SaleFinalizedHookMsg {
+        ExecuteMsg::SaleHook(SaleHookMsg {
             collection,
             token_id,
             price,
