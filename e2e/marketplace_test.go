@@ -22,10 +22,15 @@ import (
 var (
 	instantiateMarketplaceTemplate = `
 	{
-		"trading_fee_basis_points": %d,
-		"ask_expiry": [%d, %d],
-		"bid_expiry": [%d, %d],
-		"operators": ["%s"]
+		"trading_fee_bps": %d,
+		"ask_expiry": { "min": %d, "max": %d },
+		"bid_expiry": { "min": %d, "max": %d },
+		"operators": ["%s"],
+		"sale_hook": null,
+		"max_finders_fee_bps": %d,
+		"min_price": "%d",
+		"stale_bid_duration": { "time": %d },
+		"bid_removal_reward_bps": %d
 	}
 	`
 
@@ -44,6 +49,7 @@ var (
 	executeAskTemplate = `
 		{
 			"set_ask": {
+				"sale_type": "%s",
 				"collection": "%s",
 				"token_id": %d,
 				"price": {
@@ -81,9 +87,9 @@ var (
 			}
 		}
 		`
-	executeSaleFinalizedHookTemplate = `
+	executeSaleHookTemplate = `
 		{
-			"add_sale_finalized_hook": { 
+			"add_sale_hook": { 
 				"hook": "%s"
 			}
 		}
@@ -217,6 +223,10 @@ func TestMarketplace(t *testing.T) {
 		86400,
 		15552000,
 		creator.Address.String(),
+		500,
+		5000000,
+		15552000,
+		500,
 	)
 	fmt.Println(instantiateMsgRawString)
 	// instantiate marketplace
@@ -274,7 +284,7 @@ func TestMarketplace(t *testing.T) {
 	})
 
 	// set sales finalized hook on marketplace
-	executeMsgRaw = fmt.Sprintf(executeSaleFinalizedHookTemplate, claimAddress)
+	executeMsgRaw = fmt.Sprintf(executeSaleHookTemplate, claimAddress)
 	addr, err := sdk.AccAddressFromBech32(marketplaceAddress)
 	require.NoError(t, err)
 	_, err = app.WasmKeeper.Sudo(ctx, addr, []byte(executeMsgRaw))
@@ -306,6 +316,7 @@ func TestMarketplace(t *testing.T) {
 	// execute an ask on the marketplace
 	expires := startDateTime.Add(time.Hour * 24 * 30)
 	executeMsgRaw = fmt.Sprintf(executeAskTemplate,
+		"fixed_price",
 		collectionAddress,
 		1,
 		1_000_000_000,
@@ -356,6 +367,7 @@ func TestMarketplace(t *testing.T) {
 
 	// execute an ask on the marketplace
 	executeMsgRaw = fmt.Sprintf(executeAskTemplate,
+		"fixed_price",
 		collectionAddress,
 		2,
 		1_000_000_000,
