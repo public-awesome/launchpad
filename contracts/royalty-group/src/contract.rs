@@ -158,11 +158,14 @@ pub fn execute_distribute_funds(
     info: MessageInfo,
     funds: Coin,
 ) -> Result<Response, ContractError> {
+    let total_weight = TOTAL.load(deps.storage)?;
+
     let messages: StdResult<Vec<_>> = MEMBERS
         .range(deps.storage, None, None, Order::Ascending)
         .map(|member| {
             let (key, weight) = member?;
-            let amount = funds.amount.checked_mul(Uint128::from(weight))?;
+            let amount = funds.amount.checked_mul(Uint128::from(weight))?
+                .checked_div(Uint128::from(total_weight))?;
             Ok(BankMsg::Send {
                 to_address: key.to_string(),
                 amount: vec![coin(Uint128::u128(&amount), funds.denom.clone())],
@@ -243,7 +246,7 @@ fn list_members(
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-    use cosmwasm_std::{from_slice, Api, OwnedDeps, Querier, Storage};
+    use cosmwasm_std::{from_slice, Api, OwnedDeps, Querier, Storage, CosmosMsg};
     use cw4::{member_key, TOTAL_KEY};
     use cw_controllers::{AdminError, HookError};
     use sg_std::NATIVE_DENOM;
@@ -596,6 +599,28 @@ mod tests {
         let funds = coin(123u128, NATIVE_DENOM);
         let admin_info = mock_info(INIT_ADMIN, &[]);
         let msg = ExecuteMsg::Distribute { funds };
-        execute(deps.as_mut(), mock_env(), admin_info, msg).unwrap();
+        let result = execute(deps.as_mut(), mock_env(), admin_info, msg).unwrap();
+
+        assert_users(&deps, Some(11), Some(6), None, None);
+        let res = query_total_weight(deps.as_ref()).unwrap();
+        assert_eq!(17, res.weight);
+
+        let bank_send_1 = match result.messages[1].msg.clone() {
+            CosmosMsg::Bank(msg) => Ok(msg),
+            _ => Err("Unexpected message"),
+        }.unwrap();
+        assert_eq!(
+            BankMsg::Send { to_address: USER1.into(), amount: vec!(coin(79u128, NATIVE_DENOM))},
+            bank_send_1
+        );
+
+        let bank_send_2 = match result.messages[0].msg.clone() {
+            CosmosMsg::Bank(msg) => Ok(msg),
+            _ => Err("Unexpected message"),
+        }.unwrap();
+        assert_eq!(
+            BankMsg::Send { to_address: USER2.into(), amount: vec!(coin(43u128, NATIVE_DENOM))},
+            bank_send_2
+        );
     }
 }
