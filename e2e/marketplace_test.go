@@ -197,10 +197,10 @@ func TestMarketplace(t *testing.T) {
 	// download latest marketplace code
 	out, err := os.Create("contracts/sg_marketplace.wasm")
 	require.NoError(t, err)
-	require.NoError(t, out.Close())
+	defer out.Close()
 	resp, err := http.Get("https://github.com/public-awesome/marketplace/releases/latest/download/sg_marketplace.wasm")
 	require.NoError(t, err)
-	require.NoError(t, resp.Body.Close())
+	defer resp.Body.Close()
 	_, err = io.Copy(out, resp.Body)
 	require.NoError(t, err)
 
