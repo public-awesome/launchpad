@@ -89,6 +89,8 @@ func GetContractBytes(contract string) ([]byte, error) {
 	if found {
 		return bz, nil
 	}
+	contractsCache.Lock()
+	defer contractsCache.Unlock()
 	if strings.HasPrefix(contract, "https://") {
 		resp, err := http.Get(contract)
 		if err != nil {
@@ -106,9 +108,7 @@ func GetContractBytes(contract string) ([]byte, error) {
 			return nil, err
 		}
 	}
-	contractsCache.Lock()
 	contractsCache.contracts[contract] = bz
-	contractsCache.Unlock()
 	return bz, nil
 }
 
