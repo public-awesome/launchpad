@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -74,18 +75,43 @@ func TestMarketplaceTestSuite(t *testing.T) {
 	suite.Run(t, new(MarketplaceTestSuite))
 }
 
+type storeCache struct {
+	sync.Mutex
+	contracts map[string][]byte
+}
+
+var contractsCache = storeCache{contracts: make(map[string][]byte)}
+
 func GetContractBytes(contract string) ([]byte, error) {
+	contractsCache.Lock()
+	bz, found := contractsCache.contracts[contract]
+	contractsCache.Unlock()
+	if found {
+		return bz, nil
+	}
 	if strings.HasPrefix(contract, "https://") {
 		resp, err := http.Get(contract)
 		if err != nil {
 			return nil, err
 		}
 		defer resp.Body.Close()
-		return io.ReadAll(resp.Body)
+		bz, err = io.ReadAll(resp.Body)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		var err error
+		bz, err = ioutil.ReadFile(fmt.Sprintf("contracts/%s", contract))
+		if err != nil {
+			return nil, err
+		}
 	}
-
-	return ioutil.ReadFile(fmt.Sprintf("contracts/%s", contract))
+	contractsCache.Lock()
+	contractsCache.contracts[contract] = bz
+	contractsCache.Unlock()
+	return bz, nil
 }
+
 func StoreContract(ctx sdk.Context, msgServer wasmtypes.MsgServer, creator string, contract string) (uint64, error) {
 	b, err := GetContractBytes(contract)
 	if err != nil {
