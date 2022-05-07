@@ -12,8 +12,8 @@ import (
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/public-awesome/stargaze/v4/testutil/simapp"
-	claimtypes "github.com/public-awesome/stargaze/v4/x/claim/types"
+	"github.com/public-awesome/stargaze/v5/testutil/simapp"
+	claimtypes "github.com/public-awesome/stargaze/v5/x/claim/types"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
@@ -197,10 +197,10 @@ func TestMarketplace(t *testing.T) {
 	// download latest marketplace code
 	out, err := os.Create("contracts/sg_marketplace.wasm")
 	require.NoError(t, err)
-	defer out.Close()
+	require.NoError(t, out.Close())
 	resp, err := http.Get("https://github.com/public-awesome/marketplace/releases/latest/download/sg_marketplace.wasm")
 	require.NoError(t, err)
-	defer resp.Body.Close()
+	require.NoError(t, resp.Body.Close())
 	_, err = io.Copy(out, resp.Body)
 	require.NoError(t, err)
 
