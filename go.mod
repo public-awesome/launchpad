@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/CosmWasm/wasmd v0.26.0
 	github.com/cosmos/cosmos-sdk v0.45.4
-	github.com/public-awesome/stargaze/v4 v4.1.0
+	github.com/public-awesome/stargaze/v5 v5.0.0
 	github.com/stretchr/testify v1.7.1
 	github.com/tendermint/tendermint v0.34.19
 )
@@ -17,7 +17,7 @@ require (
 	github.com/CosmWasm/wasmvm v1.0.0-beta7 // indirect
 	github.com/DataDog/zstd v1.4.5 // indirect
 	github.com/Workiva/go-datastructures v1.0.53 // indirect
-	github.com/armon/go-metrics v0.3.10 // indirect
+	github.com/armon/go-metrics v0.3.11 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bgentry/speakeasy v0.1.0 // indirect
 	github.com/btcsuite/btcd v0.22.0-beta // indirect
@@ -124,6 +124,7 @@ require (
 
 replace (
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.1.7-0.20210622111912-ef00f8ac3d76
+	github.com/CosmWasm/wasmd => github.com/public-awesome/wasmd v0.27.0-stargaze.4
 	github.com/CosmWasm/wasmvm => github.com/CosmWasm/wasmvm v1.0.0-beta10
 	github.com/gin-gonic/gin => github.com/gin-gonic/gin v1.7.0
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
