@@ -302,7 +302,6 @@ func (suite *MarketplaceTestSuite) TestFindersFeesWithRoyalties() {
 			Amount: "1000000000",
 		},
 		Expires:    fmt.Sprintf("%d", expires.UnixNano()),
-		Finder:     stringPtr(finder.Address.String()),
 		FindersFee: &findersFee,
 	}
 	marketPlaceMsg := &MarketPlaceMsg{
@@ -339,15 +338,19 @@ func (suite *MarketplaceTestSuite) TestFindersFeesWithRoyalties() {
 	)
 
 	// execute a bid on the marketplace
-	executeMsgRaw = fmt.Sprintf(executeBidTemplate,
-		collectionAddress,
-		1,
-		expires.UnixNano(),
-	)
+	setBidMsg, err := json.Marshal(&MarketPlaceMsg{
+		SetBid: &SetBidMsg{
+			Collection: collectionAddress,
+			TokenID:    1,
+			Expires:    fmt.Sprintf("%d", expires.UnixNano()),
+			Finder:     stringPtr(finder.Address.String()),
+		},
+	})
+	suite.Require().NoError(err)
 	_, err = suite.msgServer.ExecuteContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgExecuteContract{
 		Contract: marketplaceAddress,
 		Sender:   buyer.Address.String(),
-		Msg:      []byte(executeMsgRaw),
+		Msg:      setBidMsg,
 		Funds:    sdk.NewCoins(sdk.NewInt64Coin("ustars", 1_000_000_000)),
 	})
 
