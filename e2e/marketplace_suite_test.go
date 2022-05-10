@@ -242,6 +242,139 @@ func (suite *MarketplaceTestSuite) TestRoyalties() {
 
 }
 
+func (suite *MarketplaceTestSuite) TestFundsRecipient() {
+	ctx, _ := suite.parentCtx.CacheContext()
+	admin := suite.accounts[0]
+	creator := suite.accounts[1]
+	creatorRoyaltyAccount := suite.accounts[2]
+	seller := suite.accounts[3]
+	buyer := suite.accounts[4]
+	recipient := suite.accounts[5]
+
+	royalties := &RoyaltyInfo{
+		PaymentAddress: creatorRoyaltyAccount.Address.String(),
+		Share:          "0.1",
+	}
+	collectionAddress, err := InstantiateSG721(ctx, suite.msgServer, creator.Address, suite.sg721CodeID, royalties)
+	suite.Require().NoError(err)
+	suite.Require().NotEmpty(collectionAddress)
+
+	marketplaceAddress, err := InstantiateMarketplace(ctx, suite.msgServer, admin.Address, suite.marketplaceCodeID)
+	suite.Require().NoError(err)
+	suite.Require().NotEmpty(marketplaceAddress)
+
+	// mint nft
+	executeMsgRaw := fmt.Sprintf(executeMintTemplate,
+		1,
+		seller.Address.String(),
+	)
+	_, err = suite.msgServer.ExecuteContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgExecuteContract{
+		Contract: collectionAddress,
+		Sender:   creator.Address.String(),
+		Msg:      []byte(executeMsgRaw),
+	})
+	suite.Require().NoError(err)
+
+	// approve the NFT
+	executeMsgRaw = fmt.Sprintf(executeApproveTemplate,
+		marketplaceAddress,
+		1,
+	)
+	_, err = suite.msgServer.ExecuteContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgExecuteContract{
+		Contract: collectionAddress,
+		Sender:   seller.Address.String(),
+		Msg:      []byte(executeMsgRaw),
+	})
+	suite.Require().NoError(err)
+
+	// execute an ask on the marketplace
+	expires := suite.startTime.Add(time.Hour * 24 * 30)
+	askMsg := SetAskMsg{
+		SaleType:   "fixed_price",
+		Collection: collectionAddress,
+		TokenID:    1,
+		Price: AskPrice{
+			Denom:  "ustars",
+			Amount: "1000000000",
+		},
+		Expires:        fmt.Sprintf("%d", expires.UnixNano()),
+		FundsRecipient: stringPtr(recipient.Address.String()),
+	}
+	marketPlaceMsg := &MarketPlaceMsg{
+		SetAsk: &askMsg,
+	}
+	askMsgRaw, err := json.Marshal(marketPlaceMsg)
+	suite.Require().NoError(err)
+	_, err = suite.msgServer.ExecuteContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgExecuteContract{
+		Contract: marketplaceAddress,
+		Sender:   seller.Address.String(),
+		Msg:      askMsgRaw,
+	})
+	suite.Require().NoError(err)
+
+	// check intial balance of buyer
+	balance := suite.app.BankKeeper.GetBalance(ctx, buyer.Address, "ustars")
+	suite.Require().Equal(
+		"2000000000",
+		balance.Amount.String(),
+	)
+
+	// check intial balance of seller
+	balance = suite.app.BankKeeper.GetBalance(ctx, buyer.Address, "ustars")
+	suite.Require().Equal(
+		"2000000000",
+		balance.Amount.String(),
+	)
+
+	// execute a bid on the marketplace
+	executeMsgRaw = fmt.Sprintf(executeBidTemplate,
+		collectionAddress,
+		1,
+		expires.UnixNano(),
+	)
+	_, err = suite.msgServer.ExecuteContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgExecuteContract{
+		Contract: marketplaceAddress,
+		Sender:   buyer.Address.String(),
+		Msg:      []byte(executeMsgRaw),
+		Funds:    sdk.NewCoins(sdk.NewInt64Coin("ustars", 1_000_000_000)),
+	})
+
+	// buy should be executed without error
+	suite.Require().NoError(err)
+
+	// buyer should have 1k less
+	balance = suite.app.BankKeeper.GetBalance(ctx, buyer.Address, "ustars")
+	suite.Require().Equal(
+		"1000000000",
+		balance.Amount.String(),
+	)
+
+	// creator payment royalty account should have 10% of the sales
+	balance = suite.app.BankKeeper.GetBalance(ctx, creatorRoyaltyAccount.Address, "ustars")
+	// 2,000 initial + 100 (10% of the sell)
+	suite.Require().Equal(
+		"2100000000",
+		balance.Amount.String(),
+	)
+
+	// seller should have 88% of the sale sent to funds_recipient address
+	balance = suite.app.BankKeeper.GetBalance(ctx, recipient.Address, "ustars")
+	// 2,000 initial + 880 (88% of the sell)
+	suite.Require().Equal(
+		"2880000000",
+		balance.Amount.String(),
+	)
+
+	// original listing address should not get anything because was sent to funds recipient address
+	balance = suite.app.BankKeeper.GetBalance(ctx, seller.Address, "ustars")
+	// 2,000 initial
+	suite.Require().Equal(
+		"2000000000",
+		balance.Amount.String(),
+	)
+
+}
+
 func stringPtr(s string) *string {
 	return &s
 }
