@@ -73,7 +73,7 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
 name = "claim"
-version = "0.14.1"
+version = "0.15.0"
 dependencies = [
  "anyhow",
  "cosmwasm-schema",
@@ -871,8 +871,8 @@ dependencies = [
 
 [[package]]
 name = "sg-marketplace"
-version = "0.14.3"
-source = "git+https://github.com/public-awesome/marketplace#430250fc38d96f5622232936014e16f3c792ccd0"
+version = "0.15.0"
+source = "git+https://github.com/public-awesome/marketplace#815342fedc1a524f1e6270b54928195709f87409"
 dependencies = [
  "cosmwasm-std",
  "cosmwasm-storage",
