@@ -50,11 +50,12 @@ pub struct TokenInfo {
 
 pub struct TokenIndicies<'a> {
     pub token_ids: UniqueIndex<'a, TokenId, TokenInfo, TokenKey>,
+    pub token_ids_by_minted: UniqueIndex<'a, (TokenId, u8), TokenInfo, TokenKey>,
 }
 
 impl<'a> IndexList<TokenInfo> for TokenIndicies<'a> {
     fn get_indexes(&'_ self) -> Box<dyn Iterator<Item = &'_ dyn Index<TokenInfo>> + '_> {
-        let v: Vec<&dyn Index<TokenInfo>> = vec![&self.token_ids];
+        let v: Vec<&dyn Index<TokenInfo>> = vec![&self.token_ids, &self.token_ids_by_minted];
         Box::new(v.into_iter())
     }
 }
@@ -62,6 +63,10 @@ impl<'a> IndexList<TokenInfo> for TokenIndicies<'a> {
 pub fn tokens<'a>() -> IndexedMap<'a, TokenKey, TokenInfo, TokenIndicies<'a>> {
     let indexes = TokenIndicies {
         token_ids: UniqueIndex::new(|d: &TokenInfo| d.id, "tokens__token_ids"),
+        token_ids_by_minted: UniqueIndex::new(
+            |d: &TokenInfo| (d.id, d.minted.into()),
+            "tokens__token_ids_by_minted",
+        ),
     };
     IndexedMap::new("tokens", indexes)
 }
