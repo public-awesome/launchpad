@@ -83,6 +83,9 @@ pub enum ContractError {
 
     #[error("{0}")]
     Fee(#[from] FeeError),
+
+    #[error("Minting is not allowed")]
+    LockedMinting {},
 }
 
 impl From<ParseError> for ContractError {
