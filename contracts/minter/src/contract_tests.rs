@@ -1562,19 +1562,6 @@ fn check_minting_with_lock() {
         ContractError::LockedMinting {}.to_string()
     );
 
-    // Minting fails
-    let mint_msg = ExecuteMsg::Mint {};
-    let err = router.execute_contract(
-        buyer.clone(),
-        minter_addr.clone(),
-        &mint_msg,
-        &coins(UNIT_PRICE, NATIVE_DENOM),
-    ).unwrap_err();
-    assert_eq!(
-        err.source().unwrap().to_string(),
-        ContractError::LockedMinting {}.to_string()
-    );
-
     // Unlock minting
     let lock_minting_msg = ExecuteMsg::UpdateLockMinting { lock_minting: false };
     let res = router.execute_contract(
