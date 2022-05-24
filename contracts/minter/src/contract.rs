@@ -593,6 +593,7 @@ fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
         unit_price: config.unit_price,
         per_address_limit: config.per_address_limit,
         whitelist: config.whitelist.map(|w| w.to_string()),
+        lock_minting: config.lock_minting,
     })
 }
 

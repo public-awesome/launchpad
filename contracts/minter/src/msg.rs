@@ -51,6 +51,7 @@ pub struct ConfigResponse {
     pub start_time: Timestamp,
     pub unit_price: Coin,
     pub whitelist: Option<String>,
+    pub lock_minting: bool
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
