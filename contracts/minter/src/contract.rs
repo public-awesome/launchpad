@@ -179,7 +179,7 @@ pub fn execute(
             execute_set_whitelist(deps, env, info, &whitelist)
         }
         ExecuteMsg::Withdraw {} => execute_withdraw(deps, env, info),
-        ExecuteMsg::UpdateLockMinting { lock_minting: _ } => unimplemented!()
+        ExecuteMsg::UpdateLockMinting { lock_minting } => execute_update_lock_minting(deps, env, info, lock_minting),
     }
 }
 
