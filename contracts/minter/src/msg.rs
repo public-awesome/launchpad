@@ -27,7 +27,7 @@ pub enum ExecuteMsg {
     MintTo { recipient: String },
     MintFor { token_id: u32, recipient: String },
     Withdraw {},
-    UpdateMintingLock { lock_minting: bool },
+    UpdateLockMinting { lock_minting: bool },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
