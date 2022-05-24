@@ -108,6 +108,8 @@ pub fn instantiate(
         .whitelist
         .and_then(|w| deps.api.addr_validate(w.as_str()).ok());
 
+    let lock_minting = msg.lock_minting.unwrap_or(false);
+
     let config = Config {
         admin: info.sender.clone(),
         base_token_uri: msg.base_token_uri,
@@ -117,6 +119,7 @@ pub fn instantiate(
         per_address_limit: msg.per_address_limit,
         whitelist: whitelist_addr,
         start_time: msg.start_time,
+        lock_minting,
     };
     CONFIG.save(deps.storage, &config)?;
     MINTABLE_NUM_TOKENS.save(deps.storage, &msg.num_tokens)?;
