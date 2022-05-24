@@ -117,6 +117,7 @@ fn setup_minter_contract(
                 }),
             },
         },
+        lock_minting: None
     };
     let minter_addr = router
         .instantiate_contract(
@@ -226,6 +227,7 @@ fn initialization() {
                 }),
             },
         },
+        lock_minting: None
     };
     instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
 
@@ -254,6 +256,7 @@ fn initialization() {
                 }),
             },
         },
+        lock_minting: None
     };
     instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
 
@@ -283,6 +286,7 @@ fn initialization() {
                 }),
             },
         },
+        lock_minting: None
     };
     instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
 
@@ -311,6 +315,7 @@ fn initialization() {
                 }),
             },
         },
+        lock_minting: None
     };
     instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
 
@@ -339,6 +344,7 @@ fn initialization() {
                 }),
             },
         },
+        lock_minting: None
     };
     instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
 
@@ -367,6 +373,7 @@ fn initialization() {
                 }),
             },
         },
+        lock_minting: None
     };
     instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
 }
@@ -1245,6 +1252,7 @@ fn test_start_time_before_genesis() {
                 }),
             },
         },
+        lock_minting: None
     };
     let minter_addr = router
         .instantiate_contract(minter_code_id, creator, &msg, &creation_fee, "Minter", None)
@@ -1292,6 +1300,7 @@ fn test_update_start_time() {
                 royalty_info: None,
             },
         },
+        lock_minting: None
     };
     let minter_addr = router
         .instantiate_contract(
@@ -1350,6 +1359,7 @@ fn test_invalid_start_time() {
                 royalty_info: None,
             },
         },
+        lock_minting: None
     };
     // set time before the start_time above
     setup_block_time(&mut router, GENESIS_MINT_START_TIME - 1000);
