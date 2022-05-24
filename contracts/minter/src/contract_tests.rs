@@ -1519,3 +1519,79 @@ fn can_withdraw() {
         coins(INITIAL_BALANCE + UNIT_PRICE - MINT_FEE, NATIVE_DENOM)
     );
 }
+
+#[test]
+fn check_minting_with_lock() {
+    // create minter
+    let mut router = custom_mock_app();
+    let (creator, buyer) = setup_accounts(&mut router);
+    let num_tokens = 1;
+    let (minter_addr, _config) = setup_minter_contract(&mut router, &creator, num_tokens);
+
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 1);
+
+    // Admin error
+    let lock_minting_msg = ExecuteMsg::UpdateLockMinting { lock_minting: true };
+    let res = router.execute_contract(
+        buyer.clone(),
+        minter_addr.clone(),
+        &lock_minting_msg,
+        &vec![],
+    );
+    assert!(res.is_err());
+
+    // Lock minting
+    let res = router.execute_contract(
+        creator.clone(),
+        minter_addr.clone(),
+        &lock_minting_msg,
+        &vec![],
+    );
+    assert!(res.is_ok());
+
+    // Minting fails
+    let mint_msg = ExecuteMsg::Mint {};
+    let err = router.execute_contract(
+        buyer.clone(),
+        minter_addr.clone(),
+        &mint_msg,
+        &coins(UNIT_PRICE, NATIVE_DENOM),
+    ).unwrap_err();
+    assert_eq!(
+        err.source().unwrap().to_string(),
+        ContractError::LockedMinting {}.to_string()
+    );
+
+    // Minting fails
+    let mint_msg = ExecuteMsg::Mint {};
+    let err = router.execute_contract(
+        buyer.clone(),
+        minter_addr.clone(),
+        &mint_msg,
+        &coins(UNIT_PRICE, NATIVE_DENOM),
+    ).unwrap_err();
+    assert_eq!(
+        err.source().unwrap().to_string(),
+        ContractError::LockedMinting {}.to_string()
+    );
+
+    // Unlock minting
+    let lock_minting_msg = ExecuteMsg::UpdateLockMinting { lock_minting: false };
+    let res = router.execute_contract(
+        creator,
+        minter_addr.clone(),
+        &lock_minting_msg,
+        &vec![],
+    );
+    assert!(res.is_ok());
+
+    // Mint successful
+    let mint_msg = ExecuteMsg::Mint {};
+    let res = router.execute_contract(
+        buyer,
+        minter_addr.clone(),
+        &mint_msg,
+        &coins(UNIT_PRICE, NATIVE_DENOM),
+    );
+    assert!(res.is_ok());
+}
