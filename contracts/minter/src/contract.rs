@@ -257,6 +257,10 @@ pub fn execute_mint_sender(
     let config = CONFIG.load(deps.storage)?;
     let action = "mint_sender";
 
+    if config.lock_minting {
+        return Err(ContractError::LockedMinting {});
+    }
+
     // If there is no active whitelist right now, check public mint
     // Check if after start_time
     if is_public_mint(deps.as_ref(), &info)? && (env.block.time < config.start_time) {
