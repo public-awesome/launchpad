@@ -7,7 +7,7 @@ use crate::ContractError;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, StdResult, Storage, WasmMsg,
+    to_binary, Binary, Deps, DepsMut, Empty, Env, Event, MessageInfo, StdResult, Storage, WasmMsg,
 };
 use cw2::set_contract_version;
 use cw721::{ContractInfoResponse, Cw721ReceiveMsg};
@@ -55,7 +55,7 @@ pub fn instantiate(
         return Err(ContractError::DescriptionTooLong {});
     }
 
-    let image = Url::parse(&msg.collection_info.image)?;
+    Url::parse(&msg.collection_info.image)?;
 
     if let Some(ref external_link) = msg.collection_info.external_link {
         Url::parse(external_link)?;
@@ -84,12 +84,6 @@ pub fn instantiate(
     if let Some(hook) = msg.transfer_hook {
         TRANSFER_HOOKS.add_hook(deps.storage, deps.api.addr_validate(&hook)?)?;
     }
-
-    res = res
-        .add_attribute("action", "instantiate")
-        .add_attribute("contract_name", CONTRACT_NAME)
-        .add_attribute("contract_version", CONTRACT_VERSION)
-        .add_attribute("image", image.to_string());
 
     Ok(res)
 }
@@ -140,12 +134,11 @@ fn transfer_nft(
 
     base._transfer_nft(deps, &env, &info, &recipient, &token_id)?;
 
-    let res = Response::new()
-        .add_submessages(hook)
-        .add_attribute("action", "transfer_nft")
+    let event = Event::new("transfer_nft")
         .add_attribute("sender", info.sender)
         .add_attribute("recipient", recipient)
         .add_attribute("token_id", token_id);
+    let res = Response::new().add_submessages(hook).add_event(event);
 
     Ok(res)
 }
@@ -171,13 +164,14 @@ fn send_nft(
     };
 
     // Send message
-    let res = Response::new()
-        .add_message(send.into_cosmos_msg(contract.clone())?)
-        .add_submessages(hook)
-        .add_attribute("action", "send_nft")
+    let event = Event::new("send_nft")
         .add_attribute("sender", info.sender)
-        .add_attribute("recipient", contract)
+        .add_attribute("recipient", contract.to_string())
         .add_attribute("token_id", token_id);
+    let res = Response::new()
+        .add_message(send.into_cosmos_msg(contract)?)
+        .add_submessages(hook)
+        .add_event(event);
 
     Ok(res)
 }
@@ -193,11 +187,13 @@ fn approve(
 ) -> Result<Response, ContractError> {
     base._update_approvals(deps, &env, &info, &spender, &token_id, true, expires)?;
 
-    Ok(Response::new()
-        .add_attribute("action", "approve")
+    let event = Event::new("approve")
         .add_attribute("sender", info.sender)
         .add_attribute("spender", spender)
-        .add_attribute("token_id", token_id))
+        .add_attribute("token_id", token_id);
+    let res = Response::new().add_event(event);
+
+    Ok(res)
 }
 
 fn revoke(
@@ -210,11 +206,13 @@ fn revoke(
 ) -> Result<Response, ContractError> {
     base._update_approvals(deps, &env, &info, &spender, &token_id, false, None)?;
 
-    Ok(Response::new()
-        .add_attribute("action", "revoke")
+    let event = Event::new("revoke")
         .add_attribute("sender", info.sender)
         .add_attribute("spender", spender)
-        .add_attribute("token_id", token_id))
+        .add_attribute("token_id", token_id);
+    let res = Response::new().add_event(event);
+
+    Ok(res)
 }
 
 fn approve_all(
@@ -236,10 +234,12 @@ fn approve_all(
     base.operators
         .save(deps.storage, (&info.sender, &operator_addr), &expires)?;
 
-    Ok(Response::new()
-        .add_attribute("action", "approve_all")
+    let event = Event::new("approve_all")
         .add_attribute("sender", info.sender)
-        .add_attribute("operator", operator))
+        .add_attribute("operator", operator);
+    let res = Response::new().add_event(event);
+
+    Ok(res)
 }
 
 fn revoke_all(
@@ -253,10 +253,12 @@ fn revoke_all(
     base.operators
         .remove(deps.storage, (&info.sender, &operator_addr));
 
-    Ok(Response::new()
-        .add_attribute("action", "revoke_all")
+    let event = Event::new("revoke_all")
         .add_attribute("sender", info.sender)
-        .add_attribute("operator", operator))
+        .add_attribute("operator", operator);
+    let res = Response::new().add_event(event);
+
+    Ok(res)
 }
 
 fn burn(
@@ -272,10 +274,12 @@ fn burn(
     base.tokens.remove(deps.storage, &token_id)?;
     base.decrement_tokens(deps.storage)?;
 
-    Ok(Response::new()
-        .add_attribute("action", "burn")
+    let event = Event::new("burn")
         .add_attribute("sender", info.sender)
-        .add_attribute("token_id", token_id))
+        .add_attribute("token_id", token_id);
+    let res = Response::new().add_event(event);
+
+    Ok(res)
 }
 
 fn prepare_transfer_hook(
