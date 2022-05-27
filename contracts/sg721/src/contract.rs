@@ -3,12 +3,12 @@ use cosmwasm_std::entry_point;
 use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, StdResult};
 use cw2::set_contract_version;
 
+use cw_utils::Expiration;
 use sg1::checked_fair_burn;
 use sg_std::{Response, StargazeMsgWrapper};
 
 use crate::ContractError;
-use cw721::ContractInfoResponse;
-use cw721_base::ContractError as BaseError;
+use cw721::{ContractInfoResponse, Cw721ReceiveMsg};
 use url::Url;
 
 use crate::msg::{
@@ -23,7 +23,7 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 const CREATION_FEE: u128 = 1_000_000_000;
 const MAX_DESCRIPTION_LENGTH: u32 = 512;
 
-pub type Sg721Contract<'a> = cw721_base::Cw721Contract<'a, Empty, StargazeMsgWrapper>;
+pub type BaseContract<'a> = cw721_base::Cw721Contract<'a, Empty, StargazeMsgWrapper>;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -34,6 +34,8 @@ pub fn instantiate(
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
+    let base = BaseContract::default();
+
     let fee_msgs = checked_fair_burn(&info, CREATION_FEE, None)?;
 
     // cw721 instantiation
@@ -41,14 +43,10 @@ pub fn instantiate(
         name: msg.name,
         symbol: msg.symbol,
     };
-    Sg721Contract::default()
-        .contract_info
-        .save(deps.storage, &info)?;
+    base.contract_info.save(deps.storage, &info)?;
 
     let minter = deps.api.addr_validate(&msg.minter)?;
-    Sg721Contract::default()
-        .minter
-        .save(deps.storage, &minter)?;
+    base.minter.save(deps.storage, &minter)?;
 
     // sg721 instantiation
     if msg.collection_info.description.len() > MAX_DESCRIPTION_LENGTH as usize {
@@ -95,15 +93,181 @@ pub fn execute(
     env: Env,
     info: MessageInfo,
     msg: ExecuteMsg,
-) -> Result<Response, BaseError> {
-    Sg721Contract::default().execute(deps, env, info, msg)
+) -> Result<Response, ContractError> {
+    let base = BaseContract::default();
+    match msg {
+        ExecuteMsg::TransferNft {
+            recipient,
+            token_id,
+        } => transfer_nft(base, deps, env, info, recipient, token_id),
+        ExecuteMsg::SendNft {
+            contract,
+            token_id,
+            msg,
+        } => send_nft(base, deps, env, info, contract, token_id, msg),
+        ExecuteMsg::Approve {
+            spender,
+            token_id,
+            expires,
+        } => approve(base, deps, env, info, spender, token_id, expires),
+        ExecuteMsg::Revoke { spender, token_id } => {
+            revoke(base, deps, env, info, spender, token_id)
+        }
+        ExecuteMsg::ApproveAll { operator, expires } => {
+            approve_all(base, deps, env, info, operator, expires)
+        }
+        ExecuteMsg::RevokeAll { operator } => revoke_all(base, deps, env, info, operator),
+        ExecuteMsg::Burn { token_id } => burn(base, deps, env, info, token_id),
+    }
+}
+
+fn transfer_nft(
+    base: BaseContract,
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    recipient: String,
+    token_id: String,
+) -> Result<Response, ContractError> {
+    base._transfer_nft(deps, &env, &info, &recipient, &token_id)?;
+
+    // TODO: add a transfer hook?
+
+    Ok(Response::new()
+        .add_attribute("action", "transfer_nft")
+        .add_attribute("sender", info.sender)
+        .add_attribute("recipient", recipient)
+        .add_attribute("token_id", token_id))
+}
+
+fn send_nft(
+    base: BaseContract,
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    contract: String,
+    token_id: String,
+    msg: Binary,
+) -> Result<Response, ContractError> {
+    // Transfer token
+    base._transfer_nft(deps, &env, &info, &contract, &token_id)?;
+
+    let send = Cw721ReceiveMsg {
+        sender: info.sender.to_string(),
+        token_id: token_id.clone(),
+        msg,
+    };
+
+    // Send message
+    Ok(Response::new()
+        .add_message(send.into_cosmos_msg(contract.clone())?)
+        .add_attribute("action", "send_nft")
+        .add_attribute("sender", info.sender)
+        .add_attribute("recipient", contract)
+        .add_attribute("token_id", token_id))
+}
+
+fn approve(
+    base: BaseContract,
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    spender: String,
+    token_id: String,
+    expires: Option<Expiration>,
+) -> Result<Response, ContractError> {
+    base._update_approvals(deps, &env, &info, &spender, &token_id, true, expires)?;
+
+    Ok(Response::new()
+        .add_attribute("action", "approve")
+        .add_attribute("sender", info.sender)
+        .add_attribute("spender", spender)
+        .add_attribute("token_id", token_id))
+}
+
+fn revoke(
+    base: BaseContract,
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    spender: String,
+    token_id: String,
+) -> Result<Response, ContractError> {
+    base._update_approvals(deps, &env, &info, &spender, &token_id, false, None)?;
+
+    Ok(Response::new()
+        .add_attribute("action", "revoke")
+        .add_attribute("sender", info.sender)
+        .add_attribute("spender", spender)
+        .add_attribute("token_id", token_id))
+}
+
+fn approve_all(
+    base: BaseContract,
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    operator: String,
+    expires: Option<Expiration>,
+) -> Result<Response, ContractError> {
+    // reject expired data as invalid
+    let expires = expires.unwrap_or_default();
+    if expires.is_expired(&env.block) {
+        return Err(ContractError::Expired {});
+    }
+
+    // set the operator for us
+    let operator_addr = deps.api.addr_validate(&operator)?;
+    base.operators
+        .save(deps.storage, (&info.sender, &operator_addr), &expires)?;
+
+    Ok(Response::new()
+        .add_attribute("action", "approve_all")
+        .add_attribute("sender", info.sender)
+        .add_attribute("operator", operator))
+}
+
+fn revoke_all(
+    base: BaseContract,
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    operator: String,
+) -> Result<Response, ContractError> {
+    let operator_addr = deps.api.addr_validate(&operator)?;
+    base.operators
+        .remove(deps.storage, (&info.sender, &operator_addr));
+
+    Ok(Response::new()
+        .add_attribute("action", "revoke_all")
+        .add_attribute("sender", info.sender)
+        .add_attribute("operator", operator))
+}
+
+fn burn(
+    base: BaseContract,
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    token_id: String,
+) -> Result<Response, ContractError> {
+    let token = base.tokens.load(deps.storage, &token_id)?;
+    base.check_can_send(deps.as_ref(), &env, &info, &token)?;
+
+    base.tokens.remove(deps.storage, &token_id)?;
+    base.decrement_tokens(deps.storage)?;
+
+    Ok(Response::new()
+        .add_attribute("action", "burn")
+        .add_attribute("sender", info.sender)
+        .add_attribute("token_id", token_id))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::CollectionInfo {} => to_binary(&query_config(deps)?),
-        _ => Sg721Contract::default().query(deps, env, msg.into()),
+        _ => BaseContract::default().query(deps, env, msg.into()),
     }
 }
 
