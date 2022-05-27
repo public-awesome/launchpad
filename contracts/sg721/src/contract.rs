@@ -1,20 +1,20 @@
-#[cfg(not(feature = "library"))]
-use cosmwasm_std::entry_point;
-use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, StdResult};
-use cw2::set_contract_version;
-
-use cw_utils::Expiration;
-use sg1::checked_fair_burn;
-use sg_std::{Response, StargazeMsgWrapper};
-
-use crate::ContractError;
-use cw721::{ContractInfoResponse, Cw721ReceiveMsg};
-use url::Url;
-
 use crate::msg::{
     CollectionInfoResponse, ExecuteMsg, InstantiateMsg, QueryMsg, RoyaltyInfoResponse,
+    TransferHookMsg,
 };
-use crate::state::{CollectionInfo, RoyaltyInfo, COLLECTION_INFO};
+use crate::state::{CollectionInfo, RoyaltyInfo, COLLECTION_INFO, TRANSFER_HOOKS};
+use crate::ContractError;
+#[cfg(not(feature = "library"))]
+use cosmwasm_std::entry_point;
+use cosmwasm_std::{
+    to_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, StdResult, Storage, WasmMsg,
+};
+use cw2::set_contract_version;
+use cw721::{ContractInfoResponse, Cw721ReceiveMsg};
+use cw_utils::Expiration;
+use sg1::checked_fair_burn;
+use sg_std::{Response, StargazeMsgWrapper, SubMsg};
+use url::Url;
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sg-721";
@@ -22,6 +22,7 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 const CREATION_FEE: u128 = 1_000_000_000;
 const MAX_DESCRIPTION_LENGTH: u32 = 512;
+const REPLY_TRANSFER_HOOK: u64 = 1;
 
 pub type BaseContract<'a> = cw721_base::Cw721Contract<'a, Empty, StargazeMsgWrapper>;
 
@@ -80,6 +81,10 @@ pub fn instantiate(
 
     COLLECTION_INFO.save(deps.storage, &collection_info)?;
 
+    if let Some(hook) = msg.transfer_hook {
+        TRANSFER_HOOKS.add_hook(deps.storage, deps.api.addr_validate(&hook)?)?;
+    }
+
     res = res
         .add_attribute("action", "instantiate")
         .add_attribute("contract_name", CONTRACT_NAME)
@@ -131,15 +136,18 @@ fn transfer_nft(
     recipient: String,
     token_id: String,
 ) -> Result<Response, ContractError> {
+    let hook = prepare_transfer_hook(deps.storage, info.sender.to_string(), &recipient, &token_id)?;
+
     base._transfer_nft(deps, &env, &info, &recipient, &token_id)?;
 
-    // TODO: add a transfer hook?
-
-    Ok(Response::new()
+    let res = Response::new()
+        .add_submessages(hook)
         .add_attribute("action", "transfer_nft")
         .add_attribute("sender", info.sender)
         .add_attribute("recipient", recipient)
-        .add_attribute("token_id", token_id))
+        .add_attribute("token_id", token_id);
+
+    Ok(res)
 }
 
 fn send_nft(
@@ -151,6 +159,8 @@ fn send_nft(
     token_id: String,
     msg: Binary,
 ) -> Result<Response, ContractError> {
+    let hook = prepare_transfer_hook(deps.storage, info.sender.to_string(), &contract, &token_id)?;
+
     // Transfer token
     base._transfer_nft(deps, &env, &info, &contract, &token_id)?;
 
@@ -161,12 +171,15 @@ fn send_nft(
     };
 
     // Send message
-    Ok(Response::new()
+    let res = Response::new()
         .add_message(send.into_cosmos_msg(contract.clone())?)
+        .add_submessages(hook)
         .add_attribute("action", "send_nft")
         .add_attribute("sender", info.sender)
         .add_attribute("recipient", contract)
-        .add_attribute("token_id", token_id))
+        .add_attribute("token_id", token_id);
+
+    Ok(res)
 }
 
 fn approve(
@@ -265,6 +278,29 @@ fn burn(
         .add_attribute("token_id", token_id))
 }
 
+fn prepare_transfer_hook(
+    store: &dyn Storage,
+    sender: String,
+    recipient: &str,
+    token_id: &str,
+) -> StdResult<Vec<SubMsg>> {
+    let submsgs = TRANSFER_HOOKS.prepare_hooks(store, |h| {
+        let msg = TransferHookMsg {
+            sender: sender.to_string(),
+            recipient: recipient.to_string(),
+            token_id: token_id.to_string(),
+        };
+        let execute = WasmMsg::Execute {
+            contract_addr: h.to_string(),
+            msg: msg.into_binary()?,
+            funds: vec![],
+        };
+        Ok(SubMsg::reply_on_error(execute, REPLY_TRANSFER_HOOK))
+    })?;
+
+    Ok(submsgs)
+}
+
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
@@ -318,6 +354,7 @@ mod tests {
                 external_link: Some("https://example.com/external.html".to_string()),
                 royalty_info: None,
             },
+            transfer_hook: None,
         };
         let info = mock_info("creator", &coins(CREATION_FEE, NATIVE_DENOM));
 
@@ -357,6 +394,7 @@ mod tests {
                     share: Decimal::percent(10),
                 }),
             },
+            transfer_hook: None,
         };
         let info = mock_info("creator", &coins(CREATION_FEE, NATIVE_DENOM));
 

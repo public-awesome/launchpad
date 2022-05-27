@@ -2,6 +2,7 @@ use cosmwasm_std::{Addr, Decimal};
 use cw_storage_plus::Item;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use sg_controllers::Hooks;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct CollectionInfo<T> {
@@ -19,3 +20,5 @@ pub struct RoyaltyInfo {
 }
 
 pub const COLLECTION_INFO: Item<CollectionInfo<RoyaltyInfo>> = Item::new("collection_info");
+
+pub const TRANSFER_HOOKS: Hooks = Hooks::new("transfer-hooks");

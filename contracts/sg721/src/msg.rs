@@ -1,5 +1,5 @@
 use crate::{state::CollectionInfo, ContractError};
-use cosmwasm_std::{Binary, Decimal};
+use cosmwasm_std::{to_binary, Binary, Decimal, StdResult};
 use cw721_base::msg::QueryMsg as Cw721QueryMsg;
 use cw_utils::Expiration;
 use schemars::JsonSchema;
@@ -11,6 +11,8 @@ pub struct InstantiateMsg {
     pub symbol: String,
     pub minter: String,
     pub collection_info: CollectionInfo<RoyaltyInfoResponse>,
+    /// Address of contract to get a callback for every transfer
+    pub transfer_hook: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -178,4 +180,27 @@ pub struct CollectionInfoResponse {
     pub image: String,
     pub external_link: Option<String>,
     pub royalty_info: Option<RoyaltyInfoResponse>,
+}
+
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
+#[serde(rename_all = "snake_case")]
+pub struct TransferHookMsg {
+    pub sender: String,
+    pub recipient: String,
+    pub token_id: String,
+}
+
+impl TransferHookMsg {
+    /// serializes the message
+    pub fn into_binary(self) -> StdResult<Binary> {
+        let msg = TransferExecuteMsg::TransferHook(self);
+        to_binary(&msg)
+    }
+}
+
+// This is just a helper to properly serialize the above message
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
+#[serde(rename_all = "snake_case")]
+pub enum TransferExecuteMsg {
+    TransferHook(TransferHookMsg),
 }

@@ -12,6 +12,9 @@ pub enum ContractError {
     #[error("{0}")]
     Base(#[from] cw721_base::ContractError),
 
+    #[error("{0}")]
+    Hook(#[from] sg_controllers::HookError),
+
     #[error("Unauthorized")]
     Unauthorized {},
 
