@@ -35,8 +35,9 @@ pub fn instantiate(
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
     let base = BaseContract::default();
+    let mut res = Response::new();
 
-    let fee_msgs = checked_fair_burn(&info, CREATION_FEE, None)?;
+    checked_fair_burn(&info, CREATION_FEE, None, &mut res)?;
 
     // cw721 instantiation
     let info = ContractInfoResponse {
@@ -79,12 +80,13 @@ pub fn instantiate(
 
     COLLECTION_INFO.save(deps.storage, &collection_info)?;
 
-    Ok(Response::default()
+    res = res
         .add_attribute("action", "instantiate")
         .add_attribute("contract_name", CONTRACT_NAME)
         .add_attribute("contract_version", CONTRACT_VERSION)
-        .add_attribute("image", image.to_string())
-        .add_messages(fee_msgs))
+        .add_attribute("image", image.to_string());
+
+    Ok(res)
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
