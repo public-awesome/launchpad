@@ -13,7 +13,7 @@ use cosmwasm_std::{
 use cw2::set_contract_version;
 use cw721::{ContractInfoResponse as Cw721ContractInfoResponse, Cw721ReceiveMsg};
 use cw721_base::state::TokenInfo;
-use cw721_base::MintMsg;
+use cw721_base::{Extension, MintMsg};
 use cw_utils::Expiration;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
@@ -29,10 +29,10 @@ const CREATION_FEE: u128 = 1_000_000_000;
 const MAX_DESCRIPTION_LENGTH: u32 = 512;
 const REPLY_TRANSFER_HOOK: u64 = 1;
 
-pub type BaseContract<'a, T> = cw721_base::Cw721Contract<'a, T, StargazeMsgWrapper>;
+pub type BaseContract<'a> = cw721_base::Cw721Contract<'a, Extension, StargazeMsgWrapper>;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn instantiate<T: Serialize + DeserializeOwned + Clone>(
+pub fn instantiate(
     deps: DepsMut,
     _env: Env,
     info: MessageInfo,
@@ -40,7 +40,7 @@ pub fn instantiate<T: Serialize + DeserializeOwned + Clone>(
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
-    let base = BaseContract::<T>::default();
+    let base = BaseContract::default();
     let mut res = Response::new();
 
     checked_fair_burn(&info, CREATION_FEE, None, &mut res)?;
@@ -133,7 +133,7 @@ pub fn execute<T: Serialize + DeserializeOwned + Clone>(
 }
 
 pub fn mint<T: Serialize + DeserializeOwned + Clone>(
-    base: BaseContract<T>,
+    base: BaseContract,
     deps: DepsMut,
     _env: Env,
     info: MessageInfo,
@@ -167,8 +167,8 @@ pub fn mint<T: Serialize + DeserializeOwned + Clone>(
         .add_attribute("token_id", msg.token_id))
 }
 
-fn transfer_nft<T: Serialize + DeserializeOwned + Clone>(
-    base: BaseContract<T>,
+fn transfer_nft(
+    base: BaseContract,
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
@@ -188,8 +188,8 @@ fn transfer_nft<T: Serialize + DeserializeOwned + Clone>(
     Ok(res)
 }
 
-fn send_nft<T: Serialize + DeserializeOwned + Clone>(
-    base: BaseContract<T>,
+fn send_nft(
+    base: BaseContract,
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
@@ -221,8 +221,8 @@ fn send_nft<T: Serialize + DeserializeOwned + Clone>(
     Ok(res)
 }
 
-fn approve<T: Serialize + DeserializeOwned + Clone>(
-    base: BaseContract<T>,
+fn approve(
+    base: BaseContract,
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
@@ -241,8 +241,8 @@ fn approve<T: Serialize + DeserializeOwned + Clone>(
     Ok(res)
 }
 
-fn revoke<T: Serialize + DeserializeOwned + Clone>(
-    base: BaseContract<T>,
+fn revoke(
+    base: BaseContract,
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
@@ -260,8 +260,8 @@ fn revoke<T: Serialize + DeserializeOwned + Clone>(
     Ok(res)
 }
 
-fn approve_all<T: Serialize + DeserializeOwned + Clone>(
-    base: BaseContract<T>,
+fn approve_all(
+    base: BaseContract,
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
@@ -287,8 +287,8 @@ fn approve_all<T: Serialize + DeserializeOwned + Clone>(
     Ok(res)
 }
 
-fn revoke_all<T: Serialize + DeserializeOwned + Clone>(
-    base: BaseContract<T>,
+fn revoke_all(
+    base: BaseContract,
     deps: DepsMut,
     _env: Env,
     info: MessageInfo,
@@ -306,8 +306,8 @@ fn revoke_all<T: Serialize + DeserializeOwned + Clone>(
     Ok(res)
 }
 
-fn burn<T: Serialize + DeserializeOwned + Clone>(
-    base: BaseContract<T>,
+fn burn(
+    base: BaseContract,
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
@@ -358,7 +358,7 @@ pub fn query<T: Serialize + DeserializeOwned + Clone>(
 ) -> StdResult<Binary> {
     match msg {
         QueryMsg::CollectionInfo {} => to_binary(&query_config(deps)?),
-        _ => BaseContract::<T>::default().query(deps, env, msg.into()),
+        _ => BaseContract::default().query(deps, env, msg.into()),
     }
 }
 
@@ -386,8 +386,8 @@ fn query_config(deps: Deps) -> StdResult<CollectionInfoResponse> {
 mod tests {
     use super::*;
     use crate::state::CollectionInfo;
+    use cosmwasm_std::coins;
     use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-    use cosmwasm_std::{coins, Empty};
     use sg_std::NATIVE_DENOM;
 
     #[test]
@@ -410,6 +410,6 @@ mod tests {
         };
         let info = mock_info("creator", &coins(CREATION_FEE, NATIVE_DENOM));
 
-        instantiate::<Empty>(deps.as_mut(), mock_env(), info, msg).unwrap_err();
+        instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
     }
 }
