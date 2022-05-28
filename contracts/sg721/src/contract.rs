@@ -1,16 +1,16 @@
-use crate::msg::{
-    CollectionInfoResponse, ExecuteMsg, InstantiateMsg, QueryMsg, RoyaltyInfoResponse,
-    TransferHookMsg,
-};
+use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg, RoyaltyInfoResponse, TransferHookMsg};
 use crate::state::{CollectionInfo, RoyaltyInfo, COLLECTION_INFO, TRANSFER_HOOKS};
 use crate::ContractError;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Binary, Deps, DepsMut, Empty, Env, Event, MessageInfo, StdResult, Storage, WasmMsg,
+    to_binary, Binary, ContractInfoResponse, Deps, DepsMut, Empty, Env, Event, MessageInfo,
+    QueryRequest, StdResult, Storage, WasmMsg, WasmQuery,
 };
 use cw2::set_contract_version;
-use cw721::{ContractInfoResponse, Cw721ReceiveMsg};
+use cw721::{ContractInfoResponse as Cw721ContractInfoResponse, Cw721ReceiveMsg};
+use cw721_base::state::TokenInfo;
+use cw721_base::MintMsg;
 use cw_utils::Expiration;
 use sg1::checked_fair_burn;
 use sg_std::{Response, StargazeMsgWrapper, SubMsg};
@@ -41,13 +41,27 @@ pub fn instantiate(
     checked_fair_burn(&info, CREATION_FEE, None, &mut res)?;
 
     // cw721 instantiation
-    let info = ContractInfoResponse {
+    let info = Cw721ContractInfoResponse {
         name: msg.name,
         symbol: msg.symbol,
     };
     base.contract_info.save(deps.storage, &info)?;
 
     let minter = deps.api.addr_validate(&msg.minter)?;
+
+    // TODO: get this from the chain
+    let code_ids = vec![1, 2, 3];
+
+    // make sure collection can only be instantiated with registered minters
+    let query = QueryRequest::Wasm(WasmQuery::ContractInfo {
+        contract_addr: minter.to_string(),
+    });
+    let info_res: ContractInfoResponse = deps.querier.query(&query)?;
+    let code_id = info_res.code_id;
+    if code_ids.contains(&code_id) {
+        return Err(ContractError::InvalidMinterCodeId { code_id });
+    }
+
     base.minter.save(deps.storage, &minter)?;
 
     // sg721 instantiation
@@ -89,11 +103,11 @@ pub fn instantiate(
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn execute(
+pub fn execute<T>(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    msg: ExecuteMsg,
+    msg: ExecuteMsg<T>,
 ) -> Result<Response, ContractError> {
     let base = BaseContract::default();
     match msg {
@@ -119,7 +133,43 @@ pub fn execute(
         }
         ExecuteMsg::RevokeAll { operator } => revoke_all(base, deps, env, info, operator),
         ExecuteMsg::Burn { token_id } => burn(base, deps, env, info, token_id),
+        ExecuteMsg::Mint(msg) => mint(base, deps, env, info, msg),
     }
+}
+
+pub fn mint<T>(
+    base: BaseContract,
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    msg: MintMsg<T>,
+) -> Result<Response, ContractError> {
+    let minter = base.minter.load(deps.storage)?;
+
+    if info.sender != minter {
+        return Err(ContractError::Unauthorized {});
+    }
+
+    // create the token
+    let token = TokenInfo {
+        owner: deps.api.addr_validate(&msg.owner)?,
+        approvals: vec![],
+        token_uri: msg.token_uri,
+        extension: msg.extension,
+    };
+    base.tokens
+        .update(deps.storage, &msg.token_id, |old| match old {
+            Some(_) => Err(ContractError::Claimed {}),
+            None => Ok(token),
+        })?;
+
+    base.increment_tokens(deps.storage)?;
+
+    Ok(Response::new()
+        .add_attribute("action", "mint")
+        .add_attribute("minter", info.sender)
+        .add_attribute("owner", msg.owner)
+        .add_attribute("token_id", msg.token_id))
 }
 
 fn transfer_nft(
