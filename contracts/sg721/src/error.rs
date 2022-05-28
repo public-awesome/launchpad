@@ -21,9 +21,6 @@ pub enum ContractError {
     #[error("InvalidCreationFee")]
     InvalidCreationFee {},
 
-    #[error("InvalidMinterCodeId {code_id}")]
-    InvalidMinterCodeId { code_id: u64 },
-
     #[error("token_id already claimed")]
     Claimed {},
 

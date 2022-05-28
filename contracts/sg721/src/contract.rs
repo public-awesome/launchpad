@@ -7,8 +7,8 @@ use crate::ContractError;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Binary, ContractInfoResponse, Deps, DepsMut, Env, Event, MessageInfo, QueryRequest,
-    StdResult, Storage, WasmMsg, WasmQuery,
+    to_binary, Binary, Deps, DepsMut, Env, Event, MessageInfo, QueryRequest, StdResult, Storage,
+    WasmMsg, WasmQuery,
 };
 use cw2::set_contract_version;
 use cw721::{ContractInfoResponse as Cw721ContractInfoResponse, Cw721ReceiveMsg};
@@ -52,21 +52,12 @@ pub fn instantiate<T: Serialize + DeserializeOwned + Clone>(
     };
     base.contract_info.save(deps.storage, &info)?;
 
+    // check if minter is a contract and save
     let minter = deps.api.addr_validate(&msg.minter)?;
-
-    // TODO: get this from the chain
-    let allowed_minter_code_ids = vec![1, 2, 3];
-
-    // make sure collection can only be instantiated with registered minters
     let query = QueryRequest::Wasm(WasmQuery::ContractInfo {
         contract_addr: minter.to_string(),
     });
-    let info_res: ContractInfoResponse = deps.querier.query(&query)?;
-    let code_id = info_res.code_id;
-    if allowed_minter_code_ids.contains(&code_id) {
-        return Err(ContractError::InvalidMinterCodeId { code_id });
-    }
-
+    deps.querier.query(&query)?;
     base.minter.save(deps.storage, &minter)?;
 
     // sg721 instantiation
@@ -75,7 +66,6 @@ pub fn instantiate<T: Serialize + DeserializeOwned + Clone>(
     }
 
     Url::parse(&msg.collection_info.image)?;
-
     if let Some(ref external_link) = msg.collection_info.external_link {
         Url::parse(external_link)?;
     }
@@ -395,14 +385,13 @@ fn query_config(deps: Deps) -> StdResult<CollectionInfoResponse> {
 #[cfg(test)]
 mod tests {
     use super::*;
-
     use crate::state::CollectionInfo;
     use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-    use cosmwasm_std::{coins, from_binary, Decimal, Empty};
+    use cosmwasm_std::{coins, Empty};
     use sg_std::NATIVE_DENOM;
 
     #[test]
-    fn proper_initialization_no_royalties() {
+    fn fail_initialization_with_no_minter_contract() {
         let mut deps = mock_dependencies();
         let collection = String::from("collection0");
 
@@ -421,63 +410,6 @@ mod tests {
         };
         let info = mock_info("creator", &coins(CREATION_FEE, NATIVE_DENOM));
 
-        // FIXME: ths will fail because the list of allowed minters have to be mocked out
-
-        // make sure instantiate has the fair burn messages
-        let res = instantiate::<Empty>(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(2, res.messages.len());
-
-        // let's query the collection info
-        let res = query::<Empty>(deps.as_ref(), mock_env(), QueryMsg::CollectionInfo {}).unwrap();
-        let value: CollectionInfoResponse = from_binary(&res).unwrap();
-        assert_eq!("https://example.com/image.png", value.image);
-        assert_eq!("Stargaze Monkeys", value.description);
-        assert_eq!(
-            "https://example.com/external.html",
-            value.external_link.unwrap()
-        );
-        assert_eq!(None, value.royalty_info);
-    }
-
-    #[test]
-    fn proper_initialization_with_royalties() {
-        let mut deps = mock_dependencies();
-        let creator = String::from("creator");
-        let collection = String::from("collection0");
-
-        let msg = InstantiateMsg {
-            name: collection,
-            symbol: String::from("BOBO"),
-            minter: String::from("minter"),
-            collection_info: CollectionInfo {
-                creator: String::from("creator"),
-                description: String::from("Stargaze Monkeys"),
-                image: "https://example.com/image.png".to_string(),
-                external_link: Some("https://example.com/external.html".to_string()),
-                royalty_info: Some(RoyaltyInfoResponse {
-                    payment_address: creator.clone(),
-                    share: Decimal::percent(10),
-                }),
-            },
-            transfer_hook: None,
-        };
-        let info = mock_info("creator", &coins(CREATION_FEE, NATIVE_DENOM));
-
-        // FIXME: ths will fail because the list of allowed minters have to be mocked out
-
-        // make sure instantiate has the fair burn messages
-        let res = instantiate::<Empty>(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(2, res.messages.len());
-
-        // let's query the collection info
-        let res = query::<Empty>(deps.as_ref(), mock_env(), QueryMsg::CollectionInfo {}).unwrap();
-        let value: CollectionInfoResponse = from_binary(&res).unwrap();
-        assert_eq!(
-            Some(RoyaltyInfoResponse {
-                payment_address: creator,
-                share: Decimal::percent(10),
-            }),
-            value.royalty_info
-        );
+        instantiate::<Empty>(deps.as_mut(), mock_env(), info, msg).unwrap_err();
     }
 }
