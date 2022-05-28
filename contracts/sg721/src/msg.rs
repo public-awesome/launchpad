@@ -1,6 +1,6 @@
 use crate::{state::CollectionInfo, ContractError};
 use cosmwasm_std::{to_binary, Binary, Decimal, StdResult};
-use cw721_base::msg::QueryMsg as Cw721QueryMsg;
+use cw721_base::{msg::QueryMsg as Cw721QueryMsg, MintMsg};
 use cw_utils::Expiration;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -29,20 +29,6 @@ impl RoyaltyInfoResponse {
 
         Ok(self.share)
     }
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct MintMsg<T> {
-    /// Unique ID of the NFT
-    pub token_id: String,
-    /// The owner of the newly minter NFT
-    pub owner: String,
-    /// Universal resource identifier for this NFT
-    /// Should point to a JSON file that conforms to the ERC721
-    /// Metadata JSON Schema
-    pub token_uri: Option<String>,
-    /// Any custom extension used by this contract
-    pub extension: T,
 }
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]

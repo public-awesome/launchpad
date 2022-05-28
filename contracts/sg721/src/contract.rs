@@ -1,17 +1,22 @@
-use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg, RoyaltyInfoResponse, TransferHookMsg};
+use crate::msg::{
+    CollectionInfoResponse, ExecuteMsg, InstantiateMsg, QueryMsg, RoyaltyInfoResponse,
+    TransferHookMsg,
+};
 use crate::state::{CollectionInfo, RoyaltyInfo, COLLECTION_INFO, TRANSFER_HOOKS};
 use crate::ContractError;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Binary, ContractInfoResponse, Deps, DepsMut, Empty, Env, Event, MessageInfo,
-    QueryRequest, StdResult, Storage, WasmMsg, WasmQuery,
+    to_binary, Binary, ContractInfoResponse, Deps, DepsMut, Env, Event, MessageInfo, QueryRequest,
+    StdResult, Storage, WasmMsg, WasmQuery,
 };
 use cw2::set_contract_version;
 use cw721::{ContractInfoResponse as Cw721ContractInfoResponse, Cw721ReceiveMsg};
 use cw721_base::state::TokenInfo;
 use cw721_base::MintMsg;
 use cw_utils::Expiration;
+use serde::de::DeserializeOwned;
+use serde::Serialize;
 use sg1::checked_fair_burn;
 use sg_std::{Response, StargazeMsgWrapper, SubMsg};
 use url::Url;
@@ -24,10 +29,10 @@ const CREATION_FEE: u128 = 1_000_000_000;
 const MAX_DESCRIPTION_LENGTH: u32 = 512;
 const REPLY_TRANSFER_HOOK: u64 = 1;
 
-pub type BaseContract<'a> = cw721_base::Cw721Contract<'a, Empty, StargazeMsgWrapper>;
+pub type BaseContract<'a, T> = cw721_base::Cw721Contract<'a, T, StargazeMsgWrapper>;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn instantiate(
+pub fn instantiate<T: Serialize + DeserializeOwned + Clone>(
     deps: DepsMut,
     _env: Env,
     info: MessageInfo,
@@ -35,7 +40,7 @@ pub fn instantiate(
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
-    let base = BaseContract::default();
+    let base = BaseContract::<T>::default();
     let mut res = Response::new();
 
     checked_fair_burn(&info, CREATION_FEE, None, &mut res)?;
@@ -50,7 +55,7 @@ pub fn instantiate(
     let minter = deps.api.addr_validate(&msg.minter)?;
 
     // TODO: get this from the chain
-    let code_ids = vec![1, 2, 3];
+    let allowed_minter_code_ids = vec![1, 2, 3];
 
     // make sure collection can only be instantiated with registered minters
     let query = QueryRequest::Wasm(WasmQuery::ContractInfo {
@@ -58,7 +63,7 @@ pub fn instantiate(
     });
     let info_res: ContractInfoResponse = deps.querier.query(&query)?;
     let code_id = info_res.code_id;
-    if code_ids.contains(&code_id) {
+    if allowed_minter_code_ids.contains(&code_id) {
         return Err(ContractError::InvalidMinterCodeId { code_id });
     }
 
@@ -103,7 +108,7 @@ pub fn instantiate(
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn execute<T>(
+pub fn execute<T: Serialize + DeserializeOwned + Clone>(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
@@ -137,8 +142,8 @@ pub fn execute<T>(
     }
 }
 
-pub fn mint<T>(
-    base: BaseContract,
+pub fn mint<T: Serialize + DeserializeOwned + Clone>(
+    base: BaseContract<T>,
     deps: DepsMut,
     _env: Env,
     info: MessageInfo,
@@ -172,8 +177,8 @@ pub fn mint<T>(
         .add_attribute("token_id", msg.token_id))
 }
 
-fn transfer_nft(
-    base: BaseContract,
+fn transfer_nft<T: Serialize + DeserializeOwned + Clone>(
+    base: BaseContract<T>,
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
@@ -193,8 +198,8 @@ fn transfer_nft(
     Ok(res)
 }
 
-fn send_nft(
-    base: BaseContract,
+fn send_nft<T: Serialize + DeserializeOwned + Clone>(
+    base: BaseContract<T>,
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
@@ -226,8 +231,8 @@ fn send_nft(
     Ok(res)
 }
 
-fn approve(
-    base: BaseContract,
+fn approve<T: Serialize + DeserializeOwned + Clone>(
+    base: BaseContract<T>,
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
@@ -246,8 +251,8 @@ fn approve(
     Ok(res)
 }
 
-fn revoke(
-    base: BaseContract,
+fn revoke<T: Serialize + DeserializeOwned + Clone>(
+    base: BaseContract<T>,
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
@@ -265,8 +270,8 @@ fn revoke(
     Ok(res)
 }
 
-fn approve_all(
-    base: BaseContract,
+fn approve_all<T: Serialize + DeserializeOwned + Clone>(
+    base: BaseContract<T>,
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
@@ -292,8 +297,8 @@ fn approve_all(
     Ok(res)
 }
 
-fn revoke_all(
-    base: BaseContract,
+fn revoke_all<T: Serialize + DeserializeOwned + Clone>(
+    base: BaseContract<T>,
     deps: DepsMut,
     _env: Env,
     info: MessageInfo,
@@ -311,8 +316,8 @@ fn revoke_all(
     Ok(res)
 }
 
-fn burn(
-    base: BaseContract,
+fn burn<T: Serialize + DeserializeOwned + Clone>(
+    base: BaseContract<T>,
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
@@ -356,10 +361,14 @@ fn prepare_transfer_hook(
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
+pub fn query<T: Serialize + DeserializeOwned + Clone>(
+    deps: Deps,
+    env: Env,
+    msg: QueryMsg,
+) -> StdResult<Binary> {
     match msg {
         QueryMsg::CollectionInfo {} => to_binary(&query_config(deps)?),
-        _ => BaseContract::default().query(deps, env, msg.into()),
+        _ => BaseContract::<T>::default().query(deps, env, msg.into()),
     }
 }
 
@@ -389,7 +398,7 @@ mod tests {
 
     use crate::state::CollectionInfo;
     use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-    use cosmwasm_std::{coins, from_binary, Decimal};
+    use cosmwasm_std::{coins, from_binary, Decimal, Empty};
     use sg_std::NATIVE_DENOM;
 
     #[test]
@@ -412,12 +421,14 @@ mod tests {
         };
         let info = mock_info("creator", &coins(CREATION_FEE, NATIVE_DENOM));
 
-        // make sure instantiate has the burn messages
-        let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+        // FIXME: ths will fail because the list of allowed minters have to be mocked out
+
+        // make sure instantiate has the fair burn messages
+        let res = instantiate::<Empty>(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(2, res.messages.len());
 
         // let's query the collection info
-        let res = query(deps.as_ref(), mock_env(), QueryMsg::CollectionInfo {}).unwrap();
+        let res = query::<Empty>(deps.as_ref(), mock_env(), QueryMsg::CollectionInfo {}).unwrap();
         let value: CollectionInfoResponse = from_binary(&res).unwrap();
         assert_eq!("https://example.com/image.png", value.image);
         assert_eq!("Stargaze Monkeys", value.description);
@@ -452,12 +463,14 @@ mod tests {
         };
         let info = mock_info("creator", &coins(CREATION_FEE, NATIVE_DENOM));
 
-        // make sure instantiate has the burn messages
-        let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+        // FIXME: ths will fail because the list of allowed minters have to be mocked out
+
+        // make sure instantiate has the fair burn messages
+        let res = instantiate::<Empty>(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(2, res.messages.len());
 
         // let's query the collection info
-        let res = query(deps.as_ref(), mock_env(), QueryMsg::CollectionInfo {}).unwrap();
+        let res = query::<Empty>(deps.as_ref(), mock_env(), QueryMsg::CollectionInfo {}).unwrap();
         let value: CollectionInfoResponse = from_binary(&res).unwrap();
         assert_eq!(
             Some(RoyaltyInfoResponse {

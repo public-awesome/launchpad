@@ -9,7 +9,7 @@ use cw721::{
     AllNftInfoResponse, ApprovalResponse, ApprovalsResponse, ContractInfoResponse, NftInfoResponse,
     NumTokensResponse, OperatorsResponse, OwnerOfResponse, TokensResponse,
 };
-use cw721_base::MinterResponse;
+use cw721_base::{Extension, MinterResponse};
 use sg721::msg::{CollectionInfoResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
 
 fn main() {
@@ -19,7 +19,7 @@ fn main() {
     remove_schemas(&out_dir).unwrap();
 
     export_schema(&schema_for!(InstantiateMsg), &out_dir);
-    export_schema(&schema_for!(ExecuteMsg), &out_dir);
+    export_schema(&schema_for!(ExecuteMsg<Extension>), &out_dir);
     export_schema(&schema_for!(QueryMsg), &out_dir);
     export_schema(&schema_for!(Binary), &out_dir);
     export_schema(&schema_for!(CollectionInfoResponse), &out_dir);
