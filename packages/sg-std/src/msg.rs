@@ -34,6 +34,9 @@ pub enum StargazeMsg {
     FundCommunityPool {
         amount: Vec<Coin>,
     },
+    FundFeeCollector {
+        amount: Vec<Coin>,
+    },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -58,6 +61,15 @@ pub fn create_fund_community_pool_msg(amount: Vec<Coin>) -> CosmosMsg<StargazeMs
     StargazeMsgWrapper {
         route: StargazeRoute::Distribution,
         msg_data: StargazeMsg::FundCommunityPool { amount },
+        version: MSG_DATA_VERSION.to_owned(),
+    }
+    .into()
+}
+
+pub fn create_fund_fee_collector_msg(amount: Vec<Coin>) -> CosmosMsg<StargazeMsgWrapper> {
+    StargazeMsgWrapper {
+        route: StargazeRoute::Alloc,
+        msg_data: StargazeMsg::FundFeeCollector { amount },
         version: MSG_DATA_VERSION.to_owned(),
     }
     .into()
