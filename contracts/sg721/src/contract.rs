@@ -98,11 +98,11 @@ pub fn instantiate(
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn execute<T: Serialize + DeserializeOwned + Clone>(
+pub fn execute(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    msg: ExecuteMsg<T>,
+    msg: ExecuteMsg<Extension>,
 ) -> Result<Response, ContractError> {
     let base = BaseContract::default();
     match msg {
