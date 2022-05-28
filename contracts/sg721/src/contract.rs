@@ -351,11 +351,7 @@ fn prepare_transfer_hook(
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query<T: Serialize + DeserializeOwned + Clone>(
-    deps: Deps,
-    env: Env,
-    msg: QueryMsg,
-) -> StdResult<Binary> {
+pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::CollectionInfo {} => to_binary(&query_config(deps)?),
         _ => BaseContract::default().query(deps, env, msg.into()),
