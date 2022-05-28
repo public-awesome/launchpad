@@ -20,6 +20,13 @@
     },
     "symbol": {
       "type": "string"
+    },
+    "transfer_hook": {
+      "description": "Address of contract to get a callback for every transfer",
+      "type": [
+        "string",
+        "null"
+      ]
     }
   },
   "definitions": {
