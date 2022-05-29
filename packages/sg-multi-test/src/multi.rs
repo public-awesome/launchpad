@@ -65,7 +65,7 @@ impl Module for StargazeModule {
             }
             sg_std::StargazeMsg::FundFairburnPool { amount } => {
                 let msg = BankMsg::Send {
-                    to_address: "community_pool".to_owned(),
+                    to_address: "fairburn_pool".to_owned(),
                     amount,
                 }
                 .into();
