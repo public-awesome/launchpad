@@ -131,10 +131,10 @@ pub fn instantiate(
         msg: WasmMsg::Instantiate {
             code_id: msg.sg721_code_id,
             msg: to_binary(&Sg721InstantiateMsg {
-                name: msg.sg721_instantiate_msg.name,
-                symbol: msg.sg721_instantiate_msg.symbol,
+                name: msg.name,
+                symbol: msg.symbol,
                 minter: env.contract.address.to_string(),
-                collection_info: msg.sg721_instantiate_msg.collection_info,
+                collection_info: msg.collection_info,
             })?,
             funds: info.funds,
             admin: Some(info.sender.to_string()),

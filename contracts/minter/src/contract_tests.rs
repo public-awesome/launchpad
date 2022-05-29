@@ -4,7 +4,7 @@ use cosmwasm_std::{Api, Coin};
 use cw721::{Cw721QueryMsg, OwnerOfResponse};
 use cw721_base::ExecuteMsg as Cw721ExecuteMsg;
 use cw_multi_test::{BankSudo, Contract, ContractWrapper, Executor, SudoMsg};
-use sg721::msg::{InstantiateMsg as Sg721InstantiateMsg, RoyaltyInfoResponse};
+use sg721::msg::RoyaltyInfoResponse;
 use sg721::state::CollectionInfo;
 use sg_multi_test::StargazeApp;
 use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
@@ -102,20 +102,17 @@ fn setup_minter_contract(
         whitelist: None,
         base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
         sg721_code_id,
-        sg721_instantiate_msg: Sg721InstantiateMsg {
-            name: String::from("TEST"),
-            symbol: String::from("TEST"),
-            minter: creator.to_string(),
-            collection_info: CollectionInfo {
-                creator: creator.to_string(),
-                description: String::from("Stargaze Monkeys"),
-                image: "https://example.com/image.png".to_string(),
-                external_link: Some("https://example.com/external.html".to_string()),
-                royalty_info: Some(RoyaltyInfoResponse {
-                    payment_address: creator.to_string(),
-                    share: Decimal::percent(10),
-                }),
-            },
+        name: String::from("TEST"),
+        symbol: String::from("TEST"),
+        collection_info: CollectionInfo {
+            creator: creator.to_string(),
+            description: String::from("Stargaze Monkeys"),
+            image: "https://example.com/image.png".to_string(),
+            external_link: Some("https://example.com/external.html".to_string()),
+            royalty_info: Some(RoyaltyInfoResponse {
+                payment_address: creator.to_string(),
+                share: Decimal::percent(10),
+            }),
         },
     };
     let minter_addr = router
@@ -211,20 +208,17 @@ fn initialization() {
         whitelist: None,
         base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
         sg721_code_id: 1,
-        sg721_instantiate_msg: Sg721InstantiateMsg {
-            name: String::from("TEST"),
-            symbol: String::from("TEST"),
-            minter: info.sender.to_string(),
-            collection_info: CollectionInfo {
-                creator: info.sender.to_string(),
-                description: String::from("Stargaze Monkeys"),
-                image: "https://example.com/image.png".to_string(),
-                external_link: Some("https://example.com/external.html".to_string()),
-                royalty_info: Some(RoyaltyInfoResponse {
-                    payment_address: info.sender.to_string(),
-                    share: Decimal::percent(10),
-                }),
-            },
+        name: String::from("TEST"),
+        symbol: String::from("TEST"),
+        collection_info: CollectionInfo {
+            creator: info.sender.to_string(),
+            description: String::from("Stargaze Monkeys"),
+            image: "https://example.com/image.png".to_string(),
+            external_link: Some("https://example.com/external.html".to_string()),
+            royalty_info: Some(RoyaltyInfoResponse {
+                payment_address: info.sender.to_string(),
+                share: Decimal::percent(10),
+            }),
         },
     };
     instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
@@ -239,20 +233,17 @@ fn initialization() {
         whitelist: None,
         base_token_uri: "https://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
         sg721_code_id: 1,
-        sg721_instantiate_msg: Sg721InstantiateMsg {
-            name: String::from("TEST"),
-            symbol: String::from("TEST"),
-            minter: info.sender.to_string(),
-            collection_info: CollectionInfo {
-                creator: info.sender.to_string(),
-                description: String::from("Stargaze Monkeys"),
-                image: "https://example.com/image.png".to_string(),
-                external_link: Some("https://example.com/external.html".to_string()),
-                royalty_info: Some(RoyaltyInfoResponse {
-                    payment_address: info.sender.to_string(),
-                    share: Decimal::percent(10),
-                }),
-            },
+        name: String::from("TEST"),
+        symbol: String::from("TEST"),
+        collection_info: CollectionInfo {
+            creator: info.sender.to_string(),
+            description: String::from("Stargaze Monkeys"),
+            image: "https://example.com/image.png".to_string(),
+            external_link: Some("https://example.com/external.html".to_string()),
+            royalty_info: Some(RoyaltyInfoResponse {
+                payment_address: info.sender.to_string(),
+                share: Decimal::percent(10),
+            }),
         },
     };
     instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
@@ -268,20 +259,17 @@ fn initialization() {
         whitelist: None,
         base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
         sg721_code_id: 1,
-        sg721_instantiate_msg: Sg721InstantiateMsg {
-            name: String::from("TEST"),
-            symbol: String::from("TEST"),
-            minter: info.sender.to_string(),
-            collection_info: CollectionInfo {
-                creator: info.sender.to_string(),
-                description: String::from("Stargaze Monkeys"),
-                image: "https://example.com/image.png".to_string(),
-                external_link: Some("https://example.com/external.html".to_string()),
-                royalty_info: Some(RoyaltyInfoResponse {
-                    payment_address: info.sender.to_string(),
-                    share: Decimal::percent(10),
-                }),
-            },
+        name: String::from("TEST"),
+        symbol: String::from("TEST"),
+        collection_info: CollectionInfo {
+            creator: info.sender.to_string(),
+            description: String::from("Stargaze Monkeys"),
+            image: "https://example.com/image.png".to_string(),
+            external_link: Some("https://example.com/external.html".to_string()),
+            royalty_info: Some(RoyaltyInfoResponse {
+                payment_address: info.sender.to_string(),
+                share: Decimal::percent(10),
+            }),
         },
     };
     instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
@@ -296,20 +284,17 @@ fn initialization() {
         whitelist: None,
         base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
         sg721_code_id: 1,
-        sg721_instantiate_msg: Sg721InstantiateMsg {
-            name: String::from("TEST"),
-            symbol: String::from("TEST"),
-            minter: info.sender.to_string(),
-            collection_info: CollectionInfo {
-                creator: info.sender.to_string(),
-                description: String::from("Stargaze Monkeys"),
-                image: "https://example.com/image.png".to_string(),
-                external_link: Some("https://example.com/external.html".to_string()),
-                royalty_info: Some(RoyaltyInfoResponse {
-                    payment_address: info.sender.to_string(),
-                    share: Decimal::percent(10),
-                }),
-            },
+        name: String::from("TEST"),
+        symbol: String::from("TEST"),
+        collection_info: CollectionInfo {
+            creator: info.sender.to_string(),
+            description: String::from("Stargaze Monkeys"),
+            image: "https://example.com/image.png".to_string(),
+            external_link: Some("https://example.com/external.html".to_string()),
+            royalty_info: Some(RoyaltyInfoResponse {
+                payment_address: info.sender.to_string(),
+                share: Decimal::percent(10),
+            }),
         },
     };
     instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
@@ -324,20 +309,17 @@ fn initialization() {
         whitelist: None,
         base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
         sg721_code_id: 1,
-        sg721_instantiate_msg: Sg721InstantiateMsg {
-            name: String::from("TEST"),
-            symbol: String::from("TEST"),
-            minter: info.sender.to_string(),
-            collection_info: CollectionInfo {
-                creator: info.sender.to_string(),
-                description: String::from("Stargaze Monkeys"),
-                image: "https://example.com/image.png".to_string(),
-                external_link: Some("https://example.com/external.html".to_string()),
-                royalty_info: Some(RoyaltyInfoResponse {
-                    payment_address: info.sender.to_string(),
-                    share: Decimal::percent(10),
-                }),
-            },
+        name: String::from("TEST"),
+        symbol: String::from("TEST"),
+        collection_info: CollectionInfo {
+            creator: info.sender.to_string(),
+            description: String::from("Stargaze Monkeys"),
+            image: "https://example.com/image.png".to_string(),
+            external_link: Some("https://example.com/external.html".to_string()),
+            royalty_info: Some(RoyaltyInfoResponse {
+                payment_address: info.sender.to_string(),
+                share: Decimal::percent(10),
+            }),
         },
     };
     instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
@@ -352,20 +334,17 @@ fn initialization() {
         whitelist: None,
         base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
         sg721_code_id: 1,
-        sg721_instantiate_msg: Sg721InstantiateMsg {
-            name: String::from("TEST"),
-            symbol: String::from("TEST"),
-            minter: info.sender.to_string(),
-            collection_info: CollectionInfo {
-                creator: info.sender.to_string(),
-                description: String::from("Stargaze Monkeys"),
-                image: "https://example.com/image.png".to_string(),
-                external_link: Some("https://example.com/external.html".to_string()),
-                royalty_info: Some(RoyaltyInfoResponse {
-                    payment_address: info.sender.to_string(),
-                    share: Decimal::percent(10),
-                }),
-            },
+        name: String::from("TEST"),
+        symbol: String::from("TEST"),
+        collection_info: CollectionInfo {
+            creator: info.sender.to_string(),
+            description: String::from("Stargaze Monkeys"),
+            image: "https://example.com/image.png".to_string(),
+            external_link: Some("https://example.com/external.html".to_string()),
+            royalty_info: Some(RoyaltyInfoResponse {
+                payment_address: info.sender.to_string(),
+                share: Decimal::percent(10),
+            }),
         },
     };
     instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
@@ -1230,20 +1209,17 @@ fn test_start_time_before_genesis() {
         whitelist: None,
         base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
         sg721_code_id,
-        sg721_instantiate_msg: Sg721InstantiateMsg {
-            name: String::from("TEST"),
-            symbol: String::from("TEST"),
-            minter: creator.to_string(),
-            collection_info: CollectionInfo {
-                creator: creator.to_string(),
-                description: String::from("Stargaze Monkeys"),
-                image: "https://example.com/image.png".to_string(),
-                external_link: Some("https://example.com/external.html".to_string()),
-                royalty_info: Some(RoyaltyInfoResponse {
-                    payment_address: creator.to_string(),
-                    share: Decimal::percent(10),
-                }),
-            },
+        name: String::from("TEST"),
+        symbol: String::from("TEST"),
+        collection_info: CollectionInfo {
+            creator: creator.to_string(),
+            description: String::from("Stargaze Monkeys"),
+            image: "https://example.com/image.png".to_string(),
+            external_link: Some("https://example.com/external.html".to_string()),
+            royalty_info: Some(RoyaltyInfoResponse {
+                payment_address: creator.to_string(),
+                share: Decimal::percent(10),
+            }),
         },
     };
     let minter_addr = router
@@ -1280,17 +1256,14 @@ fn test_update_start_time() {
         whitelist: None,
         base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
         sg721_code_id,
-        sg721_instantiate_msg: Sg721InstantiateMsg {
-            name: String::from("TEST"),
-            symbol: String::from("TEST"),
-            minter: creator.to_string(),
-            collection_info: CollectionInfo {
-                creator: creator.to_string(),
-                description: String::from("Stargaze Monkeys"),
-                image: "https://example.com/image.png".to_string(),
-                external_link: Some("https://example.com/external.html".to_string()),
-                royalty_info: None,
-            },
+        name: String::from("TEST"),
+        symbol: String::from("TEST"),
+        collection_info: CollectionInfo {
+            creator: creator.to_string(),
+            description: String::from("Stargaze Monkeys"),
+            image: "https://example.com/image.png".to_string(),
+            external_link: Some("https://example.com/external.html".to_string()),
+            royalty_info: None,
         },
     };
     let minter_addr = router
@@ -1338,17 +1311,14 @@ fn test_invalid_start_time() {
         whitelist: None,
         base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
         sg721_code_id,
-        sg721_instantiate_msg: Sg721InstantiateMsg {
-            name: String::from("TEST"),
-            symbol: String::from("TEST"),
-            minter: creator.to_string(),
-            collection_info: CollectionInfo {
-                creator: creator.to_string(),
-                description: String::from("Stargaze Monkeys"),
-                image: "https://example.com/image.png".to_string(),
-                external_link: Some("https://example.com/external.html".to_string()),
-                royalty_info: None,
-            },
+        name: String::from("TEST"),
+        symbol: String::from("TEST"),
+        collection_info: CollectionInfo {
+            creator: creator.to_string(),
+            description: String::from("Stargaze Monkeys"),
+            image: "https://example.com/image.png".to_string(),
+            external_link: Some("https://example.com/external.html".to_string()),
+            royalty_info: None,
         },
     };
     // set time before the start_time above
