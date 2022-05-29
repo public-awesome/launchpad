@@ -148,7 +148,6 @@ func TestClaim(t *testing.T) {
 		fmt.Sprintf(instantiateMinterTemplate,
 			creator.Address.String(),
 			creator.Address.String(),
-			creator.Address.String(),
 			genesisMintDateTime.UnixNano(),
 			"null",
 			1, // limit 1

@@ -40,21 +40,18 @@ var (
 			"base_token_uri": "ipfs://...",
 			"num_tokens": 100,
 			"sg721_code_id": 3,
-			"sg721_instantiate_msg": {
-			  "name": "Collection Name",
-			  "symbol": "SYM",
-			  "minter": "%s",
-			  "collection_info": {
+			"name": "Collection Name",
+			"symbol": "SYM",
+			"collection_info": {
 				"contract_uri": "ipfs://...",
 				"creator": "%s",
 				"description": "Stargaze Monkeys",
 				"image": "https://example.com/image.png",
 				"external_link" : "https://stargaze.zone",
 				"royalty_info": {
-				  "payment_address": "%s",
-				  "share": "0.1"
+					"payment_address": "%s",
+					"share": "0.1"
 				}
-			  }
 			},
 			"start_time": "%d",
 			"whitelist" : %s, 
@@ -172,7 +169,6 @@ func TestMinter(t *testing.T) {
 
 	instantiateMsgRaw := []byte(
 		fmt.Sprintf(instantiateMinterTemplate,
-			creator.Address.String(),
 			creator.Address.String(),
 			creator.Address.String(),
 			genesisMintDateTime.UnixNano(),
@@ -430,7 +426,6 @@ func TestWhitelistMinter(t *testing.T) {
 	whiteListAddrStr := fmt.Sprintf("\"%s\"", whitelistAddr)
 	instantiateMinterMsgRaw := []byte(
 		fmt.Sprintf(instantiateMinterTemplate,
-			creator.Address.String(),
 			creator.Address.String(),
 			creator.Address.String(),
 			whitelistEndTime.UnixNano(),
