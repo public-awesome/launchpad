@@ -28,6 +28,7 @@ type MarketplaceTestSuite struct {
 	startTime time.Time
 
 	accounts          []Account
+	minter            sdk.AccAddress
 	claimCodeID       uint64
 	sg721CodeID       uint64
 	minterCodeID      uint64
@@ -38,6 +39,8 @@ func (suite *MarketplaceTestSuite) SetupSuite() {
 
 	suite.accounts = GetAccounts()
 	genAccs, balances := GetAccountsAndBalances(suite.accounts)
+
+	suite.minter = wasmkeeper.BuildContractAddress(3, 1)
 
 	suite.app = simapp.SetupWithGenesisAccounts(suite.T(), suite.T().TempDir(), genAccs, balances...)
 
@@ -131,6 +134,7 @@ func (suite *MarketplaceTestSuite) TestRoyalties() {
 	ctx, _ := suite.parentCtx.CacheContext()
 	admin := suite.accounts[0]
 	creator := suite.accounts[1]
+	// minter := suite.minter
 	creatorRoyaltyAccount := suite.accounts[2]
 	seller := suite.accounts[3]
 	buyer := suite.accounts[4]
@@ -139,9 +143,22 @@ func (suite *MarketplaceTestSuite) TestRoyalties() {
 		PaymentAddress: creatorRoyaltyAccount.Address.String(),
 		Share:          "0.1",
 	}
-	collectionAddress, err := InstantiateSG721(ctx, suite.msgServer, creator.Address, suite.sg721CodeID, royalties)
+
+	// create a minter that creates a sg721 instead
+	minterAddress, err := InstantiateMinter(ctx, suite.msgServer, creator.Address, suite.minterCodeID, suite.sg721CodeID, royalties)
 	suite.Require().NoError(err)
-	suite.Require().NotEmpty(collectionAddress)
+	suite.Require().NotEmpty(minterAddress)
+	minterAddr, err := sdk.AccAddressFromBech32(minterAddress)
+	suite.Require().NoError(err)
+
+	// query minter config to get sg721 collection address
+	data, err := suite.app.WasmKeeper.QuerySmart(ctx, minterAddr, []byte("Config {}"))
+	suite.Require().NoError(err)
+	var configRes ConfigResponse
+	err = json.Unmarshal(data, &configRes)
+	suite.Require().NoError(err)
+	collectionAddress := configRes.SG721Address
+	suite.Require().NotEmpty(configRes.SG721Address)
 
 	marketplaceAddress, err := InstantiateMarketplace(ctx, suite.msgServer, admin.Address, suite.marketplaceCodeID)
 	suite.Require().NoError(err)
@@ -255,9 +272,21 @@ func (suite *MarketplaceTestSuite) TestFundsRecipient() {
 		PaymentAddress: creatorRoyaltyAccount.Address.String(),
 		Share:          "0.1",
 	}
-	collectionAddress, err := InstantiateSG721(ctx, suite.msgServer, creator.Address, suite.sg721CodeID, royalties)
+	// create a minter that creates a sg721 instead
+	minterAddress, err := InstantiateMinter(ctx, suite.msgServer, creator.Address, suite.minterCodeID, suite.sg721CodeID, royalties)
 	suite.Require().NoError(err)
-	suite.Require().NotEmpty(collectionAddress)
+	suite.Require().NotEmpty(minterAddress)
+	minterAddr, err := sdk.AccAddressFromBech32(minterAddress)
+	suite.Require().NoError(err)
+
+	// query minter config to get sg721 collection address
+	data, err := suite.app.WasmKeeper.QuerySmart(ctx, minterAddr, []byte("Config {}"))
+	suite.Require().NoError(err)
+	var configRes ConfigResponse
+	err = json.Unmarshal(data, &configRes)
+	suite.Require().NoError(err)
+	collectionAddress := configRes.SG721Address
+	suite.Require().NotEmpty(configRes.SG721Address)
 
 	marketplaceAddress, err := InstantiateMarketplace(ctx, suite.msgServer, admin.Address, suite.marketplaceCodeID)
 	suite.Require().NoError(err)
@@ -392,9 +421,21 @@ func (suite *MarketplaceTestSuite) TestFindersFeesWithRoyalties() {
 		PaymentAddress: creatorRoyaltyAccount.Address.String(),
 		Share:          "0.1",
 	}
-	collectionAddress, err := InstantiateSG721(ctx, suite.msgServer, creator.Address, suite.sg721CodeID, royalties)
+	// create a minter that creates a sg721 instead
+	minterAddress, err := InstantiateMinter(ctx, suite.msgServer, creator.Address, suite.minterCodeID, suite.sg721CodeID, royalties)
 	suite.Require().NoError(err)
-	suite.Require().NotEmpty(collectionAddress)
+	suite.Require().NotEmpty(minterAddress)
+	minterAddr, err := sdk.AccAddressFromBech32(minterAddress)
+	suite.Require().NoError(err)
+
+	// query minter config to get sg721 collection address
+	data, err := suite.app.WasmKeeper.QuerySmart(ctx, minterAddr, []byte(`{"config":{}}`))
+	suite.Require().NoError(err)
+	var configRes ConfigResponse
+	err = json.Unmarshal(data, &configRes)
+	suite.Require().NoError(err)
+	collectionAddress := configRes.SG721Address
+	suite.Require().NotEmpty(configRes.SG721Address)
 
 	marketplaceAddress, err := InstantiateMarketplace(ctx, suite.msgServer, admin.Address, suite.marketplaceCodeID)
 	suite.Require().NoError(err)
@@ -523,11 +564,54 @@ func (suite *MarketplaceTestSuite) TestFindersFeesWithRoyalties() {
 
 }
 
-func InstantiateSG721(ctx sdk.Context, msgServer wasmtypes.MsgServer, account sdk.AccAddress, codeID uint64, royalties *RoyaltyInfo) (string, error) {
+func InstantiateMinter(ctx sdk.Context, msgServer wasmtypes.MsgServer, account sdk.AccAddress, MinterCodeID, SG721CodeID uint64, royalties *RoyaltyInfo) (string, error) {
+	startDateTime, err := time.Parse(time.RFC3339Nano, "2022-03-11T21:00:00.000Z")
+	if err != nil {
+		return "", err
+	}
+
+	instantiate := MinterInstantiateMsg{
+		BaseTokenURI: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN",
+		NumTokens:    100,
+		SG721CodeID:  SG721CodeID,
+		Name:         "Collection Name",
+		Symbol:       "COL",
+		CollectionInfo: CollectionInfo{
+			Creator:     account.String(),
+			Description: "Description",
+			Image:       "https://example.com/image.png",
+			RoyaltyInfo: royalties,
+		},
+		StartTime:       fmt.Sprintf("%d", startDateTime.UnixNano()),
+		PerAddressLimit: 5,
+		UnitPrice:       sdk.NewInt64Coin("ustars", 10_000_000_000),
+		Whitelist:       nil,
+	}
+
+	instantiateMsgRaw, err := json.Marshal(&instantiate)
+	if err != nil {
+		return "", err
+	}
+
+	instantiateRes, err := msgServer.InstantiateContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgInstantiateContract{
+		Sender: account.String(),
+		Admin:  account.String(),
+		CodeID: MinterCodeID,
+		Label:  "Minter",
+		Msg:    instantiateMsgRaw,
+		Funds:  sdk.NewCoins(sdk.NewInt64Coin("ustars", 1_000_000_000)),
+	})
+	if err != nil {
+		return "", err
+	}
+	return instantiateRes.Address, nil
+}
+
+func InstantiateSG721(ctx sdk.Context, msgServer wasmtypes.MsgServer, minter sdk.AccAddress, account sdk.AccAddress, codeID uint64, royalties *RoyaltyInfo) (string, error) {
 	instantiate := SG721InstantiateMsg{
 		Name:   "Collection Name",
 		Symbol: "COL",
-		Minter: account.String(),
+		Minter: minter.String(),
 		CollectionInfo: CollectionInfo{
 			Creator:     account.String(),
 			Description: "Description",
@@ -592,6 +676,32 @@ type CollectionInfo struct {
 	Image       string       `json:"image"`
 	RoyaltyInfo *RoyaltyInfo `json:"royalty_info,omitempty"`
 }
+
+type MinterInstantiateMsg struct {
+	BaseTokenURI    string         `json:"base_token_uri"`
+	NumTokens       uint32         `json:"num_tokens"`
+	SG721CodeID     uint64         `json:"sg721_code_id"`
+	Name            string         `json:"name"`
+	Symbol          string         `json:"symbol"`
+	CollectionInfo  CollectionInfo `json:"collection_info"`
+	StartTime       string         `json:"start_time"`
+	PerAddressLimit uint32         `json:"per_address_limit"`
+	UnitPrice       sdk.Coin       `json:"unit_price"`
+	Whitelist       *string        `json:"whitelist"`
+}
+
+type ConfigResponse struct {
+	Admin           string   `json:"admin"`
+	BaseTokenURI    string   `json:"base_token_uri"`
+	NumTokens       uint32   `json:"num_tokens"`
+	PerAddressLimit uint32   `json:"per_address_limit"`
+	SG721Address    string   `json:"sg721_address"`
+	SG721CodeID     uint64   `json:"sg721_code_id"`
+	StartTime       uint64   `json:"start_time"`
+	UnitPrice       sdk.Coin `json:"unit_price"`
+	Whitelist       *string  `json:"whitelist"`
+}
+
 type SG721InstantiateMsg struct {
 	Name           string         `json:"name"`
 	Symbol         string         `json:"symbol"`

@@ -43,7 +43,6 @@ var (
 			"name": "Collection Name",
 			"symbol": "SYM",
 			"collection_info": {
-				"contract_uri": "ipfs://...",
 				"creator": "%s",
 				"description": "Stargaze Monkeys",
 				"image": "https://example.com/image.png",
