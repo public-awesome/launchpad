@@ -92,7 +92,7 @@ dependencies = [
  "sg-controllers 0.12.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg-marketplace",
  "sg-multi-test 0.13.0",
- "sg-std 0.12.0",
+ "sg-std 0.12.1",
  "sg721 0.12.0",
  "thiserror",
 ]
@@ -914,7 +914,7 @@ dependencies = [
  "cw-multi-test",
  "schemars",
  "serde",
- "sg-std 0.12.0",
+ "sg-std 0.12.1",
 ]
 
 [[package]]
@@ -974,7 +974,7 @@ dependencies = [
  "cosmwasm-std",
  "cw-utils",
  "serde",
- "sg-std 0.12.0",
+ "sg-std 0.12.1",
  "thiserror",
 ]
 
@@ -1026,8 +1026,8 @@ dependencies = [
  "cw721-base",
  "schemars",
  "serde",
- "sg-std 0.12.0",
- "sg1 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg-std 0.12.1",
+ "sg1 0.13.0",
  "thiserror",
  "url",
 ]

@@ -1,6 +1,6 @@
 use cosmwasm_std::{coins, Addr, BankMsg, Decimal, Event, MessageInfo, Uint128};
 use cw_utils::{must_pay, PaymentError};
-use sg_std::{create_fund_community_pool_msg, Response, SubMsg, NATIVE_DENOM};
+use sg_std::{create_fund_fairburn_pool_msg, Response, SubMsg, NATIVE_DENOM};
 use thiserror::Error;
 
 // governance parameters
@@ -26,7 +26,7 @@ pub fn checked_fair_burn(
 
 /// Burn and distribute fees, assuming the right fee is passed in
 pub fn fair_burn(fee: u128, developer: Option<Addr>, res: &mut Response) {
-    let mut event = Event::new("fair_burn");
+    let mut event = Event::new("fair-burn");
 
     let (burn_percent, dev_fee) = match developer {
         Some(dev) => {
@@ -54,7 +54,7 @@ pub fn fair_burn(fee: u128, developer: Option<Addr>, res: &mut Response) {
     // Send other half to community pool
     let dist_amount = fee - (burn_fee + dev_fee);
     res.messages
-        .push(SubMsg::new(create_fund_community_pool_msg(coins(
+        .push(SubMsg::new(create_fund_fairburn_pool_msg(coins(
             dist_amount,
             NATIVE_DENOM,
         ))));
