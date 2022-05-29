@@ -13,6 +13,7 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/public-awesome/stargaze/v5/testutil/simapp"
+	alloctypes "github.com/public-awesome/stargaze/v5/x/alloc/types"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
@@ -119,7 +120,6 @@ func TestMinter(t *testing.T) {
 	// wasm params
 	wasmParams := app.WasmKeeper.GetParams(ctx)
 	wasmParams.CodeUploadAccess = wasmtypes.AllowEverybody
-	wasmParams.MaxWasmCodeSize = 1000 * 1024 * 4 // 4MB
 	app.WasmKeeper.SetParams(ctx, wasmParams)
 
 	priv1 := secp256k1.GenPrivKey()
@@ -198,10 +198,11 @@ func TestMinter(t *testing.T) {
 		intialTotalSupply.Amount.Sub(sdk.NewInt(500_000_000)).String(),
 		app.BankKeeper.GetSupply(ctx, "ustars").Amount.String())
 
-	// 500 STARS should have been transferred to community pool
+	fairburnPool := app.AccountKeeper.GetModuleAddress(alloctypes.FairburnPoolName)
+	// 500 STARS should have been transferred to fairburn pool
 	require.Equal(t,
 		int64(500_000_000),
-		app.DistrKeeper.GetFeePoolCommunityCoins(ctx).AmountOf("ustars").TruncateInt64(),
+		app.BankKeeper.GetBalance(ctx, fairburnPool, "ustars").Amount.ToDec().TruncateInt64(),
 	)
 
 	// Creator should have been charged 1000STARS
@@ -258,10 +259,10 @@ func TestMinter(t *testing.T) {
 		intialTotalSupply.Amount.Sub(sdk.NewInt(505_000_000)).String(),
 		app.BankKeeper.GetSupply(ctx, "ustars").Amount.String())
 
-	// 505 STARS should have been transferred to community pool so far
+	// 505 STARS should have been transferred to fairburn pool
 	require.Equal(t,
 		int64(505_000_000),
-		app.DistrKeeper.GetFeePoolCommunityCoins(ctx).AmountOf("ustars").TruncateInt64(),
+		app.BankKeeper.GetBalance(ctx, fairburnPool, "ustars").Amount.ToDec().TruncateInt64(),
 	)
 
 	count := 0
@@ -290,7 +291,7 @@ func TestMinter(t *testing.T) {
 	// 500 +  (100 * 5) STARS should have been transferred to community pool so far
 	require.Equal(t,
 		int64(1_000_000_000),
-		app.DistrKeeper.GetFeePoolCommunityCoins(ctx).AmountOf("ustars").TruncateInt64(),
+		app.BankKeeper.GetBalance(ctx, fairburnPool, "ustars").Amount.ToDec().TruncateInt64(),
 	)
 
 	// Creator should have the same balance before withdrawal
@@ -330,7 +331,6 @@ func TestWhitelistMinter(t *testing.T) {
 	// wasm params
 	wasmParams := app.WasmKeeper.GetParams(ctx)
 	wasmParams.CodeUploadAccess = wasmtypes.AllowEverybody
-	wasmParams.MaxWasmCodeSize = 1000 * 1024 * 4 // 4MB
 	app.WasmKeeper.SetParams(ctx, wasmParams)
 
 	priv1 := secp256k1.GenPrivKey()
@@ -412,10 +412,12 @@ func TestWhitelistMinter(t *testing.T) {
 		intialTotalSupply.Amount.Sub(sdk.NewInt(50_000_000)).String(),
 		app.BankKeeper.GetSupply(ctx, "ustars").Amount.String())
 
-	// 50 STARS should have been transferred to community pool
+	fairburnPool := app.AccountKeeper.GetModuleAddress(alloctypes.FairburnPoolName)
+
+	// 50 STARS should have been transferred to fairburn pool
 	require.Equal(t,
 		int64(50_000_000),
-		app.DistrKeeper.GetFeePoolCommunityCoins(ctx).AmountOf("ustars").TruncateInt64(),
+		app.BankKeeper.GetBalance(ctx, fairburnPool, "ustars").Amount.ToDec().TruncateInt64(),
 	)
 
 	// Creator should have been charged 100STARS
@@ -456,10 +458,10 @@ func TestWhitelistMinter(t *testing.T) {
 		intialTotalSupply.Amount.Sub(sdk.NewInt(550_000_000)).String(),
 		app.BankKeeper.GetSupply(ctx, "ustars").Amount.String())
 
-	// 550 STARS should have been transferred to community pool so far
+	// 550 STARS should have been transferred to fairburn pool so far
 	require.Equal(t,
 		int64(550_000_000),
-		app.DistrKeeper.GetFeePoolCommunityCoins(ctx).AmountOf("ustars").TruncateInt64(),
+		app.BankKeeper.GetBalance(ctx, fairburnPool, "ustars").Amount.ToDec().TruncateInt64(),
 	)
 
 	// Creator should have been charged another 1000STARS
@@ -591,7 +593,7 @@ func TestWhitelistMinter(t *testing.T) {
 	//  should have 925STARS more
 	require.Equal(t,
 		int64(925_000_000),
-		app.DistrKeeper.GetFeePoolCommunityCoins(ctx).AmountOf("ustars").TruncateInt64(),
+		app.BankKeeper.GetBalance(ctx, fairburnPool, "ustars").Amount.ToDec().TruncateInt64(),
 	)
 
 	// Creator should have their initial balance before withdrawal

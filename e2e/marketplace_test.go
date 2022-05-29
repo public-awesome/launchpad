@@ -110,7 +110,6 @@ func TestMarketplace(t *testing.T) {
 	// wasm params
 	wasmParams := app.WasmKeeper.GetParams(ctx)
 	wasmParams.CodeUploadAccess = wasmtypes.AllowEverybody
-	wasmParams.MaxWasmCodeSize = 1000 * 1024 * 4 // 4MB
 	app.WasmKeeper.SetParams(ctx, wasmParams)
 
 	priv1 := secp256k1.GenPrivKey()

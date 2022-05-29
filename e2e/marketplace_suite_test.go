@@ -49,7 +49,6 @@ func (suite *MarketplaceTestSuite) SetupSuite() {
 	// wasm params
 	wasmParams := suite.app.WasmKeeper.GetParams(suite.parentCtx)
 	wasmParams.CodeUploadAccess = wasmtypes.AllowEverybody
-	wasmParams.MaxWasmCodeSize = 1000 * 1024 * 4 // 4MB
 	suite.app.WasmKeeper.SetParams(suite.parentCtx, wasmParams)
 	suite.msgServer = wasmkeeper.NewMsgServerImpl(wasmkeeper.NewDefaultPermissionKeeper(suite.app.WasmKeeper))
 

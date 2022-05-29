@@ -43,7 +43,6 @@ func TestClaim(t *testing.T) {
 	// wasm params
 	wasmParams := app.WasmKeeper.GetParams(ctx)
 	wasmParams.CodeUploadAccess = wasmtypes.AllowEverybody
-	wasmParams.MaxWasmCodeSize = 1000 * 1024 * 4 // 4MB
 	app.WasmKeeper.SetParams(ctx, wasmParams)
 
 	addr1 := accs[1].Address
