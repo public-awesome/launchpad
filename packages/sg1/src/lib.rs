@@ -51,7 +51,7 @@ pub fn fair_burn(fee: u128, developer: Option<Addr>, res: &mut Response) {
     res.messages
         .push(SubMsg::new(BankMsg::Burn { amount: burn_coin }));
 
-    // Send other half to community pool
+    // Send other half to fairburn pool
     let dist_amount = fee - (burn_fee + dev_fee);
     res.messages
         .push(SubMsg::new(create_fund_fairburn_pool_msg(coins(

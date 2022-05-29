@@ -288,7 +288,7 @@ func TestMinter(t *testing.T) {
 		intialTotalSupply.Amount.Sub(sdk.NewInt(1_000_000_000)).String(),
 		app.BankKeeper.GetSupply(ctx, "ustars").Amount.String())
 
-	// 500 +  (100 * 5) STARS should have been transferred to community pool so far
+	// 500 +  (100 * 5) STARS should have been transferred to fairburn pool so far
 	require.Equal(t,
 		int64(1_000_000_000),
 		app.BankKeeper.GetBalance(ctx, fairburnPool, "ustars").Amount.ToDec().TruncateInt64(),
