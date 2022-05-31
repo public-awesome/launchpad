@@ -3,8 +3,8 @@ use cosmwasm_std::entry_point;
 use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, StdResult};
 use cw2::set_contract_version;
 
-use sg_std::checked_fair_burn;
-use sg_std::StargazeMsgWrapper;
+use sg1::checked_fair_burn;
+use sg_std::{Response, StargazeMsgWrapper};
 
 use crate::ContractError;
 use cw721::ContractInfoResponse;
@@ -23,7 +23,6 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 const CREATION_FEE: u128 = 1_000_000_000;
 const MAX_DESCRIPTION_LENGTH: u32 = 512;
 
-type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 pub type Sg721Contract<'a> = cw721_base::Cw721Contract<'a, Empty, StargazeMsgWrapper>;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -35,7 +34,8 @@ pub fn instantiate(
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
-    let fee_msgs = checked_fair_burn(&info, CREATION_FEE)?;
+    let mut res = Response::new();
+    checked_fair_burn(&info, CREATION_FEE, None, &mut res)?;
 
     // cw721 instantiation
     let info = ContractInfoResponse {
@@ -82,12 +82,11 @@ pub fn instantiate(
 
     COLLECTION_INFO.save(deps.storage, &collection_info)?;
 
-    Ok(Response::default()
+    Ok(res
         .add_attribute("action", "instantiate")
         .add_attribute("contract_name", CONTRACT_NAME)
         .add_attribute("contract_version", CONTRACT_VERSION)
-        .add_attribute("image", image.to_string())
-        .add_messages(fee_msgs))
+        .add_attribute("image", image.to_string()))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]

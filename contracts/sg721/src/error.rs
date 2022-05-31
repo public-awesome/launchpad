@@ -1,7 +1,7 @@
 use cosmwasm_std::StdError;
 use cw721_base::ContractError as Cw721ContractError;
 use cw_utils::PaymentError;
-use sg_std::FeeError;
+use sg1::FeeError;
 use thiserror::Error;
 use url::ParseError;
 
