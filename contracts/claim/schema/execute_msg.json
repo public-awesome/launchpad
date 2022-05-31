@@ -25,11 +25,11 @@
     {
       "type": "object",
       "required": [
-        "sale_finalized_hook"
+        "sale_hook"
       ],
       "properties": {
-        "sale_finalized_hook": {
-          "$ref": "#/definitions/SaleFinalizedHookMsg"
+        "sale_hook": {
+          "$ref": "#/definitions/SaleHookMsg"
         }
       },
       "additionalProperties": false
@@ -93,7 +93,7 @@
         }
       }
     },
-    "SaleFinalizedHookMsg": {
+    "SaleHookMsg": {
       "type": "object",
       "required": [
         "buyer",
