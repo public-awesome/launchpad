@@ -24,12 +24,7 @@ pub fn token_count(storage: &dyn Storage) -> StdResult<u32> {
     Ok(MINTABLE_NUM_TOKENS.may_load(storage)?.unwrap_or_default())
 }
 
-pub fn increment_tokens(storage: &mut dyn Storage) -> StdResult<u32> {
-    let val = token_count(storage)? + 1;
-    MINTABLE_NUM_TOKENS.save(storage, &val)?;
-    Ok(val)
-}
-
+// decrements mintable tokens as supply is minted or burned
 pub fn decrement_tokens(storage: &mut dyn Storage) -> StdResult<u32> {
     let val = token_count(storage)? - 1;
     MINTABLE_NUM_TOKENS.save(storage, &val)?;
