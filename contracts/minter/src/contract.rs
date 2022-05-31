@@ -419,7 +419,7 @@ fn _execute_mint(
         network_fee
     };
 
-    let mintable_token_id = match token_id {
+    let mintable_token_info: TokenInfo = match token_id {
         Some(token_id) => {
             if token_id == 0 || token_id > config.num_tokens {
                 return Err(ContractError::InvalidTokenId {});
@@ -431,7 +431,7 @@ fn _execute_mint(
                 .map(|id| id.1);
             match token_info {
                 // If token_id exists, ready to mint
-                Some(_) => token_id,
+                Some(token_info) => token_info,
                 // If token_id not on mintable map, throw err
                 _ => return Err(ContractError::TokenIdAlreadySold { token_id }),
             }
@@ -440,15 +440,18 @@ fn _execute_mint(
             let token_key: u32 =
                 random_mintable_token_key(deps.as_ref(), env, info.sender.clone())?;
             let token_info = tokens().load(deps.storage, token_key)?;
-            token_info.id
+            token_info
         }
     };
 
     // Create mint msgs
     let mint_msg = Cw721ExecuteMsg::Mint(MintMsg::<Empty> {
-        token_id: mintable_token_id.to_string(),
+        token_id: mintable_token_info.id.to_string(),
         owner: recipient_addr.to_string(),
-        token_uri: Some(format!("{}/{}", config.base_token_uri, mintable_token_id)),
+        token_uri: Some(format!(
+            "{}/{}",
+            config.base_token_uri, mintable_token_info.id
+        )),
         extension: Empty {},
     });
     let msg = CosmosMsg::Wasm(WasmMsg::Execute {
@@ -458,26 +461,19 @@ fn _execute_mint(
     });
     msgs.append(&mut vec![msg]);
 
-    // Remove mintable token id from map
-    let token_info = tokens()
-        .idx
-        .token_ids
-        .item(deps.storage, mintable_token_id)?
-        .map(|id| id.1);
-    if let Some(token_info) = token_info {
-        tokens().remove(deps.storage, token_info.key)?;
-        // Decrement mintable num tokens
-        decrement_tokens(deps.storage)?;
-        // Save the new mint count for the sender's address
-        let new_mint_count = mint_count(deps.as_ref(), &info)? + 1;
-        MINTER_ADDRS.save(deps.storage, info.clone().sender, &new_mint_count)?;
-    }
+    // Remove mintable token info from map
+    tokens().remove(deps.storage, mintable_token_info.key)?;
+    // Decrement mintable num tokens
+    decrement_tokens(deps.storage)?;
+    // Save the new mint count for the sender's address
+    let new_mint_count = mint_count(deps.as_ref(), &info)? + 1;
+    MINTER_ADDRS.save(deps.storage, info.clone().sender, &new_mint_count)?;
 
     Ok(Response::default()
         .add_attribute("action", action)
         .add_attribute("sender", info.sender)
         .add_attribute("recipient", recipient_addr)
-        .add_attribute("token_id", mintable_token_id.to_string())
+        .add_attribute("token_id", mintable_token_info.id.to_string())
         .add_attribute("network_fee", network_fee)
         .add_attribute("mint_price", mint_price.amount)
         .add_messages(msgs))
