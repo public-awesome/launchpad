@@ -6,7 +6,7 @@ use crate::msg::{
     MintableNumTokensResponse, QueryMsg, StartTimeResponse,
 };
 use crate::state::{
-    decrement_tokens, increment_tokens, token_count, tokens, Config, TokenInfo, CONFIG,
+    decrement_tokens, token_count, tokens, Config, TokenInfo, CONFIG, MINTABLE_NUM_TOKENS,
     MINTER_ADDRS, SG721_ADDRESS,
 };
 #[cfg(not(feature = "library"))]
@@ -121,17 +121,19 @@ pub fn instantiate(
         start_time: msg.start_time,
     };
     CONFIG.save(deps.storage, &config)?;
+    MINTABLE_NUM_TOKENS.save(deps.storage, &msg.num_tokens)?;
 
     let token_list = random_token_list(&env, msg.num_tokens)?;
     // Save mintable token ids map
-    for token_id in token_list {
-        let count = increment_tokens(deps.storage)?;
+    for (i, token_id) in token_list.iter().enumerate() {
+        // i = [0..num_tokens], add 1 to get the expected token key
+        let token_key = i as u32 + 1;
         tokens().save(
             deps.storage,
-            count,
+            token_key,
             &TokenInfo {
-                key: count,
-                id: token_id,
+                key: token_key,
+                id: *token_id,
             },
         )?;
     }
