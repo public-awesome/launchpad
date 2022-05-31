@@ -124,7 +124,7 @@ pub fn instantiate(
     let token_list = random_token_list(&env, msg.num_tokens)?;
     // Save mintable token ids map
     for token_id in token_list {
-        let count = increment_tokens(deps.storage)?.into();
+        let count = increment_tokens(deps.storage)?;
         tokens().save(deps.storage, count, &TokenInfo{key: count, id: token_id})?;
     }
 
