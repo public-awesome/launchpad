@@ -1,8 +1,8 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_std::{Addr, Coin, Timestamp, Storage, StdResult};
-use cw_storage_plus::{Item, Map, UniqueIndex, IndexList, Index, IndexedMap};
+use cosmwasm_std::{Addr, Coin, StdResult, Storage, Timestamp};
+use cw_storage_plus::{Index, IndexList, IndexedMap, Item, Map, UniqueIndex};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Config {
@@ -42,9 +42,9 @@ type TokenKey = u32;
 type TokenId = u32;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct TokenInfo{
+pub struct TokenInfo {
     pub key: TokenKey,
-    pub id: TokenId
+    pub id: TokenId,
 }
 
 pub struct TokenIndices<'a> {

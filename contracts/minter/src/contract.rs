@@ -6,7 +6,8 @@ use crate::msg::{
     MintableNumTokensResponse, QueryMsg, StartTimeResponse,
 };
 use crate::state::{
-    Config, CONFIG, MINTER_ADDRS, SG721_ADDRESS, tokens, TokenInfo, increment_tokens, decrement_tokens, token_count,
+    decrement_tokens, increment_tokens, token_count, tokens, Config, TokenInfo, CONFIG,
+    MINTER_ADDRS, SG721_ADDRESS,
 };
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
@@ -125,7 +126,14 @@ pub fn instantiate(
     // Save mintable token ids map
     for token_id in token_list {
         let count = increment_tokens(deps.storage)?;
-        tokens().save(deps.storage, count, &TokenInfo{key: count, id: token_id})?;
+        tokens().save(
+            deps.storage,
+            count,
+            &TokenInfo {
+                key: count,
+                id: token_id,
+            },
+        )?;
     }
 
     // Submessage to instantiate sg721 contract
@@ -376,7 +384,8 @@ fn _execute_mint(
     // Return sold out error if no token found
     tokens()
         .keys(deps.storage, None, None, Order::Ascending)
-        .next().ok_or(ContractError::SoldOut {})??;
+        .next()
+        .ok_or(ContractError::SoldOut {})??;
     let config = CONFIG.load(deps.storage)?;
     let sg721_address = SG721_ADDRESS.load(deps.storage)?;
 
@@ -413,7 +422,11 @@ fn _execute_mint(
                 return Err(ContractError::InvalidTokenId {});
             }
             // If token_id not on mintable map, throw err
-            let token_info = tokens().idx.token_ids.item(deps.storage, token_id)?.map(|id| id.1);
+            let token_info = tokens()
+                .idx
+                .token_ids
+                .item(deps.storage, token_id)?
+                .map(|id| id.1);
             if token_info.is_none() {
                 return Err(ContractError::TokenIdAlreadySold { token_id });
             }
@@ -439,7 +452,11 @@ fn _execute_mint(
     msgs.append(&mut vec![msg]);
 
     // Remove mintable token id from map
-    let token_info = tokens().idx.token_ids.item(deps.storage, mintable_token_id)?.map(|id| id.1);
+    let token_info = tokens()
+        .idx
+        .token_ids
+        .item(deps.storage, mintable_token_id)?
+        .map(|id| id.1);
     if let Some(token_info) = token_info {
         tokens().remove(deps.storage, token_info.key)?;
         // Decrement mintable num tokens
@@ -448,7 +465,6 @@ fn _execute_mint(
         let new_mint_count = mint_count(deps.as_ref(), &info)? + 1;
         MINTER_ADDRS.save(deps.storage, info.clone().sender, &new_mint_count)?;
     }
-    
     Ok(Response::default()
         .add_attribute("action", action)
         .add_attribute("sender", info.sender)
