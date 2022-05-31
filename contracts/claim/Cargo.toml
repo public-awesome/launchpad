@@ -1,6 +1,6 @@
 [package]
 name = "claim"
-version = "0.1.0"
+version = "0.15.1"
 authors = ["jhernandezb <jorge@publicawesome.com>"]
 edition = "2018"
 
@@ -14,17 +14,6 @@ exclude = [
 
 [lib]
 crate-type = ["cdylib", "rlib"]
-
-[profile.release]
-opt-level = 3
-debug = false
-rpath = false
-lto = true
-debug-assertions = false
-codegen-units = 1
-panic = 'abort'
-incremental = false
-overflow-checks = true
 
 [features]
 # for more explicit tests, cargo test --features=backtraces
@@ -40,17 +29,27 @@ optimize = """docker run --rm -v "$(pwd)":/code \
 """
 
 [dependencies]
-cosmwasm-std = { version = "1.0.0-beta7" }
-cosmwasm-storage = { version = "1.0.0-beta7" }
-cw2 = "0.13.1"
-cw-utils = "0.13.1"
+cosmwasm-std = { version = "1.0.0" }
+cosmwasm-storage = { version = "1.0.0" }
+cw2 = "0.13.2"
+cw-utils = "0.13.2"
 schemars = "0.8"
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 minter = { path = "../minter", features = ["library"] }
-sg-std = { path = "../../packages/sg-std" }
+sg-std = "0.12.0"
 thiserror = { version = "1.0" }
+cw-storage-plus = "0.13.2"
+sg-marketplace = { git = "https://github.com/public-awesome/marketplace", version = "0.15.0", features = [
+  "library",
+] }
+cw-controllers = "0.13.2"
 
 [dev-dependencies]
-cosmwasm-schema = { version = "1.0.0-beta7" }
-cw-multi-test = "0.13.1"
+cosmwasm-schema = { version = "1.0.0" }
+cw-multi-test = "0.13.2"
 anyhow = "1"
+sg721 = { version = "0.12.0", features = ["library"] }
+cw721 = "0.13.2"
+cw721-base = { version = "0.13.2", features = ["library"] }
+sg-multi-test = { version = "0.13.0", path = "../../packages/sg-multi-test" }
+sg-controllers = "0.12.1"

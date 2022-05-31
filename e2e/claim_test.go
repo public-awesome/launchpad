@@ -2,7 +2,10 @@ package e2e_test
 
 import (
 	"fmt"
+	"io"
 	"io/ioutil"
+	"net/http"
+	"os"
 	"testing"
 	"time"
 
@@ -10,8 +13,8 @@ import (
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/public-awesome/stargaze/v3/testutil/simapp"
-	claimtypes "github.com/public-awesome/stargaze/v3/x/claim/types"
+	"github.com/public-awesome/stargaze/v5/testutil/simapp"
+	claimtypes "github.com/public-awesome/stargaze/v5/x/claim/types"
 	"github.com/stretchr/testify/require"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 )
@@ -82,7 +85,58 @@ func TestClaim(t *testing.T) {
 	require.NotNil(t, res)
 	require.Equal(t, res.CodeID, uint64(3))
 
+	// download latest marketplace code
+	out, err := os.Create("contracts/sg_marketplace.wasm")
+	require.NoError(t, err)
+	defer out.Close()
+	resp, err := http.Get("https://github.com/public-awesome/marketplace/releases/latest/download/sg_marketplace.wasm")
+	require.NoError(t, err)
+	defer resp.Body.Close()
+	_, err = io.Copy(out, resp.Body)
+	require.NoError(t, err)
+
+	// marketplace
+	b, err = ioutil.ReadFile("contracts/sg_marketplace.wasm")
+	require.NoError(t, err)
+
+	res, err = msgServer.StoreCode(sdk.WrapSDKContext(ctx), &wasmtypes.MsgStoreCode{
+		Sender:       addr1.String(),
+		WASMByteCode: b,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+	require.Equal(t, res.CodeID, uint64(4))
+
 	creator := accs[0]
+
+	instantiateMsgRaw := []byte(
+		fmt.Sprintf(instantiateMarketplaceTemplate,
+			200,
+			86400,
+			15552000,
+			86400,
+			15552000,
+			creator.Address.String(),
+			500,
+			5000000,
+			15552000,
+			500,
+		),
+	)
+
+	// instantiate marketplace
+	instantiateRes, err := msgServer.InstantiateContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgInstantiateContract{
+		Sender: creator.Address.String(),
+		Admin:  creator.Address.String(),
+		CodeID: 4,
+		Label:  "Marketplace",
+		Msg:    instantiateMsgRaw,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, instantiateRes)
+	require.NotEmpty(t, instantiateRes.Address)
+	marketplaceAddress := instantiateRes.Address
+	require.NotEmpty(t, marketplaceAddress)
 
 	// minter
 	afterGenesisMint, err := time.Parse(time.RFC3339Nano, "2022-03-11T21:00:01Z")
@@ -90,7 +144,7 @@ func TestClaim(t *testing.T) {
 	genesisMintDateTime, err := time.Parse(time.RFC3339Nano, "2022-03-11T21:00:00Z")
 	require.NoError(t, err)
 
-	instantiateMsgRaw := []byte(
+	instantiateMsgRaw = []byte(
 		fmt.Sprintf(instantiateMinterTemplate,
 			creator.Address.String(),
 			creator.Address.String(),
@@ -100,7 +154,7 @@ func TestClaim(t *testing.T) {
 			1, // limit 1
 		),
 	)
-	instantiateRes, err := msgServer.InstantiateContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgInstantiateContract{
+	instantiateRes, err = msgServer.InstantiateContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgInstantiateContract{
 		Sender: creator.Address.String(),
 		Admin:  creator.Address.String(),
 		CodeID: 1,
@@ -144,7 +198,7 @@ func TestClaim(t *testing.T) {
 		Admin:  creator.Address.String(),
 		CodeID: 2,
 		Label:  "Claim",
-		Msg:    []byte("{}"),
+		Msg:    []byte(`{"marketplace_addr":"` + marketplaceAddress + `"}`),
 	})
 	require.NoError(t, err)
 	require.NotNil(t, instantiateRes)

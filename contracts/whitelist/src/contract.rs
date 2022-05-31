@@ -14,7 +14,7 @@ use cw_storage_plus::Bound;
 use cw_utils::{may_pay, maybe_addr, must_pay};
 use rust_decimal::prelude::ToPrimitive;
 use rust_decimal::Decimal;
-use sg_std::checked_fair_burn;
+use sg1::checked_fair_burn;
 use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
 // version info for migration info
@@ -125,7 +125,7 @@ pub fn instantiate(
         ));
     }
 
-    let fee_msgs = checked_fair_burn(&info, creation_fee)?;
+    let fee_msgs = checked_fair_burn(&info, creation_fee, None)?;
 
     if config.member_limit < config.num_members {
         return Err(ContractError::MembersExceeded {
@@ -355,7 +355,7 @@ pub fn execute_increase_member_limit(
     }
 
     let fee_msgs = if upgrade_fee > 0 {
-        checked_fair_burn(&info, upgrade_fee)?
+        checked_fair_burn(&info, upgrade_fee, None)?
     } else {
         vec![]
     };
