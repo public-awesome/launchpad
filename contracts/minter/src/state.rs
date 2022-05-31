@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_std::{Addr, Coin, Timestamp, StdResult, Storage};
+use cosmwasm_std::{Addr, Coin, StdResult, Storage, Timestamp};
 use cw_storage_plus::{Index, IndexList, IndexedMap, Item, Map, UniqueIndex};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -19,7 +19,6 @@ pub struct Config {
 pub const CONFIG: Item<Config> = Item::new("config");
 pub const SG721_ADDRESS: Item<Addr> = Item::new("sg721_address");
 pub const MINTABLE_NUM_TOKENS: Item<u32> = Item::new("mintable_num_tokens");
-
 
 pub fn token_count(storage: &dyn Storage) -> StdResult<u32> {
     Ok(MINTABLE_NUM_TOKENS.may_load(storage)?.unwrap_or_default())
@@ -43,9 +42,9 @@ type TokenKey = u32;
 type TokenId = u32;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct TokenInfo{
+pub struct TokenInfo {
     pub key: TokenKey,
-    pub id: TokenId
+    pub id: TokenId,
 }
 
 pub struct TokenIndices<'a> {
