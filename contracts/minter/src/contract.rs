@@ -6,7 +6,7 @@ use crate::msg::{
     MintableNumTokensResponse, QueryMsg, StartTimeResponse,
 };
 use crate::state::{
-    Config, CONFIG, MINTABLE_NUM_TOKENS, MINTABLE_TOKEN_IDS, MINTER_ADDRS, SG721_ADDRESS,
+    Config, CONFIG, MINTER_ADDRS, SG721_ADDRESS, tokens, TokenInfo, increment_tokens, decrement_tokens, token_count,
 };
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
@@ -120,12 +120,12 @@ pub fn instantiate(
         start_time: msg.start_time,
     };
     CONFIG.save(deps.storage, &config)?;
-    MINTABLE_NUM_TOKENS.save(deps.storage, &msg.num_tokens)?;
 
     let token_list = random_token_list(&env, msg.num_tokens)?;
     // Save mintable token ids map
     for token_id in token_list {
-        MINTABLE_TOKEN_IDS.save(deps.storage, token_id, &true)?;
+        let count = increment_tokens(deps.storage)?.into();
+        tokens().save(deps.storage, count, &TokenInfo{key: count, id: token_id})?;
     }
 
     // Submessage to instantiate sg721 contract
@@ -373,13 +373,10 @@ fn _execute_mint(
     recipient: Option<Addr>,
     token_id: Option<u32>,
 ) -> Result<Response, ContractError> {
-    let mintable = MINTABLE_TOKEN_IDS
+    // Return sold out error if no token found
+    tokens()
         .keys(deps.storage, None, None, Order::Ascending)
-        .next()
-        .is_some();
-    if !mintable {
-        return Err(ContractError::SoldOut {});
-    }
+        .next().ok_or(ContractError::SoldOut {})??;
 
     let config = CONFIG.load(deps.storage)?;
     let sg721_address = SG721_ADDRESS.load(deps.storage)?;
@@ -416,16 +413,19 @@ fn _execute_mint(
             if token_id == 0 || token_id > config.num_tokens {
                 return Err(ContractError::InvalidTokenId {});
             }
-            // If token_id not on mintable map, throw err
-            if !MINTABLE_TOKEN_IDS.has(deps.storage, token_id) {
-                return Err(ContractError::TokenIdAlreadySold { token_id });
+            let token_info = tokens().idx.token_ids.item(deps.storage, token_id)?.map(|id| id.1);
+            match token_info {
+                // If token_id exists, ready to mint
+                Some(_) => token_id,
+                // If token_id not on mintable map, throw err
+                _ => return Err(ContractError::TokenIdAlreadySold { token_id }),
             }
-            token_id
-        }
+        },
         None => {
-            let token_id: u32 = random_mintable_token_id(deps.as_ref(), env, info.sender.clone())?;
-            token_id
-        }
+            let token_key: u32 = random_mintable_token_key(deps.as_ref(), env, info.sender.clone())?;
+            let token_info = tokens().load(deps.storage, token_key)?;
+            token_info.id
+        },
     };
 
     // Create mint msgs
@@ -443,13 +443,15 @@ fn _execute_mint(
     msgs.append(&mut vec![msg]);
 
     // Remove mintable token id from map
-    MINTABLE_TOKEN_IDS.remove(deps.storage, mintable_token_id);
-    let mintable_num_tokens = MINTABLE_NUM_TOKENS.load(deps.storage)?;
-    // Decrement mintable num tokens
-    MINTABLE_NUM_TOKENS.save(deps.storage, &(mintable_num_tokens - 1))?;
-    // Save the new mint count for the sender's address
-    let new_mint_count = mint_count(deps.as_ref(), &info)? + 1;
-    MINTER_ADDRS.save(deps.storage, info.clone().sender, &new_mint_count)?;
+    let token_info = tokens().idx.token_ids.item(deps.storage, mintable_token_id)?.map(|id| id.1);
+    if let Some(token_info) = token_info {
+        tokens().remove(deps.storage, token_info.key)?;
+        // Decrement mintable num tokens
+        decrement_tokens(deps.storage)?;
+        // Save the new mint count for the sender's address
+        let new_mint_count = mint_count(deps.as_ref(), &info)? + 1;
+        MINTER_ADDRS.save(deps.storage, info.clone().sender, &new_mint_count)?;
+    }
 
     Ok(Response::default()
         .add_attribute("action", action)
@@ -474,8 +476,8 @@ fn random_token_list(env: &Env, num_tokens: u32) -> Result<Vec<u32>, ContractErr
     Ok(tokens)
 }
 
-fn random_mintable_token_id(deps: Deps, env: Env, sender: Addr) -> Result<u32, ContractError> {
-    let num_tokens = MINTABLE_NUM_TOKENS.load(deps.storage)?;
+fn random_mintable_token_key(deps: Deps, env: Env, sender: Addr) -> Result<u32, ContractError> {
+    let num_tokens = token_count(deps.storage)?;
     let sha256 =
         Sha256::digest(format!("{}{}{}", sender, num_tokens, env.block.height).into_bytes());
     // Cut first 16 bytes from 32 byte value
@@ -494,7 +496,7 @@ fn random_mintable_token_id(deps: Deps, env: Env, sender: Addr) -> Result<u32, C
         rem = num_tokens;
     }
     let n = r % rem;
-    let mintable_tokens = MINTABLE_TOKEN_IDS
+    let mintable_tokens = tokens()
         .keys(deps.storage, None, None, order)
         .skip(n as usize)
         .take(1)
@@ -645,7 +647,7 @@ fn query_start_time(deps: Deps) -> StdResult<StartTimeResponse> {
 }
 
 fn query_mintable_num_tokens(deps: Deps) -> StdResult<MintableNumTokensResponse> {
-    let count = MINTABLE_NUM_TOKENS.load(deps.storage)?;
+    let count = token_count(deps.storage)?;
     Ok(MintableNumTokensResponse { count })
 }
 
