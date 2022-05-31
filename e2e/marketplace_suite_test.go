@@ -14,6 +14,7 @@ import (
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/public-awesome/stargaze/v5/app"
 	"github.com/public-awesome/stargaze/v5/testutil/simapp"
 	"github.com/stretchr/testify/suite"
@@ -587,11 +588,13 @@ func InstantiateMinter(ctx sdk.Context, msgServer wasmtypes.MsgServer, account s
 		UnitPrice:       sdk.NewInt64Coin("ustars", 10_000_000_000),
 		Whitelist:       nil,
 	}
+	// spew.Dump(instantiate)
 
 	instantiateMsgRaw, err := json.Marshal(&instantiate)
 	if err != nil {
 		return "", err
 	}
+	spew.Dump(instantiateMsgRaw)
 
 	instantiateRes, err := msgServer.InstantiateContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgInstantiateContract{
 		Sender: account.String(),

@@ -1,5 +1,5 @@
 use cosmwasm_std::testing::{mock_dependencies_with_balance, mock_env, mock_info};
-use cosmwasm_std::{coin, coins, Addr, Decimal, Empty, Timestamp, Uint128};
+use cosmwasm_std::{coin, coins, to_binary, Addr, Decimal, Empty, Timestamp, Uint128};
 use cosmwasm_std::{Api, Coin};
 use cw721::{Cw721QueryMsg, OwnerOfResponse};
 use cw721_base::ExecuteMsg as Cw721ExecuteMsg;
@@ -115,6 +115,10 @@ fn setup_minter_contract(
             }),
         },
     };
+
+    let res = to_binary(&msg);
+    dbg!("{}", res.unwrap());
+
     let minter_addr = router
         .instantiate_contract(
             minter_code_id,
