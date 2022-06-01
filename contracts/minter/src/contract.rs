@@ -17,7 +17,7 @@ use cosmwasm_std::{
 };
 use cw2::set_contract_version;
 use cw721_base::{msg::ExecuteMsg as Cw721ExecuteMsg, MintMsg};
-use cw_utils::{may_pay, parse_reply_instantiate_data};
+use cw_utils::{may_pay, must_pay, parse_reply_instantiate_data};
 use rand_core::{RngCore, SeedableRng};
 use rand_xoshiro::Xoshiro128PlusPlus;
 use sg721::msg::InstantiateMsg as Sg721InstantiateMsg;
@@ -43,6 +43,7 @@ const MAX_TOKEN_LIMIT: u32 = 10000;
 const MAX_PER_ADDRESS_LIMIT: u32 = 50;
 const MIN_MINT_PRICE: u128 = 50_000_000;
 const MINT_FEE_PERCENT: u32 = 10;
+const SHUFFLE_FEE: u128 = 100_000_000;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -123,7 +124,7 @@ pub fn instantiate(
     CONFIG.save(deps.storage, &config)?;
     MINTABLE_NUM_TOKENS.save(deps.storage, &msg.num_tokens)?;
 
-    let token_list = random_token_list(&env, msg.num_tokens)?;
+    let token_list = random_token_list(&env, (1..=msg.num_tokens).collect::<Vec<u32>>())?;
     // Save mintable token ids map
     for (i, token_id) in token_list.iter().enumerate() {
         // i = [0..num_tokens], add 1 to get the expected token key
@@ -187,8 +188,51 @@ pub fn execute(
         ExecuteMsg::SetWhitelist { whitelist } => {
             execute_set_whitelist(deps, env, info, &whitelist)
         }
+        ExecuteMsg::Shuffle {} => execute_shuffle(deps, env, info),
         ExecuteMsg::Withdraw {} => execute_withdraw(deps, env, info),
     }
+}
+
+// Anyone can pay to shuffle at any time
+// Introduces another source of randomness to minting
+// There's a fee because this action is computationally expensive.
+pub fn execute_shuffle(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+) -> Result<Response, ContractError> {
+    // Check exact shuffle fee payment included
+    let payment = must_pay(&info, &NATIVE_DENOM)?;
+    if payment != Uint128::from(SHUFFLE_FEE) {
+        return Err(ContractError::IncorrectPaymentAmount(
+            coin(payment.u128(), NATIVE_DENOM),
+            coin(SHUFFLE_FEE, NATIVE_DENOM),
+        ));
+    }
+
+    // run random_token_list to generate a list of random token key indices
+    let keys = tokens()
+        .keys(deps.as_ref().storage, None, None, Order::Ascending)
+        .map(|token_key| token_key.unwrap())
+        .collect::<Vec<_>>();
+    let randomized_keys_list = random_token_list(&env, keys.clone())?;
+
+    // // assign new token keys and token ids
+    for (i, random_token_key) in randomized_keys_list.iter().enumerate() {
+        let og_token_info = tokens().load(deps.as_ref().storage, keys[i])?;
+        let new_token_info = tokens().load(deps.storage, *random_token_key)?;
+        // swap ids for keys[i] and random_token_key
+        tokens().replace(
+            deps.storage,
+            keys[i],
+            Some(&TokenInfo {
+                key: keys[i],
+                id: new_token_info.id,
+            }),
+            Some(&og_token_info),
+        )?;
+    }
+    Ok(Response::default().add_attribute("action", "shuffle"))
 }
 
 pub fn execute_withdraw(
@@ -479,10 +523,10 @@ fn _execute_mint(
         .add_messages(msgs))
 }
 
-fn random_token_list(env: &Env, num_tokens: u32) -> Result<Vec<u32>, ContractError> {
-    let mut tokens: Vec<u32> = (1..=num_tokens).collect::<Vec<u32>>();
-    let sha256 = Sha256::digest(format!("{}{}", env.block.height, num_tokens).into_bytes());
+fn random_token_list(env: &Env, tokens: std::vec::Vec<u32>) -> Result<Vec<u32>, ContractError> {
+    let sha256 = Sha256::digest(format!("{}{}", env.block.height, tokens.len()).into_bytes());
     // Cut first 16 bytes from 32 byte value
+    let mut tokens = tokens;
     let randomness: [u8; 16] = sha256.to_vec()[0..16].try_into().unwrap();
     let mut rng = Xoshiro128PlusPlus::from_seed(randomness);
     let mut shuffler = FisherYates::default();
