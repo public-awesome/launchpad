@@ -17,7 +17,7 @@ use cosmwasm_std::{
 };
 use cw2::set_contract_version;
 use cw721_base::{msg::ExecuteMsg as Cw721ExecuteMsg, MintMsg};
-use cw_utils::{may_pay, must_pay, parse_reply_instantiate_data};
+use cw_utils::{may_pay, parse_reply_instantiate_data};
 use rand_core::{RngCore, SeedableRng};
 use rand_xoshiro::Xoshiro128PlusPlus;
 use sg721::msg::InstantiateMsg as Sg721InstantiateMsg;
@@ -201,13 +201,11 @@ pub fn execute_shuffle(
     env: Env,
     info: MessageInfo,
 ) -> Result<Response, ContractError> {
-    // Check exact shuffle fee payment included
-    let payment = must_pay(&info, NATIVE_DENOM)?;
-    if payment != Uint128::from(SHUFFLE_FEE) {
-        return Err(ContractError::IncorrectPaymentAmount(
-            coin(payment.u128(), NATIVE_DENOM),
-            coin(SHUFFLE_FEE, NATIVE_DENOM),
-        ));
+    // Check exact shuffle fee payment included in message
+    let fee_msgs = checked_fair_burn(&info, SHUFFLE_FEE)?;
+    // Check not sold out
+    if token_count(deps.storage)? == 0 {
+        return Err(ContractError::SoldOut {});
     }
 
     // run random_token_list to generate a list of random token key indices
@@ -241,7 +239,11 @@ pub fn execute_shuffle(
             },
         )?;
     }
-    Ok(Response::default().add_attribute("action", "shuffle"))
+
+    Ok(Response::default()
+        .add_attribute("action", "shuffle")
+        .add_attribute("sender", info.sender)
+        .add_messages(fee_msgs))
 }
 
 pub fn execute_withdraw(
