@@ -6,8 +6,8 @@ use crate::msg::{
     MintableNumTokensResponse, QueryMsg, StartTimeResponse,
 };
 use crate::state::{
-    decrement_tokens, token_count, tokens, Config, TokenInfo, CONFIG, MINTABLE_NUM_TOKENS,
-    MINTER_ADDRS, SG721_ADDRESS,
+    decrement_tokens, mintable_tokens, token_count, Config, TokenIndexMapping, CONFIG,
+    MINTABLE_NUM_TOKENS, MINTER_ADDRS, SG721_ADDRESS,
 };
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
@@ -128,10 +128,10 @@ pub fn instantiate(
     for (i, token_id) in token_list.iter().enumerate() {
         // i = [0..num_tokens], add 1 to get the expected token key
         let token_key = i as u32 + 1;
-        tokens().save(
+        mintable_tokens().save(
             deps.storage,
             token_key,
-            &TokenInfo {
+            &TokenIndexMapping {
                 key: token_key,
                 id: *token_id,
             },
@@ -384,7 +384,7 @@ fn _execute_mint(
     token_id: Option<u32>,
 ) -> Result<Response, ContractError> {
     // Return sold out error if no token found
-    tokens()
+    mintable_tokens()
         .keys(deps.storage, None, None, Order::Ascending)
         .next()
         .ok_or(ContractError::SoldOut {})??;
@@ -419,19 +419,19 @@ fn _execute_mint(
         network_fee
     };
 
-    let mintable_token_info: TokenInfo = match token_id {
+    let mintable_token_mapping: TokenIndexMapping = match token_id {
         Some(token_id) => {
             if token_id == 0 || token_id > config.num_tokens {
                 return Err(ContractError::InvalidTokenId {});
             }
-            let token_info = tokens()
+            let token_mapping = mintable_tokens()
                 .idx
                 .token_ids
                 .item(deps.storage, token_id)?
                 .map(|id| id.1);
-            match token_info {
+            match token_mapping {
                 // If token_id exists, ready to mint
-                Some(token_info) => token_info,
+                Some(token_mapping) => token_mapping,
                 // If token_id not on mintable map, throw err
                 _ => return Err(ContractError::TokenIdAlreadySold { token_id }),
             }
@@ -439,18 +439,18 @@ fn _execute_mint(
         None => {
             let token_key: u32 =
                 random_mintable_token_key(deps.as_ref(), env, info.sender.clone())?;
-            let token_info = tokens().load(deps.storage, token_key)?;
-            token_info
+            let token_mapping = mintable_tokens().load(deps.storage, token_key)?;
+            token_mapping
         }
     };
 
     // Create mint msgs
     let mint_msg = Cw721ExecuteMsg::Mint(MintMsg::<Empty> {
-        token_id: mintable_token_info.id.to_string(),
+        token_id: mintable_token_mapping.id.to_string(),
         owner: recipient_addr.to_string(),
         token_uri: Some(format!(
             "{}/{}",
-            config.base_token_uri, mintable_token_info.id
+            config.base_token_uri, mintable_token_mapping.id
         )),
         extension: Empty {},
     });
@@ -462,7 +462,7 @@ fn _execute_mint(
     msgs.append(&mut vec![msg]);
 
     // Remove mintable token info from map
-    tokens().remove(deps.storage, mintable_token_info.key)?;
+    mintable_tokens().remove(deps.storage, mintable_token_mapping.key)?;
     // Decrement mintable num tokens
     decrement_tokens(deps.storage)?;
     // Save the new mint count for the sender's address
@@ -473,7 +473,7 @@ fn _execute_mint(
         .add_attribute("action", action)
         .add_attribute("sender", info.sender)
         .add_attribute("recipient", recipient_addr)
-        .add_attribute("token_id", mintable_token_info.id.to_string())
+        .add_attribute("token_id", mintable_token_mapping.id.to_string())
         .add_attribute("network_fee", network_fee)
         .add_attribute("mint_price", mint_price.amount)
         .add_messages(msgs))
@@ -512,7 +512,7 @@ fn random_mintable_token_key(deps: Deps, env: Env, sender: Addr) -> Result<u32, 
         rem = num_tokens;
     }
     let n = r % rem;
-    let mintable_tokens = tokens()
+    let mintable_tokens = mintable_tokens()
         .keys(deps.storage, None, None, order)
         .skip(n as usize)
         .take(1)
