@@ -202,7 +202,7 @@ pub fn execute_shuffle(
     info: MessageInfo,
 ) -> Result<Response, ContractError> {
     // Check exact shuffle fee payment included
-    let payment = must_pay(&info, &NATIVE_DENOM)?;
+    let payment = must_pay(&info, NATIVE_DENOM)?;
     if payment != Uint128::from(SHUFFLE_FEE) {
         return Err(ContractError::IncorrectPaymentAmount(
             coin(payment.u128(), NATIVE_DENOM),
