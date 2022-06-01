@@ -1549,7 +1549,7 @@ fn shuffle() {
     // try shuffle
     let shuffle_msg = ExecuteMsg::Shuffle {};
     let funds = coins(SHUFFLE_FEE, NATIVE_DENOM);
-    let res = router.execute_contract(creator.clone(), minter_addr.clone(), &shuffle_msg, &funds);
+    let res = router.execute_contract(creator.clone(), minter_addr, &shuffle_msg, &funds);
     assert!(res.is_err());
 }
 
