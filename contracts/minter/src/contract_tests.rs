@@ -14,7 +14,7 @@ use whitelist::msg::{AddMembersMsg, ExecuteMsg as WhitelistExecuteMsg};
 use crate::contract::instantiate;
 use crate::msg::{
     ConfigResponse, ExecuteMsg, InstantiateMsg, MintCountResponse, MintPriceResponse,
-    MintableNumTokensResponse, QueryMsg, StartTimeResponse,
+    MintableNumTokensResponse, MintableTokensResponse, QueryMsg, StartTimeResponse,
 };
 use crate::ContractError;
 
@@ -1460,6 +1460,43 @@ fn unhappy_path() {
     let mint_msg = ExecuteMsg::Mint {};
     let res = router.execute_contract(buyer, minter_addr, &mint_msg, &coins(UNIT_PRICE, "uatom"));
     assert!(res.is_err());
+}
+
+//TODO for debug to test shuffle. remove before prod
+#[test]
+fn shuffle() {
+    // setup accounts
+    let mut router = custom_mock_app();
+    let (creator, _buyer) = setup_accounts(&mut router);
+    // setup contracts
+    let num_tokens = 20;
+    let (minter_addr, _config) = setup_minter_contract(&mut router, &creator, num_tokens);
+    // query mintable order for mints
+    let query_mintable_tokens_msg = QueryMsg::MintableTokens {};
+    let res: MintableTokensResponse = router
+        .wrap()
+        .query_wasm_smart(minter_addr.clone(), &query_mintable_tokens_msg)
+        .unwrap();
+    println!("{:?}", res);
+    // perform shuffle
+    let shuffle_msg = ExecuteMsg::Shuffle {};
+    const SHUFFLE_FEE: u128 = 100_000_000;
+    let funds = coins(SHUFFLE_FEE, NATIVE_DENOM);
+    let res = router.execute_contract(creator, minter_addr.clone(), &shuffle_msg, &funds);
+    assert!(res.is_ok());
+    // query and compare mintable order for mints
+    let query_mintable_tokens_msg = QueryMsg::MintableTokens {};
+    let res: MintableTokensResponse = router
+        .wrap()
+        .query_wasm_smart(minter_addr.clone(), &query_mintable_tokens_msg)
+        .unwrap();
+    println!("{:?}", res);
+    // mint a few tokens
+    // query mintable order for mints
+    // perform shuffle
+    // query and compare mintable order for mints
+    // mint until sold out
+    // try shuffle
 }
 
 #[test]

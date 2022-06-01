@@ -3,7 +3,7 @@ use std::convert::TryInto;
 use crate::error::ContractError;
 use crate::msg::{
     ConfigResponse, ExecuteMsg, InstantiateMsg, MintCountResponse, MintPriceResponse,
-    MintableNumTokensResponse, QueryMsg, StartTimeResponse,
+    MintableNumTokensResponse, MintableTokensResponse, QueryMsg, StartTimeResponse,
 };
 use crate::state::{
     decrement_tokens, token_count, tokens, Config, TokenInfo, CONFIG, MINTABLE_NUM_TOKENS,
@@ -221,7 +221,8 @@ pub fn execute_shuffle(
     for (i, random_token_key) in randomized_keys_list.iter().enumerate() {
         let og_token_info = tokens().load(deps.as_ref().storage, keys[i])?;
         let new_token_info = tokens().load(deps.storage, *random_token_key)?;
-        // swap ids for keys[i] and random_token_key
+        // replace values for keys[i] and random_token_key
+        tokens().remove(deps.storage, *random_token_key)?;
         tokens().replace(
             deps.storage,
             keys[i],
@@ -230,6 +231,14 @@ pub fn execute_shuffle(
                 id: new_token_info.id,
             }),
             Some(&og_token_info),
+        )?;
+        tokens().save(
+            deps.storage,
+            *random_token_key,
+            &TokenInfo {
+                key: *random_token_key,
+                id: og_token_info.id,
+            },
         )?;
     }
     Ok(Response::default().add_attribute("action", "shuffle"))
@@ -670,6 +679,8 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::MintableNumTokens {} => to_binary(&query_mintable_num_tokens(deps)?),
         QueryMsg::MintPrice {} => to_binary(&query_mint_price(deps)?),
         QueryMsg::MintCount { address } => to_binary(&query_mint_count(deps, address)?),
+        // TODO for debug to test shuffle. remove before prod
+        QueryMsg::MintableTokens {} => to_binary(&query_mintable_tokens(deps)?),
     }
 }
 
@@ -709,6 +720,19 @@ fn query_start_time(deps: Deps) -> StdResult<StartTimeResponse> {
 fn query_mintable_num_tokens(deps: Deps) -> StdResult<MintableNumTokensResponse> {
     let count = token_count(deps.storage)?;
     Ok(MintableNumTokensResponse { count })
+}
+
+//TODO for debug to test shuffle. remove before prod
+fn query_mintable_tokens(deps: Deps) -> StdResult<MintableTokensResponse> {
+    let tokens = tokens()
+        .range(deps.storage, None, None, Order::Ascending)
+        .into_iter()
+        .map(|t| t.unwrap().1)
+        .collect::<Vec<_>>();
+
+    Ok(MintableTokensResponse {
+        mintable_tokens: tokens,
+    })
 }
 
 fn query_mint_price(deps: Deps) -> StdResult<MintPriceResponse> {
