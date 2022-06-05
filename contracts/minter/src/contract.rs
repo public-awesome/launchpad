@@ -214,21 +214,24 @@ pub fn execute_shuffle(
         .map(|token_key| token_key.unwrap())
         .collect::<Vec<_>>();
     let randomized_keys_list = random_token_list(&env, keys.clone())?;
-
+    let dummy_token_info = TokenInfo {
+        key: 999999999,
+        id: 999999999,
+    };
     // // assign new token keys and token ids
     for (i, random_token_key) in randomized_keys_list.iter().enumerate() {
         let og_token_info = tokens().load(deps.as_ref().storage, keys[i])?;
         let new_token_info = tokens().load(deps.storage, *random_token_key)?;
         // replace values for keys[i] and random_token_key
-        tokens().remove(deps.storage, *random_token_key)?;
-        tokens().replace(
+        // first save dummy info to avoid tripping unique value constraint
+        tokens().save(deps.storage, *random_token_key, &dummy_token_info)?;
+        tokens().save(
             deps.storage,
             keys[i],
-            Some(&TokenInfo {
+            &TokenInfo {
                 key: keys[i],
                 id: new_token_info.id,
-            }),
-            Some(&og_token_info),
+            },
         )?;
         tokens().save(
             deps.storage,
