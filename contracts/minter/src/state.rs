@@ -2,7 +2,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use cosmwasm_std::{Addr, Coin, StdResult, Storage, Timestamp};
-use cw_storage_plus::{Index, IndexList, IndexedMap, Item, Map, UniqueIndex};
+use cw_storage_plus::{Item, Map};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Config {
@@ -32,30 +32,13 @@ pub fn decrement_tokens(storage: &mut dyn Storage) -> StdResult<u32> {
 }
 
 pub const MINTER_ADDRS: Map<Addr, u32> = Map::new("ma");
+pub const MINTABLE_TOKEN_IDS: Item<Vec<u32>> = Item::new("mintable_token_ids");
 
-type TokenKey = u32;
+type TokenPosition = usize;
 type TokenId = u32;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct TokenIndexMapping {
-    pub key: TokenKey,
+    pub position: TokenPosition,
     pub id: TokenId,
-}
-
-pub struct TokenIndices<'a> {
-    pub token_ids: UniqueIndex<'a, TokenId, TokenIndexMapping, TokenKey>,
-}
-
-impl<'a> IndexList<TokenIndexMapping> for TokenIndices<'a> {
-    fn get_indexes(&'_ self) -> Box<dyn Iterator<Item = &'_ dyn Index<TokenIndexMapping>> + '_> {
-        let v: Vec<&dyn Index<TokenIndexMapping>> = vec![&self.token_ids];
-        Box::new(v.into_iter())
-    }
-}
-
-pub fn mintable_tokens<'a>() -> IndexedMap<'a, TokenKey, TokenIndexMapping, TokenIndices<'a>> {
-    let indexes = TokenIndices {
-        token_ids: UniqueIndex::new(|d: &TokenIndexMapping| d.id, "tokens__token_ids"),
-    };
-    IndexedMap::new("tokens", indexes)
 }

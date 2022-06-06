@@ -4,8 +4,6 @@ use serde::{Deserialize, Serialize};
 
 use sg721::msg::InstantiateMsg as Sg721InstantiateMsg;
 
-use crate::state::TokenInfo;
-
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {
     pub base_token_uri: String,
@@ -81,5 +79,5 @@ pub struct MintCountResponse {
 //TODO for debug to test shuffle. remove before prod
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct MintableTokensResponse {
-    pub mintable_tokens: Vec<TokenInfo>,
+    pub mintable_tokens: Vec<u32>,
 }

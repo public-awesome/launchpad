@@ -6,14 +6,14 @@ use crate::msg::{
     MintableNumTokensResponse, MintableTokensResponse, QueryMsg, StartTimeResponse,
 };
 use crate::state::{
-    decrement_tokens, mintable_tokens, token_count, Config, TokenIndexMapping, CONFIG,
-    MINTABLE_NUM_TOKENS, MINTER_ADDRS, SG721_ADDRESS,
+    decrement_tokens, token_count, Config, TokenIndexMapping, CONFIG, MINTABLE_NUM_TOKENS,
+    MINTABLE_TOKEN_IDS, MINTER_ADDRS, SG721_ADDRESS,
 };
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     coin, to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut, Empty, Env,
-    MessageInfo, Order, Reply, ReplyOn, StdError, StdResult, Timestamp, Uint128, WasmMsg,
+    MessageInfo, Reply, ReplyOn, StdError, StdResult, Timestamp, Uint128, WasmMsg,
 };
 use cw2::set_contract_version;
 use cw721_base::{msg::ExecuteMsg as Cw721ExecuteMsg, MintMsg};
@@ -125,19 +125,7 @@ pub fn instantiate(
     MINTABLE_NUM_TOKENS.save(deps.storage, &msg.num_tokens)?;
 
     let token_list = random_token_list(&env, (1..=msg.num_tokens).collect::<Vec<u32>>())?;
-    // Save mintable token ids map
-    for (i, token_id) in token_list.iter().enumerate() {
-        // i = [0..num_tokens], add 1 to get the expected token key
-        let token_key = i as u32 + 1;
-        mintable_tokens().save(
-            deps.storage,
-            token_key,
-            &TokenIndexMapping {
-                key: token_key,
-                id: *token_id,
-            },
-        )?;
-    }
+    MINTABLE_TOKEN_IDS.save(deps.storage, &token_list)?;
 
     // Submessage to instantiate sg721 contract
     let sub_msgs: Vec<SubMsg> = vec![SubMsg {
@@ -209,36 +197,11 @@ pub fn execute_shuffle(
     }
 
     // run random_token_list to generate a list of random token key indices
-    let keys = tokens()
-        .keys(deps.as_ref().storage, None, None, Order::Ascending)
-        .map(|token_key| token_key.unwrap())
-        .collect::<Vec<_>>();
-    let randomized_keys_list = random_token_list(&env, keys.clone())?;
+    let mintable_token_ids = MINTABLE_TOKEN_IDS.load(deps.storage)?;
+    let randomized_mintable_token_ids = random_token_list(&env, mintable_token_ids)?;
 
-    // // assign new token keys and token ids
-    for (i, random_token_key) in randomized_keys_list.iter().enumerate() {
-        let og_token_info = tokens().load(deps.as_ref().storage, keys[i])?;
-        let new_token_info = tokens().load(deps.storage, *random_token_key)?;
-        // replace values for keys[i] and random_token_key
-        tokens().remove(deps.storage, *random_token_key)?;
-        tokens().replace(
-            deps.storage,
-            keys[i],
-            Some(&TokenInfo {
-                key: keys[i],
-                id: new_token_info.id,
-            }),
-            Some(&og_token_info),
-        )?;
-        tokens().save(
-            deps.storage,
-            *random_token_key,
-            &TokenInfo {
-                key: *random_token_key,
-                id: og_token_info.id,
-            },
-        )?;
-    }
+    // update the mintable token ids with the randomized list
+    MINTABLE_TOKEN_IDS.save(deps.storage, &randomized_mintable_token_ids)?;
 
     Ok(Response::default()
         .add_attribute("action", "shuffle")
@@ -439,10 +402,10 @@ fn _execute_mint(
     token_id: Option<u32>,
 ) -> Result<Response, ContractError> {
     // Return sold out error if no token found
-    mintable_tokens()
-        .keys(deps.storage, None, None, Order::Ascending)
-        .next()
-        .ok_or(ContractError::SoldOut {})??;
+    let mut mintable_token_ids = MINTABLE_TOKEN_IDS.load(deps.storage)?;
+    if mintable_token_ids.is_empty() {
+        return Err(ContractError::SoldOut {});
+    }
 
     let config = CONFIG.load(deps.storage)?;
     let sg721_address = SG721_ADDRESS.load(deps.storage)?;
@@ -479,22 +442,22 @@ fn _execute_mint(
             if token_id == 0 || token_id > config.num_tokens {
                 return Err(ContractError::InvalidTokenId {});
             }
-            let token_mapping = mintable_tokens()
-                .idx
-                .token_ids
-                .item(deps.storage, token_id)?
-                .map(|id| id.1);
-            match token_mapping {
+            let position = mintable_token_ids.iter().position(|&t| t == token_id);
+            match position {
                 // If token_id exists, ready to mint
-                Some(token_mapping) => token_mapping,
-                // If token_id not on mintable map, throw err
-                _ => return Err(ContractError::TokenIdAlreadySold { token_id }),
+                Some(position) => TokenIndexMapping {
+                    position,
+                    id: token_id,
+                },
+                // If token_id not contained in mintable_token_ids, throw err
+                None => {
+                    return Err(ContractError::TokenIdAlreadySold { token_id });
+                }
             }
         }
         None => {
-            let token_key: u32 =
-                random_mintable_token_key(deps.as_ref(), env, info.sender.clone())?;
-            let token_mapping = mintable_tokens().load(deps.storage, token_key)?;
+            let token_mapping =
+                random_mintable_token_mapping(deps.as_ref(), env, info.sender.clone())?;
             token_mapping
         }
     };
@@ -517,7 +480,8 @@ fn _execute_mint(
     msgs.append(&mut vec![msg]);
 
     // Remove mintable token info from map
-    mintable_tokens().remove(deps.storage, mintable_token_mapping.key)?;
+    mintable_token_ids.remove(mintable_token_mapping.position);
+    MINTABLE_TOKEN_IDS.save(deps.storage, &mintable_token_ids)?;
     // Decrement mintable num tokens
     decrement_tokens(deps.storage)?;
     // Save the new mint count for the sender's address
@@ -547,7 +511,13 @@ fn random_token_list(env: &Env, tokens: std::vec::Vec<u32>) -> Result<Vec<u32>, 
     Ok(tokens)
 }
 
-fn random_mintable_token_key(deps: Deps, env: Env, sender: Addr) -> Result<u32, ContractError> {
+// takes first or last 50 tokens, shuffles, picks 1 and returns token mapping
+fn random_mintable_token_mapping(
+    deps: Deps,
+    env: Env,
+    sender: Addr,
+) -> Result<TokenIndexMapping, ContractError> {
+    let mintable_token_ids = MINTABLE_TOKEN_IDS.load(deps.storage)?;
     let num_tokens = token_count(deps.storage)?;
     let sha256 =
         Sha256::digest(format!("{}{}{}", sender, num_tokens, env.block.height).into_bytes());
@@ -558,21 +528,29 @@ fn random_mintable_token_key(deps: Deps, env: Env, sender: Addr) -> Result<u32, 
 
     let r = rng.next_u32();
 
-    let order = match r % 2 {
-        1 => Order::Descending,
-        _ => Order::Ascending,
-    };
+    let order = r % 2;
     let mut rem = 50;
     if rem > num_tokens {
         rem = num_tokens;
     }
     let n = r % rem;
-    let mintable_tokens = mintable_tokens()
-        .keys(deps.storage, None, None, order)
-        .skip(n as usize)
-        .take(1)
-        .collect::<StdResult<Vec<_>>>()?;
-    Ok(mintable_tokens[0])
+
+    let token_mapping = if order == 1 {
+        let position = n as usize;
+        TokenIndexMapping {
+            position,
+            id: mintable_token_ids[position],
+        }
+    } else {
+        // taking random position from the end of the array
+        let position = (num_tokens - n - 1) as usize;
+        TokenIndexMapping {
+            position,
+            id: mintable_token_ids[position],
+        }
+    };
+
+    Ok(token_mapping)
 }
 
 pub fn execute_update_start_time(
@@ -726,11 +704,7 @@ fn query_mintable_num_tokens(deps: Deps) -> StdResult<MintableNumTokensResponse>
 
 //TODO for debug to test shuffle. remove before prod
 fn query_mintable_tokens(deps: Deps) -> StdResult<MintableTokensResponse> {
-    let tokens = tokens()
-        .range(deps.storage, None, None, Order::Ascending)
-        .into_iter()
-        .map(|t| t.unwrap().1)
-        .collect::<Vec<_>>();
+    let tokens = MINTABLE_TOKEN_IDS.load(deps.storage)?;
 
     Ok(MintableTokensResponse {
         mintable_tokens: tokens,
