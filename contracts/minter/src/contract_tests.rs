@@ -435,9 +435,9 @@ fn happy_path() {
     assert_eq!(res.address, buyer.to_string());
 
     // Check NFT owned by buyer
-    // Random mint token_id 1
+    // Random mint token_id 2
     let query_owner_msg = Cw721QueryMsg::OwnerOf {
-        token_id: String::from("1"),
+        token_id: String::from("2"),
         include_expired: None,
     };
     let res: OwnerOfResponse = router
@@ -1192,8 +1192,8 @@ fn mint_for_token_id_addr() {
         .unwrap();
     assert_eq!(mintable_num_tokens_response.count, 3);
 
-    // Test mint_for token_id 2 then normal mint
-    let token_id = 2;
+    // Test mint_for token_id 3 then normal mint
+    let token_id = 3;
     let mint_for_msg = ExecuteMsg::MintFor {
         token_id,
         recipient: buyer.to_string(),
