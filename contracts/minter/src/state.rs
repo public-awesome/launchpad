@@ -37,25 +37,25 @@ type TokenKey = u32;
 type TokenId = u32;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct TokenInfo {
+pub struct TokenIndexMapping {
     pub key: TokenKey,
     pub id: TokenId,
 }
 
 pub struct TokenIndices<'a> {
-    pub token_ids: UniqueIndex<'a, TokenId, TokenInfo, TokenKey>,
+    pub token_ids: UniqueIndex<'a, TokenId, TokenIndexMapping, TokenKey>,
 }
 
-impl<'a> IndexList<TokenInfo> for TokenIndices<'a> {
-    fn get_indexes(&'_ self) -> Box<dyn Iterator<Item = &'_ dyn Index<TokenInfo>> + '_> {
-        let v: Vec<&dyn Index<TokenInfo>> = vec![&self.token_ids];
+impl<'a> IndexList<TokenIndexMapping> for TokenIndices<'a> {
+    fn get_indexes(&'_ self) -> Box<dyn Iterator<Item = &'_ dyn Index<TokenIndexMapping>> + '_> {
+        let v: Vec<&dyn Index<TokenIndexMapping>> = vec![&self.token_ids];
         Box::new(v.into_iter())
     }
 }
 
-pub fn tokens<'a>() -> IndexedMap<'a, TokenKey, TokenInfo, TokenIndices<'a>> {
+pub fn mintable_tokens<'a>() -> IndexedMap<'a, TokenKey, TokenIndexMapping, TokenIndices<'a>> {
     let indexes = TokenIndices {
-        token_ids: UniqueIndex::new(|d: &TokenInfo| d.id, "tokens__token_ids"),
+        token_ids: UniqueIndex::new(|d: &TokenIndexMapping| d.id, "tokens__token_ids"),
     };
     IndexedMap::new("tokens", indexes)
 }
