@@ -175,39 +175,7 @@ pub fn execute(
         ExecuteMsg::SetWhitelist { whitelist } => {
             execute_set_whitelist(deps, env, info, &whitelist)
         }
-        ExecuteMsg::Withdraw {} => execute_withdraw(deps, env, info),
     }
-}
-
-pub fn execute_withdraw(
-    deps: DepsMut,
-    env: Env,
-    info: MessageInfo,
-) -> Result<Response, ContractError> {
-    let config = CONFIG.load(deps.storage)?;
-    if config.admin != info.sender {
-        return Err(ContractError::Unauthorized(
-            "Sender is not an admin".to_owned(),
-        ));
-    };
-
-    // query balance from the contract
-    let balance = deps
-        .querier
-        .query_balance(env.contract.address, NATIVE_DENOM)?;
-    if balance.amount.is_zero() {
-        return Err(ContractError::ZeroBalance {});
-    }
-
-    // send contract balance to creator
-    let send_msg = CosmosMsg::Bank(BankMsg::Send {
-        to_address: info.sender.to_string(),
-        amount: vec![balance],
-    });
-
-    Ok(Response::default()
-        .add_attribute("action", "withdraw")
-        .add_message(send_msg))
 }
 
 pub fn execute_set_whitelist(
@@ -437,13 +405,24 @@ fn _execute_mint(
     let new_mint_count = mint_count(deps.as_ref(), &info)? + 1;
     MINTER_ADDRS.save(deps.storage, info.clone().sender, &new_mint_count)?;
 
-    Ok(res
+    let mut seller_amount = Uint128::zero();
+    // Does have a fee
+    if !admin_no_fee {
+        seller_amount = mint_price.amount - network_fee;
+        msgs.append(&mut vec![CosmosMsg::Bank(BankMsg::Send {
+            to_address: config.admin.to_string(),
+            amount: vec![coin(seller_amount.u128(), config.unit_price.denom)],
+        })]);
+    };
+
+    Ok(Response::default()
         .add_attribute("action", action)
         .add_attribute("sender", info.sender)
         .add_attribute("recipient", recipient_addr)
         .add_attribute("token_id", mintable_token_id.to_string())
         .add_attribute("network_fee", network_fee)
         .add_attribute("mint_price", mint_price.amount)
+        .add_attribute("seller_amount", seller_amount)
         .add_messages(msgs))
 }
 
