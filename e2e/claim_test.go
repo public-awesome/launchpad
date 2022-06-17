@@ -160,7 +160,7 @@ func TestClaim(t *testing.T) {
 		CodeID: 1,
 		Label:  "Minter",
 		Msg:    instantiateMsgRaw,
-		Funds:  sdk.NewCoins(sdk.NewInt64Coin("ustars", 1_000_000_000)),
+		Funds:  sdk.NewCoins(sdk.NewInt64Coin("ustars", 5_000_000_000)),
 	})
 	require.NoError(t, err)
 	require.NotNil(t, instantiateRes)
@@ -179,7 +179,7 @@ func TestClaim(t *testing.T) {
 
 	// Buyer should have 100STARS less
 	require.Equal(t,
-		sdk.NewInt64Coin("ustars", 1_900_000_000).String(),
+		sdk.NewInt64Coin("ustars", 5_900_000_000).String(),
 		app.BankKeeper.GetBalance(ctx, accs[1].Address, "ustars").String(),
 	)
 
@@ -267,7 +267,7 @@ func TestClaim(t *testing.T) {
 
 	balance := app.BankKeeper.GetBalance(ctx, accs[1].Address, "ustars")
 	require.Equal(t,
-		"1900000000",
+		"5900000000",
 		balance.Amount.String(),
 	)
 
@@ -282,7 +282,7 @@ func TestClaim(t *testing.T) {
 	perAction := claimRecords[0].InitialClaimableAmount.AmountOf(claimtypes.DefaultClaimDenom).Quo(sdk.NewInt(int64(len(claimRecords[0].ActionCompleted))))
 
 	require.Equal(t, perAction.Int64(), int64(200_000_000))
-	expectedBalance := perAction.Add(sdk.NewInt(1_900_000_000)) // user already had 19000
+	expectedBalance := perAction.Add(sdk.NewInt(5_900_000_000)) // user already had 49000
 	require.Equal(t,
 		expectedBalance.String(),
 		balance.Amount.String(),

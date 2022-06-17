@@ -3,11 +3,7 @@ use std::fs::create_dir_all;
 
 use cosmwasm_schema::{export_schema, remove_schemas, schema_for};
 
-use claim::msg::{
-    ExecuteMsg,
-    MarketplaceResponse,
-    InstantiateMsg
-};
+use claim::msg::{ExecuteMsg, InstantiateMsg, MarketplaceResponse};
 use cw_controllers::AdminResponse;
 
 fn main() {
