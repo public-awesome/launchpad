@@ -2,7 +2,7 @@
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     coin, to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut, Empty, Env,
-    MessageInfo, Order, Reply, ReplyOn, StdError, StdResult, Timestamp, WasmMsg,
+    MessageInfo, Order, Reply, ReplyOn, StdError, StdResult, Timestamp, Uint128, WasmMsg,
 };
 use cw2::set_contract_version;
 use cw721_base::{msg::ExecuteMsg as Cw721ExecuteMsg, MintMsg};
@@ -347,7 +347,6 @@ fn _execute_mint(
     }
 
     let mut res = Response::new();
-    let mut msgs: Vec<CosmosMsg<StargazeMsgWrapper>> = vec![];
 
     // Create network fee msgs
     let fee_percent = if is_admin {
@@ -394,7 +393,7 @@ fn _execute_mint(
         msg: to_binary(&mint_msg)?,
         funds: vec![],
     });
-    msgs.append(&mut vec![msg]);
+    res = res.add_message(msg);
 
     // Remove mintable token id from map
     MINTABLE_TOKEN_IDS.remove(deps.storage, mintable_token_id);
@@ -405,25 +404,26 @@ fn _execute_mint(
     let new_mint_count = mint_count(deps.as_ref(), &info)? + 1;
     MINTER_ADDRS.save(deps.storage, info.clone().sender, &new_mint_count)?;
 
-    let mut seller_amount = Uint128::zero();
-    // Does have a fee
-    if !admin_no_fee {
-        seller_amount = mint_price.amount - network_fee;
-        msgs.append(&mut vec![CosmosMsg::Bank(BankMsg::Send {
+    let seller_amount = if !is_admin {
+        let amount = mint_price.amount - network_fee;
+        let msg = BankMsg::Send {
             to_address: config.admin.to_string(),
-            amount: vec![coin(seller_amount.u128(), config.unit_price.denom)],
-        })]);
+            amount: vec![coin(amount.u128(), config.unit_price.denom)],
+        };
+        res = res.add_message(msg);
+        amount
+    } else {
+        Uint128::zero()
     };
 
-    Ok(Response::default()
+    Ok(res
         .add_attribute("action", action)
         .add_attribute("sender", info.sender)
         .add_attribute("recipient", recipient_addr)
         .add_attribute("token_id", mintable_token_id.to_string())
         .add_attribute("network_fee", network_fee)
         .add_attribute("mint_price", mint_price.amount)
-        .add_attribute("seller_amount", seller_amount)
-        .add_messages(msgs))
+        .add_attribute("seller_amount", seller_amount))
 }
 
 pub fn execute_update_start_time(

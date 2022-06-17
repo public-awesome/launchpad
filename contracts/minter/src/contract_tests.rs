@@ -1114,6 +1114,7 @@ fn mint_for_token_id_addr() {
         .wrap()
         .query_all_balances(minter_addr.clone())
         .unwrap();
+    println!("minter_balance: {:?}", minter_balance);
     assert_eq!(0, minter_balance.len());
 
     // Mint fails, invalid token_id
