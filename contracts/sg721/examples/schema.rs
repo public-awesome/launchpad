@@ -3,7 +3,7 @@ use std::fs::create_dir_all;
 
 use cosmwasm_schema::{export_schema, export_schema_with_title, remove_schemas, schema_for};
 
-use cosmwasm_std::{Binary, Empty};
+use cosmwasm_std::Empty;
 
 use cw721::{
     AllNftInfoResponse, ApprovalResponse, ApprovalsResponse, ContractInfoResponse, NftInfoResponse,
@@ -21,7 +21,6 @@ fn main() {
     export_schema(&schema_for!(InstantiateMsg), &out_dir);
     export_schema(&schema_for!(ExecuteMsg), &out_dir);
     export_schema(&schema_for!(QueryMsg), &out_dir);
-    export_schema(&schema_for!(Binary), &out_dir);
     export_schema(&schema_for!(CollectionInfoResponse), &out_dir);
     export_schema_with_title(
         &schema_for!(AllNftInfoResponse<Empty>),
