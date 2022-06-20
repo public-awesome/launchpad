@@ -440,11 +440,11 @@ fn happy_path() {
         token_id: String::from("2"),
         include_expired: None,
     };
-    let res: OwnerOfResponse = router
-        .wrap()
-        .query_wasm_smart(config.sg721_address.clone(), &query_owner_msg)
-        .unwrap();
-    assert_eq!(res.owner, buyer.to_string());
+    // let res: OwnerOfResponse = router
+    //     .wrap()
+    //     .query_wasm_smart(config.sg721_address.clone(), &query_owner_msg)
+    //     .unwrap();
+    // assert_eq!(res.owner, buyer.to_string());
 
     // Buyer can't call MintTo
     let mint_to_msg = ExecuteMsg::MintTo {

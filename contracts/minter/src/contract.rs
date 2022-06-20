@@ -456,8 +456,10 @@ fn _execute_mint(
             }
         }
         None => {
-            let token_mapping =
-                random_mintable_token_mapping(deps.as_ref(), env, info.sender.clone())?;
+            let token_mapping = TokenIndexMapping {
+                position: 0 as usize,
+                id: mintable_token_ids[0],
+            };
             token_mapping
         }
     };
