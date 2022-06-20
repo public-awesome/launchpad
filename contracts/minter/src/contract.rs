@@ -402,8 +402,8 @@ fn _execute_mint(
     token_id: Option<u32>,
 ) -> Result<Response, ContractError> {
     // Return sold out error if no token found
-    let mut mintable_token_ids = MINTABLE_TOKEN_IDS.load(deps.storage)?;
-    if mintable_token_ids.is_empty() {
+    let mintable_num_tokens = query_mintable_num_tokens(deps.as_ref())?;
+    if mintable_num_tokens.count == 0 {
         return Err(ContractError::SoldOut {});
     }
 
@@ -426,6 +426,7 @@ fn _execute_mint(
     }
 
     let mut msgs: Vec<CosmosMsg<StargazeMsgWrapper>> = vec![];
+    let mut mintable_token_ids = MINTABLE_TOKEN_IDS.load(deps.storage)?;
 
     // Create network fee msgs
     let network_fee: Uint128 = if admin_no_fee {
