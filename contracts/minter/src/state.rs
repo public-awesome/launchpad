@@ -18,6 +18,13 @@ pub struct Config {
 
 pub const CONFIG: Item<Config> = Item::new("config");
 pub const SG721_ADDRESS: Item<Addr> = Item::new("sg721_address");
-pub const MINTABLE_TOKEN_IDS: Map<u32, bool> = Map::new("mt");
+// map of index position and token id
+pub const MINTABLE_TOKEN_POSITIONS: Map<u32, u32> = Map::new("mt");
 pub const MINTABLE_NUM_TOKENS: Item<u32> = Item::new("mintable_num_tokens");
 pub const MINTER_ADDRS: Map<Addr, u32> = Map::new("ma");
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct TokenPositionMapping {
+    pub position: u32,
+    pub token_id: u32,
+}

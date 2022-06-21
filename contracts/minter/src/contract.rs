@@ -1,3 +1,4 @@
+use std::cmp::Ordering;
 use std::convert::TryInto;
 
 use crate::error::ContractError;
@@ -6,7 +7,8 @@ use crate::msg::{
     MintableNumTokensResponse, QueryMsg, StartTimeResponse,
 };
 use crate::state::{
-    Config, CONFIG, MINTABLE_NUM_TOKENS, MINTABLE_TOKEN_IDS, MINTER_ADDRS, SG721_ADDRESS,
+    Config, TokenPositionMapping, CONFIG, MINTABLE_NUM_TOKENS, MINTABLE_TOKEN_POSITIONS,
+    MINTER_ADDRS, SG721_ADDRESS,
 };
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
@@ -125,7 +127,7 @@ pub fn instantiate(
     let token_list = random_token_list(&env, msg.num_tokens)?;
     // Save mintable token ids map
     for token_id in token_list {
-        MINTABLE_TOKEN_IDS.save(deps.storage, token_id, &true)?;
+        MINTABLE_TOKEN_POSITIONS.save(deps.storage, token_id, &token_id)?;
     }
 
     // Submessage to instantiate sg721 contract
@@ -373,7 +375,7 @@ fn _execute_mint(
     recipient: Option<Addr>,
     token_id: Option<u32>,
 ) -> Result<Response, ContractError> {
-    let mintable = MINTABLE_TOKEN_IDS
+    let mintable = MINTABLE_TOKEN_POSITIONS
         .keys(deps.storage, None, None, Order::Ascending)
         .next()
         .is_some();
@@ -411,28 +413,59 @@ fn _execute_mint(
         network_fee
     };
 
-    let mintable_token_id = match token_id {
+    let mintable_token_positions: Vec<u32> = MINTABLE_TOKEN_POSITIONS
+        .keys(deps.storage, None, None, Order::Ascending)
+        .map(|x| x.unwrap())
+        .collect();
+    let mintable_token_mapping: TokenPositionMapping = match token_id {
         Some(token_id) => {
             if token_id == 0 || token_id > config.num_tokens {
                 return Err(ContractError::InvalidTokenId {});
             }
-            // If token_id not on mintable map, throw err
-            if !MINTABLE_TOKEN_IDS.has(deps.storage, token_id) {
-                return Err(ContractError::TokenIdAlreadySold { token_id });
+            // iterate map of token positions
+            // check if MINTABLE_TOKEN_POSITIONS value is token_id
+            let position = mintable_token_positions
+                .iter()
+                .filter_map(|position| {
+                    let result = MINTABLE_TOKEN_POSITIONS
+                        .load(deps.storage, *position)
+                        .unwrap()
+                        .cmp(&token_id);
+                    match result {
+                        Ordering::Equal => Some(*position),
+                        _ => None,
+                    }
+                })
+                .collect::<Vec<_>>();
+
+            match position.first() {
+                // If token_id exists, ready to mint
+                Some(position) => TokenPositionMapping {
+                    position: *position,
+                    token_id,
+                },
+                // If token_id not contained in mintable_token_ids, throw err
+                None => {
+                    return Err(ContractError::TokenIdAlreadySold { token_id });
+                }
             }
-            token_id
         }
         None => {
-            let token_id: u32 = random_mintable_token_id(deps.as_ref(), env, info.sender.clone())?;
-            token_id
+            let token_mapping: TokenPositionMapping =
+                random_mintable_token_mapping(deps.as_ref(), env, info.sender.clone())?;
+            token_mapping
         }
     };
 
     // Create mint msgs
     let mint_msg = Cw721ExecuteMsg::Mint(MintMsg::<Empty> {
-        token_id: mintable_token_id.to_string(),
+        token_id: mintable_token_mapping.token_id.to_string(),
         owner: recipient_addr.to_string(),
-        token_uri: Some(format!("{}/{}", config.base_token_uri, mintable_token_id)),
+        token_uri: Some(format!(
+            "{}/{}",
+            config.base_token_uri,
+            mintable_token_mapping.token_id.to_string()
+        )),
         extension: Empty {},
     });
     let msg = CosmosMsg::Wasm(WasmMsg::Execute {
@@ -442,8 +475,8 @@ fn _execute_mint(
     });
     msgs.append(&mut vec![msg]);
 
-    // Remove mintable token id from map
-    MINTABLE_TOKEN_IDS.remove(deps.storage, mintable_token_id);
+    // Remove mintable token position from map
+    MINTABLE_TOKEN_POSITIONS.remove(deps.storage, mintable_token_mapping.position);
     let mintable_num_tokens = MINTABLE_NUM_TOKENS.load(deps.storage)?;
     // Decrement mintable num tokens
     MINTABLE_NUM_TOKENS.save(deps.storage, &(mintable_num_tokens - 1))?;
@@ -455,7 +488,7 @@ fn _execute_mint(
         .add_attribute("action", action)
         .add_attribute("sender", info.sender)
         .add_attribute("recipient", recipient_addr)
-        .add_attribute("token_id", mintable_token_id.to_string())
+        .add_attribute("token_id", mintable_token_mapping.token_id.to_string())
         .add_attribute("network_fee", network_fee)
         .add_attribute("mint_price", mint_price.amount)
         .add_messages(msgs))
@@ -474,7 +507,11 @@ fn random_token_list(env: &Env, num_tokens: u32) -> Result<Vec<u32>, ContractErr
     Ok(tokens)
 }
 
-fn random_mintable_token_id(deps: Deps, env: Env, sender: Addr) -> Result<u32, ContractError> {
+fn random_mintable_token_mapping(
+    deps: Deps,
+    env: Env,
+    sender: Addr,
+) -> Result<TokenPositionMapping, ContractError> {
     let num_tokens = MINTABLE_NUM_TOKENS.load(deps.storage)?;
     let sha256 =
         Sha256::digest(format!("{}{}{}", sender, num_tokens, env.block.height).into_bytes());
@@ -494,12 +531,17 @@ fn random_mintable_token_id(deps: Deps, env: Env, sender: Addr) -> Result<u32, C
         rem = num_tokens;
     }
     let n = r % rem;
-    let mintable_tokens = MINTABLE_TOKEN_IDS
+    let position = MINTABLE_TOKEN_POSITIONS
         .keys(deps.storage, None, None, order)
         .skip(n as usize)
         .take(1)
-        .collect::<StdResult<Vec<_>>>()?;
-    Ok(mintable_tokens[0])
+        .collect::<StdResult<Vec<_>>>()?[0];
+
+    let token_id: u32 = MINTABLE_TOKEN_POSITIONS.load(deps.storage, position)?;
+    Ok(TokenPositionMapping {
+        position: position,
+        token_id,
+    })
 }
 
 pub fn execute_update_start_time(
