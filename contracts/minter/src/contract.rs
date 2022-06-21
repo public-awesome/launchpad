@@ -463,8 +463,7 @@ fn _execute_mint(
         owner: recipient_addr.to_string(),
         token_uri: Some(format!(
             "{}/{}",
-            config.base_token_uri,
-            mintable_token_mapping.token_id.to_string()
+            config.base_token_uri, mintable_token_mapping.token_id
         )),
         extension: Empty {},
     });
@@ -538,10 +537,7 @@ fn random_mintable_token_mapping(
         .collect::<StdResult<Vec<_>>>()?[0];
 
     let token_id: u32 = MINTABLE_TOKEN_POSITIONS.load(deps.storage, position)?;
-    Ok(TokenPositionMapping {
-        position: position,
-        token_id,
-    })
+    Ok(TokenPositionMapping { position, token_id })
 }
 
 pub fn execute_update_start_time(
