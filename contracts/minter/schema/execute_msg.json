@@ -113,7 +113,6 @@
         }
       },
       "additionalProperties": false
-<<<<<<< HEAD
     },
     {
       "type": "object",
@@ -126,20 +125,6 @@
         }
       },
       "additionalProperties": false
-    },
-    {
-      "type": "object",
-      "required": [
-        "withdraw"
-      ],
-      "properties": {
-        "withdraw": {
-          "type": "object"
-        }
-      },
-      "additionalProperties": false
-=======
->>>>>>> main
     }
   ],
   "definitions": {
