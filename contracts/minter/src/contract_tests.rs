@@ -26,7 +26,7 @@ const MINT_FEE: u128 = 10_000_000;
 const MAX_TOKEN_LIMIT: u32 = 10000;
 const WHITELIST_AMOUNT: u128 = 66_000_000;
 const WL_PER_ADDRESS_LIMIT: u32 = 1;
-const ADMIN_MINT_PRICE: u128 = 0;
+const ADMIN_MINT_PRICE: u128 = 15_000_000;
 
 fn custom_mock_app() -> StargazeApp {
     StargazeApp::default()
@@ -414,7 +414,10 @@ fn happy_path() {
     // Balances are correct
     // The creator should get the unit price - mint fee for the mint above
     let creator_balances = router.wrap().query_all_balances(creator.clone()).unwrap();
-    assert_eq!(creator_balances, coins(INITIAL_BALANCE, NATIVE_DENOM));
+    assert_eq!(
+        creator_balances,
+        coins(INITIAL_BALANCE + UNIT_PRICE - MINT_FEE, NATIVE_DENOM)
+    );
     // The buyer's tokens should reduce by unit price
     let buyer_balances = router.wrap().query_all_balances(buyer.clone()).unwrap();
     assert_eq!(
@@ -486,13 +489,12 @@ fn happy_path() {
     assert_eq!(res.count, 1);
     assert_eq!(res.address, buyer.to_string());
 
-    // Minter contract should have a balance
+    // Minter contract should have no balance
     let minter_balance = router
         .wrap()
         .query_all_balances(minter_addr.clone())
         .unwrap();
-    assert_eq!(1, minter_balance.len());
-    assert_eq!(minter_balance[0].amount.u128(), UNIT_PRICE - MINT_FEE);
+    assert_eq!(0, minter_balance.len());
 
     // Check that NFT is transferred
     let query_owner_msg = Cw721QueryMsg::OwnerOf {
@@ -1122,12 +1124,13 @@ fn mint_for_token_id_addr() {
     let sold_token_id: u32 = res.tokens[0].parse::<u32>().unwrap();
 
     // Minter contract should have a balance
+    // Minter contract should have no balance
     let minter_balance = router
         .wrap()
         .query_all_balances(minter_addr.clone())
         .unwrap();
-    assert_eq!(minter_balance[0].amount.u128(), UNIT_PRICE - MINT_FEE);
-    assert_eq!(1, minter_balance.len());
+    println!("minter_balance: {:?}", minter_balance);
+    assert_eq!(0, minter_balance.len());
 
     // Mint fails, invalid token_id
     let token_id: u32 = 0;
@@ -1180,6 +1183,27 @@ fn mint_for_token_id_addr() {
         .query_wasm_smart(minter_addr.clone(), &QueryMsg::MintableNumTokens {})
         .unwrap();
     assert_eq!(mintable_num_tokens_response.count, 3);
+
+    // Mint fails, wrong admin airdrop price
+    let err = router
+        .execute_contract(
+            creator.clone(),
+            minter_addr.clone(),
+            &mint_for_msg,
+            &coins_for_msg(Coin {
+                amount: Uint128::from(ADMIN_MINT_PRICE - 1),
+                denom: NATIVE_DENOM.to_string(),
+            }),
+        )
+        .unwrap_err();
+    assert_eq!(
+        ContractError::IncorrectPaymentAmount(
+            coin(ADMIN_MINT_PRICE - 1, NATIVE_DENOM.to_string()),
+            coin(ADMIN_MINT_PRICE, NATIVE_DENOM.to_string())
+        )
+        .to_string(),
+        err.source().unwrap().to_string()
+    );
 
     // Test mint_for token_id 2 then normal mint
     let token_id = 2;
@@ -1449,58 +1473,4 @@ fn unhappy_path() {
     let mint_msg = ExecuteMsg::Mint {};
     let res = router.execute_contract(buyer, minter_addr, &mint_msg, &coins(UNIT_PRICE, "uatom"));
     assert!(res.is_err());
-}
-
-#[test]
-fn can_withdraw() {
-    // create minter
-    let mut router = custom_mock_app();
-    let (creator, buyer) = setup_accounts(&mut router);
-    let num_tokens = 4;
-    let (minter_addr, _config) = setup_minter_contract(&mut router, &creator, num_tokens);
-
-    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 1);
-
-    // someone who isn't the creator cannot withdraw
-    let withdraw_msg = ExecuteMsg::Withdraw {};
-    router
-        .execute_contract(buyer.clone(), minter_addr.clone(), &withdraw_msg, &[])
-        .unwrap_err();
-
-    // withdraw with a zero balance
-    router
-        .execute_contract(creator.clone(), minter_addr.clone(), &withdraw_msg, &[])
-        .unwrap_err();
-
-    // do a mint
-    let mint_msg = ExecuteMsg::Mint {};
-    let res = router.execute_contract(
-        buyer,
-        minter_addr.clone(),
-        &mint_msg,
-        &coins(UNIT_PRICE, NATIVE_DENOM),
-    );
-    assert!(res.is_ok());
-
-    // Minter contract should have a balance
-    let minter_balance = router
-        .wrap()
-        .query_all_balances(minter_addr.clone())
-        .unwrap();
-    assert_eq!(minter_balance[0].amount.u128(), UNIT_PRICE - MINT_FEE);
-
-    // withdraw
-    let res = router.execute_contract(creator.clone(), minter_addr.clone(), &withdraw_msg, &[]);
-    assert!(res.is_ok());
-
-    // Minter contract should have no balance
-    let minter_balance = router.wrap().query_all_balances(minter_addr).unwrap();
-    assert_eq!(0, minter_balance.len());
-
-    // creator should have received their payment
-    let creator_balances = router.wrap().query_all_balances(creator).unwrap();
-    assert_eq!(
-        creator_balances,
-        coins(INITIAL_BALANCE + UNIT_PRICE - MINT_FEE, NATIVE_DENOM)
-    );
 }

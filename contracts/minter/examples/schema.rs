@@ -3,7 +3,10 @@ use std::fs::create_dir_all;
 
 use cosmwasm_schema::{export_schema, remove_schemas, schema_for};
 
-use minter::msg::{ConfigResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
+use minter::msg::{
+    ConfigResponse, ExecuteMsg, InstantiateMsg, MintCountResponse, MintPriceResponse,
+    MintableNumTokensResponse, QueryMsg, StartTimeResponse,
+};
 use minter::state::Config;
 
 fn main() {
@@ -17,4 +20,8 @@ fn main() {
     export_schema(&schema_for!(QueryMsg), &out_dir);
     export_schema(&schema_for!(Config), &out_dir);
     export_schema(&schema_for!(ConfigResponse), &out_dir);
+    export_schema(&schema_for!(MintableNumTokensResponse), &out_dir);
+    export_schema(&schema_for!(MintCountResponse), &out_dir);
+    export_schema(&schema_for!(StartTimeResponse), &out_dir);
+    export_schema(&schema_for!(MintPriceResponse), &out_dir);
 }

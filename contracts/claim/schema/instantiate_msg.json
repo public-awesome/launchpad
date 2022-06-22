@@ -1,5 +1,19 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "InstantiateMsg",
-  "type": "object"
+  "type": "object",
+  "properties": {
+    "admin": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "marketplace_addr": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  }
 }

@@ -1,6 +1,6 @@
 use cosmwasm_std::{Coin, StdError, Timestamp};
 use cw_utils::PaymentError;
-use sg_std::FeeError;
+use sg1::FeeError;
 use thiserror::Error;
 use url::ParseError;
 
@@ -74,9 +74,6 @@ pub enum ContractError {
 
     #[error("Token id: {token_id} already sold")]
     TokenIdAlreadySold { token_id: u32 },
-
-    #[error("ZeroBalance")]
-    ZeroBalance {},
 
     #[error("{0}")]
     Payment(#[from] PaymentError),

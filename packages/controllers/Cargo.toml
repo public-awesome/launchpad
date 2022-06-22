@@ -1,0 +1,19 @@
+[package]
+name = "sg-controllers"
+version = "0.12.1"
+authors = ["Shane Vitarana <s@users.noreply.publicawesome.com>"]
+edition = "2018"
+description = "Common controllers we can reuse in many contracts"
+license = "Apache-2.0"
+repository = "https://github.com/public-awesome/stargaze-contracts"
+homepage = "https://www.stargaze.zone"
+documentation = "https://docs.stargaze.zone"
+
+
+[dependencies]
+cosmwasm-std = { version = "1.0.0-beta8" }
+cw-storage-plus = "0.13.2"
+schemars = "0.8.1"
+serde = { version = "1.0.103", default-features = false, features = ["derive"] }
+sg-std = { path = "../sg-std" }
+thiserror = { version = "1.0.21" }

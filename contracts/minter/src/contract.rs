@@ -21,8 +21,9 @@ use cw721_base::{msg::ExecuteMsg as Cw721ExecuteMsg, MintMsg};
 use cw_utils::{may_pay, parse_reply_instantiate_data};
 use rand_core::{RngCore, SeedableRng};
 use rand_xoshiro::Xoshiro128PlusPlus;
+use sg1::checked_fair_burn;
 use sg721::msg::InstantiateMsg as Sg721InstantiateMsg;
-use sg_std::{checked_fair_burn, StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
+use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use sha2::{Digest, Sha256};
 use shuffle::{fy::FisherYates, shuffler::Shuffler};
 use url::Url;
@@ -43,8 +44,11 @@ const INSTANTIATE_SG721_REPLY_ID: u64 = 1;
 const MAX_TOKEN_LIMIT: u32 = 10000;
 const MAX_PER_ADDRESS_LIMIT: u32 = 50;
 const MIN_MINT_PRICE: u128 = 50_000_000;
+const AIRDROP_MINT_PRICE: u128 = 15_000_000;
 const MINT_FEE_PERCENT: u32 = 10;
 const SHUFFLE_FEE: u128 = 1_000_000_000;
+// 100% airdrop fee goes to fair burn
+const AIRDROP_MINT_FEE_PERCENT: u32 = 100;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -181,7 +185,6 @@ pub fn execute(
             execute_set_whitelist(deps, env, info, &whitelist)
         }
         ExecuteMsg::Shuffle {} => execute_shuffle(deps, env, info),
-        ExecuteMsg::Withdraw {} => execute_withdraw(deps, env, info),
     }
 }
 
@@ -194,7 +197,8 @@ pub fn execute_shuffle(
     info: MessageInfo,
 ) -> Result<Response, ContractError> {
     // Check exact shuffle fee payment included in message
-    let fee_msgs = checked_fair_burn(&info, SHUFFLE_FEE)?;
+    let mut res = Response::new();
+    checked_fair_burn(&info, SHUFFLE_FEE, None, &mut res)?;
     // Check not sold out
     let token_count = query_mintable_num_tokens(deps.as_ref())?;
     if token_count.count == 0 {
@@ -219,39 +223,7 @@ pub fn execute_shuffle(
 
     Ok(Response::default()
         .add_attribute("action", "shuffle")
-        .add_attribute("sender", info.sender)
-        .add_messages(fee_msgs))
-}
-
-pub fn execute_withdraw(
-    deps: DepsMut,
-    env: Env,
-    info: MessageInfo,
-) -> Result<Response, ContractError> {
-    let config = CONFIG.load(deps.storage)?;
-    if config.admin != info.sender {
-        return Err(ContractError::Unauthorized(
-            "Sender is not an admin".to_owned(),
-        ));
-    };
-
-    // query balance from the contract
-    let balance = deps
-        .querier
-        .query_balance(env.contract.address, NATIVE_DENOM)?;
-    if balance.amount.is_zero() {
-        return Err(ContractError::ZeroBalance {});
-    }
-
-    // send contract balance to creator
-    let send_msg = CosmosMsg::Bank(BankMsg::Send {
-        to_address: info.sender.to_string(),
-        amount: vec![balance],
-    });
-
-    Ok(Response::default()
-        .add_attribute("action", "withdraw")
-        .add_message(send_msg))
+        .add_attribute("sender", info.sender))
 }
 
 pub fn execute_set_whitelist(
@@ -411,7 +383,7 @@ fn _execute_mint(
     env: Env,
     info: MessageInfo,
     action: &str,
-    admin_no_fee: bool,
+    is_admin: bool,
     recipient: Option<Addr>,
     token_id: Option<u32>,
 ) -> Result<Response, ContractError> {
@@ -431,7 +403,7 @@ fn _execute_mint(
         None => info.sender.clone(),
     };
 
-    let mint_price: Coin = mint_price(deps.as_ref(), admin_no_fee)?;
+    let mint_price: Coin = mint_price(deps.as_ref(), is_admin)?;
     // Exact payment only accepted
     let payment = may_pay(&info, &config.unit_price.denom)?;
     if payment != mint_price.amount {
@@ -441,17 +413,16 @@ fn _execute_mint(
         ));
     }
 
-    let mut msgs: Vec<CosmosMsg<StargazeMsgWrapper>> = vec![];
+    let mut res = Response::new();
 
     // Create network fee msgs
-    let network_fee: Uint128 = if admin_no_fee {
-        Uint128::zero()
+    let fee_percent = if is_admin {
+        Decimal::percent(AIRDROP_MINT_FEE_PERCENT as u64)
     } else {
-        let fee_percent = Decimal::percent(MINT_FEE_PERCENT as u64);
-        let network_fee = mint_price.amount * fee_percent;
-        msgs.append(&mut checked_fair_burn(&info, network_fee.u128())?);
-        network_fee
+        Decimal::percent(MINT_FEE_PERCENT as u64)
     };
+    let network_fee = mint_price.amount * fee_percent;
+    checked_fair_burn(&info, network_fee.u128(), None, &mut res)?;
 
     let mintable_token_positions: Vec<u32> = MINTABLE_TOKEN_POSITIONS
         .keys(deps.storage, None, None, Order::Ascending)
@@ -512,7 +483,7 @@ fn _execute_mint(
         msg: to_binary(&mint_msg)?,
         funds: vec![],
     });
-    msgs.append(&mut vec![msg]);
+    res = res.add_message(msg);
 
     // Remove mintable token position from map
     MINTABLE_TOKEN_POSITIONS.remove(deps.storage, mintable_token_mapping.position);
@@ -523,14 +494,26 @@ fn _execute_mint(
     let new_mint_count = mint_count(deps.as_ref(), &info)? + 1;
     MINTER_ADDRS.save(deps.storage, info.clone().sender, &new_mint_count)?;
 
-    Ok(Response::default()
+    let seller_amount = if !is_admin {
+        let amount = mint_price.amount - network_fee;
+        let msg = BankMsg::Send {
+            to_address: config.admin.to_string(),
+            amount: vec![coin(amount.u128(), config.unit_price.denom)],
+        };
+        res = res.add_message(msg);
+        amount
+    } else {
+        Uint128::zero()
+    };
+
+    Ok(res
         .add_attribute("action", action)
         .add_attribute("sender", info.sender)
         .add_attribute("recipient", recipient_addr)
         .add_attribute("token_id", mintable_token_mapping.token_id.to_string())
         .add_attribute("network_fee", network_fee)
         .add_attribute("mint_price", mint_price.amount)
-        .add_messages(msgs))
+        .add_attribute("seller_amount", seller_amount))
 }
 
 fn random_token_list(env: &Env, tokens: std::vec::Vec<u32>) -> Result<Vec<u32>, ContractError> {
@@ -646,11 +629,11 @@ pub fn execute_update_per_address_limit(
 // if admin_no_fee => no fee,
 // else if in whitelist => whitelist price
 // else => config unit price
-pub fn mint_price(deps: Deps, admin_no_fee: bool) -> Result<Coin, StdError> {
+pub fn mint_price(deps: Deps, is_admin: bool) -> Result<Coin, StdError> {
     let config = CONFIG.load(deps.storage)?;
 
-    if admin_no_fee {
-        return Ok(coin(0, config.unit_price.denom));
+    if is_admin {
+        return Ok(coin(AIRDROP_MINT_PRICE, config.unit_price.denom));
     }
 
     if config.whitelist.is_none() {

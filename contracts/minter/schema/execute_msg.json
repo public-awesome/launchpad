@@ -113,6 +113,7 @@
         }
       },
       "additionalProperties": false
+<<<<<<< HEAD
     },
     {
       "type": "object",
@@ -137,6 +138,8 @@
         }
       },
       "additionalProperties": false
+=======
+>>>>>>> main
     }
   ],
   "definitions": {

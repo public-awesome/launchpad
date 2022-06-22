@@ -63,9 +63,10 @@ impl Module for StargazeModule {
                 router.execute(api, storage, block, sender, msg)?;
                 Ok(AppResponse::default())
             }
-            _ => {
-                bail!("not implemented")
-            }
+            sg_std::StargazeMsg::ClaimFor {
+                action: _,
+                address: _,
+            } => Ok(AppResponse::default()),
         }
     }
     fn sudo<ExecC, QueryC>(

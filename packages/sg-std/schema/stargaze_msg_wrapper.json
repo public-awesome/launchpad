@@ -43,7 +43,6 @@
       }
     },
     "StargazeMsg": {
-      "description": "StargazeMsg is an override of CosmosMsg::Custom to add support for Stargaze's custom message types",
       "oneOf": [
         {
           "type": "object",
