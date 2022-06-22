@@ -131,8 +131,10 @@ pub fn instantiate(
 
     let token_list = random_token_list(&env, (1..=msg.num_tokens).collect::<Vec<u32>>())?;
     // Save mintable token ids map
+    let mut token_position: u32 = 1;
     for token_id in token_list {
-        MINTABLE_TOKEN_POSITIONS.save(deps.storage, token_id, &token_id)?;
+        MINTABLE_TOKEN_POSITIONS.save(deps.storage, token_position, &token_id)?;
+        token_position += 1;
     }
 
     // Submessage to instantiate sg721 contract
