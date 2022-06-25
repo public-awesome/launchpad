@@ -606,11 +606,11 @@ dependencies = [
  "serde",
  "sg-multi-test 0.12.0",
  "sg-std 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg-whitelist 0.12.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg1 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg721 0.12.0",
  "thiserror",
  "url",
- "whitelist",
 ]
 
 [[package]]
@@ -955,6 +955,45 @@ dependencies = [
 ]
 
 [[package]]
+name = "sg-whitelist"
+version = "0.12.1"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cosmwasm-storage",
+ "cw-storage-plus",
+ "cw-utils",
+ "cw2",
+ "cw4",
+ "rust_decimal",
+ "schemars",
+ "serde",
+ "sg-std 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg1 0.12.1",
+ "thiserror",
+]
+
+[[package]]
+name = "sg-whitelist"
+version = "0.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8a8f7abb26d34ede9d98312579e4a1cc00c83c2d725cc2f511e51fd88fa9dfa4"
+dependencies = [
+ "cosmwasm-std",
+ "cosmwasm-storage",
+ "cw-storage-plus",
+ "cw-utils",
+ "cw2",
+ "cw4",
+ "rust_decimal",
+ "schemars",
+ "serde",
+ "sg-std 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg1 0.12.1",
+ "thiserror",
+]
+
+[[package]]
 name = "sg1"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1191,25 +1230,6 @@ name = "wasi"
 version = "0.10.2+wasi-snapshot-preview1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fd6fbd9a79829dd1ad0cc20627bf1ed606756a7f77edff7b66b7064f9cb327c6"
-
-[[package]]
-name = "whitelist"
-version = "0.12.1"
-dependencies = [
- "cosmwasm-schema",
- "cosmwasm-std",
- "cosmwasm-storage",
- "cw-storage-plus",
- "cw-utils",
- "cw2",
- "cw4",
- "rust_decimal",
- "schemars",
- "serde",
- "sg-std 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sg1 0.12.1",
- "thiserror",
-]
 
 [[package]]
 name = "zeroize"
