@@ -8,8 +8,8 @@ use sg721::msg::{InstantiateMsg as Sg721InstantiateMsg, RoyaltyInfoResponse};
 use sg721::state::CollectionInfo;
 use sg_multi_test::StargazeApp;
 use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
-use whitelist::msg::InstantiateMsg as WhitelistInstantiateMsg;
-use whitelist::msg::{AddMembersMsg, ExecuteMsg as WhitelistExecuteMsg};
+use sg_whitelist::msg::InstantiateMsg as WhitelistInstantiateMsg;
+use sg_whitelist::msg::{AddMembersMsg, ExecuteMsg as WhitelistExecuteMsg};
 
 use crate::contract::instantiate;
 use crate::msg::{
@@ -33,9 +33,9 @@ fn custom_mock_app() -> StargazeApp {
 }
 pub fn contract_whitelist() -> Box<dyn Contract<StargazeMsgWrapper>> {
     let contract = ContractWrapper::new(
-        whitelist::contract::execute,
-        whitelist::contract::instantiate,
-        whitelist::contract::query,
+        sg_whitelist::contract::execute,
+        sg_whitelist::contract::instantiate,
+        sg_whitelist::contract::query,
     );
     Box::new(contract)
 }

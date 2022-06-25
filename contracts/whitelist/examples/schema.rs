@@ -3,11 +3,11 @@ use std::fs::create_dir_all;
 
 use cosmwasm_schema::{export_schema, remove_schemas, schema_for};
 
-use whitelist::msg::{
+use sg_whitelist::msg::{
     ConfigResponse, ExecuteMsg, HasEndedResponse, HasMemberResponse, HasStartedResponse,
     InstantiateMsg, IsActiveResponse, MembersResponse, QueryMsg,
 };
-use whitelist::state::Config;
+use sg_whitelist::state::Config;
 
 fn main() {
     let mut out_dir = current_dir().unwrap();
