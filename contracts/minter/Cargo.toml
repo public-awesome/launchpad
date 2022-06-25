@@ -3,6 +3,8 @@ name = "minter"
 version = "0.13.0"
 authors = ["Jake Hartnell <jake@stargaze.zone>"]
 edition = "2018"
+description = "Stargaze NFT minter contract"
+license = "Apache-2.0"
 
 exclude = [
   # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
