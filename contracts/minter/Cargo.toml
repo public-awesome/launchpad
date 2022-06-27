@@ -1,6 +1,6 @@
 [package]
 name = "minter"
-version = "0.13.0"
+version = "0.14.0"
 authors = ["Jake Hartnell <jake@stargaze.zone>"]
 edition = "2018"
 description = "Stargaze NFT minter contract"
@@ -38,7 +38,7 @@ cw2 = "0.13.2"
 cw-utils = "0.13.2"
 schemars = "0.8"
 serde = { version = "1.0", default-features = false, features = ["derive"] }
-sg721 = { version = "0.12.0", features = ["library"] }
+sg721 = { version = "0.13.0", features = ["library"] }
 thiserror = { version = "1.0" }
 url = "2.2.0"
 sg-std = "0.12.0"

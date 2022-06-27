@@ -18,7 +18,7 @@ use crate::msg::{
 };
 use crate::ContractError;
 
-const CREATION_FEE: u128 = 1_000_000_000;
+const CREATION_FEE: u128 = 5_000_000_000;
 const INITIAL_BALANCE: u128 = 2_000_000_000;
 
 const UNIT_PRICE: u128 = 100_000_000;
@@ -116,6 +116,7 @@ fn setup_minter_contract(
                     share: Decimal::percent(10),
                 }),
             },
+            num_tokens: None,
         },
     };
     let minter_addr = router
@@ -225,6 +226,7 @@ fn initialization() {
                     share: Decimal::percent(10),
                 }),
             },
+            num_tokens: None,
         },
     };
     instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
@@ -253,6 +255,7 @@ fn initialization() {
                     share: Decimal::percent(10),
                 }),
             },
+            num_tokens: None,
         },
     };
     instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
@@ -282,6 +285,7 @@ fn initialization() {
                     share: Decimal::percent(10),
                 }),
             },
+            num_tokens: None,
         },
     };
     instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
@@ -310,6 +314,7 @@ fn initialization() {
                     share: Decimal::percent(10),
                 }),
             },
+            num_tokens: None,
         },
     };
     instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
@@ -338,6 +343,7 @@ fn initialization() {
                     share: Decimal::percent(10),
                 }),
             },
+            num_tokens: None,
         },
     };
     instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
@@ -366,6 +372,7 @@ fn initialization() {
                     share: Decimal::percent(10),
                 }),
             },
+            num_tokens: None,
         },
     };
     instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
@@ -1246,6 +1253,7 @@ fn test_start_time_before_genesis() {
                     share: Decimal::percent(10),
                 }),
             },
+            num_tokens: None,
         },
     };
     let minter_addr = router
@@ -1293,6 +1301,7 @@ fn test_update_start_time() {
                 external_link: Some("https://example.com/external.html".to_string()),
                 royalty_info: None,
             },
+            num_tokens: None,
         },
     };
     let minter_addr = router
@@ -1351,6 +1360,7 @@ fn test_invalid_start_time() {
                 external_link: Some("https://example.com/external.html".to_string()),
                 royalty_info: None,
             },
+            num_tokens: None,
         },
     };
     // set time before the start_time above

@@ -591,7 +591,7 @@ checksum = "a3e378b66a060d48947b590737b30a1be76706c8dd7b8ba0f2fe3989c68a853f"
 
 [[package]]
 name = "minter"
-version = "0.13.0"
+version = "0.14.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -608,7 +608,7 @@ dependencies = [
  "sg-std 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg-whitelist 0.12.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg1 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sg721 0.12.0",
+ "sg721 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "thiserror",
  "url",
 ]
@@ -1056,6 +1056,28 @@ name = "sg721"
 version = "0.13.0"
 dependencies = [
  "cosmwasm-schema",
+ "cosmwasm-std",
+ "cosmwasm-storage",
+ "cw-storage-plus",
+ "cw-utils",
+ "cw2",
+ "cw721",
+ "cw721-base",
+ "rust_decimal",
+ "schemars",
+ "serde",
+ "sg-std 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg1 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "thiserror",
+ "url",
+]
+
+[[package]]
+name = "sg721"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "94012e258bac61608918f261c5a8eb0aa35f3e44fdafd6aa9493026e80a5bdbd"
+dependencies = [
  "cosmwasm-std",
  "cosmwasm-storage",
  "cw-storage-plus",
