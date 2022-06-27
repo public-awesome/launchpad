@@ -124,12 +124,9 @@ pub fn instantiate(
     CONFIG.save(deps.storage, &config)?;
     MINTABLE_NUM_TOKENS.save(deps.storage, &msg.num_tokens)?;
 
-    let token_list = random_token_list(&env, msg.num_tokens)?;
     // Save mintable token ids map
-    let mut token_position: u32 = 1;
-    for token_id in token_list {
-        MINTABLE_TOKEN_POSITIONS.save(deps.storage, token_position, &token_id)?;
-        token_position += 1;
+    for token_id in 1..=config.num_tokens {
+        MINTABLE_TOKEN_POSITIONS.save(deps.storage, token_id, &token_id)?;
     }
 
     // Submessage to instantiate sg721 contract
