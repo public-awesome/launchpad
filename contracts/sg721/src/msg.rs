@@ -10,6 +10,7 @@ pub struct InstantiateMsg {
     pub symbol: String,
     pub minter: String,
     pub collection_info: CollectionInfo<RoyaltyInfoResponse>,
+    pub num_tokens: Option<u64>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

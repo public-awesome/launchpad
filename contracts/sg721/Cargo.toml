@@ -46,6 +46,7 @@ url = "2.2.2"
 cw721 = "0.13.2"
 cw721-base = { version = "0.13.2", features = ["library"] }
 sg1 = "0.13.0"
+rust_decimal = { version = "1.14.3" }
 
 [dev-dependencies]
 cosmwasm-schema = { version = "1.0.0" }
