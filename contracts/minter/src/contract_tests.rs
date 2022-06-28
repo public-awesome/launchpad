@@ -1130,7 +1130,7 @@ fn mint_for_token_id_addr() {
     };
     let res: TokensResponse = router
         .wrap()
-        .query_wasm_smart(config.sg721_address, &tokens_msg)
+        .query_wasm_smart(config.sg721_address.clone(), &tokens_msg)
         .unwrap();
     let sold_token_id: u32 = res.tokens[0].parse::<u32>().unwrap();
 
@@ -1210,6 +1210,18 @@ fn mint_for_token_id_addr() {
         }),
     );
     assert!(res.is_ok());
+
+    let res: OwnerOfResponse = router
+        .wrap()
+        .query_wasm_smart(
+            config.sg721_address,
+            &Cw721QueryMsg::OwnerOf {
+                token_id: 2.to_string(),
+                include_expired: None,
+            },
+        )
+        .unwrap();
+    assert_eq!(res.owner.to_string(), buyer.to_string());
 
     let mintable_num_tokens_response: MintableNumTokensResponse = router
         .wrap()
