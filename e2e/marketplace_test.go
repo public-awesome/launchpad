@@ -164,7 +164,7 @@ func TestMarketplace(t *testing.T) {
 		CodeID: 1,
 		Label:  "SG721",
 		Msg:    instantiateMsgRaw,
-		Funds:  sdk.NewCoins(sdk.NewInt64Coin("ustars", 1_000_000_000)),
+		Funds:  sdk.NewCoins(sdk.NewInt64Coin("ustars", 5_000_000_000)),
 	})
 	require.NoError(t, err)
 	require.NotNil(t, instantiateRes)
@@ -330,7 +330,7 @@ func TestMarketplace(t *testing.T) {
 	// check intial balance of buyer / airdrop claimer
 	balance := app.BankKeeper.GetBalance(ctx, bidder.Address, "ustars")
 	require.Equal(t,
-		"2000000000",
+		"6000000000",
 		balance.Amount.String(),
 	)
 
@@ -353,7 +353,7 @@ func TestMarketplace(t *testing.T) {
 	// buyer's should lose amount of bid (1,000) and gain airdrop claim amount (1,000 / 5 = 200)
 	balance = app.BankKeeper.GetBalance(ctx, bidder.Address, "ustars")
 	require.Equal(t,
-		"1200000000",
+		"5200000000",
 		balance.Amount.String(),
 	)
 
@@ -397,7 +397,7 @@ func TestMarketplace(t *testing.T) {
 	// buyer's should lose amount of bid (1,000)
 	balance = app.BankKeeper.GetBalance(ctx, bidder.Address, "ustars")
 	require.Equal(t,
-		"200000000",
+		"4200000000",
 		balance.Amount.String(),
 	)
 

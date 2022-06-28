@@ -1,8 +1,10 @@
 [package]
-name = "whitelist"
-version = "0.12.0"
+name = "sg-whitelist"
+version = "0.12.1"
 authors = ["Shane Vitarana <s@noreply.publicawesome.com>"]
 edition = "2018"
+description = "Stargaze NFT whitelist contract"
+license = "Apache-2.0"
 
 exclude = [
   # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
@@ -29,8 +31,8 @@ optimize = """docker run --rm -v "$(pwd)":/code \
 """
 
 [dependencies]
-cosmwasm-std = { version = "1.0.0-beta8" }
-cosmwasm-storage = { version = "1.0.0-beta8" }
+cosmwasm-std = { version = "1.0.0" }
+cosmwasm-storage = { version = "1.0.0" }
 cw-storage-plus = "0.13.2"
 cw-utils = "0.13.2"
 cw2 = "0.13.2"
@@ -43,4 +45,4 @@ sg-std = {path = "../../packages/sg-std"}
 sg1 = {path = "../../packages/sg1"}
 
 [dev-dependencies]
-cosmwasm-schema = { version = "1.0.0-beta8" }
+cosmwasm-schema = { version = "1.0.0" }

@@ -20,7 +20,7 @@ use crate::state::{CollectionInfo, RoyaltyInfo, COLLECTION_INFO};
 const CONTRACT_NAME: &str = "crates.io:sg-721";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-const CREATION_FEE: u128 = 1_000_000_000;
+const CREATION_FEE: u128 = 5_000_000_000;
 const MAX_DESCRIPTION_LENGTH: u32 = 512;
 
 pub type Sg721Contract<'a> = cw721_base::Cw721Contract<'a, Empty, StargazeMsgWrapper>;

@@ -189,14 +189,14 @@ func (suite *MarketplaceTestSuite) TestRoyalties() {
 	// check intial balance of buyer
 	balance := suite.app.BankKeeper.GetBalance(ctx, buyer.Address, "ustars")
 	suite.Require().Equal(
-		"2000000000",
+		"6000000000",
 		balance.Amount.String(),
 	)
 
 	// check intial balance of seller
 	balance = suite.app.BankKeeper.GetBalance(ctx, buyer.Address, "ustars")
 	suite.Require().Equal(
-		"2000000000",
+		"6000000000",
 		balance.Amount.String(),
 	)
 
@@ -219,23 +219,23 @@ func (suite *MarketplaceTestSuite) TestRoyalties() {
 	// buyer should have 1k less
 	balance = suite.app.BankKeeper.GetBalance(ctx, buyer.Address, "ustars")
 	suite.Require().Equal(
-		"1000000000",
+		"5000000000",
 		balance.Amount.String(),
 	)
 
 	// creator payment royalty account should have 10% of the sales
 	balance = suite.app.BankKeeper.GetBalance(ctx, creatorRoyaltyAccount.Address, "ustars")
-	// 2,000 initial + 100 (10% of the sell)
+	// 6,000 initial + 100 (10% of the sell)
 	suite.Require().Equal(
-		"2100000000",
+		"6100000000",
 		balance.Amount.String(),
 	)
 
 	// seller should have 88% of the sale
 	balance = suite.app.BankKeeper.GetBalance(ctx, seller.Address, "ustars")
-	// 2,000 initial + 880 (88% of the sell)
+	// 6,000 initial + 880 (88% of the sell)
 	suite.Require().Equal(
-		"2880000000",
+		"6880000000",
 		balance.Amount.String(),
 	)
 
@@ -314,14 +314,14 @@ func (suite *MarketplaceTestSuite) TestFundsRecipient() {
 	// check intial balance of buyer
 	balance := suite.app.BankKeeper.GetBalance(ctx, buyer.Address, "ustars")
 	suite.Require().Equal(
-		"2000000000",
+		"6000000000",
 		balance.Amount.String(),
 	)
 
 	// check intial balance of seller
 	balance = suite.app.BankKeeper.GetBalance(ctx, buyer.Address, "ustars")
 	suite.Require().Equal(
-		"2000000000",
+		"6000000000",
 		balance.Amount.String(),
 	)
 
@@ -344,31 +344,31 @@ func (suite *MarketplaceTestSuite) TestFundsRecipient() {
 	// buyer should have 1k less
 	balance = suite.app.BankKeeper.GetBalance(ctx, buyer.Address, "ustars")
 	suite.Require().Equal(
-		"1000000000",
+		"5000000000",
 		balance.Amount.String(),
 	)
 
 	// creator payment royalty account should have 10% of the sales
 	balance = suite.app.BankKeeper.GetBalance(ctx, creatorRoyaltyAccount.Address, "ustars")
-	// 2,000 initial + 100 (10% of the sell)
+	// 6,000 initial + 100 (10% of the sell)
 	suite.Require().Equal(
-		"2100000000",
+		"6100000000",
 		balance.Amount.String(),
 	)
 
 	// seller should have 88% of the sale sent to funds_recipient address
 	balance = suite.app.BankKeeper.GetBalance(ctx, recipient.Address, "ustars")
-	// 2,000 initial + 880 (88% of the sell)
+	// 6,000 initial + 880 (88% of the sell)
 	suite.Require().Equal(
-		"2880000000",
+		"6880000000",
 		balance.Amount.String(),
 	)
 
 	// original listing address should not get anything because was sent to funds recipient address
 	balance = suite.app.BankKeeper.GetBalance(ctx, seller.Address, "ustars")
-	// 2,000 initial
+	// 6,000 initial
 	suite.Require().Equal(
-		"2000000000",
+		"6000000000",
 		balance.Amount.String(),
 	)
 
@@ -451,21 +451,21 @@ func (suite *MarketplaceTestSuite) TestFindersFeesWithRoyalties() {
 	// check intial balance of buyer
 	balance := suite.app.BankKeeper.GetBalance(ctx, buyer.Address, "ustars")
 	suite.Require().Equal(
-		"2000000000",
+		"6000000000",
 		balance.Amount.String(),
 	)
 
 	// check intial balance of seller
 	balance = suite.app.BankKeeper.GetBalance(ctx, buyer.Address, "ustars")
 	suite.Require().Equal(
-		"2000000000",
+		"6000000000",
 		balance.Amount.String(),
 	)
 
 	// check intial balance of finder
 	balance = suite.app.BankKeeper.GetBalance(ctx, finder.Address, "ustars")
 	suite.Require().Equal(
-		"2000000000",
+		"6000000000",
 		balance.Amount.String(),
 	)
 
@@ -492,31 +492,31 @@ func (suite *MarketplaceTestSuite) TestFindersFeesWithRoyalties() {
 	// buyer should have 1k less
 	balance = suite.app.BankKeeper.GetBalance(ctx, buyer.Address, "ustars")
 	suite.Require().Equal(
-		"1000000000",
+		"5000000000",
 		balance.Amount.String(),
 	)
 
 	// creator payment royalty account should have 10% of the sales
 	balance = suite.app.BankKeeper.GetBalance(ctx, creatorRoyaltyAccount.Address, "ustars")
-	// 2,000 initial + 100 (10% of the sell)
+	// 6,000 initial + 100 (10% of the sell)
 	suite.Require().Equal(
-		"2100000000",
+		"6100000000",
 		balance.Amount.String(),
 	)
 
 	// seller should have 87% of the sale
 	balance = suite.app.BankKeeper.GetBalance(ctx, seller.Address, "ustars")
-	// 2,000 initial + 870 (87% of the sell)
+	// 6,000 initial + 870 (87% of the sell)
 	suite.Require().Equal(
-		"2870000000",
+		"6870000000",
 		balance.Amount.String(),
 	)
 
 	// finder should have 1% of the sale
 	balance = suite.app.BankKeeper.GetBalance(ctx, finder.Address, "ustars")
-	// 2,000 initial + 10 (1% of the sell)
+	// 6,000 initial + 10 (1% of the sell)
 	suite.Require().Equal(
-		"2010000000",
+		"6010000000",
 		balance.Amount.String(),
 	)
 
@@ -545,7 +545,7 @@ func InstantiateSG721(ctx sdk.Context, msgServer wasmtypes.MsgServer, account sd
 		CodeID: codeID,
 		Label:  "SG721",
 		Msg:    instantiateMsgRaw,
-		Funds:  sdk.NewCoins(sdk.NewInt64Coin("ustars", 1_000_000_000)),
+		Funds:  sdk.NewCoins(sdk.NewInt64Coin("ustars", 5_000_000_000)),
 	})
 	if err != nil {
 		return "", err
