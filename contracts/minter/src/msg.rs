@@ -37,6 +37,7 @@ pub enum QueryMsg {
     StartTime {},
     MintPrice {},
     MintCount { address: String },
+    MintableTokens {},
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -73,4 +74,10 @@ pub struct MintPriceResponse {
 pub struct MintCountResponse {
     pub address: String,
     pub count: u32,
+}
+
+//TODO for debug to test shuffle. remove before prod
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct MintableTokensResponse {
+    pub mintable_tokens: Vec<(u32, u32)>,
 }
