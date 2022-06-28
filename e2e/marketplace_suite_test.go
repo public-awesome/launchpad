@@ -14,8 +14,8 @@ import (
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/public-awesome/stargaze/v5/app"
-	"github.com/public-awesome/stargaze/v5/testutil/simapp"
+	"github.com/public-awesome/stargaze/v6/app"
+	"github.com/public-awesome/stargaze/v6/testutil/simapp"
 	"github.com/stretchr/testify/suite"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 )
