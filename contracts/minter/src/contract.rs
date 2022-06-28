@@ -44,6 +44,7 @@ const MAX_TOKEN_LIMIT: u32 = 10000;
 const MAX_PER_ADDRESS_LIMIT: u32 = 50;
 const MIN_MINT_PRICE: u128 = 50_000_000;
 const MINT_FEE_PERCENT: u32 = 10;
+const SHUFFLE_FEE: u128 = 500_000_000;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -181,8 +182,47 @@ pub fn execute(
         ExecuteMsg::SetWhitelist { whitelist } => {
             execute_set_whitelist(deps, env, info, &whitelist)
         }
+        ExecuteMsg::Shuffle {} => execute_shuffle(deps, env, info),
         ExecuteMsg::Withdraw {} => execute_withdraw(deps, env, info),
     }
+}
+
+// Anyone can pay to shuffle at any time
+// Introduces another source of randomness to minting
+// There's a fee because this action is expensive.
+pub fn execute_shuffle(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+) -> Result<Response, ContractError> {
+    // Check exact shuffle fee payment included in message
+    let fee_msgs = checked_fair_burn(&info, SHUFFLE_FEE)?;
+    // Check not sold out
+    let mintable: MintableNumTokensResponse = query_mintable_num_tokens(deps.as_ref())?;
+    if mintable.count == 0 {
+        return Err(ContractError::SoldOut {});
+    }
+
+    // run random_token_list to generate a list of random token key indices
+    let positions = MINTABLE_TOKEN_POSITIONS
+        .keys(deps.as_ref().storage, None, None, Order::Ascending)
+        .map(|token_key| token_key.unwrap())
+        .collect::<Vec<_>>();
+    let randomized_positions_list = random_token_positions(&env, positions.clone())?;
+
+    // // assign new token keys and token ids
+    for (i, random_position) in randomized_positions_list.iter().enumerate() {
+        let og_token_id = MINTABLE_TOKEN_POSITIONS.load(deps.as_ref().storage, positions[i])?;
+        let new_token_id = MINTABLE_TOKEN_POSITIONS.load(deps.storage, *random_position)?;
+        // replace values for keys[i] and random_token_key
+        MINTABLE_TOKEN_POSITIONS.save(deps.storage, positions[i], &new_token_id)?;
+        MINTABLE_TOKEN_POSITIONS.save(deps.storage, *random_position, &og_token_id)?;
+    }
+
+    Ok(Response::default()
+        .add_attribute("action", "shuffle")
+        .add_attribute("sender", info.sender)
+        .add_messages(fee_msgs))
 }
 
 pub fn execute_withdraw(
