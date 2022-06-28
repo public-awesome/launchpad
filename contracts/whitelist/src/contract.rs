@@ -13,7 +13,7 @@ use cw2::set_contract_version;
 use cw_storage_plus::Bound;
 use cw_utils::{may_pay, maybe_addr, must_pay};
 use rust_decimal::prelude::ToPrimitive;
-use rust_decimal::Decimal;
+use rust_decimal::Decimal as RustDecimal;
 use sg1::checked_fair_burn;
 use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
@@ -75,7 +75,7 @@ pub fn instantiate(
         });
     }
 
-    let creation_fee = Decimal::new(msg.member_limit.into(), 3)
+    let creation_fee = RustDecimal::new(msg.member_limit.into(), 3)
         .ceil()
         .to_u128()
         .unwrap()
@@ -339,8 +339,8 @@ pub fn execute_increase_member_limit(
     }
 
     // if new limit crosses 1,000 members, requires upgrade fee. Otherwise, free upgrade.
-    let old_limit = Decimal::new(config.member_limit.into(), 3).ceil();
-    let new_limit = Decimal::new(member_limit.into(), 3).ceil();
+    let old_limit = RustDecimal::new(config.member_limit.into(), 3).ceil();
+    let new_limit = RustDecimal::new(member_limit.into(), 3).ceil();
     let upgrade_fee: u128 = if new_limit > old_limit {
         (new_limit - old_limit).to_u128().unwrap() * PRICE_PER_1000_MEMBERS
     } else {

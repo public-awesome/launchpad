@@ -3,6 +3,8 @@ use cosmwasm_std::entry_point;
 use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, StdResult};
 use cw2::set_contract_version;
 
+use rust_decimal::prelude::ToPrimitive;
+use rust_decimal::Decimal;
 use sg1::checked_fair_burn;
 use sg_std::{Response, StargazeMsgWrapper};
 
@@ -20,7 +22,8 @@ use crate::state::{CollectionInfo, RoyaltyInfo, COLLECTION_INFO};
 const CONTRACT_NAME: &str = "crates.io:sg-721";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-const CREATION_FEE: u128 = 5_000_000_000;
+const BASE_CREATION_FEE: u128 = 5_000_000_000;
+const CREATION_FEE_PER_1000: u128 = 5_000_000_000;
 const MAX_DESCRIPTION_LENGTH: u32 = 512;
 
 pub type Sg721Contract<'a> = cw721_base::Cw721Contract<'a, Empty, StargazeMsgWrapper>;
@@ -35,7 +38,14 @@ pub fn instantiate(
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
     let mut res = Response::new();
-    checked_fair_burn(&info, CREATION_FEE, None, &mut res)?;
+
+    if let Some(num_tokens) = msg.num_tokens {
+        let fee =
+            Decimal::new(num_tokens as i64, 3).ceil().to_u128().unwrap() * CREATION_FEE_PER_1000;
+        checked_fair_burn(&info, BASE_CREATION_FEE + fee, None, &mut res)?;
+    } else {
+        checked_fair_burn(&info, BASE_CREATION_FEE, None, &mut res)?;
+    }
 
     // cw721 instantiation
     let info = ContractInfoResponse {
@@ -152,8 +162,9 @@ mod tests {
                 external_link: Some("https://example.com/external.html".to_string()),
                 royalty_info: None,
             },
+            num_tokens: None,
         };
-        let info = mock_info("creator", &coins(CREATION_FEE, NATIVE_DENOM));
+        let info = mock_info("creator", &coins(BASE_CREATION_FEE, NATIVE_DENOM));
 
         // make sure instantiate has the burn messages
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
@@ -191,8 +202,9 @@ mod tests {
                     share: Decimal::percent(10),
                 }),
             },
+            num_tokens: None,
         };
-        let info = mock_info("creator", &coins(CREATION_FEE, NATIVE_DENOM));
+        let info = mock_info("creator", &coins(BASE_CREATION_FEE, NATIVE_DENOM));
 
         // make sure instantiate has the burn messages
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
@@ -208,5 +220,47 @@ mod tests {
             }),
             value.royalty_info
         );
+    }
+
+    #[test]
+    fn initialization_with_10000_tokens() {
+        let mut deps = mock_dependencies();
+        let collection = String::from("collection0");
+
+        let msg = InstantiateMsg {
+            name: collection,
+            symbol: String::from("BOBO"),
+            minter: String::from("minter"),
+            collection_info: CollectionInfo {
+                creator: String::from("creator"),
+                description: String::from("Stargaze Monkeys"),
+                image: "https://example.com/image.png".to_string(),
+                external_link: Some("https://example.com/external.html".to_string()),
+                royalty_info: None,
+            },
+            num_tokens: Some(10000),
+        };
+        let info = mock_info(
+            "creator",
+            &coins(
+                BASE_CREATION_FEE + (CREATION_FEE_PER_1000 * 10),
+                NATIVE_DENOM,
+            ),
+        );
+
+        // make sure instantiate has the burn messages
+        let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+        assert_eq!(2, res.messages.len());
+
+        // let's query the collection info
+        let res = query(deps.as_ref(), mock_env(), QueryMsg::CollectionInfo {}).unwrap();
+        let value: CollectionInfoResponse = from_binary(&res).unwrap();
+        assert_eq!("https://example.com/image.png", value.image);
+        assert_eq!("Stargaze Monkeys", value.description);
+        assert_eq!(
+            "https://example.com/external.html",
+            value.external_link.unwrap()
+        );
+        assert_eq!(None, value.royalty_info);
     }
 }
