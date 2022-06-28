@@ -68,6 +68,17 @@ pub fn instantiate(
         });
     }
 
+    // Limit per address limit to 1% of num tokens
+    if (msg.num_tokens > 100 && msg.num_tokens < 5000)
+        && msg.per_address_limit > (msg.num_tokens / 100)
+    {
+        return Err(ContractError::InvalidPerAddressLimit {
+            max: msg.num_tokens / 100,
+            min: 1,
+            got: msg.per_address_limit,
+        });
+    }
+
     // Check that base_token_uri is a valid IPFS uri
     let parsed_token_uri = Url::parse(&msg.base_token_uri)?;
     if parsed_token_uri.scheme() != "ipfs" {
