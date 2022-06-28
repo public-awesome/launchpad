@@ -1221,7 +1221,7 @@ fn mint_for_token_id_addr() {
             },
         )
         .unwrap();
-    assert_eq!(res.owner.to_string(), buyer.to_string());
+    assert_eq!(res.owner, buyer.to_string());
 
     let mintable_num_tokens_response: MintableNumTokensResponse = router
         .wrap()
