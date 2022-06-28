@@ -649,11 +649,24 @@ fn mint_count_query() {
     assert_eq!(res.count, 2);
     assert_eq!(res.address, buyer.to_string());
 
+    // get random mint token_id
+    let tokens_msg = Cw721QueryMsg::Tokens {
+        owner: buyer.to_string(),
+        start_after: None,
+        limit: None,
+    };
+    let res: TokensResponse = router
+        .wrap()
+        .query_wasm_smart(sg721_addr.clone(), &tokens_msg)
+        .unwrap();
+    let sold_token_id: u32 = res.tokens[1].parse::<u32>().unwrap();
+    println!("sold token id: {}", sold_token_id);
+
     // Buyer transfers NFT to creator
-    // random mint token id: 7
+    // random mint token id: 9
     let transfer_msg: Cw721ExecuteMsg<Empty> = Cw721ExecuteMsg::TransferNft {
         recipient: creator.to_string(),
-        token_id: "7".to_string(),
+        token_id: "9".to_string(),
     };
     let res = router.execute_contract(
         buyer.clone(),
