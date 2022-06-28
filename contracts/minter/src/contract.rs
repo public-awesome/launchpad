@@ -506,6 +506,7 @@ fn random_token_list(env: &Env, num_tokens: u32) -> Result<Vec<u32>, ContractErr
     Ok(tokens)
 }
 
+// Does a baby shuffle, picking a token_id from the first or last 50 mintable positions.
 fn random_mintable_token_mapping(
     deps: Deps,
     env: Env,
