@@ -10,4 +10,4 @@ homepage = "https://stargaze.zone"
 
 [dependencies]
 bech32 = "0.8.1"
-cosmwasm-std = { version = "1.0.0-beta8" }
+cosmwasm-std = { version = "1.0.0" }

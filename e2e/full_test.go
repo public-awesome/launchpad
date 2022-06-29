@@ -199,9 +199,9 @@ func TestMinter(t *testing.T) {
 		app.BankKeeper.GetSupply(ctx, "ustars").Amount.String())
 
 	fairburnPool := app.AccountKeeper.GetModuleAddress(alloctypes.FairburnPoolName)
-	// 500 STARS should have been transferred to fairburn pool
+	// 2,500 STARS should have been transferred to fairburn pool
 	require.Equal(t,
-		int64(500_000_000),
+		int64(2_500_000_000),
 		app.BankKeeper.GetBalance(ctx, fairburnPool, "ustars").Amount.ToDec().TruncateInt64(),
 	)
 
@@ -259,9 +259,9 @@ func TestMinter(t *testing.T) {
 		intialTotalSupply.Amount.Sub(sdk.NewInt(2_505_000_000)).String(),
 		app.BankKeeper.GetSupply(ctx, "ustars").Amount.String())
 
-	// 505 STARS should have been transferred to fairburn pool
+	// 2,505 STARS should have been transferred to fairburn pool
 	require.Equal(t,
-		int64(505_000_000),
+		int64(2_505_000_000),
 		app.BankKeeper.GetBalance(ctx, fairburnPool, "ustars").Amount.ToDec().TruncateInt64(),
 	)
 
@@ -288,9 +288,9 @@ func TestMinter(t *testing.T) {
 		intialTotalSupply.Amount.Sub(sdk.NewInt(3_000_000_000)).String(),
 		app.BankKeeper.GetSupply(ctx, "ustars").Amount.String())
 
-	// 500 +  (100 * 5) STARS should have been transferred to fairburn pool so far
+	// 2,500 +  (100 * 5) STARS should have been transferred to fairburn pool so far
 	require.Equal(t,
-		int64(1_000_000_000),
+		int64(3_000_000_000),
 		app.BankKeeper.GetBalance(ctx, fairburnPool, "ustars").Amount.ToDec().TruncateInt64(),
 	)
 
@@ -443,9 +443,9 @@ func TestWhitelistMinter(t *testing.T) {
 		intialTotalSupply.Amount.Sub(sdk.NewInt(2_550_000_000)).String(),
 		app.BankKeeper.GetSupply(ctx, "ustars").Amount.String())
 
-	// 550 STARS should have been transferred to fairburn pool so far
+	// 2,550 STARS should have been transferred to fairburn pool so far
 	require.Equal(t,
-		int64(550_000_000),
+		int64(2_550_000_000),
 		app.BankKeeper.GetBalance(ctx, fairburnPool, "ustars").Amount.ToDec().TruncateInt64(),
 	)
 
@@ -574,9 +574,9 @@ func TestWhitelistMinter(t *testing.T) {
 		intialTotalSupply.Amount.Sub(sdk.NewInt(2_925_000_000)).String(),
 		app.BankKeeper.GetSupply(ctx, "ustars").Amount.String())
 
-	//  should have 2,925STARS more
+	//  should have 2,925 STARS more
 	require.Equal(t,
-		int64(925_000_000),
+		int64(2_925_000_000),
 		app.BankKeeper.GetBalance(ctx, fairburnPool, "ustars").Amount.ToDec().TruncateInt64(),
 	)
 
