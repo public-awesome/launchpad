@@ -459,20 +459,23 @@ fn _execute_mint(
 
     let mintable_token_mapping = match token_id {
         Some(token_id) => {
-            let position = MINTABLE_TOKEN_POSITIONS
-                .range(deps.storage, None, None, Order::Ascending)
-                .map(|res| {
-                    let (pos, id) = res?;
-                    if id == token_id {
-                        Ok(pos)
-                    } else {
-                        Err(ContractError::TokenIdAlreadySold { token_id })
-                    }
-                })
-                .take(1)
-                .last()
-                .unwrap()?;
-
+            if token_id == 0 || token_id > config.num_tokens {
+                return Err(ContractError::InvalidTokenId {});
+            }
+            // set position to invalid value, iterate to find matching token_id
+            // if token_id not found, token_id is already sold, position is unchanged and throw err
+            // otherwise return position and token_id
+            let mut position = 0u32;
+            for res in MINTABLE_TOKEN_POSITIONS.range(deps.storage, None, None, Order::Ascending) {
+                let (pos, id) = res?;
+                if id == token_id {
+                    position = pos;
+                    break;
+                }
+            }
+            if position == 0u32 {
+                return Err(ContractError::TokenIdAlreadySold { token_id });
+            }
             TokenPositionMapping { position, token_id }
 
             // let mintable_token_positions = MINTABLE_TOKEN_POSITIONS
