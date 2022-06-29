@@ -125,7 +125,7 @@ pub fn instantiate(
     CONFIG.save(deps.storage, &config)?;
     MINTABLE_NUM_TOKENS.save(deps.storage, &msg.num_tokens)?;
 
-    let token_positions = random_token_positions(&env, (1..=msg.num_tokens).collect::<Vec<u32>>())?;
+    let token_positions = random_token_list(&env, (1..=msg.num_tokens).collect::<Vec<u32>>())?;
     // Save mintable token ids map
     let mut token_id: u32 = 1;
     for token_position in token_positions {
@@ -198,8 +198,8 @@ pub fn execute_shuffle(
     // Check exact shuffle fee payment included in message
     let fee_msgs = checked_fair_burn(&info, SHUFFLE_FEE)?;
     // Check not sold out
-    let mintable: MintableNumTokensResponse = query_mintable_num_tokens(deps.as_ref())?;
-    if mintable.count == 0 {
+    let mintable_num_tokens = MINTABLE_NUM_TOKENS.load(deps.storage)?;
+    if mintable_num_tokens == 0 {
         return Err(ContractError::SoldOut {});
     }
 
@@ -417,8 +417,8 @@ fn _execute_mint(
     recipient: Option<Addr>,
     token_id: Option<u32>,
 ) -> Result<Response, ContractError> {
-    let mintable: MintableNumTokensResponse = query_mintable_num_tokens(deps.as_ref())?;
-    if mintable.count == 0 {
+    let mintable_num_tokens = MINTABLE_NUM_TOKENS.load(deps.storage)?;
+    if mintable_num_tokens == 0 {
         return Err(ContractError::SoldOut {});
     }
 
@@ -533,18 +533,17 @@ fn _execute_mint(
         .add_messages(msgs))
 }
 
-fn random_token_positions(env: &Env, token_positions: Vec<u32>) -> Result<Vec<u32>, ContractError> {
-    let mut token_positions: Vec<u32> = token_positions;
-    let sha256 =
-        Sha256::digest(format!("{}{}", env.block.height, token_positions.len()).into_bytes());
+fn random_token_list(env: &Env, tokens: Vec<u32>) -> Result<Vec<u32>, ContractError> {
+    let mut tokens: Vec<u32> = tokens;
+    let sha256 = Sha256::digest(format!("{}{}", env.block.height, tokens.len()).into_bytes());
     // Cut first 16 bytes from 32 byte value
     let randomness: [u8; 16] = sha256.to_vec()[0..16].try_into().unwrap();
     let mut rng = Xoshiro128PlusPlus::from_seed(randomness);
     let mut shuffler = FisherYates::default();
     shuffler
-        .shuffle(&mut token_positions, &mut rng)
+        .shuffle(&mut tokens, &mut rng)
         .map_err(StdError::generic_err)?;
-    Ok(token_positions)
+    Ok(tokens)
 }
 
 // Does a baby shuffle, picking a token_id from the first or last 50 mintable positions.
