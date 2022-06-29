@@ -1133,7 +1133,6 @@ fn mint_for_token_id_addr() {
         .query_wasm_smart(config.sg721_address.clone(), &tokens_msg)
         .unwrap();
     let sold_token_id: u32 = res.tokens[0].parse::<u32>().unwrap();
-    println!("sold_token_id: {}", sold_token_id);
 
     // Minter contract should have a balance
     let minter_balance = router
@@ -1210,7 +1209,6 @@ fn mint_for_token_id_addr() {
             denom: NATIVE_DENOM.to_string(),
         }),
     );
-    println!("{:?}", res);
     assert!(res.is_ok());
 
     let res: OwnerOfResponse = router
