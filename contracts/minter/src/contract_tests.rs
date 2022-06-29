@@ -1546,7 +1546,7 @@ fn shuffle() {
         .wrap()
         .query_wasm_smart(minter_addr.clone(), &query_mintable_tokens_msg)
         .unwrap();
-    dbg!("{:?}", res);
+    dbg!("after initialize {:?}", res);
     // perform shuffle
     let shuffle_msg = ExecuteMsg::Shuffle {};
     let funds = coins(SHUFFLE_FEE, NATIVE_DENOM);
@@ -1558,7 +1558,7 @@ fn shuffle() {
         .wrap()
         .query_wasm_smart(minter_addr.clone(), &query_mintable_tokens_msg)
         .unwrap();
-    println!("{:?}", res);
+    dbg!("after shuffle {:?}", res);
     // mint a few tokens
     let mut i = 0;
     while i < 3 {
@@ -1584,7 +1584,7 @@ fn shuffle() {
         .wrap()
         .query_wasm_smart(minter_addr.clone(), &query_mintable_tokens_msg)
         .unwrap();
-    println!("{:?}", res);
+    dbg!("{:?}", res);
     // perform shuffle
     let shuffle_msg = ExecuteMsg::Shuffle {};
     let funds = coins(SHUFFLE_FEE, NATIVE_DENOM);
@@ -1596,7 +1596,7 @@ fn shuffle() {
         .wrap()
         .query_wasm_smart(minter_addr.clone(), &query_mintable_tokens_msg)
         .unwrap();
-    println!("{:?}", res);
+    dbg!("after another shuffle {:?}", res);
     // mint until sold out
     while i < num_tokens {
         let mint_to_msg = ExecuteMsg::MintTo {
