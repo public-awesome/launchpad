@@ -205,10 +205,7 @@ pub fn execute_shuffle(
     // get positions and token_ids, then randomize token_ids and reassign positions
     let mut positions: Vec<u32> = Vec::new();
     let mut token_ids: Vec<u32> = Vec::new();
-    for token in MINTABLE_TOKEN_POSITIONS
-        .range(deps.storage, None, None, Order::Ascending)
-        .into_iter()
-    {
+    for token in MINTABLE_TOKEN_POSITIONS.range(deps.storage, None, None, Order::Ascending) {
         positions.push(token.as_ref().unwrap().0);
         token_ids.push(token.as_ref().unwrap().1);
     }
