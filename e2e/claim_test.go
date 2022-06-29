@@ -13,8 +13,8 @@ import (
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/public-awesome/stargaze/v5/testutil/simapp"
-	claimtypes "github.com/public-awesome/stargaze/v5/x/claim/types"
+	"github.com/public-awesome/stargaze/v6/testutil/simapp"
+	claimtypes "github.com/public-awesome/stargaze/v6/x/claim/types"
 	"github.com/stretchr/testify/require"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 )
@@ -43,7 +43,6 @@ func TestClaim(t *testing.T) {
 	// wasm params
 	wasmParams := app.WasmKeeper.GetParams(ctx)
 	wasmParams.CodeUploadAccess = wasmtypes.AllowEverybody
-	wasmParams.MaxWasmCodeSize = 1000 * 1024 * 4 // 4MB
 	app.WasmKeeper.SetParams(ctx, wasmParams)
 
 	addr1 := accs[1].Address

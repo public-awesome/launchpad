@@ -125,7 +125,8 @@ pub fn instantiate(
         ));
     }
 
-    let fee_msgs = checked_fair_burn(&info, creation_fee, None)?;
+    let mut res = Response::new();
+    checked_fair_burn(&info, creation_fee, None, &mut res)?;
 
     if config.member_limit < config.num_members {
         return Err(ContractError::MembersExceeded {
@@ -139,12 +140,11 @@ pub fn instantiate(
         WHITELIST.save(deps.storage, addr, &true)?;
     }
 
-    Ok(Response::new()
+    Ok(res
         .add_attribute("action", "instantiate")
         .add_attribute("contract_name", CONTRACT_NAME)
         .add_attribute("contract_version", CONTRACT_VERSION)
-        .add_attribute("sender", info.sender)
-        .add_messages(fee_msgs))
+        .add_attribute("sender", info.sender))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -354,18 +354,16 @@ pub fn execute_increase_member_limit(
         ));
     }
 
-    let fee_msgs = if upgrade_fee > 0 {
-        checked_fair_burn(&info, upgrade_fee, None)?
-    } else {
-        vec![]
-    };
+    let mut res = Response::new();
+    if upgrade_fee > 0 {
+        checked_fair_burn(&info, upgrade_fee, None, &mut res)?
+    }
 
     config.member_limit = member_limit;
     CONFIG.save(deps.storage, &config)?;
-    Ok(Response::new()
+    Ok(res
         .add_attribute("action", "increase_member_limit")
-        .add_attribute("member_limit", member_limit.to_string())
-        .add_messages(fee_msgs))
+        .add_attribute("member_limit", member_limit.to_string()))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]

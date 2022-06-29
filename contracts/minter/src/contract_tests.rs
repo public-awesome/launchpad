@@ -18,7 +18,7 @@ use crate::msg::{
 };
 use crate::ContractError;
 
-const CREATION_FEE: u128 = 1_000_000_000;
+const CREATION_FEE: u128 = 5_000_000_000;
 const INITIAL_BALANCE: u128 = 2_000_000_000;
 
 const UNIT_PRICE: u128 = 100_000_000;
