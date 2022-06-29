@@ -128,9 +128,9 @@ pub fn instantiate(
     CONFIG.save(deps.storage, &config)?;
     MINTABLE_NUM_TOKENS.save(deps.storage, &msg.num_tokens)?;
 
-    let token_ids = random_token_list(&env, (1..=msg.num_tokens).collect::<Vec<u32>>())?;
+    let token_ids = random_token_list(&env, (1..=msg.num_tokens).collect::<Vec<_>>())?;
     // Save mintable token ids map
-    let mut token_position: u32 = 1;
+    let mut token_position = 1;
     for token_id in token_ids {
         MINTABLE_TOKEN_POSITIONS.save(deps.storage, token_position, &token_id)?;
         token_position += 1;
