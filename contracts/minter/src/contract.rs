@@ -6,8 +6,7 @@ use crate::msg::{
     MintableNumTokensResponse, MintableTokensResponse, QueryMsg, StartTimeResponse,
 };
 use crate::state::{
-    Config, TokenPositionMapping, CONFIG, MINTABLE_NUM_TOKENS, MINTABLE_TOKEN_POSITIONS,
-    MINTER_ADDRS, SG721_ADDRESS,
+    Config, CONFIG, MINTABLE_NUM_TOKENS, MINTABLE_TOKEN_POSITIONS, MINTER_ADDRS, SG721_ADDRESS,
 };
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
@@ -31,6 +30,11 @@ use whitelist::msg::{
 
 pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 pub type SubMsg = cosmwasm_std::SubMsg<StargazeMsgWrapper>;
+
+pub struct TokenPositionMapping {
+    pub position: u32,
+    pub token_id: u32,
+}
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sg-minter";
