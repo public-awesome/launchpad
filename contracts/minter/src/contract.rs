@@ -421,6 +421,13 @@ fn _execute_mint(
     }
 
     let config = CONFIG.load(deps.storage)?;
+
+    if let Some(token_id) = token_id {
+        if token_id == 0 || token_id > config.num_tokens {
+            return Err(ContractError::InvalidTokenId {});
+        }
+    }
+
     let sg721_address = SG721_ADDRESS.load(deps.storage)?;
 
     let recipient_addr = match recipient {
