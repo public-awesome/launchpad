@@ -1,4 +1,3 @@
-use std::cmp::Ordering;
 use std::convert::TryInto;
 
 use crate::error::ContractError;
@@ -451,49 +450,62 @@ fn _execute_mint(
         network_fee
     };
 
-    let mintable_token_positions: Vec<u32> = MINTABLE_TOKEN_POSITIONS
-        .keys(deps.storage, None, None, Order::Ascending)
-        .map(|x| x.unwrap())
-        .collect();
-    let mintable_token_mapping: TokenPositionMapping = match token_id {
+    let mintable_token_mapping = match token_id {
         Some(token_id) => {
-            if token_id == 0 || token_id > config.num_tokens {
-                return Err(ContractError::InvalidTokenId {});
-            }
-
-            // iterate map of token positions
-            // check if MINTABLE_TOKEN_POSITIONS value is token_id
-            let position = mintable_token_positions
-                .iter()
-                .filter_map(|position| {
-                    let result = MINTABLE_TOKEN_POSITIONS
-                        .load(deps.storage, *position)
-                        .unwrap()
-                        .cmp(&token_id);
-                    match result {
-                        Ordering::Equal => Some(*position),
-                        _ => None,
+            let position = MINTABLE_TOKEN_POSITIONS
+                .range(deps.storage, None, None, Order::Ascending)
+                .map(|res| {
+                    let (pos, id) = res?;
+                    if id == token_id {
+                        Ok(pos)
+                    } else {
+                        Err(ContractError::TokenIdAlreadySold { token_id })
                     }
                 })
-                .collect::<Vec<_>>();
+                .take(1)
+                .last()
+                .unwrap()?;
 
-            match position.first() {
-                // If token_id exists, ready to mint
-                Some(position) => TokenPositionMapping {
-                    position: *position,
-                    token_id,
-                },
-                // If token_id not contained in mintable_token_ids, throw err
-                None => {
-                    return Err(ContractError::TokenIdAlreadySold { token_id });
-                }
-            }
+            TokenPositionMapping { position, token_id }
+
+            // let mintable_token_positions = MINTABLE_TOKEN_POSITIONS
+            //     .keys(deps.storage, None, None, Order::Ascending)
+            //     .map(|x| x.unwrap())
+            //     .collect::<Vec<_>>();
+
+            // if token_id == 0 || token_id > config.num_tokens {
+            //     return Err(ContractError::InvalidTokenId {});
+            // }
+
+            // // iterate map of token positions
+            // // check if MINTABLE_TOKEN_POSITIONS value is token_id
+            // let position = mintable_token_positions
+            //     .iter()
+            //     .filter_map(|position| {
+            //         let result = MINTABLE_TOKEN_POSITIONS
+            //             .load(deps.storage, *position)
+            //             .unwrap()
+            //             .cmp(&token_id);
+            //         match result {
+            //             Ordering::Equal => Some(*position),
+            //             _ => None,
+            //         }
+            //     })
+            //     .collect::<Vec<_>>();
+
+            // match position.first() {
+            //     // If token_id exists, ready to mint
+            //     Some(position) => TokenPositionMapping {
+            //         position: *position,
+            //         token_id,
+            //     },
+            //     // If token_id not contained in mintable_token_ids, throw err
+            //     None => {
+            //         return Err(ContractError::TokenIdAlreadySold { token_id });
+            //     }
+            // }
         }
-        None => {
-            let token_mapping: TokenPositionMapping =
-                random_mintable_token_mapping(deps.as_ref(), env, info.sender.clone())?;
-            token_mapping
-        }
+        None => random_mintable_token_mapping(deps.as_ref(), env, info.sender.clone())?,
     };
 
     // Create mint msgs
