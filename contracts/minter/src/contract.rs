@@ -203,20 +203,19 @@ pub fn execute_shuffle(
         return Err(ContractError::SoldOut {});
     }
 
-    // run random_token_list to generate a list of random token key indices
-    let positions = MINTABLE_TOKEN_POSITIONS
-        .keys(deps.as_ref().storage, None, None, Order::Ascending)
-        .map(|token_key| token_key.unwrap())
-        .collect::<Vec<_>>();
-    let randomized_positions_list = random_token_positions(&env, positions.clone())?;
-
-    // // assign new token keys and token ids
-    for (i, random_position) in randomized_positions_list.iter().enumerate() {
-        let og_token_id = MINTABLE_TOKEN_POSITIONS.load(deps.as_ref().storage, positions[i])?;
-        let new_token_id = MINTABLE_TOKEN_POSITIONS.load(deps.storage, *random_position)?;
-        // replace values for keys[i] and random_token_key
-        MINTABLE_TOKEN_POSITIONS.save(deps.storage, positions[i], &new_token_id)?;
-        MINTABLE_TOKEN_POSITIONS.save(deps.storage, *random_position, &og_token_id)?;
+    // get positions and token_ids, then randomize token_ids and reassign positions
+    let mut positions: Vec<u32> = Vec::new();
+    let mut token_ids: Vec<u32> = Vec::new();
+    for token in MINTABLE_TOKEN_POSITIONS
+        .range(deps.storage, None, None, Order::Ascending)
+        .into_iter()
+    {
+        positions.push(token.as_ref().unwrap().0);
+        token_ids.push(token.as_ref().unwrap().1);
+    }
+    let randomized_token_ids = random_token_list(&env, token_ids.clone())?;
+    for (i, position) in positions.iter().enumerate() {
+        MINTABLE_TOKEN_POSITIONS.save(deps.storage, *position, &randomized_token_ids[i])?;
     }
 
     Ok(Response::default()
