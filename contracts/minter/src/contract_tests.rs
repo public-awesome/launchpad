@@ -663,10 +663,10 @@ fn mint_count_query() {
     println!("sold token id: {}", sold_token_id);
 
     // Buyer transfers NFT to creator
-    // random mint token id: 9
+    // random mint token id: 8
     let transfer_msg: Cw721ExecuteMsg<Empty> = Cw721ExecuteMsg::TransferNft {
         recipient: creator.to_string(),
-        token_id: "9".to_string(),
+        token_id: "8".to_string(),
     };
     let res = router.execute_contract(
         buyer.clone(),
