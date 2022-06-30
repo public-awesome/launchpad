@@ -206,8 +206,11 @@ pub fn execute_shuffle(
     env: Env,
     info: MessageInfo,
 ) -> Result<Response, ContractError> {
+    let mut res = Response::new();
+
     // Check exact shuffle fee payment included in message
-    let fee_msgs = checked_fair_burn(&info, SHUFFLE_FEE)?;
+    checked_fair_burn(&info, SHUFFLE_FEE, None, &mut res)?;
+
     // Check not sold out
     let mintable_num_tokens = MINTABLE_NUM_TOKENS.load(deps.storage)?;
     if mintable_num_tokens == 0 {
@@ -227,10 +230,9 @@ pub fn execute_shuffle(
         MINTABLE_TOKEN_POSITIONS.save(deps.storage, *position, &randomized_token_ids[i])?;
     }
 
-    Ok(Response::default()
+    Ok(res
         .add_attribute("action", "shuffle")
-        .add_attribute("sender", info.sender)
-        .add_messages(fee_msgs))
+        .add_attribute("sender", info.sender))
 }
 
 pub fn execute_withdraw(
