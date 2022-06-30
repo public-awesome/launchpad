@@ -14,7 +14,7 @@ use whitelist::msg::{AddMembersMsg, ExecuteMsg as WhitelistExecuteMsg};
 use crate::contract::instantiate;
 use crate::msg::{
     ConfigResponse, ExecuteMsg, InstantiateMsg, MintCountResponse, MintPriceResponse,
-    MintableNumTokensResponse, QueryMsg, StartTimeResponse,
+    MintableNumTokensResponse, MintableTokensResponse, QueryMsg, StartTimeResponse,
 };
 use crate::ContractError;
 
@@ -649,11 +649,24 @@ fn mint_count_query() {
     assert_eq!(res.count, 2);
     assert_eq!(res.address, buyer.to_string());
 
+    // get random mint token_id
+    let tokens_msg = Cw721QueryMsg::Tokens {
+        owner: buyer.to_string(),
+        start_after: None,
+        limit: None,
+    };
+    let res: TokensResponse = router
+        .wrap()
+        .query_wasm_smart(sg721_addr.clone(), &tokens_msg)
+        .unwrap();
+    let sold_token_id: u32 = res.tokens[1].parse::<u32>().unwrap();
+    println!("sold token id: {}", sold_token_id);
+
     // Buyer transfers NFT to creator
-    // random mint token id: 3
+    // random mint token id: 8
     let transfer_msg: Cw721ExecuteMsg<Empty> = Cw721ExecuteMsg::TransferNft {
         recipient: creator.to_string(),
-        token_id: "3".to_string(),
+        token_id: "8".to_string(),
     };
     let res = router.execute_contract(
         buyer.clone(),
@@ -1117,7 +1130,7 @@ fn mint_for_token_id_addr() {
     };
     let res: TokensResponse = router
         .wrap()
-        .query_wasm_smart(config.sg721_address, &tokens_msg)
+        .query_wasm_smart(config.sg721_address.clone(), &tokens_msg)
         .unwrap();
     let sold_token_id: u32 = res.tokens[0].parse::<u32>().unwrap();
 
@@ -1197,6 +1210,18 @@ fn mint_for_token_id_addr() {
         }),
     );
     assert!(res.is_ok());
+
+    let res: OwnerOfResponse = router
+        .wrap()
+        .query_wasm_smart(
+            config.sg721_address,
+            &Cw721QueryMsg::OwnerOf {
+                token_id: 2.to_string(),
+                include_expired: None,
+            },
+        )
+        .unwrap();
+    assert_eq!(res.owner, buyer.to_string());
 
     let mintable_num_tokens_response: MintableNumTokensResponse = router
         .wrap()
@@ -1503,4 +1528,95 @@ fn can_withdraw() {
         creator_balances,
         coins(INITIAL_BALANCE + UNIT_PRICE - MINT_FEE, NATIVE_DENOM)
     );
+}
+
+//TODO for debug to test shuffle. remove before prod
+#[test]
+fn shuffle() {
+    const SHUFFLE_FEE: u128 = 500_000_000;
+    // setup accounts
+    let mut router = custom_mock_app();
+    let (creator, buyer) = setup_accounts(&mut router);
+    // setup contracts
+    let num_tokens = 20;
+    let (minter_addr, _config) = setup_minter_contract(&mut router, &creator, num_tokens);
+    // query mintable order for mints
+    let query_mintable_tokens_msg = QueryMsg::MintableTokens {};
+    let res: MintableTokensResponse = router
+        .wrap()
+        .query_wasm_smart(minter_addr.clone(), &query_mintable_tokens_msg)
+        .unwrap();
+    dbg!("after initialize {:?}", res);
+    // perform shuffle
+    let shuffle_msg = ExecuteMsg::Shuffle {};
+    let funds = coins(SHUFFLE_FEE, NATIVE_DENOM);
+    let res = router.execute_contract(creator.clone(), minter_addr.clone(), &shuffle_msg, &funds);
+    assert!(res.is_ok());
+    // query and compare mintable order for mints
+    let query_mintable_tokens_msg = QueryMsg::MintableTokens {};
+    let res: MintableTokensResponse = router
+        .wrap()
+        .query_wasm_smart(minter_addr.clone(), &query_mintable_tokens_msg)
+        .unwrap();
+    dbg!("after shuffle {:?}", res);
+    // mint a few tokens
+    let mut i = 0;
+    while i < 3 {
+        let mint_to_msg = ExecuteMsg::MintTo {
+            recipient: buyer.to_string(),
+        };
+        let res = router.execute_contract(
+            creator.clone(),
+            minter_addr.clone(),
+            &mint_to_msg,
+            &coins_for_msg(Coin {
+                amount: Uint128::from(ADMIN_MINT_PRICE),
+                denom: NATIVE_DENOM.to_string(),
+            }),
+        );
+        assert!(res.is_ok());
+        i += 1;
+    }
+    println!("---after mint_to---");
+    // query mintable order for mints
+    let query_mintable_tokens_msg = QueryMsg::MintableTokens {};
+    let res: MintableTokensResponse = router
+        .wrap()
+        .query_wasm_smart(minter_addr.clone(), &query_mintable_tokens_msg)
+        .unwrap();
+    dbg!("{:?}", res);
+    // perform shuffle
+    let shuffle_msg = ExecuteMsg::Shuffle {};
+    let funds = coins(SHUFFLE_FEE, NATIVE_DENOM);
+    let res = router.execute_contract(creator.clone(), minter_addr.clone(), &shuffle_msg, &funds);
+    assert!(res.is_ok());
+    // query and compare mintable order for mints
+    let query_mintable_tokens_msg = QueryMsg::MintableTokens {};
+    let res: MintableTokensResponse = router
+        .wrap()
+        .query_wasm_smart(minter_addr.clone(), &query_mintable_tokens_msg)
+        .unwrap();
+    dbg!("after another shuffle {:?}", res);
+    // mint until sold out
+    while i < num_tokens {
+        let mint_to_msg = ExecuteMsg::MintTo {
+            recipient: buyer.to_string(),
+        };
+        let res = router.execute_contract(
+            creator.clone(),
+            minter_addr.clone(),
+            &mint_to_msg,
+            &coins_for_msg(Coin {
+                amount: Uint128::from(ADMIN_MINT_PRICE),
+                denom: NATIVE_DENOM.to_string(),
+            }),
+        );
+        assert!(res.is_ok());
+        i += 1;
+    }
+    // try shuffle
+    let shuffle_msg = ExecuteMsg::Shuffle {};
+    let funds = coins(SHUFFLE_FEE, NATIVE_DENOM);
+    let res = router.execute_contract(creator.clone(), minter_addr, &shuffle_msg, &funds);
+    assert!(res.is_err());
 }
