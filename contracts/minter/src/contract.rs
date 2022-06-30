@@ -125,7 +125,11 @@ pub fn instantiate(
     CONFIG.save(deps.storage, &config)?;
     MINTABLE_NUM_TOKENS.save(deps.storage, &msg.num_tokens)?;
 
-    let token_ids = random_token_list(&env, (1..=msg.num_tokens).collect::<Vec<u32>>())?;
+    let token_ids = random_token_list(
+        &env,
+        info.sender.clone(),
+        (1..=msg.num_tokens).collect::<Vec<u32>>(),
+    )?;
     // Save mintable token ids map
     let mut token_position: u32 = 1;
     for token_id in token_ids {
@@ -210,7 +214,7 @@ pub fn execute_shuffle(
         positions.push(token.as_ref().unwrap().0);
         token_ids.push(token.as_ref().unwrap().1);
     }
-    let randomized_token_ids = random_token_list(&env, token_ids.clone())?;
+    let randomized_token_ids = random_token_list(&env, info.sender.clone(), token_ids.clone())?;
     for (i, position) in positions.iter().enumerate() {
         MINTABLE_TOKEN_POSITIONS.save(deps.storage, *position, &randomized_token_ids[i])?;
     }
@@ -529,9 +533,10 @@ fn _execute_mint(
         .add_messages(msgs))
 }
 
-fn random_token_list(env: &Env, tokens: Vec<u32>) -> Result<Vec<u32>, ContractError> {
+fn random_token_list(env: &Env, sender: Addr, tokens: Vec<u32>) -> Result<Vec<u32>, ContractError> {
     let mut tokens: Vec<u32> = tokens;
-    let sha256 = Sha256::digest(format!("{}{}", env.block.height, tokens.len()).into_bytes());
+    let sha256 =
+        Sha256::digest(format!("{}{}{}", sender, env.block.height, tokens.len()).into_bytes());
     // Cut first 16 bytes from 32 byte value
     let randomness: [u8; 16] = sha256.to_vec()[0..16].try_into().unwrap();
     let mut rng = Xoshiro128PlusPlus::from_seed(randomness);
@@ -730,7 +735,6 @@ fn query_mintable_num_tokens(deps: Deps) -> StdResult<MintableNumTokensResponse>
 fn query_mintable_tokens(deps: Deps) -> StdResult<MintableTokensResponse> {
     let tokens = MINTABLE_TOKEN_POSITIONS
         .range(deps.storage, None, None, Order::Ascending)
-        .into_iter()
         .map(|t| t.unwrap())
         .collect::<Vec<_>>();
 
