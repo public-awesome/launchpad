@@ -6,7 +6,7 @@ resolver = "2"
 codegen-units = 1
 incremental = false
 
-[profile.release.package.whitelist]
+[profile.release.package.sg-whitelist]
 codegen-units = 1
 incremental = false
 

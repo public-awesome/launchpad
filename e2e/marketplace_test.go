@@ -12,8 +12,8 @@ import (
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/public-awesome/stargaze/v5/testutil/simapp"
-	claimtypes "github.com/public-awesome/stargaze/v5/x/claim/types"
+	"github.com/public-awesome/stargaze/v6/testutil/simapp"
+	claimtypes "github.com/public-awesome/stargaze/v6/x/claim/types"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
@@ -110,7 +110,6 @@ func TestMarketplace(t *testing.T) {
 	// wasm params
 	wasmParams := app.WasmKeeper.GetParams(ctx)
 	wasmParams.CodeUploadAccess = wasmtypes.AllowEverybody
-	wasmParams.MaxWasmCodeSize = 1000 * 1024 * 4 // 4MB
 	app.WasmKeeper.SetParams(ctx, wasmParams)
 
 	priv1 := secp256k1.GenPrivKey()
@@ -165,7 +164,7 @@ func TestMarketplace(t *testing.T) {
 		CodeID: 1,
 		Label:  "SG721",
 		Msg:    instantiateMsgRaw,
-		Funds:  sdk.NewCoins(sdk.NewInt64Coin("ustars", 1_000_000_000)),
+		Funds:  sdk.NewCoins(sdk.NewInt64Coin("ustars", 5_000_000_000)),
 	})
 	require.NoError(t, err)
 	require.NotNil(t, instantiateRes)
@@ -331,7 +330,7 @@ func TestMarketplace(t *testing.T) {
 	// check intial balance of buyer / airdrop claimer
 	balance := app.BankKeeper.GetBalance(ctx, bidder.Address, "ustars")
 	require.Equal(t,
-		"2000000000",
+		"6000000000",
 		balance.Amount.String(),
 	)
 
@@ -354,7 +353,7 @@ func TestMarketplace(t *testing.T) {
 	// buyer's should lose amount of bid (1,000) and gain airdrop claim amount (1,000 / 5 = 200)
 	balance = app.BankKeeper.GetBalance(ctx, bidder.Address, "ustars")
 	require.Equal(t,
-		"1200000000",
+		"5200000000",
 		balance.Amount.String(),
 	)
 
@@ -398,7 +397,7 @@ func TestMarketplace(t *testing.T) {
 	// buyer's should lose amount of bid (1,000)
 	balance = app.BankKeeper.GetBalance(ctx, bidder.Address, "ustars")
 	require.Equal(t,
-		"200000000",
+		"4200000000",
 		balance.Amount.String(),
 	)
 

@@ -108,11 +108,11 @@ dependencies = [
  "minter",
  "schemars",
  "serde",
- "sg-controllers 0.12.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg-controllers 0.12.1",
  "sg-marketplace",
- "sg-multi-test 0.13.0",
- "sg-std 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sg721 0.12.0",
+ "sg-multi-test",
+ "sg-std 0.12.1",
+ "sg721 0.12.2",
  "thiserror",
 ]
 
@@ -562,7 +562,7 @@ dependencies = [
 
 [[package]]
 name = "ics721"
-version = "0.12.0"
+version = "0.12.1"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -630,7 +630,7 @@ checksum = "a3e378b66a060d48947b590737b30a1be76706c8dd7b8ba0f2fe3989c68a853f"
 
 [[package]]
 name = "minter"
-version = "0.12.5"
+version = "0.13.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -645,15 +645,15 @@ dependencies = [
  "rand_xoshiro",
  "schemars",
  "serde",
- "sg-multi-test 0.12.0",
- "sg-std 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sg1 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sg721 0.12.0",
+ "sg-multi-test",
+ "sg-std 0.12.1",
+ "sg-whitelist",
+ "sg1 0.13.0",
+ "sg721 0.12.2",
  "sha2 0.10.2",
  "shuffle",
  "thiserror",
  "url",
- "whitelist",
 ]
 
 [[package]]
@@ -784,7 +784,7 @@ dependencies = [
 
 [[package]]
 name = "royalty-group"
-version = "0.12.0"
+version = "0.12.1"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -795,7 +795,7 @@ dependencies = [
  "cw4",
  "schemars",
  "serde",
- "sg-std 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg-std 0.12.1",
  "thiserror",
 ]
 
@@ -918,28 +918,27 @@ dependencies = [
  "cw-storage-plus",
  "schemars",
  "serde",
- "sg-std 0.12.0",
+ "sg-std 0.12.1",
  "thiserror",
 ]
 
 [[package]]
 name = "sg-controllers"
 version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8139d4ec93b30e68b5fe598076bf80bc778e950e1b1af6e7cd7a38da439bbc79"
+source = "git+https://github.com/public-awesome/launchpad?branch=feature/fund-fairburn-pool#57d7b2ebe146ad7c2164c0e16a0439d9bd0433b9"
 dependencies = [
  "cosmwasm-std",
  "cw-storage-plus",
  "schemars",
  "serde",
- "sg-std 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg-std 0.12.1 (git+https://github.com/public-awesome/launchpad?branch=feature/fund-fairburn-pool)",
  "thiserror",
 ]
 
 [[package]]
 name = "sg-marketplace"
 version = "0.15.0"
-source = "git+https://github.com/public-awesome/marketplace#815342fedc1a524f1e6270b54928195709f87409"
+source = "git+https://github.com/public-awesome/marketplace?branch=feature/fair-burn#504309026d9532479647a352937c19ecb4bce8d5"
 dependencies = [
  "cosmwasm-std",
  "cosmwasm-storage",
@@ -951,25 +950,11 @@ dependencies = [
  "cw721-base",
  "schemars",
  "serde",
- "sg-controllers 0.12.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "sg-std 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sg1 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sg721 0.12.0",
+ "sg-controllers 0.12.1 (git+https://github.com/public-awesome/launchpad?branch=feature/fund-fairburn-pool)",
+ "sg-std 0.12.1 (git+https://github.com/public-awesome/launchpad?branch=feature/fund-fairburn-pool)",
+ "sg1 0.13.0 (git+https://github.com/public-awesome/launchpad?branch=feature/fund-fairburn-pool)",
+ "sg721 0.12.2 (git+https://github.com/public-awesome/launchpad?branch=feature/fund-fairburn-pool)",
  "thiserror",
-]
-
-[[package]]
-name = "sg-multi-test"
-version = "0.12.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "377a727f43cf3deb4c8dc1543534134f7cbd47578fb42a9adf2f35e433598daf"
-dependencies = [
- "anyhow",
- "cosmwasm-std",
- "cw-multi-test",
- "schemars",
- "serde",
- "sg-std 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -981,12 +966,12 @@ dependencies = [
  "cw-multi-test",
  "schemars",
  "serde",
- "sg-std 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg-std 0.12.1",
 ]
 
 [[package]]
 name = "sg-std"
-version = "0.12.0"
+version = "0.12.1"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -1000,9 +985,8 @@ dependencies = [
 
 [[package]]
 name = "sg-std"
-version = "0.12.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8333ebd66ab56cd6f83368598c3f810e95b41a10fd81ac3e447792996824deba"
+version = "0.12.1"
+source = "git+https://github.com/public-awesome/launchpad?branch=feature/fund-fairburn-pool#57d7b2ebe146ad7c2164c0e16a0439d9bd0433b9"
 dependencies = [
  "cosmwasm-std",
  "cw-utils",
@@ -1022,66 +1006,50 @@ dependencies = [
 ]
 
 [[package]]
-name = "sg1"
+name = "sg-whitelist"
 version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4b9b26273bdcfd32e1f8adfd99a4d168717fa5adc570c8b67b4081037791e212"
 dependencies = [
- "cosmwasm-std",
- "cw-utils",
- "serde",
- "sg-std 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "thiserror",
-]
-
-[[package]]
-name = "sg1"
-version = "0.13.0"
-dependencies = [
- "cosmwasm-std",
- "cw-utils",
- "serde",
- "sg-std 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "thiserror",
-]
-
-[[package]]
-name = "sg1"
-version = "0.13.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f84da5448efc51fb2484fa1aa3d29402b1cd2fc26d42f4e2cefa73090a85d2da"
-dependencies = [
- "cosmwasm-std",
- "cw-utils",
- "serde",
- "sg-std 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "thiserror",
-]
-
-[[package]]
-name = "sg721"
-version = "0.12.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "10578a37c6be874e4db80d9d9231d834c751154c6b2c8f1e5facff03edf4ab08"
-dependencies = [
+ "cosmwasm-schema",
  "cosmwasm-std",
  "cosmwasm-storage",
  "cw-storage-plus",
  "cw-utils",
  "cw2",
- "cw721",
- "cw721-base",
+ "cw4",
+ "rust_decimal",
  "schemars",
  "serde",
- "sg-std 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sg1 0.12.1",
+ "sg-std 0.12.1",
+ "sg1 0.13.0",
  "thiserror",
- "url",
+]
+
+[[package]]
+name = "sg1"
+version = "0.13.0"
+dependencies = [
+ "cosmwasm-std",
+ "cw-utils",
+ "serde",
+ "sg-std 0.12.1",
+ "thiserror",
+]
+
+[[package]]
+name = "sg1"
+version = "0.13.0"
+source = "git+https://github.com/public-awesome/launchpad?branch=feature/fund-fairburn-pool#57d7b2ebe146ad7c2164c0e16a0439d9bd0433b9"
+dependencies = [
+ "cosmwasm-std",
+ "cw-utils",
+ "serde",
+ "sg-std 0.12.1 (git+https://github.com/public-awesome/launchpad?branch=feature/fund-fairburn-pool)",
+ "thiserror",
 ]
 
 [[package]]
 name = "sg721"
-version = "0.12.1"
+version = "0.12.2"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -1093,8 +1061,28 @@ dependencies = [
  "cw721-base",
  "schemars",
  "serde",
- "sg-std 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sg1 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg-std 0.12.1",
+ "sg1 0.13.0",
+ "thiserror",
+ "url",
+]
+
+[[package]]
+name = "sg721"
+version = "0.12.2"
+source = "git+https://github.com/public-awesome/launchpad?branch=feature/fund-fairburn-pool#57d7b2ebe146ad7c2164c0e16a0439d9bd0433b9"
+dependencies = [
+ "cosmwasm-std",
+ "cosmwasm-storage",
+ "cw-storage-plus",
+ "cw-utils",
+ "cw2",
+ "cw721",
+ "cw721-base",
+ "schemars",
+ "serde",
+ "sg-std 0.12.1 (git+https://github.com/public-awesome/launchpad?branch=feature/fund-fairburn-pool)",
+ "sg1 0.13.0 (git+https://github.com/public-awesome/launchpad?branch=feature/fund-fairburn-pool)",
  "thiserror",
  "url",
 ]
@@ -1278,25 +1266,6 @@ name = "wasi"
 version = "0.10.2+wasi-snapshot-preview1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fd6fbd9a79829dd1ad0cc20627bf1ed606756a7f77edff7b66b7064f9cb327c6"
-
-[[package]]
-name = "whitelist"
-version = "0.12.0"
-dependencies = [
- "cosmwasm-schema",
- "cosmwasm-std",
- "cosmwasm-storage",
- "cw-storage-plus",
- "cw-utils",
- "cw2",
- "cw4",
- "rust_decimal",
- "schemars",
- "serde",
- "sg-std 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sg1 0.12.1",
- "thiserror",
-]
 
 [[package]]
 name = "zeroize"
