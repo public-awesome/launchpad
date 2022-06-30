@@ -516,8 +516,7 @@ fn _execute_mint(
         .add_messages(msgs))
 }
 
-fn random_token_list(env: &Env, tokens: Vec<u32>) -> Result<Vec<u32>, ContractError> {
-    let mut tokens: Vec<u32> = tokens;
+fn random_token_list(env: &Env, mut tokens: Vec<u32>) -> Result<Vec<u32>, ContractError> {
     let sha256 = Sha256::digest(format!("{}{}", env.block.height, tokens.len()).into_bytes());
     // Cut first 16 bytes from 32 byte value
     let randomness: [u8; 16] = sha256.to_vec()[0..16].try_into().unwrap();
