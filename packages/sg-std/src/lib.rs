@@ -7,8 +7,8 @@ pub const NATIVE_DENOM: &str = "ustars";
 pub const GENESIS_MINT_START_TIME: u64 = 1647032400000000000;
 
 pub use msg::{
-    create_claim_for_msg, create_fund_community_pool_msg, ClaimAction, StargazeMsg,
-    StargazeMsgWrapper,
+    create_claim_for_msg, create_fund_community_pool_msg, create_fund_fairburn_pool_msg,
+    ClaimAction, StargazeMsg, StargazeMsgWrapper,
 };
 
 pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;

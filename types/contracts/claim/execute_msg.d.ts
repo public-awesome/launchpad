@@ -4,7 +4,7 @@ minter_address: string
 [k: string]: unknown
 }
 } | {
-sale_finalized_hook: SaleFinalizedHookMsg
+sale_hook: SaleHookMsg
 } | {
 update_admin: {
 admin?: (string | null)
@@ -31,7 +31,7 @@ marketplace_addr?: (string | null)
  */
 export type Uint128 = string
 
-export interface SaleFinalizedHookMsg {
+export interface SaleHookMsg {
 buyer: string
 collection: string
 price: Coin

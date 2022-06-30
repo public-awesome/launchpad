@@ -12,7 +12,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/public-awesome/stargaze/v5/testutil/simapp"
+	"github.com/public-awesome/stargaze/v6/testutil/simapp"
+	alloctypes "github.com/public-awesome/stargaze/v6/x/alloc/types"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
@@ -98,7 +99,7 @@ func GetAccountsAndBalances(accs []Account) ([]authtypes.GenesisAccount, []bankt
 		}
 		balance := banktypes.Balance{
 			Address: a.Address.String(),
-			Coins:   sdk.NewCoins(sdk.NewInt64Coin("ustars", 2_000_000_000)),
+			Coins:   sdk.NewCoins(sdk.NewInt64Coin("ustars", 6_000_000_000)),
 		}
 		genAccs = append(genAccs, &genAcc)
 		balances = append(balances, balance)
@@ -119,7 +120,6 @@ func TestMinter(t *testing.T) {
 	// wasm params
 	wasmParams := app.WasmKeeper.GetParams(ctx)
 	wasmParams.CodeUploadAccess = wasmtypes.AllowEverybody
-	wasmParams.MaxWasmCodeSize = 1000 * 1024 * 4 // 4MB
 	app.WasmKeeper.SetParams(ctx, wasmParams)
 
 	priv1 := secp256k1.GenPrivKey()
@@ -140,7 +140,7 @@ func TestMinter(t *testing.T) {
 	require.Equal(t, res.CodeID, uint64(1))
 
 	// whitelist
-	b, err = ioutil.ReadFile("contracts/whitelist.wasm")
+	b, err = ioutil.ReadFile("contracts/sg_whitelist.wasm")
 	require.NoError(t, err)
 
 	res, err = msgServer.StoreCode(sdk.WrapSDKContext(ctx), &wasmtypes.MsgStoreCode{
@@ -186,22 +186,23 @@ func TestMinter(t *testing.T) {
 		CodeID: 1,
 		Label:  "Minter",
 		Msg:    instantiateMsgRaw,
-		Funds:  sdk.NewCoins(sdk.NewInt64Coin("ustars", 1_000_000_000)),
+		Funds:  sdk.NewCoins(sdk.NewInt64Coin("ustars", 5_000_000_000)),
 	})
 	require.NoError(t, err)
 	require.NotNil(t, instantiateRes)
 	require.NotEmpty(t, instantiateRes.Address)
 	minterAddress := instantiateRes.Address
 
-	// 500 STARS should have been burned
+	// 2,500 STARS should have been burned
 	require.Equal(t,
-		intialTotalSupply.Amount.Sub(sdk.NewInt(500_000_000)).String(),
+		intialTotalSupply.Amount.Sub(sdk.NewInt(2_500_000_000)).String(),
 		app.BankKeeper.GetSupply(ctx, "ustars").Amount.String())
 
-	// 500 STARS should have been transferred to community pool
+	fairburnPool := app.AccountKeeper.GetModuleAddress(alloctypes.FairburnPoolName)
+	// 2,500 STARS should have been transferred to fairburn pool
 	require.Equal(t,
-		int64(500_000_000),
-		app.DistrKeeper.GetFeePoolCommunityCoins(ctx).AmountOf("ustars").TruncateInt64(),
+		int64(2_500_000_000),
+		app.BankKeeper.GetBalance(ctx, fairburnPool, "ustars").Amount.ToDec().TruncateInt64(),
 	)
 
 	// Creator should have been charged 1000STARS
@@ -243,25 +244,25 @@ func TestMinter(t *testing.T) {
 
 	// Buyer should have 100STARS less
 	require.Equal(t,
-		sdk.NewInt64Coin("ustars", 1_900_000_000),
+		sdk.NewInt64Coin("ustars", 5_900_000_000),
 		app.BankKeeper.GetBalance(ctx, accs[1].Address, "ustars"),
 	)
 
-	// Creator should have the same amount they started with since it hasn't been withdrawn yet
+	// Creator should have earned 90%
 	require.Equal(t,
 		app.BankKeeper.GetBalance(ctx, creator.Address, "ustars"),
-		sdk.NewInt64Coin("ustars", 1_000_000_000),
+		sdk.NewInt64Coin("ustars", 1_090_000_000),
 	)
 
-	// 505 STARS should have been burned so far
+	// 2,505 STARS should have been burned so far
 	require.Equal(t,
-		intialTotalSupply.Amount.Sub(sdk.NewInt(505_000_000)).String(),
+		intialTotalSupply.Amount.Sub(sdk.NewInt(2_505_000_000)).String(),
 		app.BankKeeper.GetSupply(ctx, "ustars").Amount.String())
 
-	// 505 STARS should have been transferred to community pool so far
+	// 2,505 STARS should have been transferred to fairburn pool
 	require.Equal(t,
-		int64(505_000_000),
-		app.DistrKeeper.GetFeePoolCommunityCoins(ctx).AmountOf("ustars").TruncateInt64(),
+		int64(2_505_000_000),
+		app.BankKeeper.GetBalance(ctx, fairburnPool, "ustars").Amount.ToDec().TruncateInt64(),
 	)
 
 	count := 0
@@ -276,36 +277,22 @@ func TestMinter(t *testing.T) {
 		require.NoError(t, err)
 		// Buyer should have still have only 100STARS less
 		require.Equal(t,
-			sdk.NewInt64Coin("ustars", 1900_000_000).String(),
+			sdk.NewInt64Coin("ustars", 5_900_000_000).String(),
 			app.BankKeeper.GetBalance(ctx, accs[i].Address, "ustars").String(),
 		)
 	}
 	require.Equal(t, 99, count)
 
-	// 500 +  (100 * 5) STARS should have been burned so far
+	// 2,500 +  (100 * 5) STARS should have been burned so far
 	require.Equal(t,
-		intialTotalSupply.Amount.Sub(sdk.NewInt(1_000_000_000)).String(),
+		intialTotalSupply.Amount.Sub(sdk.NewInt(3_000_000_000)).String(),
 		app.BankKeeper.GetSupply(ctx, "ustars").Amount.String())
 
-	// 500 +  (100 * 5) STARS should have been transferred to community pool so far
+	// 2,500 +  (100 * 5) STARS should have been transferred to fairburn pool so far
 	require.Equal(t,
-		int64(1_000_000_000),
-		app.DistrKeeper.GetFeePoolCommunityCoins(ctx).AmountOf("ustars").TruncateInt64(),
+		int64(3_000_000_000),
+		app.BankKeeper.GetBalance(ctx, fairburnPool, "ustars").Amount.ToDec().TruncateInt64(),
 	)
-
-	// Creator should have the same balance before withdrawal
-	require.Equal(t,
-		sdk.NewInt64Coin("ustars", 1_000_000_000),
-		app.BankKeeper.GetBalance(ctx, creator.Address, "ustars"),
-	)
-
-	// withdraw succeeds
-	_, err = msgServer.ExecuteContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgExecuteContract{
-		Contract: minterAddress,
-		Sender:   creator.Address.String(),
-		Msg:      []byte(`{"withdraw":{}}`),
-	})
-	require.NoError(t, err)
 
 	// Creator should have earned 90% of total sales
 	// 1000 (balance) + (100 * 90 STARS)
@@ -313,7 +300,6 @@ func TestMinter(t *testing.T) {
 		sdk.NewInt64Coin("ustars", 10_000_000_000),
 		app.BankKeeper.GetBalance(ctx, creator.Address, "ustars"),
 	)
-
 }
 
 func TestWhitelistMinter(t *testing.T) {
@@ -330,7 +316,6 @@ func TestWhitelistMinter(t *testing.T) {
 	// wasm params
 	wasmParams := app.WasmKeeper.GetParams(ctx)
 	wasmParams.CodeUploadAccess = wasmtypes.AllowEverybody
-	wasmParams.MaxWasmCodeSize = 1000 * 1024 * 4 // 4MB
 	app.WasmKeeper.SetParams(ctx, wasmParams)
 
 	priv1 := secp256k1.GenPrivKey()
@@ -351,7 +336,7 @@ func TestWhitelistMinter(t *testing.T) {
 	require.Equal(t, res.CodeID, uint64(1))
 
 	// whitelist
-	b, err = ioutil.ReadFile("contracts/whitelist.wasm")
+	b, err = ioutil.ReadFile("contracts/sg_whitelist.wasm")
 	require.NoError(t, err)
 
 	res, err = msgServer.StoreCode(sdk.WrapSDKContext(ctx), &wasmtypes.MsgStoreCode{
@@ -412,16 +397,18 @@ func TestWhitelistMinter(t *testing.T) {
 		intialTotalSupply.Amount.Sub(sdk.NewInt(50_000_000)).String(),
 		app.BankKeeper.GetSupply(ctx, "ustars").Amount.String())
 
-	// 50 STARS should have been transferred to community pool
+	fairburnPool := app.AccountKeeper.GetModuleAddress(alloctypes.FairburnPoolName)
+
+	// 50 STARS should have been transferred to fairburn pool
 	require.Equal(t,
 		int64(50_000_000),
-		app.DistrKeeper.GetFeePoolCommunityCoins(ctx).AmountOf("ustars").TruncateInt64(),
+		app.BankKeeper.GetBalance(ctx, fairburnPool, "ustars").Amount.ToDec().TruncateInt64(),
 	)
 
 	// Creator should have been charged 100STARS
 	require.Equal(t,
 		app.BankKeeper.GetBalance(ctx, creator.Address, "ustars"),
-		sdk.NewInt64Coin("ustars", 1_900_000_000),
+		sdk.NewInt64Coin("ustars", 5_900_000_000),
 	)
 
 	// MINTER
@@ -444,22 +431,22 @@ func TestWhitelistMinter(t *testing.T) {
 		CodeID: 1,
 		Label:  "Minter",
 		Msg:    instantiateMinterMsgRaw,
-		Funds:  sdk.NewCoins(sdk.NewInt64Coin("ustars", 1_000_000_000)),
+		Funds:  sdk.NewCoins(sdk.NewInt64Coin("ustars", 5_000_000_000)),
 	})
 	require.NoError(t, err)
 	require.NotNil(t, instantiateMinterRes)
 	require.NotEmpty(t, instantiateMinterRes.Address)
 	minterAddress := instantiateMinterRes.Address
 
-	// 550 STARS should have been burned so far
+	// 2,550 STARS should have been burned so far
 	require.Equal(t,
-		intialTotalSupply.Amount.Sub(sdk.NewInt(550_000_000)).String(),
+		intialTotalSupply.Amount.Sub(sdk.NewInt(2_550_000_000)).String(),
 		app.BankKeeper.GetSupply(ctx, "ustars").Amount.String())
 
-	// 550 STARS should have been transferred to community pool so far
+	// 2,550 STARS should have been transferred to fairburn pool so far
 	require.Equal(t,
-		int64(550_000_000),
-		app.DistrKeeper.GetFeePoolCommunityCoins(ctx).AmountOf("ustars").TruncateInt64(),
+		int64(2_550_000_000),
+		app.BankKeeper.GetBalance(ctx, fairburnPool, "ustars").Amount.ToDec().TruncateInt64(),
 	)
 
 	// Creator should have been charged another 1000STARS
@@ -522,7 +509,7 @@ func TestWhitelistMinter(t *testing.T) {
 		require.NoError(t, err)
 		// Buyer should have still have only 50STARS less
 		require.Equal(t,
-			sdk.NewInt64Coin("ustars", 1_950_000_000).String(),
+			sdk.NewInt64Coin("ustars", 5_950_000_000).String(),
 			app.BankKeeper.GetBalance(ctx, accs[i].Address, "ustars").String(),
 		)
 	}
@@ -543,7 +530,7 @@ func TestWhitelistMinter(t *testing.T) {
 
 	// Buyer should have 150STARS less
 	require.Equal(t,
-		sdk.NewInt64Coin("ustars", 1_850_000_000).String(),
+		sdk.NewInt64Coin("ustars", 5_850_000_000).String(),
 		app.BankKeeper.GetBalance(ctx, accs[1].Address, "ustars").String(),
 	)
 
@@ -561,7 +548,7 @@ func TestWhitelistMinter(t *testing.T) {
 		require.NoError(t, err)
 		// Buyer should have still have only 50STARS less
 		require.Equal(t,
-			sdk.NewInt64Coin("ustars", 1_900_000_000).String(),
+			sdk.NewInt64Coin("ustars", 5_900_000_000).String(),
 			app.BankKeeper.GetBalance(ctx, accs[i].Address, "ustars").String(),
 		)
 	}
@@ -576,46 +563,30 @@ func TestWhitelistMinter(t *testing.T) {
 	})
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "Sold out")
-	// TODO: fake refund since test failed
 
 	// Check Supply
 	// - 50 whitelist fee
-	// - 500 minter fee
+	// - 2,500 minter fee
 	// - Whitelist Price : 50STARS * 5%  * 50 sold = 125
 	// - Public Price: 100STARS * 5% * 50 sold =  250
-	// should have 925STARS less
+	// should have 2,925STARS less
 	require.Equal(t,
-		intialTotalSupply.Amount.Sub(sdk.NewInt(925_000_000)).String(),
+		intialTotalSupply.Amount.Sub(sdk.NewInt(2_925_000_000)).String(),
 		app.BankKeeper.GetSupply(ctx, "ustars").Amount.String())
 
-	//  should have 925STARS more
+	//  should have 2,925 STARS more
 	require.Equal(t,
-		int64(925_000_000),
-		app.DistrKeeper.GetFeePoolCommunityCoins(ctx).AmountOf("ustars").TruncateInt64(),
+		int64(2_925_000_000),
+		app.BankKeeper.GetBalance(ctx, fairburnPool, "ustars").Amount.ToDec().TruncateInt64(),
 	)
-
-	// Creator should have their initial balance before withdrawal
-	// 900 (balance)
-	require.Equal(t,
-		sdk.NewInt64Coin("ustars", 900_000_000),
-		app.BankKeeper.GetBalance(ctx, creator.Address, "ustars"),
-	)
-
-	// withdraw succeeds
-	_, err = msgServer.ExecuteContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgExecuteContract{
-		Contract: minterAddress,
-		Sender:   creator.Address.String(),
-		Msg:      []byte(`{"withdraw":{}}`),
-	})
-	require.NoError(t, err)
 
 	// Creator should have earned 90% of total sales
 	// 900 (balance)
 	// 50STARS * 90% * 50 sold = 2,250
-	// 100STARS * 90% * 50 sold = 4,500 + 100 (1 failed mint)
-	// should have 7,750 STARS
+	// 100STARS * 90% * 50 sold = 4,500
+	// should have 7,650 STARS
 	require.Equal(t,
-		sdk.NewInt64Coin("ustars", 7_750_000_000),
+		sdk.NewInt64Coin("ustars", 7_650_000_000),
 		app.BankKeeper.GetBalance(ctx, creator.Address, "ustars"),
 	)
 

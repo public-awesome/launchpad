@@ -63,6 +63,15 @@ impl Module for StargazeModule {
                 router.execute(api, storage, block, sender, msg)?;
                 Ok(AppResponse::default())
             }
+            sg_std::StargazeMsg::FundFairburnPool { amount } => {
+                let msg = BankMsg::Send {
+                    to_address: "fairburn_pool".to_owned(),
+                    amount,
+                }
+                .into();
+                router.execute(api, storage, block, sender, msg)?;
+                Ok(AppResponse::default())
+            }
             sg_std::StargazeMsg::ClaimFor {
                 action: _,
                 address: _,

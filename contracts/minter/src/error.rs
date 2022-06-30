@@ -75,9 +75,6 @@ pub enum ContractError {
     #[error("Token id: {token_id} already sold")]
     TokenIdAlreadySold { token_id: u32 },
 
-    #[error("ZeroBalance")]
-    ZeroBalance {},
-
     #[error("{0}")]
     Payment(#[from] PaymentError),
 
