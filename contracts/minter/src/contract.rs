@@ -1,4 +1,3 @@
-use std::cmp::Ordering;
 use std::convert::TryInto;
 
 use crate::error::ContractError;
@@ -7,8 +6,7 @@ use crate::msg::{
     MintableNumTokensResponse, MintableTokensResponse, QueryMsg, StartTimeResponse,
 };
 use crate::state::{
-    Config, TokenPositionMapping, CONFIG, MINTABLE_NUM_TOKENS, MINTABLE_TOKEN_POSITIONS,
-    MINTER_ADDRS, SG721_ADDRESS,
+    Config, CONFIG, MINTABLE_NUM_TOKENS, MINTABLE_TOKEN_POSITIONS, MINTER_ADDRS, SG721_ADDRESS,
 };
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
@@ -32,6 +30,11 @@ use whitelist::msg::{
 
 pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 pub type SubMsg = cosmwasm_std::SubMsg<StargazeMsgWrapper>;
+
+pub struct TokenPositionMapping {
+    pub position: u32,
+    pub token_id: u32,
+}
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sg-minter";
@@ -131,7 +134,7 @@ pub fn instantiate(
         (1..=msg.num_tokens).collect::<Vec<u32>>(),
     )?;
     // Save mintable token ids map
-    let mut token_position: u32 = 1;
+    let mut token_position = 1;
     for token_id in token_ids {
         MINTABLE_TOKEN_POSITIONS.save(deps.storage, token_position, &token_id)?;
         token_position += 1;
@@ -208,11 +211,12 @@ pub fn execute_shuffle(
     }
 
     // get positions and token_ids, then randomize token_ids and reassign positions
-    let mut positions: Vec<u32> = Vec::new();
-    let mut token_ids: Vec<u32> = Vec::new();
-    for token in MINTABLE_TOKEN_POSITIONS.range(deps.storage, None, None, Order::Ascending) {
-        positions.push(token.as_ref().unwrap().0);
-        token_ids.push(token.as_ref().unwrap().1);
+    let mut positions = vec![];
+    let mut token_ids = vec![];
+    for mapping in MINTABLE_TOKEN_POSITIONS.range(deps.storage, None, None, Order::Ascending) {
+        let (position, token_id) = mapping?;
+        positions.push(position);
+        token_ids.push(token_id);
     }
     let randomized_token_ids = random_token_list(&env, info.sender.clone(), token_ids.clone())?;
     for (i, position) in positions.iter().enumerate() {
@@ -423,6 +427,13 @@ fn _execute_mint(
     }
 
     let config = CONFIG.load(deps.storage)?;
+
+    if let Some(token_id) = token_id {
+        if token_id == 0 || token_id > config.num_tokens {
+            return Err(ContractError::InvalidTokenId {});
+        }
+    }
+
     let sg721_address = SG721_ADDRESS.load(deps.storage)?;
 
     let recipient_addr = match recipient {
@@ -452,49 +463,25 @@ fn _execute_mint(
         network_fee
     };
 
-    let mintable_token_positions: Vec<u32> = MINTABLE_TOKEN_POSITIONS
-        .keys(deps.storage, None, None, Order::Ascending)
-        .map(|x| x.unwrap())
-        .collect();
-    let mintable_token_mapping: TokenPositionMapping = match token_id {
+    let mintable_token_mapping = match token_id {
         Some(token_id) => {
-            if token_id == 0 || token_id > config.num_tokens {
-                return Err(ContractError::InvalidTokenId {});
-            }
-
-            // iterate map of token positions
-            // check if MINTABLE_TOKEN_POSITIONS value is token_id
-            let position = mintable_token_positions
-                .iter()
-                .filter_map(|position| {
-                    let result = MINTABLE_TOKEN_POSITIONS
-                        .load(deps.storage, *position)
-                        .unwrap()
-                        .cmp(&token_id);
-                    match result {
-                        Ordering::Equal => Some(*position),
-                        _ => None,
-                    }
-                })
-                .collect::<Vec<_>>();
-
-            match position.first() {
-                // If token_id exists, ready to mint
-                Some(position) => TokenPositionMapping {
-                    position: *position,
-                    token_id,
-                },
-                // If token_id not contained in mintable_token_ids, throw err
-                None => {
-                    return Err(ContractError::TokenIdAlreadySold { token_id });
+            // set position to invalid value, iterate to find matching token_id
+            // if token_id not found, token_id is already sold, position is unchanged and throw err
+            // otherwise return position and token_id
+            let mut position = 0;
+            for res in MINTABLE_TOKEN_POSITIONS.range(deps.storage, None, None, Order::Ascending) {
+                let (pos, id) = res?;
+                if id == token_id {
+                    position = pos;
+                    break;
                 }
             }
+            if position == 0 {
+                return Err(ContractError::TokenIdAlreadySold { token_id });
+            }
+            TokenPositionMapping { position, token_id }
         }
-        None => {
-            let token_mapping: TokenPositionMapping =
-                random_mintable_token_mapping(deps.as_ref(), env, info.sender.clone())?;
-            token_mapping
-        }
+        None => random_mintable_token_mapping(deps.as_ref(), env, info.sender.clone())?,
     };
 
     // Create mint msgs
@@ -533,8 +520,11 @@ fn _execute_mint(
         .add_messages(msgs))
 }
 
-fn random_token_list(env: &Env, sender: Addr, tokens: Vec<u32>) -> Result<Vec<u32>, ContractError> {
-    let mut tokens: Vec<u32> = tokens;
+fn random_token_list(
+    env: &Env,
+    sender: Addr,
+    mut tokens: Vec<u32>,
+) -> Result<Vec<u32>, ContractError> {
     let sha256 =
         Sha256::digest(format!("{}{}{}", sender, env.block.height, tokens.len()).into_bytes());
     // Cut first 16 bytes from 32 byte value
@@ -578,7 +568,7 @@ fn random_mintable_token_mapping(
         .take(1)
         .collect::<StdResult<Vec<_>>>()?[0];
 
-    let token_id: u32 = MINTABLE_TOKEN_POSITIONS.load(deps.storage, position)?;
+    let token_id = MINTABLE_TOKEN_POSITIONS.load(deps.storage, position)?;
     Ok(TokenPositionMapping { position, token_id })
 }
 
