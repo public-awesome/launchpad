@@ -128,9 +128,9 @@ pub fn instantiate(
     CONFIG.save(deps.storage, &config)?;
     MINTABLE_NUM_TOKENS.save(deps.storage, &msg.num_tokens)?;
 
-    let token_ids = random_token_list(&env, (1..=msg.num_tokens).collect::<Vec<u32>>())?;
+    let token_ids = random_token_list(&env, (1..=msg.num_tokens).collect::<Vec<_>>())?;
     // Save mintable token ids map
-    let mut token_position: u32 = 1;
+    let mut token_position = 1;
     for token_id in token_ids {
         MINTABLE_TOKEN_POSITIONS.save(deps.storage, token_position, &token_id)?;
         token_position += 1;
@@ -207,11 +207,12 @@ pub fn execute_shuffle(
     }
 
     // get positions and token_ids, then randomize token_ids and reassign positions
-    let mut positions: Vec<u32> = Vec::new();
-    let mut token_ids: Vec<u32> = Vec::new();
-    for token in MINTABLE_TOKEN_POSITIONS.range(deps.storage, None, None, Order::Ascending) {
-        positions.push(token.as_ref().unwrap().0);
-        token_ids.push(token.as_ref().unwrap().1);
+    let mut positions = vec![];
+    let mut token_ids = vec![];
+    for mapping in MINTABLE_TOKEN_POSITIONS.range(deps.storage, None, None, Order::Ascending) {
+        let (position, token_id) = mapping?;
+        positions.push(position);
+        token_ids.push(token_id);
     }
     let randomized_token_ids = random_token_list(&env, token_ids.clone())?;
     for (i, position) in positions.iter().enumerate() {
@@ -515,8 +516,7 @@ fn _execute_mint(
         .add_messages(msgs))
 }
 
-fn random_token_list(env: &Env, tokens: Vec<u32>) -> Result<Vec<u32>, ContractError> {
-    let mut tokens: Vec<u32> = tokens;
+fn random_token_list(env: &Env, mut tokens: Vec<u32>) -> Result<Vec<u32>, ContractError> {
     let sha256 = Sha256::digest(format!("{}{}", env.block.height, tokens.len()).into_bytes());
     // Cut first 16 bytes from 32 byte value
     let randomness: [u8; 16] = sha256.to_vec()[0..16].try_into().unwrap();
@@ -559,7 +559,7 @@ fn random_mintable_token_mapping(
         .take(1)
         .collect::<StdResult<Vec<_>>>()?[0];
 
-    let token_id: u32 = MINTABLE_TOKEN_POSITIONS.load(deps.storage, position)?;
+    let token_id = MINTABLE_TOKEN_POSITIONS.load(deps.storage, position)?;
     Ok(TokenPositionMapping { position, token_id })
 }
 
