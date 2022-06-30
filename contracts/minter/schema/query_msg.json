@@ -69,6 +69,18 @@
         }
       },
       "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "mintable_tokens"
+      ],
+      "properties": {
+        "mintable_tokens": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
     }
   ]
 }
