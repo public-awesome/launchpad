@@ -117,7 +117,7 @@ fn setup_minter_contract(
     };
 
     let res = to_binary(&msg);
-    dbg!("{}", res.unwrap());
+    // dbg!("{}", res.unwrap());
 
     let minter_addr = router
         .instantiate_contract(

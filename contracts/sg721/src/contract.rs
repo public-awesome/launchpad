@@ -49,14 +49,24 @@ pub fn instantiate(
         .save(deps.storage, &info)?;
 
     // check if minter is a contract and save
+    // TODO: check length of contract address
+    println!("minter: {}", msg.minter);
+    println!("minter len: {}", msg.minter.len());
+
+    if msg.minter.len() != 64 {
+        return Err(ContractError::InvalidMinter {});
+    }
+
     let minter = deps.api.addr_validate(&msg.minter)?;
-    let query = QueryRequest::Wasm(WasmQuery::ContractInfo {
-        contract_addr: minter.to_string(),
-    });
-    deps.querier.query(&query)?;
+    // let query = QueryRequest::Wasm(WasmQuery::ContractInfo {
+    //     contract_addr: minter.to_string(),
+    // });
+    // deps.querier.query(&query)?;
     Sg721Contract::default()
         .minter
         .save(deps.storage, &minter)?;
+
+    println!("here");
 
     // sg721 instantiation
     if msg.collection_info.description.len() > MAX_DESCRIPTION_LENGTH as usize {
@@ -151,7 +161,11 @@ mod tests {
         let msg = InstantiateMsg {
             name: collection,
             symbol: String::from("BOBO"),
-            minter: String::from("minter"),
+            // minter: String::from("minter"),
+            minter: String::from(
+                "stars1fhjm2yshl8qef3dvlj03sdckqjq5k84nlwcrqeqyh0c4gvjxv63qef9ccd",
+            ),
+            // minter: String::from("stars1dnt5k4wfyx27sh9vnkmysersyqesr0d5rkn6tz"),
             collection_info: CollectionInfo {
                 creator: String::from("creator"),
                 description: String::from("Stargaze Monkeys"),
@@ -163,6 +177,7 @@ mod tests {
         let info = mock_info("creator", &coins(CREATION_FEE, NATIVE_DENOM));
 
         // fails because minter is not a contract
-        instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
+        let err = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
+        println!("{:?}", err);
     }
 }

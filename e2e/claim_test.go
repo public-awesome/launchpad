@@ -155,6 +155,8 @@ func TestClaim(t *testing.T) {
 	)
 	fmt.Println(string(instantiateMsgRaw))
 
+	// FIXME: not sure why this test is failing
+
 	instantiateRes, err = msgServer.InstantiateContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgInstantiateContract{
 		Sender: creator.Address.String(),
 		Admin:  creator.Address.String(),
