@@ -41,7 +41,18 @@ pub fn execute(
     match msg {
         ExecuteMsg::Increment {} => try_increment(deps),
         ExecuteMsg::Reset { count } => try_reset(deps, info, count),
+        ExecuteMsg::CreateMinter {} => execute_create_minter(deps),
     }
+}
+
+pub fn execute_create_minter(deps: DepsMut) -> Result<Response, ContractError> {
+    // TODO: create minter
+    STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
+        state.count += 1;
+        Ok(state)
+    })?;
+
+    Ok(Response::new().add_attribute("method", "try_increment"))
 }
 
 pub fn try_increment(deps: DepsMut) -> Result<Response, ContractError> {
