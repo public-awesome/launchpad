@@ -126,6 +126,8 @@ pub fn instantiate(
         MINTABLE_TOKEN_IDS.save(deps.storage, token_id, &true)?;
     }
 
+    println!("contract address {:?}", env.contract.address.to_string());
+
     // Submessage to instantiate sg721 contract
     let sub_msgs: Vec<SubMsg> = vec![SubMsg {
         msg: WasmMsg::Instantiate {
