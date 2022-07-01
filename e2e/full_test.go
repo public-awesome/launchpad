@@ -37,7 +37,7 @@ var (
 
 	instantiateMinterTemplate = `
 		{
-			"base_token_uri": "ipfs://...",
+			"base_token_uri": "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN",
 			"num_tokens": 100,
 			"sg721_code_id": 3,
 			"name": "Collection Name",
@@ -59,7 +59,7 @@ var (
 			  "amount": "100000000",
 			  "denom": "ustars"
 			}
-		  }	  
+		}	  
 		`
 )
 

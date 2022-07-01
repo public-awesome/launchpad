@@ -153,6 +153,8 @@ func TestClaim(t *testing.T) {
 			1, // limit 1
 		),
 	)
+	fmt.Println(string(instantiateMsgRaw))
+
 	instantiateRes, err = msgServer.InstantiateContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgInstantiateContract{
 		Sender: creator.Address.String(),
 		Admin:  creator.Address.String(),
