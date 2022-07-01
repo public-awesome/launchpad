@@ -16,7 +16,7 @@ use cosmwasm_std::{
 };
 use cw2::set_contract_version;
 use cw721_base::{msg::ExecuteMsg as Cw721ExecuteMsg, MintMsg};
-use cw_utils::{may_pay, parse_reply_instantiate_data};
+use cw_utils::{may_pay, nonpayable, parse_reply_instantiate_data};
 use rand_core::{RngCore, SeedableRng};
 use rand_xoshiro::Xoshiro128PlusPlus;
 use sg1::checked_fair_burn;
@@ -240,6 +240,7 @@ pub fn execute_withdraw(
     env: Env,
     info: MessageInfo,
 ) -> Result<Response, ContractError> {
+    nonpayable(&info)?;
     let config = CONFIG.load(deps.storage)?;
     if config.admin != info.sender {
         return Err(ContractError::Unauthorized(
@@ -272,6 +273,7 @@ pub fn execute_set_whitelist(
     info: MessageInfo,
     whitelist: &str,
 ) -> Result<Response, ContractError> {
+    nonpayable(&info)?;
     let mut config = CONFIG.load(deps.storage)?;
     if config.admin != info.sender {
         return Err(ContractError::Unauthorized(
@@ -595,6 +597,7 @@ pub fn execute_update_start_time(
     info: MessageInfo,
     start_time: Timestamp,
 ) -> Result<Response, ContractError> {
+    nonpayable(&info)?;
     let mut config = CONFIG.load(deps.storage)?;
     if info.sender != config.admin {
         return Err(ContractError::Unauthorized(
@@ -631,6 +634,7 @@ pub fn execute_update_per_address_limit(
     info: MessageInfo,
     per_address_limit: u32,
 ) -> Result<Response, ContractError> {
+    nonpayable(&info)?;
     let mut config = CONFIG.load(deps.storage)?;
     if info.sender != config.admin {
         return Err(ContractError::Unauthorized(
