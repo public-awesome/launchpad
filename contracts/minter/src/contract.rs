@@ -77,6 +77,12 @@ pub fn instantiate(
         return Err(ContractError::InvalidBaseTokenURI {});
     }
 
+    let genesis_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
+    // If start time is before genesis time return error
+    if msg.start_time < genesis_time {
+        return Err(ContractError::BeforeGenesisTime {});
+    }
+
     // If current time is beyond the provided start time return error
     if env.block.time > msg.start_time {
         return Err(ContractError::InvalidStartTime(

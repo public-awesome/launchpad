@@ -37,3 +37,4 @@ sg-std = { path = "../../packages/sg-std" }
 [dev-dependencies]
 cosmwasm-schema = "1.0.0"
 cw-multi-test = "0.13.2"
+sg-multi-test = { path = "../../packages/sg-multi-test" }

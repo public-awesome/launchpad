@@ -489,6 +489,7 @@ dependencies = [
  "minter",
  "schemars",
  "serde",
+ "sg-multi-test",
  "sg-std 0.12.1",
  "sg1 0.13.0",
  "thiserror",
