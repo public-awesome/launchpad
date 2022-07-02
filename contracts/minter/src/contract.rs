@@ -6,7 +6,8 @@ use crate::msg::{
     MintableNumTokensResponse, MintableTokensResponse, QueryMsg, StartTimeResponse,
 };
 use crate::state::{
-    Config, CONFIG, MINTABLE_NUM_TOKENS, MINTABLE_TOKEN_POSITIONS, MINTER_ADDRS, SG721_ADDRESS,
+    Config, Params, CONFIG, MINTABLE_NUM_TOKENS, MINTABLE_TOKEN_POSITIONS, MINTER_ADDRS, PARAMS,
+    SG721_ADDRESS,
 };
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
@@ -43,14 +44,6 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 const INSTANTIATE_SG721_REPLY_ID: u64 = 1;
 
-// governance parameters
-const MAX_PER_ADDRESS_LIMIT: u32 = 50;
-const AIRDROP_MINT_PRICE: u128 = 15_000_000;
-const MINT_FEE_PERCENT: u32 = 10;
-// 100% airdrop fee goes to fair burn
-const AIRDROP_MINT_FEE_PERCENT: u32 = 100;
-const SHUFFLE_FEE: u128 = 500_000_000;
-
 const MINTER_FACTORY: &str = "minter-factory-contract";
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -66,6 +59,17 @@ pub fn instantiate(
     if info.sender != MINTER_FACTORY {
         return Err(ContractError::Unauthorized(info.sender.to_string()));
     }
+
+    let params = Params {
+        max_token_limit: msg.max_token_limit,
+        max_per_address_limit: msg.per_address_limit,
+        min_mint_price: msg.min_mint_price,
+        airdrop_mint_price: msg.airdrop_mint_price,
+        mint_fee_percent: Decimal::percent(msg.mint_fee_bps),
+        airdrop_mint_fee_percent: Decimal::percent(msg.airdrop_mint_fee_bps),
+        shuffle_fee: msg.shuffle_fee,
+    };
+    PARAMS.save(deps.storage, &params)?;
 
     // Check that base_token_uri is a valid IPFS uri
     let parsed_token_uri = Url::parse(&msg.base_token_uri)?;
@@ -174,9 +178,10 @@ pub fn execute_shuffle(
     info: MessageInfo,
 ) -> Result<Response, ContractError> {
     let mut res = Response::new();
+    let params = PARAMS.load(deps.storage)?;
 
     // Check exact shuffle fee payment included in message
-    checked_fair_burn(&info, SHUFFLE_FEE, None, &mut res)?;
+    checked_fair_burn(&info, params.shuffle_fee, None, &mut res)?;
 
     // Check not sold out
     let mintable_num_tokens = MINTABLE_NUM_TOKENS.load(deps.storage)?;
@@ -426,11 +431,13 @@ fn _execute_mint(
 
     let mut res = Response::new();
 
+    let params = PARAMS.load(deps.storage)?;
+
     // Create network fee msgs
     let fee_percent = if is_admin {
-        Decimal::percent(AIRDROP_MINT_FEE_PERCENT as u64)
+        params.airdrop_mint_fee_percent
     } else {
-        Decimal::percent(MINT_FEE_PERCENT as u64)
+        params.mint_fee_percent
     };
     let network_fee = mint_price.amount * fee_percent;
     checked_fair_burn(&info, network_fee.u128(), None, &mut res)?;
@@ -598,15 +605,17 @@ pub fn execute_update_per_address_limit(
     info: MessageInfo,
     per_address_limit: u32,
 ) -> Result<Response, ContractError> {
+    let params = PARAMS.load(deps.storage)?;
+
     let mut config = CONFIG.load(deps.storage)?;
     if info.sender != config.admin {
         return Err(ContractError::Unauthorized(
             "Sender is not an admin".to_owned(),
         ));
     }
-    if per_address_limit == 0 || per_address_limit > MAX_PER_ADDRESS_LIMIT {
+    if per_address_limit == 0 || per_address_limit > params.max_per_address_limit {
         return Err(ContractError::InvalidPerAddressLimit {
-            max: MAX_PER_ADDRESS_LIMIT,
+            max: params.max_per_address_limit,
             min: 1,
             got: per_address_limit,
         });
@@ -623,10 +632,11 @@ pub fn execute_update_per_address_limit(
 // else if in whitelist => whitelist price
 // else => config unit price
 pub fn mint_price(deps: Deps, is_admin: bool) -> Result<Coin, StdError> {
+    let params = PARAMS.load(deps.storage)?;
     let config = CONFIG.load(deps.storage)?;
 
     if is_admin {
-        return Ok(coin(AIRDROP_MINT_PRICE, config.unit_price.denom));
+        return Ok(coin(params.airdrop_mint_price, config.unit_price.denom));
     }
 
     if config.whitelist.is_none() {

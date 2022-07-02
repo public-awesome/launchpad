@@ -23,7 +23,7 @@ pub const MINTABLE_TOKEN_POSITIONS: Map<u32, u32> = Map::new("mt");
 pub const MINTABLE_NUM_TOKENS: Item<u32> = Item::new("mintable_num_tokens");
 pub const MINTER_ADDRS: Map<Addr, u32> = Map::new("ma");
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, Default)]
 pub struct Params {
     pub max_token_limit: u32,
     pub max_per_address_limit: u32,

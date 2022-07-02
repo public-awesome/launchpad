@@ -7,7 +7,9 @@ use cw2::set_contract_version;
 use cw_utils::parse_reply_instantiate_data;
 
 use crate::error::ContractError;
-use crate::msg::{CountResponse, ExecuteMsg, InstantiateMsg, QueryMsg, Response, SubMsg, SudoMsg};
+use crate::msg::{
+    CountResponse, ExecuteMsg, InstantiateMsg, ParamsResponse, QueryMsg, Response, SubMsg, SudoMsg,
+};
 use crate::state::{Minter, State, MINTERS, STATE, SUDO_PARAMS};
 
 use minter::msg::InstantiateMsg as VendingMinterInitMsg;
@@ -95,9 +97,9 @@ pub fn execute_create_vending_minter(
     }
 
     // Check that the price is greater than the minimum
-    if params.min_mint_price > msg.unit_price.amount.into() {
+    if params.min_mint_price > msg.unit_price.amount {
         return Err(ContractError::InsufficientMintPrice {
-            expected: params.min_mint_price,
+            expected: params.min_mint_price.u128(),
             got: msg.unit_price.amount.into(),
         });
     }
@@ -162,12 +164,18 @@ pub fn try_reset(deps: DepsMut, info: MessageInfo, count: i32) -> Result<Respons
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::GetCount {} => to_binary(&query_count(deps)?),
+        QueryMsg::Params {} => to_binary(&query_params(deps)?),
     }
 }
 
 fn query_count(deps: Deps) -> StdResult<CountResponse> {
     let state = STATE.load(deps.storage)?;
     Ok(CountResponse { count: state.count })
+}
+
+fn query_params(deps: Deps) -> StdResult<ParamsResponse> {
+    let params = SUDO_PARAMS.load(deps.storage)?;
+    Ok(ParamsResponse { params })
 }
 
 #[cfg(test)]

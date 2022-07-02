@@ -4,6 +4,8 @@ use serde::{Deserialize, Serialize};
 use minter::msg::InstantiateMsg as VendingMinterInitMsg;
 use sg_std::StargazeMsgWrapper;
 
+use crate::state::SudoParams;
+
 pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 pub type SubMsg = cosmwasm_std::SubMsg<StargazeMsgWrapper>;
 
@@ -40,10 +42,16 @@ pub enum SudoMsg {
 pub enum QueryMsg {
     // GetCount returns the current count as a json-encoded number
     GetCount {},
+    Params {},
 }
 
 // We define a custom struct for each query response
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct CountResponse {
     pub count: i32,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct ParamsResponse {
+    pub params: SudoParams,
 }
