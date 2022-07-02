@@ -3,7 +3,6 @@ use serde::{Deserialize, Serialize};
 
 use cosmwasm_std::{Addr, Decimal};
 use cw_storage_plus::{Item, Map};
-
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct State {
     pub count: i32,
@@ -15,6 +14,7 @@ pub const STATE: Item<State> = Item::new("state");
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct VendingMinterParams {
     pub max_token_limit: u32,
+    pub max_per_address_limit: u32,
     pub min_mint_price: u128,
     pub airdrop_mint_price: u128,
     pub mint_fee_percent: Decimal,

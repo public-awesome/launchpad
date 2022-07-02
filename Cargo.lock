@@ -484,10 +484,13 @@ dependencies = [
  "cosmwasm-storage",
  "cw-multi-test",
  "cw-storage-plus",
+ "cw-utils",
  "cw2",
  "minter",
  "schemars",
  "serde",
+ "sg-std 0.12.1",
+ "sg1 0.13.0",
  "thiserror",
 ]
 

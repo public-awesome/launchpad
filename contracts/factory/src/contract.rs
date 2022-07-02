@@ -1,17 +1,19 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
+use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult, WasmMsg};
 use cw2::set_contract_version;
 
 use crate::error::ContractError;
-use crate::msg::{CountResponse, ExecuteMsg, InstantiateMsg, QueryMsg, SudoMsg};
-use crate::state::{State, STATE};
+use crate::msg::{CountResponse, ExecuteMsg, InstantiateMsg, QueryMsg, Response, SubMsg, SudoMsg};
+use crate::state::{State, STATE, SUDO_PARAMS};
 
 use minter::msg::InstantiateMsg as VendingMinterInitMsg;
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:factory";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
+
+const INIT_REPLY_ID: u64 = 1;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -36,14 +38,14 @@ pub fn instantiate(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::Increment {} => try_increment(deps),
         ExecuteMsg::Reset { count } => try_reset(deps, info, count),
-        ExecuteMsg::CreateVendingMinter(msg) => execute_create_minter(deps, msg),
+        ExecuteMsg::CreateVendingMinter(msg) => execute_create_vending_minter(deps, env, info, msg),
     }
 }
 
@@ -55,17 +57,70 @@ pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> Result<Response, ContractE
     }
 }
 
-pub fn execute_create_minter(
+pub fn execute_create_vending_minter(
     deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
     msg: VendingMinterInitMsg,
 ) -> Result<Response, ContractError> {
-    STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
-        state.count += 1;
-        Ok(state)
-    })?;
+    let params = SUDO_PARAMS.load(deps.storage)?.vending_minter;
 
-    Ok(Response::new().add_attribute("action", "create_minter"))
+    // TODO: charge collection creation fee here so its part of params
+
+    // Check the number of tokens is more than zero and less than the max limit
+    if msg.num_tokens == 0 || msg.num_tokens > params.max_token_limit {
+        return Err(ContractError::InvalidNumTokens {
+            min: 1,
+            max: params.max_token_limit,
+        });
+    }
+
+    // Check per address limit is valid
+    if msg.per_address_limit == 0 || msg.per_address_limit > params.max_per_address_limit {
+        return Err(ContractError::InvalidPerAddressLimit {
+            max: params.max_per_address_limit,
+            min: 1,
+            got: msg.per_address_limit,
+        });
+    }
+
+    // Check that the price is in the correct denom ('ustars')
+    let native_denom = deps.querier.query_bonded_denom()?;
+    if native_denom != msg.unit_price.denom {
+        return Err(ContractError::InvalidDenom {
+            expected: native_denom,
+            got: msg.unit_price.denom,
+        });
+    }
+
+    // Check that the price is greater than the minimum
+    if params.min_mint_price > msg.unit_price.amount.into() {
+        return Err(ContractError::InsufficientMintPrice {
+            expected: params.min_mint_price,
+            got: msg.unit_price.amount.into(),
+        });
+    }
+
+    let wasm_msg = WasmMsg::Instantiate {
+        admin: Some(env.contract.address.to_string()),
+        code_id: msg.sg721_code_id,
+        msg: to_binary(&msg)?,
+        funds: info.funds,
+        label: msg.name,
+    };
+    let submsg = SubMsg::reply_on_success(wasm_msg, INIT_REPLY_ID);
+
+    // STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
+    //     state.count += 1;
+    //     Ok(state)
+    // })?;
+
+    Ok(Response::new()
+        .add_attribute("action", "create_minter")
+        .add_submessage(submsg))
 }
+
+// TODO: handle reply from init minter
 
 pub fn try_increment(deps: DepsMut) -> Result<Response, ContractError> {
     STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {

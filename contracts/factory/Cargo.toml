@@ -30,6 +30,9 @@ schemars = "0.8.8"
 serde = { version = "1.0.137", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0.31" }
 minter = { path = "../minter", features = ["library"] }
+cw-utils = "0.13.2"
+sg1 = { path = "../../packages/sg1" }
+sg-std = { path = "../../packages/sg-std" }
 
 [dev-dependencies]
 cosmwasm-schema = "1.0.0"

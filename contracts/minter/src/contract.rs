@@ -44,14 +44,12 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 const INSTANTIATE_SG721_REPLY_ID: u64 = 1;
 
 // governance parameters
-// const MAX_TOKEN_LIMIT: u32 = 10000;
-// const MAX_PER_ADDRESS_LIMIT: u32 = 50;
-// const MIN_MINT_PRICE: u128 = 50_000_000;
-// const AIRDROP_MINT_PRICE: u128 = 15_000_000;
-// const MINT_FEE_PERCENT: u32 = 10;
+const MAX_PER_ADDRESS_LIMIT: u32 = 50;
+const AIRDROP_MINT_PRICE: u128 = 15_000_000;
+const MINT_FEE_PERCENT: u32 = 10;
 // 100% airdrop fee goes to fair burn
-// const AIRDROP_MINT_FEE_PERCENT: u32 = 100;
-// const SHUFFLE_FEE: u128 = 500_000_000;
+const AIRDROP_MINT_FEE_PERCENT: u32 = 100;
+const SHUFFLE_FEE: u128 = 500_000_000;
 
 const MINTER_FACTORY: &str = "minter-factory-contract";
 
@@ -69,50 +67,12 @@ pub fn instantiate(
         return Err(ContractError::Unauthorized(info.sender.to_string()));
     }
 
-    // Check the number of tokens is more than zero and less than the max limit
-    if msg.num_tokens == 0 || msg.num_tokens > MAX_TOKEN_LIMIT {
-        return Err(ContractError::InvalidNumTokens {
-            min: 1,
-            max: MAX_TOKEN_LIMIT,
-        });
-    }
-
-    // Check per address limit is valid
-    if msg.per_address_limit == 0 || msg.per_address_limit > MAX_PER_ADDRESS_LIMIT {
-        return Err(ContractError::InvalidPerAddressLimit {
-            max: MAX_PER_ADDRESS_LIMIT,
-            min: 1,
-            got: msg.per_address_limit,
-        });
-    }
-
     // Check that base_token_uri is a valid IPFS uri
     let parsed_token_uri = Url::parse(&msg.base_token_uri)?;
     if parsed_token_uri.scheme() != "ipfs" {
         return Err(ContractError::InvalidBaseTokenURI {});
     }
 
-    // Check that the price is in the correct denom ('ustars')
-    if NATIVE_DENOM != msg.unit_price.denom {
-        return Err(ContractError::InvalidDenom {
-            expected: NATIVE_DENOM.to_string(),
-            got: msg.unit_price.denom,
-        });
-    }
-
-    // Check that the price is greater than the minimum
-    if MIN_MINT_PRICE > msg.unit_price.amount.into() {
-        return Err(ContractError::InsufficientMintPrice {
-            expected: MIN_MINT_PRICE,
-            got: msg.unit_price.amount.into(),
-        });
-    }
-
-    let genesis_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
-    // If start time is before genesis time return error
-    if msg.start_time < genesis_time {
-        return Err(ContractError::BeforeGenesisTime {});
-    }
     // If current time is beyond the provided start time return error
     if env.block.time > msg.start_time {
         return Err(ContractError::InvalidStartTime(
@@ -156,10 +116,10 @@ pub fn instantiate(
         msg: WasmMsg::Instantiate {
             code_id: msg.sg721_code_id,
             msg: to_binary(&Sg721InstantiateMsg {
-                name: msg.sg721_instantiate_msg.name,
-                symbol: msg.sg721_instantiate_msg.symbol,
+                name: msg.name,
+                symbol: msg.symbol,
                 minter: env.contract.address.to_string(),
-                collection_info: msg.sg721_instantiate_msg.collection_info,
+                collection_info: msg.collection_info,
             })?,
             funds: info.funds,
             admin: Some(info.sender.to_string()),

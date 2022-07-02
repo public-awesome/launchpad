@@ -2,6 +2,10 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use minter::msg::InstantiateMsg as VendingMinterInitMsg;
+use sg_std::StargazeMsgWrapper;
+
+pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
+pub type SubMsg = cosmwasm_std::SubMsg<StargazeMsgWrapper>;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {
