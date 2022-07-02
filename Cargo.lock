@@ -485,6 +485,7 @@ dependencies = [
  "cw-multi-test",
  "cw-storage-plus",
  "cw2",
+ "minter",
  "schemars",
  "serde",
  "thiserror",

@@ -7,6 +7,8 @@ use crate::error::ContractError;
 use crate::msg::{CountResponse, ExecuteMsg, InstantiateMsg, QueryMsg, SudoMsg};
 use crate::state::{State, STATE};
 
+use minter::msg::InstantiateMsg as VendingMinterInitMsg;
+
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:factory";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -41,7 +43,7 @@ pub fn execute(
     match msg {
         ExecuteMsg::Increment {} => try_increment(deps),
         ExecuteMsg::Reset { count } => try_reset(deps, info, count),
-        ExecuteMsg::CreateMinter {} => execute_create_minter(deps),
+        ExecuteMsg::CreateVendingMinter(msg) => execute_create_minter(deps, msg),
     }
 }
 
@@ -53,7 +55,10 @@ pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> Result<Response, ContractE
     }
 }
 
-pub fn execute_create_minter(deps: DepsMut) -> Result<Response, ContractError> {
+pub fn execute_create_minter(
+    deps: DepsMut,
+    msg: VendingMinterInitMsg,
+) -> Result<Response, ContractError> {
     // TODO: create minter
     STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
         state.count += 1;
