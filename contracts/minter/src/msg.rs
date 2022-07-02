@@ -21,6 +21,7 @@ pub struct InstantiateMsg {
 pub enum ExecuteMsg {
     Mint {},
     SetWhitelist { whitelist: String },
+    UpdateMintPrice { price: u128 },
     UpdateStartTime(Timestamp),
     UpdatePerAddressLimit { per_address_limit: u32 },
     MintTo { recipient: String },

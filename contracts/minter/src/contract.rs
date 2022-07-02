@@ -124,7 +124,8 @@ pub fn instantiate(
         base_token_uri: msg.base_token_uri,
         num_tokens: msg.num_tokens,
         sg721_code_id: msg.sg721_code_id,
-        unit_price: msg.unit_price,
+        unit_price: msg.unit_price.clone(),
+        initial_price: msg.unit_price,
         per_address_limit: msg.per_address_limit,
         whitelist: whitelist_addr,
         start_time: msg.start_time,
@@ -181,6 +182,7 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::Mint {} => execute_mint_sender(deps, env, info),
+        ExecuteMsg::UpdateMintPrice { price } => execute_update_mint_price(deps, env, info, price),
         ExecuteMsg::UpdateStartTime(time) => execute_update_start_time(deps, env, info, time),
         ExecuteMsg::UpdatePerAddressLimit { per_address_limit } => {
             execute_update_per_address_limit(deps, env, info, per_address_limit)
@@ -587,6 +589,38 @@ fn random_mintable_token_mapping(
 
     let token_id = MINTABLE_TOKEN_POSITIONS.load(deps.storage, position)?;
     Ok(TokenPositionMapping { position, token_id })
+}
+
+pub fn execute_update_mint_price(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    price: u128,
+) -> Result<Response, ContractError> {
+    let mut config = CONFIG.load(deps.storage)?;
+    if info.sender != config.admin {
+        return Err(ContractError::Unauthorized(
+            "Sender is not an admin".to_owned(),
+        ));
+    }
+    // If current time is after the stored start time return error
+    if env.block.time >= config.start_time {
+        return Err(ContractError::AlreadyStarted {});
+    }
+
+    // If price is greater than initial price, return error
+    if price > config.initial_price.amount.u128() {
+        return Err(ContractError::UpdatedMintPriceTooHigh {
+            initial: config.initial_price.amount.u128(),
+            updated: price,
+        });
+    }
+    config.unit_price = coin(price, config.unit_price.denom);
+    CONFIG.save(deps.storage, &config)?;
+    Ok(Response::new()
+        .add_attribute("action", "update_mint_price")
+        .add_attribute("sender", info.sender)
+        .add_attribute("unit_price", price.to_string()))
 }
 
 pub fn execute_update_start_time(
