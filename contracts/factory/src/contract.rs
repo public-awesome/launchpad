@@ -59,13 +59,12 @@ pub fn execute_create_minter(
     deps: DepsMut,
     msg: VendingMinterInitMsg,
 ) -> Result<Response, ContractError> {
-    // TODO: create minter
     STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
         state.count += 1;
         Ok(state)
     })?;
 
-    Ok(Response::new().add_attribute("method", "try_increment"))
+    Ok(Response::new().add_attribute("action", "create_minter"))
 }
 
 pub fn try_increment(deps: DepsMut) -> Result<Response, ContractError> {
