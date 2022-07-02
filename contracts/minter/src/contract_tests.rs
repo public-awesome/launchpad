@@ -32,8 +32,8 @@ const MAX_TOKEN_LIMIT: u32 = 10000;
 const MAX_PER_ADDRESS_LIMIT: u32 = 50;
 const MIN_MINT_PRICE: u128 = 50_000_000;
 const AIRDROP_MINT_PRICE: u128 = 15_000_000;
-const MINT_FEE_BPS: u64 = 1000;
-const AIRDROP_MINT_FEE_BPS: u64 = 10_000;
+const MINT_FEE_BPS: u64 = 1_000; // 10%
+const AIRDROP_MINT_FEE_BPS: u64 = 10_000; // 100%
 const SHUFFLE_FEE: u128 = 500_000_000;
 
 fn custom_mock_app() -> StargazeApp {
@@ -749,6 +749,7 @@ fn mint_count_query() {
         &transfer_msg,
         &coins_for_msg(coin(123, NATIVE_DENOM)),
     );
+    println!("res: {:?}", res);
     assert!(res.is_ok());
 
     // Mint succeeds
@@ -1195,7 +1196,6 @@ fn mint_for_token_id_addr() {
         &mint_msg,
         &coins(UNIT_PRICE, NATIVE_DENOM),
     );
-    println!("{:?}", res);
     assert!(res.is_ok());
 
     // get random mint token_id
@@ -1306,6 +1306,7 @@ fn mint_for_token_id_addr() {
             denom: NATIVE_DENOM.to_string(),
         }),
     );
+    println!("{:?}", res);
     assert!(res.is_ok());
 
     let res: OwnerOfResponse = router
@@ -1480,6 +1481,7 @@ fn test_invalid_start_time() {
     let mut msg = minter_init();
     msg.num_tokens = 10;
     msg.sg721_code_id = sg721_code_id;
+    msg.start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME - 100);
 
     // set time before the start_time above
     setup_block_time(&mut router, GENESIS_MINT_START_TIME - 1000);

@@ -441,9 +441,9 @@ fn _execute_mint(
 
     // Create network fee msgs
     let fee_percent = if is_admin {
-        params.airdrop_mint_fee_percent
+        params.airdrop_mint_fee_percent / Uint128::from(100u128)
     } else {
-        params.mint_fee_percent
+        params.mint_fee_percent / Uint128::from(100u128)
     };
     let network_fee = mint_price.amount * fee_percent;
     checked_fair_burn(&info, network_fee.u128(), None, &mut res)?;
