@@ -21,6 +21,12 @@ pub enum ContractError {
     #[error("Minimum network mint price {expected} got {got}")]
     InsufficientMintPrice { expected: u128, got: u128 },
 
+    #[error("Invalid reply ID")]
+    InvalidReplyID {},
+
+    #[error("InstantiateMinterError")]
+    InstantiateMinterError {},
+
     #[error("Custom Error val: {val:?}")]
     CustomError { val: String },
     // Add any other custom errors you like here.

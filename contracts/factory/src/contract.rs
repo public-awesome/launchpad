@@ -1,19 +1,20 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult, WasmMsg};
+use cosmwasm_std::{
+    to_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Reply, StdResult, WasmMsg,
+};
 use cw2::set_contract_version;
+use cw_utils::parse_reply_instantiate_data;
 
 use crate::error::ContractError;
 use crate::msg::{CountResponse, ExecuteMsg, InstantiateMsg, QueryMsg, Response, SubMsg, SudoMsg};
-use crate::state::{State, STATE, SUDO_PARAMS};
+use crate::state::{Minter, State, MINTERS, STATE, SUDO_PARAMS};
 
 use minter::msg::InstantiateMsg as VendingMinterInitMsg;
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:factory";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
-
-const INIT_REPLY_ID: u64 = 1;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -108,19 +109,34 @@ pub fn execute_create_vending_minter(
         funds: info.funds,
         label: msg.name,
     };
-    let submsg = SubMsg::reply_on_success(wasm_msg, INIT_REPLY_ID);
-
-    // STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
-    //     state.count += 1;
-    //     Ok(state)
-    // })?;
+    let submsg = SubMsg::reply_on_success(wasm_msg, msg.sg721_code_id);
 
     Ok(Response::new()
         .add_attribute("action", "create_minter")
         .add_submessage(submsg))
 }
 
-// TODO: handle reply from init minter
+// Reply callback triggered from cw721 contract instantiation
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
+    let code_id = msg.id;
+    let reply = parse_reply_instantiate_data(msg);
+    match reply {
+        Ok(res) => {
+            let minter = Minter {
+                verified: false,
+                blocked: false,
+            };
+            MINTERS.save(
+                deps.storage,
+                (code_id, &Addr::unchecked(res.contract_address)),
+                &minter,
+            )?;
+            Ok(Response::default().add_attribute("action", "instantiate_minter_reply"))
+        }
+        Err(_) => Err(ContractError::InstantiateMinterError {}),
+    }
+}
 
 pub fn try_increment(deps: DepsMut) -> Result<Response, ContractError> {
     STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
