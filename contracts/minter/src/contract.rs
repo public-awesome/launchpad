@@ -15,7 +15,7 @@ use cosmwasm_std::{
     coin, to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut, Empty, Env,
     MessageInfo, Order, Reply, ReplyOn, StdError, StdResult, Timestamp, Uint128, WasmMsg,
 };
-use cw2::{query_contract_info, set_contract_version};
+use cw2::set_contract_version;
 use cw721_base::{msg::ExecuteMsg as Cw721ExecuteMsg, MintMsg};
 use cw_utils::{may_pay, parse_reply_instantiate_data};
 use rand_core::{RngCore, SeedableRng};
@@ -29,6 +29,8 @@ use sg_whitelist::msg::{
 use sha2::{Digest, Sha256};
 use shuffle::{fy::FisherYates, shuffler::Shuffler};
 use url::Url;
+
+use launchpad::QueryMsg as LaunchpadQueryMsg;
 
 pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 pub type SubMsg = cosmwasm_std::SubMsg<StargazeMsgWrapper>;
@@ -55,18 +57,11 @@ pub fn instantiate(
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
-    // // make sure only the factory contract is authorized to call this
-    // if info.sender != MINTER_FACTORY {
-    //     return Err(ContractError::Unauthorized(info.sender.to_string()));
-    // }
+    let factory = info.sender;
 
-    // TODO: perform a query on the sender to make sure its a factory contract
-    // do this by checking Params {}
-    // make sure this code id matches a code id in the params
-    // save factory contract address...
-
-    // let factory = msg.factory;
-    // let d = query_contract_info(&deps.querier, &factory)?;
+    // Make sure the sender is the factory contract
+    deps.querier
+        .query_wasm_smart(factory.clone(), &LaunchpadQueryMsg::Params {})?;
 
     let params = Params {
         max_token_limit: msg.max_token_limit,
@@ -105,7 +100,7 @@ pub fn instantiate(
         .and_then(|w| deps.api.addr_validate(w.as_str()).ok());
 
     let config = Config {
-        admin: info.sender.clone(),
+        admin: factory.clone(),
         base_token_uri: msg.base_token_uri,
         num_tokens: msg.num_tokens,
         sg721_code_id: msg.sg721_code_id,
@@ -119,7 +114,7 @@ pub fn instantiate(
 
     let token_ids = random_token_list(
         &env,
-        info.sender.clone(),
+        factory.clone(),
         (1..=msg.num_tokens).collect::<Vec<u32>>(),
     )?;
     // Save mintable token ids map
@@ -140,7 +135,7 @@ pub fn instantiate(
                 collection_info: msg.collection_info,
             })?,
             funds: info.funds,
-            admin: Some(info.sender.to_string()),
+            admin: Some(factory.to_string()),
             label: String::from("Fixed price minter"),
         }
         .into(),
@@ -153,7 +148,7 @@ pub fn instantiate(
         .add_attribute("action", "instantiate")
         .add_attribute("contract_name", CONTRACT_NAME)
         .add_attribute("contract_version", CONTRACT_VERSION)
-        .add_attribute("sender", info.sender)
+        .add_attribute("sender", factory)
         .add_submessages(sub_msgs))
 }
 

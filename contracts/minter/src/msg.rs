@@ -5,7 +5,6 @@ use sg721::{CollectionInfo, RoyaltyInfoResponse};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {
-    pub factory: String,
     pub base_token_uri: String,
     pub num_tokens: u32,
     pub sg721_code_id: u64,
