@@ -182,8 +182,6 @@ fn setup_minter_contract(
     minter_msg.sg721_code_id = sg721_code_id;
     minter_msg.collection_info.creator = creator.to_string();
 
-    // TODO: why can't access factory here?
-
     let msg = FactoryExecuteMsg::CreateVendingMinter(minter_msg);
 
     router.execute_contract(*creator, factory_addr, &msg, &[]);

@@ -2,7 +2,7 @@ use cosmwasm_std::{Addr, Decimal};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, Default)]
 pub struct CollectionInfo<T> {
     pub creator: String,
     pub description: String,
@@ -17,7 +17,7 @@ pub struct RoyaltyInfo {
     pub share: Decimal,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, Default)]
 pub struct RoyaltyInfoResponse {
     pub payment_address: String,
     pub share: Decimal,
