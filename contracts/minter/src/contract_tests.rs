@@ -1589,3 +1589,46 @@ fn shuffle() {
     let res = router.execute_contract(creator.clone(), minter_addr, &shuffle_msg, &funds);
     assert!(res.is_err());
 }
+
+#[test]
+fn update_mint_price() {
+    let mut router = custom_mock_app();
+    let (creator, _) = setup_accounts(&mut router);
+    // setup contracts
+    let num_tokens = 20;
+    let (minter_addr, _config) = setup_minter_contract(&mut router, &creator, num_tokens);
+    // throws error if updated mint price higher than initial price
+
+    let updated_mint_price = UNIT_PRICE + 1;
+    let update_mint_price_msg = ExecuteMsg::UpdateMintPrice {
+        price: updated_mint_price,
+    };
+    let res = router.execute_contract(
+        creator.clone(),
+        minter_addr.clone(),
+        &update_mint_price_msg,
+        &[],
+    );
+    assert!(res.is_err());
+
+    // changes mint price if updated price lower than initial price
+    let updated_mint_price = UNIT_PRICE - 1;
+    let update_mint_price_msg = ExecuteMsg::UpdateMintPrice {
+        price: updated_mint_price,
+    };
+    let res = router.execute_contract(
+        creator.clone(),
+        minter_addr.clone(),
+        &update_mint_price_msg,
+        &[],
+    );
+    assert!(res.is_ok());
+
+    // query config for new mint price
+    let query_config_msg = QueryMsg::Config {};
+    let res: ConfigResponse = router
+        .wrap()
+        .query_wasm_smart(minter_addr.clone(), &query_config_msg)
+        .unwrap();
+    assert_eq!(res.unit_price.amount.u128(), updated_mint_price);
+}
