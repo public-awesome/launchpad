@@ -1115,6 +1115,7 @@ dependencies = [
  "cw2",
  "cw721",
  "cw721-base",
+ "factory",
  "schemars",
  "serde",
  "sg-std 0.12.1",
