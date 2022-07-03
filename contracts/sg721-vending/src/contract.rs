@@ -4,7 +4,7 @@ use cosmwasm_std::{to_binary, Binary, Decimal, Deps, DepsMut, Empty, Env, Messag
 use cw2::set_contract_version;
 
 use sg1::checked_fair_burn;
-use sg721::{CollectionInfo, RoyaltyInfo, RoyaltyInfoResponse};
+use sg721::{CollectionInfo, InstantiateMsg, RoyaltyInfo, RoyaltyInfoResponse};
 use sg_std::{Response, StargazeMsgWrapper};
 
 use crate::ContractError;
@@ -12,7 +12,7 @@ use cw721::ContractInfoResponse;
 use cw721_base::ContractError as BaseError;
 use url::Url;
 
-use crate::msg::{CollectionInfoResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
+use crate::msg::{CollectionInfoResponse, ExecuteMsg, QueryMsg};
 use crate::state::COLLECTION_INFO;
 
 // use factory::msg::{ParamsResponse, QueryMsg as FactoryQueryMsg};

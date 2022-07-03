@@ -22,3 +22,11 @@ pub struct RoyaltyInfoResponse {
     pub payment_address: String,
     pub share: Decimal,
 }
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct InstantiateMsg {
+    pub name: String,
+    pub symbol: String,
+    pub minter: String,
+    pub collection_info: CollectionInfo<RoyaltyInfoResponse>,
+}

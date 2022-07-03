@@ -4,14 +4,6 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use sg721::{CollectionInfo, RoyaltyInfoResponse};
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct InstantiateMsg {
-    pub name: String,
-    pub symbol: String,
-    pub minter: String,
-    pub collection_info: CollectionInfo<RoyaltyInfoResponse>,
-}
-
 pub type ExecuteMsg = cw721_base::ExecuteMsg<Empty>;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

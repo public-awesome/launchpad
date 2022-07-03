@@ -10,7 +10,8 @@ use cw721::{
     NumTokensResponse, OperatorsResponse, OwnerOfResponse, TokensResponse,
 };
 use cw721_base::MinterResponse;
-use sg721_vending::msg::{CollectionInfoResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
+use sg721::InstantiateMsg;
+use sg721_vending::msg::{CollectionInfoResponse, ExecuteMsg, QueryMsg};
 
 fn main() {
     let mut out_dir = current_dir().unwrap();
