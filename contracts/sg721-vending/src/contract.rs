@@ -1,11 +1,10 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{
-    to_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, StdResult, WasmQuery,
-};
+use cosmwasm_std::{to_binary, Binary, Decimal, Deps, DepsMut, Empty, Env, MessageInfo, StdResult};
 use cw2::set_contract_version;
 
 use sg1::checked_fair_burn;
+use sg721::{CollectionInfo, RoyaltyInfo, RoyaltyInfoResponse};
 use sg_std::{Response, StargazeMsgWrapper};
 
 use crate::ContractError;
@@ -13,10 +12,8 @@ use cw721::ContractInfoResponse;
 use cw721_base::ContractError as BaseError;
 use url::Url;
 
-use crate::msg::{
-    CollectionInfoResponse, ExecuteMsg, InstantiateMsg, QueryMsg, RoyaltyInfoResponse,
-};
-use crate::state::{CollectionInfo, RoyaltyInfo, COLLECTION_INFO};
+use crate::msg::{CollectionInfoResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
+use crate::state::COLLECTION_INFO;
 
 // use factory::msg::{ParamsResponse, QueryMsg as FactoryQueryMsg};
 
@@ -77,7 +74,7 @@ pub fn instantiate(
     let royalty_info: Option<RoyaltyInfo> = match msg.collection_info.royalty_info {
         Some(royalty_info) => Some(RoyaltyInfo {
             payment_address: deps.api.addr_validate(&royalty_info.payment_address)?,
-            share: royalty_info.share_validate()?,
+            share: share_validate(royalty_info.share)?,
         }),
         None => None,
     };
@@ -139,11 +136,18 @@ fn query_config(deps: Deps) -> StdResult<CollectionInfoResponse> {
     })
 }
 
+pub fn share_validate(share: Decimal) -> Result<Decimal, ContractError> {
+    if share > Decimal::one() {
+        return Err(ContractError::InvalidRoyalities {});
+    }
+
+    Ok(share)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    use crate::state::CollectionInfo;
     use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
     use cosmwasm_std::{coins, from_binary, Decimal};
     use sg_std::NATIVE_DENOM;

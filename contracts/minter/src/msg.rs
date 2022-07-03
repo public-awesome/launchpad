@@ -1,7 +1,7 @@
 use cosmwasm_std::{Coin, Timestamp};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use sg721_vending::{msg::RoyaltyInfoResponse, state::CollectionInfo};
+use sg721::{CollectionInfo, RoyaltyInfoResponse};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {

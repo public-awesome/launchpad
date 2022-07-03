@@ -4,8 +4,7 @@ use cosmwasm_std::{Api, Coin};
 use cw721::{Cw721QueryMsg, OwnerOfResponse, TokensResponse};
 use cw721_base::ExecuteMsg as Cw721ExecuteMsg;
 use cw_multi_test::{BankSudo, Contract, ContractWrapper, Executor, SudoMsg};
-use sg721_vending::msg::RoyaltyInfoResponse;
-use sg721_vending::state::CollectionInfo;
+use sg721::{CollectionInfo, RoyaltyInfoResponse};
 use sg_multi_test::StargazeApp;
 use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use sg_whitelist::msg::InstantiateMsg as WhitelistInstantiateMsg;
@@ -29,7 +28,7 @@ const ADMIN_MINT_PRICE: u128 = 15_000_000;
 
 // params
 const MAX_TOKEN_LIMIT: u32 = 10000;
-const MAX_PER_ADDRESS_LIMIT: u32 = 50;
+// const MAX_PER_ADDRESS_LIMIT: u32 = 50;
 const MIN_MINT_PRICE: u128 = 50_000_000;
 const AIRDROP_MINT_PRICE: u128 = 15_000_000;
 const MINT_FEE_BPS: u64 = 1_000; // 10%
