@@ -5,6 +5,7 @@
   "required": [
     "admin",
     "base_token_uri",
+    "initial_price",
     "num_tokens",
     "per_address_limit",
     "sg721_code_id",
@@ -17,6 +18,9 @@
     },
     "base_token_uri": {
       "type": "string"
+    },
+    "initial_price": {
+      "$ref": "#/definitions/Coin"
     },
     "num_tokens": {
       "type": "integer",

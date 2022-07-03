@@ -37,6 +37,28 @@
     {
       "type": "object",
       "required": [
+        "update_mint_price"
+      ],
+      "properties": {
+        "update_mint_price": {
+          "type": "object",
+          "required": [
+            "price"
+          ],
+          "properties": {
+            "price": {
+              "type": "integer",
+              "format": "uint128",
+              "minimum": 0.0
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
         "update_start_time"
       ],
       "properties": {

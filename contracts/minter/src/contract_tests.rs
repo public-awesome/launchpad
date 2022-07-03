@@ -1628,7 +1628,7 @@ fn update_mint_price() {
     let query_config_msg = QueryMsg::Config {};
     let res: ConfigResponse = router
         .wrap()
-        .query_wasm_smart(minter_addr.clone(), &query_config_msg)
+        .query_wasm_smart(minter_addr, &query_config_msg)
         .unwrap();
     assert_eq!(res.unit_price.amount.u128(), updated_mint_price);
 }
