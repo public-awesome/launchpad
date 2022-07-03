@@ -131,40 +131,11 @@ fn setup_minter_contract(
     let minter_code_id = router.store_code(contract_minter());
     let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
 
-    // Instantiate minter contract
-    // let msg = InstantiateMsg {
-    //     unit_price: coin(UNIT_PRICE, NATIVE_DENOM),
-    //     num_tokens,
-    //     start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
-    //     per_address_limit: 5,
-    //     whitelist: None,
-    //     base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
-    //     sg721_code_id,
-    //     name: String::from("TEST"),
-    //     symbol: String::from("TEST"),
-    //     collection_info: CollectionInfo {
-    //         creator: creator.to_string(),
-    //         description: String::from("Stargaze Monkeys"),
-    //         image: "https://example.com/image.png".to_string(),
-    //         external_link: Some("https://example.com/external.html".to_string()),
-    //         royalty_info: Some(RoyaltyInfoResponse {
-    //             payment_address: creator.to_string(),
-    //             share: Decimal::percent(10),
-    //         }),
-    //     },
-    //     max_token_limit: MAX_TOKEN_LIMIT,
-    //     min_mint_price: MIN_MINT_PRICE,
-    //     airdrop_mint_price: AIRDROP_MINT_PRICE,
-    //     mint_fee_bps: MINT_FEE_BPS,
-    //     airdrop_mint_fee_bps: AIRDROP_MINT_FEE_BPS,
-    //     shuffle_fee: SHUFFLE_FEE,
-    // };
     let mut msg = minter_init();
     msg.unit_price = coin(UNIT_PRICE, NATIVE_DENOM);
     msg.num_tokens = num_tokens;
     msg.sg721_code_id = sg721_code_id;
     msg.collection_info.creator = creator.to_string();
-    // msg.collection_info.royalty_info.unwrap().payment_address = creator.to_string();
 
     let minter_addr = router
         .instantiate_contract(
@@ -251,99 +222,20 @@ fn initialization() {
 
     // 0 per address limit returns error
     let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
-    // let msg = InstantiateMsg {
-    //     unit_price: coin(UNIT_PRICE, NATIVE_DENOM),
-    //     num_tokens: 100,
-    //     start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
-    //     per_address_limit: 0,
-    //     whitelist: None,
-    //     base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
-    //     sg721_code_id: 1,
-    //     sg721_instantiate_msg: Sg721InstantiateMsg {
-    //         name: String::from("TEST"),
-    //         symbol: String::from("TEST"),
-    //         minter: info.sender.to_string(),
-    //         collection_info: CollectionInfo {
-    //             creator: info.sender.to_string(),
-    //             description: String::from("Stargaze Monkeys"),
-    //             image: "https://example.com/image.png".to_string(),
-    //             external_link: Some("https://example.com/external.html".to_string()),
-    //             royalty_info: Some(RoyaltyInfoResponse {
-    //                 payment_address: info.sender.to_string(),
-    //                 share: Decimal::percent(10),
-    //             }),
-    //         },
-    //     },
-    // };
     let mut msg = minter_init();
     msg.num_tokens = 100;
     msg.sg721_code_id = 1;
     msg.collection_info.creator = info.sender.to_string();
-    // msg.collection_info.royalty_info.unwrap().payment_address = info.sender.to_string();
 
     instantiate(deps.as_mut(), mock_env(), info, msg.clone()).unwrap_err();
 
     // Invalid uri returns error
     let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
-    // let msg = InstantiateMsg {
-    //     unit_price: coin(UNIT_PRICE, NATIVE_DENOM),
-    //     num_tokens: 100,
-    //     start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
-    //     per_address_limit: 5,
-    //     whitelist: None,
-    //     base_token_uri: "https://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
-    //     sg721_code_id: 1,
-    //     sg721_instantiate_msg: Sg721InstantiateMsg {
-    //         name: String::from("TEST"),
-    //         symbol: String::from("TEST"),
-    //         minter: info.sender.to_string(),
-    //         collection_info: CollectionInfo {
-    //             creator: info.sender.to_string(),
-    //             description: String::from("Stargaze Monkeys"),
-    //             image: "https://example.com/image.png".to_string(),
-    //             external_link: Some("https://example.com/external.html".to_string()),
-    //             royalty_info: Some(RoyaltyInfoResponse {
-    //                 payment_address: info.sender.to_string(),
-    //                 share: Decimal::percent(10),
-    //             }),
-    //         },
-    //     },
-    // };
-    // let mut msg = minter_init();
-    // msg.num_tokens = 100;
-    // msg.sg721_code_id = 1;
-    // msg.collection_info.creator = info.sender.to_string();
-    // msg.collection_info.royalty_info.unwrap().payment_address = info.sender.to_string();
-
     instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
 
     // Invalid denom returns error
     let wrong_denom = "uosmo";
     let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
-    // let msg = InstantiateMsg {
-    //     unit_price: coin(UNIT_PRICE, wrong_denom),
-    //     num_tokens: 100,
-    //     start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
-    //     per_address_limit: 5,
-    //     whitelist: None,
-    //     base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
-    //     sg721_code_id: 1,
-    //     sg721_instantiate_msg: Sg721InstantiateMsg {
-    //         name: String::from("TEST"),
-    //         symbol: String::from("TEST"),
-    //         minter: info.sender.to_string(),
-    //         collection_info: CollectionInfo {
-    //             creator: info.sender.to_string(),
-    //             description: String::from("Stargaze Monkeys"),
-    //             image: "https://example.com/image.png".to_string(),
-    //             external_link: Some("https://example.com/external.html".to_string()),
-    //             royalty_info: Some(RoyaltyInfoResponse {
-    //                 payment_address: info.sender.to_string(),
-    //                 share: Decimal::percent(10),
-    //             }),
-    //         },
-    //     },
-    // };
     let mut msg = minter_init();
     msg.unit_price = coin(UNIT_PRICE, wrong_denom);
 
@@ -351,30 +243,6 @@ fn initialization() {
 
     // Insufficient mint price returns error
     let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
-    // let msg = InstantiateMsg {
-    //     unit_price: coin(1, NATIVE_DENOM),
-    //     num_tokens: 100,
-    //     start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
-    //     per_address_limit: 5,
-    //     whitelist: None,
-    //     base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
-    //     sg721_code_id: 1,
-    //     sg721_instantiate_msg: Sg721InstantiateMsg {
-    //         name: String::from("TEST"),
-    //         symbol: String::from("TEST"),
-    //         minter: info.sender.to_string(),
-    //         collection_info: CollectionInfo {
-    //             creator: info.sender.to_string(),
-    //             description: String::from("Stargaze Monkeys"),
-    //             image: "https://example.com/image.png".to_string(),
-    //             external_link: Some("https://example.com/external.html".to_string()),
-    //             royalty_info: Some(RoyaltyInfoResponse {
-    //                 payment_address: info.sender.to_string(),
-    //                 share: Decimal::percent(10),
-    //             }),
-    //         },
-    //     },
-    // };
     let mut msg = minter_init();
     msg.unit_price = coin(1, NATIVE_DENOM);
 
@@ -382,30 +250,6 @@ fn initialization() {
 
     // Over max token limit
     let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
-    // let msg = InstantiateMsg {
-    //     unit_price: coin(UNIT_PRICE, NATIVE_DENOM),
-    //     num_tokens: (MAX_TOKEN_LIMIT + 1),
-    //     start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
-    //     per_address_limit: 5,
-    //     whitelist: None,
-    //     base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
-    //     sg721_code_id: 1,
-    //     sg721_instantiate_msg: Sg721InstantiateMsg {
-    //         name: String::from("TEST"),
-    //         symbol: String::from("TEST"),
-    //         minter: info.sender.to_string(),
-    //         collection_info: CollectionInfo {
-    //             creator: info.sender.to_string(),
-    //             description: String::from("Stargaze Monkeys"),
-    //             image: "https://example.com/image.png".to_string(),
-    //             external_link: Some("https://example.com/external.html".to_string()),
-    //             royalty_info: Some(RoyaltyInfoResponse {
-    //                 payment_address: info.sender.to_string(),
-    //                 share: Decimal::percent(10),
-    //             }),
-    //         },
-    //     },
-    // };
     let mut msg = minter_init();
     msg.unit_price = coin(UNIT_PRICE, NATIVE_DENOM);
     msg.num_tokens = MAX_TOKEN_LIMIT + 1;
@@ -414,30 +258,6 @@ fn initialization() {
 
     // Under min token limit
     let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
-    // let msg = InstantiateMsg {
-    //     unit_price: coin(UNIT_PRICE, NATIVE_DENOM),
-    //     num_tokens: 0,
-    //     start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
-    //     per_address_limit: 5,
-    //     whitelist: None,
-    //     base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
-    //     sg721_code_id: 1,
-    //     sg721_instantiate_msg: Sg721InstantiateMsg {
-    //         name: String::from("TEST"),
-    //         symbol: String::from("TEST"),
-    //         minter: info.sender.to_string(),
-    //         collection_info: CollectionInfo {
-    //             creator: info.sender.to_string(),
-    //             description: String::from("Stargaze Monkeys"),
-    //             image: "https://example.com/image.png".to_string(),
-    //             external_link: Some("https://example.com/external.html".to_string()),
-    //             royalty_info: Some(RoyaltyInfoResponse {
-    //                 payment_address: info.sender.to_string(),
-    //                 share: Decimal::percent(10),
-    //             }),
-    //         },
-    //     },
-    // };
     let mut msg = minter_init();
     msg.num_tokens = 0;
 
@@ -741,7 +561,8 @@ fn mint_count_query() {
     // random mint token id: 8
     let transfer_msg: Cw721ExecuteMsg<Empty> = Cw721ExecuteMsg::TransferNft {
         recipient: creator.to_string(),
-        token_id: "8".to_string(),
+        // token_id: "8".to_string(),
+        token_id: sold_token_id.to_string(),
     };
     let res = router.execute_contract(
         buyer.clone(),
@@ -1292,7 +1113,7 @@ fn mint_for_token_id_addr() {
     );
 
     // Test mint_for token_id 2 then normal mint
-    let token_id = 2;
+    let token_id = 3;
     let mint_for_msg = ExecuteMsg::MintFor {
         token_id,
         recipient: buyer.to_string(),
@@ -1339,31 +1160,6 @@ fn test_start_time_before_genesis() {
     let minter_code_id = router.store_code(contract_minter());
     let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
 
-    // Instantiate sale contract
-    // let msg = InstantiateMsg {
-    //     unit_price: coin(UNIT_PRICE, NATIVE_DENOM),
-    //     num_tokens,
-    //     start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
-    //     per_address_limit: 5,
-    //     whitelist: None,
-    //     base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
-    //     sg721_code_id,
-    //     sg721_instantiate_msg: Sg721InstantiateMsg {
-    //         name: String::from("TEST"),
-    //         symbol: String::from("TEST"),
-    //         minter: creator.to_string(),
-    //         collection_info: CollectionInfo {
-    //             creator: creator.to_string(),
-    //             description: String::from("Stargaze Monkeys"),
-    //             image: "https://example.com/image.png".to_string(),
-    //             external_link: Some("https://example.com/external.html".to_string()),
-    //             royalty_info: Some(RoyaltyInfoResponse {
-    //                 payment_address: creator.to_string(),
-    //                 share: Decimal::percent(10),
-    //             }),
-    //         },
-    //     },
-    // };
     let mut msg = minter_init();
     msg.num_tokens = 10;
     msg.sg721_code_id = sg721_code_id;
@@ -1394,28 +1190,6 @@ fn test_update_start_time() {
     let minter_code_id = router.store_code(contract_minter());
     let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
 
-    // Instantiate sale contract
-    // let msg = InstantiateMsg {
-    //     unit_price: coin(UNIT_PRICE, NATIVE_DENOM),
-    //     num_tokens,
-    //     start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
-    //     per_address_limit: 5,
-    //     whitelist: None,
-    //     base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
-    //     sg721_code_id,
-    //     sg721_instantiate_msg: Sg721InstantiateMsg {
-    //         name: String::from("TEST"),
-    //         symbol: String::from("TEST"),
-    //         minter: creator.to_string(),
-    //         collection_info: CollectionInfo {
-    //             creator: creator.to_string(),
-    //             description: String::from("Stargaze Monkeys"),
-    //             image: "https://example.com/image.png".to_string(),
-    //             external_link: Some("https://example.com/external.html".to_string()),
-    //             royalty_info: None,
-    //         },
-    //     },
-    // };
     let mut msg = minter_init();
     msg.num_tokens = 10;
     msg.sg721_code_id = sg721_code_id;
@@ -1457,27 +1231,6 @@ fn test_invalid_start_time() {
     let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
 
     // Instantiate sale contract before genesis mint
-    // let mut msg = InstantiateMsg {
-    //     unit_price: coin(UNIT_PRICE, NATIVE_DENOM),
-    //     num_tokens,
-    //     start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME - 100),
-    //     per_address_limit: 5,
-    //     whitelist: None,
-    //     base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
-    //     sg721_code_id,
-    //     sg721_instantiate_msg: Sg721InstantiateMsg {
-    //         name: String::from("TEST"),
-    //         symbol: String::from("TEST"),
-    //         minter: creator.to_string(),
-    //         collection_info: CollectionInfo {
-    //             creator: creator.to_string(),
-    //             description: String::from("Stargaze Monkeys"),
-    //             image: "https://example.com/image.png".to_string(),
-    //             external_link: Some("https://example.com/external.html".to_string()),
-    //             royalty_info: None,
-    //         },
-    //     },
-    // };
     let mut msg = minter_init();
     msg.num_tokens = 10;
     msg.sg721_code_id = sg721_code_id;
