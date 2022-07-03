@@ -15,7 +15,7 @@ use url::Url;
 use crate::msg::{CollectionInfoResponse, ExecuteMsg, QueryMsg};
 use crate::state::COLLECTION_INFO;
 
-// use factory::msg::{ParamsResponse, QueryMsg as FactoryQueryMsg};
+use factory::msg::{ParamsResponse, QueryMsg as FactoryQueryMsg};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sg-721";
@@ -39,7 +39,9 @@ pub fn instantiate(
 
     // TODO:
     // query minter factory contract for params
-    // let wasm_query = deps.querier.query_wasm_smart(MINTER_FACTORY, msg)
+    // let wasm_query = deps
+    //     .querier
+    //     .query_wasm_smart(MINTER_FACTORY, FactoryQueryMsg::)?;
     // get allowed minter code ids
     // query sender's contract for code id and check for match
 

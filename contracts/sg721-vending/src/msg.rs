@@ -2,7 +2,7 @@ use cosmwasm_std::Empty;
 use cw721_base::msg::QueryMsg as Cw721QueryMsg;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use sg721::{CollectionInfo, RoyaltyInfoResponse};
+use sg721::RoyaltyInfoResponse;
 
 pub type ExecuteMsg = cw721_base::ExecuteMsg<Empty>;
 
