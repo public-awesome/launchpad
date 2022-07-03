@@ -39,9 +39,11 @@ pub fn instantiate(
 
     // TODO:
     // query minter factory contract for params
-    // let wasm_query = deps
-    //     .querier
-    //     .query_wasm_smart(MINTER_FACTORY, FactoryQueryMsg::)?;
+    let res: ParamsResponse = deps
+        .querier
+        .query_wasm_smart(MINTER_FACTORY, &FactoryQueryMsg::Params {})?;
+    println!("{:?}", res);
+
     // get allowed minter code ids
     // query sender's contract for code id and check for match
 
