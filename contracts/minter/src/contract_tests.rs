@@ -4,8 +4,8 @@ use cosmwasm_std::{Api, Coin};
 use cw721::{Cw721QueryMsg, OwnerOfResponse, TokensResponse};
 use cw721_base::ExecuteMsg as Cw721ExecuteMsg;
 use cw_multi_test::{BankSudo, Contract, ContractWrapper, Executor, SudoMsg};
-use sg721::msg::RoyaltyInfoResponse;
-use sg721::state::CollectionInfo;
+use sg721_vending::msg::RoyaltyInfoResponse;
+use sg721_vending::state::CollectionInfo;
 use sg_multi_test::StargazeApp;
 use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use sg_whitelist::msg::InstantiateMsg as WhitelistInstantiateMsg;
@@ -60,9 +60,9 @@ pub fn contract_minter() -> Box<dyn Contract<StargazeMsgWrapper>> {
 
 pub fn contract_sg721() -> Box<dyn Contract<StargazeMsgWrapper>> {
     let contract = ContractWrapper::new(
-        sg721::contract::execute,
-        sg721::contract::instantiate,
-        sg721::contract::query,
+        sg721_vending::contract::execute,
+        sg721_vending::contract::instantiate,
+        sg721_vending::contract::query,
     );
     Box::new(contract)
 }
