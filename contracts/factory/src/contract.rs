@@ -5,11 +5,10 @@ use cosmwasm_std::{
 };
 use cw2::set_contract_version;
 use cw_utils::parse_reply_instantiate_data;
+use launchpad::ParamsResponse;
 
 use crate::error::ContractError;
-use crate::msg::{
-    CountResponse, ExecuteMsg, InstantiateMsg, ParamsResponse, QueryMsg, Response, SubMsg, SudoMsg,
-};
+use crate::msg::{CountResponse, ExecuteMsg, InstantiateMsg, QueryMsg, Response, SubMsg, SudoMsg};
 use crate::state::{Minter, State, MINTERS, STATE, SUDO_PARAMS};
 
 use minter::msg::InstantiateMsg as VendingMinterInitMsg;

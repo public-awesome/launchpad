@@ -1,10 +1,9 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use minter::msg::InstantiateMsg as VendingMinterInitMsg;
 use sg_std::StargazeMsgWrapper;
 
-use crate::state::SudoParams;
+use minter::msg::InstantiateMsg as VendingMinterInitMsg;
 
 pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 pub type SubMsg = cosmwasm_std::SubMsg<StargazeMsgWrapper>;
@@ -49,9 +48,4 @@ pub enum QueryMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct CountResponse {
     pub count: i32,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct ParamsResponse {
-    pub params: SudoParams,
 }

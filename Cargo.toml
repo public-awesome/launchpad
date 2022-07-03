@@ -6,6 +6,10 @@ resolver = "2"
 codegen-units = 1
 incremental = false
 
+[profile.release.package.launchpad]
+codegen-units = 1
+incremental = false
+
 [profile.release.package.sg721-vending]
 codegen-units = 1
 incremental = false

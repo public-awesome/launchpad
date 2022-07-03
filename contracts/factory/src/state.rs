@@ -1,7 +1,8 @@
+use launchpad::SudoParams;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_std::{Addr, Decimal, Uint128};
+use cosmwasm_std::Addr;
 use cw_storage_plus::{Item, Map};
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct State {
@@ -10,24 +11,6 @@ pub struct State {
 }
 
 pub const STATE: Item<State> = Item::new("state");
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct VendingMinterParams {
-    pub max_token_limit: u32,
-    pub max_per_address_limit: u32,
-    pub min_mint_price: Uint128,
-    pub airdrop_mint_price: Uint128,
-    pub mint_fee_percent: Decimal,
-    pub airdrop_mint_fee_percent: Decimal,
-    pub shuffle_fee: Uint128,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct SudoParams {
-    /// A list of allowed minter code IDs
-    pub minter_codes: Vec<u64>,
-    pub vending_minter: VendingMinterParams,
-}
 
 pub const SUDO_PARAMS: Item<SudoParams> = Item::new("sudo-params");
 

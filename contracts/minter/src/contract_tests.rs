@@ -91,6 +91,7 @@ fn setup_whitelist_contract(router: &mut StargazeApp, creator: &Addr) -> Addr {
 
 fn minter_init() -> InstantiateMsg {
     InstantiateMsg {
+        factory: "factory-contract".to_string(),
         unit_price: coin(UNIT_PRICE, NATIVE_DENOM),
         num_tokens: 10,
         start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),

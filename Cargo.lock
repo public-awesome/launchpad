@@ -486,6 +486,7 @@ dependencies = [
  "cw-storage-plus",
  "cw-utils",
  "cw2",
+ "launchpad",
  "minter",
  "schemars",
  "serde",
@@ -634,6 +635,18 @@ dependencies = [
  "elliptic-curve",
  "sec1",
  "sha2 0.9.9",
+]
+
+[[package]]
+name = "launchpad"
+version = "0.13.0"
+dependencies = [
+ "cosmwasm-std",
+ "cw-utils",
+ "schemars",
+ "serde",
+ "sg-std 0.12.1",
+ "thiserror",
 ]
 
 [[package]]
@@ -1115,7 +1128,7 @@ dependencies = [
  "cw2",
  "cw721",
  "cw721-base",
- "factory",
+ "launchpad",
  "schemars",
  "serde",
  "sg-std 0.12.1",

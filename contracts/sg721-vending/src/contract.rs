@@ -3,6 +3,7 @@ use cosmwasm_std::entry_point;
 use cosmwasm_std::{to_binary, Binary, Decimal, Deps, DepsMut, Empty, Env, MessageInfo, StdResult};
 use cw2::set_contract_version;
 
+use launchpad::ParamsResponse;
 use sg1::checked_fair_burn;
 use sg721::{CollectionInfo, InstantiateMsg, RoyaltyInfo, RoyaltyInfoResponse};
 use sg_std::{Response, StargazeMsgWrapper};
@@ -15,13 +16,11 @@ use url::Url;
 use crate::msg::{CollectionInfoResponse, ExecuteMsg, QueryMsg};
 use crate::state::COLLECTION_INFO;
 
-use factory::msg::{ParamsResponse, QueryMsg as FactoryQueryMsg};
-
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sg-721";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-const MINTER_FACTORY: &str = "minter-factory-contract";
+// const MINTER_FACTORY: &str = "minter-factory-contract";
 
 const CREATION_FEE: u128 = 5_000_000_000;
 const MAX_DESCRIPTION_LENGTH: u32 = 512;
@@ -37,15 +36,15 @@ pub fn instantiate(
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
-    // TODO:
-    // query minter factory contract for params
-    let res: ParamsResponse = deps
-        .querier
-        .query_wasm_smart(MINTER_FACTORY, &FactoryQueryMsg::Params {})?;
-    println!("{:?}", res);
-
+    // TODO: query minter for factory contract?
     // get allowed minter code ids
     // query sender's contract for code id and check for match
+
+    // // query minter factory contract for params
+    // let res: ParamsResponse = deps
+    //     .querier
+    //     .query_wasm_smart(MINTER_FACTORY, &FactoryQueryMsg::Params {})?;
+    // println!("{:?}", res);
 
     let mut res = Response::new();
     checked_fair_burn(&info, CREATION_FEE, None, &mut res)?;
