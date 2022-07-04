@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_std::{Addr, Coin, Decimal, Timestamp};
+use cosmwasm_std::{Addr, Coin, Decimal, Timestamp, Uint128};
 use cw_storage_plus::{Item, Map};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -27,11 +27,11 @@ pub const MINTER_ADDRS: Map<Addr, u32> = Map::new("ma");
 pub struct Params {
     pub max_token_limit: u32,
     pub max_per_address_limit: u32,
-    pub min_mint_price: u128,
-    pub airdrop_mint_price: u128,
+    pub min_mint_price: Uint128,
+    pub airdrop_mint_price: Uint128,
     pub mint_fee_percent: Decimal,
     pub airdrop_mint_fee_percent: Decimal,
-    pub shuffle_fee: u128,
+    pub shuffle_fee: Uint128,
 }
 
 pub const PARAMS: Item<Params> = Item::new("params");

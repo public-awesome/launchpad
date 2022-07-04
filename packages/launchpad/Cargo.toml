@@ -16,3 +16,4 @@ serde = { version = "1.0.133", default-features = false, features = ["derive"] }
 sg-std = { path = "../sg-std" }
 thiserror = "1.0.30"
 schemars = "0.8.8"
+sg721 = { path = "../sg721" }

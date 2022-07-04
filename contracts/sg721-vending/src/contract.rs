@@ -36,6 +36,8 @@ pub fn instantiate(
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
+    println!("instantiate: {:?}", msg);
+
     // TODO: query minter for factory contract?
     // get allowed minter code ids
     // query sender's contract for code id and check for match

@@ -3,26 +3,6 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use sg721::{CollectionInfo, RoyaltyInfoResponse};
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, Default)]
-pub struct InstantiateMsg {
-    pub base_token_uri: String,
-    pub num_tokens: u32,
-    pub sg721_code_id: u64,
-    pub name: String,
-    pub symbol: String,
-    pub collection_info: CollectionInfo<RoyaltyInfoResponse>,
-    pub start_time: Timestamp,
-    pub per_address_limit: u32,
-    pub unit_price: Coin,
-    pub whitelist: Option<String>,
-    pub max_token_limit: u32,
-    pub min_mint_price: u128,
-    pub airdrop_mint_price: u128,
-    pub mint_fee_bps: u64,
-    pub airdrop_mint_fee_bps: u64,
-    pub shuffle_fee: u128,
-}
-
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {

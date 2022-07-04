@@ -4,6 +4,7 @@ mod tests {
     use crate::msg::InstantiateMsg;
     use cosmwasm_std::Addr;
     use cw_multi_test::{Contract, ContractWrapper, Executor};
+    use launchpad::{SudoParams, VendingMinterParams};
     use sg_multi_test::StargazeApp;
     use sg_std::StargazeMsgWrapper;
 
@@ -44,7 +45,14 @@ mod tests {
         let mut app = custom_mock_app();
         let cw_template_id = app.store_code(contract_template());
 
-        let msg = InstantiateMsg {};
+        let mock_params = SudoParams {
+            minter_codes: vec![1, 2, 3],
+            vending_minter: VendingMinterParams::default(),
+        };
+
+        let msg = InstantiateMsg {
+            params: mock_params,
+        };
         let cw_template_contract_addr = app
             .instantiate_contract(
                 cw_template_id,

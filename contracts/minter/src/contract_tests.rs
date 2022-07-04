@@ -4,10 +4,12 @@ use cosmwasm_std::{Api, Coin};
 use cw721::{Cw721QueryMsg, OwnerOfResponse, TokensResponse};
 use cw721_base::ExecuteMsg as Cw721ExecuteMsg;
 use cw_multi_test::{BankSudo, Contract, ContractWrapper, Executor, SudoMsg};
+use launchpad::{SudoParams, VendingMinterInitMsg, VendingMinterParams};
 
+use crate::contract::instantiate;
 use crate::msg::{
-    ConfigResponse, ExecuteMsg, InstantiateMsg, MintCountResponse, MintPriceResponse,
-    MintableNumTokensResponse, MintableTokensResponse, QueryMsg, StartTimeResponse,
+    ConfigResponse, ExecuteMsg, MintCountResponse, MintPriceResponse, MintableNumTokensResponse,
+    MintableTokensResponse, QueryMsg, StartTimeResponse,
 };
 use crate::ContractError;
 
@@ -18,11 +20,6 @@ use sg_whitelist::msg::InstantiateMsg as WhitelistInstantiateMsg;
 use sg_whitelist::msg::{AddMembersMsg, ExecuteMsg as WhitelistExecuteMsg};
 
 use factory::msg::ExecuteMsg as FactoryExecuteMsg;
-
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-// }
 
 const CREATION_FEE: u128 = 5_000_000_000;
 const INITIAL_BALANCE: u128 = 2_000_000_000;
@@ -106,8 +103,8 @@ fn setup_whitelist_contract(router: &mut StargazeApp, creator: &Addr) -> Addr {
         .unwrap()
 }
 
-fn minter_init() -> InstantiateMsg {
-    InstantiateMsg {
+fn minter_init() -> VendingMinterInitMsg {
+    VendingMinterInitMsg {
         unit_price: coin(UNIT_PRICE, NATIVE_DENOM),
         num_tokens: 10,
         start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
@@ -128,11 +125,11 @@ fn minter_init() -> InstantiateMsg {
             }),
         },
         max_token_limit: MAX_TOKEN_LIMIT,
-        min_mint_price: MIN_MINT_PRICE,
-        airdrop_mint_price: AIRDROP_MINT_PRICE,
+        min_mint_price: Uint128::from(MIN_MINT_PRICE),
+        airdrop_mint_price: Uint128::from(AIRDROP_MINT_PRICE),
         mint_fee_bps: MINT_FEE_BPS,
         airdrop_mint_fee_bps: AIRDROP_MINT_FEE_BPS,
-        shuffle_fee: SHUFFLE_FEE,
+        shuffle_fee: Uint128::from(SHUFFLE_FEE),
     }
 }
 
@@ -142,63 +139,54 @@ fn setup_minter_contract(
     creator: &Addr,
     num_tokens: u32,
 ) -> (Addr, ConfigResponse) {
-    // Upload contract code
+    let minter_code_id = router.store_code(contract_minter());
+    // let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
+
     let factory_code_id = router.store_code(contract_factory());
+
+    let sudo_params = SudoParams {
+        minter_codes: vec![minter_code_id],
+        vending_minter: VendingMinterParams {
+            max_token_limit: MAX_TOKEN_LIMIT,
+            max_per_address_limit: 5,
+            min_mint_price: Uint128::from(MIN_MINT_PRICE),
+            airdrop_mint_price: Uint128::from(AIRDROP_MINT_PRICE),
+            mint_fee_percent: Decimal::percent(MINT_FEE_BPS),
+            airdrop_mint_fee_percent: Decimal::percent(AIRDROP_MINT_FEE_BPS),
+            shuffle_fee: Uint128::from(SHUFFLE_FEE),
+            code_id: minter_code_id,
+        },
+    };
+
     let factory_addr = router
         .instantiate_contract(
             factory_code_id,
             creator.clone(),
-            &factory::msg::InstantiateMsg {},
+            &factory::msg::InstantiateMsg {
+                params: sudo_params,
+            },
             &[],
             "factory",
             None,
         )
         .unwrap();
 
-    let minter_init_msg = InstantiateMsg {
-        base_token_uri: todo!(),
-        num_tokens,
-        sg721_code_id: todo!(),
-        name: todo!(),
-        symbol: todo!(),
-        collection_info: todo!(),
-        start_time: todo!(),
-        per_address_limit: todo!(),
-        unit_price: todo!(),
-        whitelist: todo!(),
-        max_token_limit: todo!(),
-        min_mint_price: todo!(),
-        airdrop_mint_price: todo!(),
-        mint_fee_bps: todo!(),
-        airdrop_mint_fee_bps: todo!(),
-        shuffle_fee: todo!(),
-    };
-
     let sg721_code_id = router.store_code(contract_sg721());
 
-    let mut minter_msg = minter_init();
-    minter_msg.unit_price = coin(UNIT_PRICE, NATIVE_DENOM);
-    minter_msg.num_tokens = num_tokens;
-    minter_msg.sg721_code_id = sg721_code_id;
-    minter_msg.collection_info.creator = creator.to_string();
+    let mut create_minter_msg = minter_init();
+    create_minter_msg.unit_price = coin(UNIT_PRICE, NATIVE_DENOM);
+    create_minter_msg.num_tokens = num_tokens;
+    create_minter_msg.sg721_code_id = sg721_code_id;
+    create_minter_msg.collection_info.creator = creator.to_string();
 
-    let msg = FactoryExecuteMsg::CreateVendingMinter(minter_msg);
+    let msg = FactoryExecuteMsg::CreateVendingMinter(create_minter_msg);
 
-    router.execute_contract(*creator, factory_addr, &msg, &[]);
+    let res = router.execute_contract(creator.clone(), factory_addr.clone(), &msg, &[]);
+    println!("{:?}", res);
+    assert!(res.is_ok());
 
-    let minter_code_id = router.store_code(contract_minter());
-    let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
-
-    // let minter_addr = router
-    //     .instantiate_contract(
-    //         minter_code_id,
-    //         creator.clone(),
-    //         &msg,
-    //         &creation_fee,
-    //         "Minter",
-    //         None,
-    //     )
-    //     .unwrap();
+    // FIXME: sadf
+    let minter_addr = factory_addr;
 
     let config: ConfigResponse = router
         .wrap()
@@ -263,59 +251,58 @@ fn coins_for_msg(msg_coin: Coin) -> Vec<Coin> {
     }
 }
 
-// TODO: move these to the factory?
-// #[test]
-// fn initialization() {
-//     let mut deps = mock_dependencies_with_balance(&coins(2, "token"));
+#[test]
+fn initialization() {
+    let mut deps = mock_dependencies_with_balance(&coins(2, "token"));
 
-//     // Check valid addr
-//     let addr = "earth1";
-//     let res = deps.api.addr_validate(&(*addr));
-//     assert!(res.is_ok());
+    // Check valid addr
+    let addr = "earth1";
+    let res = deps.api.addr_validate(&(*addr));
+    assert!(res.is_ok());
 
-//     // 0 per address limit returns error
-//     let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
-//     let mut msg = minter_init();
-//     msg.num_tokens = 100;
-//     msg.sg721_code_id = 1;
-//     msg.collection_info.creator = info.sender.to_string();
+    // 0 per address limit returns error
+    let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
+    let mut msg = minter_init();
+    msg.num_tokens = 100;
+    msg.sg721_code_id = 1;
+    msg.collection_info.creator = info.sender.to_string();
 
-//     instantiate(deps.as_mut(), mock_env(), info, msg.clone()).unwrap_err();
+    instantiate(deps.as_mut(), mock_env(), info, msg.clone()).unwrap_err();
 
-//     // Invalid uri returns error
-//     let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
-//     instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
+    // Invalid uri returns error
+    let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
+    instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
 
-//     // Invalid denom returns error
-//     let wrong_denom = "uosmo";
-//     let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
-//     let mut msg = minter_init();
-//     msg.unit_price = coin(UNIT_PRICE, wrong_denom);
+    // Invalid denom returns error
+    let wrong_denom = "uosmo";
+    let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
+    let mut msg = minter_init();
+    msg.unit_price = coin(UNIT_PRICE, wrong_denom);
 
-//     instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
+    instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
 
-//     // Insufficient mint price returns error
-//     let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
-//     let mut msg = minter_init();
-//     msg.unit_price = coin(1, NATIVE_DENOM);
+    // Insufficient mint price returns error
+    let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
+    let mut msg = minter_init();
+    msg.unit_price = coin(1, NATIVE_DENOM);
 
-//     instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
+    instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
 
-//     // Over max token limit
-//     let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
-//     let mut msg = minter_init();
-//     msg.unit_price = coin(UNIT_PRICE, NATIVE_DENOM);
-//     msg.num_tokens = MAX_TOKEN_LIMIT + 1;
+    // Over max token limit
+    let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
+    let mut msg = minter_init();
+    msg.unit_price = coin(UNIT_PRICE, NATIVE_DENOM);
+    msg.num_tokens = MAX_TOKEN_LIMIT + 1;
 
-//     instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
+    instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
 
-//     // Under min token limit
-//     let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
-//     let mut msg = minter_init();
-//     msg.num_tokens = 0;
+    // Under min token limit
+    let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
+    let mut msg = minter_init();
+    msg.num_tokens = 0;
 
-//     instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
-// }
+    instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
+}
 
 #[test]
 fn happy_path() {

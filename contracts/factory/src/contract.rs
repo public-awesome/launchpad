@@ -5,13 +5,12 @@ use cosmwasm_std::{
 };
 use cw2::set_contract_version;
 use cw_utils::parse_reply_instantiate_data;
-use launchpad::ParamsResponse;
+use launchpad::{ParamsResponse, VendingMinterInitMsg};
+use sg_std::NATIVE_DENOM;
 
 use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg, Response, SubMsg, SudoMsg};
-use crate::state::{Minter, MINTERS, STATE, SUDO_PARAMS};
-
-use minter::msg::InstantiateMsg as VendingMinterInitMsg;
+use crate::state::{Minter, MINTERS, SUDO_PARAMS};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:factory";
@@ -23,9 +22,13 @@ pub fn instantiate(
     deps: DepsMut,
     _env: Env,
     _info: MessageInfo,
-    _msg: InstantiateMsg,
+    msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+
+    // TODO: validate params
+
+    SUDO_PARAMS.save(deps.storage, &msg.params)?;
 
     Ok(Response::new())
 }
@@ -78,10 +81,11 @@ pub fn execute_create_vending_minter(
     }
 
     // Check that the price is in the correct denom ('ustars')
-    let native_denom = deps.querier.query_bonded_denom()?;
+    // let native_denom = deps.querier.query_bonded_denom()?;
+    let native_denom = NATIVE_DENOM;
     if native_denom != msg.unit_price.denom {
         return Err(ContractError::InvalidDenom {
-            expected: native_denom,
+            expected: native_denom.to_string(),
             got: msg.unit_price.denom,
         });
     }
@@ -96,7 +100,7 @@ pub fn execute_create_vending_minter(
 
     let wasm_msg = WasmMsg::Instantiate {
         admin: Some(env.contract.address.to_string()),
-        code_id: msg.sg721_code_id,
+        code_id: params.code_id,
         msg: to_binary(&msg)?,
         funds: info.funds,
         label: msg.name,
@@ -130,26 +134,6 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractE
     }
 }
 
-pub fn try_increment(deps: DepsMut) -> Result<Response, ContractError> {
-    STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
-        state.count += 1;
-        Ok(state)
-    })?;
-
-    Ok(Response::new().add_attribute("method", "try_increment"))
-}
-
-pub fn try_reset(deps: DepsMut, info: MessageInfo, count: i32) -> Result<Response, ContractError> {
-    STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
-        if info.sender != state.owner {
-            return Err(ContractError::Unauthorized {});
-        }
-        state.count = count;
-        Ok(state)
-    })?;
-    Ok(Response::new().add_attribute("method", "reset"))
-}
-
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
@@ -165,14 +149,22 @@ fn query_params(deps: Deps) -> StdResult<ParamsResponse> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use cosmwasm_std::coins;
     use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-    use cosmwasm_std::{coins, from_binary};
+    use launchpad::{SudoParams, VendingMinterParams};
 
     #[test]
     fn proper_initialization() {
         let mut deps = mock_dependencies();
 
-        let msg = InstantiateMsg {};
+        let sudo_params = SudoParams {
+            minter_codes: vec![1, 2, 3],
+            vending_minter: VendingMinterParams::default(),
+        };
+
+        let msg = InstantiateMsg {
+            params: sudo_params,
+        };
         let info = mock_info("creator", &coins(1000, "earth"));
 
         // we can just call .unwrap() to assert this was a success

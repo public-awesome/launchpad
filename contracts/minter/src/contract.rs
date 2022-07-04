@@ -2,8 +2,8 @@ use std::convert::TryInto;
 
 use crate::error::ContractError;
 use crate::msg::{
-    ConfigResponse, ExecuteMsg, InstantiateMsg, MintCountResponse, MintPriceResponse,
-    MintableNumTokensResponse, MintableTokensResponse, QueryMsg, StartTimeResponse,
+    ConfigResponse, ExecuteMsg, MintCountResponse, MintPriceResponse, MintableNumTokensResponse,
+    MintableTokensResponse, QueryMsg, StartTimeResponse,
 };
 use crate::state::{
     Config, Params, CONFIG, MINTABLE_NUM_TOKENS, MINTABLE_TOKEN_POSITIONS, MINTER_ADDRS, PARAMS,
@@ -30,7 +30,7 @@ use sha2::{Digest, Sha256};
 use shuffle::{fy::FisherYates, shuffler::Shuffler};
 use url::Url;
 
-use launchpad::QueryMsg as LaunchpadQueryMsg;
+use launchpad::{QueryMsg as LaunchpadQueryMsg, VendingMinterInitMsg as InstantiateMsg};
 
 pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 pub type SubMsg = cosmwasm_std::SubMsg<StargazeMsgWrapper>;
@@ -124,19 +124,21 @@ pub fn instantiate(
         token_position += 1;
     }
 
+    println!("contract address {:?}", env.contract.address.to_string());
+
     // Submessage to instantiate sg721 contract
     let sub_msgs: Vec<SubMsg> = vec![SubMsg {
         msg: WasmMsg::Instantiate {
             code_id: msg.sg721_code_id,
             msg: to_binary(&Sg721InstantiateMsg {
-                name: msg.name,
+                name: msg.name.clone(),
                 symbol: msg.symbol,
                 minter: env.contract.address.to_string(),
                 collection_info: msg.collection_info,
             })?,
             funds: info.funds,
             admin: Some(factory.to_string()),
-            label: String::from("Fixed price minter"),
+            label: msg.name,
         }
         .into(),
         id: INSTANTIATE_SG721_REPLY_ID,
@@ -190,7 +192,7 @@ pub fn execute_shuffle(
     let params = PARAMS.load(deps.storage)?;
 
     // Check exact shuffle fee payment included in message
-    checked_fair_burn(&info, params.shuffle_fee, None, &mut res)?;
+    checked_fair_burn(&info, params.shuffle_fee.u128(), None, &mut res)?;
 
     // Check not sold out
     let mintable_num_tokens = MINTABLE_NUM_TOKENS.load(deps.storage)?;
@@ -645,7 +647,10 @@ pub fn mint_price(deps: Deps, is_admin: bool) -> Result<Coin, StdError> {
     let config = CONFIG.load(deps.storage)?;
 
     if is_admin {
-        return Ok(coin(params.airdrop_mint_price, config.unit_price.denom));
+        return Ok(coin(
+            params.airdrop_mint_price.u128(),
+            config.unit_price.denom,
+        ));
     }
 
     if config.whitelist.is_none() {
