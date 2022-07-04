@@ -79,14 +79,17 @@ pub enum ContractError {
     Payment(#[from] PaymentError),
 
     #[error("{0}")]
+    ParseError(#[from] ParseError),
+
+    #[error("{0}")]
     Fee(#[from] FeeError),
 
     #[error("NoEnvTransactionIndex")]
     NoEnvTransactionIndex {},
 }
 
-impl From<ParseError> for ContractError {
-    fn from(_err: ParseError) -> ContractError {
-        ContractError::InvalidBaseTokenURI {}
-    }
-}
+// impl From<ParseError> for ContractError {
+//     fn from(_err: ParseError) -> ContractError {
+//         ContractError::InvalidBaseTokenURI {}
+//     }
+// }

@@ -30,7 +30,9 @@ use sha2::{Digest, Sha256};
 use shuffle::{fy::FisherYates, shuffler::Shuffler};
 use url::Url;
 
-use launchpad::{QueryMsg as LaunchpadQueryMsg, VendingMinterInitMsg as InstantiateMsg};
+use launchpad::{
+    ParamsResponse, QueryMsg as LaunchpadQueryMsg, VendingMinterInitMsg as InstantiateMsg,
+};
 
 pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 pub type SubMsg = cosmwasm_std::SubMsg<StargazeMsgWrapper>;
@@ -46,8 +48,6 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 const INSTANTIATE_SG721_REPLY_ID: u64 = 1;
 
-// const MINTER_FACTORY: &str = "minter-factory-contract";
-
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
@@ -59,9 +59,14 @@ pub fn instantiate(
 
     let factory = info.sender;
 
+    // TODO: validate
+
     // Make sure the sender is the factory contract
-    deps.querier
+    let _res: ParamsResponse = deps
+        .querier
         .query_wasm_smart(factory.clone(), &LaunchpadQueryMsg::Params {})?;
+    // TODO: validate minter id
+    // println!("{:?}", res);
 
     let params = Params {
         max_token_limit: msg.max_token_limit,

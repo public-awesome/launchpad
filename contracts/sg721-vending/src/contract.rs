@@ -3,7 +3,6 @@ use cosmwasm_std::entry_point;
 use cosmwasm_std::{to_binary, Binary, Decimal, Deps, DepsMut, Empty, Env, MessageInfo, StdResult};
 use cw2::set_contract_version;
 
-use launchpad::ParamsResponse;
 use sg1::checked_fair_burn;
 use sg721::{CollectionInfo, InstantiateMsg, RoyaltyInfo, RoyaltyInfoResponse};
 use sg_std::{Response, StargazeMsgWrapper};
@@ -19,8 +18,6 @@ use crate::state::COLLECTION_INFO;
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sg-721";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
-
-// const MINTER_FACTORY: &str = "minter-factory-contract";
 
 const CREATION_FEE: u128 = 5_000_000_000;
 const MAX_DESCRIPTION_LENGTH: u32 = 512;
