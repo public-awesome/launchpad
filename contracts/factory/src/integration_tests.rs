@@ -37,7 +37,7 @@ mod tests {
         Box::new(contract)
     }
 
-    const USER: &str = "user";
+    const GOVERNANCE: &str = "governance";
     const ADMIN: &str = "ADMIN";
     const NATIVE_DENOM: &str = "ustars";
     const CREATION_FEE: u128 = 5_000_000_000;
@@ -55,11 +55,6 @@ mod tests {
             code_id: minter_id,
             max_token_limit: 10_000,
             max_per_address_limit: 5,
-            // min_mint_price: todo!(),
-            // airdrop_mint_price: todo!(),
-            // mint_fee_percent: todo!(),
-            // airdrop_mint_fee_percent: todo!(),
-            // shuffle_fee: todo!(),
             ..VendingMinterParams::default()
         };
 
@@ -121,23 +116,23 @@ mod tests {
                 collection_info,
                 ..VendingMinterInitMsg::default()
             });
-            // println!("{:?}", msg);
             let creation_fee = coin(CREATION_FEE, NATIVE_DENOM);
 
             app.sudo(SudoMsg::Bank(BankSudo::Mint {
-                to_address: USER.to_string(),
+                to_address: GOVERNANCE.to_string(),
                 amount: vec![creation_fee.clone()],
             }))
             .unwrap();
 
-            let bal = app.wrap().query_all_balances(USER).unwrap();
+            let bal = app.wrap().query_all_balances(GOVERNANCE).unwrap();
             assert_eq!(bal, vec![creation_fee.clone()]);
 
             let cosmos_msg = cw_template_contract
                 .call_with_funds(msg, creation_fee)
                 .unwrap();
 
-            app.execute(Addr::unchecked(USER), cosmos_msg).unwrap();
+            app.execute(Addr::unchecked(GOVERNANCE), cosmos_msg)
+                .unwrap();
         }
     }
 }

@@ -48,7 +48,8 @@ pub fn contract_factory() -> Box<dyn Contract<StargazeMsgWrapper>> {
         factory::contract::execute,
         factory::contract::instantiate,
         factory::contract::query,
-    );
+    )
+    .with_reply(factory::contract::reply);
     Box::new(contract)
 }
 
@@ -111,7 +112,7 @@ fn minter_init() -> VendingMinterInitMsg {
         per_address_limit: 5,
         whitelist: None,
         base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
-        sg721_code_id: 5,
+        sg721_code_id: 3,
         name: String::from("TEST"),
         symbol: String::from("TEST"),
         collection_info: CollectionInfo {
@@ -140,7 +141,7 @@ fn setup_minter_contract(
     num_tokens: u32,
 ) -> (Addr, ConfigResponse) {
     let minter_code_id = router.store_code(contract_minter());
-    // let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
+    let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
 
     let factory_code_id = router.store_code(contract_factory());
 
@@ -182,17 +183,17 @@ fn setup_minter_contract(
 
     let msg = FactoryExecuteMsg::CreateVendingMinter(create_minter_msg);
 
-    let res = router.execute_contract(creator.clone(), factory_addr.clone(), &msg, &[]);
-    println!("{:?}", res);
+    let res = router.execute_contract(creator.clone(), factory_addr, &msg, &creation_fee);
     assert!(res.is_ok());
 
-    // FIXME: sadf
-    let minter_addr = factory_addr;
+    // could get the minter address from the response above, but we know its contract1
+    let minter_addr = Addr::unchecked("contract1");
 
     let config: ConfigResponse = router
         .wrap()
         .query_wasm_smart(minter_addr.clone(), &QueryMsg::Config {})
         .unwrap();
+    // println!("{:?}", config);
 
     (minter_addr, config)
 }
@@ -200,7 +201,7 @@ fn setup_minter_contract(
 // Add a creator account with initial balances
 fn setup_accounts(router: &mut StargazeApp) -> (Addr, Addr) {
     let buyer = Addr::unchecked("buyer");
-    let creator = Addr::unchecked("minter-factory-contract");
+    let creator = Addr::unchecked("creator");
     // 3,000 tokens
     let creator_funds = coins(INITIAL_BALANCE + CREATION_FEE, NATIVE_DENOM);
     // 2,000 tokens

@@ -105,7 +105,7 @@ pub fn instantiate(
         .and_then(|w| deps.api.addr_validate(w.as_str()).ok());
 
     let config = Config {
-        admin: factory.clone(),
+        admin: deps.api.addr_validate(&msg.collection_info.creator)?,
         base_token_uri: msg.base_token_uri,
         num_tokens: msg.num_tokens,
         sg721_code_id: msg.sg721_code_id,
