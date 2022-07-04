@@ -4,8 +4,9 @@ use cosmwasm_std::{
     to_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Reply, StdResult, WasmMsg,
 };
 use cw2::set_contract_version;
-use cw_utils::parse_reply_instantiate_data;
+use cw_utils::{must_pay, parse_reply_instantiate_data};
 use launchpad::{ParamsResponse, VendingMinterInitMsg};
+use sg1::checked_fair_burn;
 use sg_std::NATIVE_DENOM;
 
 use crate::error::ContractError;
@@ -59,9 +60,15 @@ pub fn execute_create_vending_minter(
     info: MessageInfo,
     msg: VendingMinterInitMsg,
 ) -> Result<Response, ContractError> {
+    // TODO: why doesn't this work?
+    // must_pay(&info, &deps.querier.query_bonded_denom()?)?;
+    must_pay(&info, NATIVE_DENOM)?;
+
     let params = SUDO_PARAMS.load(deps.storage)?.vending_minter;
 
-    // TODO: charge collection creation fee here so its part of params
+    let mut res = Response::new();
+    // FIXME: Cannot transfer empty coins amount
+    // checked_fair_burn(&info, params.creation_fee.u128(), None, &mut res)?;
 
     // Check the number of tokens is more than zero and less than the max limit
     if msg.num_tokens == 0 || msg.num_tokens > params.max_token_limit {
@@ -102,12 +109,12 @@ pub fn execute_create_vending_minter(
         admin: Some(env.contract.address.to_string()),
         code_id: params.code_id,
         msg: to_binary(&msg)?,
-        funds: info.funds,
+        funds: vec![],
         label: msg.name,
     };
     let submsg = SubMsg::reply_on_success(wasm_msg, msg.sg721_code_id);
 
-    Ok(Response::new()
+    Ok(res
         .add_attribute("action", "create_minter")
         .add_submessage(submsg))
 }
@@ -117,6 +124,7 @@ pub fn execute_create_vending_minter(
 pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
     let code_id = msg.id;
     let reply = parse_reply_instantiate_data(msg);
+
     match reply {
         Ok(res) => {
             let minter = Minter {

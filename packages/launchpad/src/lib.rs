@@ -41,6 +41,7 @@ pub struct VendingMinterParams {
     pub mint_fee_percent: Decimal,
     pub airdrop_mint_fee_percent: Decimal,
     pub shuffle_fee: Uint128,
+    pub creation_fee: Uint128,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

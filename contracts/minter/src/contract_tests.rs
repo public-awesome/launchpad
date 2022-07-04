@@ -1,5 +1,5 @@
 use cosmwasm_std::testing::{mock_dependencies_with_balance, mock_env, mock_info};
-use cosmwasm_std::{coin, coins, to_binary, Addr, Decimal, Empty, Timestamp, Uint128, WasmMsg};
+use cosmwasm_std::{coin, coins, Addr, Decimal, Empty, Timestamp, Uint128};
 use cosmwasm_std::{Api, Coin};
 use cw721::{Cw721QueryMsg, OwnerOfResponse, TokensResponse};
 use cw721_base::ExecuteMsg as Cw721ExecuteMsg;
@@ -155,6 +155,7 @@ fn setup_minter_contract(
             airdrop_mint_fee_percent: Decimal::percent(AIRDROP_MINT_FEE_BPS),
             shuffle_fee: Uint128::from(SHUFFLE_FEE),
             code_id: minter_code_id,
+            creation_fee: Uint128::from(CREATION_FEE),
         },
     };
 

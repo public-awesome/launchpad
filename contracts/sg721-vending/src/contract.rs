@@ -1,25 +1,23 @@
+use url::Url;
+
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{to_binary, Binary, Decimal, Deps, DepsMut, Empty, Env, MessageInfo, StdResult};
 use cw2::set_contract_version;
+use cw721::ContractInfoResponse;
+use cw721_base::ContractError as BaseError;
 
-use sg1::checked_fair_burn;
 use sg721::{CollectionInfo, InstantiateMsg, RoyaltyInfo, RoyaltyInfoResponse};
 use sg_std::{Response, StargazeMsgWrapper};
 
-use crate::ContractError;
-use cw721::ContractInfoResponse;
-use cw721_base::ContractError as BaseError;
-use url::Url;
-
 use crate::msg::{CollectionInfoResponse, ExecuteMsg, QueryMsg};
 use crate::state::COLLECTION_INFO;
+use crate::ContractError;
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sg-721";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-const CREATION_FEE: u128 = 5_000_000_000;
 const MAX_DESCRIPTION_LENGTH: u32 = 512;
 
 pub type Sg721Contract<'a> = cw721_base::Cw721Contract<'a, Empty, StargazeMsgWrapper>;
@@ -38,15 +36,13 @@ pub fn instantiate(
     // TODO: query minter for factory contract?
     // get allowed minter code ids
     // query sender's contract for code id and check for match
-
-    // // query minter factory contract for params
-    // let res: ParamsResponse = deps
+    // let _res: ParamsResponse = deps
     //     .querier
-    //     .query_wasm_smart(MINTER_FACTORY, &FactoryQueryMsg::Params {})?;
+    //     .query_wasm_smart(factory.clone(), &LaunchpadQueryMsg::Params {})?;
     // println!("{:?}", res);
 
     let mut res = Response::new();
-    checked_fair_burn(&info, CREATION_FEE, None, &mut res)?;
+    // checked_fair_burn(&info, CREATION_FEE, None, &mut res)?;
 
     // cw721 instantiation
     let info = ContractInfoResponse {
@@ -171,11 +167,10 @@ mod tests {
                 royalty_info: None,
             },
         };
-        let info = mock_info("creator", &coins(CREATION_FEE, NATIVE_DENOM));
+        let info = mock_info("creator", &coins(0, NATIVE_DENOM));
 
-        // make sure instantiate has the burn messages
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(2, res.messages.len());
+        assert_eq!(0, res.messages.len());
 
         // let's query the collection info
         let res = query(deps.as_ref(), mock_env(), QueryMsg::CollectionInfo {}).unwrap();
@@ -210,11 +205,10 @@ mod tests {
                 }),
             },
         };
-        let info = mock_info("creator", &coins(CREATION_FEE, NATIVE_DENOM));
+        let info = mock_info("creator", &coins(0, NATIVE_DENOM));
 
-        // make sure instantiate has the burn messages
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(2, res.messages.len());
+        assert_eq!(0, res.messages.len());
 
         // let's query the collection info
         let res = query(deps.as_ref(), mock_env(), QueryMsg::CollectionInfo {}).unwrap();

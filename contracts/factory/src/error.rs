@@ -1,4 +1,6 @@
 use cosmwasm_std::StdError;
+use cw_utils::PaymentError;
+use sg1::FeeError;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -26,6 +28,12 @@ pub enum ContractError {
 
     #[error("InstantiateMinterError")]
     InstantiateMinterError {},
+
+    #[error("{0}")]
+    Fee(#[from] FeeError),
+
+    #[error("{0}")]
+    Payment(#[from] PaymentError),
 
     #[error("Custom Error val: {val:?}")]
     CustomError { val: String },

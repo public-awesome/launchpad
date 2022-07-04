@@ -1,7 +1,6 @@
 use cosmwasm_std::{Coin, Timestamp};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use sg721::{CollectionInfo, RoyaltyInfoResponse};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
