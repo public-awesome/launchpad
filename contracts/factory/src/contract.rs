@@ -67,8 +67,7 @@ pub fn execute_create_vending_minter(
     let params = SUDO_PARAMS.load(deps.storage)?.vending_minter;
 
     let mut res = Response::new();
-    // FIXME: Cannot transfer empty coins amount
-    // checked_fair_burn(&info, params.creation_fee.u128(), None, &mut res)?;
+    checked_fair_burn(&info, params.creation_fee.u128(), None, &mut res)?;
 
     // Check the number of tokens is more than zero and less than the max limit
     if msg.num_tokens == 0 || msg.num_tokens > params.max_token_limit {

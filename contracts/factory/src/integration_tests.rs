@@ -2,7 +2,7 @@
 mod tests {
     use crate::helpers::CwTemplateContract;
     use crate::msg::InstantiateMsg;
-    use cosmwasm_std::Addr;
+    use cosmwasm_std::{Addr, Uint128};
     use cw_multi_test::{Contract, ContractWrapper, Executor};
     use launchpad::{SudoParams, VendingMinterParams};
     use sg_multi_test::StargazeApp;
@@ -55,6 +55,7 @@ mod tests {
             code_id: minter_id,
             max_token_limit: 10_000,
             max_per_address_limit: 5,
+            creation_fee: Uint128::from(CREATION_FEE),
             ..VendingMinterParams::default()
         };
 
