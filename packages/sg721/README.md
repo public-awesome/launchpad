@@ -1,6 +1,6 @@
 # SG-721
 
-SG-721 is a cw721-compatible contract that adds on-chain contract metadata, including royalties.
+SG-721 is a cw721-compatible spec that adds on-chain contract metadata, including royalties.
 
 ```rs
 pub struct CollectionInfo<T> {
