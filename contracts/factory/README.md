@@ -1,6 +1,6 @@
 # Minter Factory
 
-A contract that maintains all Launchpad governance parameters, include those for each minter.
+A contract that maintains all Launchpad governance parameters, including those for each minter.
 
 It's responsible for creating new minters with the latest governance parameters.
 
