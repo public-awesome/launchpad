@@ -3,7 +3,8 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use cosmwasm_std::{
-    to_binary, Addr, Coin, CustomQuery, Querier, QuerierWrapper, StdResult, WasmMsg, WasmQuery,
+    to_binary, Addr, Coin, ContractInfoResponse, CustomQuery, Querier, QuerierWrapper, StdResult,
+    WasmMsg, WasmQuery,
 };
 use sg_std::CosmosMsg;
 
@@ -59,4 +60,18 @@ impl CwTemplateContract {
     //     let res: CountResponse = QuerierWrapper::<CQ>::new(querier).query(&query)?;
     //     Ok(res)
     // }
+
+    pub fn contract_info<Q, T, CQ>(&self, querier: &Q) -> StdResult<ContractInfoResponse>
+    where
+        Q: Querier,
+        T: Into<String>,
+        CQ: CustomQuery,
+    {
+        let query = WasmQuery::ContractInfo {
+            contract_addr: self.addr().into(),
+        }
+        .into();
+        let res: ContractInfoResponse = QuerierWrapper::<CQ>::new(querier).query(&query)?;
+        Ok(res)
+    }
 }
