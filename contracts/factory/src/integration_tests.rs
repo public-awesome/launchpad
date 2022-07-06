@@ -86,12 +86,11 @@ mod tests {
     mod params {
         use cosmwasm_std::{coin, Timestamp};
         use cw_multi_test::{BankSudo, SudoMsg};
-        use launchpad::VendingMinterInitMsg;
+        use launchpad::{ExecuteMsg, VendingMinterInitMsg};
         use sg721::{CollectionInfo, RoyaltyInfoResponse};
         use sg_std::GENESIS_MINT_START_TIME;
 
         use super::*;
-        use crate::msg::ExecuteMsg;
 
         #[test]
         fn create_vending_minter() {

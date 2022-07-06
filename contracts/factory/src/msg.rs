@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use launchpad::{SudoParams, VendingMinterInitMsg};
+use launchpad::SudoParams;
 use sg_std::StargazeMsgWrapper;
 
 pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
@@ -17,12 +17,6 @@ pub struct InstantiateMsg {
 #[serde(rename_all = "snake_case")]
 pub enum MinterInitMsg {
     CreateMinter {},
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
-pub enum ExecuteMsg {
-    CreateVendingMinter(VendingMinterInitMsg),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

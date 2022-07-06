@@ -4,7 +4,9 @@ use cosmwasm_std::{Api, Coin};
 use cw721::{Cw721QueryMsg, OwnerOfResponse, TokensResponse};
 use cw721_base::ExecuteMsg as Cw721ExecuteMsg;
 use cw_multi_test::{BankSudo, Contract, ContractWrapper, Executor, SudoMsg};
-use launchpad::{SudoParams, VendingMinterInitMsg, VendingMinterParams};
+use launchpad::{
+    ExecuteMsg as FactoryExecuteMsg, SudoParams, VendingMinterInitMsg, VendingMinterParams,
+};
 
 use crate::contract::instantiate;
 use crate::msg::{
@@ -18,8 +20,6 @@ use sg_multi_test::StargazeApp;
 use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use sg_whitelist::msg::InstantiateMsg as WhitelistInstantiateMsg;
 use sg_whitelist::msg::{AddMembersMsg, ExecuteMsg as WhitelistExecuteMsg};
-
-use factory::msg::ExecuteMsg as FactoryExecuteMsg;
 
 const CREATION_FEE: u128 = 5_000_000_000;
 const INITIAL_BALANCE: u128 = 2_000_000_000;
@@ -193,7 +193,6 @@ fn setup_minter_contract(
         .wrap()
         .query_wasm_smart(minter_addr.clone(), &QueryMsg::Config {})
         .unwrap();
-    // println!("{:?}", config);
 
     (minter_addr, config)
 }
@@ -1195,27 +1194,9 @@ fn mint_for_token_id_addr() {
 fn test_update_start_time() {
     let mut router = custom_mock_app();
     let (creator, _) = setup_accounts(&mut router);
-    // let num_tokens = 10;
+    let num_tokens = 10;
 
-    // Upload contract code
-    let sg721_code_id = router.store_code(contract_sg721());
-    let minter_code_id = router.store_code(contract_minter());
-    let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
-
-    let mut msg = minter_init();
-    msg.num_tokens = 10;
-    msg.sg721_code_id = sg721_code_id;
-
-    let minter_addr = router
-        .instantiate_contract(
-            minter_code_id,
-            creator.clone(),
-            &msg,
-            &creation_fee,
-            "Minter",
-            None,
-        )
-        .unwrap();
+    let (minter_addr, _) = setup_minter_contract(&mut router, &creator, num_tokens);
 
     // Public mint has started
     setup_block_time(&mut router, GENESIS_MINT_START_TIME + 100);
@@ -1235,64 +1216,75 @@ fn test_update_start_time() {
 fn test_invalid_start_time() {
     let mut router = custom_mock_app();
     let (creator, _) = setup_accounts(&mut router);
-    // let num_tokens = 10;
 
     // Upload contract code
     let sg721_code_id = router.store_code(contract_sg721());
     let minter_code_id = router.store_code(contract_minter());
     let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
 
-    // Instantiate sale contract before genesis mint
-    let mut msg = minter_init();
-    msg.num_tokens = 10;
-    msg.sg721_code_id = sg721_code_id;
-    msg.start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME - 100);
+    let factory_code_id = router.store_code(contract_factory());
+
+    let sudo_params = SudoParams {
+        minter_codes: vec![minter_code_id],
+        vending_minter: VendingMinterParams {
+            max_token_limit: MAX_TOKEN_LIMIT,
+            max_per_address_limit: 5,
+            min_mint_price: Uint128::from(MIN_MINT_PRICE),
+            airdrop_mint_price: Uint128::from(AIRDROP_MINT_PRICE),
+            mint_fee_percent: Decimal::percent(MINT_FEE_BPS),
+            airdrop_mint_fee_percent: Decimal::percent(AIRDROP_MINT_FEE_BPS),
+            shuffle_fee: Uint128::from(SHUFFLE_FEE),
+            code_id: minter_code_id,
+            creation_fee: Uint128::from(CREATION_FEE),
+        },
+    };
+
+    let factory_addr = router
+        .instantiate_contract(
+            factory_code_id,
+            creator.clone(),
+            &factory::msg::InstantiateMsg {
+                params: sudo_params,
+            },
+            &[],
+            "factory",
+            None,
+        )
+        .unwrap();
 
     // set time before the start_time above
     setup_block_time(&mut router, GENESIS_MINT_START_TIME - 1000);
 
-    let err = router
-        .instantiate_contract(
-            minter_code_id,
-            creator.clone(),
-            &msg,
-            &creation_fee,
-            "Minter",
-            None,
-        )
+    // Instantiate sale contract before genesis mint
+    let mut minter_init_msg = minter_init();
+    minter_init_msg.num_tokens = 10;
+    minter_init_msg.sg721_code_id = sg721_code_id;
+    minter_init_msg.start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME - 100);
+    let msg = FactoryExecuteMsg::CreateVendingMinter(minter_init_msg.clone());
+
+    router
+        .execute_contract(creator.clone(), factory_addr.clone(), &msg, &creation_fee)
         .unwrap_err();
-    assert_eq!(err.source().unwrap().to_string(), "BeforeGenesisTime");
 
     // move date after genesis mint
     setup_block_time(&mut router, GENESIS_MINT_START_TIME + 1000);
 
     // move start time after genesis but before current time
-    msg.start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 500);
-
+    minter_init_msg.start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 500);
+    let msg = FactoryExecuteMsg::CreateVendingMinter(minter_init_msg.clone());
     router
-        .instantiate_contract(
-            minter_code_id,
-            creator.clone(),
-            &msg,
-            &creation_fee,
-            "Minter",
-            None,
-        )
+        .execute_contract(creator.clone(), factory_addr.clone(), &msg, &creation_fee)
         .unwrap_err();
 
     // position block time before the start time
     setup_block_time(&mut router, GENESIS_MINT_START_TIME + 400);
-
-    let minter_addr = router
-        .instantiate_contract(
-            minter_code_id,
-            creator.clone(),
-            &msg,
-            &creation_fee,
-            "Minter",
-            None,
-        )
+    minter_init_msg.start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 500);
+    let msg = FactoryExecuteMsg::CreateVendingMinter(minter_init_msg.clone());
+    router
+        .execute_contract(creator.clone(), factory_addr.clone(), &msg, &creation_fee)
         .unwrap();
+
+    let minter_addr = Addr::unchecked("contract1");
 
     // Update to a start time in the past
     let msg = ExecuteMsg::UpdateStartTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME - 100));

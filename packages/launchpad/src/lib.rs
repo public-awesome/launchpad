@@ -55,3 +55,9 @@ pub struct SudoParams {
 pub struct ParamsResponse {
     pub params: SudoParams,
 }
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum ExecuteMsg {
+    CreateVendingMinter(VendingMinterInitMsg),
+}

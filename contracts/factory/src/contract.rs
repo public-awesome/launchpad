@@ -5,12 +5,12 @@ use cosmwasm_std::{
 };
 use cw2::set_contract_version;
 use cw_utils::{must_pay, parse_reply_instantiate_data};
-use launchpad::{ParamsResponse, VendingMinterInitMsg};
+use launchpad::{ExecuteMsg, ParamsResponse, VendingMinterInitMsg};
 use sg1::checked_fair_burn;
 use sg_std::NATIVE_DENOM;
 
 use crate::error::ContractError;
-use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg, Response, SubMsg, SudoMsg};
+use crate::msg::{InstantiateMsg, QueryMsg, Response, SubMsg, SudoMsg};
 use crate::state::{Minter, MINTERS, SUDO_PARAMS};
 
 // version info for migration info

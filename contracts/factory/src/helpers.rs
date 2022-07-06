@@ -1,3 +1,4 @@
+use launchpad::ExecuteMsg;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -6,7 +7,7 @@ use cosmwasm_std::{
 };
 use sg_std::CosmosMsg;
 
-use crate::msg::{ExecuteMsg, QueryMsg};
+use crate::msg::QueryMsg;
 
 /// CwTemplateContract is a wrapper around Addr that provides a lot of helpers
 /// for working with this.
