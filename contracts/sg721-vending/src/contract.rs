@@ -1,12 +1,16 @@
-use cw_utils::nonpayable;
 use url::Url;
 
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{to_binary, Binary, Decimal, Deps, DepsMut, Empty, Env, MessageInfo, StdResult};
+use cosmwasm_std::{
+    from_binary, to_binary, to_vec, Binary, ContractInfoResponse as CwContractInfoResponse,
+    ContractResult, Decimal, Deps, DepsMut, Empty, Env, MessageInfo, Querier, QueryRequest,
+    StdError, StdResult, SystemError, SystemResult, WasmQuery,
+};
 use cw2::set_contract_version;
 use cw721::ContractInfoResponse;
 use cw721_base::ContractError as BaseError;
+use cw_utils::nonpayable;
 
 use launchpad::ParamsResponse;
 use sg721::{CollectionInfo, InstantiateMsg, RoyaltyInfo, RoyaltyInfoResponse};
@@ -36,8 +40,25 @@ pub fn instantiate(
     // no funds should be sent to this contract
     nonpayable(&info)?;
 
+    // WasmQuery::ContractInfo { contract_addr } => {
+    //     if *contract_addr == constract1 {
+    //         let response = ContractInfoResponse {
+    //             code_id: 4,
+    //             creator: "lalala".into(),
+    //             admin: None,
+    //             pinned: false,
+    //             ibc_port: None,
+    //         };
+    //         SystemResult::Ok(ContractResult::Ok(to_binary(&response).unwrap()))
+
+    // let result = querier.query(&WasmQuery::ContractInfo {
+    //     contract_addr: "contract1".into(),
+    // });
+
     // TODO:
     // 1. query minter contract to get minter code id
+    let contract_info = query_contract_info(&deps.querier, "contract1".into())?;
+
     // 2. query factory contract to check if minter code id is in allowed list
 
     // let _res: ParamsResponse = deps
@@ -95,6 +116,27 @@ pub fn instantiate(
         .add_attribute("contract_name", CONTRACT_NAME)
         .add_attribute("contract_version", CONTRACT_VERSION)
         .add_attribute("image", image.to_string()))
+}
+
+fn query_contract_info(
+    querier: &dyn Querier,
+    contract_addr: String,
+) -> StdResult<CwContractInfoResponse> {
+    let raw = QueryRequest::<Empty>::Wasm(WasmQuery::ContractInfo { contract_addr });
+    match querier.raw_query(&to_vec(&raw).unwrap()) {
+        SystemResult::Err(system_err) => Err(StdError::generic_err(format!(
+            "Querier system error: {}",
+            system_err
+        ))),
+        SystemResult::Ok(ContractResult::Err(contract_err)) => Err(StdError::generic_err(format!(
+            "Querier contract error: {}",
+            contract_err
+        ))),
+        SystemResult::Ok(ContractResult::Ok(res)) => {
+            let response: CwContractInfoResponse = from_binary(&res)?;
+            Ok(response)
+        }
+    }
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
