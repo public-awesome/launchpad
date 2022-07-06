@@ -1134,6 +1134,7 @@ dependencies = [
  "cw721",
  "cw721-base",
  "launchpad",
+ "minter",
  "schemars",
  "serde",
  "sg-std 0.12.1",
