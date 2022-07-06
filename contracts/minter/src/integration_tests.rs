@@ -1192,36 +1192,6 @@ fn mint_for_token_id_addr() {
 }
 
 #[test]
-fn test_start_time_before_genesis() {
-    let mut router = custom_mock_app();
-    let (creator, _) = setup_accounts(&mut router);
-    // let sender = "minter-factory-contract".to_string();
-
-    // Upload contract code
-    let sg721_code_id = router.store_code(contract_sg721());
-    let minter_code_id = router.store_code(contract_minter());
-    let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
-
-    let mut msg = minter_init();
-    msg.num_tokens = 10;
-    msg.sg721_code_id = sg721_code_id;
-    msg.collection_info.creator = creator.to_string();
-
-    let minter_addr = router
-        .instantiate_contract(minter_code_id, creator, &msg, &creation_fee, "Minter", None)
-        .unwrap();
-
-    let res: StartTimeResponse = router
-        .wrap()
-        .query_wasm_smart(minter_addr, &QueryMsg::StartTime {})
-        .unwrap();
-    assert_eq!(
-        res.start_time,
-        Timestamp::from_nanos(GENESIS_MINT_START_TIME).to_string()
-    );
-}
-
-#[test]
 fn test_update_start_time() {
     let mut router = custom_mock_app();
     let (creator, _) = setup_accounts(&mut router);
