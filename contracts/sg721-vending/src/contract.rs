@@ -1,3 +1,4 @@
+use cw_utils::nonpayable;
 use url::Url;
 
 #[cfg(not(feature = "library"))]
@@ -7,6 +8,7 @@ use cw2::set_contract_version;
 use cw721::ContractInfoResponse;
 use cw721_base::ContractError as BaseError;
 
+use launchpad::ParamsResponse;
 use sg721::{CollectionInfo, InstantiateMsg, RoyaltyInfo, RoyaltyInfoResponse};
 use sg_std::{Response, StargazeMsgWrapper};
 
@@ -31,16 +33,17 @@ pub fn instantiate(
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
-    // TODO: query minter for factory contract?
-    // get allowed minter code ids
-    // query sender's contract for code id and check for match
+    // no funds should be sent to this contract
+    nonpayable(&info)?;
+
+    // TODO:
+    // 1. query minter contract to get minter code id
+    // 2. query factory contract to check if minter code id is in allowed list
+
     // let _res: ParamsResponse = deps
     //     .querier
     //     .query_wasm_smart(factory.clone(), &LaunchpadQueryMsg::Params {})?;
     // println!("{:?}", res);
-
-    let mut res = Response::new();
-    // checked_fair_burn(&info, CREATION_FEE, None, &mut res)?;
 
     // cw721 instantiation
     let info = ContractInfoResponse {
@@ -87,7 +90,7 @@ pub fn instantiate(
 
     COLLECTION_INFO.save(deps.storage, &collection_info)?;
 
-    Ok(res
+    Ok(Response::new()
         .add_attribute("action", "instantiate")
         .add_attribute("contract_name", CONTRACT_NAME)
         .add_attribute("contract_version", CONTRACT_VERSION)
@@ -165,7 +168,7 @@ mod tests {
                 royalty_info: None,
             },
         };
-        let info = mock_info("creator", &coins(0, NATIVE_DENOM));
+        let info = mock_info("creator", &[]);
 
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(0, res.messages.len());
@@ -203,7 +206,7 @@ mod tests {
                 }),
             },
         };
-        let info = mock_info("creator", &coins(0, NATIVE_DENOM));
+        let info = mock_info("creator", &[]);
 
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(0, res.messages.len());

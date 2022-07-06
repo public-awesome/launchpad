@@ -113,6 +113,7 @@ pub fn instantiate(
         per_address_limit: msg.per_address_limit,
         whitelist: whitelist_addr,
         start_time: msg.start_time,
+        factory: factory.clone(),
     };
     CONFIG.save(deps.storage, &config)?;
     MINTABLE_NUM_TOKENS.save(deps.storage, &msg.num_tokens)?;
