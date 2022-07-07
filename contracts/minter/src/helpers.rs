@@ -8,12 +8,12 @@ use cosmwasm_std::{
 };
 use sg_std::CosmosMsg;
 
-/// CwTemplateContract is a wrapper around Addr that provides a lot of helpers
+/// MinterContract is a wrapper around Addr that provides a lot of helpers
 /// for working with this.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct CwTemplateContract(pub Addr);
+pub struct MinterContract(pub Addr);
 
-impl CwTemplateContract {
+impl MinterContract {
     pub fn addr(&self) -> Addr {
         self.0.clone()
     }

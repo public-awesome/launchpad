@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use crate::helpers::CwTemplateContract;
+    use crate::helpers::FactoryContract;
     use crate::msg::InstantiateMsg;
     use cosmwasm_std::{Addr, Uint128};
     use cw_multi_test::{Contract, ContractWrapper, Executor};
@@ -46,7 +46,7 @@ mod tests {
         StargazeApp::default()
     }
 
-    fn proper_instantiate() -> (StargazeApp, CwTemplateContract) {
+    fn proper_instantiate() -> (StargazeApp, FactoryContract) {
         let mut app = custom_mock_app();
         let cw_template_id = app.store_code(contract_template());
         let minter_id = app.store_code(minter_contract());
@@ -78,7 +78,7 @@ mod tests {
             )
             .unwrap();
 
-        let cw_template_contract = CwTemplateContract(cw_template_contract_addr);
+        let cw_template_contract = FactoryContract(cw_template_contract_addr);
 
         (app, cw_template_contract)
     }

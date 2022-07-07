@@ -776,7 +776,8 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractE
     let reply = parse_reply_instantiate_data(msg);
     match reply {
         Ok(res) => {
-            SG721_ADDRESS.save(deps.storage, &Addr::unchecked(res.contract_address))?;
+            SG721_ADDRESS.save(deps.storage, &Addr::unchecked(res.contract_address.clone()))?;
+            println!("SG721 contract address: {}", res.contract_address);
             Ok(Response::default().add_attribute("action", "instantiate_sg721_reply"))
         }
         Err(_) => Err(ContractError::InstantiateSg721Error {}),

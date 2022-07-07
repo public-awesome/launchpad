@@ -1,19 +1,22 @@
+use cw721::NumTokensResponse;
 use launchpad::ExecuteMsg;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use cosmwasm_std::{
-    to_binary, Addr, Coin, ContractInfoResponse, CustomQuery, Querier, QuerierWrapper, StdResult,
+    to_binary, Addr, ContractInfoResponse, CustomQuery, Querier, QuerierWrapper, StdResult,
     WasmMsg, WasmQuery,
 };
 use sg_std::CosmosMsg;
 
-/// CwTemplateContract is a wrapper around Addr that provides a lot of helpers
+use crate::msg::QueryMsg;
+
+/// Sg721VendingContract is a wrapper around Addr that provides a lot of helpers
 /// for working with this.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct FactoryContract(pub Addr);
+pub struct Sg721VendingContract(pub Addr);
 
-impl FactoryContract {
+impl Sg721VendingContract {
     pub fn addr(&self) -> Addr {
         self.0.clone()
     }
@@ -28,36 +31,20 @@ impl FactoryContract {
         .into())
     }
 
-    pub fn call_with_funds<T: Into<ExecuteMsg>>(
-        &self,
-        msg: T,
-        funds: Coin,
-    ) -> StdResult<CosmosMsg> {
-        let msg = to_binary(&msg.into())?;
-        Ok(WasmMsg::Execute {
+    pub fn num_tokens<Q, CQ>(&self, querier: &Q) -> StdResult<NumTokensResponse>
+    where
+        Q: Querier,
+        CQ: CustomQuery,
+    {
+        let msg = QueryMsg::NumTokens {};
+        let query = WasmQuery::Smart {
             contract_addr: self.addr().into(),
-            msg,
-            funds: vec![funds],
+            msg: to_binary(&msg)?,
         }
-        .into())
+        .into();
+        let res: NumTokensResponse = QuerierWrapper::<CQ>::new(querier).query(&query)?;
+        Ok(res)
     }
-
-    // /// Get Count
-    // pub fn count<Q, T, CQ>(&self, querier: &Q) -> StdResult<CountResponse>
-    // where
-    //     Q: Querier,
-    //     T: Into<String>,
-    //     CQ: CustomQuery,
-    // {
-    //     let msg = QueryMsg::GetCount {};
-    //     let query = WasmQuery::Smart {
-    //         contract_addr: self.addr().into(),
-    //         msg: to_binary(&msg)?,
-    //     }
-    //     .into();
-    //     let res: CountResponse = QuerierWrapper::<CQ>::new(querier).query(&query)?;
-    //     Ok(res)
-    // }
 
     pub fn contract_info<Q, T, CQ>(&self, querier: &Q) -> StdResult<ContractInfoResponse>
     where
