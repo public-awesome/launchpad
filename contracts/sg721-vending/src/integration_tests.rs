@@ -5,7 +5,7 @@ mod tests {
     use factory::helpers::FactoryContract;
     use factory::msg::InstantiateMsg as FactoryInstantiateMsg;
     use launchpad::{ExecuteMsg, SudoParams, VendingMinterInitMsg, VendingMinterParams};
-    use sg721::{CollectionInfo, InstantiateMsg, RoyaltyInfoResponse};
+    use sg721::{CollectionInfo, RoyaltyInfoResponse};
     use sg_multi_test::StargazeApp;
     use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME};
 
@@ -33,8 +33,8 @@ mod tests {
 
     pub fn sg721_vending_contract() -> Box<dyn Contract<StargazeMsgWrapper>> {
         let contract = ContractWrapper::new(
-            crate::contract::execute,
-            crate::contract::instantiate,
+            crate::entry::execute,
+            crate::entry::instantiate,
             crate::contract::query,
         );
         Box::new(contract)

@@ -35,6 +35,9 @@ pub enum ContractError {
 
     #[error("{0}")]
     Parse(#[from] ParseError),
+
+    #[error("{0}")]
+    Base(#[from] cw721_base::ContractError),
 }
 
 impl From<ContractError> for Cw721ContractError {

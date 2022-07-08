@@ -1,27 +1,24 @@
-use std::sync::Arc;
-
+use cw721_base::state::TokenInfo;
+use cw721_base::{Extension, MintMsg};
 use url::Url;
 
-#[cfg(not(feature = "library"))]
-use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     from_binary, to_binary, to_vec, Binary, ContractInfoResponse as CwContractInfoResponse,
-    ContractResult, Decimal, Deps, DepsMut, Empty, Env, MessageInfo, Querier, QueryRequest,
+    ContractResult, Decimal, Deps, DepsMut, Empty, Env, Event, MessageInfo, Querier, QueryRequest,
     StdError, StdResult, SystemResult, WasmQuery,
 };
 use cw2::set_contract_version;
-use cw721::ContractInfoResponse;
-use cw721_base::ContractError as BaseError;
-use cw_utils::nonpayable;
+use cw721::{ContractInfoResponse, Cw721ReceiveMsg};
+use cw_utils::{nonpayable, Expiration};
 
 use launchpad::{ParamsResponse, QueryMsg as LaunchpadQueryMsg};
 use minter::msg::{ConfigResponse, QueryMsg as MinterQueryMsg};
 use sg721::{CollectionInfo, InstantiateMsg, RoyaltyInfo, RoyaltyInfoResponse};
-use sg_std::{Response, StargazeMsgWrapper};
+use sg_std::Response;
 
-use crate::msg::{CollectionInfoResponse, ExecuteMsg, QueryMsg};
+use crate::msg::{CollectionInfoResponse, QueryMsg};
 use crate::state::COLLECTION_INFO;
-use crate::ContractError;
+use crate::{ContractError, Sg721Contract};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sg-721";
@@ -29,10 +26,8 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 const MAX_DESCRIPTION_LENGTH: u32 = 512;
 
-pub type Sg721Contract<'a> = cw721_base::Cw721Contract<'a, Empty, StargazeMsgWrapper>;
-
-#[cfg_attr(not(feature = "library"), entry_point)]
-pub fn instantiate(
+pub fn _instantiate(
+    contract: Sg721Contract,
     deps: DepsMut,
     _env: Env,
     info: MessageInfo,
@@ -128,6 +123,220 @@ pub fn instantiate(
         .add_attribute("image", image.to_string()))
 }
 
+pub fn ready(
+    contract: Sg721Contract,
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+) -> Result<Response, ContractError> {
+    Ok(Response::new())
+}
+
+pub fn approve(
+    contract: Sg721Contract,
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    spender: String,
+    token_id: String,
+    expires: Option<Expiration>,
+) -> Result<Response, ContractError> {
+    contract._update_approvals(deps, &env, &info, &spender, &token_id, true, expires)?;
+
+    let event = Event::new("approve")
+        .add_attribute("sender", info.sender)
+        .add_attribute("spender", spender)
+        .add_attribute("token_id", token_id);
+    let res = Response::new().add_event(event);
+
+    Ok(res)
+}
+
+pub fn approve_all(
+    contract: Sg721Contract,
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    operator: String,
+    expires: Option<Expiration>,
+) -> Result<Response, ContractError> {
+    // reject expired data as invalid
+    let expires = expires.unwrap_or_default();
+    if expires.is_expired(&env.block) {
+        return Err(ContractError::Expired {});
+    }
+
+    // set the operator for us
+    let operator_addr = deps.api.addr_validate(&operator)?;
+    contract
+        .operators
+        .save(deps.storage, (&info.sender, &operator_addr), &expires)?;
+
+    let event = Event::new("approve_all")
+        .add_attribute("sender", info.sender)
+        .add_attribute("operator", operator);
+    let res = Response::new().add_event(event);
+
+    Ok(res)
+}
+
+pub fn burn(
+    contract: Sg721Contract,
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    token_id: String,
+) -> Result<Response, ContractError> {
+    let token = contract.tokens.load(deps.storage, &token_id)?;
+    contract.check_can_send(deps.as_ref(), &env, &info, &token)?;
+
+    contract.tokens.remove(deps.storage, &token_id)?;
+    contract.decrement_tokens(deps.storage)?;
+
+    let event = Event::new("burn")
+        .add_attribute("sender", info.sender)
+        .add_attribute("token_id", token_id);
+    let res = Response::new().add_event(event);
+
+    Ok(res)
+}
+
+pub fn revoke(
+    contract: Sg721Contract,
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    spender: String,
+    token_id: String,
+) -> Result<Response, ContractError> {
+    contract._update_approvals(deps, &env, &info, &spender, &token_id, false, None)?;
+
+    let event = Event::new("revoke")
+        .add_attribute("sender", info.sender)
+        .add_attribute("spender", spender)
+        .add_attribute("token_id", token_id);
+    let res = Response::new().add_event(event);
+
+    Ok(res)
+}
+
+pub fn revoke_all(
+    contract: Sg721Contract,
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    operator: String,
+) -> Result<Response, ContractError> {
+    let operator_addr = deps.api.addr_validate(&operator)?;
+    contract
+        .operators
+        .remove(deps.storage, (&info.sender, &operator_addr));
+
+    let event = Event::new("revoke_all")
+        .add_attribute("sender", info.sender)
+        .add_attribute("operator", operator);
+    let res = Response::new().add_event(event);
+
+    Ok(res)
+}
+
+pub fn send_nft(
+    contract: Sg721Contract,
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    receiving_contract: String,
+    token_id: String,
+    msg: Binary,
+) -> Result<Response, ContractError> {
+    // let hook = prepare_transfer_hook(
+    //     deps.storage,
+    //     info.sender.to_string(),
+    //     &receiving_contract,
+    //     &token_id,
+    // )?;
+
+    // Transfer token
+    contract._transfer_nft(deps, &env, &info, &receiving_contract, &token_id)?;
+
+    let send = Cw721ReceiveMsg {
+        sender: info.sender.to_string(),
+        token_id: token_id.clone(),
+        msg,
+    };
+
+    // Send message
+    let event = Event::new("send_nft")
+        .add_attribute("sender", info.sender)
+        .add_attribute("recipient", receiving_contract.to_string())
+        .add_attribute("token_id", token_id);
+    let res = Response::new()
+        .add_message(send.into_cosmos_msg(receiving_contract)?)
+        // .add_submessages(hook)
+        .add_event(event);
+
+    Ok(res)
+}
+
+pub fn transfer_nft(
+    contract: Sg721Contract,
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    recipient: String,
+    token_id: String,
+) -> Result<Response, ContractError> {
+    // let hook = prepare_transfer_hook(deps.storage, info.sender.to_string(), &recipient, &token_id)?;
+
+    contract._transfer_nft(deps, &env, &info, &recipient, &token_id)?;
+
+    let event = Event::new("transfer_nft")
+        .add_attribute("sender", info.sender)
+        .add_attribute("recipient", recipient)
+        .add_attribute("token_id", token_id);
+    let res = Response::new()
+        // .add_submessages(hook)
+        .add_event(event);
+
+    Ok(res)
+}
+
+pub fn mint(
+    contract: Sg721Contract,
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    msg: MintMsg<Extension>,
+) -> Result<Response, ContractError> {
+    let minter = contract.minter.load(deps.storage)?;
+
+    if info.sender != minter {
+        return Err(ContractError::Unauthorized {});
+    }
+
+    // create the token
+    let token = TokenInfo {
+        owner: deps.api.addr_validate(&msg.owner)?,
+        approvals: vec![],
+        token_uri: msg.token_uri,
+        extension: msg.extension,
+    };
+    contract
+        .tokens
+        .update(deps.storage, &msg.token_id, |old| match old {
+            Some(_) => Err(ContractError::Claimed {}),
+            None => Ok(token),
+        })?;
+
+    contract.increment_tokens(deps.storage)?;
+
+    Ok(Response::new()
+        .add_attribute("action", "mint")
+        .add_attribute("minter", info.sender)
+        .add_attribute("owner", msg.owner)
+        .add_attribute("token_id", msg.token_id))
+}
+
 fn query_contract_info(
     querier: &dyn Querier,
     contract_addr: String,
@@ -149,17 +358,6 @@ fn query_contract_info(
     }
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
-pub fn execute(
-    deps: DepsMut,
-    env: Env,
-    info: MessageInfo,
-    msg: ExecuteMsg,
-) -> Result<Response, BaseError> {
-    Sg721Contract::default().execute(deps, env, info, msg)
-}
-
-#[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::CollectionInfo {} => to_binary(&query_config(deps)?),

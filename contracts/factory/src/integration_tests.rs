@@ -30,8 +30,8 @@ mod tests {
 
     pub fn sg721_vending_contract() -> Box<dyn Contract<StargazeMsgWrapper>> {
         let contract = ContractWrapper::new(
-            sg721_vending::contract::execute,
-            sg721_vending::contract::instantiate,
+            sg721_vending::entry::execute,
+            sg721_vending::entry::instantiate,
             sg721_vending::contract::query,
         );
         Box::new(contract)
