@@ -4,7 +4,15 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use sg721::RoyaltyInfoResponse;
 
-pub type ExecuteMsg = cw721_base::ExecuteMsg<Empty>;
+// TODO: expand all messages...
+// ExecuteMsg::_Ready {}
+// pub type ExecuteMsg = cw721_base::ExecuteMsg<Empty>;
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum ExecuteMsg {
+    _Ready {},
+}
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
