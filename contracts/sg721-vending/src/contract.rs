@@ -1,18 +1,21 @@
+use std::sync::Arc;
+
 use url::Url;
 
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     from_binary, to_binary, to_vec, Binary, ContractInfoResponse as CwContractInfoResponse,
-    ContractResult, Decimal, Deps, DepsMut, Empty, Env, MessageInfo, Querier, QuerierWrapper,
-    QueryRequest, StdError, StdResult, SystemError, SystemResult, WasmQuery,
+    ContractResult, Decimal, Deps, DepsMut, Empty, Env, MessageInfo, Querier, QueryRequest,
+    StdError, StdResult, SystemResult, WasmQuery,
 };
 use cw2::set_contract_version;
 use cw721::ContractInfoResponse;
 use cw721_base::ContractError as BaseError;
 use cw_utils::nonpayable;
 
-use launchpad::ParamsResponse;
+use launchpad::{ParamsResponse, QueryMsg as LaunchpadQueryMsg};
+use minter::msg::{ConfigResponse, QueryMsg as MinterQueryMsg};
 use sg721::{CollectionInfo, InstantiateMsg, RoyaltyInfo, RoyaltyInfoResponse};
 use sg_std::{Response, StargazeMsgWrapper};
 
@@ -40,28 +43,38 @@ pub fn instantiate(
     // no funds should be sent to this contract
     nonpayable(&info)?;
 
+    println!("here1");
+
+    // query minter to the get the factory address
+    let config: ConfigResponse = deps
+        .querier
+        .query_wasm_smart(msg.minter.clone(), &MinterQueryMsg::Config {})?;
+    let factory = config.factory;
+    if factory != info.sender {
+        return Err(ContractError::Unauthorized {});
+    }
+
+    println!("here2");
+
+    // query minter contract to get minter code id
     let query = WasmQuery::ContractInfo {
         contract_addr: msg.minter.clone(),
     }
     .into();
     let res: CwContractInfoResponse = deps.querier.query(&query)?;
-    println!("{:?}", res);
+    let minter_id = res.code_id;
 
-    // TODO:
-    // write integrate test to test instantiation...
+    println!("here3");
 
-    // TODO:
-    // 1. query minter contract to get minter code id
-    // let contract_info = query_contract_info(&deps.querier, "contract1".into())?;
+    // query factory to check if minter code id is in allowed list
+    let res: ParamsResponse = deps
+        .querier
+        .query_wasm_smart(factory, &LaunchpadQueryMsg::Params {})?;
+    if !res.params.minter_codes.iter().any(|x| x == &minter_id) {
+        return Err(ContractError::Unauthorized {});
+    }
 
-    // CwTemplateContract(msg.minter);
-
-    // 2. query factory contract to check if minter code id is in allowed list
-
-    // let _res: ParamsResponse = deps
-    //     .querier
-    //     .query_wasm_smart(factory.clone(), &LaunchpadQueryMsg::Params {})?;
-    // println!("{:?}", res);
+    println!("here4");
 
     // cw721 instantiation
     let info = ContractInfoResponse {
@@ -76,6 +89,8 @@ pub fn instantiate(
     Sg721Contract::default()
         .minter
         .save(deps.storage, &minter)?;
+
+    println!("here5");
 
     // sg721 instantiation
     if msg.collection_info.description.len() > MAX_DESCRIPTION_LENGTH as usize {

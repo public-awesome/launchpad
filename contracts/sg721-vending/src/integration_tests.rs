@@ -102,7 +102,7 @@ mod tests {
             num_tokens: 1,
             per_address_limit: 5,
             unit_price: coin(10_000_000, NATIVE_DENOM),
-            name: "Test Name".to_string(),
+            name: "Sg721 Vending Test Name".to_string(),
             base_token_uri: "ipfs://test".to_string(),
             start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
             sg721_code_id: sg721_id,
@@ -154,7 +154,7 @@ mod tests {
 
             // query contract...
             let res = contract.num_tokens::<MockQuerier, Empty>(&deps.querier);
-            println!("{:?}", res);
+            // println!("{:?}", res);
         }
 
         // #[test]

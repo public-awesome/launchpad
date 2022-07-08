@@ -37,6 +37,7 @@ pub struct ConfigResponse {
     pub start_time: Timestamp,
     pub unit_price: Coin,
     pub whitelist: Option<String>,
+    pub factory: String,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

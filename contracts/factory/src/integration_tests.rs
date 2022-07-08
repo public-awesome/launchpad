@@ -38,7 +38,7 @@ mod tests {
     }
 
     const GOVERNANCE: &str = "governance";
-    const ADMIN: &str = "ADMIN";
+    const ADMIN: &str = "admin";
     const NATIVE_DENOM: &str = "ustars";
     const CREATION_FEE: u128 = 5_000_000_000;
 
@@ -83,7 +83,7 @@ mod tests {
         (app, cw_template_contract)
     }
 
-    mod params {
+    mod execute {
         use cosmwasm_std::{coin, Timestamp};
         use cw_multi_test::{BankSudo, SudoMsg};
         use launchpad::{ExecuteMsg, VendingMinterInitMsg};
@@ -109,7 +109,7 @@ mod tests {
                 num_tokens: 1,
                 per_address_limit: 5,
                 unit_price: coin(10_000_000, NATIVE_DENOM),
-                name: "Test Name".to_string(),
+                name: "Factory Vending Minter Test".to_string(),
                 base_token_uri: "ipfs://test".to_string(),
                 start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
                 sg721_code_id: sg721_id,
@@ -119,20 +119,19 @@ mod tests {
             let creation_fee = coin(CREATION_FEE, NATIVE_DENOM);
 
             app.sudo(SudoMsg::Bank(BankSudo::Mint {
-                to_address: GOVERNANCE.to_string(),
+                to_address: ADMIN.to_string(),
                 amount: vec![creation_fee.clone()],
             }))
             .unwrap();
 
-            let bal = app.wrap().query_all_balances(GOVERNANCE).unwrap();
+            let bal = app.wrap().query_all_balances(ADMIN).unwrap();
             assert_eq!(bal, vec![creation_fee.clone()]);
 
             let cosmos_msg = cw_template_contract
                 .call_with_funds(msg, creation_fee)
                 .unwrap();
 
-            app.execute(Addr::unchecked(GOVERNANCE), cosmos_msg)
-                .unwrap();
+            app.execute(Addr::unchecked(ADMIN), cosmos_msg).unwrap();
         }
     }
 }

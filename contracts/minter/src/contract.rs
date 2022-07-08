@@ -57,16 +57,15 @@ pub fn instantiate(
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
-    let factory = info.sender;
-
     // TODO: validate
 
     // Make sure the sender is the factory contract
-    let _res: ParamsResponse = deps
+    let res: ParamsResponse = deps
         .querier
-        .query_wasm_smart(factory.clone(), &LaunchpadQueryMsg::Params {})?;
-    // TODO: validate minter id
-    // println!("{:?}", res);
+        .query_wasm_smart(msg.factory.clone(), &LaunchpadQueryMsg::Params {})?;
+    if res.params.minter_codes.is_empty() {
+        return Err(ContractError::Unauthorized(msg.factory.to_string()));
+    }
 
     let params = Params {
         max_token_limit: msg.max_token_limit,
@@ -113,14 +112,14 @@ pub fn instantiate(
         per_address_limit: msg.per_address_limit,
         whitelist: whitelist_addr,
         start_time: msg.start_time,
-        factory: factory.clone(),
+        factory: deps.api.addr_validate(&msg.factory)?,
     };
     CONFIG.save(deps.storage, &config)?;
     MINTABLE_NUM_TOKENS.save(deps.storage, &msg.num_tokens)?;
 
     let token_ids = random_token_list(
         &env,
-        factory.clone(),
+        info.sender.clone(),
         (1..=msg.num_tokens).collect::<Vec<u32>>(),
     )?;
     // Save mintable token ids map
@@ -130,7 +129,7 @@ pub fn instantiate(
         token_position += 1;
     }
 
-    println!("contract address {:?}", env.contract.address.to_string());
+    // println!("contract address {:?}", env.contract.address.to_string());
 
     // Submessage to instantiate sg721 contract
     let sub_msgs: Vec<SubMsg> = vec![SubMsg {
@@ -143,7 +142,7 @@ pub fn instantiate(
                 collection_info: msg.collection_info,
             })?,
             funds: info.funds,
-            admin: Some(factory.to_string()),
+            admin: Some(info.sender.to_string()),
             label: msg.name,
         }
         .into(),
@@ -156,7 +155,7 @@ pub fn instantiate(
         .add_attribute("action", "instantiate")
         .add_attribute("contract_name", CONTRACT_NAME)
         .add_attribute("contract_version", CONTRACT_VERSION)
-        .add_attribute("sender", factory)
+        .add_attribute("sender", info.sender)
         .add_submessages(sub_msgs))
 }
 
@@ -711,6 +710,7 @@ fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
         unit_price: config.unit_price,
         per_address_limit: config.per_address_limit,
         whitelist: config.whitelist.map(|w| w.to_string()),
+        factory: config.factory.to_string(),
     })
 }
 

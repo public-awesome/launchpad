@@ -58,7 +58,7 @@ pub fn execute_create_vending_minter(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    msg: VendingMinterInitMsg,
+    mut msg: VendingMinterInitMsg,
 ) -> Result<Response, ContractError> {
     // TODO: why doesn't this work?
     // must_pay(&info, &deps.querier.query_bonded_denom()?)?;
@@ -68,6 +68,8 @@ pub fn execute_create_vending_minter(
 
     let mut res = Response::new();
     checked_fair_burn(&info, params.creation_fee.u128(), None, &mut res)?;
+
+    msg.factory = env.contract.address.to_string();
 
     // Check the number of tokens is more than zero and less than the max limit
     if msg.num_tokens == 0 || msg.num_tokens > params.max_token_limit {
@@ -109,7 +111,7 @@ pub fn execute_create_vending_minter(
         code_id: params.code_id,
         msg: to_binary(&msg)?,
         funds: vec![],
-        label: msg.name,
+        label: format!("VendingMinter-{}", msg.name),
     };
     let submsg = SubMsg::reply_on_success(wasm_msg, msg.sg721_code_id);
 
@@ -130,6 +132,8 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractE
                 verified: false,
                 blocked: false,
             };
+            // TODO: save factory contract address in minter config
+
             MINTERS.save(
                 deps.storage,
                 (code_id, &Addr::unchecked(res.contract_address)),
