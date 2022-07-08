@@ -60,5 +60,7 @@ pub struct ParamsResponse {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
+    // TODO: try to make generic by passing in JSON
+    // have base params, with optional JSON...
     CreateVendingMinter(VendingMinterInitMsg),
 }

@@ -107,7 +107,7 @@ pub fn execute_create_vending_minter(
     }
 
     let wasm_msg = WasmMsg::Instantiate {
-        admin: Some(env.contract.address.to_string()),
+        admin: Some(info.sender.to_string()),
         code_id: params.code_id,
         msg: to_binary(&msg)?,
         funds: vec![],

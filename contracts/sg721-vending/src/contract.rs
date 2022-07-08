@@ -43,7 +43,13 @@ pub fn instantiate(
     // no funds should be sent to this contract
     nonpayable(&info)?;
 
-    println!("here1");
+    println!("minter {:?}", msg.minter);
+
+    // TODO: move these checks into the approve() function
+    // called by the minter reply
+
+    // TODO: keep track of contract setup state
+    // only allow actions when contract is approved
 
     // query minter to the get the factory address
     let config: ConfigResponse = deps
@@ -54,8 +60,6 @@ pub fn instantiate(
         return Err(ContractError::Unauthorized {});
     }
 
-    println!("here2");
-
     // query minter contract to get minter code id
     let query = WasmQuery::ContractInfo {
         contract_addr: msg.minter.clone(),
@@ -64,8 +68,6 @@ pub fn instantiate(
     let res: CwContractInfoResponse = deps.querier.query(&query)?;
     let minter_id = res.code_id;
 
-    println!("here3");
-
     // query factory to check if minter code id is in allowed list
     let res: ParamsResponse = deps
         .querier
@@ -73,8 +75,6 @@ pub fn instantiate(
     if !res.params.minter_codes.iter().any(|x| x == &minter_id) {
         return Err(ContractError::Unauthorized {});
     }
-
-    println!("here4");
 
     // cw721 instantiation
     let info = ContractInfoResponse {
@@ -89,8 +89,6 @@ pub fn instantiate(
     Sg721Contract::default()
         .minter
         .save(deps.storage, &minter)?;
-
-    println!("here5");
 
     // sg721 instantiation
     if msg.collection_info.description.len() > MAX_DESCRIPTION_LENGTH as usize {

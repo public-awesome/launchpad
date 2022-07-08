@@ -77,7 +77,7 @@ mod tests {
                 &msg,
                 &[],
                 "factory",
-                None,
+                Some(GOVERNANCE.to_string()),
             )
             .unwrap();
 
@@ -92,7 +92,7 @@ mod tests {
         let sg721_id = app.store_code(sg721_vending_contract());
 
         let collection_info: CollectionInfo<RoyaltyInfoResponse> = CollectionInfo {
-            creator: "creator".to_string(),
+            creator: ADMIN.to_string(),
             description: "description".to_string(),
             image: "https://example.com/image.png".to_string(),
             ..CollectionInfo::default()
@@ -102,7 +102,7 @@ mod tests {
             num_tokens: 1,
             per_address_limit: 5,
             unit_price: coin(10_000_000, NATIVE_DENOM),
-            name: "Sg721 Vending Test Name".to_string(),
+            name: "Collection Name".to_string(),
             base_token_uri: "ipfs://test".to_string(),
             start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
             sg721_code_id: sg721_id,

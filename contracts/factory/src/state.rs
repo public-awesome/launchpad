@@ -20,3 +20,5 @@ pub type MinterAddress = Addr;
 pub const MINTERS: Map<(CodeID, &MinterAddress), Minter> = Map::new("m");
 
 // pub const COLLECTION_ADDRESS: Item<Addr> = Item::new("collection_address");
+
+// TODO: create a map of creator addresses

@@ -142,8 +142,8 @@ pub fn instantiate(
                 collection_info: msg.collection_info,
             })?,
             funds: info.funds,
-            admin: Some(info.sender.to_string()),
-            label: msg.name,
+            admin: Some(config.admin.to_string()),
+            label: format!("SG721-{}", msg.name),
         }
         .into(),
         id: INSTANTIATE_SG721_REPLY_ID,
@@ -769,6 +769,10 @@ fn query_mint_price(deps: Deps) -> StdResult<MintPriceResponse> {
 // Reply callback triggered from cw721 contract instantiation
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
+    println!("IN MINTER reply: {:?}", msg);
+
+    // TODO: call approve() when contract is instantiated
+
     if msg.id != INSTANTIATE_SG721_REPLY_ID {
         return Err(ContractError::InvalidReplyID {});
     }
