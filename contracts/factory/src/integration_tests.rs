@@ -70,7 +70,7 @@ mod tests {
         let cw_template_contract_addr = app
             .instantiate_contract(
                 cw_template_id,
-                Addr::unchecked(ADMIN),
+                Addr::unchecked(GOVERNANCE),
                 &msg,
                 &[],
                 "factory",

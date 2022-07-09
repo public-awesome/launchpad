@@ -1,5 +1,5 @@
 use cw721_base::state::TokenInfo;
-use cw721_base::{Extension, MintMsg};
+use cw721_base::Extension;
 use url::Url;
 
 use cosmwasm_std::{
@@ -13,7 +13,7 @@ use cw_utils::{nonpayable, Expiration};
 
 use launchpad::{ParamsResponse, QueryMsg as LaunchpadQueryMsg};
 use minter::msg::{ConfigResponse, QueryMsg as MinterQueryMsg};
-use sg721::{CollectionInfo, InstantiateMsg, RoyaltyInfo, RoyaltyInfoResponse};
+use sg721::{CollectionInfo, InstantiateMsg, MintMsg, RoyaltyInfo, RoyaltyInfoResponse};
 use sg_std::Response;
 
 use crate::msg::{CollectionInfoResponse, QueryMsg};
@@ -39,37 +39,6 @@ pub fn _instantiate(
     nonpayable(&info)?;
 
     println!("minter {:?}", msg.minter);
-
-    // TODO: move these checks into the approve() function
-    // called by the minter reply
-
-    // TODO: keep track of contract setup state
-    // only allow actions when contract is approved
-
-    // query minter to the get the factory address
-    let config: ConfigResponse = deps
-        .querier
-        .query_wasm_smart(msg.minter.clone(), &MinterQueryMsg::Config {})?;
-    let factory = config.factory;
-    if factory != info.sender {
-        return Err(ContractError::Unauthorized {});
-    }
-
-    // query minter contract to get minter code id
-    let query = WasmQuery::ContractInfo {
-        contract_addr: msg.minter.clone(),
-    }
-    .into();
-    let res: CwContractInfoResponse = deps.querier.query(&query)?;
-    let minter_id = res.code_id;
-
-    // query factory to check if minter code id is in allowed list
-    let res: ParamsResponse = deps
-        .querier
-        .query_wasm_smart(factory, &LaunchpadQueryMsg::Params {})?;
-    if !res.params.minter_codes.iter().any(|x| x == &minter_id) {
-        return Err(ContractError::Unauthorized {});
-    }
 
     // cw721 instantiation
     let info = ContractInfoResponse {
@@ -123,12 +92,40 @@ pub fn _instantiate(
         .add_attribute("image", image.to_string()))
 }
 
+// TODO: make sure this cannot be called from the outside
 pub fn ready(
     contract: Sg721Contract,
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
 ) -> Result<Response, ContractError> {
+    let minter = Sg721Contract::default().minter.load(deps.storage)?;
+    if minter != info.sender {
+        return Err(ContractError::Unauthorized {});
+    }
+
+    // query minter to the get the factory address
+    let config: ConfigResponse = deps
+        .querier
+        .query_wasm_smart(minter.clone(), &MinterQueryMsg::Config {})?;
+    let factory = config.factory;
+
+    // query minter contract to get minter code id
+    let query = WasmQuery::ContractInfo {
+        contract_addr: minter.to_string(),
+    }
+    .into();
+    let res: CwContractInfoResponse = deps.querier.query(&query)?;
+    let minter_id = res.code_id;
+
+    // query factory to check if minter code id is in allowed list
+    let res: ParamsResponse = deps
+        .querier
+        .query_wasm_smart(factory, &LaunchpadQueryMsg::Params {})?;
+    if !res.params.minter_codes.iter().any(|x| x == &minter_id) {
+        return Err(ContractError::Unauthorized {});
+    }
+
     Ok(Response::new())
 }
 
@@ -393,7 +390,7 @@ pub fn share_validate(share: Decimal) -> Result<Decimal, ContractError> {
     Ok(share)
 }
 
-// FIXME: fail because minter doesn't exist yet
+// TODO: move to integration tests
 // #[cfg(test)]
 // mod tests {
 //     use super::*;

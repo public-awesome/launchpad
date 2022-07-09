@@ -5,10 +5,8 @@ use serde::{Deserialize, Serialize};
 use sg721::{CollectionInfo, RoyaltyInfoResponse};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, Default)]
-pub struct VendingMinterInitMsg {
+pub struct MinterInitMsg<T> {
     pub factory: String,
-    pub base_token_uri: String,
-    pub num_tokens: u32,
     pub sg721_code_id: u64,
     pub name: String,
     pub symbol: String,
@@ -17,12 +15,16 @@ pub struct VendingMinterInitMsg {
     pub per_address_limit: u32,
     pub unit_price: Coin,
     pub whitelist: Option<String>,
-    // params...
     pub max_token_limit: u32,
     pub min_mint_price: Uint128,
     pub airdrop_mint_price: Uint128,
     pub mint_fee_bps: u64,
     pub airdrop_mint_fee_bps: u64,
+    pub extension: T,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, Default)]
+pub struct VendingMinterInitMsgExtension {
     pub shuffle_fee: Uint128,
 }
 
@@ -33,7 +35,7 @@ pub enum QueryMsg {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, Default)]
-pub struct VendingMinterParams {
+pub struct MinterParams<T> {
     pub code_id: u64,
     pub max_token_limit: u32,
     pub max_per_address_limit: u32,
@@ -41,26 +43,33 @@ pub struct VendingMinterParams {
     pub airdrop_mint_price: Uint128,
     pub mint_fee_percent: Decimal,
     pub airdrop_mint_fee_percent: Decimal,
-    pub shuffle_fee: Uint128,
     pub creation_fee: Uint128,
+    pub extension: T,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, Default)]
+pub struct VendingMinterParamsExtension {
+    pub shuffle_fee: Uint128,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct SudoParams {
-    /// A list of allowed minter code IDs
-    pub minter_codes: Vec<u64>,
-    pub vending_minter: VendingMinterParams,
+pub struct SudoParams<T> {
+    pub minters: Vec<MinterInfo<T>>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct ParamsResponse {
-    pub params: SudoParams,
+pub struct MinterInfo<T> {
+    pub code_id: u64,
+    pub params: MinterParams<T>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct ParamsResponse<T> {
+    pub params: SudoParams<T>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum ExecuteMsg {
-    // TODO: try to make generic by passing in JSON
-    // have base params, with optional JSON...
-    CreateVendingMinter(VendingMinterInitMsg),
+pub enum ExecuteMsg<T> {
+    CreateMinter(MinterInitMsg<T>),
 }

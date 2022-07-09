@@ -21,7 +21,7 @@ use cw_utils::{may_pay, parse_reply_instantiate_data};
 use rand_core::{RngCore, SeedableRng};
 use rand_xoshiro::Xoshiro128PlusPlus;
 use sg1::checked_fair_burn;
-use sg721::InstantiateMsg as Sg721InstantiateMsg;
+use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
 use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use sg_whitelist::msg::{
     ConfigResponse as WhitelistConfigResponse, HasMemberResponse, QueryMsg as WhitelistQueryMsg,
@@ -771,8 +771,6 @@ fn query_mint_price(deps: Deps) -> StdResult<MintPriceResponse> {
 pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
     println!("IN MINTER reply: {:?}", msg);
 
-    // TODO: call approve() when contract is instantiated
-
     if msg.id != INSTANTIATE_SG721_REPLY_ID {
         return Err(ContractError::InvalidReplyID {});
     }
@@ -780,9 +778,21 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractE
     let reply = parse_reply_instantiate_data(msg);
     match reply {
         Ok(res) => {
-            SG721_ADDRESS.save(deps.storage, &Addr::unchecked(res.contract_address.clone()))?;
-            println!("SG721 contract address: {}", res.contract_address);
-            Ok(Response::default().add_attribute("action", "instantiate_sg721_reply"))
+            let sg721_address = res.contract_address;
+
+            // mark the collection contract as ready to mint
+            let msg = WasmMsg::Execute {
+                contract_addr: sg721_address.clone(),
+                msg: to_binary(&Sg721ExecuteMsg::<Empty>::_Ready {})?,
+                funds: vec![],
+            };
+
+            SG721_ADDRESS.save(deps.storage, &Addr::unchecked(sg721_address.clone()))?;
+            println!("SG721 contract address: {}", sg721_address);
+
+            Ok(Response::default()
+                .add_attribute("action", "instantiate_sg721_reply")
+                .add_message(msg))
         }
         Err(_) => Err(ContractError::InstantiateSg721Error {}),
     }

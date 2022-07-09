@@ -123,11 +123,9 @@ mod tests {
         let cosmos_msg = factory_contract.call_with_funds(msg, creation_fee).unwrap();
 
         let res = app.execute(Addr::unchecked(ADMIN), cosmos_msg);
-        println!("{:?}", res);
         assert!(res.is_ok());
 
-        // TODO: get address from contract instantiation
-
+        // can also get this address from the events from the res above
         let contract = Sg721VendingContract(Addr::unchecked("contract1"));
 
         (app, contract)
@@ -156,35 +154,5 @@ mod tests {
             let res = contract.num_tokens::<MockQuerier, Empty>(&deps.querier);
             // println!("{:?}", res);
         }
-
-        // #[test]
-        // fn incorrectly_create_sg721_vending_collection() {
-        //     let (mut app, factory_contract) = proper_instantiate_factory();
-        //     let sg721_id = app.store_code(sg721_vending_contract());
-        //     let msg = InstantiateMsg {
-        //         name: "Collection Name".to_string(),
-        //         symbol: "COL".to_string(),
-        //         minter: "minter".to_string(),
-        //         collection_info: CollectionInfo {
-        //             creator: "creator".to_string(),
-        //             description: "description".to_string(),
-        //             image: "image".to_string(),
-        //             external_link: None,
-        //             royalty_info: None,
-        //         },
-        //     };
-        //     let sg721_addr = app
-        //         .instantiate_contract(
-        //             sg721_id,
-        //             Addr::unchecked(ADMIN),
-        //             &msg,
-        //             &[],
-        //             "sg721",
-        //             Some(ADMIN.to_string()),
-        //         )
-        //         .unwrap();
-        //     let sg721_contract = Sg721VendingContract(sg721_addr);
-        //     (app, sg721_contract)
-        // }
     }
 }

@@ -20,8 +20,8 @@ pub mod entry {
         _instantiate, approve, approve_all, burn, mint, ready, revoke, revoke_all, send_nft,
         transfer_nft,
     };
-    use crate::msg::ExecuteMsg;
     use cosmwasm_std::{DepsMut, Env, MessageInfo};
+    use sg721::ExecuteMsg;
     use sg_std::Response;
 
     #[cfg_attr(not(feature = "library"), entry_point)]
