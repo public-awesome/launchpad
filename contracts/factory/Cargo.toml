@@ -32,7 +32,7 @@ thiserror = { version = "1.0.31" }
 cw-utils = "0.13.2"
 sg1 = { path = "../../packages/sg1" }
 sg-std = { path = "../../packages/sg-std" }
-launchpad = { path = "../../packages/launchpad" }
+vending = { path = "../../packages/vending" }
 sg721 = { path = "../../packages/sg721" }
 
 [dev-dependencies]

@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use cosmwasm_std::Addr;
 use cw_storage_plus::{Item, Map};
 
-use launchpad::SudoParams;
+use vending::SudoParams;
 
 pub const SUDO_PARAMS: Item<SudoParams> = Item::new("sudo-params");
 

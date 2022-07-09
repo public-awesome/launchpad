@@ -1,4 +1,4 @@
-# Launchpad Types
+# Vending Minter Types
 
 Common types needed for the minter factory.
 

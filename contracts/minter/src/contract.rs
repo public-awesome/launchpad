@@ -30,7 +30,7 @@ use sha2::{Digest, Sha256};
 use shuffle::{fy::FisherYates, shuffler::Shuffler};
 use url::Url;
 
-use launchpad::{
+use vending::{
     ParamsResponse, QueryMsg as LaunchpadQueryMsg, VendingMinterInitMsg as InstantiateMsg,
 };
 

@@ -1,7 +1,7 @@
 use cw721::NumTokensResponse;
-use launchpad::ExecuteMsg;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use vending::ExecuteMsg;
 
 use cosmwasm_std::{
     to_binary, Addr, ContractInfoResponse, CustomQuery, Querier, QuerierWrapper, StdResult,

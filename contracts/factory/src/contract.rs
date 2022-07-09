@@ -5,9 +5,9 @@ use cosmwasm_std::{
 };
 use cw2::set_contract_version;
 use cw_utils::{must_pay, parse_reply_instantiate_data};
-use launchpad::{ExecuteMsg, ParamsResponse, VendingMinterInitMsg};
 use sg1::checked_fair_burn;
 use sg_std::NATIVE_DENOM;
+use vending::{ExecuteMsg, ParamsResponse, VendingMinterInitMsg};
 
 use crate::error::ContractError;
 use crate::msg::{InstantiateMsg, QueryMsg, Response, SubMsg, SudoMsg};
@@ -162,7 +162,7 @@ mod tests {
     use super::*;
     use cosmwasm_std::coins;
     use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-    use launchpad::{SudoParams, VendingMinterParams};
+    use vending::{SudoParams, VendingMinterParams};
 
     #[test]
     fn proper_initialization() {

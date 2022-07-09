@@ -4,9 +4,9 @@ mod tests {
     use crate::msg::InstantiateMsg;
     use cosmwasm_std::{Addr, Uint128};
     use cw_multi_test::{Contract, ContractWrapper, Executor};
-    use launchpad::{SudoParams, VendingMinterParams};
     use sg_multi_test::StargazeApp;
     use sg_std::StargazeMsgWrapper;
+    use vending::{SudoParams, VendingMinterParams};
 
     pub fn contract_template() -> Box<dyn Contract<StargazeMsgWrapper>> {
         let contract = ContractWrapper::new(
@@ -86,9 +86,9 @@ mod tests {
     mod execute {
         use cosmwasm_std::{coin, Timestamp};
         use cw_multi_test::{BankSudo, SudoMsg};
-        use launchpad::{ExecuteMsg, VendingMinterInitMsg};
         use sg721::{CollectionInfo, RoyaltyInfoResponse};
         use sg_std::GENESIS_MINT_START_TIME;
+        use vending::{ExecuteMsg, VendingMinterInitMsg};
 
         use super::*;
 

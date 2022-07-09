@@ -4,7 +4,7 @@ use cosmwasm_std::{Api, Coin};
 use cw721::{Cw721QueryMsg, OwnerOfResponse, TokensResponse};
 use cw721_base::ExecuteMsg as Cw721ExecuteMsg;
 use cw_multi_test::{BankSudo, Contract, ContractWrapper, Executor, SudoMsg};
-use launchpad::{
+use vending::{
     ExecuteMsg as FactoryExecuteMsg, SudoParams, VendingMinterInitMsg, VendingMinterParams,
 };
 

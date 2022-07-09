@@ -486,7 +486,6 @@ dependencies = [
  "cw-storage-plus",
  "cw-utils",
  "cw2",
- "launchpad",
  "minter",
  "schemars",
  "serde",
@@ -496,6 +495,7 @@ dependencies = [
  "sg721 0.1.0",
  "sg721-vending",
  "thiserror",
+ "vending",
 ]
 
 [[package]]
@@ -640,19 +640,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "launchpad"
-version = "0.13.0"
-dependencies = [
- "cosmwasm-std",
- "cw-utils",
- "schemars",
- "serde",
- "sg-std 0.12.1",
- "sg721 0.1.0",
- "thiserror",
-]
-
-[[package]]
 name = "libc"
 version = "0.2.125"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -678,7 +665,6 @@ dependencies = [
  "cw721",
  "cw721-base",
  "factory",
- "launchpad",
  "rand_core 0.6.3",
  "rand_xoshiro",
  "schemars",
@@ -693,6 +679,7 @@ dependencies = [
  "shuffle",
  "thiserror",
  "url",
+ "vending",
 ]
 
 [[package]]
@@ -1136,7 +1123,6 @@ dependencies = [
  "cw721",
  "cw721-base",
  "factory",
- "launchpad",
  "minter",
  "schemars",
  "serde",
@@ -1146,6 +1132,7 @@ dependencies = [
  "sg721 0.1.0",
  "thiserror",
  "url",
+ "vending",
 ]
 
 [[package]]
@@ -1308,6 +1295,19 @@ dependencies = [
  "idna",
  "matches",
  "percent-encoding",
+]
+
+[[package]]
+name = "vending"
+version = "0.13.0"
+dependencies = [
+ "cosmwasm-std",
+ "cw-utils",
+ "schemars",
+ "serde",
+ "sg-std 0.12.1",
+ "sg721 0.1.0",
+ "thiserror",
 ]
 
 [[package]]

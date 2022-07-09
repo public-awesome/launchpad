@@ -1,5 +1,5 @@
 [package]
-name = "launchpad"
+name = "vending"
 version = "0.13.0"
 edition = "2021"
 

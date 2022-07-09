@@ -4,10 +4,10 @@ mod tests {
     use cw_multi_test::{BankSudo, Contract, ContractWrapper, Executor, SudoMsg};
     use factory::helpers::FactoryContract;
     use factory::msg::InstantiateMsg as FactoryInstantiateMsg;
-    use launchpad::{ExecuteMsg, SudoParams, VendingMinterInitMsg, VendingMinterParams};
     use sg721::{CollectionInfo, RoyaltyInfoResponse};
     use sg_multi_test::StargazeApp;
     use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME};
+    use vending::{ExecuteMsg, SudoParams, VendingMinterInitMsg, VendingMinterParams};
 
     use crate::helpers::Sg721VendingContract;
 
@@ -138,9 +138,9 @@ mod tests {
             Empty, Timestamp,
         };
         use cw_multi_test::{BankSudo, SudoMsg};
-        use launchpad::{ExecuteMsg, VendingMinterInitMsg};
         use sg721::{CollectionInfo, RoyaltyInfoResponse};
         use sg_std::GENESIS_MINT_START_TIME;
+        use vending::{ExecuteMsg, VendingMinterInitMsg};
 
         use super::*;
 
