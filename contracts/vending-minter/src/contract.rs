@@ -63,9 +63,11 @@ pub fn instantiate(
     let res: ParamsResponse = deps
         .querier
         .query_wasm_smart(msg.factory.clone(), &LaunchpadQueryMsg::Params {})?;
-    if res.params.minter_codes.is_empty() {
-        return Err(ContractError::Unauthorized(msg.factory.to_string()));
-    }
+    // TODO: send minter_code_id in msg and check here?
+    // FIXME: fails
+    // if res.params.minter_code_id != 0 {
+    //     return Err(ContractError::Unauthorized(msg.factory.to_string()));
+    // }
 
     let params = Params {
         max_token_limit: msg.max_token_limit,
@@ -128,8 +130,6 @@ pub fn instantiate(
         MINTABLE_TOKEN_POSITIONS.save(deps.storage, token_position, &token_id)?;
         token_position += 1;
     }
-
-    // println!("contract address {:?}", env.contract.address.to_string());
 
     // Submessage to instantiate sg721 contract
     let sub_msgs: Vec<SubMsg> = vec![SubMsg {

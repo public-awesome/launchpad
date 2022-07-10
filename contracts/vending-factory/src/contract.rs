@@ -169,7 +169,7 @@ mod tests {
         let mut deps = mock_dependencies();
 
         let sudo_params = SudoParams {
-            minter_codes: vec![1, 2, 3],
+            minter_code_id: 2,
             vending_minter: VendingMinterParams::default(),
         };
 

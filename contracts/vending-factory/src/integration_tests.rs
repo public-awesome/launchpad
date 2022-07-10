@@ -60,7 +60,7 @@ mod tests {
         };
 
         let mock_params = SudoParams {
-            minter_codes: vec![1, 2, 3],
+            minter_code_id: 2,
             vending_minter: minter_params,
         };
 

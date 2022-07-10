@@ -46,7 +46,7 @@ pub struct VendingMinterParams {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct SudoParams {
-    pub minter_codes: Vec<u64>,
+    pub minter_code_id: u64,
     pub vending_minter: VendingMinterParams,
 }
 

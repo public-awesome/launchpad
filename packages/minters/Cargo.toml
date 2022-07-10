@@ -1,6 +1,6 @@
 [package]
 name = "minters"
-version = "0.13.0"
+version = "0.1.0"
 edition = "2021"
 
 authors = ["Shane Vitarana <s@noreply.publicawesome.com>"]

@@ -147,7 +147,7 @@ fn setup_minter_contract(
     let factory_code_id = router.store_code(contract_factory());
 
     let sudo_params = SudoParams {
-        minter_codes: vec![minter_code_id],
+        minter_code_id: 2,
         vending_minter: VendingMinterParams {
             max_token_limit: MAX_TOKEN_LIMIT,
             max_per_address_limit: 5,
@@ -1226,7 +1226,7 @@ fn test_invalid_start_time() {
     let factory_code_id = router.store_code(contract_factory());
 
     let sudo_params = SudoParams {
-        minter_codes: vec![minter_code_id],
+        minter_code_id: 2,
         vending_minter: VendingMinterParams {
             max_token_limit: MAX_TOKEN_LIMIT,
             max_per_address_limit: 5,
