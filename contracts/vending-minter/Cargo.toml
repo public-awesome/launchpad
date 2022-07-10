@@ -1,5 +1,5 @@
 [package]
-name = "minter"
+name = "vending-minter"
 version = "0.13.0"
 authors = ["Jake Hartnell <jake@stargaze.zone>"]
 edition = "2018"

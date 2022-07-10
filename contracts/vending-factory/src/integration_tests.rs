@@ -20,11 +20,11 @@ mod tests {
 
     pub fn minter_contract() -> Box<dyn Contract<StargazeMsgWrapper>> {
         let contract = ContractWrapper::new(
-            minter::contract::execute,
-            minter::contract::instantiate,
-            minter::contract::query,
+            vending_minter::contract::execute,
+            vending_minter::contract::instantiate,
+            vending_minter::contract::query,
         )
-        .with_reply(minter::contract::reply);
+        .with_reply(vending_minter::contract::reply);
         Box::new(contract)
     }
 

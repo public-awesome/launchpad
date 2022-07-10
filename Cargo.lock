@@ -105,7 +105,6 @@ dependencies = [
  "cw2",
  "cw721",
  "cw721-base",
- "minter",
  "schemars",
  "serde",
  "sg-controllers 0.12.1",
@@ -114,6 +113,7 @@ dependencies = [
  "sg-std 0.12.1",
  "sg721-vending",
  "thiserror",
+ "vending-minter",
 ]
 
 [[package]]
@@ -629,37 +629,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a3e378b66a060d48947b590737b30a1be76706c8dd7b8ba0f2fe3989c68a853f"
 
 [[package]]
-name = "minter"
-version = "0.13.0"
-dependencies = [
- "cosmwasm-schema",
- "cosmwasm-std",
- "cosmwasm-storage",
- "cw-multi-test",
- "cw-storage-plus",
- "cw-utils",
- "cw2",
- "cw721",
- "cw721-base",
- "rand_core 0.6.3",
- "rand_xoshiro",
- "schemars",
- "serde",
- "sg-multi-test",
- "sg-std 0.12.1",
- "sg-whitelist",
- "sg1 0.13.0",
- "sg721 0.1.0",
- "sg721-vending",
- "sha2 0.10.2",
- "shuffle",
- "thiserror",
- "url",
- "vending",
- "vending-factory",
-]
-
-[[package]]
 name = "num-traits"
 version = "0.2.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1099,7 +1068,6 @@ dependencies = [
  "cw2",
  "cw721",
  "cw721-base",
- "minter",
  "schemars",
  "serde",
  "sg-multi-test",
@@ -1110,6 +1078,7 @@ dependencies = [
  "url",
  "vending",
  "vending-factory",
+ "vending-minter",
 ]
 
 [[package]]
@@ -1298,7 +1267,6 @@ dependencies = [
  "cw-storage-plus",
  "cw-utils",
  "cw2",
- "minter",
  "schemars",
  "serde",
  "sg-multi-test",
@@ -1308,6 +1276,38 @@ dependencies = [
  "sg721-vending",
  "thiserror",
  "vending",
+ "vending-minter",
+]
+
+[[package]]
+name = "vending-minter"
+version = "0.13.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cosmwasm-storage",
+ "cw-multi-test",
+ "cw-storage-plus",
+ "cw-utils",
+ "cw2",
+ "cw721",
+ "cw721-base",
+ "rand_core 0.6.3",
+ "rand_xoshiro",
+ "schemars",
+ "serde",
+ "sg-multi-test",
+ "sg-std 0.12.1",
+ "sg-whitelist",
+ "sg1 0.13.0",
+ "sg721 0.1.0",
+ "sg721-vending",
+ "sha2 0.10.2",
+ "shuffle",
+ "thiserror",
+ "url",
+ "vending",
+ "vending-factory",
 ]
 
 [[package]]

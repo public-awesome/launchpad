@@ -4,10 +4,10 @@ use cosmwasm_std::entry_point;
 use cosmwasm_std::{to_binary, Addr, Binary, Coin, Deps, DepsMut, Env, MessageInfo, StdResult};
 use cw2::set_contract_version;
 use cw_utils::maybe_addr;
-use minter::msg::{MintCountResponse, QueryMsg as MinterQueryMsg};
 use sg_marketplace::msg::SaleHookMsg;
 use sg_marketplace::MarketplaceContract;
 use sg_std::{create_claim_for_msg, ClaimAction, StargazeMsgWrapper};
+use vending_minter::msg::{MintCountResponse, QueryMsg as MinterQueryMsg};
 
 use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, InstantiateMsg, MarketplaceResponse, QueryMsg};
