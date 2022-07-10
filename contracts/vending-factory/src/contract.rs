@@ -168,9 +168,21 @@ mod tests {
     fn proper_initialization() {
         let mut deps = mock_dependencies();
 
+        // TODO: move params into package under test module?
+
         let sudo_params = SudoParams {
             minter_code_id: 2,
-            vending_minter: VendingMinterParams::default(),
+            vending_minter: VendingMinterParams {
+                code_id: todo!(),
+                max_token_limit: todo!(),
+                max_per_address_limit: todo!(),
+                min_mint_price: todo!(),
+                airdrop_mint_price: todo!(),
+                mint_fee_percent: todo!(),
+                airdrop_mint_fee_percent: todo!(),
+                creation_fee: todo!(),
+                shuffle_fee: todo!(),
+            },
         };
 
         let msg = InstantiateMsg {

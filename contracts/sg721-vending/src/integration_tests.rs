@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use cosmwasm_std::{coin, Addr, Timestamp, Uint128};
+    use cosmwasm_std::{coin, Addr, Decimal, Timestamp, Uint128};
     use cw_multi_test::{BankSudo, Contract, ContractWrapper, Executor, SudoMsg};
     use sg721::{CollectionInfo, RoyaltyInfoResponse};
     use sg_multi_test::StargazeApp;
@@ -44,6 +44,13 @@ mod tests {
     const ADMIN: &str = "admin";
     const NATIVE_DENOM: &str = "ustars";
     const CREATION_FEE: u128 = 5_000_000_000;
+    const MIN_MINT_PRICE: u128 = 50_000_000;
+    const AIRDROP_MINT_PRICE: u128 = 15_000_000;
+    const MINT_FEE_BPS: u64 = 1_000; // 10%
+    const AIRDROP_MINT_FEE_BPS: u64 = 10_000; // 100%
+    const SHUFFLE_FEE: u128 = 500_000_000;
+
+    const MAX_TOKEN_LIMIT: u32 = 10000;
 
     fn custom_mock_app() -> StargazeApp {
         StargazeApp::default()
@@ -59,7 +66,11 @@ mod tests {
             max_token_limit: 10_000,
             max_per_address_limit: 5,
             creation_fee: Uint128::from(CREATION_FEE),
-            ..VendingMinterParams::default()
+            min_mint_price: Uint128::from(MIN_MINT_PRICE),
+            airdrop_mint_price: Uint128::from(AIRDROP_MINT_PRICE),
+            mint_fee_percent: Decimal::percent(MINT_FEE_BPS),
+            airdrop_mint_fee_percent: Decimal::percent(AIRDROP_MINT_FEE_BPS),
+            shuffle_fee: Uint128::from(SHUFFLE_FEE),
         };
 
         let mock_params = SudoParams {
@@ -107,7 +118,15 @@ mod tests {
             start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
             sg721_code_id: sg721_id,
             collection_info,
-            ..VendingMinterInitMsg::default()
+            factory: factory_contract.addr().to_string(),
+            symbol: "HAL".to_string(),
+            whitelist: None,
+            max_token_limit: MAX_TOKEN_LIMIT,
+            min_mint_price: Uint128::from(MIN_MINT_PRICE),
+            airdrop_mint_price: Uint128::from(AIRDROP_MINT_PRICE),
+            mint_fee_bps: MINT_FEE_BPS,
+            airdrop_mint_fee_bps: AIRDROP_MINT_FEE_BPS,
+            shuffle_fee: Uint128::from(SHUFFLE_FEE),
         });
         let creation_fee = coin(CREATION_FEE, NATIVE_DENOM);
 

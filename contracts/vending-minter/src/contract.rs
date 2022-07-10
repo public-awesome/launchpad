@@ -65,9 +65,9 @@ pub fn instantiate(
         .query_wasm_smart(msg.factory.clone(), &LaunchpadQueryMsg::Params {})?;
     // TODO: send minter_code_id in msg and check here?
     // FIXME: fails
-    // if res.params.minter_code_id != 0 {
-    //     return Err(ContractError::Unauthorized(msg.factory.to_string()));
-    // }
+    if res.params.minter_code_id != 0 {
+        return Err(ContractError::Unauthorized(msg.factory.to_string()));
+    }
 
     let params = Params {
         max_token_limit: msg.max_token_limit,

@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use sg721::{CollectionInfo, RoyaltyInfoResponse};
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, Default)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct VendingMinterInitMsg {
     pub factory: String,
     pub sg721_code_id: u64,
@@ -31,7 +31,7 @@ pub enum QueryMsg {
     Params {},
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, Default)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct VendingMinterParams {
     pub code_id: u64,
     pub max_token_limit: u32,

@@ -56,7 +56,11 @@ mod tests {
             max_token_limit: 10_000,
             max_per_address_limit: 5,
             creation_fee: Uint128::from(CREATION_FEE),
-            ..VendingMinterParams::default()
+            min_mint_price: todo!(),
+            airdrop_mint_price: todo!(),
+            mint_fee_percent: todo!(),
+            airdrop_mint_fee_percent: todo!(),
+            shuffle_fee: todo!(),
         };
 
         let mock_params = SudoParams {
@@ -114,7 +118,15 @@ mod tests {
                 start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
                 sg721_code_id: sg721_id,
                 collection_info,
-                ..VendingMinterInitMsg::default()
+                factory: todo!(),
+                symbol: todo!(),
+                whitelist: todo!(),
+                max_token_limit: todo!(),
+                min_mint_price: todo!(),
+                airdrop_mint_price: todo!(),
+                mint_fee_bps: todo!(),
+                airdrop_mint_fee_bps: todo!(),
+                shuffle_fee: todo!(),
             });
             let creation_fee = coin(CREATION_FEE, NATIVE_DENOM);
 
