@@ -2,22 +2,22 @@
 mod tests {
     use cosmwasm_std::{coin, Addr, Timestamp, Uint128};
     use cw_multi_test::{BankSudo, Contract, ContractWrapper, Executor, SudoMsg};
-    use factory::helpers::FactoryContract;
-    use factory::msg::InstantiateMsg as FactoryInstantiateMsg;
     use sg721::{CollectionInfo, RoyaltyInfoResponse};
     use sg_multi_test::StargazeApp;
     use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME};
     use vending::{ExecuteMsg, SudoParams, VendingMinterInitMsg, VendingMinterParams};
+    use vending_factory::helpers::FactoryContract;
+    use vending_factory::msg::InstantiateMsg as FactoryInstantiateMsg;
 
     use crate::helpers::Sg721VendingContract;
 
     pub fn factory_contract() -> Box<dyn Contract<StargazeMsgWrapper>> {
         let contract = ContractWrapper::new(
-            factory::contract::execute,
-            factory::contract::instantiate,
-            factory::contract::query,
+            vending_factory::contract::execute,
+            vending_factory::contract::instantiate,
+            vending_factory::contract::query,
         )
-        .with_reply(factory::contract::reply);
+        .with_reply(vending_factory::contract::reply);
         Box::new(contract)
     }
 

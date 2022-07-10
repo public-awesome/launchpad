@@ -45,6 +45,6 @@ minter = { path = "../minter" }
 
 [dev-dependencies]
 cosmwasm-schema = { version = "1.0.0" }
-factory = { path = "../factory" }
+vending-factory = { path = "../vending-factory" }
 cw-multi-test = "0.13.2"
 sg-multi-test = { path = "../../packages/sg-multi-test" }

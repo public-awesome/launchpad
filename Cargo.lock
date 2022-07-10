@@ -476,29 +476,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "factory"
-version = "0.1.0"
-dependencies = [
- "cosmwasm-schema",
- "cosmwasm-std",
- "cosmwasm-storage",
- "cw-multi-test",
- "cw-storage-plus",
- "cw-utils",
- "cw2",
- "minter",
- "schemars",
- "serde",
- "sg-multi-test",
- "sg-std 0.12.1",
- "sg1 0.13.0",
- "sg721 0.1.0",
- "sg721-vending",
- "thiserror",
- "vending",
-]
-
-[[package]]
 name = "ff"
 version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -664,7 +641,6 @@ dependencies = [
  "cw2",
  "cw721",
  "cw721-base",
- "factory",
  "rand_core 0.6.3",
  "rand_xoshiro",
  "schemars",
@@ -680,6 +656,7 @@ dependencies = [
  "thiserror",
  "url",
  "vending",
+ "vending-factory",
 ]
 
 [[package]]
@@ -1122,7 +1099,6 @@ dependencies = [
  "cw2",
  "cw721",
  "cw721-base",
- "factory",
  "minter",
  "schemars",
  "serde",
@@ -1133,6 +1109,7 @@ dependencies = [
  "thiserror",
  "url",
  "vending",
+ "vending-factory",
 ]
 
 [[package]]
@@ -1308,6 +1285,29 @@ dependencies = [
  "sg-std 0.12.1",
  "sg721 0.1.0",
  "thiserror",
+]
+
+[[package]]
+name = "vending-factory"
+version = "0.1.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cosmwasm-storage",
+ "cw-multi-test",
+ "cw-storage-plus",
+ "cw-utils",
+ "cw2",
+ "minter",
+ "schemars",
+ "serde",
+ "sg-multi-test",
+ "sg-std 0.12.1",
+ "sg1 0.13.0",
+ "sg721 0.1.0",
+ "sg721-vending",
+ "thiserror",
+ "vending",
 ]
 
 [[package]]

@@ -45,11 +45,11 @@ fn custom_mock_app() -> StargazeApp {
 
 pub fn contract_factory() -> Box<dyn Contract<StargazeMsgWrapper>> {
     let contract = ContractWrapper::new(
-        factory::contract::execute,
-        factory::contract::instantiate,
-        factory::contract::query,
+        vending_factory::contract::execute,
+        vending_factory::contract::instantiate,
+        vending_factory::contract::query,
     )
-    .with_reply(factory::contract::reply);
+    .with_reply(vending_factory::contract::reply);
     Box::new(contract)
 }
 
@@ -165,7 +165,7 @@ fn setup_minter_contract(
         .instantiate_contract(
             factory_code_id,
             creator.clone(),
-            &factory::msg::InstantiateMsg {
+            &vending_factory::msg::InstantiateMsg {
                 params: sudo_params,
             },
             &[],
@@ -1244,7 +1244,7 @@ fn test_invalid_start_time() {
         .instantiate_contract(
             factory_code_id,
             creator.clone(),
-            &factory::msg::InstantiateMsg {
+            &vending_factory::msg::InstantiateMsg {
                 params: sudo_params,
             },
             &[],
