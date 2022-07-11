@@ -4,6 +4,7 @@ use cosmwasm_std::{Api, Coin};
 use cw721::{Cw721QueryMsg, OwnerOfResponse, TokensResponse};
 use cw721_base::ExecuteMsg as Cw721ExecuteMsg;
 use cw_multi_test::{BankSudo, Contract, ContractWrapper, Executor, SudoMsg};
+use vending::tests::mock_params;
 use vending::{
     ExecuteMsg as FactoryExecuteMsg, SudoParams, VendingMinterInitMsg, VendingMinterParams,
 };
@@ -126,12 +127,7 @@ fn minter_init() -> VendingMinterInitMsg {
                 share: Decimal::percent(10),
             }),
         },
-        max_token_limit: MAX_TOKEN_LIMIT,
-        min_mint_price: Uint128::from(MIN_MINT_PRICE),
-        airdrop_mint_price: Uint128::from(AIRDROP_MINT_PRICE),
-        mint_fee_bps: MINT_FEE_BPS,
-        airdrop_mint_fee_bps: AIRDROP_MINT_FEE_BPS,
-        shuffle_fee: Uint128::from(SHUFFLE_FEE),
+        params: mock_params(),
     }
 }
 
@@ -147,7 +143,7 @@ fn setup_minter_contract(
     let factory_code_id = router.store_code(contract_factory());
 
     let sudo_params = SudoParams {
-        minter_code_id: 2,
+        minter_code_id,
         vending_minter: VendingMinterParams {
             max_token_limit: MAX_TOKEN_LIMIT,
             max_per_address_limit: 5,
@@ -1226,7 +1222,7 @@ fn test_invalid_start_time() {
     let factory_code_id = router.store_code(contract_factory());
 
     let sudo_params = SudoParams {
-        minter_code_id: 2,
+        minter_code_id,
         vending_minter: VendingMinterParams {
             max_token_limit: MAX_TOKEN_LIMIT,
             max_per_address_limit: 5,

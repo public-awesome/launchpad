@@ -6,7 +6,7 @@ use crate::msg::{
     MintableTokensResponse, QueryMsg, StartTimeResponse,
 };
 use crate::state::{
-    Config, Params, CONFIG, MINTABLE_NUM_TOKENS, MINTABLE_TOKEN_POSITIONS, MINTER_ADDRS, PARAMS,
+    Config, CONFIG, MINTABLE_NUM_TOKENS, MINTABLE_TOKEN_POSITIONS, MINTER_ADDRS, PARAMS,
     SG721_ADDRESS,
 };
 #[cfg(not(feature = "library"))]
@@ -60,25 +60,12 @@ pub fn instantiate(
     // TODO: validate
 
     // Make sure the sender is the factory contract
-    let res: ParamsResponse = deps
+    // This will fail if the sender cannot parse a response from the factory contract
+    let _res: ParamsResponse = deps
         .querier
         .query_wasm_smart(msg.factory.clone(), &LaunchpadQueryMsg::Params {})?;
-    // TODO: send minter_code_id in msg and check here?
-    // FIXME: fails
-    if res.params.minter_code_id != 0 {
-        return Err(ContractError::Unauthorized(msg.factory.to_string()));
-    }
 
-    let params = Params {
-        max_token_limit: msg.max_token_limit,
-        max_per_address_limit: msg.per_address_limit,
-        min_mint_price: msg.min_mint_price,
-        airdrop_mint_price: msg.airdrop_mint_price,
-        mint_fee_percent: Decimal::percent(msg.mint_fee_bps),
-        airdrop_mint_fee_percent: Decimal::percent(msg.airdrop_mint_fee_bps),
-        shuffle_fee: msg.shuffle_fee,
-    };
-    PARAMS.save(deps.storage, &params)?;
+    PARAMS.save(deps.storage, &msg.params)?;
 
     // Check that base_token_uri is a valid IPFS uri
     let parsed_token_uri = Url::parse(&msg.base_token_uri)?;
@@ -769,7 +756,7 @@ fn query_mint_price(deps: Deps) -> StdResult<MintPriceResponse> {
 // Reply callback triggered from cw721 contract instantiation
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
-    println!("IN MINTER reply: {:?}", msg);
+    // println!("IN MINTER reply: {:?}", msg);
 
     if msg.id != INSTANTIATE_SG721_REPLY_ID {
         return Err(ContractError::InvalidReplyID {});
@@ -788,7 +775,7 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractE
             };
 
             SG721_ADDRESS.save(deps.storage, &Addr::unchecked(sg721_address.clone()))?;
-            println!("SG721 contract address: {}", sg721_address);
+            // println!("SG721 contract address: {}", sg721_address);
 
             Ok(Response::default()
                 .add_attribute("action", "instantiate_sg721_reply")

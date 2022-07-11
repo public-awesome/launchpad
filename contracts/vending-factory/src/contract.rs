@@ -162,27 +162,17 @@ mod tests {
     use super::*;
     use cosmwasm_std::coins;
     use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-    use vending::{SudoParams, VendingMinterParams};
+    use vending::tests::mock_params;
+    use vending::SudoParams;
 
     #[test]
     fn proper_initialization() {
         let mut deps = mock_dependencies();
 
-        // TODO: move params into package under test module?
-
+        // TODO: dont' send code id twice (also in params)
         let sudo_params = SudoParams {
             minter_code_id: 2,
-            vending_minter: VendingMinterParams {
-                code_id: todo!(),
-                max_token_limit: todo!(),
-                max_per_address_limit: todo!(),
-                min_mint_price: todo!(),
-                airdrop_mint_price: todo!(),
-                mint_fee_percent: todo!(),
-                airdrop_mint_fee_percent: todo!(),
-                creation_fee: todo!(),
-                shuffle_fee: todo!(),
-            },
+            vending_minter: mock_params(),
         };
 
         let msg = InstantiateMsg {

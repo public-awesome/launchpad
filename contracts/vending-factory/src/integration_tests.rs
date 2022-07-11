@@ -2,13 +2,19 @@
 mod tests {
     use crate::helpers::FactoryContract;
     use crate::msg::InstantiateMsg;
-    use cosmwasm_std::{Addr, Uint128};
+    use cosmwasm_std::{Addr, Decimal, Uint128};
     use cw_multi_test::{Contract, ContractWrapper, Executor};
     use sg_multi_test::StargazeApp;
     use sg_std::StargazeMsgWrapper;
-    use vending::{tests::CREATION_FEE, SudoParams, VendingMinterParams};
+    use vending::{
+        tests::{
+            AIRDROP_MINT_FEE_BPS, AIRDROP_MINT_PRICE, CREATION_FEE, MINT_FEE_BPS, MIN_MINT_PRICE,
+            SHUFFLE_FEE,
+        },
+        SudoParams, VendingMinterParams,
+    };
 
-    pub fn contract_template() -> Box<dyn Contract<StargazeMsgWrapper>> {
+    pub fn factory_contract() -> Box<dyn Contract<StargazeMsgWrapper>> {
         let contract = ContractWrapper::new(
             crate::contract::execute,
             crate::contract::instantiate,
@@ -47,7 +53,7 @@ mod tests {
 
     fn proper_instantiate() -> (StargazeApp, FactoryContract) {
         let mut app = custom_mock_app();
-        let cw_template_id = app.store_code(contract_template());
+        let factory_id = app.store_code(factory_contract());
         let minter_id = app.store_code(minter_contract());
 
         let minter_params = VendingMinterParams {
@@ -55,24 +61,24 @@ mod tests {
             max_token_limit: 10_000,
             max_per_address_limit: 5,
             creation_fee: Uint128::from(CREATION_FEE),
-            min_mint_price: todo!(),
-            airdrop_mint_price: todo!(),
-            mint_fee_percent: todo!(),
-            airdrop_mint_fee_percent: todo!(),
-            shuffle_fee: todo!(),
+            min_mint_price: Uint128::from(MIN_MINT_PRICE),
+            airdrop_mint_price: Uint128::from(AIRDROP_MINT_PRICE),
+            mint_fee_percent: Decimal::percent(MINT_FEE_BPS),
+            airdrop_mint_fee_percent: Decimal::percent(AIRDROP_MINT_FEE_BPS),
+            shuffle_fee: Uint128::from(SHUFFLE_FEE),
         };
 
         let mock_params = SudoParams {
-            minter_code_id: 2,
+            minter_code_id: minter_id,
             vending_minter: minter_params,
         };
 
         let msg = InstantiateMsg {
             params: mock_params,
         };
-        let cw_template_contract_addr = app
+        let factory_contract_addr = app
             .instantiate_contract(
-                cw_template_id,
+                factory_id,
                 Addr::unchecked(GOVERNANCE),
                 &msg,
                 &[],
@@ -81,52 +87,26 @@ mod tests {
             )
             .unwrap();
 
-        let cw_template_contract = FactoryContract(cw_template_contract_addr);
-
-        (app, cw_template_contract)
+        (app, FactoryContract(factory_contract_addr))
     }
 
     mod execute {
-        use cosmwasm_std::{coin, Timestamp};
+        use cosmwasm_std::coin;
         use cw_multi_test::{BankSudo, SudoMsg};
-        use sg721::{CollectionInfo, RoyaltyInfoResponse};
-        use sg_std::GENESIS_MINT_START_TIME;
-        use vending::{ExecuteMsg, VendingMinterInitMsg};
+        use vending::{tests::mock_init_msg, ExecuteMsg};
 
         use super::*;
 
         #[test]
-        fn create_vending_minter() {
-            let (mut app, cw_template_contract) = proper_instantiate();
-
+        fn create_vending_minter_and_launch_collection() {
+            let (mut app, factory_contract) = proper_instantiate();
             let sg721_id = app.store_code(sg721_vending_contract());
 
-            let collection_info: CollectionInfo<RoyaltyInfoResponse> = CollectionInfo {
-                creator: "creator".to_string(),
-                description: "description".to_string(),
-                image: "https://example.com/image.png".to_string(),
-                ..CollectionInfo::default()
-            };
+            let mut m = mock_init_msg();
+            m.sg721_code_id = sg721_id;
+            m.factory = factory_contract.addr().to_string();
+            let msg = ExecuteMsg::CreateVendingMinter(m);
 
-            let msg = ExecuteMsg::CreateVendingMinter(VendingMinterInitMsg {
-                num_tokens: 1,
-                per_address_limit: 5,
-                unit_price: coin(10_000_000, NATIVE_DENOM),
-                name: "Factory Vending Minter Test".to_string(),
-                base_token_uri: "ipfs://test".to_string(),
-                start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
-                sg721_code_id: sg721_id,
-                collection_info,
-                factory: todo!(),
-                symbol: todo!(),
-                whitelist: todo!(),
-                max_token_limit: todo!(),
-                min_mint_price: todo!(),
-                airdrop_mint_price: todo!(),
-                mint_fee_bps: todo!(),
-                airdrop_mint_fee_bps: todo!(),
-                shuffle_fee: todo!(),
-            });
             let creation_fee = coin(CREATION_FEE, NATIVE_DENOM);
 
             app.sudo(SudoMsg::Bank(BankSudo::Mint {
@@ -138,9 +118,7 @@ mod tests {
             let bal = app.wrap().query_all_balances(ADMIN).unwrap();
             assert_eq!(bal, vec![creation_fee.clone()]);
 
-            let cosmos_msg = cw_template_contract
-                .call_with_funds(msg, creation_fee)
-                .unwrap();
+            let cosmos_msg = factory_contract.call_with_funds(msg, creation_fee).unwrap();
 
             app.execute(Addr::unchecked(ADMIN), cosmos_msg).unwrap();
         }
