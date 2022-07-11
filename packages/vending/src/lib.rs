@@ -1,7 +1,6 @@
 use cosmwasm_std::{Coin, Decimal, Timestamp, Uint128};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-
 use sg721::{CollectionInfo, RoyaltyInfoResponse};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -65,4 +64,14 @@ pub struct ParamsResponse {
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
     CreateVendingMinter(VendingMinterInitMsg),
+}
+
+pub mod tests {
+    pub const CREATION_FEE: u128 = 5_000_000_000;
+    pub const MIN_MINT_PRICE: u128 = 50_000_000;
+    pub const AIRDROP_MINT_PRICE: u128 = 15_000_000;
+    pub const MINT_FEE_BPS: u64 = 1_000; // 10%
+    pub const AIRDROP_MINT_FEE_BPS: u64 = 10_000; // 100%
+    pub const SHUFFLE_FEE: u128 = 500_000_000;
+    pub const MAX_TOKEN_LIMIT: u32 = 10000;
 }

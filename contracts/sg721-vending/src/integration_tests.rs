@@ -1,15 +1,18 @@
 #[cfg(test)]
 mod tests {
+    use crate::helpers::Sg721VendingContract;
     use cosmwasm_std::{coin, Addr, Decimal, Timestamp, Uint128};
     use cw_multi_test::{BankSudo, Contract, ContractWrapper, Executor, SudoMsg};
     use sg721::{CollectionInfo, RoyaltyInfoResponse};
     use sg_multi_test::StargazeApp;
     use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME};
+    use vending::tests::{
+        AIRDROP_MINT_FEE_BPS, AIRDROP_MINT_PRICE, CREATION_FEE, MAX_TOKEN_LIMIT, MINT_FEE_BPS,
+        MIN_MINT_PRICE, SHUFFLE_FEE,
+    };
     use vending::{ExecuteMsg, SudoParams, VendingMinterInitMsg, VendingMinterParams};
     use vending_factory::helpers::FactoryContract;
     use vending_factory::msg::InstantiateMsg as FactoryInstantiateMsg;
-
-    use crate::helpers::Sg721VendingContract;
 
     pub fn factory_contract() -> Box<dyn Contract<StargazeMsgWrapper>> {
         let contract = ContractWrapper::new(
@@ -43,14 +46,6 @@ mod tests {
     const GOVERNANCE: &str = "governance";
     const ADMIN: &str = "admin";
     const NATIVE_DENOM: &str = "ustars";
-    const CREATION_FEE: u128 = 5_000_000_000;
-    const MIN_MINT_PRICE: u128 = 50_000_000;
-    const AIRDROP_MINT_PRICE: u128 = 15_000_000;
-    const MINT_FEE_BPS: u64 = 1_000; // 10%
-    const AIRDROP_MINT_FEE_BPS: u64 = 10_000; // 100%
-    const SHUFFLE_FEE: u128 = 500_000_000;
-
-    const MAX_TOKEN_LIMIT: u32 = 10000;
 
     fn custom_mock_app() -> StargazeApp {
         StargazeApp::default()

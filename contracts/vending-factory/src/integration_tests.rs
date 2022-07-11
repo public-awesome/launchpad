@@ -6,7 +6,7 @@ mod tests {
     use cw_multi_test::{Contract, ContractWrapper, Executor};
     use sg_multi_test::StargazeApp;
     use sg_std::StargazeMsgWrapper;
-    use vending::{SudoParams, VendingMinterParams};
+    use vending::{tests::CREATION_FEE, SudoParams, VendingMinterParams};
 
     pub fn contract_template() -> Box<dyn Contract<StargazeMsgWrapper>> {
         let contract = ContractWrapper::new(
@@ -40,7 +40,6 @@ mod tests {
     const GOVERNANCE: &str = "governance";
     const ADMIN: &str = "admin";
     const NATIVE_DENOM: &str = "ustars";
-    const CREATION_FEE: u128 = 5_000_000_000;
 
     fn custom_mock_app() -> StargazeApp {
         StargazeApp::default()
