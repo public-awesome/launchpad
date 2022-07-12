@@ -38,12 +38,6 @@ pub struct VendingMinterParams {
     pub shuffle_fee: Uint128,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct SudoParams {
-    pub minter_code_id: u64,
-    pub vending_minter: VendingMinterParams,
-}
-
 // #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 // pub struct MinterInfo<T> {
 //     pub code_id: u64,
@@ -53,7 +47,7 @@ pub struct SudoParams {
 // TODO: move to factory or minters package?
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct ParamsResponse {
-    pub params: SudoParams,
+    pub params: VendingMinterParams,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

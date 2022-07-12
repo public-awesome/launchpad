@@ -1,5 +1,3 @@
-# Vending Minter Types
+# Common Minter Types
 
-Common types needed for the minter factory.
-
-Add new minter instantiation and parameter messages should be added here.
+Common types needed for the minters and minter factories.

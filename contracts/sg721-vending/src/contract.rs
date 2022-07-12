@@ -122,7 +122,7 @@ pub fn ready(
     let res: ParamsResponse = deps
         .querier
         .query_wasm_smart(factory, &LaunchpadQueryMsg::Params {})?;
-    if res.params.minter_code_id != minter_id {
+    if res.params.code_id != minter_id {
         return Err(ContractError::Unauthorized {});
     }
 

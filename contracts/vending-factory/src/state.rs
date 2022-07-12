@@ -1,12 +1,10 @@
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
-
 use cosmwasm_std::Addr;
 use cw_storage_plus::{Item, Map};
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+use vending::VendingMinterParams;
 
-use vending::SudoParams;
-
-pub const SUDO_PARAMS: Item<SudoParams> = Item::new("sudo-params");
+pub const SUDO_PARAMS: Item<VendingMinterParams> = Item::new("sudo-params");
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Minter {

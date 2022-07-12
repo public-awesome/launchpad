@@ -5,9 +5,7 @@ use cw721::{Cw721QueryMsg, OwnerOfResponse, TokensResponse};
 use cw721_base::ExecuteMsg as Cw721ExecuteMsg;
 use cw_multi_test::{BankSudo, Contract, ContractWrapper, Executor, SudoMsg};
 use vending::tests::mock_params;
-use vending::{
-    ExecuteMsg as FactoryExecuteMsg, SudoParams, VendingMinterInitMsg, VendingMinterParams,
-};
+use vending::{ExecuteMsg as FactoryExecuteMsg, VendingMinterInitMsg, VendingMinterParams};
 
 use crate::contract::instantiate;
 use crate::msg::{
@@ -142,19 +140,16 @@ fn setup_minter_contract(
 
     let factory_code_id = router.store_code(contract_factory());
 
-    let sudo_params = SudoParams {
-        minter_code_id,
-        vending_minter: VendingMinterParams {
-            max_token_limit: MAX_TOKEN_LIMIT,
-            max_per_address_limit: 5,
-            min_mint_price: Uint128::from(MIN_MINT_PRICE),
-            airdrop_mint_price: Uint128::from(AIRDROP_MINT_PRICE),
-            mint_fee_percent: Decimal::percent(MINT_FEE_BPS),
-            airdrop_mint_fee_percent: Decimal::percent(AIRDROP_MINT_FEE_BPS),
-            shuffle_fee: Uint128::from(SHUFFLE_FEE),
-            code_id: minter_code_id,
-            creation_fee: Uint128::from(CREATION_FEE),
-        },
+    let sudo_params = VendingMinterParams {
+        max_token_limit: MAX_TOKEN_LIMIT,
+        max_per_address_limit: 5,
+        min_mint_price: Uint128::from(MIN_MINT_PRICE),
+        airdrop_mint_price: Uint128::from(AIRDROP_MINT_PRICE),
+        mint_fee_percent: Decimal::percent(MINT_FEE_BPS),
+        airdrop_mint_fee_percent: Decimal::percent(AIRDROP_MINT_FEE_BPS),
+        shuffle_fee: Uint128::from(SHUFFLE_FEE),
+        code_id: minter_code_id,
+        creation_fee: Uint128::from(CREATION_FEE),
     };
 
     let factory_addr = router
@@ -1221,19 +1216,16 @@ fn test_invalid_start_time() {
 
     let factory_code_id = router.store_code(contract_factory());
 
-    let sudo_params = SudoParams {
-        minter_code_id,
-        vending_minter: VendingMinterParams {
-            max_token_limit: MAX_TOKEN_LIMIT,
-            max_per_address_limit: 5,
-            min_mint_price: Uint128::from(MIN_MINT_PRICE),
-            airdrop_mint_price: Uint128::from(AIRDROP_MINT_PRICE),
-            mint_fee_percent: Decimal::percent(MINT_FEE_BPS),
-            airdrop_mint_fee_percent: Decimal::percent(AIRDROP_MINT_FEE_BPS),
-            shuffle_fee: Uint128::from(SHUFFLE_FEE),
-            code_id: minter_code_id,
-            creation_fee: Uint128::from(CREATION_FEE),
-        },
+    let sudo_params = VendingMinterParams {
+        max_token_limit: MAX_TOKEN_LIMIT,
+        max_per_address_limit: 5,
+        min_mint_price: Uint128::from(MIN_MINT_PRICE),
+        airdrop_mint_price: Uint128::from(AIRDROP_MINT_PRICE),
+        mint_fee_percent: Decimal::percent(MINT_FEE_BPS),
+        airdrop_mint_fee_percent: Decimal::percent(AIRDROP_MINT_FEE_BPS),
+        shuffle_fee: Uint128::from(SHUFFLE_FEE),
+        code_id: minter_code_id,
+        creation_fee: Uint128::from(CREATION_FEE),
     };
 
     let factory_addr = router

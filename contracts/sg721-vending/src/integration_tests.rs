@@ -9,7 +9,7 @@ mod tests {
         mock_init_msg, AIRDROP_MINT_FEE_BPS, AIRDROP_MINT_PRICE, CREATION_FEE, MINT_FEE_BPS,
         MIN_MINT_PRICE, SHUFFLE_FEE,
     };
-    use vending::{ExecuteMsg, SudoParams, VendingMinterParams};
+    use vending::{ExecuteMsg, VendingMinterParams};
     use vending_factory::helpers::FactoryContract;
     use vending_factory::msg::InstantiateMsg as FactoryInstantiateMsg;
 
@@ -67,13 +67,8 @@ mod tests {
             shuffle_fee: Uint128::from(SHUFFLE_FEE),
         };
 
-        let mock_params = SudoParams {
-            minter_code_id: minter_id,
-            vending_minter: minter_params,
-        };
-
         let msg = FactoryInstantiateMsg {
-            params: mock_params,
+            params: minter_params,
         };
         let factory_addr = app
             .instantiate_contract(

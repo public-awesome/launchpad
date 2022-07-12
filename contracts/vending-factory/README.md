@@ -1,10 +1,10 @@
-# Minter Factory
+# Vending Minter Factory
 
-A contract that maintains all Launchpad governance parameters, including those for each minter.
+A contract that maintains all vending machine minter governance parameters.
 
 It's responsible for creating new minters with the latest governance parameters.
 
-It also maintains verified and blocked lists for minters.
+It also maintains verified and blocked lists for vending minters.
 
 ```rs
 pub struct Minter {

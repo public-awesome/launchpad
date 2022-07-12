@@ -11,7 +11,7 @@ mod tests {
             AIRDROP_MINT_FEE_BPS, AIRDROP_MINT_PRICE, CREATION_FEE, MINT_FEE_BPS, MIN_MINT_PRICE,
             SHUFFLE_FEE,
         },
-        SudoParams, VendingMinterParams,
+        VendingMinterParams,
     };
 
     pub fn factory_contract() -> Box<dyn Contract<StargazeMsgWrapper>> {
@@ -68,13 +68,8 @@ mod tests {
             shuffle_fee: Uint128::from(SHUFFLE_FEE),
         };
 
-        let mock_params = SudoParams {
-            minter_code_id: minter_id,
-            vending_minter: minter_params,
-        };
-
         let msg = InstantiateMsg {
-            params: mock_params,
+            params: minter_params,
         };
         let factory_contract_addr = app
             .instantiate_contract(

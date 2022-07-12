@@ -14,7 +14,7 @@ use crate::msg::{InstantiateMsg, QueryMsg, Response, SubMsg, SudoMsg};
 use crate::state::{Minter, MINTERS, SUDO_PARAMS};
 
 // version info for migration info
-const CONTRACT_NAME: &str = "crates.io:factory";
+const CONTRACT_NAME: &str = "crates.io:vending-factory";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 /// Can only be called by governance
@@ -64,7 +64,7 @@ pub fn execute_create_vending_minter(
     // must_pay(&info, &deps.querier.query_bonded_denom()?)?;
     must_pay(&info, NATIVE_DENOM)?;
 
-    let params = SUDO_PARAMS.load(deps.storage)?.vending_minter;
+    let params = SUDO_PARAMS.load(deps.storage)?;
 
     let mut res = Response::new();
     checked_fair_burn(&info, params.creation_fee.u128(), None, &mut res)?;
@@ -163,20 +163,14 @@ mod tests {
     use cosmwasm_std::coins;
     use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
     use vending::tests::mock_params;
-    use vending::SudoParams;
+    use vending::VendingMinterParams;
 
     #[test]
     fn proper_initialization() {
         let mut deps = mock_dependencies();
 
-        // TODO: dont' send code id twice (also in params)
-        let sudo_params = SudoParams {
-            minter_code_id: 2,
-            vending_minter: mock_params(),
-        };
-
         let msg = InstantiateMsg {
-            params: sudo_params,
+            params: mock_params(),
         };
         let info = mock_info("creator", &coins(1000, "earth"));
 

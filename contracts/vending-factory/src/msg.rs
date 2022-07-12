@@ -2,15 +2,14 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use sg_std::StargazeMsgWrapper;
-use vending::SudoParams;
+use vending::VendingMinterParams;
 
 pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 pub type SubMsg = cosmwasm_std::SubMsg<StargazeMsgWrapper>;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {
-    // TODO: expand?
-    pub params: SudoParams,
+    pub params: VendingMinterParams,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
