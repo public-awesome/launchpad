@@ -8,8 +8,8 @@ mod tests {
     use sg_std::StargazeMsgWrapper;
     use vending::{
         tests::{
-            AIRDROP_MINT_FEE_BPS, AIRDROP_MINT_PRICE, CREATION_FEE, MINT_FEE_BPS, MIN_MINT_PRICE,
-            SHUFFLE_FEE,
+            mock_params, AIRDROP_MINT_FEE_BPS, AIRDROP_MINT_PRICE, CREATION_FEE, MINT_FEE_BPS,
+            MIN_MINT_PRICE, SHUFFLE_FEE,
         },
         VendingMinterParams,
     };
@@ -56,26 +56,14 @@ mod tests {
         let factory_id = app.store_code(factory_contract());
         let minter_id = app.store_code(minter_contract());
 
-        let minter_params = VendingMinterParams {
-            code_id: minter_id,
-            max_token_limit: 10_000,
-            max_per_address_limit: 5,
-            creation_fee: Uint128::from(CREATION_FEE),
-            min_mint_price: Uint128::from(MIN_MINT_PRICE),
-            airdrop_mint_price: Uint128::from(AIRDROP_MINT_PRICE),
-            mint_fee_percent: Decimal::percent(MINT_FEE_BPS),
-            airdrop_mint_fee_percent: Decimal::percent(AIRDROP_MINT_FEE_BPS),
-            shuffle_fee: Uint128::from(SHUFFLE_FEE),
-        };
+        let mut params = mock_params();
+        params.code_id = minter_id;
 
-        let msg = InstantiateMsg {
-            params: minter_params,
-        };
         let factory_contract_addr = app
             .instantiate_contract(
                 factory_id,
                 Addr::unchecked(GOVERNANCE),
-                &msg,
+                &InstantiateMsg { params },
                 &[],
                 "factory",
                 None,

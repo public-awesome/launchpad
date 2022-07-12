@@ -1262,6 +1262,7 @@ version = "0.13.0"
 dependencies = [
  "cosmwasm-std",
  "cw-utils",
+ "minters",
  "schemars",
  "serde",
  "sg-std 0.12.1",

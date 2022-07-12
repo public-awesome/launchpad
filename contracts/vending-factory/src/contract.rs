@@ -28,7 +28,6 @@ pub fn instantiate(
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
     // TODO: validate params
-
     SUDO_PARAMS.save(deps.storage, &msg.params)?;
 
     Ok(Response::new())
@@ -163,7 +162,6 @@ mod tests {
     use cosmwasm_std::coins;
     use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
     use vending::tests::mock_params;
-    use vending::VendingMinterParams;
 
     #[test]
     fn proper_initialization() {

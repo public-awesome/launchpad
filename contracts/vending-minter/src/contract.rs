@@ -184,7 +184,7 @@ pub fn execute_shuffle(
     let params = PARAMS.load(deps.storage)?;
 
     // Check exact shuffle fee payment included in message
-    checked_fair_burn(&info, params.shuffle_fee.u128(), None, &mut res)?;
+    checked_fair_burn(&info, params.extension.shuffle_fee.u128(), None, &mut res)?;
 
     // Check not sold out
     let mintable_num_tokens = MINTABLE_NUM_TOKENS.load(deps.storage)?;

@@ -1,4 +1,5 @@
-use cosmwasm_std::{Coin, Decimal, Timestamp, Uint128};
+use cosmwasm_std::{Coin, Timestamp, Uint128};
+use minters::MinterParams;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use sg721::{CollectionInfo, RoyaltyInfoResponse};
@@ -25,16 +26,10 @@ pub enum QueryMsg {
     Params {},
 }
 
+pub type VendingMinterParams = MinterParams<ParamsExtension>;
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct VendingMinterParams {
-    pub code_id: u64,
-    pub max_token_limit: u32,
-    pub max_per_address_limit: u32,
-    pub min_mint_price: Uint128,
-    pub airdrop_mint_price: Uint128,
-    pub mint_fee_percent: Decimal,
-    pub airdrop_mint_fee_percent: Decimal,
-    pub creation_fee: Uint128,
+pub struct ParamsExtension {
     pub shuffle_fee: Uint128,
 }
 
@@ -61,7 +56,7 @@ pub mod tests {
     use sg721::{CollectionInfo, RoyaltyInfoResponse};
     use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
-    use crate::{VendingMinterInitMsg, VendingMinterParams};
+    use crate::{ParamsExtension, VendingMinterInitMsg, VendingMinterParams};
 
     pub const CREATION_FEE: u128 = 5_000_000_000;
     pub const MIN_MINT_PRICE: u128 = 50_000_000;
@@ -69,7 +64,7 @@ pub mod tests {
     pub const MINT_FEE_BPS: u64 = 1_000; // 10%
     pub const AIRDROP_MINT_FEE_BPS: u64 = 10_000; // 100%
     pub const SHUFFLE_FEE: u128 = 500_000_000;
-    pub const MAX_TOKEN_LIMIT: u32 = 10000;
+    pub const MAX_TOKEN_LIMIT: u32 = 10_000;
     pub const MAX_PER_ADDRESS_LIMIT: u32 = 50;
 
     pub fn mock_params() -> VendingMinterParams {
@@ -82,7 +77,9 @@ pub mod tests {
             mint_fee_percent: Decimal::percent(MINT_FEE_BPS),
             airdrop_mint_fee_percent: Decimal::percent(AIRDROP_MINT_FEE_BPS),
             creation_fee: Uint128::from(CREATION_FEE),
-            shuffle_fee: Uint128::from(SHUFFLE_FEE),
+            extension: ParamsExtension {
+                shuffle_fee: Uint128::from(SHUFFLE_FEE),
+            },
         }
     }
 

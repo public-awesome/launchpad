@@ -140,25 +140,14 @@ fn setup_minter_contract(
 
     let factory_code_id = router.store_code(contract_factory());
 
-    let sudo_params = VendingMinterParams {
-        max_token_limit: MAX_TOKEN_LIMIT,
-        max_per_address_limit: 5,
-        min_mint_price: Uint128::from(MIN_MINT_PRICE),
-        airdrop_mint_price: Uint128::from(AIRDROP_MINT_PRICE),
-        mint_fee_percent: Decimal::percent(MINT_FEE_BPS),
-        airdrop_mint_fee_percent: Decimal::percent(AIRDROP_MINT_FEE_BPS),
-        shuffle_fee: Uint128::from(SHUFFLE_FEE),
-        code_id: minter_code_id,
-        creation_fee: Uint128::from(CREATION_FEE),
-    };
+    let mut params = mock_params();
+    params.code_id = minter_code_id;
 
     let factory_addr = router
         .instantiate_contract(
             factory_code_id,
             creator.clone(),
-            &vending_factory::msg::InstantiateMsg {
-                params: sudo_params,
-            },
+            &vending_factory::msg::InstantiateMsg { params },
             &[],
             "factory",
             None,
@@ -1216,25 +1205,14 @@ fn test_invalid_start_time() {
 
     let factory_code_id = router.store_code(contract_factory());
 
-    let sudo_params = VendingMinterParams {
-        max_token_limit: MAX_TOKEN_LIMIT,
-        max_per_address_limit: 5,
-        min_mint_price: Uint128::from(MIN_MINT_PRICE),
-        airdrop_mint_price: Uint128::from(AIRDROP_MINT_PRICE),
-        mint_fee_percent: Decimal::percent(MINT_FEE_BPS),
-        airdrop_mint_fee_percent: Decimal::percent(AIRDROP_MINT_FEE_BPS),
-        shuffle_fee: Uint128::from(SHUFFLE_FEE),
-        code_id: minter_code_id,
-        creation_fee: Uint128::from(CREATION_FEE),
-    };
+    let mut params = mock_params();
+    params.code_id = minter_code_id;
 
     let factory_addr = router
         .instantiate_contract(
             factory_code_id,
             creator.clone(),
-            &vending_factory::msg::InstantiateMsg {
-                params: sudo_params,
-            },
+            &vending_factory::msg::InstantiateMsg { params },
             &[],
             "factory",
             None,
