@@ -1,24 +1,21 @@
-use cosmwasm_std::testing::{mock_dependencies_with_balance, mock_env, mock_info};
-use cosmwasm_std::{coin, coins, Addr, Decimal, Empty, Timestamp, Uint128};
-use cosmwasm_std::{Api, Coin};
-use cw721::{Cw721QueryMsg, OwnerOfResponse, TokensResponse};
-use cw721_base::ExecuteMsg as Cw721ExecuteMsg;
-use cw_multi_test::{BankSudo, Contract, ContractWrapper, Executor, SudoMsg};
-use vending::tests::mock_params;
-use vending::{ExecuteMsg as FactoryExecuteMsg, VendingMinterInitMsg, VendingMinterParams};
-
 use crate::contract::instantiate;
 use crate::msg::{
     ConfigResponse, ExecuteMsg, MintCountResponse, MintPriceResponse, MintableNumTokensResponse,
     MintableTokensResponse, QueryMsg, StartTimeResponse,
 };
 use crate::ContractError;
-
-use sg721::{CollectionInfo, RoyaltyInfoResponse};
+use cosmwasm_std::testing::{mock_dependencies_with_balance, mock_env, mock_info};
+use cosmwasm_std::{coin, coins, Addr, Empty, Timestamp, Uint128};
+use cosmwasm_std::{Api, Coin};
+use cw721::{Cw721QueryMsg, OwnerOfResponse, TokensResponse};
+use cw721_base::ExecuteMsg as Cw721ExecuteMsg;
+use cw_multi_test::{BankSudo, Contract, ContractWrapper, Executor, SudoMsg};
 use sg_multi_test::StargazeApp;
 use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use sg_whitelist::msg::InstantiateMsg as WhitelistInstantiateMsg;
 use sg_whitelist::msg::{AddMembersMsg, ExecuteMsg as WhitelistExecuteMsg};
+use vending::tests::{mock_create_minter, mock_params};
+use vending::ExecuteMsg as FactoryExecuteMsg;
 
 const CREATION_FEE: u128 = 5_000_000_000;
 const INITIAL_BALANCE: u128 = 2_000_000_000;
@@ -32,11 +29,11 @@ const ADMIN_MINT_PRICE: u128 = 15_000_000;
 // params
 const MAX_TOKEN_LIMIT: u32 = 10000;
 // const MAX_PER_ADDRESS_LIMIT: u32 = 50;
-const MIN_MINT_PRICE: u128 = 50_000_000;
-const AIRDROP_MINT_PRICE: u128 = 15_000_000;
-const MINT_FEE_BPS: u64 = 1_000; // 10%
-const AIRDROP_MINT_FEE_BPS: u64 = 10_000; // 100%
-const SHUFFLE_FEE: u128 = 500_000_000;
+// const MIN_MINT_PRICE: u128 = 50_000_000;
+// const AIRDROP_MINT_PRICE: u128 = 15_000_000;
+// const MINT_FEE_BPS: u64 = 1_000; // 10%
+// const AIRDROP_MINT_FEE_BPS: u64 = 10_000; // 100%
+// const SHUFFLE_FEE: u128 = 500_000_000;
 
 fn custom_mock_app() -> StargazeApp {
     StargazeApp::default()
@@ -103,31 +100,31 @@ fn setup_whitelist_contract(router: &mut StargazeApp, creator: &Addr) -> Addr {
         .unwrap()
 }
 
-fn minter_init() -> VendingMinterInitMsg {
-    VendingMinterInitMsg {
-        factory: "contract0".to_string(),
-        unit_price: coin(UNIT_PRICE, NATIVE_DENOM),
-        num_tokens: 10,
-        start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
-        per_address_limit: 5,
-        whitelist: None,
-        base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
-        sg721_code_id: 3,
-        name: String::from("TEST"),
-        symbol: String::from("TEST"),
-        collection_info: CollectionInfo {
-            creator: "creator".to_string(),
-            description: String::from("Stargaze Monkeys"),
-            image: "https://example.com/image.png".to_string(),
-            external_link: Some("https://example.com/external.html".to_string()),
-            royalty_info: Some(RoyaltyInfoResponse {
-                payment_address: "creator".to_string(),
-                share: Decimal::percent(10),
-            }),
-        },
-        params: mock_params(),
-    }
-}
+// fn minter_init() -> VendingMinterCreateMsg {
+//     VendingMinterCreateMsg {
+//         factory: "contract0".to_string(),
+//         unit_price: coin(UNIT_PRICE, NATIVE_DENOM),
+//         num_tokens: 10,
+//         start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
+//         per_address_limit: 5,
+//         whitelist: None,
+//         base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
+//         sg721_code_id: 3,
+//         name: String::from("TEST"),
+//         symbol: String::from("TEST"),
+//         collection_info: CollectionInfo {
+//             creator: "creator".to_string(),
+//             description: String::from("Stargaze Monkeys"),
+//             image: "https://example.com/image.png".to_string(),
+//             external_link: Some("https://example.com/external.html".to_string()),
+//             royalty_info: Some(RoyaltyInfoResponse {
+//                 payment_address: "creator".to_string(),
+//                 share: Decimal::percent(10),
+//             }),
+//         },
+//         params: mock_params(),
+//     }
+// }
 
 // Upload contract code and instantiate minter contract
 fn setup_minter_contract(
@@ -156,13 +153,14 @@ fn setup_minter_contract(
 
     let sg721_code_id = router.store_code(contract_sg721());
 
-    let mut create_minter_msg = minter_init();
-    create_minter_msg.unit_price = coin(UNIT_PRICE, NATIVE_DENOM);
-    create_minter_msg.num_tokens = num_tokens;
-    create_minter_msg.sg721_code_id = sg721_code_id;
-    create_minter_msg.collection_info.creator = creator.to_string();
+    // let mut create_minter_msg = minter_init();
+    let mut msg = mock_create_minter();
+    msg.init_msg.unit_price = coin(UNIT_PRICE, NATIVE_DENOM);
+    msg.init_msg.num_tokens = num_tokens;
+    msg.collection_params.code_id = sg721_code_id;
+    msg.collection_params.info.creator = creator.to_string();
 
-    let msg = FactoryExecuteMsg::CreateVendingMinter(create_minter_msg);
+    let msg = FactoryExecuteMsg::CreateVendingMinter(msg);
 
     let res = router.execute_contract(creator.clone(), factory_addr, &msg, &creation_fee);
     assert!(res.is_ok());
@@ -244,10 +242,11 @@ fn initialization() {
 
     // 0 per address limit returns error
     let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
-    let mut msg = minter_init();
-    msg.num_tokens = 100;
-    msg.sg721_code_id = 1;
-    msg.collection_info.creator = info.sender.to_string();
+    // let mut msg = minter_init();
+    let mut msg = mock_create_minter();
+    msg.init_msg.num_tokens = 100;
+    msg.collection_params.code_id = 1;
+    msg.collection_params.info.creator = info.sender.to_string();
 
     instantiate(deps.as_mut(), mock_env(), info, msg.clone()).unwrap_err();
 
@@ -258,30 +257,34 @@ fn initialization() {
     // Invalid denom returns error
     let wrong_denom = "uosmo";
     let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
-    let mut msg = minter_init();
-    msg.unit_price = coin(UNIT_PRICE, wrong_denom);
+    // let mut msg = minter_init();
+    let mut msg = mock_create_minter();
+    // msg.init_msg.unit_price = 100;
+    msg.init_msg.unit_price = coin(UNIT_PRICE, wrong_denom);
 
     instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
 
     // Insufficient mint price returns error
     let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
-    let mut msg = minter_init();
-    msg.unit_price = coin(1, NATIVE_DENOM);
+    let mut msg = mock_create_minter();
+    msg.init_msg.unit_price = coin(1, NATIVE_DENOM);
 
     instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
 
     // Over max token limit
     let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
-    let mut msg = minter_init();
-    msg.unit_price = coin(UNIT_PRICE, NATIVE_DENOM);
-    msg.num_tokens = MAX_TOKEN_LIMIT + 1;
+    // let mut msg = minter_init();
+    let mut msg = mock_create_minter();
+    msg.init_msg.unit_price = coin(UNIT_PRICE, NATIVE_DENOM);
+    msg.init_msg.num_tokens = MAX_TOKEN_LIMIT + 1;
 
     instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
 
     // Under min token limit
     let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
-    let mut msg = minter_init();
-    msg.num_tokens = 0;
+    // let mut msg = minter_init();
+    let mut msg = mock_create_minter();
+    msg.init_msg.num_tokens = 0;
 
     instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
 }
@@ -1223,11 +1226,12 @@ fn test_invalid_start_time() {
     setup_block_time(&mut router, GENESIS_MINT_START_TIME - 1000);
 
     // Instantiate sale contract before genesis mint
-    let mut minter_init_msg = minter_init();
-    minter_init_msg.num_tokens = 10;
-    minter_init_msg.sg721_code_id = sg721_code_id;
-    minter_init_msg.start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME - 100);
-    let msg = FactoryExecuteMsg::CreateVendingMinter(minter_init_msg.clone());
+    // let mut minter_init_msg = minter_init();
+    let mut minter_msg = mock_create_minter();
+    minter_msg.init_msg.num_tokens = 10;
+    minter_msg.collection_params.code_id = sg721_code_id;
+    minter_msg.init_msg.start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME - 100);
+    let msg = FactoryExecuteMsg::CreateVendingMinter(minter_msg.clone());
 
     router
         .execute_contract(creator.clone(), factory_addr.clone(), &msg, &creation_fee)
@@ -1237,16 +1241,16 @@ fn test_invalid_start_time() {
     setup_block_time(&mut router, GENESIS_MINT_START_TIME + 1000);
 
     // move start time after genesis but before current time
-    minter_init_msg.start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 500);
-    let msg = FactoryExecuteMsg::CreateVendingMinter(minter_init_msg.clone());
+    minter_msg.init_msg.start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 500);
+    let msg = FactoryExecuteMsg::CreateVendingMinter(minter_msg.clone());
     router
         .execute_contract(creator.clone(), factory_addr.clone(), &msg, &creation_fee)
         .unwrap_err();
 
     // position block time before the start time
     setup_block_time(&mut router, GENESIS_MINT_START_TIME + 400);
-    minter_init_msg.start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 500);
-    let msg = FactoryExecuteMsg::CreateVendingMinter(minter_init_msg.clone());
+    minter_msg.init_msg.start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 500);
+    let msg = FactoryExecuteMsg::CreateVendingMinter(minter_msg.clone());
     router
         .execute_contract(creator.clone(), factory_addr.clone(), &msg, &creation_fee)
         .unwrap();

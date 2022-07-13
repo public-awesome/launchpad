@@ -7,7 +7,7 @@ use cw2::set_contract_version;
 use cw_utils::{must_pay, parse_reply_instantiate_data};
 use sg1::checked_fair_burn;
 use sg_std::NATIVE_DENOM;
-use vending::{ExecuteMsg, ParamsResponse, VendingMinterInitMsg};
+use vending::{ExecuteMsg, ParamsResponse, VendingMinterCreateMsg};
 
 use crate::error::ContractError;
 use crate::msg::{InstantiateMsg, QueryMsg, Response, SubMsg, SudoMsg};
@@ -21,11 +21,13 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     _info: MessageInfo,
-    msg: InstantiateMsg,
+    mut msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+
+    msg.params.factory = env.contract.address.to_string();
 
     // TODO: validate params
     SUDO_PARAMS.save(deps.storage, &msg.params)?;
@@ -45,19 +47,11 @@ pub fn execute(
     }
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
-pub fn sudo(_deps: DepsMut, _env: Env, msg: SudoMsg) -> Result<Response, ContractError> {
-    match msg {
-        SudoMsg::VerifyMinter { minter } => todo!(),
-        SudoMsg::BlockMinter { minter } => todo!(),
-    }
-}
-
 pub fn execute_create_vending_minter(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    mut msg: VendingMinterInitMsg,
+    mut msg: VendingMinterCreateMsg,
 ) -> Result<Response, ContractError> {
     // TODO: why doesn't this work?
     // must_pay(&info, &deps.querier.query_bonded_denom()?)?;
@@ -68,10 +62,8 @@ pub fn execute_create_vending_minter(
     let mut res = Response::new();
     checked_fair_burn(&info, params.creation_fee.u128(), None, &mut res)?;
 
-    msg.factory = env.contract.address.to_string();
-
     // Check the number of tokens is more than zero and less than the max limit
-    if msg.num_tokens == 0 || msg.num_tokens > params.max_token_limit {
+    if msg.init_msg.num_tokens == 0 || msg.init_msg.num_tokens > params.max_token_limit {
         return Err(ContractError::InvalidNumTokens {
             min: 1,
             max: params.max_token_limit,
@@ -79,29 +71,31 @@ pub fn execute_create_vending_minter(
     }
 
     // Check per address limit is valid
-    if msg.per_address_limit == 0 || msg.per_address_limit > params.max_per_address_limit {
+    if msg.init_msg.per_address_limit == 0
+        || msg.init_msg.per_address_limit > params.max_per_address_limit
+    {
         return Err(ContractError::InvalidPerAddressLimit {
             max: params.max_per_address_limit,
             min: 1,
-            got: msg.per_address_limit,
+            got: msg.init_msg.per_address_limit,
         });
     }
 
     // Check that the price is in the correct denom ('ustars')
     // let native_denom = deps.querier.query_bonded_denom()?;
     let native_denom = NATIVE_DENOM;
-    if native_denom != msg.unit_price.denom {
+    if native_denom != msg.init_msg.unit_price.denom {
         return Err(ContractError::InvalidDenom {
             expected: native_denom.to_string(),
-            got: msg.unit_price.denom,
+            got: msg.init_msg.unit_price.denom,
         });
     }
 
     // Check that the price is greater than the minimum
-    if params.min_mint_price > msg.unit_price.amount {
+    if params.min_mint_price > msg.init_msg.unit_price.amount {
         return Err(ContractError::InsufficientMintPrice {
             expected: params.min_mint_price.u128(),
-            got: msg.unit_price.amount.into(),
+            got: msg.init_msg.unit_price.amount.into(),
         });
     }
 
@@ -110,13 +104,21 @@ pub fn execute_create_vending_minter(
         code_id: params.code_id,
         msg: to_binary(&msg)?,
         funds: vec![],
-        label: format!("VendingMinter-{}", msg.name),
+        label: format!("VendingMinter-{}", msg.collection_params.name),
     };
-    let submsg = SubMsg::reply_on_success(wasm_msg, msg.sg721_code_id);
+    let submsg = SubMsg::reply_on_success(wasm_msg, params.code_id);
 
     Ok(res
         .add_attribute("action", "create_minter")
         .add_submessage(submsg))
+}
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn sudo(_deps: DepsMut, _env: Env, msg: SudoMsg) -> Result<Response, ContractError> {
+    match msg {
+        SudoMsg::VerifyMinter { minter } => todo!(),
+        SudoMsg::BlockMinter { minter } => todo!(),
+    }
 }
 
 // Reply callback triggered from cw721 contract instantiation

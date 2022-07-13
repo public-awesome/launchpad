@@ -1,15 +1,12 @@
 #[cfg(test)]
 mod tests {
     use crate::helpers::Sg721VendingContract;
-    use cosmwasm_std::{coin, Addr, Decimal, Uint128};
+    use cosmwasm_std::{coin, Addr};
     use cw_multi_test::{BankSudo, Contract, ContractWrapper, Executor, SudoMsg};
     use sg_multi_test::StargazeApp;
     use sg_std::StargazeMsgWrapper;
-    use vending::tests::{
-        mock_init_msg, mock_params, AIRDROP_MINT_FEE_BPS, AIRDROP_MINT_PRICE, CREATION_FEE,
-        MINT_FEE_BPS, MIN_MINT_PRICE, SHUFFLE_FEE,
-    };
-    use vending::{ExecuteMsg, VendingMinterParams};
+    use vending::tests::{mock_create_minter, mock_params, CREATION_FEE};
+    use vending::ExecuteMsg;
     use vending_factory::helpers::FactoryContract;
     use vending_factory::msg::InstantiateMsg as FactoryInstantiateMsg;
 
@@ -79,9 +76,8 @@ mod tests {
         let (mut app, factory_contract) = proper_instantiate_factory();
         let sg721_id = app.store_code(sg721_vending_contract());
 
-        let mut m = mock_init_msg();
-        m.sg721_code_id = sg721_id;
-        m.factory = factory_contract.addr().to_string();
+        let mut m = mock_create_minter();
+        m.collection_params.code_id = sg721_id;
         let msg = ExecuteMsg::CreateVendingMinter(m);
 
         let creation_fee = coin(CREATION_FEE, NATIVE_DENOM);
@@ -98,7 +94,6 @@ mod tests {
         let cosmos_msg = factory_contract.call_with_funds(msg, creation_fee).unwrap();
 
         let res = app.execute(Addr::unchecked(ADMIN), cosmos_msg);
-        println!("{:?}", res);
         assert!(res.is_ok());
 
         // can also get this address from the events from the res above
@@ -108,17 +103,11 @@ mod tests {
     }
 
     mod init {
-        use cosmwasm_std::{
-            coin,
-            testing::{mock_dependencies, MockQuerier},
-            Empty, Timestamp,
-        };
-        use cw_multi_test::{BankSudo, SudoMsg};
-        use sg721::{CollectionInfo, RoyaltyInfoResponse};
-        use sg_std::GENESIS_MINT_START_TIME;
-        use vending::{ExecuteMsg, VendingMinterInitMsg};
-
         use super::*;
+        use cosmwasm_std::{
+            testing::{mock_dependencies, MockQuerier},
+            Empty,
+        };
 
         #[test]
         fn create_sg721_vending_collection() {

@@ -12,7 +12,7 @@ use crate::state::{
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coin, to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut, Empty, Env,
+    coin, to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Deps, DepsMut, Empty, Env,
     MessageInfo, Order, Reply, ReplyOn, StdError, StdResult, Timestamp, Uint128, WasmMsg,
 };
 use cw2::set_contract_version;
@@ -31,7 +31,7 @@ use shuffle::{fy::FisherYates, shuffler::Shuffler};
 use url::Url;
 
 use vending::{
-    ParamsResponse, QueryMsg as LaunchpadQueryMsg, VendingMinterInitMsg as InstantiateMsg,
+    ParamsResponse, QueryMsg as LaunchpadQueryMsg, VendingMinterCreateMsg as InstantiateMsg,
 };
 
 pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
@@ -57,59 +57,65 @@ pub fn instantiate(
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
+    let factory = info.sender.clone();
+
     // TODO: validate
 
     // Make sure the sender is the factory contract
     // This will fail if the sender cannot parse a response from the factory contract
     let _res: ParamsResponse = deps
         .querier
-        .query_wasm_smart(msg.factory.clone(), &LaunchpadQueryMsg::Params {})?;
+        .query_wasm_smart(factory.clone(), &LaunchpadQueryMsg::Params {})?;
 
-    PARAMS.save(deps.storage, &msg.params)?;
+    // PARAMS.save(deps.storage, &msg.collection_params)?;
 
     // Check that base_token_uri is a valid IPFS uri
-    let parsed_token_uri = Url::parse(&msg.base_token_uri)?;
+    let parsed_token_uri = Url::parse(&msg.init_msg.base_token_uri)?;
     if parsed_token_uri.scheme() != "ipfs" {
         return Err(ContractError::InvalidBaseTokenURI {});
     }
 
     let genesis_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
     // If start time is before genesis time return error
-    if msg.start_time < genesis_time {
+    if msg.init_msg.start_time < genesis_time {
         return Err(ContractError::BeforeGenesisTime {});
     }
 
     // If current time is beyond the provided start time return error
-    if env.block.time > msg.start_time {
+    if env.block.time > msg.init_msg.start_time {
         return Err(ContractError::InvalidStartTime(
-            msg.start_time,
+            msg.init_msg.start_time,
             env.block.time,
         ));
     }
 
     // Validate address for the optional whitelist contract
     let whitelist_addr = msg
+        .init_msg
         .whitelist
         .and_then(|w| deps.api.addr_validate(w.as_str()).ok());
 
     let config = Config {
-        admin: deps.api.addr_validate(&msg.collection_info.creator)?,
-        base_token_uri: msg.base_token_uri,
-        num_tokens: msg.num_tokens,
-        sg721_code_id: msg.sg721_code_id,
-        unit_price: msg.unit_price,
-        per_address_limit: msg.per_address_limit,
+        admin: deps
+            .api
+            .addr_validate(&msg.collection_params.info.creator)?,
+        base_token_uri: msg.init_msg.base_token_uri,
+        num_tokens: msg.init_msg.num_tokens,
+        sg721_code_id: msg.collection_params.code_id,
+        unit_price: msg.init_msg.unit_price,
+        per_address_limit: msg.init_msg.per_address_limit,
         whitelist: whitelist_addr,
-        start_time: msg.start_time,
-        factory: deps.api.addr_validate(&msg.factory)?,
+        start_time: msg.init_msg.start_time,
+        factory: factory.clone(),
     };
     CONFIG.save(deps.storage, &config)?;
-    MINTABLE_NUM_TOKENS.save(deps.storage, &msg.num_tokens)?;
+    MINTABLE_NUM_TOKENS.save(deps.storage, &msg.init_msg.num_tokens)?;
 
     let token_ids = random_token_list(
         &env,
-        info.sender.clone(),
-        (1..=msg.num_tokens).collect::<Vec<u32>>(),
+        deps.api
+            .addr_validate(&msg.collection_params.info.creator)?,
+        (1..=msg.init_msg.num_tokens).collect::<Vec<u32>>(),
     )?;
     // Save mintable token ids map
     let mut token_position = 1;
@@ -121,16 +127,16 @@ pub fn instantiate(
     // Submessage to instantiate sg721 contract
     let sub_msgs: Vec<SubMsg> = vec![SubMsg {
         msg: WasmMsg::Instantiate {
-            code_id: msg.sg721_code_id,
+            code_id: msg.collection_params.code_id,
             msg: to_binary(&Sg721InstantiateMsg {
-                name: msg.name.clone(),
-                symbol: msg.symbol,
+                name: msg.collection_params.name.clone(),
+                symbol: msg.collection_params.symbol,
                 minter: env.contract.address.to_string(),
-                collection_info: msg.collection_info,
+                collection_info: msg.collection_params.info,
             })?,
             funds: info.funds,
             admin: Some(config.admin.to_string()),
-            label: format!("SG721-{}", msg.name),
+            label: format!("SG721-{}", msg.collection_params.name),
         }
         .into(),
         id: INSTANTIATE_SG721_REPLY_ID,
@@ -142,7 +148,7 @@ pub fn instantiate(
         .add_attribute("action", "instantiate")
         .add_attribute("contract_name", CONTRACT_NAME)
         .add_attribute("contract_version", CONTRACT_VERSION)
-        .add_attribute("sender", info.sender)
+        .add_attribute("sender", factory)
         .add_submessages(sub_msgs))
 }
 

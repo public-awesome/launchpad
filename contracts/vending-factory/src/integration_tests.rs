@@ -76,7 +76,7 @@ mod tests {
     mod execute {
         use cosmwasm_std::coin;
         use cw_multi_test::{BankSudo, SudoMsg};
-        use vending::{tests::mock_init_msg, ExecuteMsg};
+        use vending::{tests::mock_create_minter, ExecuteMsg};
 
         use super::*;
 
@@ -85,9 +85,8 @@ mod tests {
             let (mut app, factory_contract) = proper_instantiate();
             let sg721_id = app.store_code(sg721_vending_contract());
 
-            let mut m = mock_init_msg();
-            m.sg721_code_id = sg721_id;
-            m.factory = factory_contract.addr().to_string();
+            let mut m = mock_create_minter();
+            m.collection_params.code_id = sg721_id;
             let msg = ExecuteMsg::CreateVendingMinter(m);
 
             let creation_fee = coin(CREATION_FEE, NATIVE_DENOM);

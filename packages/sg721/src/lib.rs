@@ -64,7 +64,7 @@ pub enum ExecuteMsg<T> {
     },
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, Default)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct CollectionInfo<T> {
     pub creator: String,
     pub description: String,
