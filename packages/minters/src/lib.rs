@@ -1,4 +1,4 @@
-use cosmwasm_std::{Decimal, Uint128};
+use cosmwasm_std::{Addr, Decimal, Uint128};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -21,7 +21,9 @@ pub struct CollectionParams {
 /// Common params for all minters, updatable by governance
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct MinterParams<T> {
-    pub factory: String,
+    // pub factory: String,
+    // TODO: redundant with factory, remove?
+    pub factory: Addr,
     pub code_id: u64,
     pub creation_fee: Uint128,
     pub max_token_limit: u32,

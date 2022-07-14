@@ -6,8 +6,7 @@ use crate::msg::{
     MintableTokensResponse, QueryMsg, StartTimeResponse,
 };
 use crate::state::{
-    Config, CONFIG, MINTABLE_NUM_TOKENS, MINTABLE_TOKEN_POSITIONS, MINTER_ADDRS, PARAMS,
-    SG721_ADDRESS,
+    Config, CONFIG, MINTABLE_NUM_TOKENS, MINTABLE_TOKEN_POSITIONS, MINTER_ADDRS, SG721_ADDRESS,
 };
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
@@ -32,6 +31,7 @@ use url::Url;
 
 use vending::{
     ParamsResponse, QueryMsg as LaunchpadQueryMsg, VendingMinterCreateMsg as InstantiateMsg,
+    VendingMinterParams,
 };
 
 pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
@@ -67,7 +67,7 @@ pub fn instantiate(
         .querier
         .query_wasm_smart(factory.clone(), &LaunchpadQueryMsg::Params {})?;
 
-    // PARAMS.save(deps.storage, &msg.collection_params)?;
+    // PARAMS.save(deps.storage, params)?;
 
     // Check that base_token_uri is a valid IPFS uri
     let parsed_token_uri = Url::parse(&msg.init_msg.base_token_uri)?;
@@ -99,6 +99,7 @@ pub fn instantiate(
         admin: deps
             .api
             .addr_validate(&msg.collection_params.info.creator)?,
+        factory: factory.clone(),
         base_token_uri: msg.init_msg.base_token_uri,
         num_tokens: msg.init_msg.num_tokens,
         sg721_code_id: msg.collection_params.code_id,
@@ -106,7 +107,6 @@ pub fn instantiate(
         per_address_limit: msg.init_msg.per_address_limit,
         whitelist: whitelist_addr,
         start_time: msg.init_msg.start_time,
-        factory: factory.clone(),
     };
     CONFIG.save(deps.storage, &config)?;
     MINTABLE_NUM_TOKENS.save(deps.storage, &msg.init_msg.num_tokens)?;
@@ -187,10 +187,20 @@ pub fn execute_shuffle(
     info: MessageInfo,
 ) -> Result<Response, ContractError> {
     let mut res = Response::new();
-    let params = PARAMS.load(deps.storage)?;
+
+    let config = CONFIG.load(deps.storage)?;
+
+    let factory_params: VendingMinterParams = deps
+        .querier
+        .query_wasm_smart(config.factory, &LaunchpadQueryMsg::Params {})?;
 
     // Check exact shuffle fee payment included in message
-    checked_fair_burn(&info, params.extension.shuffle_fee.u128(), None, &mut res)?;
+    checked_fair_burn(
+        &info,
+        factory_params.extension.shuffle_fee.u128(),
+        None,
+        &mut res,
+    )?;
 
     // Check not sold out
     let mintable_num_tokens = MINTABLE_NUM_TOKENS.load(deps.storage)?;
@@ -440,13 +450,16 @@ fn _execute_mint(
 
     let mut res = Response::new();
 
-    let params = PARAMS.load(deps.storage)?;
+    // let params = PARAMS.load(deps.storage)?;
+    let factory_params: VendingMinterParams = deps
+        .querier
+        .query_wasm_smart(config.factory, &LaunchpadQueryMsg::Params {})?;
 
     // Create network fee msgs
     let fee_percent = if is_admin {
-        params.airdrop_mint_fee_percent / Uint128::from(100u128)
+        factory_params.airdrop_mint_fee_percent / Uint128::from(100u128)
     } else {
-        params.mint_fee_percent / Uint128::from(100u128)
+        factory_params.mint_fee_percent / Uint128::from(100u128)
     };
     let network_fee = mint_price.amount * fee_percent;
     checked_fair_burn(&info, network_fee.u128(), None, &mut res)?;
@@ -614,17 +627,20 @@ pub fn execute_update_per_address_limit(
     info: MessageInfo,
     per_address_limit: u32,
 ) -> Result<Response, ContractError> {
-    let params = PARAMS.load(deps.storage)?;
-
     let mut config = CONFIG.load(deps.storage)?;
     if info.sender != config.admin {
         return Err(ContractError::Unauthorized(
             "Sender is not an admin".to_owned(),
         ));
     }
-    if per_address_limit == 0 || per_address_limit > params.max_per_address_limit {
+
+    let factory_params: VendingMinterParams = deps
+        .querier
+        .query_wasm_smart(config.factory.clone(), &LaunchpadQueryMsg::Params {})?;
+
+    if per_address_limit == 0 || per_address_limit > factory_params.max_per_address_limit {
         return Err(ContractError::InvalidPerAddressLimit {
-            max: params.max_per_address_limit,
+            max: factory_params.max_per_address_limit,
             min: 1,
             got: per_address_limit,
         });
@@ -641,12 +657,15 @@ pub fn execute_update_per_address_limit(
 // else if in whitelist => whitelist price
 // else => config unit price
 pub fn mint_price(deps: Deps, is_admin: bool) -> Result<Coin, StdError> {
-    let params = PARAMS.load(deps.storage)?;
     let config = CONFIG.load(deps.storage)?;
+
+    let factory_params: ParamsResponse = deps
+        .querier
+        .query_wasm_smart(config.factory, &LaunchpadQueryMsg::Params {})?;
 
     if is_admin {
         return Ok(coin(
-            params.airdrop_mint_price.u128(),
+            factory_params.params.airdrop_mint_price.u128(),
             config.unit_price.denom,
         ));
     }
@@ -742,6 +761,7 @@ fn query_mintable_tokens(deps: Deps) -> StdResult<MintableTokensResponse> {
 
 fn query_mint_price(deps: Deps) -> StdResult<MintPriceResponse> {
     let config = CONFIG.load(deps.storage)?;
+
     let current_price = mint_price(deps, false)?;
     let public_price = config.unit_price;
     let whitelist_price: Option<Coin> = if let Some(whitelist) = config.whitelist {
@@ -762,8 +782,6 @@ fn query_mint_price(deps: Deps) -> StdResult<MintPriceResponse> {
 // Reply callback triggered from cw721 contract instantiation
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
-    // println!("IN MINTER reply: {:?}", msg);
-
     if msg.id != INSTANTIATE_SG721_REPLY_ID {
         return Err(ContractError::InvalidReplyID {});
     }
@@ -780,8 +798,7 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractE
                 funds: vec![],
             };
 
-            SG721_ADDRESS.save(deps.storage, &Addr::unchecked(sg721_address.clone()))?;
-            // println!("SG721 contract address: {}", sg721_address);
+            SG721_ADDRESS.save(deps.storage, &Addr::unchecked(sg721_address))?;
 
             Ok(Response::default()
                 .add_attribute("action", "instantiate_sg721_reply")

@@ -768,14 +768,12 @@ fn whitelist_access_len_add_remove_expiration() {
 
     // Mint fails, not whitelist price
     let mint_msg = ExecuteMsg::Mint {};
-    router
-        .execute_contract(
-            buyer.clone(),
-            minter_addr.clone(),
-            &mint_msg,
-            &coins(UNIT_PRICE, NATIVE_DENOM),
-        )
-        .unwrap_err();
+    let res = router.execute_contract(
+        buyer.clone(),
+        minter_addr.clone(),
+        &mint_msg,
+        &coins(UNIT_PRICE, NATIVE_DENOM),
+    );
 
     setup_block_time(&mut router, GENESIS_MINT_START_TIME);
 
@@ -784,6 +782,7 @@ fn whitelist_access_len_add_remove_expiration() {
         .wrap()
         .query_wasm_smart(minter_addr.clone(), &QueryMsg::MintPrice {})
         .unwrap();
+
     assert_eq!(
         coin(WHITELIST_AMOUNT, NATIVE_DENOM),
         mint_price_response.whitelist_price.unwrap()

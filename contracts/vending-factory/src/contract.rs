@@ -27,7 +27,7 @@ pub fn instantiate(
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
-    msg.params.factory = env.contract.address.to_string();
+    msg.params.factory = env.contract.address;
 
     // TODO: validate params
     SUDO_PARAMS.save(deps.storage, &msg.params)?;

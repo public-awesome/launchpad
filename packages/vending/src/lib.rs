@@ -40,7 +40,7 @@ pub enum ExecuteMsg {
 }
 
 pub mod tests {
-    use cosmwasm_std::{coin, Decimal, Timestamp, Uint128};
+    use cosmwasm_std::{coin, Addr, Decimal, Timestamp, Uint128};
     use minters::tests::mock_collection_params;
     use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
@@ -71,7 +71,8 @@ pub mod tests {
 
     pub fn mock_params() -> VendingMinterParams {
         VendingMinterParams {
-            factory: "factory".to_string(),
+            // factory: "factory".to_string(),
+            factory: Addr::unchecked("contract0".to_string()),
             code_id: 1,
             creation_fee: Uint128::from(CREATION_FEE),
             max_token_limit: MAX_TOKEN_LIMIT,

@@ -38,8 +38,6 @@ pub fn _instantiate(
     // no funds should be sent to this contract
     nonpayable(&info)?;
 
-    println!("minter {:?}", msg.minter);
-
     // cw721 instantiation
     let info = ContractInfoResponse {
         name: msg.name,
