@@ -31,7 +31,6 @@ use url::Url;
 
 use vending::{
     ParamsResponse, QueryMsg as LaunchpadQueryMsg, VendingMinterCreateMsg as InstantiateMsg,
-    VendingMinterParams,
 };
 
 pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
@@ -66,8 +65,6 @@ pub fn instantiate(
     let _res: ParamsResponse = deps
         .querier
         .query_wasm_smart(factory.clone(), &LaunchpadQueryMsg::Params {})?;
-
-    // PARAMS.save(deps.storage, params)?;
 
     // Check that base_token_uri is a valid IPFS uri
     let parsed_token_uri = Url::parse(&msg.init_msg.base_token_uri)?;
@@ -190,14 +187,14 @@ pub fn execute_shuffle(
 
     let config = CONFIG.load(deps.storage)?;
 
-    let factory_params: VendingMinterParams = deps
+    let factory_params: ParamsResponse = deps
         .querier
         .query_wasm_smart(config.factory, &LaunchpadQueryMsg::Params {})?;
 
     // Check exact shuffle fee payment included in message
     checked_fair_burn(
         &info,
-        factory_params.extension.shuffle_fee.u128(),
+        factory_params.params.extension.shuffle_fee.u128(),
         None,
         &mut res,
     )?;
@@ -450,16 +447,15 @@ fn _execute_mint(
 
     let mut res = Response::new();
 
-    // let params = PARAMS.load(deps.storage)?;
-    let factory_params: VendingMinterParams = deps
+    let factory_params: ParamsResponse = deps
         .querier
         .query_wasm_smart(config.factory, &LaunchpadQueryMsg::Params {})?;
 
     // Create network fee msgs
     let fee_percent = if is_admin {
-        factory_params.airdrop_mint_fee_percent / Uint128::from(100u128)
+        factory_params.params.airdrop_mint_fee_percent / Uint128::from(100u128)
     } else {
-        factory_params.mint_fee_percent / Uint128::from(100u128)
+        factory_params.params.mint_fee_percent / Uint128::from(100u128)
     };
     let network_fee = mint_price.amount * fee_percent;
     checked_fair_burn(&info, network_fee.u128(), None, &mut res)?;
@@ -634,13 +630,13 @@ pub fn execute_update_per_address_limit(
         ));
     }
 
-    let factory_params: VendingMinterParams = deps
+    let factory_params: ParamsResponse = deps
         .querier
         .query_wasm_smart(config.factory.clone(), &LaunchpadQueryMsg::Params {})?;
 
-    if per_address_limit == 0 || per_address_limit > factory_params.max_per_address_limit {
+    if per_address_limit == 0 || per_address_limit > factory_params.params.max_per_address_limit {
         return Err(ContractError::InvalidPerAddressLimit {
-            max: factory_params.max_per_address_limit,
+            max: factory_params.params.max_per_address_limit,
             min: 1,
             got: per_address_limit,
         });
