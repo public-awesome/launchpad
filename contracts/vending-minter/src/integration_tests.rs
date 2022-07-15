@@ -25,15 +25,7 @@ const MINT_FEE: u128 = 10_000_000;
 const WHITELIST_AMOUNT: u128 = 66_000_000;
 const WL_PER_ADDRESS_LIMIT: u32 = 1;
 const ADMIN_MINT_PRICE: u128 = 15_000_000;
-
-// params
 const MAX_TOKEN_LIMIT: u32 = 10000;
-// const MAX_PER_ADDRESS_LIMIT: u32 = 50;
-// const MIN_MINT_PRICE: u128 = 50_000_000;
-// const AIRDROP_MINT_PRICE: u128 = 15_000_000;
-// const MINT_FEE_BPS: u64 = 1_000; // 10%
-// const AIRDROP_MINT_FEE_BPS: u64 = 10_000; // 100%
-// const SHUFFLE_FEE: u128 = 500_000_000;
 
 fn custom_mock_app() -> StargazeApp {
     StargazeApp::default()
@@ -99,32 +91,6 @@ fn setup_whitelist_contract(router: &mut StargazeApp, creator: &Addr) -> Addr {
         )
         .unwrap()
 }
-
-// fn minter_init() -> VendingMinterCreateMsg {
-//     VendingMinterCreateMsg {
-//         factory: "contract0".to_string(),
-//         unit_price: coin(UNIT_PRICE, NATIVE_DENOM),
-//         num_tokens: 10,
-//         start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
-//         per_address_limit: 5,
-//         whitelist: None,
-//         base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
-//         sg721_code_id: 3,
-//         name: String::from("TEST"),
-//         symbol: String::from("TEST"),
-//         collection_info: CollectionInfo {
-//             creator: "creator".to_string(),
-//             description: String::from("Stargaze Monkeys"),
-//             image: "https://example.com/image.png".to_string(),
-//             external_link: Some("https://example.com/external.html".to_string()),
-//             royalty_info: Some(RoyaltyInfoResponse {
-//                 payment_address: "creator".to_string(),
-//                 share: Decimal::percent(10),
-//             }),
-//         },
-//         params: mock_params(),
-//     }
-// }
 
 // Upload contract code and instantiate minter contract
 fn setup_minter_contract(
@@ -219,8 +185,8 @@ fn setup_accounts(router: &mut StargazeApp) -> (Addr, Addr) {
 fn setup_block_time(router: &mut StargazeApp, nanos: u64, height: Option<u64>) {
     let mut block = router.block_info();
     block.time = Timestamp::from_nanos(nanos);
-    if height.is_some() {
-        block.height = height.unwrap();
+    if let Some(h) = height {
+        block.height = h;
     }
     router.set_block(block);
 }
@@ -772,12 +738,14 @@ fn whitelist_access_len_add_remove_expiration() {
 
     // Mint fails, not whitelist price
     let mint_msg = ExecuteMsg::Mint {};
-    let res = router.execute_contract(
-        buyer.clone(),
-        minter_addr.clone(),
-        &mint_msg,
-        &coins(UNIT_PRICE, NATIVE_DENOM),
-    );
+    router
+        .execute_contract(
+            buyer.clone(),
+            minter_addr.clone(),
+            &mint_msg,
+            &coins(UNIT_PRICE, NATIVE_DENOM),
+        )
+        .unwrap_err();
 
     setup_block_time(&mut router, GENESIS_MINT_START_TIME, None);
 

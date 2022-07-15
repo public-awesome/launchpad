@@ -49,9 +49,9 @@ pub fn execute(
 
 pub fn execute_create_vending_minter(
     deps: DepsMut,
-    env: Env,
+    _env: Env,
     info: MessageInfo,
-    mut msg: VendingMinterCreateMsg,
+    msg: VendingMinterCreateMsg,
 ) -> Result<Response, ContractError> {
     // TODO: why doesn't this work?
     // must_pay(&info, &deps.querier.query_bonded_denom()?)?;

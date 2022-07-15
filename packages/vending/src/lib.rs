@@ -62,7 +62,6 @@ pub mod tests {
             base_token_uri: "ipfs://aldkfjads".to_string(),
             start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
             num_tokens: 100,
-            // unit_price: coin(10_000_000, NATIVE_DENOM),
             unit_price: coin(MIN_MINT_PRICE, NATIVE_DENOM),
             per_address_limit: 5,
             whitelist: None,
@@ -71,7 +70,6 @@ pub mod tests {
 
     pub fn mock_params() -> VendingMinterParams {
         VendingMinterParams {
-            // factory: "factory".to_string(),
             factory: Addr::unchecked("contract0".to_string()),
             code_id: 1,
             creation_fee: Uint128::from(CREATION_FEE),

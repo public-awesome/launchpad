@@ -2,17 +2,11 @@
 mod tests {
     use crate::helpers::FactoryContract;
     use crate::msg::InstantiateMsg;
-    use cosmwasm_std::{Addr, Decimal, Uint128};
+    use cosmwasm_std::Addr;
     use cw_multi_test::{Contract, ContractWrapper, Executor};
     use sg_multi_test::StargazeApp;
     use sg_std::StargazeMsgWrapper;
-    use vending::{
-        tests::{
-            mock_params, AIRDROP_MINT_FEE_BPS, AIRDROP_MINT_PRICE, CREATION_FEE, MINT_FEE_BPS,
-            MIN_MINT_PRICE, SHUFFLE_FEE,
-        },
-        VendingMinterParams,
-    };
+    use vending::tests::{mock_params, CREATION_FEE};
 
     pub fn factory_contract() -> Box<dyn Contract<StargazeMsgWrapper>> {
         let contract = ContractWrapper::new(

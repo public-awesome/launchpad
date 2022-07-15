@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
-    use crate::helpers::Sg721VendingContract;
     use cosmwasm_std::{coin, Addr};
+    use cw721::NumTokensResponse;
     use cw_multi_test::{BankSudo, Contract, ContractWrapper, Executor, SudoMsg};
     use sg_multi_test::StargazeApp;
     use sg_std::StargazeMsgWrapper;
@@ -72,7 +72,7 @@ mod tests {
         (app, factory_contract)
     }
 
-    fn proper_instantiate() -> (StargazeApp, Sg721VendingContract) {
+    fn proper_instantiate() -> (StargazeApp, Addr) {
         let (mut app, factory_contract) = proper_instantiate_factory();
         let sg721_id = app.store_code(sg721_vending_contract());
 
@@ -96,28 +96,22 @@ mod tests {
         let res = app.execute(Addr::unchecked(ADMIN), cosmos_msg);
         assert!(res.is_ok());
 
-        // can also get this address from the events from the res above
-        let contract = Sg721VendingContract(Addr::unchecked("contract1"));
-
-        (app, contract)
+        (app, Addr::unchecked("contract2"))
     }
 
     mod init {
         use super::*;
-        use cosmwasm_std::{
-            testing::{mock_dependencies, MockQuerier},
-            Empty,
-        };
+        use crate::msg::QueryMsg;
 
         #[test]
         fn create_sg721_vending_collection() {
-            let deps = mock_dependencies();
+            let (app, contract) = proper_instantiate();
 
-            let (_, contract) = proper_instantiate();
-
-            // query contract...
-            let res = contract.num_tokens::<MockQuerier, Empty>(&deps.querier);
-            // println!("{:?}", res);
+            let res: NumTokensResponse = app
+                .wrap()
+                .query_wasm_smart(contract, &QueryMsg::NumTokens {})
+                .unwrap();
+            assert_eq!(res.count, 0);
         }
     }
 }

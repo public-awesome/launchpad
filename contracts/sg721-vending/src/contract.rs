@@ -3,9 +3,8 @@ use cw721_base::Extension;
 use url::Url;
 
 use cosmwasm_std::{
-    from_binary, to_binary, to_vec, Binary, ContractInfoResponse as CwContractInfoResponse,
-    ContractResult, Decimal, Deps, DepsMut, Empty, Env, Event, MessageInfo, Querier, QueryRequest,
-    StdError, StdResult, SystemResult, WasmQuery,
+    to_binary, Binary, ContractInfoResponse as CwContractInfoResponse, Decimal, Deps, DepsMut, Env,
+    Event, MessageInfo, StdResult, WasmQuery,
 };
 use cw2::set_contract_version;
 use cw721::{ContractInfoResponse, Cw721ReceiveMsg};
@@ -27,7 +26,7 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 const MAX_DESCRIPTION_LENGTH: u32 = 512;
 
 pub fn _instantiate(
-    contract: Sg721Contract,
+    _contract: Sg721Contract,
     deps: DepsMut,
     _env: Env,
     info: MessageInfo,
@@ -92,9 +91,9 @@ pub fn _instantiate(
 
 // TODO: make sure this cannot be called from the outside
 pub fn ready(
-    contract: Sg721Contract,
+    _contract: Sg721Contract,
     deps: DepsMut,
-    env: Env,
+    _env: Env,
     info: MessageInfo,
 ) -> Result<Response, ContractError> {
     let minter = Sg721Contract::default().minter.load(deps.storage)?;
@@ -332,35 +331,14 @@ pub fn mint(
         .add_attribute("token_id", msg.token_id))
 }
 
-fn query_contract_info(
-    querier: &dyn Querier,
-    contract_addr: String,
-) -> StdResult<CwContractInfoResponse> {
-    let raw = QueryRequest::<Empty>::Wasm(WasmQuery::ContractInfo { contract_addr });
-    match querier.raw_query(&to_vec(&raw).unwrap()) {
-        SystemResult::Err(system_err) => Err(StdError::generic_err(format!(
-            "Querier system error: {}",
-            system_err
-        ))),
-        SystemResult::Ok(ContractResult::Err(contract_err)) => Err(StdError::generic_err(format!(
-            "Querier contract error: {}",
-            contract_err
-        ))),
-        SystemResult::Ok(ContractResult::Ok(res)) => {
-            let response: CwContractInfoResponse = from_binary(&res)?;
-            Ok(response)
-        }
-    }
-}
-
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::CollectionInfo {} => to_binary(&query_config(deps)?),
+        QueryMsg::CollectionInfo {} => to_binary(&query_collection_info(deps)?),
         _ => Sg721Contract::default().query(deps, env, msg.into()),
     }
 }
 
-fn query_config(deps: Deps) -> StdResult<CollectionInfoResponse> {
+fn query_collection_info(deps: Deps) -> StdResult<CollectionInfoResponse> {
     let info = COLLECTION_INFO.load(deps.storage)?;
 
     let royalty_info_res: Option<RoyaltyInfoResponse> = match info.royalty_info {
@@ -387,85 +365,3 @@ pub fn share_validate(share: Decimal) -> Result<Decimal, ContractError> {
 
     Ok(share)
 }
-
-// TODO: move to integration tests
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-
-//     use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-//     use cosmwasm_std::{coins, from_binary, Decimal};
-//     use sg_std::NATIVE_DENOM;
-
-//     #[test]
-//     fn proper_initialization_no_royalties() {
-//         let mut deps = mock_dependencies();
-//         let collection = String::from("collection0");
-
-//         let msg = InstantiateMsg {
-//             name: collection,
-//             symbol: String::from("BOBO"),
-//             minter: String::from("minter"),
-//             collection_info: CollectionInfo {
-//                 creator: String::from("creator"),
-//                 description: String::from("Stargaze Monkeys"),
-//                 image: "https://example.com/image.png".to_string(),
-//                 external_link: Some("https://example.com/external.html".to_string()),
-//                 royalty_info: None,
-//             },
-//         };
-//         let info = mock_info("creator", &[]);
-
-//         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
-//         assert_eq!(0, res.messages.len());
-
-//         // let's query the collection info
-//         let res = query(deps.as_ref(), mock_env(), QueryMsg::CollectionInfo {}).unwrap();
-//         let value: CollectionInfoResponse = from_binary(&res).unwrap();
-//         assert_eq!("https://example.com/image.png", value.image);
-//         assert_eq!("Stargaze Monkeys", value.description);
-//         assert_eq!(
-//             "https://example.com/external.html",
-//             value.external_link.unwrap()
-//         );
-//         assert_eq!(None, value.royalty_info);
-//     }
-
-//     #[test]
-//     fn proper_initialization_with_royalties() {
-//         let mut deps = mock_dependencies();
-//         let creator = String::from("creator");
-//         let collection = String::from("collection0");
-
-//         let msg = InstantiateMsg {
-//             name: collection,
-//             symbol: String::from("BOBO"),
-//             minter: String::from("minter"),
-//             collection_info: CollectionInfo {
-//                 creator: String::from("creator"),
-//                 description: String::from("Stargaze Monkeys"),
-//                 image: "https://example.com/image.png".to_string(),
-//                 external_link: Some("https://example.com/external.html".to_string()),
-//                 royalty_info: Some(RoyaltyInfoResponse {
-//                     payment_address: creator.clone(),
-//                     share: Decimal::percent(10),
-//                 }),
-//             },
-//         };
-//         let info = mock_info("creator", &[]);
-
-//         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
-//         assert_eq!(0, res.messages.len());
-
-//         // let's query the collection info
-//         let res = query(deps.as_ref(), mock_env(), QueryMsg::CollectionInfo {}).unwrap();
-//         let value: CollectionInfoResponse = from_binary(&res).unwrap();
-//         assert_eq!(
-//             Some(RoyaltyInfoResponse {
-//                 payment_address: creator,
-//                 share: Decimal::percent(10),
-//             }),
-//             value.royalty_info
-//         );
-//     }
-// }
