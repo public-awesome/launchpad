@@ -453,12 +453,12 @@ fn _execute_mint(
         .query_wasm_smart(config.factory, &LaunchpadQueryMsg::Params {})?;
 
     // Create network fee msgs
-    let fee_percent = if is_admin {
-        factory_params.params.airdrop_mint_fee_bps.to_percent()
+    let mint_fee = if is_admin {
+        factory_params.params.airdrop_mint_fee_bps.bps_to_decimal()
     } else {
-        factory_params.params.mint_fee_bps.to_percent()
+        factory_params.params.mint_fee_bps.bps_to_decimal()
     };
-    let network_fee = mint_price.amount * fee_percent;
+    let network_fee = mint_price.amount * mint_fee;
     checked_fair_burn(&info, network_fee.u128(), None, &mut res)?;
 
     let mintable_token_mapping = match token_id {
