@@ -794,6 +794,8 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractE
                 funds: vec![],
             };
 
+            println!("sg721 {:?}", sg721_address);
+
             SG721_ADDRESS.save(deps.storage, &Addr::unchecked(sg721_address))?;
 
             Ok(Response::default()

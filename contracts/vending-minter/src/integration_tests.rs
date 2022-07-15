@@ -216,9 +216,12 @@ fn setup_accounts(router: &mut StargazeApp) -> (Addr, Addr) {
 }
 
 // Set blockchain time to after mint by default
-fn setup_block_time(router: &mut StargazeApp, nanos: u64) {
+fn setup_block_time(router: &mut StargazeApp, nanos: u64, height: Option<u64>) {
     let mut block = router.block_info();
     block.time = Timestamp::from_nanos(nanos);
+    if height.is_some() {
+        block.height = height.unwrap();
+    }
     router.set_block(block);
 }
 
@@ -292,7 +295,7 @@ fn initialization() {
 #[test]
 fn happy_path() {
     let mut router = custom_mock_app();
-    setup_block_time(&mut router, GENESIS_MINT_START_TIME - 1);
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME - 1, None);
     let (creator, buyer) = setup_accounts(&mut router);
     let num_tokens = 2;
     let (minter_addr, config) = setup_minter_contract(&mut router, &creator, num_tokens);
@@ -307,7 +310,7 @@ fn happy_path() {
         Timestamp::from_nanos(GENESIS_MINT_START_TIME).to_string()
     );
 
-    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 1);
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 1, None);
 
     // Fail with incorrect tokens
     let mint_msg = ExecuteMsg::Mint {};
@@ -358,100 +361,98 @@ fn happy_path() {
     // Check NFT owned by buyer
     // Random mint token_id 1
     let query_owner_msg = Cw721QueryMsg::OwnerOf {
-        token_id: String::from("2"),
+        token_id: String::from("1"),
         include_expired: None,
     };
-
-    dbg!(config.clone());
 
     let res: OwnerOfResponse = router
         .wrap()
         .query_wasm_smart(config.sg721_address.clone(), &query_owner_msg)
         .unwrap();
-    // assert_eq!(res.owner, buyer.to_string());
+    assert_eq!(res.owner, buyer.to_string());
 
-    // // Buyer can't call MintTo
-    // let mint_to_msg = ExecuteMsg::MintTo {
-    //     recipient: buyer.to_string(),
-    // };
-    // let res = router.execute_contract(
-    //     buyer.clone(),
-    //     minter_addr.clone(),
-    //     &mint_to_msg,
-    //     &coins_for_msg(Coin {
-    //         amount: Uint128::from(ADMIN_MINT_PRICE),
-    //         denom: NATIVE_DENOM.to_string(),
-    //     }),
-    // );
-    // assert!(res.is_err());
+    // Buyer can't call MintTo
+    let mint_to_msg = ExecuteMsg::MintTo {
+        recipient: buyer.to_string(),
+    };
+    let res = router.execute_contract(
+        buyer.clone(),
+        minter_addr.clone(),
+        &mint_to_msg,
+        &coins_for_msg(Coin {
+            amount: Uint128::from(ADMIN_MINT_PRICE),
+            denom: NATIVE_DENOM.to_string(),
+        }),
+    );
+    assert!(res.is_err());
 
-    // // Creator mints an extra NFT for the buyer (who is a friend)
-    // let res = router.execute_contract(
-    //     creator.clone(),
-    //     minter_addr.clone(),
-    //     &mint_to_msg,
-    //     &coins_for_msg(Coin {
-    //         amount: Uint128::from(ADMIN_MINT_PRICE),
-    //         denom: NATIVE_DENOM.to_string(),
-    //     }),
-    // );
-    // assert!(res.is_ok());
+    // Creator mints an extra NFT for the buyer (who is a friend)
+    let res = router.execute_contract(
+        creator.clone(),
+        minter_addr.clone(),
+        &mint_to_msg,
+        &coins_for_msg(Coin {
+            amount: Uint128::from(ADMIN_MINT_PRICE),
+            denom: NATIVE_DENOM.to_string(),
+        }),
+    );
+    assert!(res.is_ok());
 
-    // // Mint count is not increased if admin mints for the user
-    // let res: MintCountResponse = router
-    //     .wrap()
-    //     .query_wasm_smart(
-    //         minter_addr.clone(),
-    //         &QueryMsg::MintCount {
-    //             address: buyer.to_string(),
-    //         },
-    //     )
-    //     .unwrap();
-    // assert_eq!(res.count, 1);
-    // assert_eq!(res.address, buyer.to_string());
+    // Mint count is not increased if admin mints for the user
+    let res: MintCountResponse = router
+        .wrap()
+        .query_wasm_smart(
+            minter_addr.clone(),
+            &QueryMsg::MintCount {
+                address: buyer.to_string(),
+            },
+        )
+        .unwrap();
+    assert_eq!(res.count, 1);
+    assert_eq!(res.address, buyer.to_string());
 
-    // // Minter contract should have no balance
-    // let minter_balance = router
-    //     .wrap()
-    //     .query_all_balances(minter_addr.clone())
-    //     .unwrap();
-    // assert_eq!(0, minter_balance.len());
+    // Minter contract should have no balance
+    let minter_balance = router
+        .wrap()
+        .query_all_balances(minter_addr.clone())
+        .unwrap();
+    assert_eq!(0, minter_balance.len());
 
-    // // Check that NFT is transferred
-    // let query_owner_msg = Cw721QueryMsg::OwnerOf {
-    //     token_id: String::from("1"),
-    //     include_expired: None,
-    // };
-    // let res: OwnerOfResponse = router
-    //     .wrap()
-    //     .query_wasm_smart(config.sg721_address, &query_owner_msg)
-    //     .unwrap();
-    // assert_eq!(res.owner, buyer.to_string());
+    // Check that NFT is transferred
+    let query_owner_msg = Cw721QueryMsg::OwnerOf {
+        token_id: String::from("1"),
+        include_expired: None,
+    };
+    let res: OwnerOfResponse = router
+        .wrap()
+        .query_wasm_smart(config.sg721_address, &query_owner_msg)
+        .unwrap();
+    assert_eq!(res.owner, buyer.to_string());
 
-    // // Errors if sold out
-    // let mint_msg = ExecuteMsg::Mint {};
-    // let res = router.execute_contract(
-    //     buyer,
-    //     minter_addr.clone(),
-    //     &mint_msg,
-    //     &coins_for_msg(Coin {
-    //         amount: Uint128::from(UNIT_PRICE),
-    //         denom: NATIVE_DENOM.to_string(),
-    //     }),
-    // );
-    // assert!(res.is_err());
+    // Errors if sold out
+    let mint_msg = ExecuteMsg::Mint {};
+    let res = router.execute_contract(
+        buyer,
+        minter_addr.clone(),
+        &mint_msg,
+        &coins_for_msg(Coin {
+            amount: Uint128::from(UNIT_PRICE),
+            denom: NATIVE_DENOM.to_string(),
+        }),
+    );
+    assert!(res.is_err());
 
-    // // Creator can't use MintTo if sold out
-    // let res = router.execute_contract(
-    //     creator,
-    //     minter_addr,
-    //     &mint_to_msg,
-    //     &coins_for_msg(Coin {
-    //         amount: Uint128::from(ADMIN_MINT_PRICE),
-    //         denom: NATIVE_DENOM.to_string(),
-    //     }),
-    // );
-    // assert!(res.is_err());
+    // Creator can't use MintTo if sold out
+    let res = router.execute_contract(
+        creator,
+        minter_addr,
+        &mint_to_msg,
+        &coins_for_msg(Coin {
+            amount: Uint128::from(ADMIN_MINT_PRICE),
+            denom: NATIVE_DENOM.to_string(),
+        }),
+    );
+    assert!(res.is_err());
 }
 #[test]
 fn mint_count_query() {
@@ -464,7 +465,7 @@ fn mint_count_query() {
     const EXPIRATION_TIME: Timestamp = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000);
 
     // Set block to before genesis mint start time
-    setup_block_time(&mut router, GENESIS_MINT_START_TIME - 1000);
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME - 1000, None);
 
     let wl_msg = WhitelistExecuteMsg::UpdateEndTime(EXPIRATION_TIME);
     let res = router.execute_contract(creator.clone(), whitelist_addr.clone(), &wl_msg, &[]);
@@ -506,7 +507,7 @@ fn mint_count_query() {
     let res = router.execute_contract(creator.clone(), whitelist_addr, &wasm_msg, &[]);
     assert!(res.is_ok());
 
-    setup_block_time(&mut router, GENESIS_MINT_START_TIME);
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME, Some(10));
 
     // Mint succeeds
     let mint_msg = ExecuteMsg::Mint {};
@@ -547,7 +548,7 @@ fn mint_count_query() {
     );
 
     // Set time after wl ends
-    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 20_000);
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 20_000, Some(11));
 
     // Public mint succeeds
     let mint_msg = ExecuteMsg::Mint {};
@@ -661,7 +662,7 @@ fn whitelist_already_started() {
     let (minter_addr, _) = setup_minter_contract(&mut router, &creator, num_tokens);
     let whitelist_addr = setup_whitelist_contract(&mut router, &creator);
 
-    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 101);
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 101, None);
 
     // set whitelist in minter contract
     let set_whitelist_msg = ExecuteMsg::SetWhitelist {
@@ -685,7 +686,7 @@ fn whitelist_can_update_before_start() {
     let (minter_addr, _) = setup_minter_contract(&mut router, &creator, num_tokens);
     let whitelist_addr = setup_whitelist_contract(&mut router, &creator);
 
-    setup_block_time(&mut router, GENESIS_MINT_START_TIME - 1000);
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME - 1000, None);
 
     // set whitelist in minter contract
     let set_whitelist_msg = ExecuteMsg::SetWhitelist {
@@ -722,7 +723,7 @@ fn whitelist_access_len_add_remove_expiration() {
     const AFTER_GENESIS_TIME: Timestamp = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 100);
 
     // Set to just before genesis mint start time
-    setup_block_time(&mut router, GENESIS_MINT_START_TIME - 10);
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME - 10, None);
 
     // Update whitelist_expiration fails if not admin
     let wl_msg = WhitelistExecuteMsg::UpdateEndTime(AFTER_GENESIS_TIME);
@@ -778,7 +779,7 @@ fn whitelist_access_len_add_remove_expiration() {
         &coins(UNIT_PRICE, NATIVE_DENOM),
     );
 
-    setup_block_time(&mut router, GENESIS_MINT_START_TIME);
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME, None);
 
     // Query mint price
     let mint_price_response: MintPriceResponse = router
@@ -877,7 +878,7 @@ fn before_start_time() {
     let (minter_addr, _) = setup_minter_contract(&mut router, &creator, num_tokens);
 
     // Set to before genesis mint start time
-    setup_block_time(&mut router, GENESIS_MINT_START_TIME - 10);
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME - 10, None);
 
     // Set start_time fails if not admin
     let start_time_msg = ExecuteMsg::UpdateStartTime(Timestamp::from_nanos(0));
@@ -910,7 +911,7 @@ fn before_start_time() {
     );
 
     // Set block forward, after start time. mint succeeds
-    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 10_000_000);
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 10_000_000, None);
 
     // Mint succeeds
     let mint_msg = ExecuteMsg::Mint {};
@@ -931,7 +932,7 @@ fn check_per_address_limit() {
     let (minter_addr, _config) = setup_minter_contract(&mut router, &creator, num_tokens);
 
     // Set to genesis mint start time
-    setup_block_time(&mut router, GENESIS_MINT_START_TIME);
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME, None);
 
     // Set limit, check unauthorized
     let per_address_limit_msg = ExecuteMsg::UpdatePerAddressLimit {
@@ -1011,7 +1012,7 @@ fn mint_for_token_id_addr() {
     let (minter_addr, config) = setup_minter_contract(&mut router, &creator, num_tokens);
 
     // Set to genesis mint start time
-    setup_block_time(&mut router, GENESIS_MINT_START_TIME);
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME, None);
 
     // Try mint_for, test unauthorized
     let mint_for_msg = ExecuteMsg::MintFor {
@@ -1140,7 +1141,7 @@ fn mint_for_token_id_addr() {
     );
 
     // Test mint_for token_id 2 then normal mint
-    let token_id = 3;
+    let token_id = 2;
     let mint_for_msg = ExecuteMsg::MintFor {
         token_id,
         recipient: buyer.to_string(),
@@ -1154,7 +1155,6 @@ fn mint_for_token_id_addr() {
             denom: NATIVE_DENOM.to_string(),
         }),
     );
-    println!("{:?}", res);
     assert!(res.is_ok());
 
     let res: OwnerOfResponse = router
@@ -1185,7 +1185,7 @@ fn test_update_start_time() {
     let (minter_addr, _) = setup_minter_contract(&mut router, &creator, num_tokens);
 
     // Public mint has started
-    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 100);
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 100, None);
 
     // Update to a start time in the past
     let msg = ExecuteMsg::UpdateStartTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME - 1000));
@@ -1225,7 +1225,7 @@ fn test_invalid_start_time() {
         .unwrap();
 
     // set time before the start_time above
-    setup_block_time(&mut router, GENESIS_MINT_START_TIME - 1000);
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME - 1000, None);
 
     // Instantiate sale contract before genesis mint
     // let mut minter_init_msg = minter_init();
@@ -1240,7 +1240,7 @@ fn test_invalid_start_time() {
         .unwrap_err();
 
     // move date after genesis mint
-    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 1000);
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 1000, None);
 
     // move start time after genesis but before current time
     minter_msg.init_msg.start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 500);
@@ -1250,7 +1250,7 @@ fn test_invalid_start_time() {
         .unwrap_err();
 
     // position block time before the start time
-    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 400);
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 400, None);
     minter_msg.init_msg.start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 500);
     let msg = FactoryExecuteMsg::CreateVendingMinter(minter_msg.clone());
     router
@@ -1275,7 +1275,7 @@ fn test_invalid_start_time() {
     assert!(res.is_ok());
 
     // position block after start time (GENESIS+450);
-    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 500);
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 500, None);
 
     // Update to a time after genesis and after current blocktime (GENESIS+400)
     let msg = ExecuteMsg::UpdateStartTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 450));
