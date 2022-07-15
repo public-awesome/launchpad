@@ -58,7 +58,7 @@ pub fn execute_create_vending_minter(
     let params = SUDO_PARAMS.load(deps.storage)?;
 
     let mut res = Response::new();
-    checked_fair_burn(&info, params.creation_fee.u128(), None, &mut res)?;
+    checked_fair_burn(&info, params.creation_fee.amount.u128(), None, &mut res)?;
 
     // Check the number of tokens is more than zero and less than the max limit
     if msg.init_msg.num_tokens == 0 || msg.init_msg.num_tokens > params.max_token_limit {
@@ -90,9 +90,9 @@ pub fn execute_create_vending_minter(
     }
 
     // Check that the price is greater than the minimum
-    if params.min_mint_price > msg.init_msg.unit_price.amount {
+    if params.min_mint_price.amount > msg.init_msg.unit_price.amount {
         return Err(ContractError::InsufficientMintPrice {
-            expected: params.min_mint_price.u128(),
+            expected: params.min_mint_price.amount.u128(),
             got: msg.init_msg.unit_price.amount.into(),
         });
     }

@@ -1,4 +1,4 @@
-use cosmwasm_std::{Addr, Decimal, Uint128};
+use cosmwasm_std::{Coin, Decimal, Uint128};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -22,11 +22,11 @@ pub struct CollectionParams {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct MinterParams<T> {
     pub code_id: u64,
-    pub creation_fee: Uint128,
+    pub creation_fee: Coin,
     pub max_token_limit: u32,
     pub max_per_address_limit: u32,
-    pub min_mint_price: Uint128,
-    pub airdrop_mint_price: Uint128,
+    pub min_mint_price: Coin,
+    pub airdrop_mint_price: Coin,
     pub mint_fee_percent: Decimal,
     pub airdrop_mint_fee_percent: Decimal,
     pub extension: T,
@@ -34,6 +34,7 @@ pub struct MinterParams<T> {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
+/// Returns `ParamsResponse<T>`
 pub enum QueryMsg {
     Params {},
 }

@@ -661,7 +661,7 @@ pub fn mint_price(deps: Deps, is_admin: bool) -> Result<Coin, StdError> {
 
     if is_admin {
         return Ok(coin(
-            factory_params.params.airdrop_mint_price.u128(),
+            factory_params.params.airdrop_mint_price.amount.u128(),
             config.unit_price.denom,
         ));
     }

@@ -71,11 +71,11 @@ pub mod tests {
     pub fn mock_params() -> VendingMinterParams {
         VendingMinterParams {
             code_id: 1,
-            creation_fee: Uint128::from(CREATION_FEE),
+            creation_fee: coin(CREATION_FEE, NATIVE_DENOM),
             max_token_limit: MAX_TOKEN_LIMIT,
             max_per_address_limit: MAX_PER_ADDRESS_LIMIT,
-            min_mint_price: Uint128::from(MIN_MINT_PRICE),
-            airdrop_mint_price: Uint128::from(AIRDROP_MINT_PRICE),
+            min_mint_price: coin(MIN_MINT_PRICE, NATIVE_DENOM),
+            airdrop_mint_price: coin(AIRDROP_MINT_PRICE, NATIVE_DENOM),
             mint_fee_percent: Decimal::percent(MINT_FEE_BPS),
             airdrop_mint_fee_percent: Decimal::percent(AIRDROP_MINT_FEE_BPS),
             extension: ParamsExtension {

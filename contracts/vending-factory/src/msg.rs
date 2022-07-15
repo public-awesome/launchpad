@@ -21,7 +21,7 @@ pub enum MinterInitMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum SudoMsg {
-    //TODO: UpdateParam {}
+    // UpdateParam {},
     VerifyMinter { minter: String },
     BlockMinter { minter: String },
 }
