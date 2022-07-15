@@ -122,7 +122,7 @@ pub fn instantiate(
     }
 
     // Submessage to instantiate sg721 contract
-    let sub_msgs: Vec<SubMsg> = vec![SubMsg {
+    let submsg = SubMsg {
         msg: WasmMsg::Instantiate {
             code_id: msg.collection_params.code_id,
             msg: to_binary(&Sg721InstantiateMsg {
@@ -139,14 +139,14 @@ pub fn instantiate(
         id: INSTANTIATE_SG721_REPLY_ID,
         gas_limit: None,
         reply_on: ReplyOn::Success,
-    }];
+    };
 
     Ok(Response::new()
         .add_attribute("action", "instantiate")
         .add_attribute("contract_name", CONTRACT_NAME)
         .add_attribute("contract_version", CONTRACT_VERSION)
         .add_attribute("sender", factory)
-        .add_submessages(sub_msgs))
+        .add_submessage(submsg))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]

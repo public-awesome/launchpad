@@ -327,45 +327,47 @@ fn happy_path() {
         &mint_msg,
         &coins(UNIT_PRICE, NATIVE_DENOM),
     );
-    println!("{:?}", res);
     assert!(res.is_ok());
 
-    // // Balances are correct
-    // // The creator should get the unit price - mint fee for the mint above
-    // let creator_balances = router.wrap().query_all_balances(creator.clone()).unwrap();
-    // assert_eq!(
-    //     creator_balances,
-    //     coins(INITIAL_BALANCE + UNIT_PRICE - MINT_FEE, NATIVE_DENOM)
-    // );
-    // // The buyer's tokens should reduce by unit price
-    // let buyer_balances = router.wrap().query_all_balances(buyer.clone()).unwrap();
-    // assert_eq!(
-    //     buyer_balances,
-    //     coins(INITIAL_BALANCE - UNIT_PRICE, NATIVE_DENOM)
-    // );
+    // Balances are correct
+    // The creator should get the unit price - mint fee for the mint above
+    let creator_balances = router.wrap().query_all_balances(creator.clone()).unwrap();
+    assert_eq!(
+        creator_balances,
+        coins(INITIAL_BALANCE + UNIT_PRICE - MINT_FEE, NATIVE_DENOM)
+    );
+    // The buyer's tokens should reduce by unit price
+    let buyer_balances = router.wrap().query_all_balances(buyer.clone()).unwrap();
+    assert_eq!(
+        buyer_balances,
+        coins(INITIAL_BALANCE - UNIT_PRICE, NATIVE_DENOM)
+    );
 
-    // let res: MintCountResponse = router
-    //     .wrap()
-    //     .query_wasm_smart(
-    //         minter_addr.clone(),
-    //         &QueryMsg::MintCount {
-    //             address: buyer.to_string(),
-    //         },
-    //     )
-    //     .unwrap();
-    // assert_eq!(res.count, 1);
-    // assert_eq!(res.address, buyer.to_string());
+    let res: MintCountResponse = router
+        .wrap()
+        .query_wasm_smart(
+            minter_addr.clone(),
+            &QueryMsg::MintCount {
+                address: buyer.to_string(),
+            },
+        )
+        .unwrap();
+    assert_eq!(res.count, 1);
+    assert_eq!(res.address, buyer.to_string());
 
-    // // Check NFT owned by buyer
-    // // Random mint token_id 1
-    // let query_owner_msg = Cw721QueryMsg::OwnerOf {
-    //     token_id: String::from("2"),
-    //     include_expired: None,
-    // };
-    // let res: OwnerOfResponse = router
-    //     .wrap()
-    //     .query_wasm_smart(config.sg721_address.clone(), &query_owner_msg)
-    //     .unwrap();
+    // Check NFT owned by buyer
+    // Random mint token_id 1
+    let query_owner_msg = Cw721QueryMsg::OwnerOf {
+        token_id: String::from("2"),
+        include_expired: None,
+    };
+
+    dbg!(config.clone());
+
+    let res: OwnerOfResponse = router
+        .wrap()
+        .query_wasm_smart(config.sg721_address.clone(), &query_owner_msg)
+        .unwrap();
     // assert_eq!(res.owner, buyer.to_string());
 
     // // Buyer can't call MintTo
