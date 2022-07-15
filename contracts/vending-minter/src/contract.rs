@@ -21,6 +21,7 @@ use rand_core::{RngCore, SeedableRng};
 use rand_xoshiro::Xoshiro128PlusPlus;
 use sg1::checked_fair_burn;
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
+use sg_std::math::U64Ext;
 use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use sg_whitelist::msg::{
     ConfigResponse as WhitelistConfigResponse, HasMemberResponse, QueryMsg as WhitelistQueryMsg,
@@ -194,7 +195,7 @@ pub fn execute_shuffle(
     // Check exact shuffle fee payment included in message
     checked_fair_burn(
         &info,
-        factory_params.params.extension.shuffle_fee.u128(),
+        factory_params.params.extension.shuffle_fee.amount.u128(),
         None,
         &mut res,
     )?;
@@ -453,9 +454,9 @@ fn _execute_mint(
 
     // Create network fee msgs
     let fee_percent = if is_admin {
-        factory_params.params.airdrop_mint_fee_percent / Uint128::from(100u128)
+        factory_params.params.airdrop_mint_fee_bps.to_percent()
     } else {
-        factory_params.params.mint_fee_percent / Uint128::from(100u128)
+        factory_params.params.mint_fee_bps.to_percent()
     };
     let network_fee = mint_price.amount * fee_percent;
     checked_fair_burn(&info, network_fee.u128(), None, &mut res)?;

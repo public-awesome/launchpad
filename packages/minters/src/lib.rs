@@ -1,7 +1,6 @@
-use cosmwasm_std::{Coin, Decimal, Uint128};
+use cosmwasm_std::Coin;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-
 use sg721::{CollectionInfo, RoyaltyInfoResponse};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -27,8 +26,8 @@ pub struct MinterParams<T> {
     pub max_per_address_limit: u32,
     pub min_mint_price: Coin,
     pub airdrop_mint_price: Coin,
-    pub mint_fee_percent: Decimal,
-    pub airdrop_mint_fee_percent: Decimal,
+    pub mint_fee_bps: u64,
+    pub airdrop_mint_fee_bps: u64,
     pub extension: T,
 }
 

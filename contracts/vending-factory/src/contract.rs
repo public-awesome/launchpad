@@ -27,7 +27,6 @@ pub fn instantiate(
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
-    // TODO: validate params
     SUDO_PARAMS.save(deps.storage, &msg.params)?;
 
     Ok(Response::new())
@@ -114,6 +113,17 @@ pub fn execute_create_vending_minter(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn sudo(_deps: DepsMut, _env: Env, msg: SudoMsg) -> Result<Response, ContractError> {
     match msg {
+        SudoMsg::UpdateParam {
+            code_id,
+            creation_fee,
+            max_token_limit,
+            max_per_address_limit,
+            min_mint_price,
+            airdrop_mint_price,
+            mint_fee_bps,
+            airdrop_mint_fee_bps,
+            shuffle_fee,
+        } => todo!(),
         SudoMsg::VerifyMinter { minter } => todo!(),
         SudoMsg::BlockMinter { minter } => todo!(),
     }

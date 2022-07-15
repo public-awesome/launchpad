@@ -1,4 +1,4 @@
-use cosmwasm_std::{Coin, Timestamp, Uint128};
+use cosmwasm_std::{Coin, Timestamp};
 use minters::{CreateMinterMsg, MinterParams};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 /// Parameters common to all vending minters, as determined by governance
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct ParamsExtension {
-    pub shuffle_fee: Uint128,
+    pub shuffle_fee: Coin,
 }
 pub type VendingMinterParams = MinterParams<ParamsExtension>;
 
@@ -40,7 +40,7 @@ pub enum ExecuteMsg {
 }
 
 pub mod tests {
-    use cosmwasm_std::{coin, Addr, Decimal, Timestamp, Uint128};
+    use cosmwasm_std::{coin, Timestamp};
     use minters::tests::mock_collection_params;
     use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
@@ -76,10 +76,10 @@ pub mod tests {
             max_per_address_limit: MAX_PER_ADDRESS_LIMIT,
             min_mint_price: coin(MIN_MINT_PRICE, NATIVE_DENOM),
             airdrop_mint_price: coin(AIRDROP_MINT_PRICE, NATIVE_DENOM),
-            mint_fee_percent: Decimal::percent(MINT_FEE_BPS),
-            airdrop_mint_fee_percent: Decimal::percent(AIRDROP_MINT_FEE_BPS),
+            mint_fee_bps: MINT_FEE_BPS,
+            airdrop_mint_fee_bps: AIRDROP_MINT_FEE_BPS,
             extension: ParamsExtension {
-                shuffle_fee: Uint128::from(SHUFFLE_FEE),
+                shuffle_fee: coin(SHUFFLE_FEE, NATIVE_DENOM),
             },
         }
     }
