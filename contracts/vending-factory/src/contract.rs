@@ -1,7 +1,7 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Reply, StdResult, WasmMsg,
+    ensure_eq, to_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Reply, StdResult, WasmMsg,
 };
 use cw2::set_contract_version;
 use cw_utils::{must_pay, parse_reply_instantiate_data};
@@ -10,7 +10,7 @@ use sg_std::NATIVE_DENOM;
 use vending::{ExecuteMsg, ParamsResponse, VendingMinterCreateMsg};
 
 use crate::error::ContractError;
-use crate::msg::{InstantiateMsg, QueryMsg, Response, SubMsg, SudoMsg};
+use crate::msg::{InstantiateMsg, QueryMsg, Response, SubMsg, SudoMsg, UpdateParamsMsg};
 use crate::state::{Minter, MINTERS, SUDO_PARAMS};
 
 // version info for migration info
@@ -82,10 +82,7 @@ pub fn execute_create_vending_minter(
     // let native_denom = deps.querier.query_bonded_denom()?;
     let native_denom = NATIVE_DENOM;
     if native_denom != msg.init_msg.unit_price.denom {
-        return Err(ContractError::InvalidDenom {
-            expected: native_denom.to_string(),
-            got: msg.init_msg.unit_price.denom,
-        });
+        return Err(ContractError::InvalidDenom {});
     }
 
     // Check that the price is greater than the minimum
@@ -111,22 +108,97 @@ pub fn execute_create_vending_minter(
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn sudo(_deps: DepsMut, _env: Env, msg: SudoMsg) -> Result<Response, ContractError> {
+pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> Result<Response, ContractError> {
     match msg {
-        SudoMsg::UpdateParam {
-            code_id,
-            creation_fee,
-            max_token_limit,
-            max_per_address_limit,
-            min_mint_price,
-            airdrop_mint_price,
-            mint_fee_bps,
-            airdrop_mint_fee_bps,
-            shuffle_fee,
-        } => todo!(),
-        SudoMsg::VerifyMinter { minter } => todo!(),
-        SudoMsg::BlockMinter { minter } => todo!(),
+        SudoMsg::UpdateParams(params_msg) => sudo_update_params(deps, env, params_msg),
+        SudoMsg::UpdateVerificationStatus { minter, status } => todo!(),
+        SudoMsg::UpdateBlockedStatus { minter, status } => todo!(),
     }
+}
+
+/// Only governance can update contract params
+pub fn sudo_update_verification_status(
+    deps: DepsMut,
+    _env: Env,
+    minter: String,
+    status: bool,
+) -> Result<Response, ContractError> {
+    let minter_addr = deps.api.addr_validate(&minter)?;
+
+    MINTERS.update(deps.storage, &minter_addr, |m| match m {
+        None => Ok(Minter {
+            verified: status,
+            blocked: false,
+        }),
+        Some(mut m) => {
+            m.verified = status;
+            Ok(m)
+        }
+    })?;
+
+    Ok(Response::new().add_attribute("action", "sudo_verify_minter"))
+}
+
+/// Only governance can update contract params
+pub fn sudo_update_params(
+    deps: DepsMut,
+    _env: Env,
+    param_msg: UpdateParamsMsg,
+) -> Result<Response, ContractError> {
+    let mut params = SUDO_PARAMS.load(deps.storage)?;
+    let native_denom = deps.querier.query_bonded_denom()?;
+
+    params.code_id = param_msg.code_id.unwrap_or(params.code_id);
+
+    if let Some(creation_fee) = param_msg.creation_fee {
+        ensure_eq!(
+            &creation_fee.denom,
+            &native_denom,
+            ContractError::InvalidDenom {}
+        );
+        params.creation_fee = creation_fee;
+    }
+
+    params.max_token_limit = param_msg.max_token_limit.unwrap_or(params.max_token_limit);
+    params.max_per_address_limit = param_msg
+        .max_per_address_limit
+        .unwrap_or(params.max_per_address_limit);
+
+    if let Some(min_mint_price) = param_msg.min_mint_price {
+        ensure_eq!(
+            &min_mint_price.denom,
+            &native_denom,
+            ContractError::InvalidDenom {}
+        );
+        params.min_mint_price = min_mint_price;
+    }
+
+    if let Some(airdrop_mint_price) = param_msg.airdrop_mint_price {
+        ensure_eq!(
+            &airdrop_mint_price.denom,
+            &native_denom,
+            ContractError::InvalidDenom {}
+        );
+        params.airdrop_mint_price = airdrop_mint_price;
+    }
+
+    params.mint_fee_bps = param_msg.mint_fee_bps.unwrap_or(params.mint_fee_bps);
+    params.airdrop_mint_fee_bps = param_msg
+        .airdrop_mint_fee_bps
+        .unwrap_or(params.airdrop_mint_fee_bps);
+
+    if let Some(shuffle_fee) = param_msg.shuffle_fee {
+        ensure_eq!(
+            &shuffle_fee.denom,
+            &native_denom,
+            ContractError::InvalidDenom {}
+        );
+        params.extension.shuffle_fee = shuffle_fee;
+    }
+
+    SUDO_PARAMS.save(deps.storage, &params)?;
+
+    Ok(Response::new().add_attribute("action", "sudo_update_params"))
 }
 
 // Reply callback triggered from cw721 contract instantiation
@@ -145,7 +217,7 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractE
 
             MINTERS.save(
                 deps.storage,
-                (code_id, &Addr::unchecked(res.contract_address)),
+                &Addr::unchecked(res.contract_address),
                 &minter,
             )?;
             Ok(Response::default().add_attribute("action", "instantiate_minter_reply"))

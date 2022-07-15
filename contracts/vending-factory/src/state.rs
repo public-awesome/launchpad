@@ -12,10 +12,7 @@ pub struct Minter {
     pub blocked: bool,
 }
 
-pub type CodeID = u64;
-pub type MinterAddress = Addr;
-
-pub const MINTERS: Map<(CodeID, &MinterAddress), Minter> = Map::new("m");
+pub const MINTERS: Map<&Addr, Minter> = Map::new("m");
 
 // pub const COLLECTION_ADDRESS: Item<Addr> = Item::new("collection_address");
 

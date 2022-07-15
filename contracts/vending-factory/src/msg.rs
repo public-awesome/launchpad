@@ -1,4 +1,4 @@
-use cosmwasm_std::{Coin, Uint128};
+use cosmwasm_std::Coin;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -13,32 +13,28 @@ pub struct InstantiateMsg {
     pub params: VendingMinterParams,
 }
 
+/// Message for params so they can be updated invidiually by governance
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum MinterInitMsg {
-    CreateMinter {},
+pub struct UpdateParamsMsg {
+    // TODO: move common params to minter package?
+    pub code_id: Option<u64>,
+    pub creation_fee: Option<Coin>,
+    pub max_token_limit: Option<u32>,
+    pub max_per_address_limit: Option<u32>,
+    pub min_mint_price: Option<Coin>,
+    pub airdrop_mint_price: Option<Coin>,
+    pub mint_fee_bps: Option<u64>,
+    pub airdrop_mint_fee_bps: Option<u64>,
+    pub shuffle_fee: Option<Coin>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum SudoMsg {
-    UpdateParam {
-        code_id: Option<u64>,
-        creation_fee: Option<Coin>,
-        max_token_limit: Option<u32>,
-        max_per_address_limit: Option<u32>,
-        min_mint_price: Option<Coin>,
-        airdrop_mint_price: Option<Coin>,
-        mint_fee_bps: Option<u64>,
-        airdrop_mint_fee_bps: Option<u64>,
-        shuffle_fee: Option<Coin>,
-    },
-    VerifyMinter {
-        minter: String,
-    },
-    BlockMinter {
-        minter: String,
-    },
+    UpdateParams(UpdateParamsMsg),
+    UpdateVerificationStatus { minter: String, status: bool },
+    UpdateBlockedStatus { minter: String, status: bool },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

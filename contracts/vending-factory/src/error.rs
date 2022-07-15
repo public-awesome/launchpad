@@ -3,7 +3,7 @@ use cw_utils::PaymentError;
 use sg1::FeeError;
 use thiserror::Error;
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, PartialEq)]
 pub enum ContractError {
     #[error("{0}")]
     Std(#[from] StdError),
@@ -17,8 +17,8 @@ pub enum ContractError {
     #[error("Invalid minting limit per address. max: {max}, min: 1, got: {got}")]
     InvalidPerAddressLimit { max: u32, min: u32, got: u32 },
 
-    #[error("InvalidDenom {expected} got {got}")]
-    InvalidDenom { expected: String, got: String },
+    #[error("InvalidDenom")]
+    InvalidDenom {},
 
     #[error("Minimum network mint price {expected} got {got}")]
     InsufficientMintPrice { expected: u128, got: u128 },
@@ -34,9 +34,8 @@ pub enum ContractError {
 
     #[error("{0}")]
     Payment(#[from] PaymentError),
-
-    #[error("Custom Error val: {val:?}")]
-    CustomError { val: String },
+    // #[error("Custom Error val: {val:?}")]
+    // CustomError { val: String },
     // Add any other custom errors you like here.
     // Look at https://docs.rs/thiserror/1.0.21/thiserror/ for details.
 }
