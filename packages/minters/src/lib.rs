@@ -21,8 +21,6 @@ pub struct CollectionParams {
 /// Common params for all minters, updatable by governance
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct MinterParams<T> {
-    // TODO: redundant with factory, remove?
-    pub factory: Addr,
     pub code_id: u64,
     pub creation_fee: Uint128,
     pub max_token_limit: u32,

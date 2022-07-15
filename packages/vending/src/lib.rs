@@ -70,7 +70,6 @@ pub mod tests {
 
     pub fn mock_params() -> VendingMinterParams {
         VendingMinterParams {
-            factory: Addr::unchecked("contract0".to_string()),
             code_id: 1,
             creation_fee: Uint128::from(CREATION_FEE),
             max_token_limit: MAX_TOKEN_LIMIT,
