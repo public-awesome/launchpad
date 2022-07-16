@@ -902,6 +902,7 @@ dependencies = [
  "cosmwasm-std",
  "cw-storage-plus",
  "cw-utils",
+ "minters",
  "schemars",
  "serde",
  "sg-std 0.12.1",

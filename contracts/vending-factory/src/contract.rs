@@ -12,7 +12,7 @@ use vending::{ExecuteMsg, ParamsResponse, VendingMinterCreateMsg, VendingUpdateP
 use crate::error::ContractError;
 use crate::msg::{InstantiateMsg, QueryMsg, Response, SubMsg, SudoMsg};
 use crate::state::SUDO_PARAMS;
-use sg_controllers::{handle_reply, upsert_minter_status};
+use sg_controllers::{handle_reply, update_params, upsert_minter_status};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:vending-factory";
@@ -117,7 +117,7 @@ pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> Result<Response, ContractE
             verified,
             blocked,
         } => upsert_minter_status(deps, env, minter, verified, blocked)
-            .map_err(|e| ContractError::MinterFactoryError {}),
+            .map_err(|_| ContractError::MinterFactoryError {}),
     }
 }
 
@@ -128,51 +128,13 @@ pub fn sudo_update_params(
     param_msg: VendingUpdateParamsMsg,
 ) -> Result<Response, ContractError> {
     let mut params = SUDO_PARAMS.load(deps.storage)?;
-    let native_denom = deps.querier.query_bonded_denom()?;
 
-    params.code_id = param_msg.code_id.unwrap_or(params.code_id);
-
-    if let Some(creation_fee) = param_msg.creation_fee {
-        ensure_eq!(
-            &creation_fee.denom,
-            &native_denom,
-            ContractError::InvalidDenom {}
-        );
-        params.creation_fee = creation_fee;
-    }
-
-    params.max_token_limit = param_msg.max_token_limit.unwrap_or(params.max_token_limit);
-    params.max_per_address_limit = param_msg
-        .max_per_address_limit
-        .unwrap_or(params.max_per_address_limit);
-
-    if let Some(min_mint_price) = param_msg.min_mint_price {
-        ensure_eq!(
-            &min_mint_price.denom,
-            &native_denom,
-            ContractError::InvalidDenom {}
-        );
-        params.min_mint_price = min_mint_price;
-    }
-
-    if let Some(airdrop_mint_price) = param_msg.airdrop_mint_price {
-        ensure_eq!(
-            &airdrop_mint_price.denom,
-            &native_denom,
-            ContractError::InvalidDenom {}
-        );
-        params.airdrop_mint_price = airdrop_mint_price;
-    }
-
-    params.mint_fee_bps = param_msg.mint_fee_bps.unwrap_or(params.mint_fee_bps);
-    params.airdrop_mint_fee_bps = param_msg
-        .airdrop_mint_fee_bps
-        .unwrap_or(params.airdrop_mint_fee_bps);
+    update_params(&mut params, param_msg.clone())?;
 
     if let Some(shuffle_fee) = param_msg.extension.shuffle_fee {
         ensure_eq!(
             &shuffle_fee.denom,
-            &native_denom,
+            &NATIVE_DENOM,
             ContractError::InvalidDenom {}
         );
         params.extension.shuffle_fee = shuffle_fee;

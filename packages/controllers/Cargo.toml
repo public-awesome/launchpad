@@ -18,3 +18,4 @@ serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 sg-std = { path = "../sg-std" }
 thiserror = { version = "1.0.21" }
 cw-utils = "0.13.2"
+minters = { path = "../minters" }
