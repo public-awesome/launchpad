@@ -50,7 +50,7 @@ pub fn execute_create_vending_minter(
     info: MessageInfo,
     msg: VendingMinterCreateMsg,
 ) -> Result<Response, ContractError> {
-    // TODO: why doesn't this work?
+    // TODO: https://github.com/CosmWasm/cw-plus/issues/753
     // must_pay(&info, &deps.querier.query_bonded_denom()?)?;
     must_pay(&info, NATIVE_DENOM)?;
 
@@ -110,7 +110,7 @@ pub fn execute_create_vending_minter(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> Result<Response, ContractError> {
     match msg {
-        SudoMsg::UpdateParams(params_msg) => sudo_update_params(deps, env, params_msg),
+        SudoMsg::UpdateParams(params_msg) => sudo_update_params(deps, env, *params_msg),
         SudoMsg::UpdateMinterStatus {
             minter,
             verified,
@@ -203,24 +203,20 @@ pub fn sudo_update_params(
     Ok(Response::new().add_attribute("action", "sudo_update_params"))
 }
 
-// Reply callback triggered from cw721 contract instantiation
+/// Reply callback triggered from cw721 contract instantiation
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
-    let code_id = msg.id;
     let reply = parse_reply_instantiate_data(msg);
 
     match reply {
         Ok(res) => {
-            let minter = Minter {
-                verified: false,
-                blocked: false,
-            };
-            // TODO: save factory contract address in minter config
-
             MINTERS.save(
                 deps.storage,
                 &Addr::unchecked(res.contract_address),
-                &minter,
+                &Minter {
+                    verified: false,
+                    blocked: false,
+                },
             )?;
             Ok(Response::default().add_attribute("action", "instantiate_minter_reply"))
         }

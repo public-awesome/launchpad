@@ -32,7 +32,7 @@ pub struct UpdateParamsMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum SudoMsg {
-    UpdateParams(UpdateParamsMsg),
+    UpdateParams(Box<UpdateParamsMsg>),
     UpdateMinterStatus {
         minter: String,
         verified: bool,
