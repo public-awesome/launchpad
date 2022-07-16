@@ -1,6 +1,7 @@
 use cosmwasm_std::StdError;
 use cw_utils::PaymentError;
 use sg1::FeeError;
+use sg_controllers::MinterFactoryError;
 use thiserror::Error;
 
 #[derive(Error, Debug, PartialEq)]
@@ -8,8 +9,20 @@ pub enum ContractError {
     #[error("{0}")]
     Std(#[from] StdError),
 
+    #[error("{0}")]
+    Fee(#[from] FeeError),
+
+    #[error("{0}")]
+    Payment(#[from] PaymentError),
+
+    #[error("{0}")]
+    MinterFactory(#[from] MinterFactoryError),
+
     #[error("Unauthorized")]
     Unauthorized {},
+
+    #[error("MinterFactoryError")]
+    MinterFactoryError {},
 
     #[error("InvalidNumTokens {max}, min: 1")]
     InvalidNumTokens { max: u32, min: u32 },
@@ -25,15 +38,6 @@ pub enum ContractError {
 
     #[error("Invalid reply ID")]
     InvalidReplyID {},
-
-    #[error("InstantiateMinterError")]
-    InstantiateMinterError {},
-
-    #[error("{0}")]
-    Fee(#[from] FeeError),
-
-    #[error("{0}")]
-    Payment(#[from] PaymentError),
     // #[error("Custom Error val: {val:?}")]
     // CustomError { val: String },
     // Add any other custom errors you like here.

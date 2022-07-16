@@ -6,14 +6,6 @@ use vending::VendingMinterParams;
 
 pub const SUDO_PARAMS: Item<VendingMinterParams> = Item::new("sudo-params");
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct Minter {
-    pub verified: bool,
-    pub blocked: bool,
-}
-
-pub const MINTERS: Map<&Addr, Minter> = Map::new("m");
-
 // pub const COLLECTION_ADDRESS: Item<Addr> = Item::new("collection_address");
 
 // TODO: create a map of creator addresses

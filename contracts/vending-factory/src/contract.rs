@@ -11,7 +11,8 @@ use vending::{ExecuteMsg, ParamsResponse, VendingMinterCreateMsg};
 
 use crate::error::ContractError;
 use crate::msg::{InstantiateMsg, QueryMsg, Response, SubMsg, SudoMsg, UpdateParamsMsg};
-use crate::state::{Minter, MINTERS, SUDO_PARAMS};
+use crate::state::SUDO_PARAMS;
+use sg_controllers::{handle_reply, upsert_minter_status};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:vending-factory";
@@ -115,30 +116,9 @@ pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> Result<Response, ContractE
             minter,
             verified,
             blocked,
-        } => sudo_update_minter_status(deps, env, minter, verified, blocked),
+        } => upsert_minter_status(deps, env, minter, verified, blocked)
+            .map_err(|e| ContractError::MinterFactoryError {}),
     }
-}
-
-/// Only governance can update contract params
-pub fn sudo_update_minter_status(
-    deps: DepsMut,
-    _env: Env,
-    minter: String,
-    verified: bool,
-    blocked: bool,
-) -> Result<Response, ContractError> {
-    let minter_addr = deps.api.addr_validate(&minter)?;
-
-    let _: StdResult<Minter> = MINTERS.update(deps.storage, &minter_addr, |m| match m {
-        None => Ok(Minter { verified, blocked }),
-        Some(mut m) => {
-            m.verified = verified;
-            m.blocked = blocked;
-            Ok(m)
-        }
-    });
-
-    Ok(Response::new().add_attribute("action", "sudo_update_minter_status"))
 }
 
 /// Only governance can update contract params
@@ -206,22 +186,7 @@ pub fn sudo_update_params(
 /// Reply callback triggered from cw721 contract instantiation
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
-    let reply = parse_reply_instantiate_data(msg);
-
-    match reply {
-        Ok(res) => {
-            MINTERS.save(
-                deps.storage,
-                &Addr::unchecked(res.contract_address),
-                &Minter {
-                    verified: false,
-                    blocked: false,
-                },
-            )?;
-            Ok(Response::default().add_attribute("action", "instantiate_minter_reply"))
-        }
-        Err(_) => Err(ContractError::InstantiateMinterError {}),
-    }
+    handle_reply(deps, msg).map_err(|e| e.into())
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
