@@ -89,7 +89,8 @@ pub fn _instantiate(
         .add_attribute("image", image.to_string()))
 }
 
-// TODO: make sure this cannot be called from the outside
+/// Called by the minter reply handler after instantiation. Now we can query
+/// the factory and minter to verify that the collection creation is authorized.
 pub fn ready(
     _contract: Sg721Contract,
     deps: DepsMut,
@@ -243,13 +244,6 @@ pub fn send_nft(
     token_id: String,
     msg: Binary,
 ) -> Result<Response, ContractError> {
-    // let hook = prepare_transfer_hook(
-    //     deps.storage,
-    //     info.sender.to_string(),
-    //     &receiving_contract,
-    //     &token_id,
-    // )?;
-
     // Transfer token
     contract._transfer_nft(deps, &env, &info, &receiving_contract, &token_id)?;
 
@@ -280,8 +274,6 @@ pub fn transfer_nft(
     recipient: String,
     token_id: String,
 ) -> Result<Response, ContractError> {
-    // let hook = prepare_transfer_hook(deps.storage, info.sender.to_string(), &recipient, &token_id)?;
-
     contract._transfer_nft(deps, &env, &info, &recipient, &token_id)?;
 
     let event = Event::new("transfer_nft")

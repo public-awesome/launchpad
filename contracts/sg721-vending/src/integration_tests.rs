@@ -3,6 +3,7 @@ mod tests {
     use cosmwasm_std::{coin, Addr};
     use cw721::NumTokensResponse;
     use cw_multi_test::{BankSudo, Contract, ContractWrapper, Executor, SudoMsg};
+    use sg721::ExecuteMsg as Sg721ExecuteMsg;
     use sg_multi_test::StargazeApp;
     use sg_std::StargazeMsgWrapper;
     use vending::tests::{mock_create_minter, mock_params, CREATION_FEE};
@@ -100,6 +101,8 @@ mod tests {
     }
 
     mod init {
+        use cosmwasm_std::Empty;
+
         use super::*;
         use crate::msg::QueryMsg;
 
@@ -112,6 +115,17 @@ mod tests {
                 .query_wasm_smart(contract, &QueryMsg::NumTokens {})
                 .unwrap();
             assert_eq!(res.count, 0);
+        }
+
+        #[test]
+        fn check_ready_unauthorized() {
+            let (mut app, contract) = proper_instantiate();
+
+            let sender = Addr::unchecked("sender".to_string());
+
+            let res =
+                app.execute_contract(sender, contract, &Sg721ExecuteMsg::<Empty>::_Ready {}, &[]);
+            assert!(res.is_err());
         }
     }
 }
