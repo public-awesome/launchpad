@@ -1,10 +1,19 @@
 use cosmwasm_std::{Coin, Timestamp};
-use minters::{CreateMinterMsg, MinterParams};
+use minters::{CreateMinterMsg, MinterParams, UpdateParamsMsg};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+/// Message for params so they can be updated invidiually by governance
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub struct VendingUpdateParamsExtension {
+    pub shuffle_fee: Option<Coin>,
+}
+pub type VendingUpdateParamsMsg = UpdateParamsMsg<VendingUpdateParamsExtension>;
+
 /// Parameters common to all vending minters, as determined by governance
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 pub struct ParamsExtension {
     pub shuffle_fee: Coin,
 }
@@ -12,6 +21,7 @@ pub type VendingMinterParams = MinterParams<ParamsExtension>;
 
 /// Properties of each specific vending minter
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 pub struct MinterInitMsgExtension {
     pub base_token_uri: String,
     pub start_time: Timestamp,
@@ -29,6 +39,7 @@ pub enum QueryMsg {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 pub struct ParamsResponse {
     pub params: VendingMinterParams,
 }

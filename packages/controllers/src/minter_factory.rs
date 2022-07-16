@@ -63,3 +63,60 @@ pub fn handle_reply(deps: DepsMut, msg: Reply) -> Result<Response, MinterFactory
         Err(_) => Err(MinterFactoryError::InstantiateMinterError {}),
     }
 }
+
+// pub fn update_params(deps: DepsMut, param_msg: UpdateParamsMsg) -> Result<Response, ContractError> {
+//     let mut params = SUDO_PARAMS.load(deps.storage)?;
+//     let native_denom = deps.querier.query_bonded_denom()?;
+
+//     params.code_id = param_msg.code_id.unwrap_or(params.code_id);
+
+//     if let Some(creation_fee) = param_msg.creation_fee {
+//         ensure_eq!(
+//             &creation_fee.denom,
+//             &native_denom,
+//             ContractError::InvalidDenom {}
+//         );
+//         params.creation_fee = creation_fee;
+//     }
+
+//     params.max_token_limit = param_msg.max_token_limit.unwrap_or(params.max_token_limit);
+//     params.max_per_address_limit = param_msg
+//         .max_per_address_limit
+//         .unwrap_or(params.max_per_address_limit);
+
+//     if let Some(min_mint_price) = param_msg.min_mint_price {
+//         ensure_eq!(
+//             &min_mint_price.denom,
+//             &native_denom,
+//             ContractError::InvalidDenom {}
+//         );
+//         params.min_mint_price = min_mint_price;
+//     }
+
+//     if let Some(airdrop_mint_price) = param_msg.airdrop_mint_price {
+//         ensure_eq!(
+//             &airdrop_mint_price.denom,
+//             &native_denom,
+//             ContractError::InvalidDenom {}
+//         );
+//         params.airdrop_mint_price = airdrop_mint_price;
+//     }
+
+//     params.mint_fee_bps = param_msg.mint_fee_bps.unwrap_or(params.mint_fee_bps);
+//     params.airdrop_mint_fee_bps = param_msg
+//         .airdrop_mint_fee_bps
+//         .unwrap_or(params.airdrop_mint_fee_bps);
+
+//     if let Some(shuffle_fee) = param_msg.shuffle_fee {
+//         ensure_eq!(
+//             &shuffle_fee.denom,
+//             &native_denom,
+//             ContractError::InvalidDenom {}
+//         );
+//         params.extension.shuffle_fee = shuffle_fee;
+//     }
+
+//     SUDO_PARAMS.save(deps.storage, &params)?;
+
+//     Ok(Response::new().add_attribute("action", "sudo_update_params"))
+// }

@@ -1,7 +1,4 @@
-use cosmwasm_std::Addr;
-use cw_storage_plus::{Item, Map};
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use cw_storage_plus::Item;
 use vending::VendingMinterParams;
 
 pub const SUDO_PARAMS: Item<VendingMinterParams> = Item::new("sudo-params");

@@ -1,16 +1,16 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    ensure_eq, to_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Reply, StdResult, WasmMsg,
+    ensure_eq, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Reply, StdResult, WasmMsg,
 };
 use cw2::set_contract_version;
-use cw_utils::{must_pay, parse_reply_instantiate_data};
+use cw_utils::must_pay;
 use sg1::checked_fair_burn;
 use sg_std::NATIVE_DENOM;
-use vending::{ExecuteMsg, ParamsResponse, VendingMinterCreateMsg};
+use vending::{ExecuteMsg, ParamsResponse, VendingMinterCreateMsg, VendingUpdateParamsMsg};
 
 use crate::error::ContractError;
-use crate::msg::{InstantiateMsg, QueryMsg, Response, SubMsg, SudoMsg, UpdateParamsMsg};
+use crate::msg::{InstantiateMsg, QueryMsg, Response, SubMsg, SudoMsg};
 use crate::state::SUDO_PARAMS;
 use sg_controllers::{handle_reply, upsert_minter_status};
 
@@ -125,7 +125,7 @@ pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> Result<Response, ContractE
 pub fn sudo_update_params(
     deps: DepsMut,
     _env: Env,
-    param_msg: UpdateParamsMsg,
+    param_msg: VendingUpdateParamsMsg,
 ) -> Result<Response, ContractError> {
     let mut params = SUDO_PARAMS.load(deps.storage)?;
     let native_denom = deps.querier.query_bonded_denom()?;
@@ -169,7 +169,7 @@ pub fn sudo_update_params(
         .airdrop_mint_fee_bps
         .unwrap_or(params.airdrop_mint_fee_bps);
 
-    if let Some(shuffle_fee) = param_msg.shuffle_fee {
+    if let Some(shuffle_fee) = param_msg.extension.shuffle_fee {
         ensure_eq!(
             &shuffle_fee.denom,
             &native_denom,

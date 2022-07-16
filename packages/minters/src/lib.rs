@@ -31,6 +31,21 @@ pub struct MinterParams<T> {
     pub extension: T,
 }
 
+/// Message for params so they can be updated invidiually by governance
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub struct UpdateParamsMsg<T> {
+    pub code_id: Option<u64>,
+    pub creation_fee: Option<Coin>,
+    pub max_token_limit: Option<u32>,
+    pub max_per_address_limit: Option<u32>,
+    pub min_mint_price: Option<Coin>,
+    pub airdrop_mint_price: Option<Coin>,
+    pub mint_fee_bps: Option<u64>,
+    pub airdrop_mint_fee_bps: Option<u64>,
+    pub extension: T,
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 /// Returns `ParamsResponse<T>`
