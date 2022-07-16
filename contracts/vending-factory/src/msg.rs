@@ -33,8 +33,11 @@ pub struct UpdateParamsMsg {
 #[serde(rename_all = "snake_case")]
 pub enum SudoMsg {
     UpdateParams(UpdateParamsMsg),
-    UpdateVerificationStatus { minter: String, status: bool },
-    UpdateBlockedStatus { minter: String, status: bool },
+    UpdateMinterStatus {
+        minter: String,
+        verified: bool,
+        blocked: bool,
+    },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

@@ -111,32 +111,34 @@ pub fn execute_create_vending_minter(
 pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> Result<Response, ContractError> {
     match msg {
         SudoMsg::UpdateParams(params_msg) => sudo_update_params(deps, env, params_msg),
-        SudoMsg::UpdateVerificationStatus { minter, status } => todo!(),
-        SudoMsg::UpdateBlockedStatus { minter, status } => todo!(),
+        SudoMsg::UpdateMinterStatus {
+            minter,
+            verified,
+            blocked,
+        } => sudo_update_minter_status(deps, env, minter, verified, blocked),
     }
 }
 
 /// Only governance can update contract params
-pub fn sudo_update_verification_status(
+pub fn sudo_update_minter_status(
     deps: DepsMut,
     _env: Env,
     minter: String,
-    status: bool,
+    verified: bool,
+    blocked: bool,
 ) -> Result<Response, ContractError> {
     let minter_addr = deps.api.addr_validate(&minter)?;
 
-    MINTERS.update(deps.storage, &minter_addr, |m| match m {
-        None => Ok(Minter {
-            verified: status,
-            blocked: false,
-        }),
+    let _: StdResult<Minter> = MINTERS.update(deps.storage, &minter_addr, |m| match m {
+        None => Ok(Minter { verified, blocked }),
         Some(mut m) => {
-            m.verified = status;
+            m.verified = verified;
+            m.blocked = blocked;
             Ok(m)
         }
-    })?;
+    });
 
-    Ok(Response::new().add_attribute("action", "sudo_verify_minter"))
+    Ok(Response::new().add_attribute("action", "sudo_update_minter_status"))
 }
 
 /// Only governance can update contract params
