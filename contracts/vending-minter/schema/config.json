@@ -5,6 +5,7 @@
   "required": [
     "admin",
     "base_token_uri",
+    "factory",
     "num_tokens",
     "per_address_limit",
     "sg721_code_id",
@@ -17,6 +18,9 @@
     },
     "base_token_uri": {
       "type": "string"
+    },
+    "factory": {
+      "$ref": "#/definitions/Addr"
     },
     "num_tokens": {
       "type": "integer",
