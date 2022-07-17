@@ -107,7 +107,7 @@ dependencies = [
  "cw721-base",
  "schemars",
  "serde",
- "sg-controllers 0.12.1",
+ "sg-controllers 0.13.0",
  "sg-marketplace",
  "sg-multi-test",
  "sg-std 0.12.1",
@@ -898,6 +898,19 @@ dependencies = [
 [[package]]
 name = "sg-controllers"
 version = "0.12.1"
+source = "git+https://github.com/public-awesome/launchpad?branch=feature/fund-fairburn-pool#57d7b2ebe146ad7c2164c0e16a0439d9bd0433b9"
+dependencies = [
+ "cosmwasm-std",
+ "cw-storage-plus",
+ "schemars",
+ "serde",
+ "sg-std 0.12.1 (git+https://github.com/public-awesome/launchpad?branch=feature/fund-fairburn-pool)",
+ "thiserror",
+]
+
+[[package]]
+name = "sg-controllers"
+version = "0.13.0"
 dependencies = [
  "cosmwasm-std",
  "cw-storage-plus",
@@ -906,19 +919,6 @@ dependencies = [
  "schemars",
  "serde",
  "sg-std 0.12.1",
- "thiserror",
-]
-
-[[package]]
-name = "sg-controllers"
-version = "0.12.1"
-source = "git+https://github.com/public-awesome/launchpad?branch=feature/fund-fairburn-pool#57d7b2ebe146ad7c2164c0e16a0439d9bd0433b9"
-dependencies = [
- "cosmwasm-std",
- "cw-storage-plus",
- "schemars",
- "serde",
- "sg-std 0.12.1 (git+https://github.com/public-awesome/launchpad?branch=feature/fund-fairburn-pool)",
  "thiserror",
 ]
 
@@ -937,7 +937,7 @@ dependencies = [
  "cw721-base",
  "schemars",
  "serde",
- "sg-controllers 0.12.1 (git+https://github.com/public-awesome/launchpad?branch=feature/fund-fairburn-pool)",
+ "sg-controllers 0.12.1",
  "sg-std 0.12.1 (git+https://github.com/public-awesome/launchpad?branch=feature/fund-fairburn-pool)",
  "sg1 0.13.0 (git+https://github.com/public-awesome/launchpad?branch=feature/fund-fairburn-pool)",
  "sg721 0.12.2",
@@ -1072,7 +1072,7 @@ dependencies = [
 
 [[package]]
 name = "sg721-vending"
-version = "0.12.2"
+version = "0.13.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -1260,7 +1260,7 @@ dependencies = [
 
 [[package]]
 name = "vending"
-version = "0.13.0"
+version = "0.1.0"
 dependencies = [
  "cosmwasm-std",
  "cw-utils",
@@ -1285,7 +1285,7 @@ dependencies = [
  "cw2",
  "schemars",
  "serde",
- "sg-controllers 0.12.1",
+ "sg-controllers 0.13.0",
  "sg-multi-test",
  "sg-std 0.12.1",
  "sg1 0.13.0",
@@ -1298,7 +1298,7 @@ dependencies = [
 
 [[package]]
 name = "vending-minter"
-version = "0.13.0"
+version = "0.14.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",

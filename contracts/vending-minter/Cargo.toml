@@ -1,6 +1,6 @@
 [package]
 name = "vending-minter"
-version = "0.13.0"
+version = "0.14.0"
 authors = ["Jake Hartnell <jake@stargaze.zone>"]
 edition = "2018"
 description = "Stargaze NFT minter contract"

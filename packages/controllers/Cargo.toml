@@ -1,6 +1,6 @@
 [package]
 name = "sg-controllers"
-version = "0.12.1"
+version = "0.13.0"
 authors = ["Shane Vitarana <s@users.noreply.publicawesome.com>"]
 edition = "2018"
 description = "Common controllers we can reuse in many contracts"
