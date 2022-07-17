@@ -12,7 +12,7 @@ use vending::{ExecuteMsg, ParamsResponse, VendingMinterCreateMsg, VendingUpdateP
 use crate::error::ContractError;
 use crate::msg::{InstantiateMsg, QueryMsg, Response, SubMsg, SudoMsg};
 use crate::state::SUDO_PARAMS;
-use sg_controllers::{handle_reply, update_params, upsert_minter_status};
+use sg_controllers::{handle_reply, query_minter_status, update_params, upsert_minter_status};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:vending-factory";
@@ -106,6 +106,12 @@ pub fn execute_create_vending_minter(
         .add_submessage(submsg))
 }
 
+/// Reply callback triggered from creation above (minter init)
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
+    handle_reply(deps, msg).map_err(|e| e.into())
+}
+
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> Result<Response, ContractError> {
     match msg {
@@ -114,7 +120,7 @@ pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> Result<Response, ContractE
             minter,
             verified,
             blocked,
-        } => upsert_minter_status(deps, env, minter, verified, blocked)
+        } => upsert_minter_status(deps, minter, verified, blocked)
             .map_err(|_| ContractError::MinterFactoryError {}),
     }
 }
@@ -143,16 +149,11 @@ pub fn sudo_update_params(
     Ok(Response::new().add_attribute("action", "sudo_update_params"))
 }
 
-/// Reply callback triggered from cw721 contract instantiation
-#[cfg_attr(not(feature = "library"), entry_point)]
-pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
-    handle_reply(deps, msg).map_err(|e| e.into())
-}
-
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::Params {} => to_binary(&query_params(deps)?),
+        QueryMsg::MinterStatus { minter } => to_binary(&query_minter_status(deps, minter)?),
     }
 }
 

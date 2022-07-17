@@ -51,11 +51,24 @@ pub struct UpdateParamsMsg<T> {
 /// Returns `ParamsResponse<T>`
 pub enum QueryMsg {
     Params {},
+    MinterStatus { minter: String },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct ParamsResponse<T> {
     pub params: MinterParams<T>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct Minter {
+    pub verified: bool,
+    pub blocked: bool,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub struct MinterStatusResponse {
+    pub minter: Minter,
 }
 
 pub mod tests {

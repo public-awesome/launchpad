@@ -14,6 +14,7 @@ mod tests {
             crate::contract::instantiate,
             crate::contract::query,
         )
+        .with_sudo(crate::contract::sudo)
         .with_reply(crate::contract::reply);
         Box::new(contract)
     }
@@ -68,8 +69,10 @@ mod tests {
     }
 
     mod execute {
+        use crate::msg::{QueryMsg, SudoMsg};
         use cosmwasm_std::coin;
-        use cw_multi_test::{BankSudo, SudoMsg};
+        use cw_multi_test::{BankSudo, SudoMsg as CwSudoMsg};
+        use minters::MinterStatusResponse;
         use vending::{tests::mock_create_minter, ExecuteMsg};
 
         use super::*;
@@ -78,6 +81,7 @@ mod tests {
         fn create_vending_minter_and_launch_collection() {
             let (mut app, factory_contract) = proper_instantiate();
             let sg721_id = app.store_code(sg721_vending_contract());
+            let minter = "contract1".to_string();
 
             let mut m = mock_create_minter();
             m.collection_params.code_id = sg721_id;
@@ -85,7 +89,7 @@ mod tests {
 
             let creation_fee = coin(CREATION_FEE, NATIVE_DENOM);
 
-            app.sudo(SudoMsg::Bank(BankSudo::Mint {
+            app.sudo(CwSudoMsg::Bank(BankSudo::Mint {
                 to_address: ADMIN.to_string(),
                 amount: vec![creation_fee.clone()],
             }))
@@ -97,6 +101,33 @@ mod tests {
             let cosmos_msg = factory_contract.call_with_funds(msg, creation_fee).unwrap();
 
             app.execute(Addr::unchecked(ADMIN), cosmos_msg).unwrap();
+
+            // query to see if minter default status is set (unverified and unblocked)
+            let query_minter_msg = QueryMsg::MinterStatus {
+                minter: minter.clone(),
+            };
+            let res: MinterStatusResponse = app
+                .wrap()
+                .query_wasm_smart(factory_contract.addr(), &query_minter_msg)
+                .unwrap();
+            assert!(!res.minter.verified);
+
+            // test sudo
+            let msg = SudoMsg::UpdateMinterStatus {
+                minter: minter.clone(),
+                verified: true,
+                blocked: false,
+            };
+            let res = app.wasm_sudo(factory_contract.addr(), &msg);
+            assert!(res.is_ok());
+
+            // query to see if it worked
+            let query_minter_msg = QueryMsg::MinterStatus { minter };
+            let res: MinterStatusResponse = app
+                .wrap()
+                .query_wasm_smart(factory_contract.addr(), &query_minter_msg)
+                .unwrap();
+            assert!(res.minter.verified);
         }
     }
 }

@@ -1,17 +1,9 @@
-use cosmwasm_std::{ensure_eq, Addr, DepsMut, Env, Reply, StdError, StdResult};
+use cosmwasm_std::{ensure_eq, Addr, Deps, DepsMut, Reply, StdError, StdResult};
 use cw_storage_plus::Map;
 use cw_utils::parse_reply_instantiate_data;
-use minters::{MinterParams, UpdateParamsMsg};
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use minters::{Minter, MinterParams, MinterStatusResponse, UpdateParamsMsg};
 use sg_std::{Response, NATIVE_DENOM};
 use thiserror::Error;
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct Minter {
-    pub verified: bool,
-    pub blocked: bool,
-}
 
 pub const MINTERS: Map<&Addr, Minter> = Map::new("m");
 
@@ -30,14 +22,13 @@ pub enum MinterFactoryError {
 /// Only governance can update contract params
 pub fn upsert_minter_status(
     deps: DepsMut,
-    _env: Env,
     minter: String,
     verified: bool,
     blocked: bool,
 ) -> StdResult<Response> {
     let minter_addr = deps.api.addr_validate(&minter)?;
 
-    let _: StdResult<Minter> = MINTERS.update(deps.storage, &minter_addr, |m| match m {
+    let m: StdResult<Minter> = MINTERS.update(deps.storage, &minter_addr, |m| match m {
         None => Ok(Minter { verified, blocked }),
         Some(mut m) => {
             m.verified = verified;
@@ -45,6 +36,8 @@ pub fn upsert_minter_status(
             Ok(m)
         }
     });
+    dbg!(minter_addr);
+    dbg!(m.unwrap());
 
     Ok(Response::new().add_attribute("action", "sudo_update_minter_status"))
 }
@@ -54,14 +47,8 @@ pub fn handle_reply(deps: DepsMut, msg: Reply) -> Result<Response, MinterFactory
 
     match reply {
         Ok(res) => {
-            MINTERS.save(
-                deps.storage,
-                &Addr::unchecked(res.contract_address),
-                &Minter {
-                    verified: false,
-                    blocked: false,
-                },
-            )?;
+            let minter = res.contract_address;
+            upsert_minter_status(deps, minter, false, false)?;
             Ok(Response::default().add_attribute("action", "instantiate_minter_reply"))
         }
         Err(_) => Err(MinterFactoryError::InstantiateMinterError {}),
@@ -112,4 +99,10 @@ pub fn update_params<T, C>(
         .unwrap_or(params.airdrop_mint_fee_bps);
 
     Ok(())
+}
+
+pub fn query_minter_status(deps: Deps, minter_addr: String) -> StdResult<MinterStatusResponse> {
+    let minter = MINTERS.load(deps.storage, &deps.api.addr_validate(&minter_addr)?)?;
+
+    Ok(MinterStatusResponse { minter })
 }

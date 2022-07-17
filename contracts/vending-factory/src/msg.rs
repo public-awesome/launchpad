@@ -25,5 +25,8 @@ pub enum SudoMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
+    /// Returns `ParamsResponse`
     Params {},
+    /// Returns a `MinterStatusResponse`
+    MinterStatus { minter: String },
 }

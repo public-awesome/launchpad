@@ -139,6 +139,8 @@ fn setup_minter_contract(
         .query_wasm_smart(minter_addr.clone(), &QueryMsg::Config {})
         .unwrap();
 
+    // TODO: query params from factory
+
     (minter_addr, config)
 }
 
@@ -565,7 +567,6 @@ fn mint_count_query() {
         &transfer_msg,
         &coins_for_msg(coin(123, NATIVE_DENOM)),
     );
-    println!("res: {:?}", res);
     assert!(res.is_ok());
 
     // Mint succeeds
