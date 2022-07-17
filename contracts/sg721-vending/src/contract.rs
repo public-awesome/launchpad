@@ -16,7 +16,7 @@ use vending::{ParamsResponse, QueryMsg as LaunchpadQueryMsg};
 use vending_minter::msg::{ConfigResponse, QueryMsg as MinterQueryMsg};
 
 use crate::msg::{CollectionInfoResponse, QueryMsg};
-use crate::state::COLLECTION_INFO;
+use crate::state::{COLLECTION_INFO, READY};
 use crate::{ContractError, Sg721Contract};
 
 // version info for migration info
@@ -82,6 +82,8 @@ pub fn _instantiate(
 
     COLLECTION_INFO.save(deps.storage, &collection_info)?;
 
+    READY.save(deps.storage, &false)?;
+
     Ok(Response::new()
         .add_attribute("action", "instantiate")
         .add_attribute("contract_name", CONTRACT_NAME)
@@ -124,6 +126,8 @@ pub fn ready(
         return Err(ContractError::Unauthorized {});
     }
 
+    READY.save(deps.storage, &true)?;
+
     Ok(Response::new())
 }
 
@@ -136,6 +140,10 @@ pub fn approve(
     token_id: String,
     expires: Option<Expiration>,
 ) -> Result<Response, ContractError> {
+    if !READY.load(deps.storage)? {
+        return Err(ContractError::NotReady {});
+    }
+
     contract._update_approvals(deps, &env, &info, &spender, &token_id, true, expires)?;
 
     let event = Event::new("approve")
@@ -155,6 +163,9 @@ pub fn approve_all(
     operator: String,
     expires: Option<Expiration>,
 ) -> Result<Response, ContractError> {
+    if !READY.load(deps.storage)? {
+        return Err(ContractError::NotReady {});
+    }
     // reject expired data as invalid
     let expires = expires.unwrap_or_default();
     if expires.is_expired(&env.block) {
@@ -182,6 +193,9 @@ pub fn burn(
     info: MessageInfo,
     token_id: String,
 ) -> Result<Response, ContractError> {
+    if !READY.load(deps.storage)? {
+        return Err(ContractError::NotReady {});
+    }
     let token = contract.tokens.load(deps.storage, &token_id)?;
     contract.check_can_send(deps.as_ref(), &env, &info, &token)?;
 
@@ -204,6 +218,9 @@ pub fn revoke(
     spender: String,
     token_id: String,
 ) -> Result<Response, ContractError> {
+    if !READY.load(deps.storage)? {
+        return Err(ContractError::NotReady {});
+    }
     contract._update_approvals(deps, &env, &info, &spender, &token_id, false, None)?;
 
     let event = Event::new("revoke")
@@ -222,6 +239,9 @@ pub fn revoke_all(
     info: MessageInfo,
     operator: String,
 ) -> Result<Response, ContractError> {
+    if !READY.load(deps.storage)? {
+        return Err(ContractError::NotReady {});
+    }
     let operator_addr = deps.api.addr_validate(&operator)?;
     contract
         .operators
@@ -244,6 +264,9 @@ pub fn send_nft(
     token_id: String,
     msg: Binary,
 ) -> Result<Response, ContractError> {
+    if !READY.load(deps.storage)? {
+        return Err(ContractError::NotReady {});
+    }
     // Transfer token
     contract._transfer_nft(deps, &env, &info, &receiving_contract, &token_id)?;
 
@@ -273,6 +296,9 @@ pub fn transfer_nft(
     recipient: String,
     token_id: String,
 ) -> Result<Response, ContractError> {
+    if !READY.load(deps.storage)? {
+        return Err(ContractError::NotReady {});
+    }
     contract._transfer_nft(deps, &env, &info, &recipient, &token_id)?;
 
     let event = Event::new("transfer_nft")
@@ -291,6 +317,9 @@ pub fn mint(
     info: MessageInfo,
     msg: MintMsg<Extension>,
 ) -> Result<Response, ContractError> {
+    if !READY.load(deps.storage)? {
+        return Err(ContractError::NotReady {});
+    }
     let minter = contract.minter.load(deps.storage)?;
 
     if info.sender != minter {
