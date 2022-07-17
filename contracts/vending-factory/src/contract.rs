@@ -166,8 +166,8 @@ fn query_params(deps: Deps) -> StdResult<ParamsResponse> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cosmwasm_std::coins;
     use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
+    use cosmwasm_std::{coins, from_binary};
     use vending::tests::mock_params;
 
     #[test]
@@ -183,9 +183,9 @@ mod tests {
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(0, res.messages.len());
 
-        // // it worked, let's query the state
-        // let res = query(deps.as_ref(), mock_env(), QueryMsg::GetCount {}).unwrap();
-        // let value: CountResponse = from_binary(&res).unwrap();
-        // assert_eq!(17, value.count);
+        // it worked, let's query the state
+        let res = query(deps.as_ref(), mock_env(), QueryMsg::Params {}).unwrap();
+        let value: ParamsResponse = from_binary(&res).unwrap();
+        assert_eq!(1, value.params.code_id);
     }
 }

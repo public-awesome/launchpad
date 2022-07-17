@@ -9,6 +9,15 @@ pub enum ContractError {
     #[error("{0}")]
     Std(#[from] StdError),
 
+    #[error("{0}")]
+    Payment(#[from] PaymentError),
+
+    #[error("{0}")]
+    ParseError(#[from] ParseError),
+
+    #[error("{0}")]
+    Fee(#[from] FeeError),
+
     #[error("Unauthorized: {0}")]
     Unauthorized(String),
 
@@ -72,21 +81,6 @@ pub enum ContractError {
     #[error("Token id: {token_id} already sold")]
     TokenIdAlreadySold { token_id: u32 },
 
-    #[error("{0}")]
-    Payment(#[from] PaymentError),
-
-    #[error("{0}")]
-    ParseError(#[from] ParseError),
-
-    #[error("{0}")]
-    Fee(#[from] FeeError),
-
     #[error("NoEnvTransactionIndex")]
     NoEnvTransactionIndex {},
 }
-
-// impl From<ParseError> for ContractError {
-//     fn from(_err: ParseError) -> ContractError {
-//         ContractError::InvalidBaseTokenURI {}
-//     }
-// }

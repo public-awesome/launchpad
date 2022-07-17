@@ -9,6 +9,15 @@ pub enum ContractError {
     #[error("{0}")]
     Std(#[from] StdError),
 
+    #[error("{0}")]
+    Payment(#[from] PaymentError),
+
+    #[error("{0}")]
+    Parse(#[from] ParseError),
+
+    #[error("{0}")]
+    Base(#[from] cw721_base::ContractError),
+
     #[error("Unauthorized")]
     Unauthorized {},
 
@@ -29,15 +38,6 @@ pub enum ContractError {
 
     #[error("Description too long")]
     DescriptionTooLong {},
-
-    #[error("{0}")]
-    Payment(#[from] PaymentError),
-
-    #[error("{0}")]
-    Parse(#[from] ParseError),
-
-    #[error("{0}")]
-    Base(#[from] cw721_base::ContractError),
 }
 
 impl From<ContractError> for Cw721ContractError {
