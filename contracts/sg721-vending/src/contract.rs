@@ -260,7 +260,6 @@ pub fn send_nft(
         .add_attribute("token_id", token_id);
     let res = Response::new()
         .add_message(send.into_cosmos_msg(receiving_contract)?)
-        // .add_submessages(hook)
         .add_event(event);
 
     Ok(res)
@@ -280,9 +279,7 @@ pub fn transfer_nft(
         .add_attribute("sender", info.sender)
         .add_attribute("recipient", recipient)
         .add_attribute("token_id", token_id);
-    let res = Response::new()
-        // .add_submessages(hook)
-        .add_event(event);
+    let res = Response::new().add_event(event);
 
     Ok(res)
 }
