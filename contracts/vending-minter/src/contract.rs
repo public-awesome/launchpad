@@ -31,7 +31,7 @@ use shuffle::{fy::FisherYates, shuffler::Shuffler};
 use url::Url;
 
 use vending::{
-    ParamsResponse, QueryMsg as LaunchpadQueryMsg, VendingMinterCreateMsg as InstantiateMsg,
+    ParamsResponse, QueryMsg as MinterFactoryQueryMsg, VendingMinterCreateMsg as InstantiateMsg,
 };
 
 pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
@@ -59,13 +59,11 @@ pub fn instantiate(
 
     let factory = info.sender.clone();
 
-    // TODO: validate
-
     // Make sure the sender is the factory contract
     // This will fail if the sender cannot parse a response from the factory contract
     let _res: ParamsResponse = deps
         .querier
-        .query_wasm_smart(factory.clone(), &LaunchpadQueryMsg::Params {})?;
+        .query_wasm_smart(factory.clone(), &MinterFactoryQueryMsg::Params {})?;
 
     // Check that base_token_uri is a valid IPFS uri
     let parsed_token_uri = Url::parse(&msg.init_msg.base_token_uri)?;
@@ -190,7 +188,7 @@ pub fn execute_shuffle(
 
     let factory_params: ParamsResponse = deps
         .querier
-        .query_wasm_smart(config.factory, &LaunchpadQueryMsg::Params {})?;
+        .query_wasm_smart(config.factory, &MinterFactoryQueryMsg::Params {})?;
 
     // Check exact shuffle fee payment included in message
     checked_fair_burn(
@@ -450,7 +448,7 @@ fn _execute_mint(
 
     let factory_params: ParamsResponse = deps
         .querier
-        .query_wasm_smart(config.factory, &LaunchpadQueryMsg::Params {})?;
+        .query_wasm_smart(config.factory, &MinterFactoryQueryMsg::Params {})?;
 
     // Create network fee msgs
     let mint_fee = if is_admin {
@@ -633,7 +631,7 @@ pub fn execute_update_per_address_limit(
 
     let factory_params: ParamsResponse = deps
         .querier
-        .query_wasm_smart(config.factory.clone(), &LaunchpadQueryMsg::Params {})?;
+        .query_wasm_smart(config.factory.clone(), &MinterFactoryQueryMsg::Params {})?;
 
     if per_address_limit == 0 || per_address_limit > factory_params.params.max_per_address_limit {
         return Err(ContractError::InvalidPerAddressLimit {
@@ -658,7 +656,7 @@ pub fn mint_price(deps: Deps, is_admin: bool) -> Result<Coin, StdError> {
 
     let factory_params: ParamsResponse = deps
         .querier
-        .query_wasm_smart(config.factory, &LaunchpadQueryMsg::Params {})?;
+        .query_wasm_smart(config.factory, &MinterFactoryQueryMsg::Params {})?;
 
     if is_admin {
         return Ok(coin(
