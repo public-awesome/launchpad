@@ -73,7 +73,7 @@ mod tests {
         use cosmwasm_std::coin;
         use cw_multi_test::{BankSudo, SudoMsg as CwSudoMsg};
         use minters::MinterStatusResponse;
-        use vending::{tests::mock_create_minter, ExecuteMsg};
+        use vending::{tests::mock_create_minter, ExecuteMsg, ParamsResponse};
 
         use super::*;
 
@@ -128,6 +128,14 @@ mod tests {
                 .query_wasm_smart(factory_contract.addr(), &query_minter_msg)
                 .unwrap();
             assert!(res.minter.verified);
+
+            // query params from factory
+            let query_params_msg = QueryMsg::Params {};
+            let res: ParamsResponse = app
+                .wrap()
+                .query_wasm_smart(factory_contract.addr(), &query_params_msg)
+                .unwrap();
+            assert_eq!(res.params.code_id, 2);
         }
     }
 }

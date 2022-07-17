@@ -12,7 +12,7 @@ use cw_utils::{nonpayable, Expiration};
 
 use sg721::{CollectionInfo, InstantiateMsg, MintMsg, RoyaltyInfo, RoyaltyInfoResponse};
 use sg_std::Response;
-use vending::{ParamsResponse, QueryMsg as LaunchpadQueryMsg};
+use vending::{ParamsResponse, QueryMsg as MinterFactoryQueryMsg};
 use vending_minter::msg::{ConfigResponse, QueryMsg as MinterQueryMsg};
 
 use crate::msg::{CollectionInfoResponse, QueryMsg};
@@ -121,7 +121,7 @@ pub fn ready(
     // query factory to check if minter code id is in allowed list
     let res: ParamsResponse = deps
         .querier
-        .query_wasm_smart(factory, &LaunchpadQueryMsg::Params {})?;
+        .query_wasm_smart(factory, &MinterFactoryQueryMsg::Params {})?;
     if res.params.code_id != minter_id {
         return Err(ContractError::Unauthorized {});
     }

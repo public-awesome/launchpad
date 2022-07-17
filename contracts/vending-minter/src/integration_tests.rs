@@ -139,8 +139,6 @@ fn setup_minter_contract(
         .query_wasm_smart(minter_addr.clone(), &QueryMsg::Config {})
         .unwrap();
 
-    // TODO: query params from factory
-
     (minter_addr, config)
 }
 

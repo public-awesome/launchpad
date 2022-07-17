@@ -28,7 +28,7 @@ pub fn upsert_minter_status(
 ) -> StdResult<Response> {
     let minter_addr = deps.api.addr_validate(&minter)?;
 
-    let m: StdResult<Minter> = MINTERS.update(deps.storage, &minter_addr, |m| match m {
+    let _: StdResult<Minter> = MINTERS.update(deps.storage, &minter_addr, |m| match m {
         None => Ok(Minter { verified, blocked }),
         Some(mut m) => {
             m.verified = verified;
@@ -36,8 +36,6 @@ pub fn upsert_minter_status(
             Ok(m)
         }
     });
-    dbg!(minter_addr);
-    dbg!(m.unwrap());
 
     Ok(Response::new().add_attribute("action", "sudo_update_minter_status"))
 }
