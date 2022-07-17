@@ -79,8 +79,6 @@ pub fn execute_create_vending_minter(
         });
     }
 
-    // Check that the price is in the correct denom ('ustars')
-    // let native_denom = deps.querier.query_bonded_denom()?;
     let native_denom = NATIVE_DENOM;
     if native_denom != msg.init_msg.unit_price.denom {
         return Err(ContractError::InvalidDenom {});

@@ -17,7 +17,7 @@ pub struct CollectionParams {
     pub info: CollectionInfo<RoyaltyInfoResponse>,
 }
 
-/// Common params for all minters, updatable by governance
+/// Common params for all minters used for storage
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct MinterParams<T> {
     pub code_id: u64,
@@ -52,12 +52,6 @@ pub struct UpdateParamsMsg<T> {
 pub enum QueryMsg {
     Params {},
 }
-
-// #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-// pub struct MinterInfo<T> {
-//     pub code_id: u64,
-//     pub params: MinterParams<T>,
-// }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct ParamsResponse<T> {
