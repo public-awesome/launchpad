@@ -27,4 +27,12 @@ recipient: string
 token_id: number
 [k: string]: unknown
 }
+} | {
+shuffle: {
+[k: string]: unknown
+}
+} | {
+withdraw: {
+[k: string]: unknown
+}
 })

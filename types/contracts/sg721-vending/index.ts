@@ -5,7 +5,6 @@ export * from "./approval_response";
 export * from "./approvals_response";
 export * from "./collection_info_response";
 export * from "./contract_info_response";
-export * from "./execute_msg_for__empty";
 export * from "./instantiate_msg";
 export * from "./minter_response";
 export * from "./nft_info_response";

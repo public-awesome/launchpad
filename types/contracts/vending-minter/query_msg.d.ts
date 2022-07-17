@@ -19,4 +19,8 @@ mint_count: {
 address: string
 [k: string]: unknown
 }
+} | {
+mintable_tokens: {
+[k: string]: unknown
+}
 })

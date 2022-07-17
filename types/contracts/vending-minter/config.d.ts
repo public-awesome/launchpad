@@ -14,6 +14,7 @@ export type Addr = string
 export interface Config {
 admin: Addr
 base_token_uri: string
+factory: Addr
 num_tokens: number
 per_address_limit: number
 sg721_code_id: number
