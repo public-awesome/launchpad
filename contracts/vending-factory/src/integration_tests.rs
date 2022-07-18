@@ -69,10 +69,10 @@ mod tests {
     }
 
     mod execute {
-        use crate::msg::{QueryMsg, SudoMsg};
+        use crate::msg::SudoMsg;
         use cosmwasm_std::coin;
         use cw_multi_test::{BankSudo, SudoMsg as CwSudoMsg};
-        use minters::MinterStatusResponse;
+        use minters::{MinterStatusResponse, QueryMsg};
         use vending::{tests::mock_create_minter, ExecuteMsg, ParamsResponse};
 
         use super::*;
