@@ -22,6 +22,7 @@ pub struct CollectionParams {
 pub struct MinterParams<T> {
     pub code_id: u64,
     pub creation_fee: Coin,
+    pub min_mint_price: Coin,
     pub extension: T,
 }
 
@@ -31,6 +32,7 @@ pub struct MinterParams<T> {
 pub struct UpdateParamsMsg<T> {
     pub code_id: Option<u64>,
     pub creation_fee: Option<Coin>,
+    pub min_mint_price: Option<Coin>,
     pub extension: T,
 }
 

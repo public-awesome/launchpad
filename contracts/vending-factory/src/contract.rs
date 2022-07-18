@@ -85,9 +85,9 @@ pub fn execute_create_vending_minter(
     }
 
     // Check that the price is greater than the minimum
-    if params.extension.min_mint_price.amount > msg.init_msg.unit_price.amount {
+    if params.min_mint_price.amount > msg.init_msg.unit_price.amount {
         return Err(ContractError::InsufficientMintPrice {
-            expected: params.extension.min_mint_price.amount.u128(),
+            expected: params.min_mint_price.amount.u128(),
             got: msg.init_msg.unit_price.amount.into(),
         });
     }
@@ -144,13 +144,13 @@ pub fn sudo_update_params(
         .max_per_address_limit
         .unwrap_or(params.extension.max_per_address_limit);
 
-    if let Some(min_mint_price) = param_msg.extension.min_mint_price {
+    if let Some(min_mint_price) = param_msg.min_mint_price {
         ensure_eq!(
             &min_mint_price.denom,
             &NATIVE_DENOM,
             ContractError::InvalidDenom {}
         );
-        params.extension.min_mint_price = min_mint_price;
+        params.min_mint_price = min_mint_price;
     }
 
     if let Some(airdrop_mint_price) = param_msg.extension.airdrop_mint_price {
