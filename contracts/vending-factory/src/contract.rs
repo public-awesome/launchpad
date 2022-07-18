@@ -52,8 +52,6 @@ pub fn execute_create_vending_minter(
     info: MessageInfo,
     msg: VendingMinterCreateMsg,
 ) -> Result<Response, ContractError> {
-    // TODO: https://github.com/CosmWasm/cw-plus/issues/753
-    // must_pay(&info, &deps.querier.query_bonded_denom()?)?;
     must_pay(&info, NATIVE_DENOM)?;
 
     let params = SUDO_PARAMS.load(deps.storage)?;
