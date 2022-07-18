@@ -452,9 +452,17 @@ fn _execute_mint(
 
     // Create network fee msgs
     let mint_fee = if is_admin {
-        factory_params.params.airdrop_mint_fee_bps.bps_to_decimal()
+        factory_params
+            .params
+            .extension
+            .airdrop_mint_fee_bps
+            .bps_to_decimal()
     } else {
-        factory_params.params.mint_fee_bps.bps_to_decimal()
+        factory_params
+            .params
+            .extension
+            .mint_fee_bps
+            .bps_to_decimal()
     };
     let network_fee = mint_price.amount * mint_fee;
     checked_fair_burn(&info, network_fee.u128(), None, &mut res)?;
@@ -633,9 +641,11 @@ pub fn execute_update_per_address_limit(
         .querier
         .query_wasm_smart(config.factory.clone(), &MinterFactoryQueryMsg::Params {})?;
 
-    if per_address_limit == 0 || per_address_limit > factory_params.params.max_per_address_limit {
+    if per_address_limit == 0
+        || per_address_limit > factory_params.params.extension.max_per_address_limit
+    {
         return Err(ContractError::InvalidPerAddressLimit {
-            max: factory_params.params.max_per_address_limit,
+            max: factory_params.params.extension.max_per_address_limit,
             min: 1,
             got: per_address_limit,
         });
@@ -660,7 +670,12 @@ pub fn mint_price(deps: Deps, is_admin: bool) -> Result<Coin, StdError> {
 
     if is_admin {
         return Ok(coin(
-            factory_params.params.airdrop_mint_price.amount.u128(),
+            factory_params
+                .params
+                .extension
+                .airdrop_mint_price
+                .amount
+                .u128(),
             config.unit_price.denom,
         ));
     }

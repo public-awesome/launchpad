@@ -68,34 +68,6 @@ pub fn update_params<T, C>(
         params.creation_fee = creation_fee;
     }
 
-    params.max_token_limit = param_msg.max_token_limit.unwrap_or(params.max_token_limit);
-    params.max_per_address_limit = param_msg
-        .max_per_address_limit
-        .unwrap_or(params.max_per_address_limit);
-
-    if let Some(min_mint_price) = param_msg.min_mint_price {
-        ensure_eq!(
-            &min_mint_price.denom,
-            &NATIVE_DENOM,
-            MinterFactoryError::InvalidDenom {}
-        );
-        params.min_mint_price = min_mint_price;
-    }
-
-    if let Some(airdrop_mint_price) = param_msg.airdrop_mint_price {
-        ensure_eq!(
-            &airdrop_mint_price.denom,
-            &NATIVE_DENOM,
-            MinterFactoryError::InvalidDenom {}
-        );
-        params.airdrop_mint_price = airdrop_mint_price;
-    }
-
-    params.mint_fee_bps = param_msg.mint_fee_bps.unwrap_or(params.mint_fee_bps);
-    params.airdrop_mint_fee_bps = param_msg
-        .airdrop_mint_fee_bps
-        .unwrap_or(params.airdrop_mint_fee_bps);
-
     Ok(())
 }
 

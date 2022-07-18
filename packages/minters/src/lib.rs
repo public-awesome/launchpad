@@ -22,12 +22,6 @@ pub struct CollectionParams {
 pub struct MinterParams<T> {
     pub code_id: u64,
     pub creation_fee: Coin,
-    pub max_token_limit: u32,
-    pub max_per_address_limit: u32,
-    pub min_mint_price: Coin,
-    pub airdrop_mint_price: Coin,
-    pub mint_fee_bps: u64,
-    pub airdrop_mint_fee_bps: u64,
     pub extension: T,
 }
 
@@ -37,12 +31,6 @@ pub struct MinterParams<T> {
 pub struct UpdateParamsMsg<T> {
     pub code_id: Option<u64>,
     pub creation_fee: Option<Coin>,
-    pub max_token_limit: Option<u32>,
-    pub max_per_address_limit: Option<u32>,
-    pub min_mint_price: Option<Coin>,
-    pub airdrop_mint_price: Option<Coin>,
-    pub mint_fee_bps: Option<u64>,
-    pub airdrop_mint_fee_bps: Option<u64>,
     pub extension: T,
 }
 

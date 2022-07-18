@@ -61,19 +61,19 @@ pub fn execute_create_vending_minter(
     checked_fair_burn(&info, params.creation_fee.amount.u128(), None, &mut res)?;
 
     // Check the number of tokens is more than zero and less than the max limit
-    if msg.init_msg.num_tokens == 0 || msg.init_msg.num_tokens > params.max_token_limit {
+    if msg.init_msg.num_tokens == 0 || msg.init_msg.num_tokens > params.extension.max_token_limit {
         return Err(ContractError::InvalidNumTokens {
             min: 1,
-            max: params.max_token_limit,
+            max: params.extension.max_token_limit,
         });
     }
 
     // Check per address limit is valid
     if msg.init_msg.per_address_limit == 0
-        || msg.init_msg.per_address_limit > params.max_per_address_limit
+        || msg.init_msg.per_address_limit > params.extension.max_per_address_limit
     {
         return Err(ContractError::InvalidPerAddressLimit {
-            max: params.max_per_address_limit,
+            max: params.extension.max_per_address_limit,
             min: 1,
             got: msg.init_msg.per_address_limit,
         });
@@ -85,9 +85,9 @@ pub fn execute_create_vending_minter(
     }
 
     // Check that the price is greater than the minimum
-    if params.min_mint_price.amount > msg.init_msg.unit_price.amount {
+    if params.extension.min_mint_price.amount > msg.init_msg.unit_price.amount {
         return Err(ContractError::InsufficientMintPrice {
-            expected: params.min_mint_price.amount.u128(),
+            expected: params.extension.min_mint_price.amount.u128(),
             got: msg.init_msg.unit_price.amount.into(),
         });
     }
@@ -134,6 +134,42 @@ pub fn sudo_update_params(
     let mut params = SUDO_PARAMS.load(deps.storage)?;
 
     update_params(&mut params, param_msg.clone())?;
+
+    params.extension.max_token_limit = param_msg
+        .extension
+        .max_token_limit
+        .unwrap_or(params.extension.max_token_limit);
+    params.extension.max_per_address_limit = param_msg
+        .extension
+        .max_per_address_limit
+        .unwrap_or(params.extension.max_per_address_limit);
+
+    if let Some(min_mint_price) = param_msg.extension.min_mint_price {
+        ensure_eq!(
+            &min_mint_price.denom,
+            &NATIVE_DENOM,
+            ContractError::InvalidDenom {}
+        );
+        params.extension.min_mint_price = min_mint_price;
+    }
+
+    if let Some(airdrop_mint_price) = param_msg.extension.airdrop_mint_price {
+        ensure_eq!(
+            &airdrop_mint_price.denom,
+            &NATIVE_DENOM,
+            ContractError::InvalidDenom {}
+        );
+        params.extension.airdrop_mint_price = airdrop_mint_price;
+    }
+
+    params.extension.mint_fee_bps = param_msg
+        .extension
+        .mint_fee_bps
+        .unwrap_or(params.extension.mint_fee_bps);
+    params.extension.airdrop_mint_fee_bps = param_msg
+        .extension
+        .airdrop_mint_fee_bps
+        .unwrap_or(params.extension.airdrop_mint_fee_bps);
 
     if let Some(shuffle_fee) = param_msg.extension.shuffle_fee {
         ensure_eq!(

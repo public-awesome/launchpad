@@ -7,6 +7,12 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub struct VendingUpdateParamsExtension {
+    pub max_token_limit: Option<u32>,
+    pub max_per_address_limit: Option<u32>,
+    pub min_mint_price: Option<Coin>,
+    pub airdrop_mint_price: Option<Coin>,
+    pub mint_fee_bps: Option<u64>,
+    pub airdrop_mint_fee_bps: Option<u64>,
     pub shuffle_fee: Option<Coin>,
 }
 pub type VendingUpdateParamsMsg = UpdateParamsMsg<VendingUpdateParamsExtension>;
@@ -15,6 +21,12 @@ pub type VendingUpdateParamsMsg = UpdateParamsMsg<VendingUpdateParamsExtension>;
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub struct ParamsExtension {
+    pub max_token_limit: u32,
+    pub max_per_address_limit: u32,
+    pub min_mint_price: Coin,
+    pub airdrop_mint_price: Coin,
+    pub mint_fee_bps: u64,
+    pub airdrop_mint_fee_bps: u64,
     pub shuffle_fee: Coin,
 }
 pub type VendingMinterParams = MinterParams<ParamsExtension>;
@@ -83,13 +95,13 @@ pub mod tests {
         VendingMinterParams {
             code_id: 1,
             creation_fee: coin(CREATION_FEE, NATIVE_DENOM),
-            max_token_limit: MAX_TOKEN_LIMIT,
-            max_per_address_limit: MAX_PER_ADDRESS_LIMIT,
-            min_mint_price: coin(MIN_MINT_PRICE, NATIVE_DENOM),
-            airdrop_mint_price: coin(AIRDROP_MINT_PRICE, NATIVE_DENOM),
-            mint_fee_bps: MINT_FEE_BPS,
-            airdrop_mint_fee_bps: AIRDROP_MINT_FEE_BPS,
             extension: ParamsExtension {
+                max_token_limit: MAX_TOKEN_LIMIT,
+                max_per_address_limit: MAX_PER_ADDRESS_LIMIT,
+                min_mint_price: coin(MIN_MINT_PRICE, NATIVE_DENOM),
+                airdrop_mint_price: coin(AIRDROP_MINT_PRICE, NATIVE_DENOM),
+                mint_fee_bps: MINT_FEE_BPS,
+                airdrop_mint_fee_bps: AIRDROP_MINT_FEE_BPS,
                 shuffle_fee: coin(SHUFFLE_FEE, NATIVE_DENOM),
             },
         }
