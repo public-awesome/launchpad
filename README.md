@@ -12,6 +12,8 @@ Launchpad consists of minter factories, minters, and SG-721 collection contracts
 
 A minter factory is a singleton contract that encapsulates all governance parameters for a type of minter. It's sole responsibility is to instantiate new minters with the latest governance parameters.
 
+Each factory also maintains an inventory of minters it has created, along with a verified and blocked status for each. Goverance can vote to verify and block minters.
+
 ### Minters
 
 Stargaze supports various types of minters. CosmWasm developers are encouraged to contribute new types of minters. Developers can earn a fee from every mint via Fair Burn's [developer incentive](./packages/sg1/README.md).
@@ -21,6 +23,8 @@ Stargaze supports various types of minters. CosmWasm developers are encouraged t
 Stargaze collections are based on cw721 and 100% compatible with the cw721 spec. SG-721 simply adds on-chain collection-level metadata. Developers are encouraged to contribute different types of collection contracts.
 
 ## Running e2e Tests
+
+End-to-end tests run on a Stargaze blockchain node, providing a higher assurance of safety than CosmWasm multitest.
 
 ```
 make optimize
