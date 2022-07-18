@@ -10,9 +10,10 @@ use cw2::set_contract_version;
 use cw721::{ContractInfoResponse, Cw721ReceiveMsg};
 use cw_utils::{nonpayable, Expiration};
 
+use minters::QueryMsg as MintersQueryMsg;
 use sg721::{CollectionInfo, InstantiateMsg, MintMsg, RoyaltyInfo, RoyaltyInfoResponse};
 use sg_std::Response;
-use vending::{ParamsResponse, QueryMsg as MinterFactoryQueryMsg};
+use vending::ParamsResponse;
 use vending_minter::msg::{ConfigResponse, QueryMsg as MinterQueryMsg};
 
 use crate::msg::{CollectionInfoResponse, QueryMsg};
@@ -121,7 +122,8 @@ pub fn ready(
     // query factory to check if minter code id is in allowed list
     let res: ParamsResponse = deps
         .querier
-        .query_wasm_smart(factory, &MinterFactoryQueryMsg::Params {})?;
+        .query_wasm_smart(factory, &MintersQueryMsg::Params {})?;
+    // TODO: make code_ids a list
     if res.params.code_id != minter_id {
         return Err(ContractError::Unauthorized {});
     }

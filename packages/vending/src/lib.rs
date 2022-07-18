@@ -43,12 +43,6 @@ pub type VendingMinterCreateMsg = CreateMinterMsg<MinterInitMsgExtension>;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum QueryMsg {
-    Params {},
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
 pub struct ParamsResponse {
     pub params: VendingMinterParams,
 }
