@@ -37,7 +37,6 @@ pub enum QueryMsg {
     StartTime {},
     MintPrice {},
     MintCount { address: String },
-    MintableTokens {},
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
