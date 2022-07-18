@@ -144,15 +144,6 @@ pub fn sudo_update_params(
         .max_per_address_limit
         .unwrap_or(params.extension.max_per_address_limit);
 
-    if let Some(min_mint_price) = param_msg.min_mint_price {
-        ensure_eq!(
-            &min_mint_price.denom,
-            &NATIVE_DENOM,
-            ContractError::InvalidDenom {}
-        );
-        params.min_mint_price = min_mint_price;
-    }
-
     if let Some(airdrop_mint_price) = param_msg.extension.airdrop_mint_price {
         ensure_eq!(
             &airdrop_mint_price.denom,
@@ -162,7 +153,6 @@ pub fn sudo_update_params(
         params.extension.airdrop_mint_price = airdrop_mint_price;
     }
 
-    params.mint_fee_bps = param_msg.mint_fee_bps.unwrap_or(params.mint_fee_bps);
     params.extension.airdrop_mint_fee_bps = param_msg
         .extension
         .airdrop_mint_fee_bps

@@ -68,6 +68,17 @@ pub fn update_params<T, C>(
         params.creation_fee = creation_fee;
     }
 
+    if let Some(min_mint_price) = param_msg.min_mint_price {
+        ensure_eq!(
+            &min_mint_price.denom,
+            &NATIVE_DENOM,
+            MinterFactoryError::InvalidDenom {}
+        );
+        params.min_mint_price = min_mint_price;
+    }
+
+    params.mint_fee_bps = param_msg.mint_fee_bps.unwrap_or(params.mint_fee_bps);
+
     Ok(())
 }
 
