@@ -1,22 +1,27 @@
-# Stargaze CosmWasm Contracts
+# Stargaze Launchpad CosmWasm Contracts
 
-Stargaze smart contracts are written in [CosmWasm](https://cosmwasm.com), a multi-chain smart contracting platform in Rust.
+Stargaze smart contracts are written in [CosmWasm](https://cosmwasm.com), a multi-chain smart contract platform in Rust.
 
-Contracts run in a WASM VM on the [Stargaze Layer 1 blockchain](https://github.com/public-awesome/stargaze).
+## Architecture
 
-## SG-721
+![](Launchpad-v2.png)
 
-Stargaze's NFT contract sg721 is a set of optional extensions on top of [cw721-base](https://github.com/CosmWasm/cw-nfts/tree/main/contracts/cw721-base), and conforms to the [cw721 specification](https://github.com/CosmWasm/cw-nfts/tree/main/packages/cw721).
+Launchpad consists of minter factories, minters, and SG-721 collection contracts.
 
-## MINTER
+### Minter Factories
 
-A contract that facilitates primary market vending machine style minting.
+A minter factory is a singleton contract that encapsulates all governance parameters for a type of minter. It's sole responsibility is to instantiate new minters with the latest governance parameters.
 
-## WHITELIST
+### Minters
 
-A contract that manages a list of addresses.
+Stargaze supports various types of minters. CosmWasm developers are encouraged to contribute new types of minters. Developers can earn a fee from every mint via Fair Burn's [developer incentive](./packages/sg1/README.md).
+
+### Collection contracts
+
+Stargaze collections are based on cw721 and 100% compatible with the cw721 spec. SG-721 simply adds on-chain collection-level metadata. Developers are encouraged to contribute different types of collection contracts.
 
 ## Running e2e Tests
+
 ```
 make optimize
 make e2etest
