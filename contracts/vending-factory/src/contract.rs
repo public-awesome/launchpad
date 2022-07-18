@@ -41,7 +41,7 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
-        ExecuteMsg::CreateVendingMinter(msg) => execute_create_vending_minter(deps, env, info, msg),
+        ExecuteMsg::CreateMinter(msg) => execute_create_vending_minter(deps, env, info, msg),
     }
 }
 

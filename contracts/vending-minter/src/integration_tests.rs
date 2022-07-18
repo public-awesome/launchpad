@@ -126,7 +126,7 @@ fn setup_minter_contract(
     msg.collection_params.code_id = sg721_code_id;
     msg.collection_params.info.creator = creator.to_string();
 
-    let msg = FactoryExecuteMsg::CreateVendingMinter(msg);
+    let msg = FactoryExecuteMsg::CreateMinter(msg);
 
     let res = router.execute_contract(creator.clone(), factory_addr, &msg, &creation_fee);
     assert!(res.is_ok());
@@ -1200,7 +1200,7 @@ fn test_invalid_start_time() {
     minter_msg.init_msg.num_tokens = 10;
     minter_msg.collection_params.code_id = sg721_code_id;
     minter_msg.init_msg.start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME - 100);
-    let msg = FactoryExecuteMsg::CreateVendingMinter(minter_msg.clone());
+    let msg = FactoryExecuteMsg::CreateMinter(minter_msg.clone());
 
     router
         .execute_contract(creator.clone(), factory_addr.clone(), &msg, &creation_fee)
@@ -1211,7 +1211,7 @@ fn test_invalid_start_time() {
 
     // move start time after genesis but before current time
     minter_msg.init_msg.start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 500);
-    let msg = FactoryExecuteMsg::CreateVendingMinter(minter_msg.clone());
+    let msg = FactoryExecuteMsg::CreateMinter(minter_msg.clone());
     router
         .execute_contract(creator.clone(), factory_addr.clone(), &msg, &creation_fee)
         .unwrap_err();
@@ -1219,7 +1219,7 @@ fn test_invalid_start_time() {
     // position block time before the start time
     setup_block_time(&mut router, GENESIS_MINT_START_TIME + 400, None);
     minter_msg.init_msg.start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 500);
-    let msg = FactoryExecuteMsg::CreateVendingMinter(minter_msg.clone());
+    let msg = FactoryExecuteMsg::CreateMinter(minter_msg.clone());
     router
         .execute_contract(creator.clone(), factory_addr.clone(), &msg, &creation_fee)
         .unwrap();

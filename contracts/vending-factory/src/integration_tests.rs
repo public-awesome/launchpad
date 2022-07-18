@@ -85,7 +85,7 @@ mod tests {
 
             let mut m = mock_create_minter();
             m.collection_params.code_id = sg721_id;
-            let msg = ExecuteMsg::CreateVendingMinter(m);
+            let msg = ExecuteMsg::CreateMinter(m);
 
             let creation_fee = coin(CREATION_FEE, NATIVE_DENOM);
 

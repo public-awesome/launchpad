@@ -1,4 +1,5 @@
 use cosmwasm_std::{Coin, Timestamp};
+use minters::ExecuteMsg as MintersExecuteMsg;
 use minters::{CreateMinterMsg, MinterParams, UpdateParamsMsg};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -52,11 +53,7 @@ pub struct ParamsResponse {
     pub params: VendingMinterParams,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
-pub enum ExecuteMsg {
-    CreateVendingMinter(VendingMinterCreateMsg),
-}
+pub type ExecuteMsg = MintersExecuteMsg<MinterInitMsgExtension>;
 
 pub mod tests {
     use cosmwasm_std::{coin, Timestamp};

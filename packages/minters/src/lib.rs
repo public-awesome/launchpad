@@ -40,6 +40,12 @@ pub struct UpdateParamsMsg<T> {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
+pub enum ExecuteMsg<T> {
+    CreateMinter(CreateMinterMsg<T>),
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 /// Returns `ParamsResponse<T>`
 pub enum QueryMsg {
     Params {},
