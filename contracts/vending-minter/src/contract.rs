@@ -186,14 +186,15 @@ pub fn execute_shuffle(
 
     let config = CONFIG.load(deps.storage)?;
 
-    let params: ParamsResponse = deps
+    let factory: ParamsResponse = deps
         .querier
         .query_wasm_smart(config.factory, &MinterFactoryQueryMsg::Params {})?;
+    let factory_params = factory.params;
 
     // Check exact shuffle fee payment included in message
     checked_fair_burn(
         &info,
-        params.params.extension.shuffle_fee.amount.u128(),
+        factory_params.extension.shuffle_fee.amount.u128(),
         None,
         &mut res,
     )?;
@@ -446,19 +447,19 @@ fn _execute_mint(
 
     let mut res = Response::new();
 
-    let params: ParamsResponse = deps
+    let factory: ParamsResponse = deps
         .querier
         .query_wasm_smart(config.factory, &MinterFactoryQueryMsg::Params {})?;
+    let factory_params = factory.params;
 
     // Create network fee msgs
     let mint_fee = if is_admin {
-        params
-            .params
+        factory_params
             .extension
             .airdrop_mint_fee_bps
             .bps_to_decimal()
     } else {
-        params.params.mint_fee_bps.bps_to_decimal()
+        factory_params.mint_fee_bps.bps_to_decimal()
     };
     let network_fee = mint_price.amount * mint_fee;
     checked_fair_burn(&info, network_fee.u128(), None, &mut res)?;
@@ -633,13 +634,15 @@ pub fn execute_update_per_address_limit(
         ));
     }
 
-    let params: ParamsResponse = deps
+    let factory: ParamsResponse = deps
         .querier
         .query_wasm_smart(config.factory.clone(), &MinterFactoryQueryMsg::Params {})?;
+    let factory_params = factory.params;
 
-    if per_address_limit == 0 || per_address_limit > params.params.extension.max_per_address_limit {
+    if per_address_limit == 0 || per_address_limit > factory_params.extension.max_per_address_limit
+    {
         return Err(ContractError::InvalidPerAddressLimit {
-            max: params.params.extension.max_per_address_limit,
+            max: factory_params.extension.max_per_address_limit,
             min: 1,
             got: per_address_limit,
         });
@@ -658,13 +661,14 @@ pub fn execute_update_per_address_limit(
 pub fn mint_price(deps: Deps, is_admin: bool) -> Result<Coin, StdError> {
     let config = CONFIG.load(deps.storage)?;
 
-    let params: ParamsResponse = deps
+    let factory: ParamsResponse = deps
         .querier
         .query_wasm_smart(config.factory, &MinterFactoryQueryMsg::Params {})?;
+    let factory_params = factory.params;
 
     if is_admin {
         return Ok(coin(
-            params.params.extension.airdrop_mint_price.amount.u128(),
+            factory_params.extension.airdrop_mint_price.amount.u128(),
             config.unit_price.denom,
         ));
     }
