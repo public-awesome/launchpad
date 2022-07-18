@@ -458,7 +458,7 @@ fn _execute_mint(
             .airdrop_mint_fee_bps
             .bps_to_decimal()
     } else {
-        params.params.extension.mint_fee_bps.bps_to_decimal()
+        params.params.mint_fee_bps.bps_to_decimal()
     };
     let network_fee = mint_price.amount * mint_fee;
     checked_fair_burn(&info, network_fee.u128(), None, &mut res)?;

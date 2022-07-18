@@ -162,10 +162,7 @@ pub fn sudo_update_params(
         params.extension.airdrop_mint_price = airdrop_mint_price;
     }
 
-    params.extension.mint_fee_bps = param_msg
-        .extension
-        .mint_fee_bps
-        .unwrap_or(params.extension.mint_fee_bps);
+    params.mint_fee_bps = param_msg.mint_fee_bps.unwrap_or(params.mint_fee_bps);
     params.extension.airdrop_mint_fee_bps = param_msg
         .extension
         .airdrop_mint_fee_bps
