@@ -20,6 +20,7 @@ use cw_utils::{may_pay, parse_reply_instantiate_data};
 use rand_core::{RngCore, SeedableRng};
 use rand_xoshiro::Xoshiro128PlusPlus;
 use sg1::checked_fair_burn;
+use sg2::query::Sg2QueryMsg;
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
 use sg_std::math::U64Ext;
 use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
@@ -30,7 +31,6 @@ use sha2::{Digest, Sha256};
 use shuffle::{fy::FisherYates, shuffler::Shuffler};
 use url::Url;
 
-use sg2::query::QueryMsg as FactoryQueryMsg;
 use sg2_vending::{ParamsResponse, VendingMinterCreateMsg as InstantiateMsg};
 
 pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
@@ -62,7 +62,7 @@ pub fn instantiate(
     // This will fail if the sender cannot parse a response from the factory contract
     let _res: ParamsResponse = deps
         .querier
-        .query_wasm_smart(factory.clone(), &FactoryQueryMsg::Params {})?;
+        .query_wasm_smart(factory.clone(), &Sg2QueryMsg::Params {})?;
 
     // Check that base_token_uri is a valid IPFS uri
     let parsed_token_uri = Url::parse(&msg.init_msg.base_token_uri)?;
@@ -187,7 +187,7 @@ pub fn execute_shuffle(
 
     let factory: ParamsResponse = deps
         .querier
-        .query_wasm_smart(config.factory, &FactoryQueryMsg::Params {})?;
+        .query_wasm_smart(config.factory, &Sg2QueryMsg::Params {})?;
     let factory_params = factory.params;
 
     // Check exact shuffle fee payment included in message
@@ -448,7 +448,7 @@ fn _execute_mint(
 
     let factory: ParamsResponse = deps
         .querier
-        .query_wasm_smart(config.factory, &FactoryQueryMsg::Params {})?;
+        .query_wasm_smart(config.factory, &Sg2QueryMsg::Params {})?;
     let factory_params = factory.params;
 
     // Create network fee msgs
@@ -635,7 +635,7 @@ pub fn execute_update_per_address_limit(
 
     let factory: ParamsResponse = deps
         .querier
-        .query_wasm_smart(config.factory.clone(), &FactoryQueryMsg::Params {})?;
+        .query_wasm_smart(config.factory.clone(), &Sg2QueryMsg::Params {})?;
     let factory_params = factory.params;
 
     if per_address_limit == 0 || per_address_limit > factory_params.extension.max_per_address_limit
@@ -662,7 +662,7 @@ pub fn mint_price(deps: Deps, is_admin: bool) -> Result<Coin, StdError> {
 
     let factory: ParamsResponse = deps
         .querier
-        .query_wasm_smart(config.factory, &FactoryQueryMsg::Params {})?;
+        .query_wasm_smart(config.factory, &Sg2QueryMsg::Params {})?;
     let factory_params = factory.params;
 
     if is_admin {

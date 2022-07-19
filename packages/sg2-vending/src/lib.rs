@@ -2,7 +2,7 @@ use cosmwasm_std::{Coin, Timestamp};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use sg2::{
-    msg::{CreateMinterMsg, ExecuteMsg as MintersExecuteMsg, UpdateParamsMsg},
+    msg::{CreateMinterMsg, Sg2ExecuteMsg, UpdateParamsMsg},
     MinterParams,
 };
 
@@ -49,7 +49,7 @@ pub struct ParamsResponse {
     pub params: VendingMinterParams,
 }
 
-pub type ExecuteMsg = MintersExecuteMsg<MinterInitMsgExtension>;
+pub type ExecuteMsg = Sg2ExecuteMsg<MinterInitMsgExtension>;
 
 pub mod tests {
     use cosmwasm_std::{coin, Timestamp};

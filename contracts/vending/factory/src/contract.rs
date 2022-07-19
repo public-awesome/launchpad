@@ -6,7 +6,7 @@ use cosmwasm_std::{
 use cw2::set_contract_version;
 use cw_utils::must_pay;
 use sg1::checked_fair_burn;
-use sg2::query::QueryMsg;
+use sg2::query::Sg2QueryMsg;
 use sg2_vending::{ExecuteMsg, ParamsResponse, VendingMinterCreateMsg, VendingUpdateParamsMsg};
 use sg_std::NATIVE_DENOM;
 
@@ -172,10 +172,10 @@ pub fn sudo_update_params(
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
+pub fn query(deps: Deps, _env: Env, msg: Sg2QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::Params {} => to_binary(&query_params(deps)?),
-        QueryMsg::MinterStatus { minter } => to_binary(&query_minter_status(deps, minter)?),
+        Sg2QueryMsg::Params {} => to_binary(&query_params(deps)?),
+        Sg2QueryMsg::MinterStatus { minter } => to_binary(&query_minter_status(deps, minter)?),
     }
 }
 
@@ -205,7 +205,7 @@ mod tests {
         assert_eq!(0, res.messages.len());
 
         // it worked, let's query the state
-        let res = query(deps.as_ref(), mock_env(), QueryMsg::Params {}).unwrap();
+        let res = query(deps.as_ref(), mock_env(), Sg2QueryMsg::Params {}).unwrap();
         let value: ParamsResponse = from_binary(&res).unwrap();
         assert_eq!(1, value.params.code_id);
     }

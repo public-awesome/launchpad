@@ -30,6 +30,6 @@ pub struct UpdateParamsMsg<T> {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum ExecuteMsg<T> {
+pub enum Sg2ExecuteMsg<T> {
     CreateMinter(CreateMinterMsg<T>),
 }

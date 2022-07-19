@@ -1,5 +1,6 @@
 use cw721_base::state::TokenInfo;
 use cw721_base::Extension;
+use sg2::query::Sg2QueryMsg;
 use url::Url;
 
 use cosmwasm_std::{
@@ -10,7 +11,6 @@ use cw2::set_contract_version;
 use cw721::{ContractInfoResponse, Cw721ReceiveMsg};
 use cw_utils::{nonpayable, Expiration};
 
-use sg2::query::QueryMsg as FactoryQueryMsg;
 use sg2_vending::ParamsResponse;
 use sg721::{CollectionInfo, InstantiateMsg, MintMsg, RoyaltyInfo, RoyaltyInfoResponse};
 use sg_std::Response;
@@ -122,7 +122,7 @@ pub fn ready(
     // query factory to check if the minter for this collection has the same code id as in factory params
     let res: ParamsResponse = deps
         .querier
-        .query_wasm_smart(factory, &FactoryQueryMsg::Params {})?;
+        .query_wasm_smart(factory, &Sg2QueryMsg::Params {})?;
     if res.params.code_id != minter_id {
         return Err(ContractError::Unauthorized {});
     }

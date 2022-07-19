@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum QueryMsg {
+pub enum Sg2QueryMsg {
     /// Returns `ParamsResponse`
     Params {},
     /// Returns a `MinterStatusResponse`
