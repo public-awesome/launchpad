@@ -30,7 +30,7 @@ use sha2::{Digest, Sha256};
 use shuffle::{fy::FisherYates, shuffler::Shuffler};
 use url::Url;
 
-use minters::QueryMsg as MintersQueryMsg;
+use minters::QueryMsg as FactoryQueryMsg;
 use vending::{ParamsResponse, VendingMinterCreateMsg as InstantiateMsg};
 
 pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
@@ -62,7 +62,7 @@ pub fn instantiate(
     // This will fail if the sender cannot parse a response from the factory contract
     let _res: ParamsResponse = deps
         .querier
-        .query_wasm_smart(factory.clone(), &MintersQueryMsg::Params {})?;
+        .query_wasm_smart(factory.clone(), &FactoryQueryMsg::Params {})?;
 
     // Check that base_token_uri is a valid IPFS uri
     let parsed_token_uri = Url::parse(&msg.init_msg.base_token_uri)?;
@@ -187,7 +187,7 @@ pub fn execute_shuffle(
 
     let factory: ParamsResponse = deps
         .querier
-        .query_wasm_smart(config.factory, &MintersQueryMsg::Params {})?;
+        .query_wasm_smart(config.factory, &FactoryQueryMsg::Params {})?;
     let factory_params = factory.params;
 
     // Check exact shuffle fee payment included in message
@@ -448,7 +448,7 @@ fn _execute_mint(
 
     let factory: ParamsResponse = deps
         .querier
-        .query_wasm_smart(config.factory, &MintersQueryMsg::Params {})?;
+        .query_wasm_smart(config.factory, &FactoryQueryMsg::Params {})?;
     let factory_params = factory.params;
 
     // Create network fee msgs
@@ -635,7 +635,7 @@ pub fn execute_update_per_address_limit(
 
     let factory: ParamsResponse = deps
         .querier
-        .query_wasm_smart(config.factory.clone(), &MintersQueryMsg::Params {})?;
+        .query_wasm_smart(config.factory.clone(), &FactoryQueryMsg::Params {})?;
     let factory_params = factory.params;
 
     if per_address_limit == 0 || per_address_limit > factory_params.extension.max_per_address_limit
@@ -662,7 +662,7 @@ pub fn mint_price(deps: Deps, is_admin: bool) -> Result<Coin, StdError> {
 
     let factory: ParamsResponse = deps
         .querier
-        .query_wasm_smart(config.factory, &MintersQueryMsg::Params {})?;
+        .query_wasm_smart(config.factory, &FactoryQueryMsg::Params {})?;
     let factory_params = factory.params;
 
     if is_admin {
