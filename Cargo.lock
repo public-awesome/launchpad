@@ -1297,10 +1297,8 @@ dependencies = [
 name = "vending-minter"
 version = "0.14.0"
 dependencies = [
- "cosmwasm-schema",
  "cosmwasm-std",
  "cosmwasm-storage",
- "cw-multi-test",
  "cw-storage-plus",
  "cw-utils",
  "cw2",
@@ -1311,12 +1309,10 @@ dependencies = [
  "rand_xoshiro",
  "schemars",
  "serde",
- "sg-multi-test",
  "sg-std 0.12.1",
  "sg-whitelist",
  "sg1 0.13.0",
  "sg721 0.1.0",
- "sg721-vending",
  "sha2 0.10.2",
  "shuffle",
  "thiserror",
