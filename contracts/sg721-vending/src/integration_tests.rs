@@ -1,15 +1,18 @@
 #[cfg(test)]
 mod tests {
-    use cosmwasm_std::{coin, Addr};
+    use cosmwasm_std::{coin, Addr, Timestamp};
     use cw721::NumTokensResponse;
     use cw_multi_test::{BankSudo, Contract, ContractWrapper, Executor, SudoMsg};
-    use sg2_vending::tests::{mock_create_minter, mock_params, CREATION_FEE};
-    use sg2_vending::ExecuteMsg;
+    use sg2::tests::mock_collection_params;
     use sg721::ExecuteMsg as Sg721ExecuteMsg;
     use sg_multi_test::StargazeApp;
-    use sg_std::StargazeMsgWrapper;
+    use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME};
     use vending_factory::helpers::FactoryContract;
-    use vending_factory::msg::InstantiateMsg as FactoryInstantiateMsg;
+    use vending_factory::msg::{
+        ExecuteMsg, InstantiateMsg as FactoryInstantiateMsg, VendingMinterCreateMsg,
+        VendingMinterInitMsgExtension,
+    };
+    use vending_factory::state::{ParamsExtension, VendingMinterParams};
 
     pub fn factory_contract() -> Box<dyn Contract<StargazeMsgWrapper>> {
         let contract = ContractWrapper::new(
@@ -44,8 +47,51 @@ mod tests {
     const ADMIN: &str = "admin";
     const NATIVE_DENOM: &str = "ustars";
 
+    pub const CREATION_FEE: u128 = 5_000_000_000;
+    pub const MIN_MINT_PRICE: u128 = 50_000_000;
+    pub const AIRDROP_MINT_PRICE: u128 = 15_000_000;
+    pub const MINT_FEE_BPS: u64 = 1_000; // 10%
+    pub const AIRDROP_MINT_FEE_BPS: u64 = 10_000; // 100%
+    pub const SHUFFLE_FEE: u128 = 500_000_000;
+    pub const MAX_TOKEN_LIMIT: u32 = 10_000;
+    pub const MAX_PER_ADDRESS_LIMIT: u32 = 50;
+
     fn custom_mock_app() -> StargazeApp {
         StargazeApp::default()
+    }
+
+    pub fn mock_init_extension() -> VendingMinterInitMsgExtension {
+        VendingMinterInitMsgExtension {
+            base_token_uri: "ipfs://aldkfjads".to_string(),
+            start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
+            num_tokens: 100,
+            unit_price: coin(MIN_MINT_PRICE, NATIVE_DENOM),
+            per_address_limit: 5,
+            whitelist: None,
+        }
+    }
+
+    pub fn mock_params() -> VendingMinterParams {
+        VendingMinterParams {
+            code_id: 1,
+            creation_fee: coin(CREATION_FEE, NATIVE_DENOM),
+            min_mint_price: coin(MIN_MINT_PRICE, NATIVE_DENOM),
+            mint_fee_bps: MINT_FEE_BPS,
+            extension: ParamsExtension {
+                max_token_limit: MAX_TOKEN_LIMIT,
+                max_per_address_limit: MAX_PER_ADDRESS_LIMIT,
+                airdrop_mint_price: coin(AIRDROP_MINT_PRICE, NATIVE_DENOM),
+                airdrop_mint_fee_bps: AIRDROP_MINT_FEE_BPS,
+                shuffle_fee: coin(SHUFFLE_FEE, NATIVE_DENOM),
+            },
+        }
+    }
+
+    pub fn mock_create_minter() -> VendingMinterCreateMsg {
+        VendingMinterCreateMsg {
+            init_msg: mock_init_extension(),
+            collection_params: mock_collection_params(),
+        }
     }
 
     fn proper_instantiate_factory() -> (StargazeApp, FactoryContract) {

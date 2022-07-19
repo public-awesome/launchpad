@@ -1,7 +1,10 @@
+use cosmwasm_std::{Coin, Timestamp};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use sg2_vending::{VendingMinterParams, VendingUpdateParamsMsg};
+use sg2::msg::{CreateMinterMsg, UpdateParamsMsg, Sg2ExecuteMsg};
 use sg_std::StargazeMsgWrapper;
+
+use crate::state::VendingMinterParams;
 
 pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 pub type SubMsg = cosmwasm_std::SubMsg<StargazeMsgWrapper>;
@@ -13,6 +16,20 @@ pub struct InstantiateMsg {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
+pub struct VendingMinterInitMsgExtension {
+    pub base_token_uri: String,
+    pub start_time: Timestamp,
+    pub num_tokens: u32,
+    pub unit_price: Coin,
+    pub per_address_limit: u32,
+    pub whitelist: Option<String>,
+}
+pub type VendingMinterCreateMsg = CreateMinterMsg<VendingMinterInitMsgExtension>;
+
+pub type ExecuteMsg = Sg2ExecuteMsg<VendingMinterInitMsgExtension>;
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 pub enum SudoMsg {
     UpdateParams(Box<VendingUpdateParamsMsg>),
     UpdateMinterStatus {
@@ -20,4 +37,22 @@ pub enum SudoMsg {
         verified: bool,
         blocked: bool,
     },
+}
+
+/// Message for params so they can be updated invidiually by governance
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub struct VendingUpdateParamsExtension {
+    pub max_token_limit: Option<u32>,
+    pub max_per_address_limit: Option<u32>,
+    pub airdrop_mint_price: Option<Coin>,
+    pub airdrop_mint_fee_bps: Option<u64>,
+    pub shuffle_fee: Option<Coin>,
+}
+pub type VendingUpdateParamsMsg = UpdateParamsMsg<VendingUpdateParamsExtension>;
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub struct ParamsResponse {
+    pub params: VendingMinterParams,
 }

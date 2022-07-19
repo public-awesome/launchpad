@@ -7,11 +7,13 @@ use cw2::set_contract_version;
 use cw_utils::must_pay;
 use sg1::checked_fair_burn;
 use sg2::query::Sg2QueryMsg;
-use sg2_vending::{ExecuteMsg, ParamsResponse, VendingMinterCreateMsg, VendingUpdateParamsMsg};
 use sg_std::NATIVE_DENOM;
 
 use crate::error::ContractError;
-use crate::msg::{InstantiateMsg, Response, SubMsg, SudoMsg};
+use crate::msg::{
+    ExecuteMsg, InstantiateMsg, ParamsResponse, Response, SubMsg, SudoMsg, VendingMinterCreateMsg,
+    VendingUpdateParamsMsg,
+};
 use crate::state::SUDO_PARAMS;
 use sg_controllers::{handle_reply, query_minter_status, update_params, upsert_minter_status};
 

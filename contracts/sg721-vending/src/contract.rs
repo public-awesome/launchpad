@@ -11,9 +11,9 @@ use cw2::set_contract_version;
 use cw721::{ContractInfoResponse, Cw721ReceiveMsg};
 use cw_utils::{nonpayable, Expiration};
 
-use sg2_vending::ParamsResponse;
 use sg721::{CollectionInfo, InstantiateMsg, MintMsg, RoyaltyInfo, RoyaltyInfoResponse};
 use sg_std::Response;
+use vending_factory::msg::ParamsResponse;
 use vending_minter::msg::{ConfigResponse, QueryMsg as MinterQueryMsg};
 
 use crate::msg::{CollectionInfoResponse, QueryMsg};

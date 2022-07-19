@@ -1,12 +1,13 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use sg2_vending::ExecuteMsg;
 
 use cosmwasm_std::{
     to_binary, Addr, Coin, ContractInfoResponse, CustomQuery, Querier, QuerierWrapper, StdResult,
     WasmMsg, WasmQuery,
 };
 use sg_std::CosmosMsg;
+
+use crate::msg::ExecuteMsg;
 
 /// MinterContract is a wrapper around Addr that provides a lot of helpers
 /// for working with this.

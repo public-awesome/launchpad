@@ -1,7 +1,7 @@
 use cosmwasm_std::{Coin, Timestamp};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use sg2_vending::{VendingMinterCreateMsg, VendingMinterParams};
+use vending_factory::{msg::VendingMinterCreateMsg, state::VendingMinterParams};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {
