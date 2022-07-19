@@ -1277,10 +1277,8 @@ dependencies = [
 name = "vending-factory"
 version = "0.1.0"
 dependencies = [
- "cosmwasm-schema",
  "cosmwasm-std",
  "cosmwasm-storage",
- "cw-multi-test",
  "cw-storage-plus",
  "cw-utils",
  "cw2",
@@ -1288,14 +1286,11 @@ dependencies = [
  "schemars",
  "serde",
  "sg-controllers 0.13.0",
- "sg-multi-test",
  "sg-std 0.12.1",
  "sg1 0.13.0",
  "sg721 0.1.0",
- "sg721-vending",
  "thiserror",
  "vending",
- "vending-minter",
 ]
 
 [[package]]
