@@ -6,7 +6,7 @@ mod tests {
     use cw_multi_test::{Contract, ContractWrapper, Executor};
     use sg_multi_test::StargazeApp;
     use sg_std::StargazeMsgWrapper;
-    use vending::tests::{mock_params, CREATION_FEE};
+    // use vending::tests::{mock_params, CREATION_FEE};
 
     pub fn factory_contract() -> Box<dyn Contract<StargazeMsgWrapper>> {
         let contract = ContractWrapper::new(
