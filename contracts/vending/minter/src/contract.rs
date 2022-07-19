@@ -30,8 +30,8 @@ use sha2::{Digest, Sha256};
 use shuffle::{fy::FisherYates, shuffler::Shuffler};
 use url::Url;
 
-use minters::QueryMsg as FactoryQueryMsg;
-use vending::{ParamsResponse, VendingMinterCreateMsg as InstantiateMsg};
+use sg2::query::QueryMsg as FactoryQueryMsg;
+use sg2_vending::{ParamsResponse, VendingMinterCreateMsg as InstantiateMsg};
 
 pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 pub type SubMsg = cosmwasm_std::SubMsg<StargazeMsgWrapper>;

@@ -629,19 +629,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a3e378b66a060d48947b590737b30a1be76706c8dd7b8ba0f2fe3989c68a853f"
 
 [[package]]
-name = "minters"
-version = "0.1.0"
-dependencies = [
- "cosmwasm-std",
- "cw-utils",
- "schemars",
- "serde",
- "sg-std 0.12.1",
- "sg721 0.1.0",
- "thiserror",
-]
-
-[[package]]
 name = "num-traits"
 version = "0.2.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -915,10 +902,10 @@ dependencies = [
  "cosmwasm-std",
  "cw-storage-plus",
  "cw-utils",
- "minters",
  "schemars",
  "serde",
  "sg-std 0.12.1",
+ "sg2",
  "thiserror",
 ]
 
@@ -1035,6 +1022,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "sg2"
+version = "0.1.0"
+dependencies = [
+ "cosmwasm-std",
+ "cw-utils",
+ "schemars",
+ "serde",
+ "sg-std 0.12.1",
+ "sg721 0.1.0",
+ "thiserror",
+]
+
+[[package]]
+name = "sg2-vending"
+version = "0.1.0"
+dependencies = [
+ "cosmwasm-std",
+ "cw-utils",
+ "schemars",
+ "serde",
+ "sg-std 0.12.1",
+ "sg2",
+ "sg721 0.1.0",
+ "thiserror",
+]
+
+[[package]]
 name = "sg721"
 version = "0.1.0"
 dependencies = [
@@ -1083,16 +1097,16 @@ dependencies = [
  "cw2",
  "cw721",
  "cw721-base",
- "minters",
  "schemars",
  "serde",
  "sg-multi-test",
  "sg-std 0.12.1",
  "sg1 0.13.0",
+ "sg2",
+ "sg2-vending",
  "sg721 0.1.0",
  "thiserror",
  "url",
- "vending",
  "vending-factory",
  "vending-minter",
 ]
@@ -1260,20 +1274,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "vending"
-version = "0.1.0"
-dependencies = [
- "cosmwasm-std",
- "cw-utils",
- "minters",
- "schemars",
- "serde",
- "sg-std 0.12.1",
- "sg721 0.1.0",
- "thiserror",
-]
-
-[[package]]
 name = "vending-factory"
 version = "0.1.0"
 dependencies = [
@@ -1282,15 +1282,15 @@ dependencies = [
  "cw-storage-plus",
  "cw-utils",
  "cw2",
- "minters",
  "schemars",
  "serde",
  "sg-controllers 0.13.0",
  "sg-std 0.12.1",
  "sg1 0.13.0",
+ "sg2",
+ "sg2-vending",
  "sg721 0.1.0",
  "thiserror",
- "vending",
 ]
 
 [[package]]
@@ -1304,7 +1304,6 @@ dependencies = [
  "cw2",
  "cw721",
  "cw721-base",
- "minters",
  "rand_core 0.6.3",
  "rand_xoshiro",
  "schemars",
@@ -1312,12 +1311,13 @@ dependencies = [
  "sg-std 0.12.1",
  "sg-whitelist",
  "sg1 0.13.0",
+ "sg2",
+ "sg2-vending",
  "sg721 0.1.0",
  "sha2 0.10.2",
  "shuffle",
  "thiserror",
  "url",
- "vending",
  "vending-factory",
 ]
 

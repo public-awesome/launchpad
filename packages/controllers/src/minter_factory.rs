@@ -1,7 +1,7 @@
 use cosmwasm_std::{ensure_eq, Addr, Deps, DepsMut, Reply, StdError, StdResult};
 use cw_storage_plus::Map;
 use cw_utils::parse_reply_instantiate_data;
-use minters::{Minter, MinterParams, MinterStatusResponse, UpdateParamsMsg};
+use sg2::{msg::UpdateParamsMsg, query::MinterStatusResponse, Minter, MinterParams};
 use sg_std::{Response, NATIVE_DENOM};
 use thiserror::Error;
 

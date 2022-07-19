@@ -1,8 +1,10 @@
 use cosmwasm_std::{Coin, Timestamp};
-use minters::ExecuteMsg as MintersExecuteMsg;
-use minters::{CreateMinterMsg, MinterParams, UpdateParamsMsg};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use sg2::{
+    msg::{CreateMinterMsg, ExecuteMsg as MintersExecuteMsg, UpdateParamsMsg},
+    MinterParams,
+};
 
 /// Message for params so they can be updated invidiually by governance
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -51,7 +53,7 @@ pub type ExecuteMsg = MintersExecuteMsg<MinterInitMsgExtension>;
 
 pub mod tests {
     use cosmwasm_std::{coin, Timestamp};
-    use minters::tests::mock_collection_params;
+    use sg2::tests::mock_collection_params;
     use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
     use crate::{

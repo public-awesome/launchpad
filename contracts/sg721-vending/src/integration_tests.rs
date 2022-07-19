@@ -3,11 +3,11 @@ mod tests {
     use cosmwasm_std::{coin, Addr};
     use cw721::NumTokensResponse;
     use cw_multi_test::{BankSudo, Contract, ContractWrapper, Executor, SudoMsg};
+    use sg2_vending::tests::{mock_create_minter, mock_params, CREATION_FEE};
+    use sg2_vending::ExecuteMsg;
     use sg721::ExecuteMsg as Sg721ExecuteMsg;
     use sg_multi_test::StargazeApp;
     use sg_std::StargazeMsgWrapper;
-    use vending::tests::{mock_create_minter, mock_params, CREATION_FEE};
-    use vending::ExecuteMsg;
     use vending_factory::helpers::FactoryContract;
     use vending_factory::msg::InstantiateMsg as FactoryInstantiateMsg;
 

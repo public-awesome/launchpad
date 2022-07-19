@@ -5,10 +5,10 @@ use cosmwasm_std::{
 };
 use cw2::set_contract_version;
 use cw_utils::must_pay;
-use minters::QueryMsg;
 use sg1::checked_fair_burn;
+use sg2::query::QueryMsg;
+use sg2_vending::{ExecuteMsg, ParamsResponse, VendingMinterCreateMsg, VendingUpdateParamsMsg};
 use sg_std::NATIVE_DENOM;
-use vending::{ExecuteMsg, ParamsResponse, VendingMinterCreateMsg, VendingUpdateParamsMsg};
 
 use crate::error::ContractError;
 use crate::msg::{InstantiateMsg, Response, SubMsg, SudoMsg};

@@ -1,6 +1,6 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vending::ExecuteMsg;
+use sg2_vending::ExecuteMsg;
 
 use cosmwasm_std::{
     to_binary, Addr, Coin, ContractInfoResponse, CustomQuery, Querier, QuerierWrapper, StdResult,

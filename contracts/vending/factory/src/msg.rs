@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use sg2_vending::{VendingMinterParams, VendingUpdateParamsMsg};
 use sg_std::StargazeMsgWrapper;
-use vending::{VendingMinterParams, VendingUpdateParamsMsg};
 
 pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 pub type SubMsg = cosmwasm_std::SubMsg<StargazeMsgWrapper>;

@@ -10,10 +10,10 @@ use cw2::set_contract_version;
 use cw721::{ContractInfoResponse, Cw721ReceiveMsg};
 use cw_utils::{nonpayable, Expiration};
 
-use minters::QueryMsg as FactoryQueryMsg;
+use sg2::query::QueryMsg as FactoryQueryMsg;
+use sg2_vending::ParamsResponse;
 use sg721::{CollectionInfo, InstantiateMsg, MintMsg, RoyaltyInfo, RoyaltyInfoResponse};
 use sg_std::Response;
-use vending::ParamsResponse;
 use vending_minter::msg::{ConfigResponse, QueryMsg as MinterQueryMsg};
 
 use crate::msg::{CollectionInfoResponse, QueryMsg};
