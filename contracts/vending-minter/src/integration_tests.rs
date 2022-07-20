@@ -10,12 +10,11 @@ use cosmwasm_std::{Api, Coin};
 use cw721::{Cw721QueryMsg, OwnerOfResponse, TokensResponse};
 use cw721_base::ExecuteMsg as Cw721ExecuteMsg;
 use cw_multi_test::{BankSudo, Contract, ContractWrapper, Executor, SudoMsg};
+use sg2::msg::Sg2ExecuteMsg;
 use sg_multi_test::StargazeApp;
 use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use sg_whitelist::msg::InstantiateMsg as WhitelistInstantiateMsg;
 use sg_whitelist::msg::{AddMembersMsg, ExecuteMsg as WhitelistExecuteMsg};
-// use vending::tests::{mock_create_minter, mock_params};
-use sg2::msg::Sg2ExecuteMsg;
 
 const CREATION_FEE: u128 = 5_000_000_000;
 const INITIAL_BALANCE: u128 = 2_000_000_000;
