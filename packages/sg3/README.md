@@ -10,7 +10,7 @@ pub struct MinterConfig<T> {
 }
 ```
 
-Custom minters can add more fields by using the `extenstion`.
+Custom minters can add more fields using `extention`.
 
 A minimum, Stargaze minters should specify at least one `Mint {}` operation that takes 0 to many arguments.
 

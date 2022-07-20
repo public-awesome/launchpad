@@ -1314,6 +1314,7 @@ dependencies = [
  "sg-whitelist",
  "sg1 0.13.0",
  "sg2",
+ "sg3",
  "sg721 0.1.0",
  "sg721-vending",
  "sha2 0.10.2",

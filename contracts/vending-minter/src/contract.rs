@@ -6,7 +6,8 @@ use crate::msg::{
     MintableTokensResponse, QueryMsg, StartTimeResponse,
 };
 use crate::state::{
-    Config, CONFIG, MINTABLE_NUM_TOKENS, MINTABLE_TOKEN_POSITIONS, MINTER_ADDRS, SG721_ADDRESS,
+    Config, ConfigExtension, CONFIG, MINTABLE_NUM_TOKENS, MINTABLE_TOKEN_POSITIONS, MINTER_ADDRS,
+    SG721_ADDRESS,
 };
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
@@ -91,18 +92,21 @@ pub fn instantiate(
         .and_then(|w| deps.api.addr_validate(w.as_str()).ok());
 
     let config = Config {
-        admin: deps
-            .api
-            .addr_validate(&msg.collection_params.info.creator)?,
         factory: factory.clone(),
-        base_token_uri: msg.init_msg.base_token_uri,
-        num_tokens: msg.init_msg.num_tokens,
-        sg721_code_id: msg.collection_params.code_id,
-        unit_price: msg.init_msg.unit_price,
-        per_address_limit: msg.init_msg.per_address_limit,
-        whitelist: whitelist_addr,
-        start_time: msg.init_msg.start_time,
+        collection_code_id: msg.collection_params.code_id,
+        extension: ConfigExtension {
+            admin: deps
+                .api
+                .addr_validate(&msg.collection_params.info.creator)?,
+            base_token_uri: msg.init_msg.base_token_uri,
+            num_tokens: msg.init_msg.num_tokens,
+            unit_price: msg.init_msg.unit_price,
+            per_address_limit: msg.init_msg.per_address_limit,
+            whitelist: whitelist_addr,
+            start_time: msg.init_msg.start_time,
+        },
     };
+
     CONFIG.save(deps.storage, &config)?;
     MINTABLE_NUM_TOKENS.save(deps.storage, &msg.init_msg.num_tokens)?;
 
@@ -130,7 +134,7 @@ pub fn instantiate(
                 collection_info: msg.collection_params.info,
             })?,
             funds: info.funds,
-            admin: Some(config.admin.to_string()),
+            admin: Some(config.extension.admin.to_string()),
             label: format!("SG721-{}", msg.collection_params.name),
         }
         .into(),
@@ -228,7 +232,7 @@ pub fn execute_withdraw(
     info: MessageInfo,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
-    if config.admin != info.sender {
+    if config.extension.admin != info.sender {
         return Err(ContractError::Unauthorized(
             "Sender is not an admin".to_owned(),
         ));
@@ -260,17 +264,17 @@ pub fn execute_set_whitelist(
     whitelist: &str,
 ) -> Result<Response, ContractError> {
     let mut config = CONFIG.load(deps.storage)?;
-    if config.admin != info.sender {
+    if config.extension.admin != info.sender {
         return Err(ContractError::Unauthorized(
             "Sender is not an admin".to_owned(),
         ));
     };
 
-    if env.block.time >= config.start_time {
+    if env.block.time >= config.extension.start_time {
         return Err(ContractError::AlreadyStarted {});
     }
 
-    if let Some(wl) = config.whitelist {
+    if let Some(wl) = config.extension.whitelist {
         let res: WhitelistConfigResponse = deps
             .querier
             .query_wasm_smart(wl, &WhitelistQueryMsg::Config {})?;
@@ -280,7 +284,7 @@ pub fn execute_set_whitelist(
         }
     }
 
-    config.whitelist = Some(deps.api.addr_validate(whitelist)?);
+    config.extension.whitelist = Some(deps.api.addr_validate(whitelist)?);
     CONFIG.save(deps.storage, &config)?;
 
     Ok(Response::default()
@@ -298,13 +302,13 @@ pub fn execute_mint_sender(
 
     // If there is no active whitelist right now, check public mint
     // Check if after start_time
-    if is_public_mint(deps.as_ref(), &info)? && (env.block.time < config.start_time) {
+    if is_public_mint(deps.as_ref(), &info)? && (env.block.time < config.extension.start_time) {
         return Err(ContractError::BeforeMintStartTime {});
     }
 
     // Check if already minted max per address limit
     let mint_count = mint_count(deps.as_ref(), &info)?;
-    if mint_count >= config.per_address_limit {
+    if mint_count >= config.extension.per_address_limit {
         return Err(ContractError::MaxPerAddressLimitExceeded {});
     }
 
@@ -317,11 +321,11 @@ fn is_public_mint(deps: Deps, info: &MessageInfo) -> Result<bool, ContractError>
     let config = CONFIG.load(deps.storage)?;
 
     // If there is no whitelist, there's only a public mint
-    if config.whitelist.is_none() {
+    if config.extension.whitelist.is_none() {
         return Ok(true);
     }
 
-    let whitelist = config.whitelist.unwrap();
+    let whitelist = config.extension.whitelist.unwrap();
 
     let wl_config: WhitelistConfigResponse = deps
         .querier
@@ -363,7 +367,7 @@ pub fn execute_mint_to(
     let action = "mint_to";
 
     // Check only admin
-    if info.sender != config.admin {
+    if info.sender != config.extension.admin {
         return Err(ContractError::Unauthorized(
             "Sender is not an admin".to_owned(),
         ));
@@ -384,7 +388,7 @@ pub fn execute_mint_for(
     let action = "mint_for";
 
     // Check only admin
-    if info.sender != config.admin {
+    if info.sender != config.extension.admin {
         return Err(ContractError::Unauthorized(
             "Sender is not an admin".to_owned(),
         ));
@@ -422,7 +426,7 @@ fn _execute_mint(
     let config = CONFIG.load(deps.storage)?;
 
     if let Some(token_id) = token_id {
-        if token_id == 0 || token_id > config.num_tokens {
+        if token_id == 0 || token_id > config.extension.num_tokens {
             return Err(ContractError::InvalidTokenId {});
         }
     }
@@ -436,10 +440,10 @@ fn _execute_mint(
 
     let mint_price: Coin = mint_price(deps.as_ref(), is_admin)?;
     // Exact payment only accepted
-    let payment = may_pay(&info, &config.unit_price.denom)?;
+    let payment = may_pay(&info, &config.extension.unit_price.denom)?;
     if payment != mint_price.amount {
         return Err(ContractError::IncorrectPaymentAmount(
-            coin(payment.u128(), &config.unit_price.denom),
+            coin(payment.u128(), &config.extension.unit_price.denom),
             mint_price,
         ));
     }
@@ -490,7 +494,7 @@ fn _execute_mint(
         owner: recipient_addr.to_string(),
         token_uri: Some(format!(
             "{}/{}",
-            config.base_token_uri, mintable_token_mapping.token_id
+            config.extension.base_token_uri, mintable_token_mapping.token_id
         )),
         extension: Empty {},
     });
@@ -513,8 +517,8 @@ fn _execute_mint(
     let seller_amount = if !is_admin {
         let amount = mint_price.amount - network_fee;
         let msg = BankMsg::Send {
-            to_address: config.admin.to_string(),
-            amount: vec![coin(amount.u128(), config.unit_price.denom)],
+            to_address: config.extension.admin.to_string(),
+            amount: vec![coin(amount.u128(), config.extension.unit_price.denom)],
         };
         res = res.add_message(msg);
         amount
@@ -591,13 +595,13 @@ pub fn execute_update_start_time(
     start_time: Timestamp,
 ) -> Result<Response, ContractError> {
     let mut config = CONFIG.load(deps.storage)?;
-    if info.sender != config.admin {
+    if info.sender != config.extension.admin {
         return Err(ContractError::Unauthorized(
             "Sender is not an admin".to_owned(),
         ));
     }
     // If current time is after the stored start time return error
-    if env.block.time >= config.start_time {
+    if env.block.time >= config.extension.start_time {
         return Err(ContractError::AlreadyStarted {});
     }
 
@@ -612,7 +616,7 @@ pub fn execute_update_start_time(
         return Err(ContractError::BeforeGenesisTime {});
     }
 
-    config.start_time = start_time;
+    config.extension.start_time = start_time;
     CONFIG.save(deps.storage, &config)?;
     Ok(Response::new()
         .add_attribute("action", "update_start_time")
@@ -627,7 +631,7 @@ pub fn execute_update_per_address_limit(
     per_address_limit: u32,
 ) -> Result<Response, ContractError> {
     let mut config = CONFIG.load(deps.storage)?;
-    if info.sender != config.admin {
+    if info.sender != config.extension.admin {
         return Err(ContractError::Unauthorized(
             "Sender is not an admin".to_owned(),
         ));
@@ -646,7 +650,7 @@ pub fn execute_update_per_address_limit(
             got: per_address_limit,
         });
     }
-    config.per_address_limit = per_address_limit;
+    config.extension.per_address_limit = per_address_limit;
     CONFIG.save(deps.storage, &config)?;
     Ok(Response::new()
         .add_attribute("action", "update_per_address_limit")
@@ -668,15 +672,15 @@ pub fn mint_price(deps: Deps, is_admin: bool) -> Result<Coin, StdError> {
     if is_admin {
         return Ok(coin(
             factory_params.extension.airdrop_mint_price.amount.u128(),
-            config.unit_price.denom,
+            config.extension.unit_price.denom,
         ));
     }
 
-    if config.whitelist.is_none() {
-        return Ok(config.unit_price);
+    if config.extension.whitelist.is_none() {
+        return Ok(config.extension.unit_price);
     }
 
-    let whitelist = config.whitelist.unwrap();
+    let whitelist = config.extension.whitelist.unwrap();
 
     let wl_config: WhitelistConfigResponse = deps
         .querier
@@ -685,7 +689,7 @@ pub fn mint_price(deps: Deps, is_admin: bool) -> Result<Coin, StdError> {
     if wl_config.is_active {
         Ok(wl_config.unit_price)
     } else {
-        Ok(config.unit_price)
+        Ok(config.extension.unit_price)
     }
 }
 
@@ -715,15 +719,15 @@ fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
     let sg721_address = SG721_ADDRESS.load(deps.storage)?;
 
     Ok(ConfigResponse {
-        admin: config.admin.to_string(),
-        base_token_uri: config.base_token_uri,
+        admin: config.extension.admin.to_string(),
+        base_token_uri: config.extension.base_token_uri,
         sg721_address: sg721_address.to_string(),
-        sg721_code_id: config.sg721_code_id,
-        num_tokens: config.num_tokens,
-        start_time: config.start_time,
-        unit_price: config.unit_price,
-        per_address_limit: config.per_address_limit,
-        whitelist: config.whitelist.map(|w| w.to_string()),
+        sg721_code_id: config.collection_code_id,
+        num_tokens: config.extension.num_tokens,
+        start_time: config.extension.start_time,
+        unit_price: config.extension.unit_price,
+        per_address_limit: config.extension.per_address_limit,
+        whitelist: config.extension.whitelist.map(|w| w.to_string()),
         factory: config.factory.to_string(),
     })
 }
@@ -740,7 +744,7 @@ fn query_mint_count(deps: Deps, address: String) -> StdResult<MintCountResponse>
 fn query_start_time(deps: Deps) -> StdResult<StartTimeResponse> {
     let config = CONFIG.load(deps.storage)?;
     Ok(StartTimeResponse {
-        start_time: config.start_time.to_string(),
+        start_time: config.extension.start_time.to_string(),
     })
 }
 
@@ -765,8 +769,8 @@ fn query_mint_price(deps: Deps) -> StdResult<MintPriceResponse> {
     let config = CONFIG.load(deps.storage)?;
 
     let current_price = mint_price(deps, false)?;
-    let public_price = config.unit_price;
-    let whitelist_price: Option<Coin> = if let Some(whitelist) = config.whitelist {
+    let public_price = config.extension.unit_price;
+    let whitelist_price: Option<Coin> = if let Some(whitelist) = config.extension.whitelist {
         let wl_config: WhitelistConfigResponse = deps
             .querier
             .query_wasm_smart(whitelist, &WhitelistQueryMsg::Config {})?;
