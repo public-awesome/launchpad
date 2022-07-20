@@ -1,6 +1,5 @@
 [workspace]
 members = ["packages/*", "contracts/*"]
-exclude = ["packages/sg3"]
 resolver = "2"
 
 [profile.release.package.sg721]

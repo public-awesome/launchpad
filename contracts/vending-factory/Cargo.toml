@@ -40,5 +40,3 @@ sg2 = { path = "../../packages/sg2" }
 cosmwasm-schema = "1.0.0"
 cw-multi-test = "0.13.4"
 sg-multi-test = { path = "../../packages/sg-multi-test" }
-vending-minter = { path = "../vending-minter" }
-sg721-vending = { path = "../sg721-vending" }

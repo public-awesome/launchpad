@@ -11,10 +11,13 @@ use cw721::{Cw721QueryMsg, OwnerOfResponse, TokensResponse};
 use cw721_base::ExecuteMsg as Cw721ExecuteMsg;
 use cw_multi_test::{BankSudo, Contract, ContractWrapper, Executor, SudoMsg};
 use sg2::msg::Sg2ExecuteMsg;
+use sg2::tests::mock_collection_params;
 use sg_multi_test::StargazeApp;
 use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use sg_whitelist::msg::InstantiateMsg as WhitelistInstantiateMsg;
 use sg_whitelist::msg::{AddMembersMsg, ExecuteMsg as WhitelistExecuteMsg};
+use vending_factory::msg::{VendingMinterCreateMsg, VendingMinterInitMsgExtension};
+use vending_factory::state::{ParamsExtension, VendingMinterParams};
 
 const CREATION_FEE: u128 = 5_000_000_000;
 const INITIAL_BALANCE: u128 = 2_000_000_000;
@@ -25,6 +28,13 @@ const WHITELIST_AMOUNT: u128 = 66_000_000;
 const WL_PER_ADDRESS_LIMIT: u32 = 1;
 const ADMIN_MINT_PRICE: u128 = 15_000_000;
 const MAX_TOKEN_LIMIT: u32 = 10000;
+
+pub const MIN_MINT_PRICE: u128 = 50_000_000;
+pub const AIRDROP_MINT_PRICE: u128 = 15_000_000;
+pub const MINT_FEE_BPS: u64 = 1_000; // 10%
+pub const AIRDROP_MINT_FEE_BPS: u64 = 10_000; // 100%
+pub const SHUFFLE_FEE: u128 = 500_000_000;
+pub const MAX_PER_ADDRESS_LIMIT: u32 = 50;
 
 fn custom_mock_app() -> StargazeApp {
     StargazeApp::default()
@@ -91,6 +101,40 @@ fn setup_whitelist_contract(router: &mut StargazeApp, creator: &Addr) -> Addr {
         .unwrap()
 }
 
+pub fn mock_params() -> VendingMinterParams {
+    VendingMinterParams {
+        code_id: 1,
+        creation_fee: coin(CREATION_FEE, NATIVE_DENOM),
+        min_mint_price: coin(MIN_MINT_PRICE, NATIVE_DENOM),
+        mint_fee_bps: MINT_FEE_BPS,
+        extension: ParamsExtension {
+            max_token_limit: MAX_TOKEN_LIMIT,
+            max_per_address_limit: MAX_PER_ADDRESS_LIMIT,
+            airdrop_mint_price: coin(AIRDROP_MINT_PRICE, NATIVE_DENOM),
+            airdrop_mint_fee_bps: AIRDROP_MINT_FEE_BPS,
+            shuffle_fee: coin(SHUFFLE_FEE, NATIVE_DENOM),
+        },
+    }
+}
+
+pub fn mock_init_extension() -> VendingMinterInitMsgExtension {
+    VendingMinterInitMsgExtension {
+        base_token_uri: "ipfs://aldkfjads".to_string(),
+        start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
+        num_tokens: 100,
+        unit_price: coin(MIN_MINT_PRICE, NATIVE_DENOM),
+        per_address_limit: 5,
+        whitelist: None,
+    }
+}
+
+pub fn mock_create_minter() -> VendingMinterCreateMsg {
+    VendingMinterCreateMsg {
+        init_msg: mock_init_extension(),
+        collection_params: mock_collection_params(),
+    }
+}
+
 // Upload contract code and instantiate minter contract
 fn setup_minter_contract(
     router: &mut StargazeApp,
@@ -118,7 +162,6 @@ fn setup_minter_contract(
 
     let sg721_code_id = router.store_code(contract_sg721());
 
-    // let mut create_minter_msg = minter_init();
     let mut msg = mock_create_minter();
     msg.init_msg.unit_price = coin(UNIT_PRICE, NATIVE_DENOM);
     msg.init_msg.num_tokens = num_tokens;

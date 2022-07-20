@@ -1035,6 +1035,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "sg3"
+version = "0.11.0"
+dependencies = [
+ "cosmwasm-std",
+ "cw-utils",
+ "schemars",
+ "serde",
+ "sg-std 0.12.1",
+ "thiserror",
+]
+
+[[package]]
 name = "sg721"
 version = "0.1.0"
 dependencies = [
@@ -1277,9 +1289,7 @@ dependencies = [
  "sg1 0.13.0",
  "sg2",
  "sg721 0.1.0",
- "sg721-vending",
  "thiserror",
- "vending-minter",
 ]
 
 [[package]]
