@@ -173,5 +173,16 @@ mod tests {
                 app.execute_contract(sender, contract, &Sg721ExecuteMsg::<Empty>::_Ready {}, &[]);
             assert!(res.is_err());
         }
+
+        #[test]
+        fn check_ready_authorized() {
+            let (mut app, contract) = proper_instantiate();
+
+            let sender = Addr::unchecked("contract2".to_string());
+
+            let res =
+                app.execute_contract(sender, contract, &Sg721ExecuteMsg::<Empty>::_Ready {}, &[]);
+            assert!(res.is_err());
+        }
     }
 }
