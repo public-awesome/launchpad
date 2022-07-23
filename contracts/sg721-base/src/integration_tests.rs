@@ -34,7 +34,7 @@ mod tests {
         Box::new(contract)
     }
 
-    pub fn sg721_vending_contract() -> Box<dyn Contract<StargazeMsgWrapper>> {
+    pub fn sg721_base_contract() -> Box<dyn Contract<StargazeMsgWrapper>> {
         let contract = ContractWrapper::new(
             crate::entry::execute,
             crate::entry::instantiate,
@@ -121,7 +121,7 @@ mod tests {
 
     fn proper_instantiate() -> (StargazeApp, Addr) {
         let (mut app, factory_contract) = proper_instantiate_factory();
-        let sg721_id = app.store_code(sg721_vending_contract());
+        let sg721_id = app.store_code(sg721_base_contract());
 
         let mut m = mock_create_minter();
         m.collection_params.code_id = sg721_id;
@@ -153,7 +153,7 @@ mod tests {
         use crate::msg::QueryMsg;
 
         #[test]
-        fn create_sg721_vending_collection() {
+        fn create_sg721_base_collection() {
             let (app, contract) = proper_instantiate();
 
             let res: NumTokensResponse = app

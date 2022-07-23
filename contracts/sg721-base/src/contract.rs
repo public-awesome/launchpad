@@ -15,7 +15,7 @@ use crate::state::{COLLECTION_INFO, READY};
 use crate::{ContractError, Sg721Contract};
 
 // version info for migration info
-const CONTRACT_NAME: &str = "crates.io:sg721-vending";
+const CONTRACT_NAME: &str = "crates.io:sg721-base";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 const MAX_DESCRIPTION_LENGTH: u32 = 512;

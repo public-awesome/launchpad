@@ -6,7 +6,7 @@ resolver = "2"
 codegen-units = 1
 incremental = false
 
-[profile.release.package.sg721-vending]
+[profile.release.package.sg721-base]
 codegen-units = 1
 incremental = false
 

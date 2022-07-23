@@ -21,7 +21,7 @@ pub enum ContractError {
     #[error("Unauthorized")]
     Unauthorized {},
 
-    #[error("NotRead")]
+    #[error("NotReady")]
     NotReady {},
 
     #[error("InvalidCreationFee")]

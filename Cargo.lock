@@ -111,7 +111,7 @@ dependencies = [
  "sg-marketplace",
  "sg-multi-test",
  "sg-std 0.12.1",
- "sg721-vending",
+ "sg721-base",
  "thiserror",
  "vending-minter",
 ]
@@ -1083,7 +1083,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "sg721-vending"
+name = "sg721-base"
 version = "0.13.0"
 dependencies = [
  "cosmwasm-schema",
@@ -1315,7 +1315,7 @@ dependencies = [
  "sg2",
  "sg3",
  "sg721 0.1.0",
- "sg721-vending",
+ "sg721-base",
  "sha2 0.10.2",
  "shuffle",
  "thiserror",
