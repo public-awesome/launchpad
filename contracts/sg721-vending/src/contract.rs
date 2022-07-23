@@ -1,20 +1,14 @@
 use cw721_base::state::TokenInfo;
 use cw721_base::Extension;
-use sg2::query::Sg2QueryMsg;
 use url::Url;
 
-use cosmwasm_std::{
-    to_binary, Binary, ContractInfoResponse as CwContractInfoResponse, Decimal, Deps, DepsMut, Env,
-    Event, MessageInfo, StdResult, WasmQuery,
-};
+use cosmwasm_std::{to_binary, Binary, Decimal, Deps, DepsMut, Env, Event, MessageInfo, StdResult};
 use cw2::set_contract_version;
 use cw721::{ContractInfoResponse, Cw721ReceiveMsg};
 use cw_utils::{nonpayable, Expiration};
 
 use sg721::{CollectionInfo, InstantiateMsg, MintMsg, RoyaltyInfo, RoyaltyInfoResponse};
 use sg_std::Response;
-use vending_factory::msg::ParamsResponse;
-use vending_minter::msg::{ConfigResponse, QueryMsg as MinterQueryMsg};
 
 use crate::msg::{CollectionInfoResponse, QueryMsg};
 use crate::state::{COLLECTION_INFO, READY};
@@ -102,28 +96,6 @@ pub fn ready(
 ) -> Result<Response, ContractError> {
     let minter = Sg721Contract::default().minter.load(deps.storage)?;
     if minter != info.sender {
-        return Err(ContractError::Unauthorized {});
-    }
-
-    // query minter to the get the factory address
-    let config: ConfigResponse = deps
-        .querier
-        .query_wasm_smart(minter.clone(), &MinterQueryMsg::Config {})?;
-    let factory = config.factory;
-
-    // query minter contract to get minter code id
-    let query = WasmQuery::ContractInfo {
-        contract_addr: minter.to_string(),
-    }
-    .into();
-    let res: CwContractInfoResponse = deps.querier.query(&query)?;
-    let minter_id = res.code_id;
-
-    // query factory to check if the minter for this collection has the same code id as in factory params
-    let res: ParamsResponse = deps
-        .querier
-        .query_wasm_smart(factory, &Sg2QueryMsg::Params {})?;
-    if res.params.code_id != minter_id {
         return Err(ContractError::Unauthorized {});
     }
 
