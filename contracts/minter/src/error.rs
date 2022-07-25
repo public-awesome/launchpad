@@ -36,6 +36,9 @@ pub enum ContractError {
     #[error("Minimum network mint price {expected} got {got}")]
     InsufficientMintPrice { expected: u128, got: u128 },
 
+    #[error("Can not update mint price {updated} higher than initial price {initial}")]
+    UpdatedMintPriceTooHigh { initial: u128, updated: u128 },
+
     #[error("Invalid address {addr}")]
     InvalidAddress { addr: String },
 
