@@ -648,7 +648,7 @@ dependencies = [
  "sg-multi-test",
  "sg-std 0.12.1",
  "sg-whitelist",
- "sg1 0.13.0",
+ "sg1 0.12.1",
  "sg721 0.12.2",
  "sha2 0.10.2",
  "shuffle",
@@ -952,21 +952,21 @@ dependencies = [
  "serde",
  "sg-controllers 0.12.1",
  "sg-std 0.12.1 (git+https://github.com/public-awesome/launchpad?branch=feature/fund-fairburn-pool)",
- "sg1 0.13.0 (git+https://github.com/public-awesome/launchpad?branch=feature/fund-fairburn-pool)",
+ "sg1 0.13.0",
  "sg721 0.12.2 (git+https://github.com/public-awesome/launchpad?branch=feature/fund-fairburn-pool)",
  "thiserror",
 ]
 
 [[package]]
 name = "sg-multi-test"
-version = "0.13.0"
+version = "0.14.0"
 dependencies = [
  "anyhow",
  "cosmwasm-std",
  "cw-multi-test",
  "schemars",
  "serde",
- "sg-std 0.12.1",
+ "sg-std 0.12.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -1035,18 +1035,20 @@ dependencies = [
  "schemars",
  "serde",
  "sg-std 0.12.1",
- "sg1 0.13.0",
+ "sg1 0.14.0",
  "thiserror",
 ]
 
 [[package]]
 name = "sg1"
-version = "0.13.0"
+version = "0.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4b9b26273bdcfd32e1f8adfd99a4d168717fa5adc570c8b67b4081037791e212"
 dependencies = [
  "cosmwasm-std",
  "cw-utils",
  "serde",
- "sg-std 0.12.1",
+ "sg-std 0.12.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "thiserror",
 ]
 
@@ -1059,6 +1061,17 @@ dependencies = [
  "cw-utils",
  "serde",
  "sg-std 0.12.1 (git+https://github.com/public-awesome/launchpad?branch=feature/fund-fairburn-pool)",
+ "thiserror",
+]
+
+[[package]]
+name = "sg1"
+version = "0.14.0"
+dependencies = [
+ "cosmwasm-std",
+ "cw-utils",
+ "serde",
+ "sg-std 0.12.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "thiserror",
 ]
 
@@ -1077,7 +1090,7 @@ dependencies = [
  "schemars",
  "serde",
  "sg-std 0.12.1",
- "sg1 0.13.0",
+ "sg1 0.14.0",
  "thiserror",
  "url",
 ]
@@ -1097,7 +1110,7 @@ dependencies = [
  "schemars",
  "serde",
  "sg-std 0.12.1 (git+https://github.com/public-awesome/launchpad?branch=feature/fund-fairburn-pool)",
- "sg1 0.13.0 (git+https://github.com/public-awesome/launchpad?branch=feature/fund-fairburn-pool)",
+ "sg1 0.13.0",
  "thiserror",
  "url",
 ]
