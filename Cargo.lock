@@ -108,7 +108,7 @@ dependencies = [
  "minter",
  "schemars",
  "serde",
- "sg-controllers 0.12.1",
+ "sg-controllers 0.12.2",
  "sg-marketplace",
  "sg-multi-test",
  "sg-std 0.12.1",
@@ -913,18 +913,6 @@ dependencies = [
 [[package]]
 name = "sg-controllers"
 version = "0.12.1"
-dependencies = [
- "cosmwasm-std",
- "cw-storage-plus",
- "schemars",
- "serde",
- "sg-std 0.12.1",
- "thiserror",
-]
-
-[[package]]
-name = "sg-controllers"
-version = "0.12.1"
 source = "git+https://github.com/public-awesome/launchpad?branch=feature/fund-fairburn-pool#57d7b2ebe146ad7c2164c0e16a0439d9bd0433b9"
 dependencies = [
  "cosmwasm-std",
@@ -932,6 +920,18 @@ dependencies = [
  "schemars",
  "serde",
  "sg-std 0.12.1 (git+https://github.com/public-awesome/launchpad?branch=feature/fund-fairburn-pool)",
+ "thiserror",
+]
+
+[[package]]
+name = "sg-controllers"
+version = "0.12.2"
+dependencies = [
+ "cosmwasm-std",
+ "cw-storage-plus",
+ "schemars",
+ "serde",
+ "sg-std 0.12.1",
  "thiserror",
 ]
 
@@ -950,7 +950,7 @@ dependencies = [
  "cw721-base",
  "schemars",
  "serde",
- "sg-controllers 0.12.1 (git+https://github.com/public-awesome/launchpad?branch=feature/fund-fairburn-pool)",
+ "sg-controllers 0.12.1",
  "sg-std 0.12.1 (git+https://github.com/public-awesome/launchpad?branch=feature/fund-fairburn-pool)",
  "sg1 0.13.0 (git+https://github.com/public-awesome/launchpad?branch=feature/fund-fairburn-pool)",
  "sg721 0.12.2 (git+https://github.com/public-awesome/launchpad?branch=feature/fund-fairburn-pool)",
