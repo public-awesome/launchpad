@@ -19,14 +19,14 @@ use crate::msg::{
 use crate::ContractError;
 
 const CREATION_FEE: u128 = 5_000_000_000;
-const INITIAL_BALANCE: u128 = 2_000_000_000;
+const INITIAL_BALANCE: u128 = 20_000_000_000;
 
 const UNIT_PRICE: u128 = 100_000_000;
 const MINT_FEE: u128 = 10_000_000;
 const MAX_TOKEN_LIMIT: u32 = 10000;
 const WHITELIST_AMOUNT: u128 = 66_000_000;
 const WL_PER_ADDRESS_LIMIT: u32 = 1;
-const ADMIN_MINT_PRICE: u128 = 15_000_000;
+const ADMIN_MINT_PRICE: u128 = 100_000_000;
 
 fn custom_mock_app() -> StargazeApp {
     StargazeApp::default()
@@ -141,9 +141,9 @@ fn setup_minter_contract(
 fn setup_accounts(router: &mut StargazeApp) -> (Addr, Addr) {
     let buyer = Addr::unchecked("buyer");
     let creator = Addr::unchecked("creator");
-    // 3,000 tokens
+    // 21,000 tokens
     let creator_funds = coins(INITIAL_BALANCE + CREATION_FEE, NATIVE_DENOM);
-    // 2,000 tokens
+    // 20,000 tokens
     let buyer_funds = coins(INITIAL_BALANCE, NATIVE_DENOM);
     router
         .sudo(SudoMsg::Bank({
