@@ -108,7 +108,7 @@ dependencies = [
  "minter",
  "schemars",
  "serde",
- "sg-controllers 0.12.1",
+ "sg-controllers 0.12.2",
  "sg-marketplace",
  "sg-multi-test",
  "sg-std 0.12.1",
@@ -646,9 +646,9 @@ dependencies = [
  "schemars",
  "serde",
  "sg-multi-test",
- "sg-std 0.12.1",
+ "sg-std 0.12.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg-whitelist",
- "sg1 0.13.0",
+ "sg1 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg721 0.12.2",
  "sha2 0.10.2",
  "shuffle",
@@ -913,18 +913,6 @@ dependencies = [
 [[package]]
 name = "sg-controllers"
 version = "0.12.1"
-dependencies = [
- "cosmwasm-std",
- "cw-storage-plus",
- "schemars",
- "serde",
- "sg-std 0.12.1",
- "thiserror",
-]
-
-[[package]]
-name = "sg-controllers"
-version = "0.12.1"
 source = "git+https://github.com/public-awesome/launchpad?branch=feature/fund-fairburn-pool#57d7b2ebe146ad7c2164c0e16a0439d9bd0433b9"
 dependencies = [
  "cosmwasm-std",
@@ -932,6 +920,18 @@ dependencies = [
  "schemars",
  "serde",
  "sg-std 0.12.1 (git+https://github.com/public-awesome/launchpad?branch=feature/fund-fairburn-pool)",
+ "thiserror",
+]
+
+[[package]]
+name = "sg-controllers"
+version = "0.12.2"
+dependencies = [
+ "cosmwasm-std",
+ "cw-storage-plus",
+ "schemars",
+ "serde",
+ "sg-std 0.12.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "thiserror",
 ]
 
@@ -950,23 +950,23 @@ dependencies = [
  "cw721-base",
  "schemars",
  "serde",
- "sg-controllers 0.12.1 (git+https://github.com/public-awesome/launchpad?branch=feature/fund-fairburn-pool)",
+ "sg-controllers 0.12.1",
  "sg-std 0.12.1 (git+https://github.com/public-awesome/launchpad?branch=feature/fund-fairburn-pool)",
- "sg1 0.13.0 (git+https://github.com/public-awesome/launchpad?branch=feature/fund-fairburn-pool)",
+ "sg1 0.13.0",
  "sg721 0.12.2 (git+https://github.com/public-awesome/launchpad?branch=feature/fund-fairburn-pool)",
  "thiserror",
 ]
 
 [[package]]
 name = "sg-multi-test"
-version = "0.13.0"
+version = "0.14.0"
 dependencies = [
  "anyhow",
  "cosmwasm-std",
  "cw-multi-test",
  "schemars",
  "serde",
- "sg-std 0.12.1",
+ "sg-std 0.12.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -974,6 +974,21 @@ name = "sg-std"
 version = "0.12.1"
 dependencies = [
  "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-utils",
+ "cw721",
+ "cw721-base",
+ "schemars",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "sg-std"
+version = "0.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "07130302e5e6cf53351196e70f04b0c86b45b886ab93120bc6884596e1aeb782"
+dependencies = [
  "cosmwasm-std",
  "cw-utils",
  "cw721",
@@ -1019,19 +1034,8 @@ dependencies = [
  "rust_decimal",
  "schemars",
  "serde",
- "sg-std 0.12.1",
- "sg1 0.13.0",
- "thiserror",
-]
-
-[[package]]
-name = "sg1"
-version = "0.13.0"
-dependencies = [
- "cosmwasm-std",
- "cw-utils",
- "serde",
- "sg-std 0.12.1",
+ "sg-std 0.12.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg1 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "thiserror",
 ]
 
@@ -1044,6 +1048,30 @@ dependencies = [
  "cw-utils",
  "serde",
  "sg-std 0.12.1 (git+https://github.com/public-awesome/launchpad?branch=feature/fund-fairburn-pool)",
+ "thiserror",
+]
+
+[[package]]
+name = "sg1"
+version = "0.14.0"
+dependencies = [
+ "cosmwasm-std",
+ "cw-utils",
+ "serde",
+ "sg-std 0.12.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "thiserror",
+]
+
+[[package]]
+name = "sg1"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8c1673ed8ac3ed540cb091cd350cf7c6f1f162587254ed04ae9947f54af98710"
+dependencies = [
+ "cosmwasm-std",
+ "cw-utils",
+ "serde",
+ "sg-std 0.12.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "thiserror",
 ]
 
@@ -1061,8 +1089,8 @@ dependencies = [
  "cw721-base",
  "schemars",
  "serde",
- "sg-std 0.12.1",
- "sg1 0.13.0",
+ "sg-std 0.12.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg1 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "thiserror",
  "url",
 ]
@@ -1082,7 +1110,7 @@ dependencies = [
  "schemars",
  "serde",
  "sg-std 0.12.1 (git+https://github.com/public-awesome/launchpad?branch=feature/fund-fairburn-pool)",
- "sg1 0.13.0 (git+https://github.com/public-awesome/launchpad?branch=feature/fund-fairburn-pool)",
+ "sg1 0.13.0",
  "thiserror",
  "url",
 ]

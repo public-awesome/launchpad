@@ -1,6 +1,6 @@
 [package]
 name = "sg-controllers"
-version = "0.12.1"
+version = "0.12.2"
 authors = ["Shane Vitarana <s@users.noreply.publicawesome.com>"]
 edition = "2018"
 description = "Common controllers we can reuse in many contracts"
@@ -15,5 +15,5 @@ cosmwasm-std = { version = "1.0.0" }
 cw-storage-plus = "0.13.2"
 schemars = "0.8.1"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
-sg-std = { path = "../sg-std" }
+sg-std = { version = "0.12.1" }
 thiserror = { version = "1.0.21" }
