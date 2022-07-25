@@ -931,7 +931,7 @@ dependencies = [
  "cw-storage-plus",
  "schemars",
  "serde",
- "sg-std 0.12.1",
+ "sg-std 0.12.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "thiserror",
 ]
 
@@ -974,6 +974,21 @@ name = "sg-std"
 version = "0.12.1"
 dependencies = [
  "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-utils",
+ "cw721",
+ "cw721-base",
+ "schemars",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "sg-std"
+version = "0.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "07130302e5e6cf53351196e70f04b0c86b45b886ab93120bc6884596e1aeb782"
+dependencies = [
  "cosmwasm-std",
  "cw-utils",
  "cw721",
