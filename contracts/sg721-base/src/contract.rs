@@ -322,6 +322,7 @@ pub fn mint(
         .add_attribute("token_id", msg.token_id))
 }
 
+#[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::CollectionInfo {} => to_binary(&query_collection_info(deps)?),
