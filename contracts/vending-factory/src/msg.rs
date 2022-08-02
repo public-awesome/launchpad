@@ -1,7 +1,7 @@
 use cosmwasm_std::{Coin, Timestamp};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use sg2::msg::{CreateMinterMsg, UpdateParamsMsg, Sg2ExecuteMsg};
+use sg2::msg::{CreateMinterMsg, Sg2ExecuteMsg, UpdateParamsMsg};
 use sg_std::StargazeMsgWrapper;
 
 use crate::state::VendingMinterParams;
