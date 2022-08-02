@@ -1261,9 +1261,9 @@ fn test_invalid_start_time() {
     // position block time before the start time
     setup_block_time(&mut router, GENESIS_MINT_START_TIME + 400, None);
     minter_msg.init_msg.start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 500);
-    let msg = Sg2ExecuteMsg::CreateMinter(minter_msg.clone());
+    let msg = Sg2ExecuteMsg::CreateMinter(minter_msg);
     router
-        .execute_contract(creator.clone(), factory_addr.clone(), &msg, &creation_fee)
+        .execute_contract(creator.clone(), factory_addr, &msg, &creation_fee)
         .unwrap();
 
     let minter_addr = Addr::unchecked("contract1");
