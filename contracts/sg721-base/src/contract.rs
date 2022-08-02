@@ -1,3 +1,5 @@
+#[cfg(not(feature = "library"))]
+use cosmwasm_std::entry_point;
 use cw721_base::state::TokenInfo;
 use cw721_base::Extension;
 use url::Url;
