@@ -1,6 +1,7 @@
+
 [package]
 name = "sg-controllers"
-version = "0.12.2"
+version = "0.13.0"
 authors = ["Shane Vitarana <s@users.noreply.publicawesome.com>"]
 edition = "2018"
 description = "Common controllers we can reuse in many contracts"
@@ -12,8 +13,10 @@ documentation = "https://docs.stargaze.zone"
 
 [dependencies]
 cosmwasm-std = { version = "1.0.0" }
-cw-storage-plus = "0.13.2"
+cw-storage-plus = "0.13.4"
 schemars = "0.8.1"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
-sg-std = { version = "0.12.1" }
+sg-std = { path = "../sg-std" }
 thiserror = { version = "1.0.21" }
+cw-utils = "0.13.4"
+sg2 = { path = "../sg2" }
