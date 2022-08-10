@@ -178,11 +178,11 @@ mod tests {
         fn check_ready_authorized() {
             let (mut app, contract) = proper_instantiate();
 
-            let sender = Addr::unchecked("contract2".to_string());
+            let sender = Addr::unchecked("contract1".to_string());
 
             let res =
                 app.execute_contract(sender, contract, &Sg721ExecuteMsg::<Empty>::_Ready {}, &[]);
-            assert!(res.is_err());
+            assert!(res.is_ok());
         }
     }
 }

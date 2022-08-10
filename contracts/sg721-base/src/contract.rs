@@ -23,7 +23,7 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 const MAX_DESCRIPTION_LENGTH: u32 = 512;
 
 pub fn _instantiate(
-    _contract: Sg721Contract,
+    contract: Sg721Contract,
     deps: DepsMut,
     _env: Env,
     info: MessageInfo,
@@ -39,14 +39,10 @@ pub fn _instantiate(
         name: msg.name,
         symbol: msg.symbol,
     };
-    Sg721Contract::default()
-        .contract_info
-        .save(deps.storage, &info)?;
+    contract.contract_info.save(deps.storage, &info)?;
 
     let minter = deps.api.addr_validate(&msg.minter)?;
-    Sg721Contract::default()
-        .minter
-        .save(deps.storage, &minter)?;
+    contract.minter.save(deps.storage, &minter)?;
 
     // sg721 instantiation
     if msg.collection_info.description.len() > MAX_DESCRIPTION_LENGTH as usize {
@@ -85,6 +81,7 @@ pub fn _instantiate(
         .add_attribute("action", "instantiate")
         .add_attribute("contract_name", CONTRACT_NAME)
         .add_attribute("contract_version", CONTRACT_VERSION)
+        .add_attribute("collection_name", info.name)
         .add_attribute("image", image.to_string()))
 }
 
@@ -96,6 +93,8 @@ pub fn ready(
     _env: Env,
     info: MessageInfo,
 ) -> Result<Response, ContractError> {
+    println!("ready");
+
     let minter = Sg721Contract::default().minter.load(deps.storage)?;
     if minter != info.sender {
         return Err(ContractError::Unauthorized {});
