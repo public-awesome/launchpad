@@ -1,7 +1,7 @@
 use cosmwasm_std::Coin;
 use cw_storage_plus::Item;
 use schemars::JsonSchema;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use sg2::MinterParams;
 /// Parameters common to all vending minters, as determined by governance
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
