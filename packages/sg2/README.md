@@ -10,7 +10,7 @@ For example, the vending minter factory needs a `shuffle_fee`. This is added as 
 pub struct VendingUpdateParamsExtension {
     pub shuffle_fee: Option<Coin>,
 }
-pub type VendingUpdateParamsMsg = UpdateParamsMsg<VendingUpdateParamsExtension>;
+pub type VendingUpdateParamsMsg = UpdateMinterParamsMsg<VendingUpdateParamsExtension>;
 
 pub struct ParamsExtension {
     pub shuffle_fee: Coin,

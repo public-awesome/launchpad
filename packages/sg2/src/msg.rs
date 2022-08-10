@@ -11,6 +11,7 @@ pub struct CreateMinterMsg<T> {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct CollectionParams {
+    /// The collection code id
     pub code_id: u64,
     pub name: String,
     pub symbol: String,
@@ -20,7 +21,8 @@ pub struct CollectionParams {
 /// Message for params so they can be updated invidiually by governance
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub struct UpdateParamsMsg<T> {
+pub struct UpdateMinterParamsMsg<T> {
+    /// The minter code id
     pub code_id: Option<u64>,
     pub creation_fee: Option<Coin>,
     pub min_mint_price: Option<Coin>,

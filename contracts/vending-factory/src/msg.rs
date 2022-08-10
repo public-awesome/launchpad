@@ -1,7 +1,7 @@
 use cosmwasm_std::{Coin, Timestamp};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use sg2::msg::{CreateMinterMsg, Sg2ExecuteMsg, UpdateParamsMsg};
+use sg2::msg::{CreateMinterMsg, Sg2ExecuteMsg, UpdateMinterParamsMsg};
 use sg_std::StargazeMsgWrapper;
 
 use crate::state::VendingMinterParams;
@@ -49,7 +49,7 @@ pub struct VendingUpdateParamsExtension {
     pub airdrop_mint_fee_bps: Option<u64>,
     pub shuffle_fee: Option<Coin>,
 }
-pub type VendingUpdateParamsMsg = UpdateParamsMsg<VendingUpdateParamsExtension>;
+pub type VendingUpdateParamsMsg = UpdateMinterParamsMsg<VendingUpdateParamsExtension>;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]

@@ -1,7 +1,7 @@
 use cosmwasm_std::{ensure_eq, Addr, Deps, DepsMut, Reply, StdError, StdResult};
 use cw_storage_plus::Map;
 use cw_utils::parse_reply_instantiate_data;
-use sg2::{msg::UpdateParamsMsg, query::MinterStatusResponse, Minter, MinterParams};
+use sg2::{msg::UpdateMinterParamsMsg, query::MinterStatusResponse, Minter, MinterParams};
 use sg_std::{Response, NATIVE_DENOM};
 use thiserror::Error;
 
@@ -55,7 +55,7 @@ pub fn handle_reply(deps: DepsMut, msg: Reply) -> Result<Response, MinterFactory
 
 pub fn update_params<T, C>(
     params: &mut MinterParams<C>,
-    param_msg: UpdateParamsMsg<T>,
+    param_msg: UpdateMinterParamsMsg<T>,
 ) -> Result<(), MinterFactoryError> {
     params.code_id = param_msg.code_id.unwrap_or(params.code_id);
 
