@@ -1,6 +1,6 @@
 [package]
 name = "sg-multi-test"
-version = "0.13.0"
+version = "0.14.0"
 edition = "2021"
 authors = ["Jorge Hernandez <jorge@publicawesome.com>"]
 description = "Integration test helpers for Stargaze custom contracts"
@@ -14,4 +14,4 @@ cw-multi-test = "0.13.4"
 cosmwasm-std = { version = "1.0.0" }
 schemars = "0.8"
 serde = { version = "1.0", default-features = false, features = ["derive"] }
-sg-std = { path = "../../packages/sg-std" }
+sg-std =  { path = "../sg-std" }
