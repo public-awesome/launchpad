@@ -80,8 +80,7 @@ pub fn execute_create_vending_minter(
         });
     }
 
-    let native_denom = NATIVE_DENOM;
-    if native_denom != msg.init_msg.unit_price.denom {
+    if NATIVE_DENOM != msg.init_msg.unit_price.denom {
         return Err(ContractError::InvalidDenom {});
     }
 
