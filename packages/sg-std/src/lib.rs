@@ -1,3 +1,4 @@
+pub mod math;
 mod msg;
 mod query;
 mod route;
