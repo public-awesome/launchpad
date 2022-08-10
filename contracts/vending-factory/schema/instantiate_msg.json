@@ -27,29 +27,18 @@
       }
     },
     "MinterParams_for_ParamsExtension": {
-      "description": "Common params for all minters, updatable by governance",
+      "description": "Common params for all minters used for storage",
       "type": "object",
       "required": [
-        "airdrop_mint_fee_bps",
-        "airdrop_mint_price",
         "code_id",
         "creation_fee",
         "extension",
-        "max_per_address_limit",
-        "max_token_limit",
         "min_mint_price",
         "mint_fee_bps"
       ],
       "properties": {
-        "airdrop_mint_fee_bps": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        },
-        "airdrop_mint_price": {
-          "$ref": "#/definitions/Coin"
-        },
         "code_id": {
+          "description": "The minter code id",
           "type": "integer",
           "format": "uint64",
           "minimum": 0.0
@@ -59,16 +48,6 @@
         },
         "extension": {
           "$ref": "#/definitions/ParamsExtension"
-        },
-        "max_per_address_limit": {
-          "type": "integer",
-          "format": "uint32",
-          "minimum": 0.0
-        },
-        "max_token_limit": {
-          "type": "integer",
-          "format": "uint32",
-          "minimum": 0.0
         },
         "min_mint_price": {
           "$ref": "#/definitions/Coin"
@@ -84,9 +63,31 @@
       "description": "Parameters common to all vending minters, as determined by governance",
       "type": "object",
       "required": [
+        "airdrop_mint_fee_bps",
+        "airdrop_mint_price",
+        "max_per_address_limit",
+        "max_token_limit",
         "shuffle_fee"
       ],
       "properties": {
+        "airdrop_mint_fee_bps": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "airdrop_mint_price": {
+          "$ref": "#/definitions/Coin"
+        },
+        "max_per_address_limit": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "max_token_limit": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
         "shuffle_fee": {
           "$ref": "#/definitions/Coin"
         }

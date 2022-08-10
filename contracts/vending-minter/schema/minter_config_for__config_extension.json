@@ -1,57 +1,24 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Config",
+  "title": "MinterConfig_for_ConfigExtension",
+  "description": "Saved in every minter",
   "type": "object",
   "required": [
-    "admin",
-    "base_token_uri",
-    "factory",
-    "num_tokens",
-    "per_address_limit",
-    "sg721_code_id",
-    "start_time",
-    "unit_price"
+    "collection_code_id",
+    "extension",
+    "factory"
   ],
   "properties": {
-    "admin": {
-      "$ref": "#/definitions/Addr"
-    },
-    "base_token_uri": {
-      "type": "string"
-    },
-    "factory": {
-      "$ref": "#/definitions/Addr"
-    },
-    "num_tokens": {
-      "type": "integer",
-      "format": "uint32",
-      "minimum": 0.0
-    },
-    "per_address_limit": {
-      "type": "integer",
-      "format": "uint32",
-      "minimum": 0.0
-    },
-    "sg721_code_id": {
+    "collection_code_id": {
       "type": "integer",
       "format": "uint64",
       "minimum": 0.0
     },
-    "start_time": {
-      "$ref": "#/definitions/Timestamp"
+    "extension": {
+      "$ref": "#/definitions/ConfigExtension"
     },
-    "unit_price": {
-      "$ref": "#/definitions/Coin"
-    },
-    "whitelist": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/Addr"
-        },
-        {
-          "type": "null"
-        }
-      ]
+    "factory": {
+      "$ref": "#/definitions/Addr"
     }
   },
   "definitions": {
@@ -71,6 +38,51 @@
         },
         "denom": {
           "type": "string"
+        }
+      }
+    },
+    "ConfigExtension": {
+      "type": "object",
+      "required": [
+        "admin",
+        "base_token_uri",
+        "num_tokens",
+        "per_address_limit",
+        "start_time",
+        "unit_price"
+      ],
+      "properties": {
+        "admin": {
+          "$ref": "#/definitions/Addr"
+        },
+        "base_token_uri": {
+          "type": "string"
+        },
+        "num_tokens": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "per_address_limit": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "start_time": {
+          "$ref": "#/definitions/Timestamp"
+        },
+        "unit_price": {
+          "$ref": "#/definitions/Coin"
+        },
+        "whitelist": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Addr"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       }
     },
