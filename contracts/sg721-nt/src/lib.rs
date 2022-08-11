@@ -2,6 +2,7 @@
 use cosmwasm_std::entry_point;
 
 pub mod contract;
+pub mod integration_tests;
 pub mod msg;
 use cw721_base::Extension;
 use sg721::InstantiateMsg;
