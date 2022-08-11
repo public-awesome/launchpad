@@ -43,6 +43,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "base-minter"
+version = "0.14.0"
+dependencies = [
+ "base-factory",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cosmwasm-storage",
+ "cw-multi-test",
+ "cw-storage-plus",
+ "cw-utils",
+ "cw2",
+ "cw721",
+ "cw721-base",
+ "schemars",
+ "serde",
+ "sg-multi-test",
+ "sg-std",
+ "sg1",
+ "sg2",
+ "sg3",
+ "sg721",
+ "sg721-base",
+ "thiserror",
+ "url",
+]
+
+[[package]]
 name = "base16ct"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"

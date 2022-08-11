@@ -100,11 +100,11 @@ pub fn instantiate(
                 .addr_validate(&msg.collection_params.info.creator)?,
             base_token_uri: msg.init_msg.base_token_uri,
             num_tokens: msg.init_msg.num_tokens,
-            unit_price: msg.init_msg.unit_price,
             per_address_limit: msg.init_msg.per_address_limit,
             whitelist: whitelist_addr,
             start_time: msg.init_msg.start_time,
         },
+        mint_price: msg.init_msg.unit_price,
     };
 
     CONFIG.save(deps.storage, &config)?;
@@ -440,10 +440,10 @@ fn _execute_mint(
 
     let mint_price: Coin = mint_price(deps.as_ref(), is_admin)?;
     // Exact payment only accepted
-    let payment = may_pay(&info, &config.extension.unit_price.denom)?;
+    let payment = may_pay(&info, &config.mint_price.denom)?;
     if payment != mint_price.amount {
         return Err(ContractError::IncorrectPaymentAmount(
-            coin(payment.u128(), &config.extension.unit_price.denom),
+            coin(payment.u128(), &config.mint_price.denom),
             mint_price,
         ));
     }
@@ -518,7 +518,7 @@ fn _execute_mint(
         let amount = mint_price.amount - network_fee;
         let msg = BankMsg::Send {
             to_address: config.extension.admin.to_string(),
-            amount: vec![coin(amount.u128(), config.extension.unit_price.denom)],
+            amount: vec![coin(amount.u128(), config.mint_price.denom)],
         };
         res = res.add_message(msg);
         amount
@@ -672,12 +672,12 @@ pub fn mint_price(deps: Deps, is_admin: bool) -> Result<Coin, StdError> {
     if is_admin {
         return Ok(coin(
             factory_params.extension.airdrop_mint_price.amount.u128(),
-            config.extension.unit_price.denom,
+            config.mint_price.denom,
         ));
     }
 
     if config.extension.whitelist.is_none() {
-        return Ok(config.extension.unit_price);
+        return Ok(config.mint_price);
     }
 
     let whitelist = config.extension.whitelist.unwrap();
@@ -689,7 +689,7 @@ pub fn mint_price(deps: Deps, is_admin: bool) -> Result<Coin, StdError> {
     if wl_config.is_active {
         Ok(wl_config.unit_price)
     } else {
-        Ok(config.extension.unit_price)
+        Ok(config.mint_price)
     }
 }
 
@@ -725,7 +725,7 @@ fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
         sg721_code_id: config.collection_code_id,
         num_tokens: config.extension.num_tokens,
         start_time: config.extension.start_time,
-        unit_price: config.extension.unit_price,
+        unit_price: config.mint_price,
         per_address_limit: config.extension.per_address_limit,
         whitelist: config.extension.whitelist.map(|w| w.to_string()),
         factory: config.factory.to_string(),
@@ -769,7 +769,7 @@ fn query_mint_price(deps: Deps) -> StdResult<MintPriceResponse> {
     let config = CONFIG.load(deps.storage)?;
 
     let current_price = mint_price(deps, false)?;
-    let public_price = config.extension.unit_price;
+    let public_price = config.mint_price;
     let whitelist_price: Option<Coin> = if let Some(whitelist) = config.extension.whitelist {
         let wl_config: WhitelistConfigResponse = deps
             .querier
