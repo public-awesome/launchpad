@@ -284,36 +284,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cw20"
-version = "0.13.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4cb782b8f110819a4eb5dbbcfed25ffba49ec16bbe32b4ad8da50a5ce68fec05"
-dependencies = [
- "cosmwasm-std",
- "cw-utils",
- "schemars",
- "serde",
-]
-
-[[package]]
-name = "cw20-ics20"
-version = "0.13.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a8cd854000f897836dc941da0cb691643678c690f485823477c62b8597d08ea1"
-dependencies = [
- "cosmwasm-std",
- "cw-controllers",
- "cw-storage-plus",
- "cw-utils",
- "cw2",
- "cw20",
- "schemars",
- "semver",
- "serde",
- "thiserror",
-]
-
-[[package]]
 name = "cw4"
 version = "0.13.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -532,23 +502,6 @@ checksum = "2a2a2320eb7ec0ebe8da8f744d7812d9fc4cb4d09344ac01898dbcb6a20ae69b"
 dependencies = [
  "crypto-mac",
  "digest 0.9.0",
-]
-
-[[package]]
-name = "ics721"
-version = "0.12.1"
-dependencies = [
- "cosmwasm-schema",
- "cosmwasm-std",
- "cosmwasm-storage",
- "cw-storage-plus",
- "cw-utils",
- "cw2",
- "cw20-ics20",
- "cw721",
- "schemars",
- "serde",
- "thiserror",
 ]
 
 [[package]]
@@ -798,12 +751,6 @@ dependencies = [
  "subtle",
  "zeroize",
 ]
-
-[[package]]
-name = "semver"
-version = "1.0.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8cb243bdfdb5936c8dc3c45762a19d12ab4550cdc753bc247637d4ec35a040fd"
 
 [[package]]
 name = "serde"
