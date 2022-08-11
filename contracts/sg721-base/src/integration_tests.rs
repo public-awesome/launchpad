@@ -38,7 +38,7 @@ mod tests {
         let contract = ContractWrapper::new(
             crate::entry::execute,
             crate::entry::instantiate,
-            crate::contract::query,
+            crate::entry::query,
         );
         Box::new(contract)
     }
