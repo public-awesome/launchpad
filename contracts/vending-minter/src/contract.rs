@@ -3,7 +3,7 @@ use std::convert::TryInto;
 use crate::error::ContractError;
 use crate::msg::{
     ConfigResponse, ExecuteMsg, MintCountResponse, MintPriceResponse, MintableNumTokensResponse,
-    MintableTokensResponse, QueryMsg, StartTimeResponse,
+    QueryMsg, StartTimeResponse,
 };
 use crate::state::{
     Config, ConfigExtension, CONFIG, MINTABLE_NUM_TOKENS, MINTABLE_TOKEN_POSITIONS, MINTER_ADDRS,
@@ -709,8 +709,6 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::MintableNumTokens {} => to_binary(&query_mintable_num_tokens(deps)?),
         QueryMsg::MintPrice {} => to_binary(&query_mint_price(deps)?),
         QueryMsg::MintCount { address } => to_binary(&query_mint_count(deps, address)?),
-        // TODO for debug to test shuffle. remove before prod
-        QueryMsg::MintableTokens {} => to_binary(&query_mintable_tokens(deps)?),
     }
 }
 
@@ -751,18 +749,6 @@ fn query_start_time(deps: Deps) -> StdResult<StartTimeResponse> {
 fn query_mintable_num_tokens(deps: Deps) -> StdResult<MintableNumTokensResponse> {
     let count = MINTABLE_NUM_TOKENS.load(deps.storage)?;
     Ok(MintableNumTokensResponse { count })
-}
-
-//TODO for debug to test shuffle. remove before prod
-fn query_mintable_tokens(deps: Deps) -> StdResult<MintableTokensResponse> {
-    let tokens = MINTABLE_TOKEN_POSITIONS
-        .range(deps.storage, None, None, Order::Ascending)
-        .map(|t| t.unwrap())
-        .collect::<Vec<_>>();
-
-    Ok(MintableTokensResponse {
-        mintable_tokens: tokens,
-    })
 }
 
 fn query_mint_price(deps: Deps) -> StdResult<MintPriceResponse> {
