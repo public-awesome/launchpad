@@ -917,6 +917,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "sg721-nt"
+version = "0.13.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cosmwasm-storage",
+ "cw-multi-test",
+ "cw-storage-plus",
+ "cw-utils",
+ "cw2",
+ "cw721",
+ "cw721-base",
+ "schemars",
+ "serde",
+ "sg-multi-test",
+ "sg-std",
+ "sg2",
+ "sg721",
+ "sg721-base",
+ "thiserror",
+ "url",
+ "vending-factory",
+ "vending-minter",
+]
+
+[[package]]
 name = "sha2"
 version = "0.9.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"

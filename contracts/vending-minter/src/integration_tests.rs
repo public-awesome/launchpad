@@ -73,7 +73,7 @@ pub fn contract_sg721() -> Box<dyn Contract<StargazeMsgWrapper>> {
     let contract = ContractWrapper::new(
         sg721_base::entry::execute,
         sg721_base::entry::instantiate,
-        sg721_base::contract::query,
+        sg721_base::entry::query,
     );
     Box::new(contract)
 }
