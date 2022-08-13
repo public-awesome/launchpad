@@ -16,7 +16,7 @@ use crate::state::SUDO_PARAMS;
 use sg_controllers::{handle_reply, query_minter_status, update_params, upsert_minter_status};
 
 // version info for migration info
-const CONTRACT_NAME: &str = "crates.io:vending-factory";
+const CONTRACT_NAME: &str = "crates.io:sg-base-factory";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 /// Can only be called by governance
