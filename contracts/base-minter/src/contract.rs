@@ -2,7 +2,7 @@ use crate::error::ContractError;
 use crate::msg::{ConfigResponse, ExecuteMsg, QueryMsg};
 use crate::state::{increment_token_index, Config, COLLECTION_ADDRESS, CONFIG};
 
-use base_factory::msg::{BaseMinterCreateMsg, ParamsResponse};
+use base_factory::msg::{BaseMinterCreateMsg, Extension, ParamsResponse};
 
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
@@ -13,13 +13,14 @@ use cosmwasm_std::{
 
 use cw2::set_contract_version;
 use cw721_base::{msg::ExecuteMsg as Cw721ExecuteMsg, MintMsg};
-use cw_utils::parse_reply_instantiate_data;
+use cw_utils::{must_pay, parse_reply_instantiate_data};
 
 use sg1::checked_fair_burn;
 use sg2::query::Sg2QueryMsg;
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
 use sg_std::math::U64Ext;
-use sg_std::StargazeMsgWrapper;
+use sg_std::{StargazeMsgWrapper, NATIVE_DENOM};
+use url::Url;
 
 pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 pub type SubMsg = cosmwasm_std::SubMsg<StargazeMsgWrapper>;
@@ -106,6 +107,11 @@ pub fn execute_mint_sender(
     let config = CONFIG.load(deps.storage)?;
     let collection = COLLECTION_ADDRESS.load(deps.storage)?;
 
+    let parsed_token_uri = Url::parse(&token_uri)?;
+    if parsed_token_uri.scheme() != "ipfs" {
+        return Err(ContractError::InvalidTokenURI {});
+    }
+
     let mut res = Response::new();
 
     let factory: ParamsResponse = deps
@@ -113,21 +119,23 @@ pub fn execute_mint_sender(
         .query_wasm_smart(config.factory, &Sg2QueryMsg::Params {})?;
     let factory_params = factory.params;
 
+    let funds_sent = must_pay(&info, NATIVE_DENOM)?;
+
     // Create network fee msgs
     let mint_fee_percent = factory_params.mint_fee_bps.bps_to_decimal();
     let network_fee = config.mint_price.amount * mint_fee_percent;
     // For the base 1/1 minter, the entire mint price should be Fair Burned
-    if network_fee != config.mint_price.amount {
+    if network_fee != funds_sent {
         return Err(ContractError::InvalidMintPrice {});
     }
     checked_fair_burn(&info, network_fee.u128(), None, &mut res)?;
 
     // Create mint msgs
-    let mint_msg = Cw721ExecuteMsg::Mint(MintMsg::<Empty> {
+    let mint_msg = Cw721ExecuteMsg::Mint(MintMsg::<Extension> {
         token_id: increment_token_index(deps.storage)?.to_string(),
         owner: info.sender.to_string(),
         token_uri: Some(token_uri),
-        extension: Empty {},
+        extension: None,
     });
     let msg = CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: collection.to_string(),

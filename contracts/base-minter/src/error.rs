@@ -24,6 +24,9 @@ pub enum ContractError {
     #[error("InvalidMintPrice")]
     InvalidMintPrice {},
 
+    #[error("InvalidTokenURI")]
+    InvalidTokenURI {},
+
     #[error("Invalid reply ID")]
     InvalidReplyID {},
 

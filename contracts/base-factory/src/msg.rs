@@ -14,22 +14,13 @@ pub struct InstantiateMsg {
     pub params: BaseMinterParams,
 }
 
-pub type BaseMinterCreateMsg = CreateMinterMsg<Empty>;
+pub type Extension = Option<Empty>;
 
-pub type ExecuteMsg = Sg2ExecuteMsg<Empty>;
+pub type BaseMinterCreateMsg = CreateMinterMsg<Extension>;
 
-pub type BaseUpdateParamsMsg = UpdateMinterParamsMsg<Empty>;
+pub type ExecuteMsg = Sg2ExecuteMsg<Extension>;
 
-// #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-// #[serde(rename_all = "snake_case")]
-// pub enum SudoMsg {
-//     UpdateParams(Box<BaseUpdateParamsMsg>),
-//     UpdateMinterStatus {
-//         minter: String,
-//         verified: bool,
-//         blocked: bool,
-//     },
-// }
+pub type BaseUpdateParamsMsg = UpdateMinterParamsMsg<Extension>;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
