@@ -6,7 +6,8 @@
   "required": [
     "collection_code_id",
     "extension",
-    "factory"
+    "factory",
+    "mint_price"
   ],
   "properties": {
     "collection_code_id": {
@@ -19,6 +20,9 @@
     },
     "factory": {
       "$ref": "#/definitions/Addr"
+    },
+    "mint_price": {
+      "$ref": "#/definitions/Coin"
     }
   },
   "definitions": {
@@ -48,8 +52,7 @@
         "base_token_uri",
         "num_tokens",
         "per_address_limit",
-        "start_time",
-        "unit_price"
+        "start_time"
       ],
       "properties": {
         "admin": {
@@ -70,9 +73,6 @@
         },
         "start_time": {
           "$ref": "#/definitions/Timestamp"
-        },
-        "unit_price": {
-          "$ref": "#/definitions/Coin"
         },
         "whitelist": {
           "anyOf": [
