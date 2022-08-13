@@ -92,15 +92,20 @@ pub fn instantiate(
         .and_then(|w| deps.api.addr_validate(w.as_str()).ok());
 
     let config = Config {
-        admin: info.sender.clone(),
-        base_token_uri: msg.base_token_uri,
-        num_tokens: msg.num_tokens,
-        sg721_code_id: msg.sg721_code_id,
-        unit_price: msg.unit_price,
-        initial_price: msg.unit_price,
-        per_address_limit: msg.per_address_limit,
-        whitelist: whitelist_addr,
-        start_time: msg.start_time,
+        factory: factory.clone(),
+        collection_code_id: msg.collection_params.code_id,
+        extension: ConfigExtension {
+            admin: deps
+                .api
+                .addr_validate(&msg.collection_params.info.creator)?,
+            base_token_uri: msg.init_msg.base_token_uri,
+            num_tokens: msg.init_msg.num_tokens,
+            unit_price: msg.init_msg.unit_price.clone(),
+            initial_price: msg.init_msg.unit_price,
+            per_address_limit: msg.init_msg.per_address_limit,
+            whitelist: whitelist_addr,
+            start_time: msg.init_msg.start_time,
+        },
     };
 
     CONFIG.save(deps.storage, &config)?;
@@ -593,24 +598,24 @@ pub fn execute_update_mint_price(
 ) -> Result<Response, ContractError> {
     nonpayable(&info)?;
     let mut config = CONFIG.load(deps.storage)?;
-    if info.sender != config.admin {
+    if info.sender != config.extension.admin {
         return Err(ContractError::Unauthorized(
             "Sender is not an admin".to_owned(),
         ));
     }
     // If current time is after the stored start time return error
-    if env.block.time >= config.start_time {
+    if env.block.time >= config.extension.start_time {
         return Err(ContractError::AlreadyStarted {});
     }
 
     // If price is greater than initial price, return error
-    if price > config.initial_price.amount.u128() {
+    if price > config.extension.initial_price.amount.u128() {
         return Err(ContractError::UpdatedMintPriceTooHigh {
-            initial: config.initial_price.amount.u128(),
+            initial: config.extension.initial_price.amount.u128(),
             updated: price,
         });
     }
-    config.unit_price = coin(price, config.unit_price.denom);
+    config.extension.unit_price = coin(price, config.extension.unit_price.denom);
     CONFIG.save(deps.storage, &config)?;
     Ok(Response::new()
         .add_attribute("action", "update_mint_price")
