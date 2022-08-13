@@ -6,11 +6,11 @@ resolver = "2"
 codegen-units = 1
 incremental = false
 
-[profile.release.package.sg-whitelist]
+[profile.release.package.sg721-base]
 codegen-units = 1
 incremental = false
 
-[profile.release.package.royalty-group]
+[profile.release.package.sg-whitelist]
 codegen-units = 1
 incremental = false
 
@@ -19,6 +19,14 @@ codegen-units = 1
 incremental = false
 
 [profile.release.package.sg-std]
+codegen-units = 1
+incremental = false
+
+[profile.release.package.vending-factory]
+codegen-units = 1
+incremental = false
+
+[profile.release.package.vending-minter]
 codegen-units = 1
 incremental = false
 
