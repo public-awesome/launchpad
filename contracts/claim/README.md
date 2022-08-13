@@ -1,1 +1,0 @@
-# Stargaze Airdrop Claim Contract
