@@ -23,16 +23,4 @@ pub enum ContractError {
 
     #[error("MinterFactoryError")]
     MinterFactoryError {},
-
-    #[error("InvalidNumTokens {max}, min: 1")]
-    InvalidNumTokens { max: u32, min: u32 },
-
-    #[error("Invalid minting limit per address. max: {max}, min: 1, got: {got}")]
-    InvalidPerAddressLimit { max: u32, min: u32, got: u32 },
-
-    #[error("InvalidDenom")]
-    InvalidDenom {},
-
-    #[error("Minimum network mint price {expected} got {got}")]
-    InsufficientMintPrice { expected: u128, got: u128 },
 }

@@ -1,6 +1,6 @@
-# Vending Minter Factory
+# Base Minter Factory
 
-A contract that maintains all vending machine minter governance parameters.
+A simple contract that maintains all base 1/1 minter governance parameters.
 
 It's responsible for creating new minters with the latest governance parameters.
 

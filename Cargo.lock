@@ -64,7 +64,7 @@ dependencies = [
  "sg2",
  "sg3",
  "sg721",
- "sg721-base",
+ "sg721-nt",
  "thiserror",
  "url",
 ]

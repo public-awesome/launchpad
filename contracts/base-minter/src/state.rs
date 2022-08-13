@@ -14,7 +14,7 @@ pub const COLLECTION_ADDRESS: Item<Addr> = Item::new("collection_address");
 pub const TOKEN_INDEX: Item<u64> = Item::new("token_index");
 
 pub fn increment_token_index(store: &mut dyn Storage) -> StdResult<u64> {
-    let val = TOKEN_INDEX.load(store)? + 1;
+    let val = TOKEN_INDEX.may_load(store)?.unwrap_or_default() + 1;
     TOKEN_INDEX.save(store, &val)?;
     Ok(val)
 }
