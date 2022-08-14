@@ -950,6 +950,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "sg-splits"
+version = "0.1.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cosmwasm-storage",
+ "cw-multi-test",
+ "cw-storage-plus 0.13.4",
+ "cw2 0.13.4",
+ "cw3",
+ "cw3-flex-multisig",
+ "cw4 0.14.0",
+ "schemars",
+ "serde",
+ "sg-std",
+ "thiserror",
+]
+
+[[package]]
 name = "sg-std"
 version = "0.12.1"
 dependencies = [
@@ -1144,23 +1163,6 @@ checksum = "44d01ac02a6ccf3e07db148d2be087da624fea0221a16152ed01f0496a6b0a27"
 dependencies = [
  "base64ct",
  "der",
-]
-
-[[package]]
-name = "splits"
-version = "0.1.0"
-dependencies = [
- "cosmwasm-schema",
- "cosmwasm-std",
- "cosmwasm-storage",
- "cw-multi-test",
- "cw-storage-plus 0.13.4",
- "cw2 0.13.4",
- "cw3-flex-multisig",
- "cw4 0.14.0",
- "schemars",
- "serde",
- "thiserror",
 ]
 
 [[package]]
