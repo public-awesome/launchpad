@@ -19,7 +19,6 @@ pub enum ExecuteMsg {
     MintTo { recipient: String },
     MintFor { token_id: u32, recipient: String },
     Shuffle {},
-    Withdraw {},
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
