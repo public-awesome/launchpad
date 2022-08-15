@@ -1,11 +1,22 @@
 #[cfg(test)]
 mod tests {
-    use crate::helpers::CwTemplateContract;
-    use crate::msg::InstantiateMsg;
-    use cosmwasm_std::{Addr, Coin, Empty, Uint128};
-    use cw_multi_test::{App, AppBuilder, Contract, ContractWrapper, Executor};
+    use crate::{
+        msg::{InstantiateMsg, QueryMsg},
+        ContractError,
+    };
+    use cosmwasm_std::{Addr, Coin, Empty};
+    use cw2::{query_contract_info, ContractVersion};
+    use cw4::{Cw4ExecuteMsg, Member, MemberListResponse};
+    use cw_multi_test::{next_block, App, AppBuilder, Contract, ContractWrapper, Executor};
 
-    pub fn contract_template() -> Box<dyn Contract<Empty>> {
+    fn member<T: Into<String>>(addr: T, weight: u64) -> Member {
+        Member {
+            addr: addr.into(),
+            weight,
+        }
+    }
+
+    pub fn contract_splits() -> Box<dyn Contract<Empty>> {
         let contract = ContractWrapper::new(
             crate::contract::execute,
             crate::contract::instantiate,
@@ -14,58 +25,211 @@ mod tests {
         Box::new(contract)
     }
 
-    const USER: &str = "USER";
-    const ADMIN: &str = "ADMIN";
-    const NATIVE_DENOM: &str = "denom";
+    pub fn contract_group() -> Box<dyn Contract<Empty>> {
+        let contract = ContractWrapper::new(
+            cw4_group::contract::execute,
+            cw4_group::contract::instantiate,
+            cw4_group::contract::query,
+        );
+        Box::new(contract)
+    }
 
-    fn mock_app() -> App {
+    const OWNER: &str = "admin0001";
+    const MEMBER1: &str = "member0001";
+    const MEMBER2: &str = "member0002";
+    const MEMBER3: &str = "member0003";
+    // const SOMEBODY: &str = "somebody";
+
+    fn mock_app(init_funds: &[Coin]) -> App {
         AppBuilder::new().build(|router, _, storage| {
             router
                 .bank
-                .init_balance(
-                    storage,
-                    &Addr::unchecked(USER),
-                    vec![Coin {
-                        denom: NATIVE_DENOM.to_string(),
-                        amount: Uint128::new(1),
-                    }],
-                )
+                .init_balance(storage, &Addr::unchecked(OWNER), init_funds.to_vec())
                 .unwrap();
         })
     }
 
-    fn proper_instantiate() -> (App, CwTemplateContract) {
-        let mut app = mock_app();
-        let cw_template_id = app.store_code(contract_template());
+    // uploads code and returns address of group contract
+    fn instantiate_group(app: &mut App, members: Vec<Member>) -> Addr {
+        let group_id = app.store_code(contract_group());
+        let msg = cw4_group::msg::InstantiateMsg {
+            admin: Some(OWNER.into()),
+            members,
+        };
+        app.instantiate_contract(group_id, Addr::unchecked(OWNER), &msg, &[], "group", None)
+            .unwrap()
+    }
 
-        let msg = InstantiateMsg { count: 1i32 };
-        let cw_template_contract_addr = app
-            .instantiate_contract(
-                cw_template_id,
-                Addr::unchecked(ADMIN),
-                &msg,
+    #[track_caller]
+    fn instantiate_splits(
+        app: &mut App,
+        group: Addr,
+        executor: Option<cw3_flex_multisig::state::Executor>,
+    ) -> Addr {
+        let flex_id = app.store_code(contract_splits());
+        let msg = crate::msg::InstantiateMsg {
+            group_addr: group.to_string(),
+            executor,
+        };
+        app.instantiate_contract(flex_id, Addr::unchecked(OWNER), &msg, &[], "splits", None)
+            .unwrap()
+    }
+
+    #[track_caller]
+    fn setup_test_case(
+        app: &mut App,
+        init_funds: Vec<Coin>,
+        multisig_as_group_admin: bool,
+        executor: Option<cw3_flex_multisig::state::Executor>,
+    ) -> (Addr, Addr) {
+        // 1. Instantiate group contract with members (and OWNER as admin)
+        let members = vec![
+            member(OWNER, 50),
+            member(MEMBER1, 25),
+            member(MEMBER2, 20),
+            member(MEMBER3, 5),
+        ];
+        let group_addr = instantiate_group(app, members);
+        app.update_block(next_block);
+
+        // 2. Set up Splits backed by this group
+        let splits_addr = instantiate_splits(app, group_addr.clone(), executor);
+        app.update_block(next_block);
+
+        // 3. (Optional) Set the multisig as the group owner
+        if multisig_as_group_admin {
+            let update_admin = Cw4ExecuteMsg::UpdateAdmin {
+                admin: Some(splits_addr.to_string()),
+            };
+            app.execute_contract(
+                Addr::unchecked(OWNER),
+                group_addr.clone(),
+                &update_admin,
                 &[],
-                "test",
+            )
+            .unwrap();
+            app.update_block(next_block);
+        }
+
+        // Bonus: set some funds on the splits contract for future proposals
+        if !init_funds.is_empty() {
+            app.send_tokens(Addr::unchecked(OWNER), splits_addr.clone(), &init_funds)
+                .unwrap();
+        }
+        (splits_addr, group_addr)
+    }
+
+    #[test]
+    fn test_instantiate_works() {
+        let mut app = mock_app(&[]);
+        let splits_id = app.store_code(contract_splits());
+
+        // make a simple group
+        let group_addr = instantiate_group(&mut app, vec![member(OWNER, 0)]);
+
+        // Zero weight fails
+        let instantiate_msg = InstantiateMsg {
+            group_addr: group_addr.to_string(),
+            executor: None,
+        };
+        let err = app
+            .instantiate_contract(
+                splits_id,
+                Addr::unchecked(OWNER),
+                &instantiate_msg,
+                &[],
+                "greater than zero required total weight",
+                None,
+            )
+            .unwrap_err();
+        assert_eq!(
+            ContractError::InvalidWeight { weight: 0 },
+            err.downcast().unwrap()
+        );
+
+        // Single member group with weight is valid
+        let group_addr = instantiate_group(&mut app, vec![member(OWNER, 1)]);
+
+        let instantiate_msg = InstantiateMsg {
+            group_addr: group_addr.to_string(),
+            executor: None,
+        };
+        let splits_addr = app
+            .instantiate_contract(
+                splits_id,
+                Addr::unchecked(OWNER),
+                &instantiate_msg,
+                &[],
+                "single member group with weight is valid",
                 None,
             )
             .unwrap();
 
-        let cw_template_contract = CwTemplateContract(cw_template_contract_addr);
+        // Verify contract version set properly
+        let version = query_contract_info(&app, splits_addr.clone()).unwrap();
+        assert_eq!(
+            ContractVersion {
+                contract: "crates.io:sg-splits".to_string(),
+                version: "0.1.0".to_string(),
+            },
+            version,
+        );
 
-        (app, cw_template_contract)
+        // Get members query
+        let members: MemberListResponse = app
+            .wrap()
+            .query_wasm_smart(
+                &splits_addr,
+                &QueryMsg::ListMembers {
+                    start_after: None,
+                    limit: None,
+                },
+            )
+            .unwrap();
+        assert_eq!(
+            members.members,
+            vec![Member {
+                addr: OWNER.into(),
+                weight: 1
+            }]
+        );
     }
 
-    mod count {
+    mod distribute {
+        use cosmwasm_std::coins;
+
         use super::*;
         use crate::msg::ExecuteMsg;
 
         #[test]
-        fn count() {
-            let (mut app, cw_template_contract) = proper_instantiate();
+        fn distribute_zero_funds() {
+            let mut app = mock_app(&[]);
 
-            let msg = ExecuteMsg::Increment {};
-            let cosmos_msg = cw_template_contract.call(msg).unwrap();
-            app.execute(Addr::unchecked(USER), cosmos_msg).unwrap();
+            let (splits_addr, _) = setup_test_case(&mut app, vec![], false, None);
+
+            let msg = ExecuteMsg::Distribute {};
+
+            let err = app
+                .execute_contract(Addr::unchecked(OWNER), splits_addr, &msg, &[])
+                .unwrap_err();
+            assert_eq!(ContractError::NoFunds {}, err.downcast().unwrap());
+        }
+
+        #[test]
+        fn distribute() {
+            let init_funds = coins(100, "ustars");
+            let mut app = mock_app(&init_funds);
+
+            let (splits_addr, _) = setup_test_case(&mut app, init_funds, false, None);
+
+            let msg = ExecuteMsg::Distribute {};
+
+            app.execute_contract(Addr::unchecked(OWNER), splits_addr.clone(), &msg, &[])
+                .unwrap();
+
+            // make sure the contract doesn't have a balance
+            let bal = app.wrap().query_all_balances(splits_addr).unwrap();
+            assert_eq!(bal, &[])
         }
     }
 }
