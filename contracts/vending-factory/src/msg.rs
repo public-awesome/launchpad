@@ -18,6 +18,7 @@ pub struct InstantiateMsg {
 #[serde(rename_all = "snake_case")]
 pub struct VendingMinterInitMsgExtension {
     pub base_token_uri: String,
+    pub payment_address: Option<String>,
     pub start_time: Timestamp,
     pub num_tokens: u32,
     pub unit_price: Coin,
