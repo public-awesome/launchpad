@@ -2,6 +2,8 @@ use cw3_flex_multisig::state::Executor;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+use crate::state::Config;
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {
     // this is the group contract that contains the member list
@@ -20,11 +22,18 @@ pub enum ExecuteMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
-    /// Returns VoterInfo
+    /// Returns the config
+    Config {},
+    /// Returns Member
     Member { address: String },
-    /// Returns VoterListResponse
+    /// Returns MemberListResponse
     ListMembers {
         start_after: Option<String>,
         limit: Option<u32>,
     },
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct ConfigResponse {
+    pub config: Config,
 }
