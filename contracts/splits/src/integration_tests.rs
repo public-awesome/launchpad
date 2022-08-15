@@ -187,10 +187,10 @@ mod tests {
     }
 
     mod distribute {
-        use cosmwasm_std::coins;
+        use cosmwasm_std::{coins, Uint128};
 
         use super::*;
-        use crate::msg::ExecuteMsg;
+        use crate::msg::{ExecuteMsg, QueryMsg};
 
         #[test]
         fn distribute_zero_funds() {
@@ -208,7 +208,8 @@ mod tests {
 
         #[test]
         fn distribute() {
-            let init_funds = coins(100, "ustars");
+            const DENOM: &str = "ustars";
+            let init_funds = coins(100, DENOM);
             let mut app = mock_app(&init_funds);
 
             let (splits_addr, _) = setup_test_case(&mut app, init_funds, false);
@@ -219,8 +220,28 @@ mod tests {
                 .unwrap();
 
             // make sure the contract doesn't have a balance
-            let bal = app.wrap().query_all_balances(splits_addr).unwrap();
-            assert_eq!(bal, &[])
+            let bal = app.wrap().query_all_balances(splits_addr.clone()).unwrap();
+            assert_eq!(bal, &[]);
+
+            // verify amounts for each member
+            let msg = QueryMsg::ListMembers {
+                start_after: None,
+                limit: None,
+            };
+            let list: MemberListResponse = app.wrap().query_wasm_smart(splits_addr, &msg).unwrap();
+            let mut expected_balances = vec![
+                Uint128::new(5),
+                Uint128::new(20),
+                Uint128::new(25),
+                Uint128::new(50),
+            ];
+            for member in list.members.iter() {
+                let bal = app
+                    .wrap()
+                    .query_balance(member.addr.to_string(), DENOM)
+                    .unwrap();
+                assert_eq!(bal.amount, expected_balances.pop().unwrap())
+            }
         }
     }
 }
