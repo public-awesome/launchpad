@@ -35,10 +35,7 @@ pub fn instantiate(
 
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
-    let cfg = Config {
-        group_addr,
-        executor: msg.executor,
-    };
+    let cfg = Config { group_addr };
     CONFIG.save(deps.storage, &cfg)?;
 
     Ok(Response::default())
