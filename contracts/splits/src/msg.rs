@@ -1,4 +1,3 @@
-use cw3_flex_multisig::state::Executor;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -8,9 +7,6 @@ use crate::state::Config;
 pub struct InstantiateMsg {
     // this is the group contract that contains the member list
     pub group_addr: String,
-    // who is able to execute passed proposals
-    // None means that anyone can execute
-    pub executor: Option<Executor>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
