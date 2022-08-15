@@ -111,6 +111,7 @@ pub fn instantiate(
             admin: deps
                 .api
                 .addr_validate(&msg.collection_params.info.creator)?,
+            payment_address: maybe_addr(deps.api, msg.init_msg.payment_address)?,
             base_token_uri: msg.init_msg.base_token_uri,
             num_tokens: msg.init_msg.num_tokens,
             per_address_limit: msg.init_msg.per_address_limit,
