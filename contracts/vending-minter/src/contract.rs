@@ -16,6 +16,7 @@ use cosmwasm_std::{
     MessageInfo, Order, Reply, ReplyOn, StdError, StdResult, Timestamp, Uint128, WasmMsg,
 };
 use cw2::set_contract_version;
+use cw4::MemberListResponse;
 use cw721_base::{msg::ExecuteMsg as Cw721ExecuteMsg, MintMsg};
 use cw_utils::{may_pay, nonpayable, parse_reply_instantiate_data};
 use rand_core::{RngCore, SeedableRng};
@@ -23,6 +24,7 @@ use rand_xoshiro::Xoshiro128PlusPlus;
 use sg1::checked_fair_burn;
 use sg2::query::Sg2QueryMsg;
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
+use sg_splits::msg::{ExecuteMsg as SplitsExecuteMsg, QueryMsg as SplitsQueryMsg};
 use sg_std::math::U64Ext;
 use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME};
 use sg_whitelist::msg::{
@@ -504,11 +506,14 @@ fn _execute_mint(
 
     let seller_amount = if !is_admin {
         let amount = mint_price.amount - network_fee;
-        let msg = BankMsg::Send {
-            to_address: config.extension.admin.to_string(),
-            amount: vec![coin(amount.u128(), config.mint_price.denom)],
-        };
-        res = res.add_message(msg);
+        pay_seller(
+            deps.as_ref(),
+            amount,
+            config.mint_price,
+            config.extension.payment_address,
+            config.extension.admin,
+            &mut res,
+        )?;
         amount
     } else {
         Uint128::zero()
@@ -522,6 +527,48 @@ fn _execute_mint(
         .add_attribute("network_fee", network_fee)
         .add_attribute("mint_price", mint_price.amount)
         .add_attribute("seller_amount", seller_amount))
+}
+
+// If the payment address is a splits contract, perform the split. Else, pay single seller.
+fn pay_seller(
+    deps: Deps,
+    amount: Uint128,
+    mint_price: Coin,
+    payment_address: Option<Addr>,
+    creator: Addr,
+    res: &mut Response,
+) -> Result<(), ContractError> {
+    if let Some(addr) = payment_address {
+        let msg = SplitsQueryMsg::ListMembers {
+            start_after: None,
+            limit: None,
+        };
+        let list: MemberListResponse = deps.querier.query_wasm_smart(addr.clone(), &msg)?;
+        if list.members.is_empty() {
+            return Err(ContractError::NoSplitMembers {});
+        } else {
+            let msg = BankMsg::Send {
+                to_address: addr.to_string(),
+                amount: vec![coin(amount.u128(), mint_price.denom)],
+            };
+            res.messages.push(SubMsg::new(msg));
+
+            let msg = WasmMsg::Execute {
+                contract_addr: addr.to_string(),
+                msg: to_binary(&SplitsExecuteMsg::Distribute {})?,
+                funds: vec![],
+            };
+            res.messages.push(SubMsg::new(msg));
+        }
+    } else {
+        let msg = BankMsg::Send {
+            to_address: creator.to_string(),
+            amount: vec![coin(amount.u128(), mint_price.denom)],
+        };
+        res.messages.push(SubMsg::new(msg));
+    }
+
+    Ok(())
 }
 
 fn random_token_list(
