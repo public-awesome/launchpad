@@ -3,12 +3,11 @@
   "title": "InstantiateMsg",
   "type": "object",
   "required": [
-    "count"
+    "group_addr"
   ],
   "properties": {
-    "count": {
-      "type": "integer",
-      "format": "int32"
+    "group_addr": {
+      "type": "string"
     }
   }
 }
