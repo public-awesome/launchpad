@@ -9,7 +9,7 @@ use cw4::{Cw4Contract, Member, MemberListResponse, MemberResponse};
 use sg_std::NATIVE_DENOM;
 
 use crate::error::ContractError;
-use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use crate::msg::{ConfigResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
 use crate::state::{Config, CONFIG};
 
 // version info for migration info
@@ -92,11 +92,18 @@ pub fn execute_distribute(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
+        QueryMsg::Config {} => to_binary(&query_config(deps)?),
         QueryMsg::ListMembers { start_after, limit } => {
             to_binary(&list_members(deps, start_after, limit)?)
         }
         QueryMsg::Member { address } => to_binary(&query_member(deps, address)?),
     }
+}
+
+fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
+    let config = CONFIG.load(deps.storage)?;
+
+    Ok(ConfigResponse { config })
 }
 
 fn query_member(deps: Deps, member: String) -> StdResult<MemberResponse> {
