@@ -120,6 +120,7 @@ pub fn mock_params() -> VendingMinterParams {
 pub fn mock_init_extension() -> VendingMinterInitMsgExtension {
     VendingMinterInitMsgExtension {
         base_token_uri: "ipfs://aldkfjads".to_string(),
+        payment_address: None,
         start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
         num_tokens: 100,
         unit_price: coin(MIN_MINT_PRICE, NATIVE_DENOM),
