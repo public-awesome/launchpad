@@ -38,7 +38,6 @@ mod tests {
     const MEMBER1: &str = "member0001";
     const MEMBER2: &str = "member0002";
     const MEMBER3: &str = "member0003";
-    // const SOMEBODY: &str = "somebody";
 
     fn mock_app(init_funds: &[Coin]) -> App {
         AppBuilder::new().build(|router, _, storage| {
@@ -61,15 +60,10 @@ mod tests {
     }
 
     #[track_caller]
-    fn instantiate_splits(
-        app: &mut App,
-        group: Addr,
-        executor: Option<cw3_flex_multisig::state::Executor>,
-    ) -> Addr {
+    fn instantiate_splits(app: &mut App, group: Addr) -> Addr {
         let flex_id = app.store_code(contract_splits());
         let msg = crate::msg::InstantiateMsg {
             group_addr: group.to_string(),
-            executor,
         };
         app.instantiate_contract(flex_id, Addr::unchecked(OWNER), &msg, &[], "splits", None)
             .unwrap()
@@ -80,7 +74,6 @@ mod tests {
         app: &mut App,
         init_funds: Vec<Coin>,
         multisig_as_group_admin: bool,
-        executor: Option<cw3_flex_multisig::state::Executor>,
     ) -> (Addr, Addr) {
         // 1. Instantiate group contract with members (and OWNER as admin)
         let members = vec![
@@ -93,7 +86,7 @@ mod tests {
         app.update_block(next_block);
 
         // 2. Set up Splits backed by this group
-        let splits_addr = instantiate_splits(app, group_addr.clone(), executor);
+        let splits_addr = instantiate_splits(app, group_addr.clone());
         app.update_block(next_block);
 
         // 3. (Optional) Set the multisig as the group owner
@@ -130,7 +123,6 @@ mod tests {
         // Zero weight fails
         let instantiate_msg = InstantiateMsg {
             group_addr: group_addr.to_string(),
-            executor: None,
         };
         let err = app
             .instantiate_contract(
@@ -152,7 +144,6 @@ mod tests {
 
         let instantiate_msg = InstantiateMsg {
             group_addr: group_addr.to_string(),
-            executor: None,
         };
         let splits_addr = app
             .instantiate_contract(
@@ -205,7 +196,7 @@ mod tests {
         fn distribute_zero_funds() {
             let mut app = mock_app(&[]);
 
-            let (splits_addr, _) = setup_test_case(&mut app, vec![], false, None);
+            let (splits_addr, _) = setup_test_case(&mut app, vec![], false);
 
             let msg = ExecuteMsg::Distribute {};
 
@@ -220,7 +211,7 @@ mod tests {
             let init_funds = coins(100, "ustars");
             let mut app = mock_app(&init_funds);
 
-            let (splits_addr, _) = setup_test_case(&mut app, init_funds, false, None);
+            let (splits_addr, _) = setup_test_case(&mut app, init_funds, false);
 
             let msg = ExecuteMsg::Distribute {};
 
