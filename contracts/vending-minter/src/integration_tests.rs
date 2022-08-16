@@ -90,7 +90,7 @@ pub fn contract_splits() -> Box<dyn Contract<Empty>> {
     Box::new(contract)
 }
 
-pub fn contract_group() -> Box<dyn Contract<Empty>> {
+pub fn contract_group() -> Box<dyn Contract<StargazeMsgWrapper>> {
     let contract = ContractWrapper::new(
         cw4_group::contract::execute,
         cw4_group::contract::instantiate,
@@ -226,7 +226,7 @@ const MEMBER2: &str = "member0002";
 const MEMBER3: &str = "member0003";
 
 // uploads code and returns address of group contract
-fn instantiate_group(app: &mut App, members: Vec<Member>) -> Addr {
+fn instantiate_group(app: &mut StargazeApp, members: Vec<Member>) -> Addr {
     let group_id = app.store_code(contract_group());
     println!("group_id: {}", group_id);
     let msg = cw4_group::msg::InstantiateMsg {
@@ -249,7 +249,7 @@ fn instantiate_splits(app: &mut App, group: Addr) -> Addr {
 }
 
 #[track_caller]
-fn setup_splits_test_case(app: &mut App, init_funds: Vec<Coin>) -> (Addr, Addr) {
+fn setup_splits_test_case(app: &mut StargazeApp, init_funds: Vec<Coin>) -> (Addr, Addr) {
     // 1. Instantiate group contract with members (and OWNER as admin)
     let members = vec![
         member(OWNER, 50),
@@ -1423,25 +1423,25 @@ fn mock_app(init_funds: &[Coin]) -> App {
 
 #[test]
 fn mint_and_split() {
-    let mut app = mock_app(&[]);
+    // let mut app = mock_app(&[]);
+    let mut app = custom_mock_app();
 
     let (splits_addr, _) = setup_splits_test_case(&mut app, vec![]);
 
     // FIXME: two mock apps causing conflicting code_ids
 
-    let mut router = custom_mock_app();
-    let (creator, buyer) = setup_accounts(&mut router);
+    let (creator, buyer) = setup_accounts(&mut app);
     let num_tokens = 2;
     let (minter_addr, config) = setup_minter_contract(
-        &mut router,
+        &mut app,
         &creator,
         num_tokens,
         Some(splits_addr.to_string()),
     );
-    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 1, None);
+    setup_block_time(&mut app, GENESIS_MINT_START_TIME + 1, None);
 
     let mint_msg = ExecuteMsg::Mint {};
-    let res = router.execute_contract(
+    let res = app.execute_contract(
         buyer.clone(),
         minter_addr.clone(),
         &mint_msg,
