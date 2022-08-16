@@ -7,6 +7,8 @@ use cw721_base::Extension;
 use sg721::InstantiateMsg;
 use sg_std::StargazeMsgWrapper;
 
+// TODO: extend sg721-base instead of cw721-base
+
 pub type Cw721Base<'a> = cw721_base::Cw721Contract<'a, Extension, StargazeMsgWrapper>;
 
 pub mod entry {

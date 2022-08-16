@@ -21,4 +21,5 @@ pub struct MinterParams<T> {
 pub struct Minter {
     pub verified: bool,
     pub blocked: bool,
+    // pub explicit: bool,
 }

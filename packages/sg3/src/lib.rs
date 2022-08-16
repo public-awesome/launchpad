@@ -8,6 +8,9 @@ pub struct MinterConfig<T> {
     pub factory: Addr,
     pub collection_code_id: u64,
     pub mint_price: Coin,
+    // TODO: which way is better?
+    // pub verified: bool,
+    // pub blocked: bool,
     pub extension: T,
 }
 
