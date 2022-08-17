@@ -1,11 +1,9 @@
 use cosmwasm_std::{ensure_eq, Addr, Deps, DepsMut, Reply, StdError, StdResult};
 use cw_storage_plus::Map;
 use cw_utils::parse_reply_instantiate_data;
-use sg2::{msg::UpdateMinterParamsMsg, query::MinterStatusResponse, Minter, MinterParams};
+use sg2::{msg::UpdateMinterParamsMsg, MinterParams};
 use sg_std::{Response, NATIVE_DENOM};
 use thiserror::Error;
-
-pub const MINTERS: Map<&Addr, Minter> = Map::new("m");
 
 #[derive(Error, Debug, PartialEq)]
 pub enum MinterFactoryError {
@@ -19,26 +17,26 @@ pub enum MinterFactoryError {
     InvalidDenom {},
 }
 
-/// Only governance can update contract params
-pub fn upsert_minter_status(
-    deps: DepsMut,
-    minter: String,
-    verified: bool,
-    blocked: bool,
-) -> StdResult<Response> {
-    let minter_addr = deps.api.addr_validate(&minter)?;
+// /// Only governance can update contract params
+// pub fn upsert_minter_status(
+//     deps: DepsMut,
+//     minter: String,
+//     verified: bool,
+//     blocked: bool,
+// ) -> StdResult<Response> {
+//     let minter_addr = deps.api.addr_validate(&minter)?;
 
-    let _: StdResult<Minter> = MINTERS.update(deps.storage, &minter_addr, |m| match m {
-        None => Ok(Minter { verified, blocked }),
-        Some(mut m) => {
-            m.verified = verified;
-            m.blocked = blocked;
-            Ok(m)
-        }
-    });
+//     let _: StdResult<Minter> = MINTERS.update(deps.storage, &minter_addr, |m| match m {
+//         None => Ok(Minter { verified, blocked }),
+//         Some(mut m) => {
+//             m.verified = verified;
+//             m.blocked = blocked;
+//             Ok(m)
+//         }
+//     });
 
-    Ok(Response::new().add_attribute("action", "sudo_update_minter_status"))
-}
+//     Ok(Response::new().add_attribute("action", "sudo_update_minter_status"))
+// }
 
 pub fn handle_reply(deps: DepsMut, msg: Reply) -> Result<Response, MinterFactoryError> {
     let reply = parse_reply_instantiate_data(msg);
@@ -46,7 +44,7 @@ pub fn handle_reply(deps: DepsMut, msg: Reply) -> Result<Response, MinterFactory
     match reply {
         Ok(res) => {
             let minter = res.contract_address;
-            upsert_minter_status(deps, minter, false, false)?;
+            // upsert_minter_status(deps, minter, false, false)?;
             Ok(Response::default().add_attribute("action", "instantiate_minter_reply"))
         }
         Err(_) => Err(MinterFactoryError::InstantiateMinterError {}),

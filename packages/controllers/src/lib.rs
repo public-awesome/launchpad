@@ -1,4 +1,5 @@
 mod hooks;
+mod minter;
 mod minter_factory;
 
 pub use hooks::{HookError, Hooks, HooksResponse};

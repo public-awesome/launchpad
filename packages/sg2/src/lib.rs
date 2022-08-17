@@ -16,10 +16,3 @@ pub struct MinterParams<T> {
     pub mint_fee_bps: u64,
     pub extension: T,
 }
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct Minter {
-    pub verified: bool,
-    pub blocked: bool,
-    // pub explicit: bool,
-}

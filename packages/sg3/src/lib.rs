@@ -8,16 +8,21 @@ pub struct MinterConfig<T> {
     pub factory: Addr,
     pub collection_code_id: u64,
     pub mint_price: Coin,
-    // TODO: which way is better?
-    // pub verified: bool,
-    // pub blocked: bool,
     pub extension: T,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct Status {
+    pub is_verified: bool,
+    pub is_blocked: bool,
+    pub is_explicit: bool,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct MinterConfigResponse<T> {
     pub config: MinterConfig<T>,
     pub collection_address: String,
+    pub status: Status,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

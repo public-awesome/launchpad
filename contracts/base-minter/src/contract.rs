@@ -31,6 +31,8 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 const INSTANTIATE_SG721_REPLY_ID: u64 = 1;
 
+// TODO: no need to have controllers when we have base contracts
+
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
@@ -41,6 +43,8 @@ pub fn instantiate(
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
     let factory = info.sender.clone();
+
+    // TODO: set Status here (to false for all)
 
     // Make sure the sender is the factory contract
     // This will fail if the sender cannot parse a response from the factory contract
