@@ -7,7 +7,7 @@ pub mod integration_tests;
 pub mod msg;
 pub mod state;
 pub use crate::error::ContractError;
-use cw721_base::Extension;
+pub use cw721_base::Extension;
 use sg721::InstantiateMsg;
 use sg_std::StargazeMsgWrapper;
 
