@@ -164,10 +164,12 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
 fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
     let config = CONFIG.load(deps.storage)?;
     let collection_address = COLLECTION_ADDRESS.load(deps.storage)?;
+    let status = STATUS.load(deps.storage)?;
 
     Ok(ConfigResponse {
         collection_address: collection_address.to_string(),
         config,
+        status: todo!(),
     })
 }
 

@@ -16,8 +16,8 @@ pub fn update_status(deps: DepsMut, verified: bool, blocked: bool) -> StdResult<
     //     }
     // });
 
-    let status = STATUS.may_load(deps.storage)?;
-    status.verified = verified;
+    let status = STATUS.load(deps.storage)?;
+    status.is_verified = verified;
 
     Ok(Response::new().add_attribute("action", "sudo_update_minter_status"))
 }
