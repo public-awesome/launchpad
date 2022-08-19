@@ -20,16 +20,17 @@ pub enum ExecuteMsg {
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
     Config {},
+    Status {},
 }
 
 pub type ConfigResponse = MinterConfigResponse<Empty>;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum SudoMsg<T> {
+pub enum SudoMsg {
     UpdateStatus {
-        is_minter: String,
         is_verified: bool,
         is_blocked: bool,
+        is_explicit: bool,
     },
 }

@@ -1,6 +1,6 @@
 use crate::error::ContractError;
-use crate::msg::{ConfigResponse, ExecuteMsg, QueryMsg};
-use crate::state::{increment_token_index, Config, COLLECTION_ADDRESS, CONFIG};
+use crate::msg::{ConfigResponse, ExecuteMsg, QueryMsg, SudoMsg};
+use crate::state::{increment_token_index, Config, COLLECTION_ADDRESS, CONFIG, STATUS};
 
 use base_factory::msg::{BaseMinterCreateMsg, Extension, ParamsResponse};
 
@@ -17,6 +17,7 @@ use cw_utils::{must_pay, parse_reply_instantiate_data};
 
 use sg1::checked_fair_burn;
 use sg2::query::Sg2QueryMsg;
+use sg3::{Status, StatusResponse};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
 use sg_std::math::U64Ext;
 use sg_std::{StargazeMsgWrapper, NATIVE_DENOM};
@@ -44,7 +45,8 @@ pub fn instantiate(
 
     let factory = info.sender.clone();
 
-    // TODO: set Status here (to false for all)
+    // set default status so it can be queried without failing
+    STATUS.save(deps.storage, &Status::default())?;
 
     // Make sure the sender is the factory contract
     // This will fail if the sender cannot parse a response from the factory contract
@@ -63,6 +65,7 @@ pub fn instantiate(
 
     CONFIG.save(deps.storage, &config)?;
 
+    // TODO: refactor to use submsg::reply_on...
     // Submessage to instantiate sg721 contract
     let submsg = SubMsg {
         msg: WasmMsg::Instantiate {
@@ -98,6 +101,7 @@ pub fn execute(
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
+    println!("BASE-MINTER EXECUTE: {:?}", msg);
     match msg {
         ExecuteMsg::Mint { token_uri } => execute_mint_sender(deps, info, token_uri),
     }
@@ -108,6 +112,8 @@ pub fn execute_mint_sender(
     info: MessageInfo,
     token_uri: String,
 ) -> Result<Response, ContractError> {
+    println!("IN BASE MINTER: execute_mint_sender");
+
     let config = CONFIG.load(deps.storage)?;
     let collection = COLLECTION_ADDRESS.load(deps.storage)?;
 
@@ -155,22 +161,54 @@ pub fn execute_mint_sender(
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
+pub fn sudo(deps: DepsMut, _env: Env, msg: SudoMsg) -> Result<Response, ContractError> {
+    match msg {
+        SudoMsg::UpdateStatus {
+            is_verified,
+            is_blocked,
+            is_explicit,
+        } => update_status(deps, is_verified, is_blocked, is_explicit)
+            .map_err(|_| ContractError::UpdateStatus {}),
+    }
+}
+
+/// Only governance can update contract params
+pub fn update_status(
+    deps: DepsMut,
+    is_verified: bool,
+    is_blocked: bool,
+    is_explicit: bool,
+) -> StdResult<Response> {
+    let mut status = STATUS.load(deps.storage)?;
+    status.is_verified = is_verified;
+    status.is_blocked = is_blocked;
+    status.is_explicit = is_explicit;
+
+    Ok(Response::new().add_attribute("action", "sudo_update_status"))
+}
+
+#[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::Config {} => to_binary(&query_config(deps)?),
+        QueryMsg::Status {} => to_binary(&query_status(deps)?),
     }
 }
 
 fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
     let config = CONFIG.load(deps.storage)?;
     let collection_address = COLLECTION_ADDRESS.load(deps.storage)?;
-    let status = STATUS.load(deps.storage)?;
 
     Ok(ConfigResponse {
         collection_address: collection_address.to_string(),
         config,
-        status: todo!(),
     })
+}
+
+pub fn query_status(deps: Deps) -> StdResult<StatusResponse> {
+    let status = STATUS.load(deps.storage)?;
+
+    Ok(StatusResponse { status })
 }
 
 // Reply callback triggered from sg721 contract instantiation in instantiate()

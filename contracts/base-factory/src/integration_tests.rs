@@ -13,8 +13,7 @@ mod tests {
             crate::contract::instantiate,
             crate::contract::query,
         )
-        .with_sudo(crate::contract::sudo)
-        .with_reply(crate::contract::reply);
+        .with_sudo(crate::contract::sudo);
         Box::new(contract)
     }
 

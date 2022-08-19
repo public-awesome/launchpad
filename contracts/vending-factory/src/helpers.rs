@@ -34,6 +34,8 @@ impl FactoryContract {
         msg: T,
         funds: Coin,
     ) -> StdResult<CosmosMsg> {
+        println!("IN VENDING FACTORY HELPER");
+
         let msg = to_binary(&msg.into())?;
         Ok(WasmMsg::Execute {
             contract_addr: self.addr().into(),

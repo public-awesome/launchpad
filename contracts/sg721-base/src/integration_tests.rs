@@ -19,8 +19,7 @@ mod tests {
             vending_factory::contract::execute,
             vending_factory::contract::instantiate,
             vending_factory::contract::query,
-        )
-        .with_reply(vending_factory::contract::reply);
+        );
         Box::new(contract)
     }
 
@@ -138,9 +137,13 @@ mod tests {
         let bal = app.wrap().query_all_balances(ADMIN).unwrap();
         assert_eq!(bal, vec![creation_fee.clone()]);
 
+        // this should create the minter + sg721
         let cosmos_msg = factory_contract.call_with_funds(msg, creation_fee).unwrap();
 
+        dbg!(&cosmos_msg);
+
         let res = app.execute(Addr::unchecked(ADMIN), cosmos_msg);
+        println!("{:?}", res);
         assert!(res.is_ok());
 
         (app, Addr::unchecked("contract2"))

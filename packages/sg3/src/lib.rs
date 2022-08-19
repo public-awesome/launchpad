@@ -12,6 +12,12 @@ pub struct MinterConfig<T> {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct MinterConfigResponse<T> {
+    pub config: MinterConfig<T>,
+    pub collection_address: String,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, Default)]
 pub struct Status {
     pub is_verified: bool,
     pub is_blocked: bool,
@@ -19,9 +25,7 @@ pub struct Status {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct MinterConfigResponse<T> {
-    pub config: MinterConfig<T>,
-    pub collection_address: String,
+pub struct StatusResponse {
     pub status: Status,
 }
 
@@ -30,4 +34,6 @@ pub struct MinterConfigResponse<T> {
 pub enum Sg3QueryMsg {
     /// Returns `MinterConfigResponse<T>`
     Config {},
+    /// Returns `StatusResponse`
+    Status {},
 }

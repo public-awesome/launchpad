@@ -45,8 +45,7 @@ pub fn contract_factory() -> Box<dyn Contract<StargazeMsgWrapper>> {
         vending_factory::contract::execute,
         vending_factory::contract::instantiate,
         vending_factory::contract::query,
-    )
-    .with_reply(vending_factory::contract::reply);
+    );
     Box::new(contract)
 }
 
