@@ -1,3 +1,5 @@
+use base_factory::contract::update_params;
+use base_factory::ContractError as BaseContractError;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
@@ -15,7 +17,6 @@ use crate::msg::{
     VendingUpdateParamsMsg,
 };
 use crate::state::SUDO_PARAMS;
-use sg_controllers::update_params;
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:vending-factory";
@@ -81,7 +82,7 @@ pub fn execute_create_vending_minter(
     }
 
     if NATIVE_DENOM != msg.init_msg.unit_price.denom {
-        return Err(ContractError::InvalidDenom {});
+        return Err(ContractError::BaseError(BaseContractError::InvalidDenom {}));
     }
 
     // Check that the price is greater than the minimum
@@ -135,7 +136,7 @@ pub fn sudo_update_params(
         ensure_eq!(
             &airdrop_mint_price.denom,
             &NATIVE_DENOM,
-            ContractError::InvalidDenom {}
+            ContractError::BaseError(BaseContractError::InvalidDenom {})
         );
         params.extension.airdrop_mint_price = airdrop_mint_price;
     }
@@ -149,7 +150,7 @@ pub fn sudo_update_params(
         ensure_eq!(
             &shuffle_fee.denom,
             &NATIVE_DENOM,
-            ContractError::InvalidDenom {}
+            ContractError::BaseError(BaseContractError::InvalidDenom {})
         );
         params.extension.shuffle_fee = shuffle_fee;
     }

@@ -7,8 +7,8 @@ use base_factory::msg::{BaseMinterCreateMsg, Extension, ParamsResponse};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Addr, Binary, CosmosMsg, Deps, DepsMut, Empty, Env, MessageInfo, Reply, ReplyOn,
-    StdResult, WasmMsg,
+    to_binary, Addr, Binary, CosmosMsg, Deps, DepsMut, Empty, Env, MessageInfo, Reply, StdResult,
+    WasmMsg,
 };
 
 use cw2::set_contract_version;
@@ -26,13 +26,9 @@ use url::Url;
 pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 pub type SubMsg = cosmwasm_std::SubMsg<StargazeMsgWrapper>;
 
-// version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sg-base-minter";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
-
 const INSTANTIATE_SG721_REPLY_ID: u64 = 1;
-
-// TODO: no need to have controllers when we have base contracts
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -65,26 +61,19 @@ pub fn instantiate(
 
     CONFIG.save(deps.storage, &config)?;
 
-    // TODO: refactor to use submsg::reply_on...
-    // Submessage to instantiate sg721 contract
-    let submsg = SubMsg {
-        msg: WasmMsg::Instantiate {
-            code_id: msg.collection_params.code_id,
-            msg: to_binary(&Sg721InstantiateMsg {
-                name: msg.collection_params.name.clone(),
-                symbol: msg.collection_params.symbol,
-                minter: env.contract.address.to_string(),
-                collection_info: msg.collection_params.info,
-            })?,
-            funds: info.funds,
-            admin: None,
-            label: format!("SG721-{}", msg.collection_params.name),
-        }
-        .into(),
-        id: INSTANTIATE_SG721_REPLY_ID,
-        gas_limit: None,
-        reply_on: ReplyOn::Success,
+    let wasm_msg = WasmMsg::Instantiate {
+        code_id: msg.collection_params.code_id,
+        msg: to_binary(&Sg721InstantiateMsg {
+            name: msg.collection_params.name.clone(),
+            symbol: msg.collection_params.symbol,
+            minter: env.contract.address.to_string(),
+            collection_info: msg.collection_params.info,
+        })?,
+        funds: info.funds,
+        admin: None,
+        label: format!("SG721-{}", msg.collection_params.name),
     };
+    let submsg = SubMsg::reply_on_success(wasm_msg, INSTANTIATE_SG721_REPLY_ID);
 
     Ok(Response::new()
         .add_attribute("action", "instantiate")
