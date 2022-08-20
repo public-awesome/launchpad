@@ -5,7 +5,7 @@ authors = ["Shane Vitarana <s@noreply.publicawesome.com>"]
 edition = "2018"
 description = "Stargaze Non-transferrable NFT collection contract"
 license = "Apache-2.0"
-repository = "https://github.com/public-awesome/stargaze-contracts"
+repository = "https://github.com/public-awesome/launchpad"
 homepage = "https://stargaze.zone"
 
 exclude = [
