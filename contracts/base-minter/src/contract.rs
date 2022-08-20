@@ -101,7 +101,6 @@ pub fn execute(
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
-    println!("BASE-MINTER EXECUTE: {:?}", msg);
     match msg {
         ExecuteMsg::Mint { token_uri } => execute_mint_sender(deps, info, token_uri),
     }
@@ -112,8 +111,6 @@ pub fn execute_mint_sender(
     info: MessageInfo,
     token_uri: String,
 ) -> Result<Response, ContractError> {
-    println!("IN BASE MINTER: execute_mint_sender");
-
     let config = CONFIG.load(deps.storage)?;
     let collection = COLLECTION_ADDRESS.load(deps.storage)?;
 

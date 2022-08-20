@@ -140,10 +140,7 @@ mod tests {
         // this should create the minter + sg721
         let cosmos_msg = factory_contract.call_with_funds(msg, creation_fee).unwrap();
 
-        dbg!(&cosmos_msg);
-
         let res = app.execute(Addr::unchecked(ADMIN), cosmos_msg);
-        println!("{:?}", res);
         assert!(res.is_ok());
 
         (app, Addr::unchecked("contract2"))

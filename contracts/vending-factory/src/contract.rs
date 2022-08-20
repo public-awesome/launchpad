@@ -11,7 +11,7 @@ use sg_std::NATIVE_DENOM;
 
 use crate::error::ContractError;
 use crate::msg::{
-    ExecuteMsg, InstantiateMsg, ParamsResponse, Response, SubMsg, SudoMsg, VendingMinterCreateMsg,
+    ExecuteMsg, InstantiateMsg, ParamsResponse, Response, SudoMsg, VendingMinterCreateMsg,
     VendingUpdateParamsMsg,
 };
 use crate::state::SUDO_PARAMS;
@@ -43,8 +43,6 @@ pub fn execute(
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
-    println!("VENDING-FACTORY EXECUTE: {:?}", msg);
-
     match msg {
         ExecuteMsg::CreateMinter(msg) => execute_create_vending_minter(deps, env, info, msg),
     }
@@ -101,13 +99,10 @@ pub fn execute_create_vending_minter(
         funds: vec![],
         label: format!("VendingMinter-{}", msg.collection_params.name),
     };
-    // let submsg = SubMsg::reply_on_success(wasm_msg, params.code_id);
 
     Ok(res
-        // .add_attribute("action", "create_minter")
         .add_attribute("action", "create_minter")
         .add_message(wasm_msg))
-    // .add_submessage(submsg))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]

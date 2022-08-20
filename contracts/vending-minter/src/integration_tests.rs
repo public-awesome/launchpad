@@ -591,8 +591,6 @@ fn mint_count_query() {
         .query_wasm_smart(sg721_addr.clone(), &tokens_msg)
         .unwrap();
     let sold_token_id: u32 = res.tokens[1].parse::<u32>().unwrap();
-    println!("sold token id: {}", sold_token_id);
-
     // Buyer transfers NFT to creator
     // random mint token id: 8
     let transfer_msg: Cw721ExecuteMsg<Empty> = Cw721ExecuteMsg::TransferNft {
@@ -1072,7 +1070,6 @@ fn mint_for_token_id_addr() {
         .wrap()
         .query_all_balances(minter_addr.clone())
         .unwrap();
-    println!("minter_balance: {:?}", minter_balance);
     assert_eq!(0, minter_balance.len());
 
     // Mint fails, invalid token_id

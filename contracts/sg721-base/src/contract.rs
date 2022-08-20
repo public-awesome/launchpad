@@ -100,8 +100,6 @@ pub fn ready(
     _env: Env,
     info: MessageInfo,
 ) -> Result<Response, ContractError> {
-    println!("ready");
-
     let minter = Cw721Base::default().minter.load(deps.storage)?;
     if minter != info.sender {
         return Err(ContractError::Unauthorized {});

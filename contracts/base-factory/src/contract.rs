@@ -41,8 +41,6 @@ pub fn execute(
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
-    println!("BASE-FACTORY EXECUTE: {:?}", msg);
-
     match msg {
         ExecuteMsg::CreateMinter(msg) => execute_create_base_minter(deps, env, info, msg),
     }
@@ -54,8 +52,6 @@ pub fn execute_create_base_minter(
     info: MessageInfo,
     msg: BaseMinterCreateMsg,
 ) -> Result<Response, ContractError> {
-    println!("BASE-FACTORY: CREATE BASE MINTER {:?}", msg);
-
     must_pay(&info, NATIVE_DENOM)?;
 
     let params = SUDO_PARAMS.load(deps.storage)?;
