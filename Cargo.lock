@@ -781,7 +781,7 @@ dependencies = [
  "cw-utils",
  "schemars",
  "serde",
- "sg-std",
+ "sg-std 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg2",
  "thiserror",
 ]
@@ -795,14 +795,29 @@ dependencies = [
  "cw-multi-test",
  "schemars",
  "serde",
- "sg-std",
+ "sg-std 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "sg-std"
-version = "0.12.1"
+version = "0.13.0"
 dependencies = [
  "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-utils",
+ "cw721",
+ "cw721-base",
+ "schemars",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "sg-std"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "436f83aaa18cbdf901bc39b76e27f784a92935eb3cf63a819a1202d1241c519b"
+dependencies = [
  "cosmwasm-std",
  "cw-utils",
  "cw721",
@@ -834,7 +849,7 @@ dependencies = [
  "rust_decimal",
  "schemars",
  "serde",
- "sg-std",
+ "sg-std 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg1",
  "thiserror",
 ]
@@ -846,7 +861,7 @@ dependencies = [
  "cosmwasm-std",
  "cw-utils",
  "serde",
- "sg-std",
+ "sg-std 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "thiserror",
 ]
 
@@ -858,7 +873,7 @@ dependencies = [
  "cw-utils",
  "schemars",
  "serde",
- "sg-std",
+ "sg-std 0.13.0",
  "sg721",
  "thiserror",
 ]
@@ -871,7 +886,7 @@ dependencies = [
  "cw-utils",
  "schemars",
  "serde",
- "sg-std",
+ "sg-std 0.13.0",
  "thiserror",
 ]
 
@@ -907,7 +922,7 @@ dependencies = [
  "schemars",
  "serde",
  "sg-multi-test",
- "sg-std",
+ "sg-std 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg2",
  "sg721",
  "thiserror",
@@ -1093,7 +1108,7 @@ dependencies = [
  "serde",
  "sg-controllers",
  "sg-multi-test",
- "sg-std",
+ "sg-std 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg1",
  "sg2",
  "sg721",
@@ -1118,7 +1133,7 @@ dependencies = [
  "schemars",
  "serde",
  "sg-multi-test",
- "sg-std",
+ "sg-std 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg-whitelist",
  "sg1",
  "sg2",
