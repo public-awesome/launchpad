@@ -6,14 +6,14 @@ use cw2::set_contract_version;
 use sg721::InstantiateMsg;
 use sg_std::Response;
 
-use crate::Cw721Base;
+use crate::Sg721Base;
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sg721-nt";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub fn _instantiate(
-    contract: Cw721Base,
+    contract: Sg721Base,
     deps: DepsMut,
     _env: Env,
     info: MessageInfo,

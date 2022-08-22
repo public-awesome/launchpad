@@ -36,8 +36,8 @@ serde = { version = "1.0.133", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0.30" }
 sg-std = { path = "../../packages/sg-std" }
 url = "2.2.2"
-cw721 = "0.13.2"
-cw721-base = { version = "0.13.2", features = ["library"] }
+cw721 = "0.13.4"
+cw721-base = { version = "0.13.4", features = ["library"] }
 sg721 = { path = "../../packages/sg721" }
 sg721-base = { path = "../sg721-base", features = ["library"] }
 
