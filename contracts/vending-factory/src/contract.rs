@@ -1,7 +1,9 @@
+use base_factory::contract::update_params;
+use base_factory::ContractError as BaseContractError;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    ensure_eq, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Reply, StdResult, WasmMsg,
+    ensure_eq, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult, WasmMsg,
 };
 use cw2::set_contract_version;
 use cw_utils::must_pay;
@@ -11,11 +13,10 @@ use sg_std::NATIVE_DENOM;
 
 use crate::error::ContractError;
 use crate::msg::{
-    ExecuteMsg, InstantiateMsg, ParamsResponse, Response, SubMsg, SudoMsg, VendingMinterCreateMsg,
+    ExecuteMsg, InstantiateMsg, ParamsResponse, Response, SudoMsg, VendingMinterCreateMsg,
     VendingUpdateParamsMsg,
 };
 use crate::state::SUDO_PARAMS;
-use sg_controllers::{handle_reply, query_minter_status, update_params, upsert_minter_status};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:vending-factory";
@@ -81,7 +82,7 @@ pub fn execute_create_vending_minter(
     }
 
     if NATIVE_DENOM != msg.init_msg.unit_price.denom {
-        return Err(ContractError::InvalidDenom {});
+        return Err(ContractError::BaseError(BaseContractError::InvalidDenom {}));
     }
 
     // Check that the price is greater than the minimum
@@ -99,29 +100,16 @@ pub fn execute_create_vending_minter(
         funds: vec![],
         label: format!("VendingMinter-{}", msg.collection_params.name),
     };
-    let submsg = SubMsg::reply_on_success(wasm_msg, params.code_id);
 
     Ok(res
         .add_attribute("action", "create_minter")
-        .add_submessage(submsg))
-}
-
-/// Reply callback triggered from creation above (minter init)
-#[cfg_attr(not(feature = "library"), entry_point)]
-pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
-    handle_reply(deps, msg).map_err(|e| e.into())
+        .add_message(wasm_msg))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> Result<Response, ContractError> {
     match msg {
         SudoMsg::UpdateParams(params_msg) => sudo_update_params(deps, env, *params_msg),
-        SudoMsg::UpdateMinterStatus {
-            minter,
-            verified,
-            blocked,
-        } => upsert_minter_status(deps, minter, verified, blocked)
-            .map_err(|_| ContractError::MinterFactoryError {}),
     }
 }
 
@@ -148,7 +136,7 @@ pub fn sudo_update_params(
         ensure_eq!(
             &airdrop_mint_price.denom,
             &NATIVE_DENOM,
-            ContractError::InvalidDenom {}
+            ContractError::BaseError(BaseContractError::InvalidDenom {})
         );
         params.extension.airdrop_mint_price = airdrop_mint_price;
     }
@@ -162,7 +150,7 @@ pub fn sudo_update_params(
         ensure_eq!(
             &shuffle_fee.denom,
             &NATIVE_DENOM,
-            ContractError::InvalidDenom {}
+            ContractError::BaseError(BaseContractError::InvalidDenom {})
         );
         params.extension.shuffle_fee = shuffle_fee;
     }
@@ -176,7 +164,6 @@ pub fn sudo_update_params(
 pub fn query(deps: Deps, _env: Env, msg: Sg2QueryMsg) -> StdResult<Binary> {
     match msg {
         Sg2QueryMsg::Params {} => to_binary(&query_params(deps)?),
-        Sg2QueryMsg::MinterStatus { minter } => to_binary(&query_minter_status(deps, minter)?),
     }
 }
 

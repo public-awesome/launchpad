@@ -35,6 +35,7 @@ sg-std = "0.13.0"
 sg721 = { path = "../../packages/sg721" }
 sg-controllers = { path = "../../packages/controllers" }
 sg2 = { path = "../../packages/sg2" }
+base-factory = { path = "../base-factory", features = ["library"] }
 
 [dev-dependencies]
 cosmwasm-schema = "1.0.0"

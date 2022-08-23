@@ -14,27 +14,6 @@
         }
       },
       "additionalProperties": false
-    },
-    {
-      "description": "Returns a `MinterStatusResponse`",
-      "type": "object",
-      "required": [
-        "minter_status"
-      ],
-      "properties": {
-        "minter_status": {
-          "type": "object",
-          "required": [
-            "minter"
-          ],
-          "properties": {
-            "minter": {
-              "type": "string"
-            }
-          }
-        }
-      },
-      "additionalProperties": false
     }
   ]
 }
