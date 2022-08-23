@@ -24,7 +24,7 @@ use sg1::checked_fair_burn;
 use sg2::query::Sg2QueryMsg;
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
 use sg_std::math::U64Ext;
-use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
+use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME};
 use sg_whitelist::msg::{
     ConfigResponse as WhitelistConfigResponse, HasMemberResponse, QueryMsg as WhitelistQueryMsg,
 };
@@ -173,7 +173,6 @@ pub fn execute(
             execute_set_whitelist(deps, env, info, &whitelist)
         }
         ExecuteMsg::Shuffle {} => execute_shuffle(deps, env, info),
-        ExecuteMsg::Withdraw {} => execute_withdraw(deps, env, info),
     }
 }
 
@@ -224,38 +223,6 @@ pub fn execute_shuffle(
     Ok(res
         .add_attribute("action", "shuffle")
         .add_attribute("sender", info.sender))
-}
-
-pub fn execute_withdraw(
-    deps: DepsMut,
-    env: Env,
-    info: MessageInfo,
-) -> Result<Response, ContractError> {
-    nonpayable(&info)?;
-    let config = CONFIG.load(deps.storage)?;
-    if config.extension.admin != info.sender {
-        return Err(ContractError::Unauthorized(
-            "Sender is not an admin".to_owned(),
-        ));
-    };
-
-    // query balance from the contract
-    let balance = deps
-        .querier
-        .query_balance(env.contract.address, NATIVE_DENOM)?;
-    if balance.amount.is_zero() {
-        return Err(ContractError::NotEnoughFunds {});
-    }
-
-    // send contract balance to creator
-    let send_msg = CosmosMsg::Bank(BankMsg::Send {
-        to_address: info.sender.to_string(),
-        amount: vec![balance],
-    });
-
-    Ok(Response::default()
-        .add_attribute("action", "withdraw")
-        .add_message(send_msg))
 }
 
 pub fn execute_set_whitelist(
