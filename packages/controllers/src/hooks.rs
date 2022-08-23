@@ -21,6 +21,9 @@ pub enum HookError {
 
     #[error("Given address not registered as a hook")]
     HookNotRegistered {},
+
+    #[error("Too many hooks")]
+    HookTooMany {},
 }
 
 // store all hook addresses in one item. We cannot have many of them before the contract becomes unusable anyway.
@@ -33,6 +36,9 @@ impl<'a> Hooks<'a> {
 
     pub fn add_hook(&self, storage: &mut dyn Storage, addr: Addr) -> Result<(), HookError> {
         let mut hooks = self.0.may_load(storage)?.unwrap_or_default();
+        if hooks.len() >= 5 {
+            return Err(HookError::HookTooMany {});
+        }
         if !hooks.iter().any(|h| h == &addr) {
             hooks.push(addr);
         } else {

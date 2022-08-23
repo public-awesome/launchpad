@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Sg2QueryMsg",
+  "oneOf": [
+    {
+      "description": "Returns `ParamsResponse`",
+      "type": "object",
+      "required": [
+        "params"
+      ],
+      "properties": {
+        "params": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
+    }
+  ]
+}
