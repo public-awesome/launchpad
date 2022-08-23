@@ -7,19 +7,22 @@ pub mod integration_tests;
 pub mod msg;
 pub mod state;
 pub use crate::error::ContractError;
-use cw721_base::Extension;
+pub use cw721_base::Extension;
 use sg721::InstantiateMsg;
 use sg_std::StargazeMsgWrapper;
 
-pub type Sg721Contract<'a> = cw721_base::Cw721Contract<'a, Extension, StargazeMsgWrapper>;
+pub type Cw721Base<'a> = cw721_base::Cw721Contract<'a, Extension, StargazeMsgWrapper>;
 
 pub mod entry {
     use super::*;
-    use crate::contract::{
-        _instantiate, approve, approve_all, burn, mint, ready, revoke, revoke_all, send_nft,
-        transfer_nft,
+    use crate::{
+        contract::{
+            _instantiate, approve, approve_all, burn, mint, query_collection_info, ready, revoke,
+            revoke_all, send_nft, transfer_nft,
+        },
+        msg::QueryMsg,
     };
-    use cosmwasm_std::{DepsMut, Env, MessageInfo};
+    use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult};
     use sg721::ExecuteMsg;
     use sg_std::Response;
 
@@ -30,7 +33,7 @@ pub mod entry {
         info: MessageInfo,
         msg: InstantiateMsg,
     ) -> Result<Response, ContractError> {
-        let tract = Sg721Contract::default();
+        let tract = Cw721Base::default();
         _instantiate(tract, deps, env, info, msg)
     }
 
@@ -41,7 +44,7 @@ pub mod entry {
         info: MessageInfo,
         msg: ExecuteMsg<Extension>,
     ) -> Result<Response, ContractError> {
-        let tract = Sg721Contract::default();
+        let tract = Cw721Base::default();
         match msg {
             ExecuteMsg::_Ready {} => ready(tract, deps, env, info),
             ExecuteMsg::TransferNft {
@@ -67,6 +70,14 @@ pub mod entry {
             ExecuteMsg::RevokeAll { operator } => revoke_all(tract, deps, env, info, operator),
             ExecuteMsg::Burn { token_id } => burn(tract, deps, env, info, token_id),
             ExecuteMsg::Mint(msg) => mint(tract, deps, env, info, msg),
+        }
+    }
+
+    #[cfg_attr(not(feature = "library"), entry_point)]
+    pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
+        match msg {
+            QueryMsg::CollectionInfo {} => to_binary(&query_collection_info(deps)?),
+            _ => Cw721Base::default().query(deps, env, msg.into()),
         }
     }
 }

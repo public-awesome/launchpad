@@ -32,11 +32,6 @@ pub type ExecuteMsg = Sg2ExecuteMsg<VendingMinterInitMsgExtension>;
 #[serde(rename_all = "snake_case")]
 pub enum SudoMsg {
     UpdateParams(Box<VendingUpdateParamsMsg>),
-    UpdateMinterStatus {
-        minter: String,
-        verified: bool,
-        blocked: bool,
-    },
 }
 
 /// Message for params so they can be updated invidiually by governance

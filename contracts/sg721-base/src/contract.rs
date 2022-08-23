@@ -1,10 +1,8 @@
-#[cfg(not(feature = "library"))]
-use cosmwasm_std::entry_point;
 use cw721_base::state::TokenInfo;
 use cw721_base::Extension;
 use url::Url;
 
-use cosmwasm_std::{to_binary, Binary, Decimal, Deps, DepsMut, Env, Event, MessageInfo, StdResult};
+use cosmwasm_std::{Binary, Decimal, Deps, DepsMut, Env, Event, MessageInfo, StdResult};
 use cw2::set_contract_version;
 use cw721::{ContractInfoResponse, Cw721ReceiveMsg};
 use cw_utils::{nonpayable, Expiration};
@@ -12,9 +10,9 @@ use cw_utils::{nonpayable, Expiration};
 use sg721::{CollectionInfo, InstantiateMsg, MintMsg, RoyaltyInfo, RoyaltyInfoResponse};
 use sg_std::Response;
 
-use crate::msg::{CollectionInfoResponse, QueryMsg};
+use crate::msg::CollectionInfoResponse;
 use crate::state::{COLLECTION_INFO, READY};
-use crate::{ContractError, Sg721Contract};
+use crate::{ContractError, Cw721Base};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sg721-base";
@@ -23,7 +21,7 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 const MAX_DESCRIPTION_LENGTH: u32 = 512;
 
 pub fn _instantiate(
-    contract: Sg721Contract,
+    contract: Cw721Base,
     deps: DepsMut,
     _env: Env,
     info: MessageInfo,
@@ -31,6 +29,15 @@ pub fn _instantiate(
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
+    create(contract, deps, info, msg)
+}
+
+pub fn create(
+    contract: Cw721Base,
+    deps: DepsMut,
+    info: MessageInfo,
+    msg: InstantiateMsg,
+) -> Result<Response, ContractError> {
     // no funds should be sent to this contract
     nonpayable(&info)?;
 
@@ -88,14 +95,12 @@ pub fn _instantiate(
 /// Called by the minter reply handler after instantiation. Now we can query
 /// the factory and minter to verify that the collection creation is authorized.
 pub fn ready(
-    _contract: Sg721Contract,
+    _contract: Cw721Base,
     deps: DepsMut,
     _env: Env,
     info: MessageInfo,
 ) -> Result<Response, ContractError> {
-    println!("ready");
-
-    let minter = Sg721Contract::default().minter.load(deps.storage)?;
+    let minter = Cw721Base::default().minter.load(deps.storage)?;
     if minter != info.sender {
         return Err(ContractError::Unauthorized {});
     }
@@ -106,7 +111,7 @@ pub fn ready(
 }
 
 pub fn approve(
-    contract: Sg721Contract,
+    contract: Cw721Base,
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
@@ -130,7 +135,7 @@ pub fn approve(
 }
 
 pub fn approve_all(
-    contract: Sg721Contract,
+    contract: Cw721Base,
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
@@ -161,7 +166,7 @@ pub fn approve_all(
 }
 
 pub fn burn(
-    contract: Sg721Contract,
+    contract: Cw721Base,
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
@@ -185,7 +190,7 @@ pub fn burn(
 }
 
 pub fn revoke(
-    contract: Sg721Contract,
+    contract: Cw721Base,
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
@@ -207,7 +212,7 @@ pub fn revoke(
 }
 
 pub fn revoke_all(
-    contract: Sg721Contract,
+    contract: Cw721Base,
     deps: DepsMut,
     _env: Env,
     info: MessageInfo,
@@ -230,7 +235,7 @@ pub fn revoke_all(
 }
 
 pub fn send_nft(
-    contract: Sg721Contract,
+    contract: Cw721Base,
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
@@ -263,7 +268,7 @@ pub fn send_nft(
 }
 
 pub fn transfer_nft(
-    contract: Sg721Contract,
+    contract: Cw721Base,
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
@@ -285,7 +290,7 @@ pub fn transfer_nft(
 }
 
 pub fn mint(
-    contract: Sg721Contract,
+    contract: Cw721Base,
     deps: DepsMut,
     _env: Env,
     info: MessageInfo,
@@ -323,15 +328,7 @@ pub fn mint(
         .add_attribute("token_id", msg.token_id))
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
-    match msg {
-        QueryMsg::CollectionInfo {} => to_binary(&query_collection_info(deps)?),
-        _ => Sg721Contract::default().query(deps, env, msg.into()),
-    }
-}
-
-fn query_collection_info(deps: Deps) -> StdResult<CollectionInfoResponse> {
+pub fn query_collection_info(deps: Deps) -> StdResult<CollectionInfoResponse> {
     let info = COLLECTION_INFO.load(deps.storage)?;
 
     let royalty_info_res: Option<RoyaltyInfoResponse> = match info.royalty_info {

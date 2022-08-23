@@ -45,8 +45,7 @@ pub fn contract_factory() -> Box<dyn Contract<StargazeMsgWrapper>> {
         vending_factory::contract::execute,
         vending_factory::contract::instantiate,
         vending_factory::contract::query,
-    )
-    .with_reply(vending_factory::contract::reply);
+    );
     Box::new(contract)
 }
 
@@ -73,7 +72,7 @@ pub fn contract_sg721() -> Box<dyn Contract<StargazeMsgWrapper>> {
     let contract = ContractWrapper::new(
         sg721_base::entry::execute,
         sg721_base::entry::instantiate,
-        sg721_base::contract::query,
+        sg721_base::entry::query,
     );
     Box::new(contract)
 }
@@ -592,8 +591,6 @@ fn mint_count_query() {
         .query_wasm_smart(sg721_addr.clone(), &tokens_msg)
         .unwrap();
     let sold_token_id: u32 = res.tokens[1].parse::<u32>().unwrap();
-    println!("sold token id: {}", sold_token_id);
-
     // Buyer transfers NFT to creator
     // random mint token id: 8
     let transfer_msg: Cw721ExecuteMsg<Empty> = Cw721ExecuteMsg::TransferNft {
@@ -704,18 +701,13 @@ fn whitelist_can_update_before_start() {
             creator.clone(),
             minter_addr.clone(),
             &set_whitelist_msg,
-            &coins(UNIT_PRICE, NATIVE_DENOM),
+            &[],
         )
         .unwrap();
 
     // can set twice before starting
     router
-        .execute_contract(
-            creator.clone(),
-            minter_addr,
-            &set_whitelist_msg,
-            &coins(UNIT_PRICE, NATIVE_DENOM),
-        )
+        .execute_contract(creator.clone(), minter_addr, &set_whitelist_msg, &[])
         .unwrap();
 }
 
@@ -987,7 +979,7 @@ fn check_per_address_limit() {
         creator.clone(),
         minter_addr.clone(),
         &per_address_limit_msg,
-        &coins(UNIT_PRICE, NATIVE_DENOM),
+        &[],
     );
     assert!(res.is_ok());
 
@@ -1073,7 +1065,6 @@ fn mint_for_token_id_addr() {
         .wrap()
         .query_all_balances(minter_addr.clone())
         .unwrap();
-    println!("minter_balance: {:?}", minter_balance);
     assert_eq!(0, minter_balance.len());
 
     // Mint fails, invalid token_id
