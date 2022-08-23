@@ -704,18 +704,13 @@ fn whitelist_can_update_before_start() {
             creator.clone(),
             minter_addr.clone(),
             &set_whitelist_msg,
-            &coins(UNIT_PRICE, NATIVE_DENOM),
+            &[],
         )
         .unwrap();
 
     // can set twice before starting
     router
-        .execute_contract(
-            creator.clone(),
-            minter_addr,
-            &set_whitelist_msg,
-            &coins(UNIT_PRICE, NATIVE_DENOM),
-        )
+        .execute_contract(creator.clone(), minter_addr, &set_whitelist_msg, &[])
         .unwrap();
 }
 
@@ -987,7 +982,7 @@ fn check_per_address_limit() {
         creator.clone(),
         minter_addr.clone(),
         &per_address_limit_msg,
-        &coins(UNIT_PRICE, NATIVE_DENOM),
+        &[],
     );
     assert!(res.is_ok());
 
