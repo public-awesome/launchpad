@@ -514,7 +514,7 @@ fn _execute_mint(
     MINTABLE_NUM_TOKENS.save(deps.storage, &(mintable_num_tokens - 1))?;
     // Save the new mint count for the sender's address
     let new_mint_count = mint_count(deps.as_ref(), &info)? + 1;
-    MINTER_ADDRS.save(deps.storage, info.clone().sender, &new_mint_count)?;
+    MINTER_ADDRS.save(deps.storage, &info.sender, &new_mint_count)?;
 
     let seller_amount = if !is_admin {
         let amount = mint_price.amount - network_fee;
@@ -698,10 +698,7 @@ pub fn mint_price(deps: Deps, is_admin: bool) -> Result<Coin, StdError> {
 }
 
 fn mint_count(deps: Deps, info: &MessageInfo) -> Result<u32, StdError> {
-    let mint_count = (MINTER_ADDRS
-        .key(info.sender.clone())
-        .may_load(deps.storage)?)
-    .unwrap_or(0);
+    let mint_count = (MINTER_ADDRS.key(&info.sender).may_load(deps.storage)?).unwrap_or(0);
     Ok(mint_count)
 }
 
@@ -736,7 +733,7 @@ fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
 
 fn query_mint_count(deps: Deps, address: String) -> StdResult<MintCountResponse> {
     let addr = deps.api.addr_validate(&address)?;
-    let mint_count = (MINTER_ADDRS.key(addr.clone()).may_load(deps.storage)?).unwrap_or(0);
+    let mint_count = (MINTER_ADDRS.key(&addr).may_load(deps.storage)?).unwrap_or(0);
     Ok(MintCountResponse {
         address: addr.to_string(),
         count: mint_count,
