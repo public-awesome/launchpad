@@ -607,13 +607,11 @@ pub fn execute_update_mint_price(
     }
     // TODO add test
     // If current time is after the stored start time, only allow lowering price
-    if env.block.time >= config.extension.start_time {
-        if price >= config.mint_price.amount.u128() {
-            return Err(ContractError::UpdatedMintPriceTooHigh {
-                allowed: config.mint_price.amount.u128(),
-                updated: price,
-            });
-        }
+    if env.block.time >= config.extension.start_time && price >= config.mint_price.amount.u128() {
+        return Err(ContractError::UpdatedMintPriceTooHigh {
+            allowed: config.mint_price.amount.u128(),
+            updated: price,
+        });
     }
 
     // TODO add test
