@@ -1008,42 +1008,10 @@ fn check_per_address_limit() {
 #[test]
 fn check_dynamic_per_address_limit() {
     let mut router = custom_mock_app();
-    let (creator, _) = setup_accounts(&mut router);
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME - 1, None);
+    let (creator, buyer) = setup_accounts(&mut router);
     let num_tokens = 1600;
-
-    // Upload contract code
-    let sg721_code_id = router.store_code(contract_sg721());
-    let minter_code_id = router.store_code(contract_minter());
-    let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
-
-    // Instantiate minter contract
-    let msg = InstantiateMsg {
-        unit_price: coin(UNIT_PRICE, NATIVE_DENOM),
-        num_tokens,
-        start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
-        per_address_limit: 16,
-        whitelist: None,
-        base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
-        sg721_code_id,
-        sg721_instantiate_msg: Sg721InstantiateMsg {
-            name: String::from("TEST"),
-            symbol: String::from("TEST"),
-            minter: creator.to_string(),
-            collection_info: CollectionInfo {
-                creator: creator.to_string(),
-                description: String::from("Stargaze Monkeys"),
-                image: "https://example.com/image.png".to_string(),
-                external_link: Some("https://example.com/external.html".to_string()),
-                royalty_info: Some(RoyaltyInfoResponse {
-                    payment_address: creator.to_string(),
-                    share: Decimal::percent(10),
-                }),
-            },
-        },
-    };
-    router
-        .instantiate_contract(minter_code_id, creator, &msg, &creation_fee, "Minter", None)
-        .unwrap();
+    let (minter_addr, config) = setup_minter_contract(&mut router, &creator, num_tokens);
 }
 
 #[test]

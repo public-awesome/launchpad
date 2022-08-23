@@ -66,13 +66,13 @@ pub fn instantiate(
         .query_wasm_smart(factory.clone(), &Sg2QueryMsg::Params {})?;
 
     // Limit per address limit to 1% of num tokens
-    if (msg.num_tokens > 100 && msg.num_tokens < 5000)
-        && msg.per_address_limit > (msg.num_tokens / 100)
+    if (msg.init_msg.num_tokens > 100 && msg.init_msg.num_tokens < 5000)
+        && msg.init_msg.per_address_limit > (msg.init_msg.num_tokens / 100)
     {
         return Err(ContractError::InvalidPerAddressLimit {
-            max: msg.num_tokens / 100,
+            max: msg.init_msg.num_tokens / 100,
             min: 1,
-            got: msg.per_address_limit,
+            got: msg.init_msg.per_address_limit,
         });
     }
 
