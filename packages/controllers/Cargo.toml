@@ -16,7 +16,7 @@ cosmwasm-std = { version = "1.0.0" }
 cw-storage-plus = "0.13.4"
 schemars = "0.8.1"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
-sg-std = { path = "../sg-std" }
+sg-std = "0.13.0"
 thiserror = { version = "1.0.21" }
 cw-utils = "0.13.4"
 sg2 = { path = "../sg2" }
