@@ -101,6 +101,7 @@ pub fn instantiate(
             base_token_uri: msg.init_msg.base_token_uri,
             num_tokens: msg.init_msg.num_tokens,
             unit_price: msg.init_msg.unit_price,
+            initial_price: msg.init_msg.unit_price,
             per_address_limit: msg.init_msg.per_address_limit,
             whitelist: whitelist_addr,
             start_time: msg.init_msg.start_time,
