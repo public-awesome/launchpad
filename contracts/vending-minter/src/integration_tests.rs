@@ -1317,3 +1317,78 @@ fn unhappy_path() {
     let res = router.execute_contract(buyer, minter_addr, &mint_msg, &coins(MINT_PRICE, "uatom"));
     assert!(res.is_err());
 }
+
+#[test]
+fn update_mint_price() {
+    let mut router = custom_mock_app();
+    let (creator, buyer) = setup_accounts(&mut router);
+    let num_tokens = 1;
+    let (minter_addr, _) = setup_minter_contract(&mut router, &creator, num_tokens);
+
+    // Set to before genesis mint start time
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME - 10, None);
+
+    // Update mint price higher than initial price, throw error
+    let update_msg = ExecuteMsg::UpdateMintPrice {
+        price: MINT_PRICE + 1,
+    };
+    let err = router
+        .execute_contract(creator.clone(), minter_addr.clone(), &update_msg, &[])
+        .unwrap_err();
+    assert_eq!(
+        err.source().unwrap().to_string(),
+        ContractError::UpdatedMintPriceTooHigh {
+            allowed: MINT_PRICE,
+            updated: MINT_PRICE + 1
+        }
+        .to_string()
+    );
+
+    // Update mint price lower than initial price
+    let update_msg = ExecuteMsg::UpdateMintPrice {
+        price: MINT_PRICE - 2,
+    };
+    let res = router.execute_contract(creator.clone(), minter_addr.clone(), &update_msg, &[]);
+    assert!(res.is_ok());
+
+    // Update mint price higher but lower than initial price
+    let update_msg = ExecuteMsg::UpdateMintPrice {
+        price: MINT_PRICE - 1,
+    };
+    let res = router.execute_contract(creator.clone(), minter_addr.clone(), &update_msg, &[]);
+    assert!(res.is_ok());
+
+    // Set block forward, after start time. mint succeeds
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 10_000_000, None);
+
+    // Update mint price higher after start time, throw error
+    let update_msg = ExecuteMsg::UpdateMintPrice { price: MINT_PRICE };
+    let err = router
+        .execute_contract(creator.clone(), minter_addr.clone(), &update_msg, &[])
+        .unwrap_err();
+    assert_eq!(
+        err.source().unwrap().to_string(),
+        ContractError::UpdatedMintPriceTooHigh {
+            allowed: MINT_PRICE - 1,
+            updated: MINT_PRICE
+        }
+        .to_string()
+    );
+
+    // Update mint price lower
+    let update_msg = ExecuteMsg::UpdateMintPrice {
+        price: MINT_PRICE - 2,
+    };
+    let res = router.execute_contract(creator.clone(), minter_addr.clone(), &update_msg, &[]);
+    assert!(res.is_ok());
+
+    // Mint succeeds
+    let mint_msg = ExecuteMsg::Mint {};
+    let res = router.execute_contract(
+        buyer,
+        minter_addr,
+        &mint_msg,
+        &coins(MINT_PRICE - 2, NATIVE_DENOM),
+    );
+    assert!(res.is_ok());
+}
