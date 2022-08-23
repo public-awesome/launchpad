@@ -605,18 +605,26 @@ pub fn execute_update_mint_price(
             "Sender is not an admin".to_owned(),
         ));
     }
-    // If current time is after the stored start time return error
+    // TODO add test
+    // If current time is after the stored start time, only allow lowering price
     if env.block.time >= config.extension.start_time {
-        return Err(ContractError::AlreadyStarted {});
+        if price >= config.mint_price.amount.u128() {
+            return Err(ContractError::UpdatedMintPriceTooHigh {
+                allowed: config.mint_price.amount.u128(),
+                updated: price,
+            });
+        }
     }
 
+    // TODO add test
     // If price is greater than initial price, return error
     if price > config.extension.initial_price.amount.u128() {
         return Err(ContractError::UpdatedMintPriceTooHigh {
-            initial: config.extension.initial_price.amount.u128(),
+            allowed: config.extension.initial_price.amount.u128(),
             updated: price,
         });
     }
+
     config.mint_price = coin(price, config.mint_price.denom);
     CONFIG.save(deps.storage, &config)?;
     Ok(Response::new()
