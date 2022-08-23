@@ -40,7 +40,7 @@ schemars = "0.8"
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0" }
 url = "2.2.0"
-sg-std = { path = "../../packages/sg-std" }
+sg-std = "0.13.0"
 cw721 = "0.13.4"
 cw721-base = { version = "0.13.4", features = ["library"] }
 sg1 = { path = "../../packages/sg1" }
