@@ -27,7 +27,7 @@ var (
 			"members":[%s],
 			"start_time": "%d",
 			"end_time": "%d",
-			"unit_price": {
+			"mint_price": {
 				"amount": "50000000",
 				"denom": "ustars"
 			},
@@ -60,7 +60,7 @@ var (
 			"start_time": "%d",
 			"whitelist" : %s, 
 			"per_address_limit": %d,
-			"unit_price": {
+			"mint_price": {
 			  "amount": "100000000",
 			  "denom": "ustars"
 			}

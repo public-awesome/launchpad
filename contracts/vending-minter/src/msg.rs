@@ -42,7 +42,7 @@ pub struct ConfigResponse {
     pub sg721_address: String,
     pub sg721_code_id: u64,
     pub start_time: Timestamp,
-    pub unit_price: Coin,
+    pub mint_price: Coin,
     pub whitelist: Option<String>,
     pub factory: String,
 }

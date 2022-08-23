@@ -7,7 +7,7 @@ pub struct InstantiateMsg {
     pub members: Vec<String>,
     pub start_time: Timestamp,
     pub end_time: Timestamp,
-    pub unit_price: Coin,
+    pub mint_price: Coin,
     pub per_address_limit: u32,
     pub member_limit: u32,
 }
@@ -75,8 +75,8 @@ pub struct IsActiveResponse {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct UnitPriceResponse {
-    pub unit_price: Coin,
+pub struct MintPriceResponse {
+    pub mint_price: Coin,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -86,6 +86,6 @@ pub struct ConfigResponse {
     pub member_limit: u32,
     pub start_time: Timestamp,
     pub end_time: Timestamp,
-    pub unit_price: Coin,
+    pub mint_price: Coin,
     pub is_active: bool,
 }

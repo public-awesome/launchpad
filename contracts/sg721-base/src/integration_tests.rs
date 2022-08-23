@@ -64,7 +64,7 @@ mod tests {
             base_token_uri: "ipfs://aldkfjads".to_string(),
             start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
             num_tokens: 100,
-            unit_price: coin(MIN_MINT_PRICE, NATIVE_DENOM),
+            mint_price: coin(MIN_MINT_PRICE, NATIVE_DENOM),
             per_address_limit: 5,
             whitelist: None,
         }
