@@ -1,6 +1,6 @@
 use cosmwasm_std::{Addr, Empty, StdResult, Storage};
 use cw_storage_plus::Item;
-use sg3::MinterConfig;
+use sg3::{MinterConfig, Status};
 
 pub type Config = MinterConfig<Empty>;
 
@@ -9,6 +9,8 @@ pub const CONFIG: Item<Config> = Item::new("config");
 
 /// This is saved after handling a reply in instantiation. Therefore it's not in `Config`.
 pub const COLLECTION_ADDRESS: Item<Addr> = Item::new("collection_address");
+
+pub const STATUS: Item<Status> = Item::new("status");
 
 /// This keeps track of the token index for the token_ids
 pub const TOKEN_INDEX: Item<u64> = Item::new("token_index");

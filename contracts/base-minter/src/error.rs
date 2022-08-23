@@ -21,6 +21,9 @@ pub enum ContractError {
     #[error("Unauthorized: {0}")]
     Unauthorized(String),
 
+    #[error("UpdateStatus")]
+    UpdateStatus {},
+
     #[error("InvalidMintPrice")]
     InvalidMintPrice {},
 

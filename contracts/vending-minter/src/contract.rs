@@ -17,7 +17,7 @@ use cosmwasm_std::{
 };
 use cw2::set_contract_version;
 use cw721_base::{msg::ExecuteMsg as Cw721ExecuteMsg, MintMsg};
-use cw_utils::{may_pay, parse_reply_instantiate_data};
+use cw_utils::{may_pay, nonpayable, parse_reply_instantiate_data};
 use rand_core::{RngCore, SeedableRng};
 use rand_xoshiro::Xoshiro128PlusPlus;
 use sg1::checked_fair_burn;
@@ -231,6 +231,7 @@ pub fn execute_set_whitelist(
     info: MessageInfo,
     whitelist: &str,
 ) -> Result<Response, ContractError> {
+    nonpayable(&info)?;
     let mut config = CONFIG.load(deps.storage)?;
     if config.extension.admin != info.sender {
         return Err(ContractError::Unauthorized(
@@ -480,7 +481,7 @@ fn _execute_mint(
     MINTABLE_NUM_TOKENS.save(deps.storage, &(mintable_num_tokens - 1))?;
     // Save the new mint count for the sender's address
     let new_mint_count = mint_count(deps.as_ref(), &info)? + 1;
-    MINTER_ADDRS.save(deps.storage, info.clone().sender, &new_mint_count)?;
+    MINTER_ADDRS.save(deps.storage, &info.sender, &new_mint_count)?;
 
     let seller_amount = if !is_admin {
         let amount = mint_price.amount - network_fee;
@@ -562,6 +563,7 @@ pub fn execute_update_start_time(
     info: MessageInfo,
     start_time: Timestamp,
 ) -> Result<Response, ContractError> {
+    nonpayable(&info)?;
     let mut config = CONFIG.load(deps.storage)?;
     if info.sender != config.extension.admin {
         return Err(ContractError::Unauthorized(
@@ -598,6 +600,7 @@ pub fn execute_update_per_address_limit(
     info: MessageInfo,
     per_address_limit: u32,
 ) -> Result<Response, ContractError> {
+    nonpayable(&info)?;
     let mut config = CONFIG.load(deps.storage)?;
     if info.sender != config.extension.admin {
         return Err(ContractError::Unauthorized(
@@ -662,10 +665,7 @@ pub fn mint_price(deps: Deps, is_admin: bool) -> Result<Coin, StdError> {
 }
 
 fn mint_count(deps: Deps, info: &MessageInfo) -> Result<u32, StdError> {
-    let mint_count = (MINTER_ADDRS
-        .key(info.sender.clone())
-        .may_load(deps.storage)?)
-    .unwrap_or(0);
+    let mint_count = (MINTER_ADDRS.key(&info.sender).may_load(deps.storage)?).unwrap_or(0);
     Ok(mint_count)
 }
 
@@ -700,7 +700,7 @@ fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
 
 fn query_mint_count(deps: Deps, address: String) -> StdResult<MintCountResponse> {
     let addr = deps.api.addr_validate(&address)?;
-    let mint_count = (MINTER_ADDRS.key(addr.clone()).may_load(deps.storage)?).unwrap_or(0);
+    let mint_count = (MINTER_ADDRS.key(&addr).may_load(deps.storage)?).unwrap_or(0);
     Ok(MintCountResponse {
         address: addr.to_string(),
         count: mint_count,

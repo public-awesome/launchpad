@@ -26,11 +26,6 @@ pub type BaseUpdateParamsMsg = UpdateMinterParamsMsg<Extension>;
 #[serde(rename_all = "snake_case")]
 pub enum SudoMsg<T> {
     UpdateParams(Box<T>),
-    UpdateMinterStatus {
-        minter: String,
-        verified: bool,
-        blocked: bool,
-    },
 }
 pub type BaseSudoMsg = SudoMsg<BaseUpdateParamsMsg>;
 

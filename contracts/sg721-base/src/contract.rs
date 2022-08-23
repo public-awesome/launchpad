@@ -1,5 +1,3 @@
-#[cfg(not(feature = "library"))]
-use cosmwasm_std::entry_point;
 use cw721_base::state::TokenInfo;
 use cw721_base::Extension;
 use url::Url;
@@ -102,8 +100,6 @@ pub fn ready(
     _env: Env,
     info: MessageInfo,
 ) -> Result<Response, ContractError> {
-    println!("ready");
-
     let minter = Cw721Base::default().minter.load(deps.storage)?;
     if minter != info.sender {
         return Err(ContractError::Unauthorized {});
