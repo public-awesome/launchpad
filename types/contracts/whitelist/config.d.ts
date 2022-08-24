@@ -15,9 +15,9 @@ export interface Config {
 admin: Addr
 end_time: Timestamp
 member_limit: number
+mint_price: Coin
 num_members: number
 per_address_limit: number
 start_time: Timestamp
-unit_price: Coin
 [k: string]: unknown
 }

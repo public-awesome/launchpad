@@ -10,6 +10,11 @@ whitelist: string
 [k: string]: unknown
 }
 } | {
+update_mint_price: {
+price: number
+[k: string]: unknown
+}
+} | {
 update_start_time: Timestamp
 } | {
 update_per_address_limit: {
@@ -29,10 +34,6 @@ token_id: number
 }
 } | {
 shuffle: {
-[k: string]: unknown
-}
-} | {
-withdraw: {
 [k: string]: unknown
 }
 })
