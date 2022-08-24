@@ -604,7 +604,6 @@ pub fn execute_update_mint_price(
             "Sender is not an admin".to_owned(),
         ));
     }
-    // TODO add test
     // If current time is after the stored start time, only allow lowering price
     if env.block.time >= config.extension.start_time && price >= config.mint_price.amount.u128() {
         return Err(ContractError::UpdatedMintPriceTooHigh {
