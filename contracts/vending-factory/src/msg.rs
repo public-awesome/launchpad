@@ -20,7 +20,7 @@ pub struct VendingMinterInitMsgExtension {
     pub base_token_uri: String,
     pub start_time: Timestamp,
     pub num_tokens: u32,
-    pub unit_price: Coin,
+    pub mint_price: Coin,
     pub per_address_limit: u32,
     pub whitelist: Option<String>,
 }

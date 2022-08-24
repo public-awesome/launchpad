@@ -117,7 +117,7 @@ pub fn instantiate(
             whitelist: whitelist_addr,
             start_time: msg.init_msg.start_time,
         },
-        mint_price: msg.init_msg.unit_price,
+        mint_price: msg.init_msg.mint_price,
     };
 
     CONFIG.save(deps.storage, &config)?;
@@ -173,6 +173,7 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::Mint {} => execute_mint_sender(deps, env, info),
+        ExecuteMsg::UpdateMintPrice { price } => execute_update_mint_price(deps, env, info, price),
         ExecuteMsg::UpdateStartTime(time) => execute_update_start_time(deps, env, info, time),
         ExecuteMsg::UpdatePerAddressLimit { per_address_limit } => {
             execute_update_per_address_limit(deps, env, info, per_address_limit)
@@ -570,6 +571,35 @@ fn random_mintable_token_mapping(
     Ok(TokenPositionMapping { position, token_id })
 }
 
+pub fn execute_update_mint_price(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    price: u128,
+) -> Result<Response, ContractError> {
+    nonpayable(&info)?;
+    let mut config = CONFIG.load(deps.storage)?;
+    if info.sender != config.extension.admin {
+        return Err(ContractError::Unauthorized(
+            "Sender is not an admin".to_owned(),
+        ));
+    }
+    // If current time is after the stored start time, only allow lowering price
+    if env.block.time >= config.extension.start_time && price >= config.mint_price.amount.u128() {
+        return Err(ContractError::UpdatedMintPriceTooHigh {
+            allowed: config.mint_price.amount.u128(),
+            updated: price,
+        });
+    }
+
+    config.mint_price = coin(price, config.mint_price.denom);
+    CONFIG.save(deps.storage, &config)?;
+    Ok(Response::new()
+        .add_attribute("action", "update_mint_price")
+        .add_attribute("sender", info.sender)
+        .add_attribute("mint_price", price.to_string()))
+}
+
 pub fn execute_update_start_time(
     deps: DepsMut,
     env: Env,
@@ -684,7 +714,7 @@ pub fn mint_price(deps: Deps, is_admin: bool) -> Result<Coin, StdError> {
         .query_wasm_smart(whitelist, &WhitelistQueryMsg::Config {})?;
 
     if wl_config.is_active {
-        Ok(wl_config.unit_price)
+        Ok(wl_config.mint_price)
     } else {
         Ok(config.mint_price)
     }
@@ -729,7 +759,7 @@ fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
         sg721_code_id: config.collection_code_id,
         num_tokens: config.extension.num_tokens,
         start_time: config.extension.start_time,
-        unit_price: config.mint_price,
+        mint_price: config.mint_price,
         per_address_limit: config.extension.per_address_limit,
         whitelist: config.extension.whitelist.map(|w| w.to_string()),
         factory: config.factory.to_string(),
@@ -766,7 +796,7 @@ fn query_mint_price(deps: Deps) -> StdResult<MintPriceResponse> {
         let wl_config: WhitelistConfigResponse = deps
             .querier
             .query_wasm_smart(whitelist, &WhitelistQueryMsg::Config {})?;
-        Some(wl_config.unit_price)
+        Some(wl_config.mint_price)
     } else {
         None
     };

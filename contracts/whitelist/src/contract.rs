@@ -50,13 +50,13 @@ pub fn instantiate(
         });
     }
 
-    if msg.unit_price.denom != NATIVE_DENOM {
-        return Err(ContractError::InvalidDenom(msg.unit_price.denom));
+    if msg.mint_price.denom != NATIVE_DENOM {
+        return Err(ContractError::InvalidDenom(msg.mint_price.denom));
     }
 
-    if msg.unit_price.amount.u128() < MIN_MINT_PRICE {
+    if msg.mint_price.amount.u128() < MIN_MINT_PRICE {
         return Err(ContractError::InvalidUnitPrice(
-            msg.unit_price.amount.u128(),
+            msg.mint_price.amount.u128(),
             MIN_MINT_PRICE,
         ));
     }
@@ -97,7 +97,7 @@ pub fn instantiate(
         start_time: msg.start_time,
         end_time: msg.end_time,
         num_members: msg.members.len() as u32,
-        unit_price: msg.unit_price,
+        mint_price: msg.mint_price,
         per_address_limit: msg.per_address_limit,
         member_limit: msg.member_limit,
     };
@@ -437,7 +437,7 @@ fn query_config(deps: Deps, env: Env) -> StdResult<ConfigResponse> {
         member_limit: config.member_limit,
         start_time: config.start_time,
         end_time: config.end_time,
-        unit_price: config.unit_price,
+        mint_price: config.mint_price,
         is_active: (env.block.time >= config.start_time) && (env.block.time < config.end_time),
     })
 }
@@ -462,7 +462,7 @@ mod tests {
             members: vec!["adsfsa".to_string()],
             start_time: GENESIS_START_TIME,
             end_time: END_TIME,
-            unit_price: coin(UNIT_AMOUNT, NATIVE_DENOM),
+            mint_price: coin(UNIT_AMOUNT, NATIVE_DENOM),
             per_address_limit: 1,
             member_limit: 1000,
         };
@@ -484,7 +484,7 @@ mod tests {
             members: vec!["adsfsa".to_string()],
             start_time: END_TIME,
             end_time: END_TIME,
-            unit_price: coin(1, NATIVE_DENOM),
+            mint_price: coin(1, NATIVE_DENOM),
             per_address_limit: 1,
             member_limit: 1000,
         };
@@ -499,7 +499,7 @@ mod tests {
             members: vec!["adsfsa".to_string()],
             start_time: END_TIME,
             end_time: END_TIME,
-            unit_price: coin(UNIT_AMOUNT, "not_ustars"),
+            mint_price: coin(UNIT_AMOUNT, "not_ustars"),
             per_address_limit: 1,
             member_limit: 1000,
         };
@@ -515,7 +515,7 @@ mod tests {
             members: vec!["adsfsa".to_string()],
             start_time: END_TIME,
             end_time: END_TIME,
-            unit_price: coin(UNIT_AMOUNT, "ustars"),
+            mint_price: coin(UNIT_AMOUNT, "ustars"),
             per_address_limit: 1,
             member_limit: 3000,
         };
@@ -538,7 +538,7 @@ mod tests {
             ],
             start_time: END_TIME,
             end_time: END_TIME,
-            unit_price: coin(UNIT_AMOUNT, NATIVE_DENOM),
+            mint_price: coin(UNIT_AMOUNT, NATIVE_DENOM),
             per_address_limit: 1,
             member_limit: 1000,
         };
@@ -554,7 +554,7 @@ mod tests {
             members: vec!["adsfsa".to_string()],
             start_time: END_TIME,
             end_time: GENESIS_START_TIME,
-            unit_price: coin(UNIT_AMOUNT, NATIVE_DENOM),
+            mint_price: coin(UNIT_AMOUNT, NATIVE_DENOM),
             per_address_limit: 1,
             member_limit: 1000,
         };
@@ -682,7 +682,7 @@ mod tests {
             members: members.clone(),
             start_time: END_TIME,
             end_time: END_TIME,
-            unit_price: coin(UNIT_AMOUNT, NATIVE_DENOM),
+            mint_price: coin(UNIT_AMOUNT, NATIVE_DENOM),
             per_address_limit: 1,
             member_limit: 1000,
         };

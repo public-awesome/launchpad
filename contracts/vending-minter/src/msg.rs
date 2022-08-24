@@ -14,6 +14,7 @@ pub struct InstantiateMsg {
 pub enum ExecuteMsg {
     Mint {},
     SetWhitelist { whitelist: String },
+    UpdateMintPrice { price: u128 },
     UpdateStartTime(Timestamp),
     UpdatePerAddressLimit { per_address_limit: u32 },
     MintTo { recipient: String },
@@ -40,7 +41,7 @@ pub struct ConfigResponse {
     pub sg721_address: String,
     pub sg721_code_id: u64,
     pub start_time: Timestamp,
-    pub unit_price: Coin,
+    pub mint_price: Coin,
     pub whitelist: Option<String>,
     pub factory: String,
 }

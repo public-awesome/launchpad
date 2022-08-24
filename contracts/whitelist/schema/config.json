@@ -6,10 +6,10 @@
     "admin",
     "end_time",
     "member_limit",
+    "mint_price",
     "num_members",
     "per_address_limit",
-    "start_time",
-    "unit_price"
+    "start_time"
   ],
   "properties": {
     "admin": {
@@ -23,6 +23,9 @@
       "format": "uint32",
       "minimum": 0.0
     },
+    "mint_price": {
+      "$ref": "#/definitions/Coin"
+    },
     "num_members": {
       "type": "integer",
       "format": "uint32",
@@ -35,9 +38,6 @@
     },
     "start_time": {
       "$ref": "#/definitions/Timestamp"
-    },
-    "unit_price": {
-      "$ref": "#/definitions/Coin"
     }
   },
   "definitions": {

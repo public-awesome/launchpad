@@ -81,15 +81,15 @@ pub fn execute_create_vending_minter(
         });
     }
 
-    if NATIVE_DENOM != msg.init_msg.unit_price.denom {
+    if NATIVE_DENOM != msg.init_msg.mint_price.denom {
         return Err(ContractError::BaseError(BaseContractError::InvalidDenom {}));
     }
 
     // Check that the price is greater than the minimum
-    if params.min_mint_price.amount > msg.init_msg.unit_price.amount {
+    if params.min_mint_price.amount > msg.init_msg.mint_price.amount {
         return Err(ContractError::InsufficientMintPrice {
             expected: params.min_mint_price.amount.u128(),
-            got: msg.init_msg.unit_price.amount.into(),
+            got: msg.init_msg.mint_price.amount.into(),
         });
     }
 

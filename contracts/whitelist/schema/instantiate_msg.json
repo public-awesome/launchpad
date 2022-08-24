@@ -6,9 +6,9 @@
     "end_time",
     "member_limit",
     "members",
+    "mint_price",
     "per_address_limit",
-    "start_time",
-    "unit_price"
+    "start_time"
   ],
   "properties": {
     "end_time": {
@@ -25,6 +25,9 @@
         "type": "string"
       }
     },
+    "mint_price": {
+      "$ref": "#/definitions/Coin"
+    },
     "per_address_limit": {
       "type": "integer",
       "format": "uint32",
@@ -32,9 +35,6 @@
     },
     "start_time": {
       "$ref": "#/definitions/Timestamp"
-    },
-    "unit_price": {
-      "$ref": "#/definitions/Coin"
     }
   },
   "definitions": {

@@ -212,14 +212,17 @@
       "type": "object",
       "required": [
         "base_token_uri",
+        "mint_price",
         "num_tokens",
         "per_address_limit",
-        "start_time",
-        "unit_price"
+        "start_time"
       ],
       "properties": {
         "base_token_uri": {
           "type": "string"
+        },
+        "mint_price": {
+          "$ref": "#/definitions/Coin"
         },
         "num_tokens": {
           "type": "integer",
@@ -233,9 +236,6 @@
         },
         "start_time": {
           "$ref": "#/definitions/Timestamp"
-        },
-        "unit_price": {
-          "$ref": "#/definitions/Coin"
         },
         "whitelist": {
           "type": [
