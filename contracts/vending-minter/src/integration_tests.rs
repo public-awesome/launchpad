@@ -1036,7 +1036,7 @@ fn check_dynamic_per_address_limit() {
     let sg721_code_id = router.store_code(contract_sg721());
 
     let mut msg = mock_create_minter();
-    msg.init_msg.unit_price = coin(UNIT_PRICE, NATIVE_DENOM);
+    msg.init_msg.mint_price = coin(MINT_PRICE, NATIVE_DENOM);
     msg.init_msg.num_tokens = num_tokens;
     msg.collection_params.code_id = sg721_code_id;
     msg.collection_params.info.creator = creator.to_string();
@@ -1060,7 +1060,7 @@ fn check_dynamic_per_address_limit() {
     // should succeed with 1000 tokens and 5 per_address_limit
     let num_tokens = 1000;
     let mut msg = mock_create_minter();
-    msg.init_msg.unit_price = coin(UNIT_PRICE, NATIVE_DENOM);
+    msg.init_msg.mint_price = coin(MINT_PRICE, NATIVE_DENOM);
     msg.init_msg.num_tokens = num_tokens;
     msg.collection_params.code_id = sg721_code_id;
     msg.collection_params.info.creator = creator.to_string();
