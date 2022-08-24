@@ -1044,7 +1044,7 @@ fn check_dynamic_per_address_limit() {
     let msg = Sg2ExecuteMsg::CreateMinter(msg);
 
     let err = router
-        .execute_contract(creator.clone(), factory_addr, &msg, &creation_fee)
+        .execute_contract(creator.clone(), factory_addr.clone(), &msg, &creation_fee)
         .unwrap_err();
 
     assert_eq!(
@@ -1059,29 +1059,33 @@ fn check_dynamic_per_address_limit() {
 
     // should succeed with 1000 tokens and 5 per_address_limit
     let num_tokens = 1000;
-    let (minter_addr, config) = setup_minter_contract(&mut router, &creator, num_tokens);
+    let mut msg = mock_create_minter();
+    msg.init_msg.unit_price = coin(UNIT_PRICE, NATIVE_DENOM);
+    msg.init_msg.num_tokens = num_tokens;
+    msg.collection_params.code_id = sg721_code_id;
+    msg.collection_params.info.creator = creator.to_string();
+    let msg = Sg2ExecuteMsg::CreateMinter(msg);
+    let res = router.execute_contract(creator.clone(), factory_addr, &msg, &creation_fee);
+    assert!(res.is_ok());
 
-    // TODO more tests
-    // successfully launch collection with 500 tokens
+    let minter_addr = Addr::unchecked("contract1");
+
     // if per address limit > 1%, throw error when updating per_address_limit
-    // let update_msg = ExecuteMsg::UpdatePerAddressLimit {
-    //     per_address_limit: 6,
-    // };
-    // let err = router
-    //     .execute_contract(creator, minter_addr, &update_msg, &[])
-    //     .unwrap_err();
-    // println!("{:?}", err);
-    // assert!(false);
-
-    // assert_eq!(
-    //     err.source().unwrap().source().unwrap().to_string(),
-    //     ContractError::InvalidPerAddressLimit {
-    //         max: num_tokens / 100,
-    //         min: 1,
-    //         got: 6,
-    //     }
-    //     .to_string()
-    // );
+    let update_msg = ExecuteMsg::UpdatePerAddressLimit {
+        per_address_limit: 11,
+    };
+    let err = router
+        .execute_contract(creator, minter_addr, &update_msg, &[])
+        .unwrap_err();
+    assert_eq!(
+        err.source().unwrap().to_string(),
+        ContractError::InvalidPerAddressLimit {
+            max: num_tokens / 100,
+            min: 1,
+            got: 11,
+        }
+        .to_string()
+    );
 }
 
 #[test]
