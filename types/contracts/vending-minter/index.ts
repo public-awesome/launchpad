@@ -5,6 +5,7 @@ export * from "./instantiate_msg";
 export * from "./mint_count_response";
 export * from "./mint_price_response";
 export * from "./mintable_num_tokens_response";
+export * from "./minter_config_for__config_extension";
 export * from "./query_msg";
 export * from "./shared-types";
 export * from "./start_time_response";

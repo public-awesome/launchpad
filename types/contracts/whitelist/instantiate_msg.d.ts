@@ -4,8 +4,8 @@ export interface InstantiateMsg {
 end_time: Timestamp
 member_limit: number
 members: string[]
+mint_price: Coin
 per_address_limit: number
 start_time: Timestamp
-unit_price: Coin
 [k: string]: unknown
 }

@@ -1,4 +1,4 @@
-import { Coin, Timestamp } from "./shared-types";
+import { Coin, Empty } from "./shared-types";
 
 /**
  * A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0
@@ -8,13 +8,13 @@ import { Coin, Timestamp } from "./shared-types";
 export type Decimal = string
 
 export interface InstantiateMsg {
-create_msg: CreateMinterMsgFor_VendingMinterInitMsgExtension
-params: MinterParamsFor_ParamsExtension
+create_msg: CreateMinterMsgFor_Nullable_Empty
+params: MinterParamsFor_Nullable_Empty
 [k: string]: unknown
 }
-export interface CreateMinterMsgFor_VendingMinterInitMsgExtension {
+export interface CreateMinterMsgFor_Nullable_Empty {
 collection_params: CollectionParams
-init_msg: VendingMinterInitMsgExtension
+init_msg?: (Empty | null)
 [k: string]: unknown
 }
 export interface CollectionParams {
@@ -40,38 +40,18 @@ payment_address: string
 share: Decimal
 [k: string]: unknown
 }
-export interface VendingMinterInitMsgExtension {
-base_token_uri: string
-mint_price: Coin
-num_tokens: number
-per_address_limit: number
-start_time: Timestamp
-whitelist?: (string | null)
-[k: string]: unknown
-}
 
 /**
  * Common params for all minters used for storage
  */
-export interface MinterParamsFor_ParamsExtension {
+export interface MinterParamsFor_Nullable_Empty {
 /**
  * The minter code id
  */
 code_id: number
 creation_fee: Coin
-extension: ParamsExtension
+extension?: (Empty | null)
 min_mint_price: Coin
 mint_fee_bps: number
-[k: string]: unknown
-}
-/**
- * Parameters common to all vending minters, as determined by governance
- */
-export interface ParamsExtension {
-airdrop_mint_fee_bps: number
-airdrop_mint_price: Coin
-max_per_address_limit: number
-max_token_limit: number
-shuffle_fee: Coin
 [k: string]: unknown
 }

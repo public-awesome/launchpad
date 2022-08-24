@@ -14,19 +14,19 @@
 export type Uint128 = string
 
 export interface InstantiateMsg {
-params: MinterParamsFor_ParamsExtension
+params: MinterParamsFor_Nullable_Empty
 [k: string]: unknown
 }
 /**
  * Common params for all minters used for storage
  */
-export interface MinterParamsFor_ParamsExtension {
+export interface MinterParamsFor_Nullable_Empty {
 /**
  * The minter code id
  */
 code_id: number
 creation_fee: Coin
-extension: ParamsExtension
+extension?: (Empty | null)
 min_mint_price: Coin
 mint_fee_bps: number
 [k: string]: unknown
@@ -37,13 +37,10 @@ denom: string
 [k: string]: unknown
 }
 /**
- * Parameters common to all vending minters, as determined by governance
+ * An empty struct that serves as a placeholder in different places, such as contracts that don't set a custom message.
+ * 
+ * It is designed to be expressable in correct JSON and JSON Schema but contains no meaningful data. Previously we used enums without cases, but those cannot represented as valid JSON Schema (https://github.com/CosmWasm/cosmwasm/issues/451)
  */
-export interface ParamsExtension {
-airdrop_mint_fee_bps: number
-airdrop_mint_price: Coin
-max_per_address_limit: number
-max_token_limit: number
-shuffle_fee: Coin
+export interface Empty {
 [k: string]: unknown
 }
