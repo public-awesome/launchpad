@@ -624,7 +624,6 @@ pub fn execute_update_per_address_limit(
         .query_wasm_smart(config.factory.clone(), &Sg2QueryMsg::Params {})?;
     let factory_params = factory.params;
 
-    // TODO check per address limit <= 1% num_tokens if num_tokens > 100
     if per_address_limit == 0 || per_address_limit > factory_params.extension.max_per_address_limit
     {
         return Err(ContractError::InvalidPerAddressLimit {
@@ -633,6 +632,18 @@ pub fn execute_update_per_address_limit(
             got: per_address_limit,
         });
     }
+
+    // Limit per address limit to 1% of num tokens
+    if (config.extension.num_tokens > 100 && config.extension.num_tokens < 5000)
+        && per_address_limit > (config.extension.num_tokens / 100)
+    {
+        return Err(ContractError::InvalidPerAddressLimit {
+            max: config.extension.num_tokens / 100,
+            min: 1,
+            got: per_address_limit,
+        });
+    }
+
     config.extension.per_address_limit = per_address_limit;
     CONFIG.save(deps.storage, &config)?;
     Ok(Response::new()
