@@ -1006,6 +1006,89 @@ fn check_per_address_limit() {
 }
 
 #[test]
+fn check_dynamic_per_address_limit() {
+    let mut router = custom_mock_app();
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME - 1, None);
+    let (creator, _) = setup_accounts(&mut router);
+
+    // if per address limit > 1%, throw error when instantiating
+    // num_tokens: 400, per_address_limit: 5
+    let num_tokens = 400;
+    let minter_code_id = router.store_code(contract_minter());
+    let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
+
+    let factory_code_id = router.store_code(contract_factory());
+
+    let mut params = mock_params();
+    params.code_id = minter_code_id;
+
+    let factory_addr = router
+        .instantiate_contract(
+            factory_code_id,
+            creator.clone(),
+            &vending_factory::msg::InstantiateMsg { params },
+            &[],
+            "factory",
+            None,
+        )
+        .unwrap();
+
+    let sg721_code_id = router.store_code(contract_sg721());
+
+    let mut msg = mock_create_minter();
+    msg.init_msg.unit_price = coin(UNIT_PRICE, NATIVE_DENOM);
+    msg.init_msg.num_tokens = num_tokens;
+    msg.collection_params.code_id = sg721_code_id;
+    msg.collection_params.info.creator = creator.to_string();
+
+    let msg = Sg2ExecuteMsg::CreateMinter(msg);
+
+    let err = router
+        .execute_contract(creator.clone(), factory_addr.clone(), &msg, &creation_fee)
+        .unwrap_err();
+
+    assert_eq!(
+        err.source().unwrap().source().unwrap().to_string(),
+        ContractError::InvalidPerAddressLimit {
+            max: num_tokens / 100,
+            min: 1,
+            got: mock_create_minter().init_msg.per_address_limit,
+        }
+        .to_string()
+    );
+
+    // should succeed with 1000 tokens and 5 per_address_limit
+    let num_tokens = 1000;
+    let mut msg = mock_create_minter();
+    msg.init_msg.unit_price = coin(UNIT_PRICE, NATIVE_DENOM);
+    msg.init_msg.num_tokens = num_tokens;
+    msg.collection_params.code_id = sg721_code_id;
+    msg.collection_params.info.creator = creator.to_string();
+    let msg = Sg2ExecuteMsg::CreateMinter(msg);
+    let res = router.execute_contract(creator.clone(), factory_addr, &msg, &creation_fee);
+    assert!(res.is_ok());
+
+    let minter_addr = Addr::unchecked("contract1");
+
+    // if per address limit > 1%, throw error when updating per_address_limit
+    let update_msg = ExecuteMsg::UpdatePerAddressLimit {
+        per_address_limit: 11,
+    };
+    let err = router
+        .execute_contract(creator, minter_addr, &update_msg, &[])
+        .unwrap_err();
+    assert_eq!(
+        err.source().unwrap().to_string(),
+        ContractError::InvalidPerAddressLimit {
+            max: num_tokens / 100,
+            min: 1,
+            got: 11,
+        }
+        .to_string()
+    );
+}
+
+#[test]
 fn mint_for_token_id_addr() {
     let mut router = custom_mock_app();
     let (creator, buyer) = setup_accounts(&mut router);

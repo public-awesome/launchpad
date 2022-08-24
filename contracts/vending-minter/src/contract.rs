@@ -61,9 +61,22 @@ pub fn instantiate(
 
     // Make sure the sender is the factory contract
     // This will fail if the sender cannot parse a response from the factory contract
-    let _res: ParamsResponse = deps
+    let factory_response: ParamsResponse = deps
         .querier
         .query_wasm_smart(factory.clone(), &Sg2QueryMsg::Params {})?;
+    let factory_params = factory_response.params;
+
+    if !check_dynamic_per_address_limit(
+        msg.init_msg.per_address_limit,
+        msg.init_msg.num_tokens,
+        factory_params.extension.max_per_address_limit,
+    ) {
+        return Err(ContractError::InvalidPerAddressLimit {
+            max: msg.init_msg.num_tokens / 100,
+            min: 1,
+            got: msg.init_msg.per_address_limit,
+        });
+    }
 
     // Check that base_token_uri is a valid IPFS uri
     let parsed_token_uri = Url::parse(&msg.init_msg.base_token_uri)?;
@@ -621,6 +634,19 @@ pub fn execute_update_per_address_limit(
             got: per_address_limit,
         });
     }
+
+    if !check_dynamic_per_address_limit(
+        per_address_limit,
+        config.extension.num_tokens,
+        factory_params.extension.max_per_address_limit,
+    ) {
+        return Err(ContractError::InvalidPerAddressLimit {
+            max: config.extension.num_tokens / 100,
+            min: 1,
+            got: per_address_limit,
+        });
+    }
+
     config.extension.per_address_limit = per_address_limit;
     CONFIG.save(deps.storage, &config)?;
     Ok(Response::new()
@@ -667,6 +693,18 @@ pub fn mint_price(deps: Deps, is_admin: bool) -> Result<Coin, StdError> {
 fn mint_count(deps: Deps, info: &MessageInfo) -> Result<u32, StdError> {
     let mint_count = (MINTER_ADDRS.key(&info.sender).may_load(deps.storage)?).unwrap_or(0);
     Ok(mint_count)
+}
+
+// Check per address limit to make sure it's <= 1% num tokens
+fn check_dynamic_per_address_limit(
+    per_address_limit: u32,
+    num_tokens: u32,
+    max_per_address_limit: u32,
+) -> bool {
+    // If collection is small or large, no need to check per address limit
+    // ex: per_address_limit 50, no need to check if num_tokens > 5000
+    !((num_tokens > 100 && num_tokens < 100 * max_per_address_limit)
+        && per_address_limit > (num_tokens / 100))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
