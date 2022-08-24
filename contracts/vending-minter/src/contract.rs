@@ -100,7 +100,6 @@ pub fn instantiate(
                 .addr_validate(&msg.collection_params.info.creator)?,
             base_token_uri: msg.init_msg.base_token_uri,
             num_tokens: msg.init_msg.num_tokens,
-            initial_price: msg.init_msg.mint_price.clone(),
             per_address_limit: msg.init_msg.per_address_limit,
             whitelist: whitelist_addr,
             start_time: msg.init_msg.start_time,
@@ -610,15 +609,6 @@ pub fn execute_update_mint_price(
     if env.block.time >= config.extension.start_time && price >= config.mint_price.amount.u128() {
         return Err(ContractError::UpdatedMintPriceTooHigh {
             allowed: config.mint_price.amount.u128(),
-            updated: price,
-        });
-    }
-
-    // TODO add test
-    // If price is greater than initial price, return error
-    if price > config.extension.initial_price.amount.u128() {
-        return Err(ContractError::UpdatedMintPriceTooHigh {
-            allowed: config.extension.initial_price.amount.u128(),
             updated: price,
         });
     }

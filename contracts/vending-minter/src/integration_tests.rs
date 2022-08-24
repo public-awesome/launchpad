@@ -1328,21 +1328,12 @@ fn update_mint_price() {
     // Set to before genesis mint start time
     setup_block_time(&mut router, GENESIS_MINT_START_TIME - 10, None);
 
-    // Update mint price higher than initial price, throw error
+    // Update mint price higher
     let update_msg = ExecuteMsg::UpdateMintPrice {
         price: MINT_PRICE + 1,
     };
-    let err = router
-        .execute_contract(creator.clone(), minter_addr.clone(), &update_msg, &[])
-        .unwrap_err();
-    assert_eq!(
-        err.source().unwrap().to_string(),
-        ContractError::UpdatedMintPriceTooHigh {
-            allowed: MINT_PRICE,
-            updated: MINT_PRICE + 1
-        }
-        .to_string()
-    );
+    let res = router.execute_contract(creator.clone(), minter_addr.clone(), &update_msg, &[]);
+    assert!(res.is_ok());
 
     // Update mint price lower than initial price
     let update_msg = ExecuteMsg::UpdateMintPrice {
@@ -1351,7 +1342,7 @@ fn update_mint_price() {
     let res = router.execute_contract(creator.clone(), minter_addr.clone(), &update_msg, &[]);
     assert!(res.is_ok());
 
-    // Update mint price higher but lower than initial price
+    // Update mint price higher
     let update_msg = ExecuteMsg::UpdateMintPrice {
         price: MINT_PRICE - 1,
     };

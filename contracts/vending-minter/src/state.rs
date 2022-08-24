@@ -1,4 +1,4 @@
-use cosmwasm_std::{Addr, Coin, Timestamp};
+use cosmwasm_std::{Addr, Timestamp};
 use cw_storage_plus::{Item, Map};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -9,7 +9,6 @@ pub struct ConfigExtension {
     pub admin: Addr,
     pub base_token_uri: String,
     pub num_tokens: u32,
-    pub initial_price: Coin,
     pub whitelist: Option<Addr>,
     pub start_time: Timestamp,
     pub per_address_limit: u32,
