@@ -1,8 +1,12 @@
 [package]
 name = "sg721"
-version = "0.1.0"
-authors = ["Shane Vitarana <shanev@gmail.com>"]
+version = "0.14.0"
+authors = ["Shane Vitarana <s@noreply.publicawsome.com>"]
 edition = "2018"
+description = "Stargaze Basic NFT Collection Interface"
+license = "Apache-2.0"
+repository = "https://github.com/public-awesome/launchpad"
+homepage = "https://stargaze.zone"
 
 exclude = [
   # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.

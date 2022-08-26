@@ -6,6 +6,18 @@ resolver = "2"
 codegen-units = 1
 incremental = false
 
+[profile.release.package.sg1]
+codegen-units = 1
+incremental = false
+
+[profile.release.package.sg2]
+codegen-units = 1
+incremental = false
+
+[profile.release.package.sg3]
+codegen-units = 1
+incremental = false
+
 [profile.release.package.sg721-base]
 codegen-units = 1
 incremental = false
