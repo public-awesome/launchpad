@@ -98,7 +98,11 @@ pub fn execute_create_vending_minter(
         code_id: params.code_id,
         msg: to_binary(&msg)?,
         funds: vec![],
-        label: format!("VendingMinter-{}", msg.collection_params.name),
+        label: format!(
+            "VendingMinter-{}-{}",
+            params.code_id,
+            msg.collection_params.name.trim()
+        ),
     };
 
     Ok(res

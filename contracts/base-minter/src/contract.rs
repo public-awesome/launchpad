@@ -71,7 +71,11 @@ pub fn instantiate(
         })?,
         funds: info.funds,
         admin: None,
-        label: format!("SG721-{}", msg.collection_params.name),
+        label: format!(
+            "SG721-{}-{}",
+            msg.collection_params.code_id,
+            msg.collection_params.name.trim()
+        ),
     };
     let submsg = SubMsg::reply_on_success(wasm_msg, INSTANTIATE_SG721_REPLY_ID);
 

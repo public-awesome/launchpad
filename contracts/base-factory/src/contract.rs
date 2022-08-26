@@ -67,7 +67,11 @@ pub fn execute_create_base_minter(
         code_id: params.code_id,
         msg: to_binary(&msg)?,
         funds: vec![],
-        label: format!("BaseMinter-{}", msg.collection_params.name),
+        label: format!(
+            "Minter-{}-{}",
+            params.code_id,
+            msg.collection_params.name.trim()
+        ),
     };
 
     Ok(res
