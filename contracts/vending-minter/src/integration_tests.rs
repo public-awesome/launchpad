@@ -36,6 +36,10 @@ pub const AIRDROP_MINT_FEE_BPS: u64 = 10_000; // 100%
 pub const SHUFFLE_FEE: u128 = 500_000_000;
 pub const MAX_PER_ADDRESS_LIMIT: u32 = 50;
 
+// TODO import from sg_std
+// 2 weeks in seconds
+pub const START_TRADING_TIME_OFFSET: u64 = 1209600;
+
 fn custom_mock_app() -> StargazeApp {
     StargazeApp::default()
 }
@@ -120,6 +124,9 @@ pub fn mock_init_extension() -> VendingMinterInitMsgExtension {
     VendingMinterInitMsgExtension {
         base_token_uri: "ipfs://aldkfjads".to_string(),
         start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
+        start_trading_time: Some(
+            Timestamp::from_nanos(GENESIS_MINT_START_TIME).plus_seconds(START_TRADING_TIME_OFFSET),
+        ),
         num_tokens: 100,
         mint_price: coin(MIN_MINT_PRICE, NATIVE_DENOM),
         per_address_limit: 5,

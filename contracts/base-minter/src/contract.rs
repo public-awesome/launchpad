@@ -56,6 +56,7 @@ pub fn instantiate(
         // assume the mint price is the minimum mint price
         // 100% is fair burned
         mint_price: res.params.min_mint_price,
+        start_trading_time: None,
         extension: Empty {},
     };
 

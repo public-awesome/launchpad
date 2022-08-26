@@ -1,4 +1,4 @@
-use cosmwasm_std::{Addr, Coin};
+use cosmwasm_std::{Addr, Coin, Timestamp};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -8,6 +8,7 @@ pub struct MinterConfig<T> {
     pub factory: Addr,
     pub collection_code_id: u64,
     pub mint_price: Coin,
+    pub start_trading_time: Option<Timestamp>,
     pub extension: T,
 }
 

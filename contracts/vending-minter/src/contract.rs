@@ -47,6 +47,9 @@ const CONTRACT_NAME: &str = "crates.io:sg-minter";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 const INSTANTIATE_SG721_REPLY_ID: u64 = 1;
+// TODO import from sg_std
+// 2 weeks in seconds
+pub const START_TRADING_TIME_OFFSET: u64 = 1209600;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -98,6 +101,9 @@ pub fn instantiate(
         ));
     }
 
+    let start_trading_time =
+        get_start_trading_time(msg.init_msg.start_time, msg.init_msg.start_trading_time)?;
+
     // Validate address for the optional whitelist contract
     let whitelist_addr = msg
         .init_msg
@@ -107,6 +113,7 @@ pub fn instantiate(
     let config = Config {
         factory: factory.clone(),
         collection_code_id: msg.collection_params.code_id,
+        start_trading_time: Some(start_trading_time),
         extension: ConfigExtension {
             admin: deps
                 .api
@@ -162,6 +169,25 @@ pub fn instantiate(
         .add_attribute("contract_version", CONTRACT_VERSION)
         .add_attribute("sender", factory)
         .add_submessage(submsg))
+}
+
+fn get_start_trading_time(
+    start_time: Timestamp,
+    initial_start_trading_time: Option<Timestamp>,
+) -> Result<Timestamp, ContractError> {
+    let start_trading_time = if let Some(start_trading_time) = initial_start_trading_time {
+        if start_time > start_trading_time {
+            return Err(ContractError::InvalidStartTradingTime(
+                start_trading_time,
+                start_time,
+            ));
+        } else {
+            start_trading_time
+        }
+    } else {
+        start_time.plus_seconds(START_TRADING_TIME_OFFSET)
+    };
+    Ok(start_trading_time)
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]

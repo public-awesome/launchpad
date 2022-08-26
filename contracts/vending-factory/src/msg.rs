@@ -23,6 +23,7 @@ pub struct VendingMinterInitMsgExtension {
     pub mint_price: Coin,
     pub per_address_limit: u32,
     pub whitelist: Option<String>,
+    pub start_trading_time: Option<Timestamp>,
 }
 pub type VendingMinterCreateMsg = CreateMinterMsg<VendingMinterInitMsgExtension>;
 
