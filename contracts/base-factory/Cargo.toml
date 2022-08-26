@@ -32,7 +32,7 @@ thiserror = { version = "1.0.31" }
 cw-utils = "0.13.4"
 sg1 = { path = "../../packages/sg1" }
 sg-std = "0.13.0"
-sg721 = { path = "../../packages/sg721" }
+sg721 = "0.14.0"
 sg-controllers = { path = "../../packages/controllers" }
 sg2 = { path = "../../packages/sg2" }
 

@@ -1,18 +1,17 @@
 [package]
-name = "sg3"
+name = "sg4"
 version = "0.11.0"
 edition = "2021"
-
 authors = ["Shane Vitarana <s@noreply.publicawesome.com>"]
-description = "Definition and types for the SG3 interface"
+description = "Definition and types for the SG4 interface"
 license = "Apache-2.0"
-repository = "https://github.com/public-awesome/stargaze-contracts"
+repository = "https://github.com/public-awesome/launchpad"
 homepage = "https://stargaze.zone"
 
 [dependencies]
 cosmwasm-std = { version = "1.0.0" }
 cw-utils = "0.13.4"
 serde = { version = "1.0.133", default-features = false, features = ["derive"] }
-sg-std = { path = "../sg-std" }
+sg-std = "0.13.0"
 thiserror = "1.0.30"
 schemars = "0.8.8"

@@ -1,4 +1,4 @@
-# SG3 Spec: Stargaze Minter Contracts
+# SG4 Spec: Stargaze Minter Contracts
 
 A minter must store the factory that created it, so it can query its parameters:
 
