@@ -6,7 +6,7 @@ mod tests {
     use sg2::tests::mock_collection_params;
     use sg721::ExecuteMsg as Sg721ExecuteMsg;
     use sg_multi_test::StargazeApp;
-    use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME};
+    use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME, START_TRADING_TIME_OFFSET};
     use vending_factory::helpers::FactoryContract;
     use vending_factory::msg::{
         ExecuteMsg, InstantiateMsg as FactoryInstantiateMsg, VendingMinterCreateMsg,
@@ -54,10 +54,6 @@ mod tests {
     pub const SHUFFLE_FEE: u128 = 500_000_000;
     pub const MAX_TOKEN_LIMIT: u32 = 10_000;
     pub const MAX_PER_ADDRESS_LIMIT: u32 = 50;
-
-    // TODO import from sg_std
-    // 2 weeks in seconds
-    pub const START_TRADING_TIME_OFFSET: u64 = 1209600;
 
     fn custom_mock_app() -> StargazeApp {
         StargazeApp::default()
