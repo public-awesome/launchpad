@@ -2,7 +2,7 @@ use base_factory::{msg::BaseMinterCreateMsg, state::BaseMinterParams};
 use cosmwasm_std::Empty;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use sg3::MinterConfigResponse;
+use sg4::MinterConfigResponse;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {

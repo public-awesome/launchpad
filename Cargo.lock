@@ -62,7 +62,7 @@ dependencies = [
  "sg-std 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg1",
  "sg2",
- "sg3",
+ "sg4",
  "sg721 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg721-nt",
  "thiserror",
@@ -832,7 +832,7 @@ dependencies = [
  "serde",
  "sg-std 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg2",
- "sg3",
+ "sg4",
  "thiserror",
 ]
 
@@ -929,7 +929,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "sg3"
+name = "sg4"
 version = "0.11.0"
 dependencies = [
  "cosmwasm-std",
@@ -1230,7 +1230,7 @@ dependencies = [
  "sg-whitelist",
  "sg1",
  "sg2",
- "sg3",
+ "sg4",
  "sg721 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg721-base",
  "sha2 0.10.2",

@@ -20,4 +20,4 @@ sg-std = "0.13.0"
 thiserror = { version = "1.0.21" }
 cw-utils = "0.13.4"
 sg2 = { path = "../sg2" }
-sg3 = { path = "../sg3" }
+sg4 = { path = "../sg4" }

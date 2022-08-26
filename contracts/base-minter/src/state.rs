@@ -1,6 +1,6 @@
 use cosmwasm_std::{Addr, Empty, StdResult, Storage};
 use cw_storage_plus::Item;
-use sg3::{MinterConfig, Status};
+use sg4::{MinterConfig, Status};
 
 pub type Config = MinterConfig<Empty>;
 

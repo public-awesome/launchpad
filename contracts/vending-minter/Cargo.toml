@@ -52,7 +52,7 @@ sg1 = { path = "../../packages/sg1" }
 sg721 = "0.14.0"
 vending-factory = { path = "../vending-factory", features = ["library"] }
 sg2 = { path = "../../packages/sg2" }
-sg3 = { path = "../../packages/sg3" }
+sg4 = { path = "../../packages/sg4" }
 
 [dev-dependencies]
 cosmwasm-schema = { version = "1.0.0" }
