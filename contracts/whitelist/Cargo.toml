@@ -42,7 +42,7 @@ rust_decimal = { version = "1.14.3" }
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0" }
 sg-std = "0.13.0"
-sg1 = { path = "../../packages/sg1" }
+sg1 = "0.14.0"
 
 [dev-dependencies]
 cosmwasm-schema = { version = "1.0.0" }
