@@ -40,7 +40,7 @@ schemars = "0.8"
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0" }
 url = "2.2.0"
-sg-std = "0.13.0"
+sg-std = "0.14.0"
 sg-whitelist = { path = "../whitelist", features = ["library"] }
 rand_core = { version = "0.6", default-features = false }
 rand_xoshiro = { version = "0.6.0", default-features = false }
