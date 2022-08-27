@@ -40,10 +40,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "base-factory"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8304195e73310961ad49490d0e4387734a2d85a69e24220bb55440bc656bbbed"
+dependencies = [
+ "cosmwasm-std",
+ "cw-storage-plus",
+ "cw-utils",
+ "cw2",
+ "schemars",
+ "serde",
+ "sg-std 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg1 0.14.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg2 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "thiserror",
+]
+
+[[package]]
 name = "base-minter"
 version = "0.14.0"
 dependencies = [
- "base-factory",
+ "base-factory 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-multi-test",
@@ -1272,7 +1290,7 @@ dependencies = [
 name = "vending-factory"
 version = "0.1.0"
 dependencies = [
- "base-factory",
+ "base-factory 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-multi-test",
