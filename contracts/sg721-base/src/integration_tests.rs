@@ -6,7 +6,7 @@ mod tests {
     use sg2::tests::mock_collection_params;
     use sg721::ExecuteMsg as Sg721ExecuteMsg;
     use sg_multi_test::StargazeApp;
-    use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME, START_TRADING_TIME_OFFSET};
+    use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME};
     use vending_factory::helpers::FactoryContract;
     use vending_factory::msg::{
         ExecuteMsg, InstantiateMsg as FactoryInstantiateMsg, VendingMinterCreateMsg,
@@ -64,8 +64,7 @@ mod tests {
             base_token_uri: "ipfs://aldkfjads".to_string(),
             start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
             start_trading_time: Some(
-                Timestamp::from_nanos(GENESIS_MINT_START_TIME)
-                    .plus_seconds(START_TRADING_TIME_OFFSET),
+                Timestamp::from_nanos(GENESIS_MINT_START_TIME).plus_seconds(0),
             ),
             num_tokens: 100,
             mint_price: coin(MIN_MINT_PRICE, NATIVE_DENOM),
@@ -80,6 +79,7 @@ mod tests {
             creation_fee: coin(CREATION_FEE, NATIVE_DENOM),
             min_mint_price: coin(MIN_MINT_PRICE, NATIVE_DENOM),
             mint_fee_bps: MINT_FEE_BPS,
+            max_trading_start_time_offset: 0,
             extension: ParamsExtension {
                 max_token_limit: MAX_TOKEN_LIMIT,
                 max_per_address_limit: MAX_PER_ADDRESS_LIMIT,

@@ -8,7 +8,7 @@ use cw_utils::must_pay;
 use sg1::checked_fair_burn;
 use sg2::msg::UpdateMinterParamsMsg;
 use sg2::query::Sg2QueryMsg;
-use sg2::MinterParams;
+use sg2::InitialMinterParams;
 use sg_std::NATIVE_DENOM;
 
 use crate::error::ContractError;
@@ -103,7 +103,7 @@ pub fn sudo_update_params(
 
 /// Base update params that can be used by other minter factories
 pub fn update_params<T, C>(
-    params: &mut MinterParams<C>,
+    params: &mut InitialMinterParams<C>,
     param_msg: UpdateMinterParamsMsg<T>,
 ) -> Result<(), ContractError> {
     params.code_id = param_msg.code_id.unwrap_or(params.code_id);
