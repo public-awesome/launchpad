@@ -31,7 +31,7 @@ pub struct StatusResponse {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum Sg4QueryMsg {
+pub enum QueryMsg {
     /// Returns `MinterConfigResponse<T>`
     Config {},
     /// Returns `StatusResponse`
