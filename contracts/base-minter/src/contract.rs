@@ -20,11 +20,8 @@ use sg2::query::Sg2QueryMsg;
 use sg4::{Status, StatusResponse};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
 use sg_std::math::U64Ext;
-use sg_std::{StargazeMsgWrapper, NATIVE_DENOM};
+use sg_std::{Response, SubMsg, NATIVE_DENOM};
 use url::Url;
-
-pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
-pub type SubMsg = cosmwasm_std::SubMsg<StargazeMsgWrapper>;
 
 const CONTRACT_NAME: &str = "crates.io:sg-base-minter";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");

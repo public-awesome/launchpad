@@ -1,11 +1,11 @@
 [package]
 name = "sg-utils"
-version = "0.12.0"
+version = "0.12.1"
 edition = "2021"
 authors = ["Shane Vitarana <s@noreply.com>"]
 description = "Common utilities for Stargaze contract"
 license = "Apache-2.0"
-repository = "https://github.com/public-awesome/contracts"
+repository = "https://github.com/public-awesome/launchpad"
 homepage = "https://stargaze.zone"
 
 [dependencies]
