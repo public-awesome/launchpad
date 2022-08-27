@@ -1,6 +1,6 @@
 [package]
 name = "sg721-nt"
-version = "0.13.0"
+version = "0.13.1"
 authors = ["Shane Vitarana <s@noreply.publicawesome.com>"]
 edition = "2018"
 description = "Stargaze Non-transferrable NFT collection contract"
@@ -38,7 +38,7 @@ url = "2.2.2"
 cw721 = "0.13.4"
 cw721-base = { version = "0.13.4", features = ["library"] }
 sg721 = "0.14.0"
-sg721-base = { path = "../sg721-base", features = ["library"] }
+sg721-base = "0.13.1"
 
 [dev-dependencies]
 cosmwasm-schema = { version = "1.0.0" }
