@@ -1,11 +1,11 @@
 [package]
 name = "sg-multi-test"
-version = "0.15.0"
+version = "0.15.1"
 edition = "2021"
 authors = ["Jorge Hernandez <jorge@publicawesome.com>"]
 description = "Integration test helpers for Stargaze custom contracts"
 license = "Apache-2.0"
-repository = "https://github.com/public-awesome/contracts"
+repository = "https://github.com/public-awesome/launchpad"
 homepage = "https://stargaze.zone"
 
 [dependencies]

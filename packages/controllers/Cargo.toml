@@ -1,12 +1,12 @@
 
 [package]
 name = "sg-controllers"
-version = "0.13.0"
+version = "0.13.1"
 authors = ["Shane Vitarana <s@users.noreply.publicawesome.com>"]
 edition = "2018"
 description = "Common controllers we can reuse in many contracts"
 license = "Apache-2.0"
-repository = "https://github.com/public-awesome/stargaze-contracts"
+repository = "https://github.com/public-awesome/launchpad"
 homepage = "https://www.stargaze.zone"
 documentation = "https://docs.stargaze.zone"
 
