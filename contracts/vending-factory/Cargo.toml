@@ -3,6 +3,10 @@ name = "vending-factory"
 version = "0.1.0"
 authors = ["Shane Vitarana <s@noreply.publicawesome.com>"]
 edition = "2018"
+description = "Stargaze vending minter factory contract"
+license = "Apache-2.0"
+repository = "https://github.com/public-awesome/launchpad"
+homepage = "https://stargaze.zone"
 
 exclude = [
   # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.

@@ -1,10 +1,15 @@
 [package]
 name = "vending-minter"
 version = "0.14.0"
-authors = ["Jake Hartnell <jake@stargaze.zone>"]
+authors = [
+  "Jake Hartnell <jake@stargaze.zone>",
+  "Shane Vitarana <s@noreply.publicawesome.com>",
+]
 edition = "2018"
-description = "Stargaze NFT minter contract"
+description = "Stargaze vending minter contract"
 license = "Apache-2.0"
+repository = "https://github.com/public-awesome/launchpad"
+homepage = "https://stargaze.zone"
 
 exclude = [
   # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
@@ -40,16 +45,16 @@ serde = { version = "1.0", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0" }
 url = "2.2.0"
 sg-std = "0.14.0"
-sg-whitelist = { path = "../whitelist", features = ["library"] }
+sg-whitelist = { version = "0.12.2", features = ["library"] }
 rand_core = { version = "0.6", default-features = false }
 rand_xoshiro = { version = "0.6.0", default-features = false }
-shuffle = { git = "https://github.com/webmaster128/shuffle", branch = "rm-getrandom" }
+shuffle = { git = "https://github.com/webmaster128/shuffle", branch = "rm-getrandom", version = "0.1.7" }
 sha2 = "0.10.2"
 cw721 = "0.13.4"
 cw721-base = { version = "0.13.4", features = ["library"] }
 sg1 = "0.14.1"
 sg721 = "0.14.0"
-vending-factory = { path = "../vending-factory", features = ["library"] }
+vending-factory = { version = "0.1.0", features = ["library"] }
 sg2 = "0.1.0"
 sg4 = "0.11.0"
 

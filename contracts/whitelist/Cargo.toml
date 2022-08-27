@@ -1,6 +1,6 @@
 [package]
 name = "sg-whitelist"
-version = "0.12.1"
+version = "0.12.2"
 authors = ["Shane Vitarana <s@noreply.publicawesome.com>"]
 edition = "2018"
 description = "Stargaze NFT whitelist contract"

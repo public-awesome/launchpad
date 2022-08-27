@@ -1,6 +1,6 @@
 [package]
 name = "sg721-nt"
-version = "0.13.1"
+version = "0.13.2"
 authors = ["Shane Vitarana <s@noreply.publicawesome.com>"]
 edition = "2018"
 description = "Stargaze Non-transferrable NFT collection contract"
@@ -44,6 +44,6 @@ sg721-base = "0.13.1"
 cosmwasm-schema = { version = "1.0.0" }
 cw-multi-test = "0.13.4"
 sg-multi-test = "0.15.1"
-vending-minter = { path = "../vending-minter", features = ["library"] }
-vending-factory = { path = "../vending-factory", features = ["library"] }
+vending-minter = { version = "0.14.0", features = ["library"] }
+vending-factory = { version = "0.1.0", features = ["library"] }
 sg2 = "0.1.0"
