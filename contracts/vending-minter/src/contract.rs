@@ -32,7 +32,7 @@ use sha2::{Digest, Sha256};
 use shuffle::{fy::FisherYates, shuffler::Shuffler};
 use url::Url;
 
-use vending_factory::msg::{ParamsResponse, VendingMinterCreateMsg};
+use vending_factory::msg::{ParamsResponse, VendingMinterCreateMsg, VendingMinterInitMsgExtension};
 
 pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 pub type SubMsg = cosmwasm_std::SubMsg<StargazeMsgWrapper>;
@@ -47,9 +47,6 @@ const CONTRACT_NAME: &str = "crates.io:sg-minter";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 const INSTANTIATE_SG721_REPLY_ID: u64 = 1;
-// TODO import from sg_std
-// 2 weeks in seconds
-pub const START_TRADING_TIME_OFFSET: u64 = 1209600;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -101,8 +98,10 @@ pub fn instantiate(
         ));
     }
 
-    let start_trading_time =
-        get_start_trading_time(msg.init_msg.start_time, msg.init_msg.start_trading_time)?;
+    let start_trading_time = get_start_trading_time(
+        msg.init_msg.clone(),
+        factory_params.max_trading_start_time_offset,
+    )?;
 
     // Validate address for the optional whitelist contract
     let whitelist_addr = msg
@@ -157,8 +156,7 @@ pub fn instantiate(
             admin: Some(config.extension.admin.to_string()),
             label: format!(
                 "SG721-{}-{}",
-                msg.collection_params.code_id,
-                msg.collection_params.name.trim()
+                msg.collection_params.code_id, msg.collection_params.name
             ),
         }
         .into(),
@@ -176,20 +174,22 @@ pub fn instantiate(
 }
 
 fn get_start_trading_time(
-    start_time: Timestamp,
-    initial_start_trading_time: Option<Timestamp>,
+    init_msg: VendingMinterInitMsgExtension,
+    factory_max_trading_start_time_offset: u64,
 ) -> Result<Timestamp, ContractError> {
-    let start_trading_time = if let Some(start_trading_time) = initial_start_trading_time {
-        if start_time > start_trading_time {
+    let start_trading_time = if let Some(start_trading_time) = init_msg.start_trading_time {
+        if init_msg.start_time > start_trading_time {
             return Err(ContractError::InvalidStartTradingTime(
                 start_trading_time,
-                start_time,
+                init_msg.start_time,
             ));
         } else {
             start_trading_time
         }
     } else {
-        start_time.plus_seconds(START_TRADING_TIME_OFFSET)
+        init_msg
+            .start_time
+            .plus_seconds(factory_max_trading_start_time_offset)
     };
     Ok(start_trading_time)
 }
