@@ -15,7 +15,7 @@ use cw_utils::{may_pay, maybe_addr, must_pay};
 use rust_decimal::prelude::ToPrimitive;
 use rust_decimal::Decimal;
 use sg1::checked_fair_burn;
-use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
+use sg_std::{Response, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sg-whitelist";
@@ -30,8 +30,6 @@ const MAX_PER_ADDRESS_LIMIT: u32 = 30;
 // queries
 const PAGINATION_DEFAULT_LIMIT: u32 = 25;
 const PAGINATION_MAX_LIMIT: u32 = 100;
-
-type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
