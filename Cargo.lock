@@ -1137,7 +1137,7 @@ dependencies = [
 
 [[package]]
 name = "sg721-nt"
-version = "0.13.2"
+version = "0.13.3"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
