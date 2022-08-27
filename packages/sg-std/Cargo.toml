@@ -1,12 +1,12 @@
 [package]
 name = "sg-std"
-version = "0.13.0"
+version = "0.14.0"
 edition = "2021"
 
 authors = ["Jorge Hernandez <jorge@publicawesome.com>"]
 description = "Bindings for CosmWasm contracts to call into custom modules of Stargaze"
 license = "Apache-2.0"
-repository = "https://github.com/public-awesome/contracts"
+repository = "https://github.com/public-awesome/launchpad"
 homepage = "https://stargaze.zone"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
