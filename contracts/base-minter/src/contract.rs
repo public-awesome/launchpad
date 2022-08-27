@@ -17,7 +17,7 @@ use cw_utils::{must_pay, parse_reply_instantiate_data};
 
 use sg1::checked_fair_burn;
 use sg2::query::Sg2QueryMsg;
-use sg3::{Status, StatusResponse};
+use sg4::{Status, StatusResponse};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
 use sg_std::math::U64Ext;
 use sg_std::{StargazeMsgWrapper, NATIVE_DENOM};
@@ -72,7 +72,11 @@ pub fn instantiate(
         })?,
         funds: info.funds,
         admin: None,
-        label: format!("SG721-{}", msg.collection_params.name),
+        label: format!(
+            "SG721-{}-{}",
+            msg.collection_params.code_id,
+            msg.collection_params.name.trim()
+        ),
     };
     let submsg = SubMsg::reply_on_success(wasm_msg, INSTANTIATE_SG721_REPLY_ID);
 

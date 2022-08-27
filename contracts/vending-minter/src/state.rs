@@ -2,7 +2,7 @@ use cosmwasm_std::{Addr, Timestamp};
 use cw_storage_plus::{Item, Map};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use sg3::MinterConfig;
+use sg4::MinterConfig;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct ConfigExtension {

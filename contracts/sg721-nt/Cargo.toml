@@ -38,7 +38,7 @@ sg-std = "0.13.0"
 url = "2.2.2"
 cw721 = "0.13.4"
 cw721-base = { version = "0.13.4", features = ["library"] }
-sg721 = { path = "../../packages/sg721" }
+sg721 = "0.14.0"
 sg721-base = { path = "../sg721-base", features = ["library"] }
 
 [dev-dependencies]

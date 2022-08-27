@@ -45,11 +45,11 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
-        ExecuteMsg::CreateMinter(msg) => execute_create_base_minter(deps, env, info, msg),
+        ExecuteMsg::CreateMinter(msg) => execute_create_minter(deps, env, info, msg),
     }
 }
 
-pub fn execute_create_base_minter(
+pub fn execute_create_minter(
     deps: DepsMut,
     _env: Env,
     info: MessageInfo,
@@ -67,7 +67,11 @@ pub fn execute_create_base_minter(
         code_id: params.code_id,
         msg: to_binary(&msg)?,
         funds: vec![],
-        label: format!("BaseMinter-{}", msg.collection_params.name),
+        label: format!(
+            "Minter-{}-{}",
+            params.code_id,
+            msg.collection_params.name.trim()
+        ),
     };
 
     Ok(res
