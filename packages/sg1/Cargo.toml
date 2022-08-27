@@ -1,12 +1,12 @@
 [package]
 name = "sg1"
-version = "0.14.0"
+version = "0.14.1"
 edition = "2021"
 
 authors = ["Shane Vitarana <s@noreply.publicawesome.com>"]
 description = "Definition and types for the SG1 interface"
 license = "Apache-2.0"
-repository = "https://github.com/public-awesome/stargaze-contracts"
+repository = "https://github.com/public-awesome/launchpad"
 homepage = "https://stargaze.zone"
 
 [dependencies]

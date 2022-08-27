@@ -41,6 +41,7 @@ serde = { version = "1.0", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0" }
 sg-std = "0.14.0"
 sg1 = "0.14.0"
+# sg1 = { path = "../../packages/sg1" }
 
 [dev-dependencies]
 cosmwasm-schema = { version = "1.0.0" }

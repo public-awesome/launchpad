@@ -6,9 +6,6 @@ use sg_std::StargazeMsgWrapper;
 
 use crate::state::VendingMinterParams;
 
-pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
-pub type SubMsg = cosmwasm_std::SubMsg<StargazeMsgWrapper>;
-
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {
     pub params: VendingMinterParams,

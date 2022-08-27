@@ -57,4 +57,4 @@ sg4 = "0.11.0"
 cosmwasm-schema = { version = "1.0.0" }
 cw-multi-test = "0.13.4"
 sg-multi-test = "0.15.0"
-sg721-base = { path = "../sg721-base", features = ["library"] }
+sg721-base = { version = "0.13.1", features = ["library"] }

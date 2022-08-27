@@ -9,11 +9,11 @@ use cw2::set_contract_version;
 use cw_utils::must_pay;
 use sg1::checked_fair_burn;
 use sg2::query::Sg2QueryMsg;
-use sg_std::NATIVE_DENOM;
+use sg_std::{Response, NATIVE_DENOM};
 
 use crate::error::ContractError;
 use crate::msg::{
-    ExecuteMsg, InstantiateMsg, ParamsResponse, Response, SudoMsg, VendingMinterCreateMsg,
+    ExecuteMsg, InstantiateMsg, ParamsResponse, SudoMsg, VendingMinterCreateMsg,
     VendingUpdateParamsMsg,
 };
 use crate::state::SUDO_PARAMS;
