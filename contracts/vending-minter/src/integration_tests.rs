@@ -106,7 +106,8 @@ pub fn mock_params() -> VendingMinterParams {
         creation_fee: coin(CREATION_FEE, NATIVE_DENOM),
         min_mint_price: coin(MIN_MINT_PRICE, NATIVE_DENOM),
         mint_fee_bps: MINT_FEE_BPS,
-        max_trading_start_time_offset: 0,
+        // 2 weeks in seconds = 1209600
+        max_trading_start_time_offset: 1209600,
         extension: ParamsExtension {
             max_token_limit: MAX_TOKEN_LIMIT,
             max_per_address_limit: MAX_PER_ADDRESS_LIMIT,
@@ -121,7 +122,7 @@ pub fn mock_init_extension() -> VendingMinterInitMsgExtension {
     VendingMinterInitMsgExtension {
         base_token_uri: "ipfs://aldkfjads".to_string(),
         start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
-        start_trading_time: Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME).plus_seconds(0)),
+        start_trading_time: Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME).plus_seconds(5)),
         num_tokens: 100,
         mint_price: coin(MIN_MINT_PRICE, NATIVE_DENOM),
         per_address_limit: 5,

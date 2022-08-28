@@ -32,7 +32,7 @@ use sha2::{Digest, Sha256};
 use shuffle::{fy::FisherYates, shuffler::Shuffler};
 use url::Url;
 
-use vending_factory::msg::{ParamsResponse, VendingMinterCreateMsg, VendingMinterInitMsgExtension};
+use vending_factory::msg::{ParamsResponse, VendingMinterCreateMsg};
 
 pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 pub type SubMsg = cosmwasm_std::SubMsg<StargazeMsgWrapper>;
@@ -99,7 +99,8 @@ pub fn instantiate(
     }
 
     let start_trading_time = get_start_trading_time(
-        msg.init_msg.clone(),
+        msg.init_msg.start_time,
+        msg.init_msg.start_trading_time,
         factory_params.max_trading_start_time_offset,
     )?;
 
@@ -174,22 +175,33 @@ pub fn instantiate(
 }
 
 fn get_start_trading_time(
-    init_msg: VendingMinterInitMsgExtension,
+    start_time: Timestamp,
+    start_trading_time: Option<Timestamp>,
     factory_max_trading_start_time_offset: u64,
 ) -> Result<Timestamp, ContractError> {
-    let start_trading_time = if let Some(start_trading_time) = init_msg.start_trading_time {
-        if init_msg.start_time > start_trading_time {
+    let latest_trading_start_time = start_time.plus_seconds(factory_max_trading_start_time_offset);
+
+    // if start_trading_time is not provided, use latest_trading_start_time
+    // if start_trading_time is earlier than latest_trading_start_time, use start_trading_time
+    // else return invalid start time error
+    let start_trading_time = if let Some(start_trading_time) = start_trading_time {
+        if start_time > start_trading_time {
             return Err(ContractError::InvalidStartTradingTime(
                 start_trading_time,
-                init_msg.start_time,
+                start_time,
             ));
         } else {
-            start_trading_time
+            if start_trading_time < latest_trading_start_time {
+                start_trading_time
+            } else {
+                return Err(ContractError::InvalidStartTradingTime(
+                    latest_trading_start_time,
+                    start_trading_time,
+                ));
+            }
         }
     } else {
-        init_msg
-            .start_time
-            .plus_seconds(factory_max_trading_start_time_offset)
+        latest_trading_start_time
     };
     Ok(start_trading_time)
 }
@@ -205,6 +217,9 @@ pub fn execute(
         ExecuteMsg::Mint {} => execute_mint_sender(deps, env, info),
         ExecuteMsg::UpdateMintPrice { price } => execute_update_mint_price(deps, env, info, price),
         ExecuteMsg::UpdateStartTime(time) => execute_update_start_time(deps, env, info, time),
+        ExecuteMsg::UpdateStartTradingTime(time) => {
+            execute_update_start_trading_time(deps, env, info, time)
+        }
         ExecuteMsg::UpdatePerAddressLimit { per_address_limit } => {
             execute_update_per_address_limit(deps, env, info, per_address_limit)
         }
@@ -218,6 +233,42 @@ pub fn execute(
         }
         ExecuteMsg::Shuffle {} => execute_shuffle(deps, env, info),
     }
+}
+
+fn execute_update_start_trading_time(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    start_trading_time: Timestamp,
+) -> Result<Response, ContractError> {
+    nonpayable(&info)?;
+    let mut config = CONFIG.load(deps.storage)?;
+    if config.extension.admin != info.sender {
+        return Err(ContractError::Unauthorized(
+            "Sender is not an admin".to_owned(),
+        ));
+    };
+    let factory_response: ParamsResponse = deps
+        .querier
+        .query_wasm_smart(config.factory.clone(), &Sg2QueryMsg::Params {})?;
+    let factory_params = factory_response.params;
+
+    // update start_trading_time
+    let start_trading_time = get_start_trading_time(
+        config.extension.start_time,
+        Some(start_trading_time),
+        factory_params.max_trading_start_time_offset,
+    )?;
+
+    config.start_trading_time = Some(start_trading_time);
+    CONFIG.save(deps.storage, &config)?;
+
+    Ok(Response::new()
+        .add_attribute("action", "update_start_trading_time")
+        .add_attribute("contract_name", CONTRACT_NAME)
+        .add_attribute("contract_version", CONTRACT_VERSION)
+        .add_attribute("sender", env.contract.address.to_string())
+        .add_attribute("start_trading_time", start_trading_time.to_string()))
 }
 
 // Anyone can pay to shuffle at any time

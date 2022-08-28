@@ -63,9 +63,7 @@ mod tests {
         VendingMinterInitMsgExtension {
             base_token_uri: "ipfs://aldkfjads".to_string(),
             start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
-            start_trading_time: Some(
-                Timestamp::from_nanos(GENESIS_MINT_START_TIME).plus_seconds(0),
-            ),
+            start_trading_time: None,
             num_tokens: 100,
             mint_price: coin(MIN_MINT_PRICE, NATIVE_DENOM),
             per_address_limit: 5,

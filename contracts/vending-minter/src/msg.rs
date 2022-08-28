@@ -16,6 +16,7 @@ pub enum ExecuteMsg {
     SetWhitelist { whitelist: String },
     UpdateMintPrice { price: u128 },
     UpdateStartTime(Timestamp),
+    UpdateStartTradingTime(Timestamp),
     UpdatePerAddressLimit { per_address_limit: u32 },
     MintTo { recipient: String },
     MintFor { token_id: u32, recipient: String },
@@ -54,6 +55,11 @@ pub struct MintableNumTokensResponse {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct StartTimeResponse {
     pub start_time: String,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct StartTradingTimeResponse {
+    pub start_trading_time: String,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
