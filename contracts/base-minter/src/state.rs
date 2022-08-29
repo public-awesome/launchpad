@@ -1,8 +1,15 @@
-use cosmwasm_std::{Addr, Empty, StdResult, Storage};
+use cosmwasm_std::{Addr, StdResult, Storage};
 use cw_storage_plus::Item;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 use sg4::{MinterConfig, Status};
 
-pub type Config = MinterConfig<Empty>;
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct ConfigExtension {
+    pub admin: Addr,
+}
+
+pub type Config = MinterConfig<ConfigExtension>;
 
 /// Initial configuration of the minter
 pub const CONFIG: Item<Config> = Item::new("config");

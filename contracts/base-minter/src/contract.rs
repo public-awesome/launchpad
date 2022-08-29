@@ -1,6 +1,8 @@
 use crate::error::ContractError;
 use crate::msg::{ConfigResponse, ExecuteMsg, QueryMsg, SudoMsg};
-use crate::state::{increment_token_index, Config, COLLECTION_ADDRESS, CONFIG, STATUS};
+use crate::state::{
+    increment_token_index, Config, ConfigExtension, COLLECTION_ADDRESS, CONFIG, STATUS,
+};
 
 use base_factory::msg::{BaseMinterCreateMsg, Extension, ParamsResponse};
 
@@ -8,7 +10,7 @@ use base_factory::msg::{BaseMinterCreateMsg, Extension, ParamsResponse};
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     to_binary, Addr, Binary, CosmosMsg, Deps, DepsMut, Empty, Env, MessageInfo, Reply, StdResult,
-    WasmMsg,
+    Timestamp, WasmMsg,
 };
 
 use cw2::set_contract_version;
@@ -57,7 +59,11 @@ pub fn instantiate(
         // 100% is fair burned
         mint_price: res.params.min_mint_price,
         start_trading_time: None,
-        extension: Empty {},
+        extension: ConfigExtension {
+            admin: deps
+                .api
+                .addr_validate(&msg.collection_params.info.creator)?,
+        },
     };
 
     CONFIG.save(deps.storage, &config)?;
@@ -97,7 +103,30 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::Mint { token_uri } => execute_mint_sender(deps, info, token_uri),
+        ExecuteMsg::UpdateStartTradingTime { start_trading_time } => {
+            execute_update_start_trading_time(deps, info, start_trading_time)
+        }
     }
+}
+
+fn execute_update_start_trading_time(
+    deps: DepsMut,
+    info: MessageInfo,
+    start_trading_time: Option<Timestamp>,
+) -> Result<Response, ContractError> {
+    let mut config = CONFIG.load(deps.storage)?;
+    if config.extension.admin != info.sender {
+        return Err(ContractError::Unauthorized(
+            "Sender is not an admin".to_owned(),
+        ));
+    };
+
+    config.start_trading_time = start_trading_time;
+    CONFIG.save(deps.storage, &config)?;
+
+    Ok(Response::new()
+        .add_attribute("action", "update_start_trading_time")
+        .add_attribute("sender", info.sender))
 }
 
 pub fn execute_mint_sender(
