@@ -42,6 +42,7 @@ pub struct ConfigResponse {
     pub sg721_address: String,
     pub sg721_code_id: u64,
     pub start_time: Timestamp,
+    pub start_trading_time: Option<Timestamp>,
     pub mint_price: Coin,
     pub whitelist: Option<String>,
     pub factory: String,
@@ -55,11 +56,6 @@ pub struct MintableNumTokensResponse {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct StartTimeResponse {
     pub start_time: String,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct StartTradingTimeResponse {
-    pub start_trading_time: String,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

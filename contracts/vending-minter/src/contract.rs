@@ -840,6 +840,7 @@ fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
         sg721_code_id: config.collection_code_id,
         num_tokens: config.extension.num_tokens,
         start_time: config.extension.start_time,
+        start_trading_time: config.start_trading_time,
         mint_price: config.mint_price,
         per_address_limit: config.extension.per_address_limit,
         whitelist: config.extension.whitelist.map(|w| w.to_string()),
