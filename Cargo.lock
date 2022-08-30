@@ -855,6 +855,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "sg-metadata"
+version = "0.14.0"
+dependencies = [
+ "schemars",
+ "serde",
+]
+
+[[package]]
 name = "sg-multi-test"
 version = "0.15.1"
 dependencies = [
@@ -1104,7 +1112,7 @@ dependencies = [
 
 [[package]]
 name = "sg721-base"
-version = "0.13.2"
+version = "0.14.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -1122,6 +1130,31 @@ dependencies = [
  "sg721 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "thiserror",
  "url",
+ "vending-factory 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vending-minter 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "sg721-metadata-onchain"
+version = "0.14.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-multi-test",
+ "cw-storage-plus",
+ "cw-utils",
+ "cw2",
+ "cw721",
+ "cw721-base",
+ "schemars",
+ "serde",
+ "sg-metadata",
+ "sg-multi-test 0.15.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg-std 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg2 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg721 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg721-base 0.14.0",
+ "thiserror",
  "vending-factory 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "vending-minter 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
