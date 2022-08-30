@@ -1,10 +1,8 @@
 use base_factory::{msg::BaseMinterCreateMsg, state::BaseMinterParams};
-use cosmwasm_std::Timestamp;
+use cosmwasm_std::{Empty, Timestamp};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use sg4::MinterConfigResponse;
-
-use crate::state::ConfigExtension;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {
@@ -30,7 +28,7 @@ pub enum QueryMsg {
     Status {},
 }
 
-pub type ConfigResponse = MinterConfigResponse<ConfigExtension>;
+pub type ConfigResponse = MinterConfigResponse<Empty>;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
