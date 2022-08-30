@@ -27,10 +27,7 @@ where
         _env: Env,
         info: MessageInfo,
         msg: InstantiateMsg,
-    ) -> Result<Response, ContractError>
-    where
-        T: Serialize + DeserializeOwned + Clone,
-    {
+    ) -> Result<Response, ContractError> {
         // no funds should be sent to this contract
         nonpayable(&info)?;
 
