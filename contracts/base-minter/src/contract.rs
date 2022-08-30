@@ -8,7 +8,7 @@ use base_factory::msg::{BaseMinterCreateMsg, Extension, ParamsResponse};
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     to_binary, Addr, Binary, ContractInfoResponse, CosmosMsg, Deps, DepsMut, Empty, Env,
-    MessageInfo, Reply, StdResult, Timestamp, WasmMsg, WasmQuery,
+    MessageInfo, QueryRequest, Reply, StdResult, Timestamp, WasmMsg, WasmQuery,
 };
 
 use cw2::set_contract_version;
@@ -111,19 +111,24 @@ fn execute_update_start_trading_time(
 ) -> Result<Response, ContractError> {
     let mut config = CONFIG.load(deps.storage)?;
 
-    // TODO use admin if available, otherwise use creator
-    // TODO use wasmmsg contractinfo instead of config extension
-    // query contract info
-    let query = WasmQuery::ContractInfo {
+    let contract_info_query = QueryRequest::Wasm(WasmQuery::ContractInfo {
         contract_addr: env.contract.address.into(),
-    };
-    let res: ContractInfoResponse = deps.querier.query(query)?;
+    });
+    let contract_info = deps
+        .querier
+        .query::<ContractInfoResponse>(&contract_info_query)?;
 
-    // if config.extension.admin != info.sender {
-    //     return Err(ContractError::Unauthorized(
-    //         "Sender is not an admin".to_owned(),
-    //     ));
-    // };
+    let allow_addr = if let Some(admin) = contract_info.admin {
+        admin
+    } else {
+        contract_info.creator
+    };
+
+    if allow_addr != info.sender {
+        return Err(ContractError::Unauthorized(
+            "Sender is not an admin or creator".to_owned(),
+        ));
+    };
 
     config.start_trading_time = start_trading_time;
     CONFIG.save(deps.storage, &config)?;
