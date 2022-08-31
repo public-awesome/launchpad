@@ -95,7 +95,7 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::Mint { token_uri } => execute_mint_sender(deps, info, token_uri),
-        ExecuteMsg::UpdateStartTradingTime { start_trading_time } => {
+        ExecuteMsg::UpdateStartTradingTime(start_trading_time) => {
             execute_update_start_trading_time(deps, info, start_trading_time)
         }
     }
