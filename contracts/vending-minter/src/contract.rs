@@ -190,15 +190,13 @@ fn get_start_trading_time(
                 start_trading_time,
                 start_time,
             ));
+        } else if start_trading_time < latest_trading_start_time {
+            start_trading_time
         } else {
-            if start_trading_time < latest_trading_start_time {
-                start_trading_time
-            } else {
-                return Err(ContractError::InvalidStartTradingTime(
-                    latest_trading_start_time,
-                    start_trading_time,
-                ));
-            }
+            return Err(ContractError::InvalidStartTradingTime(
+                latest_trading_start_time,
+                start_trading_time,
+            ));
         }
     } else {
         latest_trading_start_time
