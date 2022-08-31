@@ -18,7 +18,7 @@ use cosmwasm_std::{
 use cw2::set_contract_version;
 use cw4::MemberListResponse;
 use cw721_base::{msg::ExecuteMsg as Cw721ExecuteMsg, MintMsg};
-use cw_utils::{may_pay, nonpayable, parse_reply_instantiate_data};
+use cw_utils::{may_pay, maybe_addr, nonpayable, parse_reply_instantiate_data};
 use rand_core::{RngCore, SeedableRng};
 use rand_xoshiro::Xoshiro128PlusPlus;
 use sg1::checked_fair_burn;
