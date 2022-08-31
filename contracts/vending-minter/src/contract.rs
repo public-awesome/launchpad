@@ -1,5 +1,4 @@
 use std::convert::TryInto;
-use std::ops::Deref;
 
 use crate::error::ContractError;
 use crate::msg::{
@@ -17,9 +16,7 @@ use cosmwasm_std::{
     MessageInfo, Order, QueryRequest, Reply, ReplyOn, StdError, StdResult, Timestamp, Uint128,
     WasmMsg, WasmQuery,
 };
-use cw2::{
-    get_contract_version, query_contract_info, set_contract_version, ContractVersion, CONTRACT,
-};
+use cw2::{set_contract_version, ContractVersion, CONTRACT};
 use cw4::MemberListResponse;
 use cw721_base::{msg::ExecuteMsg as Cw721ExecuteMsg, MintMsg};
 use cw_utils::{may_pay, maybe_addr, nonpayable, parse_reply_instantiate_data};
@@ -39,8 +36,6 @@ use shuffle::{fy::FisherYates, shuffler::Shuffler};
 use url::Url;
 
 use vending_factory::msg::{ParamsResponse, VendingMinterCreateMsg};
-
-use std::ops::Deref;
 
 pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 pub type SubMsg = cosmwasm_std::SubMsg<StargazeMsgWrapper>;
@@ -544,40 +539,58 @@ fn pay_seller(
     creator: Addr,
     res: &mut Response,
 ) -> Result<(), ContractError> {
-    // TODO: if a payment address is specified, check if it is a splits contracts
-    // and if so, perform the split.
-    // If not, pay the single seller (send to payment_address w/o distribute() call).
-    // if payment_address is None, pay the creator address.
-
     if let Some(addr) = payment_address {
         let req = QueryRequest::Wasm(WasmQuery::Raw {
-            contract_addr: addr.into(),
+            contract_addr: addr.clone().into(),
             key: CONTRACT.as_slice().into(),
         });
-        let contract_version = deps.querier.query::<ContractVersion>(&req)?;
+        match deps.querier.query::<ContractVersion>(&req) {
+            Ok(contract_version) => {
+                // We know we have a smart contract here since they all conform to cw2 and have a version
+                if contract_version.contract == sg_splits::contract::CONTRACT_NAME {
+                    // Make sure splits has members, which is also a secondary check on the contract type
+                    let msg = SplitsQueryMsg::ListMembers {
+                        start_after: None,
+                        limit: None,
+                    };
+                    let list: MemberListResponse =
+                        deps.querier.query_wasm_smart(addr.clone(), &msg)?;
+                    if list.members.is_empty() {
+                        return Err(ContractError::NoSplitMembers {});
+                    } else {
+                        let msg = BankMsg::Send {
+                            to_address: addr.to_string(),
+                            amount: vec![coin(amount.u128(), mint_price.denom)],
+                        };
+                        res.messages.push(SubMsg::new(msg));
 
-        let msg = SplitsQueryMsg::ListMembers {
-            start_after: None,
-            limit: None,
-        };
-        let list: MemberListResponse = deps.querier.query_wasm_smart(addr.clone(), &msg)?;
-        if list.members.is_empty() {
-            return Err(ContractError::NoSplitMembers {});
-        } else {
-            let msg = BankMsg::Send {
-                to_address: addr.to_string(),
-                amount: vec![coin(amount.u128(), mint_price.denom)],
-            };
-            res.messages.push(SubMsg::new(msg));
-
-            let msg = WasmMsg::Execute {
-                contract_addr: addr.to_string(),
-                msg: to_binary(&SplitsExecuteMsg::Distribute {})?,
-                funds: vec![],
-            };
-            res.messages.push(SubMsg::new(msg));
+                        let msg = WasmMsg::Execute {
+                            contract_addr: addr.to_string(),
+                            msg: to_binary(&SplitsExecuteMsg::Distribute {})?,
+                            funds: vec![],
+                        };
+                        res.messages.push(SubMsg::new(msg));
+                    }
+                } else {
+                    // Send funds to contract, since it's most likely a group/DAO
+                    let msg = BankMsg::Send {
+                        to_address: addr.to_string(),
+                        amount: vec![coin(amount.u128(), mint_price.denom)],
+                    };
+                    res.messages.push(SubMsg::new(msg));
+                }
+            }
+            Err(_) => {
+                // we have a regular payment address (not a contract)
+                let msg = BankMsg::Send {
+                    to_address: addr.to_string(),
+                    amount: vec![coin(amount.u128(), mint_price.denom)],
+                };
+                res.messages.push(SubMsg::new(msg));
+            }
         }
     } else {
+        // pay regular seller account (not a contract)
         let msg = BankMsg::Send {
             to_address: creator.to_string(),
             amount: vec![coin(amount.u128(), mint_price.denom)],
