@@ -1469,3 +1469,88 @@ fn update_mint_price() {
     );
     assert!(res.is_ok());
 }
+
+#[test]
+fn start_trading_time() {
+    let num_tokens = 100;
+    let init_params = mock_init_extension();
+    let mut router = custom_mock_app();
+    let (creator, _) = setup_accounts(&mut router);
+
+    // Upload contract code
+    let minter_code_id = router.store_code(contract_minter());
+
+    let factory_code_id = router.store_code(contract_factory());
+
+    let mut params = mock_params();
+    params.code_id = minter_code_id;
+
+    let factory_addr = router
+        .instantiate_contract(
+            factory_code_id,
+            creator.clone(),
+            &vending_factory::msg::InstantiateMsg {
+                params: params.clone(),
+            },
+            &[],
+            "factory",
+            None,
+        )
+        .unwrap();
+
+    let sg721_code_id = router.store_code(contract_sg721());
+
+    let mut msg = mock_create_minter();
+    msg.init_msg.mint_price = coin(MINT_PRICE, NATIVE_DENOM);
+    msg.init_msg.num_tokens = num_tokens;
+    msg.collection_params.code_id = sg721_code_id;
+    msg.collection_params.info.creator = creator.to_string();
+
+    let msg = Sg2ExecuteMsg::CreateMinter(msg);
+
+    let res = router.execute_contract(creator.clone(), factory_addr, &msg, &[params.creation_fee]);
+    assert!(res.is_ok());
+
+    // could get the minter address from the response above, but we know its contract1
+    let minter_addr = Addr::unchecked("contract1");
+
+    let config: ConfigResponse = router
+        .wrap()
+        .query_wasm_smart(minter_addr.clone(), &QueryMsg::Config {})
+        .unwrap();
+
+    if let Some(_) = config.start_trading_time {
+        assert_eq!(config.start_trading_time, init_params.start_trading_time);
+    } else {
+        panic!("start_trading_time not found");
+    }
+
+    let update_trading_time_msg = ExecuteMsg::UpdateStartTradingTime(
+        Timestamp::from_nanos(GENESIS_MINT_START_TIME)
+            .plus_seconds(params.max_trading_start_time_offset),
+    );
+    let res = router.execute_contract(
+        creator.clone(),
+        minter_addr.clone(),
+        &update_trading_time_msg,
+        &[],
+    );
+    assert!(res.is_ok());
+
+    let config: ConfigResponse = router
+        .wrap()
+        .query_wasm_smart(minter_addr.clone(), &QueryMsg::Config {})
+        .unwrap();
+
+    if let Some(_) = config.start_trading_time {
+        assert_eq!(
+            config.start_trading_time,
+            Some(
+                Timestamp::from_nanos(GENESIS_MINT_START_TIME)
+                    .plus_seconds(params.max_trading_start_time_offset)
+            )
+        );
+    } else {
+        panic!("start_trading_time not found");
+    }
+}
