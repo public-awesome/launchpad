@@ -572,7 +572,7 @@ fn pay_seller(
                         res.messages.push(SubMsg::new(msg));
                     }
                 } else {
-                    // Send funds to contract, since it's most likely a group/DAO
+                    // Send funds to contract, most likely a DAO
                     let msg = BankMsg::Send {
                         to_address: addr.to_string(),
                         amount: vec![coin(amount.u128(), mint_price.denom)],
