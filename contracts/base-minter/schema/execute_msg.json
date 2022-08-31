@@ -29,19 +29,14 @@
       ],
       "properties": {
         "update_start_trading_time": {
-          "type": "object",
-          "properties": {
-            "start_trading_time": {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/Timestamp"
-                },
-                {
-                  "type": "null"
-                }
-              ]
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Timestamp"
+            },
+            {
+              "type": "null"
             }
-          }
+          ]
         }
       },
       "additionalProperties": false

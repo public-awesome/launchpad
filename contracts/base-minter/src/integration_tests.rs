@@ -243,9 +243,7 @@ fn start_trading_time() {
         .instantiate_contract(
             factory_code_id,
             creator.clone(),
-            &base_factory::msg::InstantiateMsg {
-                params: params.clone(),
-            },
+            &base_factory::msg::InstantiateMsg { params },
             &[],
             "factory",
             None,
@@ -294,7 +292,7 @@ fn start_trading_time() {
         .query_wasm_smart(minter_addr, &QueryMsg::Config {})
         .unwrap();
 
-    if let Some(_) = config.config.start_trading_time {
+    if config.config.start_trading_time.is_some() {
         assert_eq!(
             config.config.start_trading_time,
             Some(Timestamp::from_nanos(0).plus_nanos(1_000_000_000))
