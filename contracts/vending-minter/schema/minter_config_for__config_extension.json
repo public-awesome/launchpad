@@ -23,6 +23,16 @@
     },
     "mint_price": {
       "$ref": "#/definitions/Coin"
+    },
+    "start_trading_time": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/Timestamp"
+        },
+        {
+          "type": "null"
+        }
+      ]
     }
   },
   "definitions": {

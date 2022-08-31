@@ -71,6 +71,18 @@
     {
       "type": "object",
       "required": [
+        "update_start_trading_time"
+      ],
+      "properties": {
+        "update_start_trading_time": {
+          "$ref": "#/definitions/Timestamp"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
         "update_per_address_limit"
       ],
       "properties": {

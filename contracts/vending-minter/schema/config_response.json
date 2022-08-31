@@ -47,6 +47,16 @@
     "start_time": {
       "$ref": "#/definitions/Timestamp"
     },
+    "start_trading_time": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/Timestamp"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
     "whitelist": {
       "type": [
         "string",

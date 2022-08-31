@@ -11,7 +11,7 @@
       "$ref": "#/definitions/CreateMinterMsg_for_Nullable_Empty"
     },
     "params": {
-      "$ref": "#/definitions/MinterParams_for_Nullable_Empty"
+      "$ref": "#/definitions/InitialMinterParams_for_Nullable_Empty"
     }
   },
   "definitions": {
@@ -120,12 +120,13 @@
       "description": "An empty struct that serves as a placeholder in different places, such as contracts that don't set a custom message.\n\nIt is designed to be expressable in correct JSON and JSON Schema but contains no meaningful data. Previously we used enums without cases, but those cannot represented as valid JSON Schema (https://github.com/CosmWasm/cosmwasm/issues/451)",
       "type": "object"
     },
-    "MinterParams_for_Nullable_Empty": {
+    "InitialMinterParams_for_Nullable_Empty": {
       "description": "Common params for all minters used for storage",
       "type": "object",
       "required": [
         "code_id",
         "creation_fee",
+        "max_trading_start_time_offset",
         "min_mint_price",
         "mint_fee_bps"
       ],
@@ -148,6 +149,11 @@
               "type": "null"
             }
           ]
+        },
+        "max_trading_start_time_offset": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
         },
         "min_mint_price": {
           "$ref": "#/definitions/Coin"

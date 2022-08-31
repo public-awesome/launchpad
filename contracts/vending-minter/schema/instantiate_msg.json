@@ -11,7 +11,7 @@
       "$ref": "#/definitions/CreateMinterMsg_for_VendingMinterInitMsgExtension"
     },
     "params": {
-      "$ref": "#/definitions/MinterParams_for_ParamsExtension"
+      "$ref": "#/definitions/InitialMinterParams_for_ParamsExtension"
     }
   },
   "definitions": {
@@ -110,13 +110,14 @@
       "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
       "type": "string"
     },
-    "MinterParams_for_ParamsExtension": {
+    "InitialMinterParams_for_ParamsExtension": {
       "description": "Common params for all minters used for storage",
       "type": "object",
       "required": [
         "code_id",
         "creation_fee",
         "extension",
+        "max_trading_start_time_offset",
         "min_mint_price",
         "mint_fee_bps"
       ],
@@ -132,6 +133,11 @@
         },
         "extension": {
           "$ref": "#/definitions/ParamsExtension"
+        },
+        "max_trading_start_time_offset": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
         },
         "min_mint_price": {
           "$ref": "#/definitions/Coin"
@@ -236,6 +242,16 @@
         },
         "start_time": {
           "$ref": "#/definitions/Timestamp"
+        },
+        "start_trading_time": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Timestamp"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "whitelist": {
           "type": [
