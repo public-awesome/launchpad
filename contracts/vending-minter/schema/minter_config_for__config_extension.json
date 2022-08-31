@@ -66,6 +66,16 @@
           "format": "uint32",
           "minimum": 0.0
         },
+        "payment_address": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Addr"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "per_address_limit": {
           "type": "integer",
           "format": "uint32",

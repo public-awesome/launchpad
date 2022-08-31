@@ -229,6 +229,12 @@
           "format": "uint32",
           "minimum": 0.0
         },
+        "payment_address": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "per_address_limit": {
           "type": "integer",
           "format": "uint32",
