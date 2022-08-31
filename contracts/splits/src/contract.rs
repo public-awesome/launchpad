@@ -7,7 +7,6 @@ use cosmwasm_std::{
 use cw2::set_contract_version;
 use cw4::{Cw4Contract, Member, MemberListResponse, MemberResponse};
 use sg_std::NATIVE_DENOM;
-// use sg_std::{Response, NATIVE_DENOM};
 
 use crate::error::ContractError;
 use crate::msg::{ConfigResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
