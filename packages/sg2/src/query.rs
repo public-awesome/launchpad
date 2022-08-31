@@ -1,4 +1,4 @@
-use crate::InitialMinterParams;
+use crate::MinterParams;
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -12,5 +12,5 @@ pub enum Sg2QueryMsg {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct ParamsResponse<T> {
-    pub params: InitialMinterParams<T>,
+    pub params: MinterParams<T>,
 }

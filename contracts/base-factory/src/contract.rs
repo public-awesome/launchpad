@@ -103,7 +103,7 @@ pub fn sudo_update_params(
 
 /// Base update params that can be used by other minter factories
 pub fn update_params<T, C>(
-    params: &mut InitialMinterParams<C>,
+    params: &mut MinterParams<C>,
     param_msg: UpdateMinterParamsMsg<T>,
 ) -> Result<(), ContractError> {
     params.code_id = param_msg.code_id.unwrap_or(params.code_id);

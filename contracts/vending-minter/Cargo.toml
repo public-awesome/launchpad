@@ -54,9 +54,9 @@ cw721 = "0.13.4"
 cw721-base = { version = "0.13.4", features = ["library"] }
 sg1 = "0.14.1"
 sg721 = "0.14.0"
-vending-factory = { version = "0.1.0", features = ["library"] }
-sg2 = "0.1.0"
-sg4 = "0.11.0"
+vending-factory = { path = "../vending-factory", features = ["library"] }
+sg2 = { path = "../../packages/sg2" }
+sg4 = { path = "../../packages/sg4" }
 
 [dev-dependencies]
 cosmwasm-schema = { version = "1.0.0" }

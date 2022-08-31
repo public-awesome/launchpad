@@ -8,7 +8,7 @@ pub mod tests;
 
 /// Common params for all minters used for storage
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct InitialMinterParams<T> {
+pub struct MinterParams<T> {
     /// The minter code id
     pub code_id: u64,
     pub creation_fee: Coin,
