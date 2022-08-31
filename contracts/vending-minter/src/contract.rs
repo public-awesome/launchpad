@@ -538,6 +538,11 @@ fn pay_seller(
     creator: Addr,
     res: &mut Response,
 ) -> Result<(), ContractError> {
+    // TODO: if a payment address is specified, check if it is a splits contracts
+    // and if so, perform the split.
+    // If not, pay the single seller (send to payment_address w/o distribute() call).
+    // if payment_address is None, pay the creator address.
+
     if let Some(addr) = payment_address {
         let msg = SplitsQueryMsg::ListMembers {
             start_after: None,
