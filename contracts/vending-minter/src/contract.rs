@@ -1,4 +1,5 @@
 use std::convert::TryInto;
+use std::ops::Deref;
 
 use crate::error::ContractError;
 use crate::msg::{
@@ -13,9 +14,12 @@ use crate::state::{
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     coin, to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Deps, DepsMut, Empty, Env,
-    MessageInfo, Order, Reply, ReplyOn, StdError, StdResult, Timestamp, Uint128, WasmMsg,
+    MessageInfo, Order, QueryRequest, Reply, ReplyOn, StdError, StdResult, Timestamp, Uint128,
+    WasmMsg, WasmQuery,
 };
-use cw2::set_contract_version;
+use cw2::{
+    get_contract_version, query_contract_info, set_contract_version, ContractVersion, CONTRACT,
+};
 use cw4::MemberListResponse;
 use cw721_base::{msg::ExecuteMsg as Cw721ExecuteMsg, MintMsg};
 use cw_utils::{may_pay, maybe_addr, nonpayable, parse_reply_instantiate_data};
@@ -35,6 +39,8 @@ use shuffle::{fy::FisherYates, shuffler::Shuffler};
 use url::Url;
 
 use vending_factory::msg::{ParamsResponse, VendingMinterCreateMsg};
+
+use std::ops::Deref;
 
 pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 pub type SubMsg = cosmwasm_std::SubMsg<StargazeMsgWrapper>;
@@ -544,6 +550,12 @@ fn pay_seller(
     // if payment_address is None, pay the creator address.
 
     if let Some(addr) = payment_address {
+        let req = QueryRequest::Wasm(WasmQuery::Raw {
+            contract_addr: addr.into(),
+            key: CONTRACT.as_slice().into(),
+        });
+        let contract_version = deps.querier.query::<ContractVersion>(&req)?;
+
         let msg = SplitsQueryMsg::ListMembers {
             start_after: None,
             limit: None,
