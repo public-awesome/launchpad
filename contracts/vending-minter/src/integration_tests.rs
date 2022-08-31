@@ -197,13 +197,62 @@ fn setup_minter_contract(
     let msg = Sg2ExecuteMsg::CreateMinter(msg);
 
     let res = router.execute_contract(creator.clone(), factory_addr, &msg, &creation_fee);
-    // println!("{:?}", res);
     assert!(res.is_ok());
 
     // could get the minter address from the response above, but we know its contract1
-    // let minter_addr = Addr::unchecked("contract1");
-    // FIXME: 1 = group, 2 = splits, 3 = minter, 4 = factory, 5 = sg721
     let minter_addr = Addr::unchecked("contract1");
+
+    let config: ConfigResponse = router
+        .wrap()
+        .query_wasm_smart(minter_addr.clone(), &QueryMsg::Config {})
+        .unwrap();
+
+    (minter_addr, config)
+}
+
+fn setup_minter_contract_with_splits(
+    router: &mut StargazeApp,
+    creator: &Addr,
+    num_tokens: u32,
+    splits_addr: Option<String>,
+) -> (Addr, ConfigResponse) {
+    let minter_code_id = router.store_code(contract_minter());
+    println!("minter_code_id: {}", minter_code_id);
+    let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
+
+    let factory_code_id = router.store_code(contract_factory());
+    println!("factory_code_id: {}", factory_code_id);
+
+    let mut params = mock_params();
+    params.code_id = minter_code_id;
+
+    let factory_addr = router
+        .instantiate_contract(
+            factory_code_id,
+            creator.clone(),
+            &vending_factory::msg::InstantiateMsg { params },
+            &[],
+            "factory",
+            None,
+        )
+        .unwrap();
+
+    let sg721_code_id = router.store_code(contract_sg721());
+    println!("sg721_code_id: {}", sg721_code_id);
+
+    let mut msg = mock_create_minter(splits_addr);
+    msg.init_msg.unit_price = coin(UNIT_PRICE, NATIVE_DENOM);
+    msg.init_msg.num_tokens = num_tokens;
+    msg.collection_params.code_id = sg721_code_id;
+    msg.collection_params.info.creator = creator.to_string();
+
+    let msg = Sg2ExecuteMsg::CreateMinter(msg);
+
+    let res = router.execute_contract(creator.clone(), factory_addr, &msg, &creation_fee);
+    assert!(res.is_ok());
+
+    // 1 = group, 2 = splits, 3 = minter, 4 = factory, 5 = sg721
+    let minter_addr = Addr::unchecked("contract3");
 
     let config: ConfigResponse = router
         .wrap()
@@ -1565,28 +1614,36 @@ fn mock_app(init_funds: &[Coin]) -> App {
 // fn mint_and_split() {
 //     // let mut app = mock_app(&[]);
 //     let mut app = custom_mock_app();
+fn mint_and_split() {
+    let mut app = custom_mock_app();
 
-//     let (splits_addr, _) = setup_splits_test_case(&mut app, vec![]);
+    let (splits_addr, _) = setup_splits_test_case(&mut app, vec![]);
 
-//     // FIXME: two mock apps causing conflicting code_ids
+    let (creator, buyer) = setup_accounts(&mut app);
+    let num_tokens = 2;
+    let (minter_addr, _) = setup_minter_contract_with_splits(
+        &mut app,
+        &creator,
+        num_tokens,
+        Some(splits_addr.to_string()),
+    );
+    setup_block_time(&mut app, GENESIS_MINT_START_TIME + 1, None);
 
-//     let (creator, buyer) = setup_accounts(&mut app);
-//     let num_tokens = 2;
-//     let (minter_addr, config) = setup_minter_contract(
-//         &mut app,
-//         &creator,
-//         num_tokens,
-//         Some(splits_addr.to_string()),
-//     );
-//     setup_block_time(&mut app, GENESIS_MINT_START_TIME + 1, None);
+    let mint_msg = ExecuteMsg::Mint {};
+    let res = app.execute_contract(
+        buyer,
+        minter_addr,
+        &mint_msg,
+        &coins(UNIT_PRICE, NATIVE_DENOM),
+    );
+    assert!(res.is_ok());
 
-//     let mint_msg = ExecuteMsg::Mint {};
-//     let res = app.execute_contract(
-//         buyer.clone(),
-//         minter_addr.clone(),
-//         &mint_msg,
-//         &coins(UNIT_PRICE, NATIVE_DENOM),
-//     );
-//     println!("{:?}", res);
-//     assert!(res.is_ok());
-// }
+    let amount = app.wrap().query_balance(OWNER, NATIVE_DENOM).unwrap();
+    assert_eq!(amount.amount.u128(), 45000000);
+    let amount = app.wrap().query_balance(MEMBER1, NATIVE_DENOM).unwrap();
+    assert_eq!(amount.amount.u128(), 22500000);
+    let amount = app.wrap().query_balance(MEMBER2, NATIVE_DENOM).unwrap();
+    assert_eq!(amount.amount.u128(), 18000000);
+    let amount = app.wrap().query_balance(MEMBER3, NATIVE_DENOM).unwrap();
+    assert_eq!(amount.amount.u128(), 4500000);
+}
