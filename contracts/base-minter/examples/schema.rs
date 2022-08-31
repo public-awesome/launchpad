@@ -3,8 +3,9 @@ use std::fs::create_dir_all;
 
 use cosmwasm_schema::{export_schema, remove_schemas, schema_for};
 
-use base_minter::msg::{ConfigResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
+use base_minter::msg::{ConfigResponse, ExecuteMsg, InstantiateMsg};
 use base_minter::state::Config;
+use sg4::QueryMsg;
 
 fn main() {
     let mut out_dir = current_dir().unwrap();

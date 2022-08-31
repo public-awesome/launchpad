@@ -1,4 +1,4 @@
-use crate::msg::{ConfigResponse, ExecuteMsg, QueryMsg};
+use crate::msg::{ConfigResponse, ExecuteMsg};
 use base_factory::msg::BaseMinterCreateMsg;
 use base_factory::state::BaseMinterParams;
 use cosmwasm_std::{coin, coins, Addr};
@@ -6,6 +6,7 @@ use cw721::{Cw721ExecuteMsg, Cw721QueryMsg, OwnerOfResponse};
 use cw_multi_test::{BankSudo, Contract, ContractWrapper, Executor, SudoMsg};
 use sg2::msg::Sg2ExecuteMsg;
 use sg2::tests::mock_collection_params;
+use sg4::QueryMsg;
 use sg_multi_test::StargazeApp;
 use sg_std::{StargazeMsgWrapper, NATIVE_DENOM};
 

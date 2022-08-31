@@ -1,5 +1,5 @@
 use crate::error::ContractError;
-use crate::msg::{ConfigResponse, ExecuteMsg, QueryMsg, SudoMsg};
+use crate::msg::{ConfigResponse, ExecuteMsg};
 use crate::state::{increment_token_index, Config, COLLECTION_ADDRESS, CONFIG, STATUS};
 
 use base_factory::msg::{BaseMinterCreateMsg, Extension, ParamsResponse};
@@ -17,15 +17,12 @@ use cw_utils::{must_pay, parse_reply_instantiate_data};
 
 use sg1::checked_fair_burn;
 use sg2::query::Sg2QueryMsg;
-use sg4::{Status, StatusResponse};
+use sg4::{QueryMsg, Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
 use sg721_base::msg::{CollectionInfoResponse, QueryMsg as Sg721QueryMsg};
 use sg_std::math::U64Ext;
-use sg_std::{StargazeMsgWrapper, NATIVE_DENOM};
+use sg_std::{Response, SubMsg, NATIVE_DENOM};
 use url::Url;
-
-pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
-pub type SubMsg = cosmwasm_std::SubMsg<StargazeMsgWrapper>;
 
 const CONTRACT_NAME: &str = "crates.io:sg-base-minter";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");

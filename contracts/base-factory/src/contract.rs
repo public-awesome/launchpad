@@ -8,13 +8,13 @@ use cw_utils::must_pay;
 use sg1::checked_fair_burn;
 use sg2::msg::UpdateMinterParamsMsg;
 use sg2::query::Sg2QueryMsg;
-use sg2::InitialMinterParams;
-use sg_std::NATIVE_DENOM;
+use sg2::MinterParams;
+use sg_std::{Response, NATIVE_DENOM};
 
 use crate::error::ContractError;
 use crate::msg::{
     BaseMinterCreateMsg, BaseSudoMsg, BaseUpdateParamsMsg, ExecuteMsg, InstantiateMsg,
-    ParamsResponse, Response, SudoMsg,
+    ParamsResponse, SudoMsg,
 };
 use crate::state::SUDO_PARAMS;
 

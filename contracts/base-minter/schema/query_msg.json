@@ -3,6 +3,7 @@
   "title": "QueryMsg",
   "oneOf": [
     {
+      "description": "Returns `MinterConfigResponse<T>`",
       "type": "object",
       "required": [
         "config"
@@ -15,6 +16,7 @@
       "additionalProperties": false
     },
     {
+      "description": "Returns `StatusResponse`",
       "type": "object",
       "required": [
         "status"

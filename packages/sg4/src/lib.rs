@@ -32,9 +32,19 @@ pub struct StatusResponse {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum Sg3QueryMsg {
+pub enum QueryMsg {
     /// Returns `MinterConfigResponse<T>`
     Config {},
     /// Returns `StatusResponse`
     Status {},
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum SudoMsg {
+    UpdateStatus {
+        is_verified: bool,
+        is_blocked: bool,
+        is_explicit: bool,
+    },
 }
