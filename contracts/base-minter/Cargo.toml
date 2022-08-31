@@ -43,6 +43,7 @@ url = "2.2.0"
 sg-std = "0.13.0"
 cw721 = "0.13.4"
 cw721-base = { version = "0.13.4", features = ["library"] }
+sg721-base = { path = "../sg721-base", features = ["library"] }
 sg1 = { path = "../../packages/sg1" }
 sg721 = "0.14.0"
 base-factory = { path = "../base-factory", features = ["library"] }

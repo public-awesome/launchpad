@@ -64,6 +64,7 @@ dependencies = [
  "sg2",
  "sg4",
  "sg721 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg721-base",
  "sg721-nt",
  "thiserror",
  "url",

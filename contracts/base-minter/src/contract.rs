@@ -7,8 +7,8 @@ use base_factory::msg::{BaseMinterCreateMsg, Extension, ParamsResponse};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Addr, Binary, ContractInfoResponse, CosmosMsg, Deps, DepsMut, Empty, Env,
-    MessageInfo, QueryRequest, Reply, StdResult, Timestamp, WasmMsg, WasmQuery,
+    to_binary, Addr, Binary, CosmosMsg, Deps, DepsMut, Empty, Env, MessageInfo, Reply, StdResult,
+    Timestamp, WasmMsg,
 };
 
 use cw2::set_contract_version;
@@ -19,6 +19,7 @@ use sg1::checked_fair_burn;
 use sg2::query::Sg2QueryMsg;
 use sg4::{Status, StatusResponse};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
+use sg721_base::msg::{CollectionInfoResponse, QueryMsg as Sg721QueryMsg};
 use sg_std::math::U64Ext;
 use sg_std::{StargazeMsgWrapper, NATIVE_DENOM};
 use url::Url;
@@ -98,7 +99,7 @@ pub fn execute(
     match msg {
         ExecuteMsg::Mint { token_uri } => execute_mint_sender(deps, info, token_uri),
         ExecuteMsg::UpdateStartTradingTime { start_trading_time } => {
-            execute_update_start_trading_time(deps, info, _env, start_trading_time)
+            execute_update_start_trading_time(deps, info, start_trading_time)
         }
     }
 }
@@ -106,27 +107,20 @@ pub fn execute(
 fn execute_update_start_trading_time(
     deps: DepsMut,
     info: MessageInfo,
-    env: Env,
     start_trading_time: Option<Timestamp>,
 ) -> Result<Response, ContractError> {
     let mut config = CONFIG.load(deps.storage)?;
+    let collection_address = COLLECTION_ADDRESS.load(deps.storage)?;
 
-    let contract_info_query = QueryRequest::Wasm(WasmQuery::ContractInfo {
-        contract_addr: env.contract.address.into(),
-    });
-    let contract_info = deps
+    // get sg721 collection info
+    let collection_info: CollectionInfoResponse = deps
         .querier
-        .query::<ContractInfoResponse>(&contract_info_query)?;
+        .query_wasm_smart(collection_address, &Sg721QueryMsg::CollectionInfo {})?;
 
-    let allow_addr = if let Some(admin) = contract_info.admin {
-        admin
-    } else {
-        contract_info.creator
-    };
-
-    if allow_addr != info.sender {
+    // allow only sg721 creator address to update the start trading time
+    if collection_info.creator != info.sender {
         return Err(ContractError::Unauthorized(
-            "Sender is not an admin or creator".to_owned(),
+            "Sender is not sg721 creator".to_owned(),
         ));
     };
 
