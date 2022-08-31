@@ -61,7 +61,7 @@ dependencies = [
 name = "base-minter"
 version = "0.14.1"
 dependencies = [
- "base-factory 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "base-factory 0.1.0",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-multi-test",
