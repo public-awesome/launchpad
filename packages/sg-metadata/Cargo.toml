@@ -1,0 +1,27 @@
+[package]
+name = "sg-metadata"
+version = "0.14.0"
+authors = [
+  "Shane Vitarana <s@noreply.publicawsome.com>",
+  "larry <gm@larry.engineer>"
+]
+edition = "2018"
+description = "Rust definition of the OpenSea metadata standard, used by Stargaze marketplace"
+license = "Apache-2.0"
+repository = "https://github.com/public-awesome/launchpad"
+homepage = "https://stargaze.zone"
+
+exclude = [
+  # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
+  "contract.wasm",
+  "hash.txt",
+]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+schemars = "0.8.8"
+serde = { version = "1.0.137", default-features = false, features = ["derive"] }
