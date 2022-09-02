@@ -35,7 +35,7 @@ thiserror = { version = "1.0.31" }
 cw-utils = "0.13.4"
 sg1 = "0.14.1"
 sg-std = "0.14.0"
-sg2 = "0.1.0"
+sg2 = { path = "../../packages/sg2" }
 
 [dev-dependencies]
 cosmwasm-schema = "1.0.0"
