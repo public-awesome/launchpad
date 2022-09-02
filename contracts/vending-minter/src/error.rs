@@ -89,7 +89,4 @@ pub enum ContractError {
 
     #[error("NoEnvTransactionIndex")]
     NoEnvTransactionIndex {},
-
-    #[error("No members in split contract")]
-    NoSplitMembers {},
 }
