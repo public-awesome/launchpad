@@ -207,6 +207,25 @@ mod tests {
         }
 
         #[test]
+        fn distribute_non_member() {
+            const DENOM: &str = "ustars";
+            let init_funds = coins(100, DENOM);
+            let mut app = mock_app(&init_funds);
+
+            let (splits_addr, _) = setup_test_case(&mut app, init_funds, false);
+
+            let msg = ExecuteMsg::Distribute {};
+
+            app.execute_contract(
+                Addr::unchecked("non_memeber".to_string()),
+                splits_addr,
+                &msg,
+                &[],
+            )
+            .unwrap_err();
+        }
+
+        #[test]
         fn distribute() {
             const DENOM: &str = "ustars";
             let init_funds = coins(100, DENOM);

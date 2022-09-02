@@ -14,6 +14,7 @@ use cw_multi_test::{next_block, BankSudo, Contract, ContractWrapper, Executor, S
 use sg2::msg::Sg2ExecuteMsg;
 use sg2::tests::mock_collection_params;
 use sg_multi_test::StargazeApp;
+use sg_splits::msg::ExecuteMsg as SplitsExecuteMsg;
 use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use sg_whitelist::msg::InstantiateMsg as WhitelistInstantiateMsg;
 use sg_whitelist::msg::{AddMembersMsg, ExecuteMsg as WhitelistExecuteMsg};
@@ -1625,6 +1626,10 @@ fn mint_and_split() {
         &mint_msg,
         &coins(MINT_PRICE, NATIVE_DENOM),
     );
+    assert!(res.is_ok());
+
+    let dist_msg = SplitsExecuteMsg::Distribute {};
+    let res = app.execute_contract(Addr::unchecked(OWNER), splits_addr, &dist_msg, &[]);
     assert!(res.is_ok());
 
     let amount = app.wrap().query_balance(OWNER, NATIVE_DENOM).unwrap();
