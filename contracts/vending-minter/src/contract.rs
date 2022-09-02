@@ -504,13 +504,13 @@ fn _execute_mint(
 
     let seller_amount = if !is_admin {
         let amount = mint_price.amount - network_fee;
-        pay_seller(
-            amount,
-            config.mint_price,
-            config.extension.payment_address,
-            config.extension.admin,
-            &mut res,
-        )?;
+        let payment_address = config.extension.payment_address;
+        let seller = config.extension.admin;
+        let msg = BankMsg::Send {
+            to_address: payment_address.unwrap_or(seller).to_string(),
+            amount: vec![coin(amount.u128(), mint_price.denom)],
+        };
+        res.messages.push(SubMsg::new(msg));
         amount
     } else {
         Uint128::zero()
@@ -524,35 +524,6 @@ fn _execute_mint(
         .add_attribute("network_fee", network_fee)
         .add_attribute("mint_price", mint_price.amount)
         .add_attribute("seller_amount", seller_amount))
-}
-
-// If the payment address is a splits contract, perform the split. Else, pay single seller.
-fn pay_seller(
-    amount: Uint128,
-    mint_price: Coin,
-    payment_address: Option<Addr>,
-    creator: Addr,
-    res: &mut Response,
-) -> Result<(), ContractError> {
-    if let Some(addr) = payment_address {
-        // NOTE: This should be a splits or DAO contract address, or a regular address associated with a private key.
-        // It's up to the creator to make sure this address is correct.
-        // Stargaze is not responsible for any funds sent to a contract that cannot be accessed.
-        let msg = BankMsg::Send {
-            to_address: addr.to_string(),
-            amount: vec![coin(amount.u128(), mint_price.denom)],
-        };
-        res.messages.push(SubMsg::new(msg));
-    } else {
-        // pay regular seller account (not a contract)
-        let msg = BankMsg::Send {
-            to_address: creator.to_string(),
-            amount: vec![coin(amount.u128(), mint_price.denom)],
-        };
-        res.messages.push(SubMsg::new(msg));
-    }
-
-    Ok(())
 }
 
 fn random_token_list(
