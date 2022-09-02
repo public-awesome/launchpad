@@ -17,9 +17,4 @@ pub enum ContractError {
 
     #[error("Group contract invalid total weight '{weight}'")]
     InvalidWeight { weight: u64 },
-
-    #[error("Custom Error val: {val:?}")]
-    CustomError { val: String },
-    // Add any other custom errors you like here.
-    // Look at https://docs.rs/thiserror/1.0.21/thiserror/ for details.
 }

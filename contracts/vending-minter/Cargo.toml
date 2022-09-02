@@ -58,7 +58,6 @@ vending-factory = { path = "../vending-factory", features = ["library"] }
 sg2 = { path = "../../packages/sg2" }
 sg4 = { path = "../../packages/sg4" }
 cw4 = "0.13.4"
-sg-splits = { path = "../splits" }
 
 [dev-dependencies]
 cosmwasm-schema = { version = "1.0.0" }
@@ -66,3 +65,4 @@ cw-multi-test = "0.13.4"
 sg-multi-test = "0.15.1"
 sg721-base = { version = "0.13.1", features = ["library"] }
 cw4-group = "0.13.4"
+sg-splits = { path = "../splits" }

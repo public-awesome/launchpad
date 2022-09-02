@@ -13,11 +13,9 @@ use crate::state::{
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     coin, to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Deps, DepsMut, Empty, Env,
-    MessageInfo, Order, QueryRequest, Reply, ReplyOn, StdError, StdResult, Timestamp, Uint128,
-    WasmMsg, WasmQuery,
+    MessageInfo, Order, Reply, ReplyOn, StdError, StdResult, Timestamp, Uint128, WasmMsg,
 };
-use cw2::{set_contract_version, ContractVersion, CONTRACT};
-use cw4::MemberListResponse;
+use cw2::set_contract_version;
 use cw721_base::{msg::ExecuteMsg as Cw721ExecuteMsg, MintMsg};
 use cw_utils::{may_pay, maybe_addr, nonpayable, parse_reply_instantiate_data};
 use rand_core::{RngCore, SeedableRng};
@@ -25,7 +23,6 @@ use rand_xoshiro::Xoshiro128PlusPlus;
 use sg1::checked_fair_burn;
 use sg2::query::Sg2QueryMsg;
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
-use sg_splits::msg::{ExecuteMsg as SplitsExecuteMsg, QueryMsg as SplitsQueryMsg};
 use sg_std::math::U64Ext;
 use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME};
 use sg_whitelist::msg::{
@@ -508,7 +505,6 @@ fn _execute_mint(
     let seller_amount = if !is_admin {
         let amount = mint_price.amount - network_fee;
         pay_seller(
-            deps.as_ref(),
             amount,
             config.mint_price,
             config.extension.payment_address,
@@ -532,7 +528,6 @@ fn _execute_mint(
 
 // If the payment address is a splits contract, perform the split. Else, pay single seller.
 fn pay_seller(
-    deps: Deps,
     amount: Uint128,
     mint_price: Coin,
     payment_address: Option<Addr>,
@@ -540,55 +535,13 @@ fn pay_seller(
     res: &mut Response,
 ) -> Result<(), ContractError> {
     if let Some(addr) = payment_address {
-        let req = QueryRequest::Wasm(WasmQuery::Raw {
-            contract_addr: addr.clone().into(),
-            key: CONTRACT.as_slice().into(),
-        });
-        match deps.querier.query::<ContractVersion>(&req) {
-            Ok(contract_version) => {
-                // We know we have a smart contract here since they all conform to cw2 and have a version
-                if contract_version.contract == sg_splits::contract::CONTRACT_NAME {
-                    // Make sure splits has members, which is also a secondary check on the contract type
-                    let msg = SplitsQueryMsg::ListMembers {
-                        start_after: None,
-                        limit: None,
-                    };
-                    let list: MemberListResponse =
-                        deps.querier.query_wasm_smart(addr.clone(), &msg)?;
-                    if list.members.is_empty() {
-                        return Err(ContractError::NoSplitMembers {});
-                    } else {
-                        let msg = BankMsg::Send {
-                            to_address: addr.to_string(),
-                            amount: vec![coin(amount.u128(), mint_price.denom)],
-                        };
-                        res.messages.push(SubMsg::new(msg));
-
-                        let msg = WasmMsg::Execute {
-                            contract_addr: addr.to_string(),
-                            msg: to_binary(&SplitsExecuteMsg::Distribute {})?,
-                            funds: vec![],
-                        };
-                        res.messages.push(SubMsg::new(msg));
-                    }
-                } else {
-                    // Send funds to contract, most likely a DAO
-                    let msg = BankMsg::Send {
-                        to_address: addr.to_string(),
-                        amount: vec![coin(amount.u128(), mint_price.denom)],
-                    };
-                    res.messages.push(SubMsg::new(msg));
-                }
-            }
-            Err(_) => {
-                // we have a regular payment address (not a contract)
-                let msg = BankMsg::Send {
-                    to_address: addr.to_string(),
-                    amount: vec![coin(amount.u128(), mint_price.denom)],
-                };
-                res.messages.push(SubMsg::new(msg));
-            }
-        }
+        // NOTE: This should be a splits or DAO contract address. It's up to the creator to make sure this address is correct.
+        // Stargaze is not responsible for any funds sent to a contract that cannot be accessed.
+        let msg = BankMsg::Send {
+            to_address: addr.to_string(),
+            amount: vec![coin(amount.u128(), mint_price.denom)],
+        };
+        res.messages.push(SubMsg::new(msg));
     } else {
         // pay regular seller account (not a contract)
         let msg = BankMsg::Send {
