@@ -535,7 +535,8 @@ fn pay_seller(
     res: &mut Response,
 ) -> Result<(), ContractError> {
     if let Some(addr) = payment_address {
-        // NOTE: This should be a splits or DAO contract address. It's up to the creator to make sure this address is correct.
+        // NOTE: This should be a splits or DAO contract address, or a regular address associated with a private key.
+        // It's up to the creator to make sure this address is correct.
         // Stargaze is not responsible for any funds sent to a contract that cannot be accessed.
         let msg = BankMsg::Send {
             to_address: addr.to_string(),
