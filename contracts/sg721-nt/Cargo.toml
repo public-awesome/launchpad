@@ -1,6 +1,6 @@
 [package]
 name = "sg721-nt"
-version = "0.13.3"
+version = "0.14.0"
 authors = ["Shane Vitarana <s@noreply.publicawesome.com>"]
 edition = "2018"
 description = "Stargaze Non-transferrable NFT collection contract"
@@ -32,18 +32,11 @@ cw-utils = "0.13.4"
 cw2 = "0.13.4"
 schemars = "0.8.8"
 serde = { version = "1.0.133", default-features = false, features = ["derive"] }
-thiserror = { version = "1.0.30" }
 sg-std = "0.14.0"
-url = "2.2.2"
 cw721 = "0.13.4"
 cw721-base = { version = "0.13.4", features = ["library"] }
 sg721 = "0.14.0"
-sg721-base = { version = "0.13.1", features = ["library"] }
+sg721-base = { path = "../sg721-base", features = ["library"] }
 
 [dev-dependencies]
 cosmwasm-schema = { version = "1.0.0" }
-cw-multi-test = "0.13.4"
-sg-multi-test = "0.15.1"
-vending-minter = { version = "0.14.0", features = ["library"] }
-vending-factory = { version = "0.1.0", features = ["library"] }
-sg2 = "0.1.0"

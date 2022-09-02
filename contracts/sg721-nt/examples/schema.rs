@@ -11,7 +11,7 @@ use cw721::{
 };
 use cw721_base::MinterResponse;
 use sg721::InstantiateMsg;
-use sg721_nt::msg::QueryMsg;
+// use sg721_nt::msg::QueryMsg;
 
 fn main() {
     let mut out_dir = current_dir().unwrap();
@@ -20,7 +20,7 @@ fn main() {
     remove_schemas(&out_dir).unwrap();
 
     export_schema(&schema_for!(InstantiateMsg), &out_dir);
-    export_schema(&schema_for!(QueryMsg), &out_dir);
+    // export_schema(&schema_for!(QueryMsg), &out_dir);
     export_schema_with_title(
         &schema_for!(AllNftInfoResponse<Empty>),
         &out_dir,
