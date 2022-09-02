@@ -43,6 +43,6 @@ sg721 = "0.14.0"
 cosmwasm-schema = { version = "1.0.0" }
 cw-multi-test = "0.13.4"
 sg-multi-test = "0.15.1"
-vending-minter = { version = "0.14.0", features = ["library"] }
-vending-factory = { version = "0.1.0", features = ["library"] }
-sg2 = "0.1.0"
+vending-minter = { path = "../vending-minter", features = ["library"] }
+vending-factory = { path = "../vending-factory", features = ["library"] }
+sg2 = { path = "../../packages/sg2" }
