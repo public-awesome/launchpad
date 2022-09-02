@@ -510,7 +510,7 @@ fn _execute_mint(
             to_address: payment_address.unwrap_or(seller).to_string(),
             amount: vec![coin(amount.u128(), mint_price.denom)],
         };
-        res.messages.push(SubMsg::new(msg));
+        res = res.add_message(msg);
         amount
     } else {
         Uint128::zero()
