@@ -10,7 +10,7 @@ use cw721_base::Extension;
 use sg721::InstantiateMsg;
 use sg721_base::Sg721Contract;
 
-pub type Sg721NonFugibleContract<'a> = Sg721Contract<'a, Extension>;
+pub type Sg721NonFungibleContract<'a> = Sg721Contract<'a, Extension>;
 
 #[cfg(not(feature = "library"))]
 pub mod entry {
@@ -30,7 +30,7 @@ pub mod entry {
     ) -> Result<Response, ContractError> {
         cw2::set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
-        let res = Sg721NonFugibleContract::default().instantiate(deps, env, info, msg)?;
+        let res = Sg721NonFungibleContract::default().instantiate(deps, env, info, msg)?;
 
         Ok(res
             .add_attribute("contract_name", CONTRACT_NAME)
@@ -45,11 +45,11 @@ pub mod entry {
         msg: ExecuteMsg<Extension>,
     ) -> Result<Response, sg721_base::ContractError> {
         match msg {
-            ExecuteMsg::_Ready {} => Sg721NonFugibleContract::default().ready(deps, env, info),
+            ExecuteMsg::_Ready {} => Sg721NonFungibleContract::default().ready(deps, env, info),
             ExecuteMsg::Burn { token_id } => {
-                Sg721NonFugibleContract::default().burn(deps, env, info, token_id)
+                Sg721NonFungibleContract::default().burn(deps, env, info, token_id)
             }
-            ExecuteMsg::Mint(msg) => Sg721NonFugibleContract::default().mint(deps, env, info, msg),
+            ExecuteMsg::Mint(msg) => Sg721NonFungibleContract::default().mint(deps, env, info, msg),
         }
     }
 }
