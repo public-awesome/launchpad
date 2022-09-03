@@ -60,7 +60,8 @@ dependencies = [
  "sg2",
  "sg4",
  "sg721 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sg721-nt 0.13.1",
+ "sg721-base 0.14.0",
+ "sg721-nt",
  "thiserror",
  "url",
 ]
@@ -1253,27 +1254,6 @@ dependencies = [
  "sg-std 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg721 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg721-base 0.14.0",
-]
-
-[[package]]
-name = "sg721-nt"
-version = "0.13.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "394bf96e6ebd4db0e459e1ef488ac85de554c8f191a996b343421aa7a714741d"
-dependencies = [
- "cosmwasm-std",
- "cw-storage-plus 0.13.4",
- "cw-utils 0.13.4",
- "cw2 0.13.4",
- "cw721",
- "cw721-base",
- "schemars",
- "serde",
- "sg-std 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sg721 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sg721-base 0.13.1",
- "thiserror",
- "url",
 ]
 
 [[package]]

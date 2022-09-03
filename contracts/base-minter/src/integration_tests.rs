@@ -39,7 +39,7 @@ pub fn contract_minter() -> Box<dyn Contract<StargazeMsgWrapper>> {
 }
 
 /// non-transferable nft
-pub fn contract_collection() -> Box<dyn Contract<StargazeMsgWrapper>> {
+pub fn nt_contract_collection() -> Box<dyn Contract<StargazeMsgWrapper>> {
     let contract = ContractWrapper::new(
         sg721_nt::entry::execute,
         sg721_nt::entry::instantiate,
@@ -86,7 +86,7 @@ fn setup_minter_contract(router: &mut StargazeApp, creator: &Addr) -> (Addr, Con
         )
         .unwrap();
 
-    let collection_code_id = router.store_code(contract_collection());
+    let collection_code_id = router.store_code(nt_contract_collection());
 
     let mut msg = mock_create_minter();
     msg.collection_params.code_id = collection_code_id;
@@ -118,8 +118,9 @@ fn setup_minter_contract(router: &mut StargazeApp, creator: &Addr) -> (Addr, Con
 }
 
 // Add a creator account with initial balances
-fn setup_accounts(router: &mut StargazeApp) -> Addr {
+fn setup_accounts(router: &mut StargazeApp) -> (Addr, Addr) {
     let creator = Addr::unchecked("creator");
+    let buyer = Addr::unchecked("buyer");
     // 3,000 tokens
     let creator_funds = coins(INITIAL_BALANCE, NATIVE_DENOM);
     router
@@ -135,13 +136,23 @@ fn setup_accounts(router: &mut StargazeApp) -> Addr {
     let creator_native_balances = router.wrap().query_all_balances(creator.clone()).unwrap();
     assert_eq!(creator_native_balances, creator_funds);
 
-    creator
+    router
+        .sudo(SudoMsg::Bank({
+            BankSudo::Mint {
+                to_address: buyer.to_string(),
+                amount: creator_funds,
+            }
+        }))
+        .map_err(|err| println!("{:?}", err))
+        .ok();
+
+    (creator, buyer)
 }
 
 #[test]
 fn check_mint() {
     let mut router = custom_mock_app();
-    let creator = setup_accounts(&mut router);
+    let (creator, buyer) = setup_accounts(&mut router);
     let (minter_addr, config) = setup_minter_contract(&mut router, &creator);
 
     // Fail with incorrect token uri
@@ -160,6 +171,18 @@ fn check_mint() {
         minter_addr.clone(),
         &mint_msg,
         &[coin(MIN_MINT_PRICE + 100, NATIVE_DENOM)],
+    );
+    assert!(err.is_err());
+
+    // Not authorized to mint
+    let mint_msg = ExecuteMsg::Mint {
+        token_uri: "ipfs://example".to_string(),
+    };
+    let err = router.execute_contract(
+        buyer,
+        minter_addr.clone(),
+        &mint_msg,
+        &[coin(MIN_MINT_PRICE, NATIVE_DENOM)],
     );
     assert!(err.is_err());
 
