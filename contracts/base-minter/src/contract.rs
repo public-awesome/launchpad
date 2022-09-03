@@ -19,6 +19,7 @@ use sg1::checked_fair_burn;
 use sg2::query::Sg2QueryMsg;
 use sg4::{QueryMsg, Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
+use sg721_base::msg::{CollectionInfoResponse, QueryMsg as Sg721QueryMsg};
 use sg_std::math::U64Ext;
 use sg_std::{Response, SubMsg, NATIVE_DENOM};
 use url::Url;
@@ -102,7 +103,20 @@ pub fn execute_mint_sender(
     token_uri: String,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
-    let collection = COLLECTION_ADDRESS.load(deps.storage)?;
+    let collection_address = COLLECTION_ADDRESS.load(deps.storage)?;
+
+    // This is a 1:1 minter, minted at min_mint_price
+    // Should mint and then list on the marketplace for secondary sales
+    let collection_info: CollectionInfoResponse = deps.querier.query_wasm_smart(
+        collection_address.clone(),
+        &Sg721QueryMsg::CollectionInfo {},
+    )?;
+    // allow only sg721 creator address to mint
+    if collection_info.creator != info.sender {
+        return Err(ContractError::Unauthorized(
+            "Sender is not sg721 creator".to_owned(),
+        ));
+    };
 
     let parsed_token_uri = Url::parse(&token_uri)?;
     if parsed_token_uri.scheme() != "ipfs" {
@@ -135,7 +149,7 @@ pub fn execute_mint_sender(
         extension: None,
     });
     let msg = CosmosMsg::Wasm(WasmMsg::Execute {
-        contract_addr: collection.to_string(),
+        contract_addr: collection_address.to_string(),
         msg: to_binary(&mint_msg)?,
         funds: vec![],
     });

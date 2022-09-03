@@ -44,6 +44,7 @@ cw721 = "0.13.4"
 cw721-base = { version = "0.13.4", features = ["library"] }
 sg1 = "0.14.1"
 sg721 = "0.14.0"
+sg721-base = { path = "../sg721-base" }
 base-factory = { path = "../base-factory" }
 sg2 = { path = "../../packages/sg2" }
 sg4 = { path = "../../packages/sg4" }
@@ -52,4 +53,4 @@ sg4 = { path = "../../packages/sg4" }
 cosmwasm-schema = { version = "1.0.0" }
 cw-multi-test = "0.13.4"
 sg-multi-test = "0.15.1"
-sg721-nt = { version = "0.13.1", features = ["library"] }
+sg721-nt = { path = "../sg721-nt"}

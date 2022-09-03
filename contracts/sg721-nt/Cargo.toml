@@ -1,7 +1,7 @@
 [package]
 name = "sg721-nt"
 version = "0.14.0"
-authors = ["Shane Vitarana <s@noreply.publicawesome.com>"]
+authors = ["Shane Vitarana <s@noreply.publicawesome.com>", "John Y <j@noreply.publicawesome.com>"]
 edition = "2018"
 description = "Stargaze Non-transferrable NFT collection contract"
 license = "Apache-2.0"
