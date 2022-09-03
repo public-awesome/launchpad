@@ -140,7 +140,7 @@ fn setup_accounts(router: &mut StargazeApp) -> (Addr, Addr) {
         .sudo(SudoMsg::Bank({
             BankSudo::Mint {
                 to_address: buyer.to_string(),
-                amount: creator_funds.clone(),
+                amount: creator_funds,
             }
         }))
         .map_err(|err| println!("{:?}", err))
@@ -179,7 +179,7 @@ fn check_mint() {
         token_uri: "ipfs://example".to_string(),
     };
     let err = router.execute_contract(
-        buyer.clone(),
+        buyer,
         minter_addr.clone(),
         &mint_msg,
         &[coin(MIN_MINT_PRICE, NATIVE_DENOM)],
