@@ -53,4 +53,4 @@ sg4 = { path = "../../packages/sg4" }
 cosmwasm-schema = { version = "1.0.0" }
 cw-multi-test = "0.13.4"
 sg-multi-test = "0.15.1"
-sg721-nt = { version = "0.13.1", features = ["library"] }
+sg721-nt = { path = "../sg721-nt"}

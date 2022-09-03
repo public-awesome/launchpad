@@ -9,7 +9,7 @@ pub mod msg;
 use cw721_base::Extension;
 use sg721::InstantiateMsg;
 use sg721_base::Sg721Contract;
-
+pub type QueryMsg = sg721_base::msg::QueryMsg;
 pub type Sg721NonTransferableContract<'a> = Sg721Contract<'a, Extension>;
 
 #[cfg(not(feature = "library"))]
@@ -17,7 +17,7 @@ pub mod entry {
     use super::*;
 
     use crate::msg::ExecuteMsg;
-    use cosmwasm_std::{DepsMut, Env, MessageInfo};
+    use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, StdResult};
     use sg721_base::ContractError;
     use sg_std::Response;
 
@@ -53,5 +53,10 @@ pub mod entry {
                 Sg721NonTransferableContract::default().mint(deps, env, info, msg)
             }
         }
+    }
+
+    #[entry_point]
+    pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
+        Sg721NonTransferableContract::default().query(deps, env, msg)
     }
 }
