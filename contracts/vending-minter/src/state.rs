@@ -7,6 +7,7 @@ use sg4::MinterConfig;
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct ConfigExtension {
     pub admin: Addr,
+    pub payment_address: Option<Addr>,
     pub base_token_uri: String,
     pub num_tokens: u32,
     pub whitelist: Option<Addr>,

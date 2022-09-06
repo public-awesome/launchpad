@@ -17,7 +17,7 @@ use cosmwasm_std::{
 };
 use cw2::set_contract_version;
 use cw721_base::{msg::ExecuteMsg as Cw721ExecuteMsg, MintMsg};
-use cw_utils::{may_pay, nonpayable, parse_reply_instantiate_data};
+use cw_utils::{may_pay, maybe_addr, nonpayable, parse_reply_instantiate_data};
 use rand_core::{RngCore, SeedableRng};
 use rand_xoshiro::Xoshiro128PlusPlus;
 use sg1::checked_fair_burn;
@@ -111,6 +111,7 @@ pub fn instantiate(
             admin: deps
                 .api
                 .addr_validate(&msg.collection_params.info.creator)?,
+            payment_address: maybe_addr(deps.api, msg.init_msg.payment_address)?,
             base_token_uri: msg.init_msg.base_token_uri,
             num_tokens: msg.init_msg.num_tokens,
             per_address_limit: msg.init_msg.per_address_limit,
@@ -503,9 +504,11 @@ fn _execute_mint(
 
     let seller_amount = if !is_admin {
         let amount = mint_price.amount - network_fee;
+        let payment_address = config.extension.payment_address;
+        let seller = config.extension.admin;
         let msg = BankMsg::Send {
-            to_address: config.extension.admin.to_string(),
-            amount: vec![coin(amount.u128(), config.mint_price.denom)],
+            to_address: payment_address.unwrap_or(seller).to_string(),
+            amount: vec![coin(amount.u128(), mint_price.denom)],
         };
         res = res.add_message(msg);
         amount
