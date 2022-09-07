@@ -115,6 +115,7 @@ where
             ExecuteMsg::UpdateCollectionInfo {
                 new_collection_info,
             } => self.update_collection_info(deps, env, info, new_collection_info),
+            // TODO freeze
             // ExecuteMsg::FreezeCollectionInfo {} => self.freeze_collection(deps, env, info),
             ExecuteMsg::Mint(msg) => self.mint(deps, env, info, msg),
         }
@@ -232,6 +233,8 @@ where
             return Err(ContractError::Unauthorized {});
         }
 
+        deps.api.addr_validate(&new_collection_info.creator)?;
+
         collection_info.creator = new_collection_info.creator;
         collection_info.description = new_collection_info.description;
         collection_info.image = new_collection_info.image;
@@ -239,7 +242,8 @@ where
         collection_info.start_trading_time = new_collection_info.start_trading_time;
         // TODO add royalty info
 
-        self.collection_info.save(deps.storage, &collection_info)?;
+        // self.collection_info
+        //     .save(deps.storage, &new_collection_info)?;
 
         let event = Event::new("update_collection_info").add_attribute("sender", info.sender);
         Ok(Response::new().add_event(event))
