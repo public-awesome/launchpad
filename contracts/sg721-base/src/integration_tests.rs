@@ -186,4 +186,38 @@ mod tests {
             assert!(res.is_ok());
         }
     }
+
+    mod start_trading_time {
+        use cosmwasm_std::Empty;
+
+        use super::*;
+        use crate::msg::{CollectionInfoResponse, QueryMsg};
+
+        #[test]
+        fn start_trading_time() {
+            let (app, contract) = proper_instantiate();
+
+            // return current start trading time
+            let res: CollectionInfoResponse = app
+                .wrap()
+                .query_wasm_smart(contract, &QueryMsg::CollectionInfo {})
+                .unwrap();
+            assert_eq!(res.start_trading_time, None);
+
+            // update start trading time
+            let (mut app, contract) = proper_instantiate();
+
+            let creator = Addr::unchecked("creator".to_string());
+
+            let res = app.execute_contract(
+                creator,
+                contract,
+                &Sg721ExecuteMsg::<Empty>::UpdateStartTradingTime {
+                    time: Some(Timestamp::from_seconds(1)),
+                },
+                &[],
+            );
+            assert!(res.is_ok());
+        }
+    }
 }

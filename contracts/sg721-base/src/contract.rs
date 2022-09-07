@@ -409,6 +409,7 @@ where
             description: info.description,
             image: info.image,
             external_link: info.external_link,
+            start_trading_time: info.start_trading_time,
             royalty_info: royalty_info_res,
         })
     }
