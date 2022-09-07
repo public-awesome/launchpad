@@ -1,4 +1,4 @@
-use cosmwasm_std::{Addr, Binary, Decimal};
+use cosmwasm_std::{Addr, Binary, Decimal, Timestamp};
 use cw_utils::Expiration;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -54,6 +54,8 @@ pub enum ExecuteMsg<T> {
     Mint(MintMsg<T>),
     /// Burn an NFT the sender has access to
     Burn { token_id: String },
+    /// Update start trading time
+    UpdateStartTradingTime { time: Option<Timestamp> },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -62,6 +64,7 @@ pub struct CollectionInfo<T> {
     pub description: String,
     pub image: String,
     pub external_link: Option<String>,
+    pub start_trading_time: Option<Timestamp>,
     pub royalty_info: Option<T>,
 }
 

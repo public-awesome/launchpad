@@ -1,7 +1,9 @@
 use cw721_base::state::TokenInfo;
 use url::Url;
 
-use cosmwasm_std::{to_binary, Binary, Decimal, Deps, DepsMut, Env, Event, MessageInfo, StdResult};
+use cosmwasm_std::{
+    to_binary, Binary, Decimal, Deps, DepsMut, Env, Event, MessageInfo, StdResult, Timestamp,
+};
 
 use cw721::{ContractInfoResponse, Cw721ReceiveMsg};
 use cw_utils::{nonpayable, Expiration};
@@ -67,6 +69,7 @@ where
             description: msg.collection_info.description,
             image: msg.collection_info.image,
             external_link: msg.collection_info.external_link,
+            start_trading_time: None,
             royalty_info,
         };
 
@@ -111,6 +114,9 @@ where
             }
             ExecuteMsg::RevokeAll { operator } => self.revoke_all(deps, env, info, operator),
             ExecuteMsg::Burn { token_id } => self.burn(deps, env, info, token_id),
+            ExecuteMsg::UpdateStartTradingTime { time } => {
+                self.update_start_trading_time(deps, env, info, time)
+            }
             ExecuteMsg::Mint(msg) => self.mint(deps, env, info, msg),
         }
     }
@@ -209,6 +215,30 @@ where
         let event = Event::new("burn")
             .add_attribute("sender", info.sender)
             .add_attribute("token_id", token_id);
+        let res = Response::new().add_event(event);
+
+        Ok(res)
+    }
+
+    pub fn update_start_trading_time(
+        &self,
+        deps: DepsMut,
+        _env: Env,
+        info: MessageInfo,
+        time: Option<Timestamp>,
+    ) -> Result<Response, ContractError> {
+        let mut collection_info = self.collection_info.load(deps.storage)?;
+        let creator = collection_info.creator.to_string();
+        if creator != info.sender.to_string() {
+            return Err(ContractError::Unauthorized {});
+        }
+
+        collection_info.start_trading_time = time;
+        self.collection_info.save(deps.storage, &collection_info)?;
+
+        let event = Event::new("update_start_trading_time")
+            .add_attribute("sender", info.sender)
+            .add_attribute("time", time.unwrap_or_default().to_string());
         let res = Response::new().add_event(event);
 
         Ok(res)
