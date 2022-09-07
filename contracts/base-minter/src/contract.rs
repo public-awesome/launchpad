@@ -8,7 +8,7 @@ use base_factory::msg::{BaseMinterCreateMsg, Extension, ParamsResponse};
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     to_binary, Addr, Binary, CosmosMsg, Deps, DepsMut, Empty, Env, MessageInfo, Reply, StdResult,
-    WasmMsg,
+    Timestamp, WasmMsg,
 };
 
 use cw2::set_contract_version;
@@ -44,7 +44,7 @@ pub fn instantiate(
 
     // Make sure the sender is the factory contract
     // This will fail if the sender cannot parse a response from the factory contract
-    let res: ParamsResponse = deps
+    let factory_params: ParamsResponse = deps
         .querier
         .query_wasm_smart(factory.clone(), &Sg2QueryMsg::Params {})?;
 
@@ -53,9 +53,22 @@ pub fn instantiate(
         collection_code_id: msg.collection_params.code_id,
         // assume the mint price is the minimum mint price
         // 100% is fair burned
-        mint_price: res.params.min_mint_price,
+        mint_price: factory_params.params.min_mint_price,
         extension: Empty {},
     };
+
+    // Use default start trading time if not provided
+    let mut collection_info = msg.collection_params.info.clone();
+    let start_trading_time: Option<Timestamp> = match msg.collection_params.info.start_trading_time
+    {
+        Some(time) => Some(time),
+        None => Some(
+            env.block
+                .time
+                .plus_seconds(factory_params.params.default_trading_offset_secs),
+        ),
+    };
+    collection_info.start_trading_time = start_trading_time;
 
     CONFIG.save(deps.storage, &config)?;
 
@@ -65,7 +78,7 @@ pub fn instantiate(
             name: msg.collection_params.name.clone(),
             symbol: msg.collection_params.symbol,
             minter: env.contract.address.to_string(),
-            collection_info: msg.collection_params.info,
+            collection_info,
         })?,
         funds: info.funds,
         admin: None,

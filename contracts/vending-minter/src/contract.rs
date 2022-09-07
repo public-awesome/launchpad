@@ -104,6 +104,19 @@ pub fn instantiate(
         .whitelist
         .and_then(|w| deps.api.addr_validate(w.as_str()).ok());
 
+    // Use default start trading time if not provided
+    let mut collection_info = msg.collection_params.info.clone();
+    let start_trading_time: Option<Timestamp> = match msg.collection_params.info.start_trading_time
+    {
+        Some(time) => Some(time),
+        None => Some(
+            env.block
+                .time
+                .plus_seconds(factory_params.default_trading_offset_secs),
+        ),
+    };
+    collection_info.start_trading_time = start_trading_time;
+
     let config = Config {
         factory: factory.clone(),
         collection_code_id: msg.collection_params.code_id,
@@ -145,7 +158,7 @@ pub fn instantiate(
                 name: msg.collection_params.name.clone(),
                 symbol: msg.collection_params.symbol,
                 minter: env.contract.address.to_string(),
-                collection_info: msg.collection_params.info,
+                collection_info,
             })?,
             funds: info.funds,
             admin: Some(config.extension.admin.to_string()),
