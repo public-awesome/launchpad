@@ -1232,7 +1232,6 @@ dependencies = [
  "sg-multi-test 0.15.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg-std 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg2",
- "sg4",
  "sg721 0.14.0",
  "thiserror",
  "url",
