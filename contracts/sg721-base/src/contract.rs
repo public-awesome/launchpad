@@ -416,7 +416,7 @@ where
 
 pub fn share_validate(share: Decimal) -> Result<Decimal, ContractError> {
     if share > Decimal::one() {
-        return Err(ContractError::InvalidRoyalities {});
+        return Err(ContractError::InvalidRoyalties {});
     }
 
     Ok(share)
