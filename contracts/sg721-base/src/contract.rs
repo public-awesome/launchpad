@@ -229,7 +229,7 @@ where
     ) -> Result<Response, ContractError> {
         let mut collection_info = self.collection_info.load(deps.storage)?;
         let creator = collection_info.creator.to_string();
-        if creator != info.sender.to_string() {
+        if creator != info.sender {
             return Err(ContractError::Unauthorized {});
         }
 
