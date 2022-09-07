@@ -14,5 +14,6 @@ pub struct MinterParams<T> {
     pub creation_fee: Coin,
     pub min_mint_price: Coin,
     pub mint_fee_bps: u64,
+    pub max_trading_offset_seconds: u64,
     pub extension: T,
 }

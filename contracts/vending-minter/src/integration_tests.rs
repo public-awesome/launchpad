@@ -126,6 +126,7 @@ pub fn mock_params() -> VendingMinterParams {
         creation_fee: coin(CREATION_FEE, NATIVE_DENOM),
         min_mint_price: coin(MIN_MINT_PRICE, NATIVE_DENOM),
         mint_fee_bps: MINT_FEE_BPS,
+        max_trading_offset_seconds: 60 * 60 * 24 * 7,
         extension: ParamsExtension {
             max_token_limit: MAX_TOKEN_LIMIT,
             max_per_address_limit: MAX_PER_ADDRESS_LIMIT,
