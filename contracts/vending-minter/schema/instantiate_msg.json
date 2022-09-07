@@ -62,6 +62,16 @@
               "type": "null"
             }
           ]
+        },
+        "start_trading_time": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Timestamp"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       }
     },
@@ -117,6 +127,7 @@
         "code_id",
         "creation_fee",
         "extension",
+        "max_trading_offset_seconds",
         "min_mint_price",
         "mint_fee_bps"
       ],
@@ -132,6 +143,11 @@
         },
         "extension": {
           "$ref": "#/definitions/ParamsExtension"
+        },
+        "max_trading_offset_seconds": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
         },
         "min_mint_price": {
           "$ref": "#/definitions/Coin"
