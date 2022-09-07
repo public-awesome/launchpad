@@ -55,7 +55,11 @@ pub enum ExecuteMsg<T> {
     /// Burn an NFT the sender has access to
     Burn { token_id: String },
     /// Update start trading time
-    UpdateStartTradingTime { time: Option<Timestamp> },
+    UpdateCollectionInfo {
+        new_collection_info: CollectionInfo<T>,
+    },
+    // TODO add freeze
+    // FreezeCollectionInfo,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

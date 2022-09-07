@@ -1,9 +1,7 @@
 use cw721_base::state::TokenInfo;
 use url::Url;
 
-use cosmwasm_std::{
-    to_binary, Binary, Decimal, Deps, DepsMut, Env, Event, MessageInfo, StdResult, Timestamp,
-};
+use cosmwasm_std::{to_binary, Binary, Decimal, Deps, DepsMut, Env, Event, MessageInfo, StdResult};
 
 use cw721::{ContractInfoResponse, Cw721ReceiveMsg};
 use cw_utils::{nonpayable, Expiration};
@@ -114,9 +112,10 @@ where
             }
             ExecuteMsg::RevokeAll { operator } => self.revoke_all(deps, env, info, operator),
             ExecuteMsg::Burn { token_id } => self.burn(deps, env, info, token_id),
-            ExecuteMsg::UpdateStartTradingTime { time } => {
-                self.update_start_trading_time(deps, env, info, time)
-            }
+            ExecuteMsg::UpdateCollectionInfo {
+                new_collection_info,
+            } => self.update_collection_info(deps, env, info, new_collection_info),
+            // ExecuteMsg::FreezeCollectionInfo {} => self.freeze_collection(deps, env, info),
             ExecuteMsg::Mint(msg) => self.mint(deps, env, info, msg),
         }
     }
@@ -220,12 +219,12 @@ where
         Ok(res)
     }
 
-    pub fn update_start_trading_time(
+    pub fn update_collection_info(
         &self,
         deps: DepsMut,
         _env: Env,
         info: MessageInfo,
-        time: Option<Timestamp>,
+        new_collection_info: CollectionInfo<T>,
     ) -> Result<Response, ContractError> {
         let mut collection_info = self.collection_info.load(deps.storage)?;
         let creator = collection_info.creator.to_string();
@@ -233,15 +232,32 @@ where
             return Err(ContractError::Unauthorized {});
         }
 
-        collection_info.start_trading_time = time;
+        collection_info.creator = new_collection_info.creator;
+        collection_info.description = new_collection_info.description;
+        collection_info.image = new_collection_info.image;
+        collection_info.external_link = new_collection_info.external_link;
+        collection_info.start_trading_time = new_collection_info.start_trading_time;
+        // TODO add royalty info
+
         self.collection_info.save(deps.storage, &collection_info)?;
 
-        let event = Event::new("update_start_trading_time")
-            .add_attribute("sender", info.sender)
-            .add_attribute("time", time.unwrap_or_default().to_string());
-
+        let event = Event::new("update_collection_info").add_attribute("sender", info.sender);
         Ok(Response::new().add_event(event))
     }
+
+    // TODO add freeze
+    // pub fn freeze_collection(
+    //     &self,
+    //     deps: DepsMut,
+    //     env: Env,
+    //     info: MessageInfo,
+    // ) -> Result<Response, ContractError> {
+    //     let frozen = true;
+    //     FROZEN.save(deps.storage, &frozen)?;
+    //     let event = Event::new("freeze_collection")
+    //         .add_attribute("sender", info.sender)
+    //     Ok(Response::new().add_event(event))
+    // }
 
     pub fn revoke(
         &self,

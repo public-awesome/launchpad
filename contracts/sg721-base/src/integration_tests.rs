@@ -190,12 +190,14 @@ mod tests {
 
     mod start_trading_time {
         use cosmwasm_std::Empty;
+        use sg721::CollectionInfo;
 
         use super::*;
         use crate::msg::{CollectionInfoResponse, QueryMsg};
 
         #[test]
-        fn start_trading_time() {
+        fn update_collection_info() {
+            let params = mock_collection_params();
             let (app, contract) = proper_instantiate();
 
             // return current start trading time
@@ -213,12 +215,21 @@ mod tests {
             let res = app.execute_contract(
                 creator,
                 contract,
-                &Sg721ExecuteMsg::<Empty>::UpdateStartTradingTime {
-                    time: Some(Timestamp::from_seconds(1)),
+                &Sg721ExecuteMsg::<Empty>::UpdateCollectionInfo {
+                    new_collection_info: CollectionInfo {
+                        creator: params.info.creator,
+                        description: params.info.description,
+                        image: params.info.image,
+                        external_link: params.info.external_link,
+                        royalty_info: None,
+                        start_trading_time: Some(Timestamp::from_seconds(1)),
+                    },
                 },
                 &[],
             );
             assert!(res.is_ok());
+
+            // TODO check freeze
         }
     }
 }
