@@ -2,12 +2,15 @@ use cw721_base::state::TokenInfo;
 use url::Url;
 
 use cosmwasm_std::{
-    to_binary, Binary, Decimal, Deps, DepsMut, Env, Event, MessageInfo, StdResult, Timestamp,
+    to_binary, Binary, Decimal, Deps, DepsMut, Empty, Env, Event, MessageInfo, StdResult, Timestamp,
 };
 
 use cw721::{ContractInfoResponse, Cw721ReceiveMsg};
 use cw_utils::{nonpayable, Expiration};
 use serde::{de::DeserializeOwned, Serialize};
+use sg2::query::{ParamsResponse as Sg2ParamsResponse, Sg2QueryMsg::Params as Sg2Params};
+use sg4::MinterConfigResponse;
+use sg4::QueryMsg::Config;
 
 use sg721::{
     CollectionInfo, ExecuteMsg, InstantiateMsg, MintMsg, RoyaltyInfo, RoyaltyInfoResponse,
@@ -233,7 +236,9 @@ where
             return Err(ContractError::Unauthorized {});
         }
 
-        collection_info.start_trading_time = time;
+        let start_trading_time = self.get_start_trading_time(deps.as_ref())?;
+        collection_info.start_trading_time = start_trading_time;
+
         self.collection_info.save(deps.storage, &collection_info)?;
 
         let event = Event::new("update_start_trading_time")
@@ -242,6 +247,27 @@ where
         let res = Response::new().add_event(event);
 
         Ok(res)
+    }
+
+    pub fn get_start_trading_time(&self, deps: Deps) -> Result<Option<Timestamp>, ContractError> {
+        let minter_addr = self.parent.minter.load(deps.storage)?;
+
+        // query factory to get max_trading_offset_seconds
+        let minter_config: MinterConfigResponse<T> =
+            deps.querier.query_wasm_smart(minter_addr, &Config {})?;
+        let factory_addr = minter_config.config.factory;
+        let factory_params: Sg2ParamsResponse<Empty> =
+            deps.querier.query_wasm_smart(factory_addr, &Sg2Params {})?;
+        let max_trading_offset_seconds = factory_params.params.max_trading_offset_seconds;
+
+        // query minter to get start time (start time is in extension for some sg721 implementations)
+        let start_time = minter_config.config.extension.start_time;
+
+        // if no start_time return None
+        // if offset > max_trading_offset_seconds throw error
+
+        // TODO fix response, should return start_trading_time
+        Ok(None)
     }
 
     pub fn revoke(
