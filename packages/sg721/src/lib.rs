@@ -66,7 +66,7 @@ pub enum ExecuteMsg<T> {
     },
     /// Update start trading time
     UpdateCollectionInfo {
-        new_collection_info: CollectionInfo<T>,
+        new_collection_info: CollectionInfo<RoyaltyInfoResponse>,
     },
     // Freeze collection info from further updates
     FreezeCollectionInfo,
