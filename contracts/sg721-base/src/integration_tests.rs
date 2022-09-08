@@ -212,6 +212,62 @@ mod tests {
 
             let creator = Addr::unchecked("creator".to_string());
 
+            // invalid start trading time
+            let res = app.execute_contract(
+                creator.clone(),
+                contract.clone(),
+                &Sg721ExecuteMsg::<Empty>::UpdateCollectionInfo {
+                    new_collection_info: CollectionInfo {
+                        creator: params.info.creator.clone(),
+                        description: params.info.description.clone(),
+                        image: params.info.image.clone(),
+                        external_link: params.info.external_link.clone(),
+                        royalty_info: None,
+                        start_trading_time: Some(Timestamp::from_nanos(1)),
+                    },
+                },
+                &[],
+            );
+            assert!(res.is_err());
+
+            // succeeds
+            let res = app.execute_contract(
+                creator.clone(),
+                contract.clone(),
+                &Sg721ExecuteMsg::<Empty>::UpdateCollectionInfo {
+                    new_collection_info: CollectionInfo {
+                        creator: params.info.creator.clone(),
+                        description: params.info.description.clone(),
+                        image: params.info.image.clone(),
+                        external_link: params.info.external_link.clone(),
+                        royalty_info: None,
+                        start_trading_time: Some(
+                            Timestamp::from_nanos(GENESIS_MINT_START_TIME).plus_seconds(1),
+                        ),
+                    },
+                },
+                &[],
+            );
+            assert!(res.is_ok());
+
+            // freeze collection throw err if not creator
+            let res = app.execute_contract(
+                Addr::unchecked("badguy"),
+                contract.clone(),
+                &Sg721ExecuteMsg::<Empty>::FreezeCollectionInfo {},
+                &[],
+            );
+            assert!(res.is_err());
+            // freeze collection to prevent further updates
+            let res = app.execute_contract(
+                creator.clone(),
+                contract.clone(),
+                &Sg721ExecuteMsg::<Empty>::FreezeCollectionInfo {},
+                &[],
+            );
+            assert!(res.is_ok());
+
+            // trying to update collection throws err
             let res = app.execute_contract(
                 creator,
                 contract,
@@ -222,14 +278,14 @@ mod tests {
                         image: params.info.image,
                         external_link: params.info.external_link,
                         royalty_info: None,
-                        start_trading_time: Some(Timestamp::from_seconds(1)),
+                        start_trading_time: Some(
+                            Timestamp::from_nanos(GENESIS_MINT_START_TIME).plus_seconds(1),
+                        ),
                     },
                 },
                 &[],
             );
-            assert!(res.is_ok());
-
-            // TODO check freeze
+            assert!(res.is_err());
         }
     }
 }

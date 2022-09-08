@@ -44,6 +44,9 @@ pub enum ContractError {
 
     #[error("InvalidStartTradingTime")]
     InvalidStartTradingTime {},
+
+    #[error("CollectionInfoFrozen")]
+    CollectionInfoFrozen {},
 }
 
 impl From<ContractError> for Cw721ContractError {

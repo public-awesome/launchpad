@@ -75,6 +75,8 @@ where
 
         self.ready.save(deps.storage, &false)?;
 
+        self.frozen_collection_info.save(deps.storage, &false)?;
+
         Ok(Response::new()
             .add_attribute("action", "instantiate")
             .add_attribute("collection_name", info.name)
@@ -115,8 +117,7 @@ where
             ExecuteMsg::UpdateCollectionInfo {
                 new_collection_info,
             } => self.update_collection_info(deps, env, info, new_collection_info),
-            // TODO freeze
-            // ExecuteMsg::FreezeCollectionInfo {} => self.freeze_collection(deps, env, info),
+            ExecuteMsg::FreezeCollectionInfo {} => self.freeze_collection(deps, env, info),
             ExecuteMsg::Mint(msg) => self.mint(deps, env, info, msg),
         }
     }
@@ -227,9 +228,14 @@ where
         info: MessageInfo,
         new_collection: CollectionInfo<T>,
     ) -> Result<Response, ContractError> {
+        let frozen_collection_info = self.frozen_collection_info.load(deps.storage)?;
+
+        if frozen_collection_info {
+            return Err(ContractError::CollectionInfoFrozen {});
+        }
+
         let collection = self.query_collection_info(deps.as_ref())?;
-        let creator = collection.creator;
-        if creator != info.sender {
+        if collection.creator != info.sender {
             return Err(ContractError::Unauthorized {});
         }
 
@@ -276,19 +282,22 @@ where
         Ok(Response::new().add_event(event))
     }
 
-    // TODO add freeze
-    // pub fn freeze_collection(
-    //     &self,
-    //     deps: DepsMut,
-    //     env: Env,
-    //     info: MessageInfo,
-    // ) -> Result<Response, ContractError> {
-    //     let frozen = true;
-    //     FROZEN.save(deps.storage, &frozen)?;
-    //     let event = Event::new("freeze_collection")
-    //         .add_attribute("sender", info.sender)
-    //     Ok(Response::new().add_event(event))
-    // }
+    pub fn freeze_collection(
+        &self,
+        deps: DepsMut,
+        _env: Env,
+        info: MessageInfo,
+    ) -> Result<Response, ContractError> {
+        let collection = self.query_collection_info(deps.as_ref())?;
+        if collection.creator != info.sender {
+            return Err(ContractError::Unauthorized {});
+        }
+
+        let frozen = true;
+        self.frozen_collection_info.save(deps.storage, &frozen)?;
+        let event = Event::new("freeze_collection").add_attribute("sender", info.sender);
+        Ok(Response::new().add_event(event))
+    }
 
     pub fn revoke(
         &self,
