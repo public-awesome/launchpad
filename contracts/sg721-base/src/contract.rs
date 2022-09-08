@@ -117,7 +117,7 @@ where
             ExecuteMsg::UpdateCollectionInfo {
                 new_collection_info,
             } => self.update_collection_info(deps, env, info, new_collection_info),
-            ExecuteMsg::FreezeCollectionInfo {} => self.freeze_collection(deps, env, info),
+            ExecuteMsg::FreezeCollectionInfo {} => self.freeze_collection_info(deps, env, info),
             ExecuteMsg::Mint(msg) => self.mint(deps, env, info, msg),
         }
     }
@@ -282,7 +282,7 @@ where
         Ok(Response::new().add_event(event))
     }
 
-    pub fn freeze_collection(
+    pub fn freeze_collection_info(
         &self,
         deps: DepsMut,
         _env: Env,

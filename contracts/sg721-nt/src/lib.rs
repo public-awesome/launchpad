@@ -52,6 +52,17 @@ pub mod entry {
             ExecuteMsg::Mint(msg) => {
                 Sg721NonTransferableContract::default().mint(deps, env, info, msg)
             }
+            ExecuteMsg::UpdateCollectionInfo {
+                new_collection_info,
+            } => Sg721NonTransferableContract::default().update_collection_info(
+                deps,
+                env,
+                info,
+                new_collection_info,
+            ),
+            ExecuteMsg::FreezeCollectionInfo {} => {
+                Sg721NonTransferableContract::default().freeze_collection_info(deps, env, info)
+            }
         }
     }
 

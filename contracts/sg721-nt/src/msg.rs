@@ -1,6 +1,6 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use sg721::MintMsg;
+use sg721::{CollectionInfo, MintMsg};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -13,6 +13,10 @@ pub enum ExecuteMsg<T> {
     Mint(MintMsg<T>),
     /// Burn an NFT the sender has access to
     Burn { token_id: String },
-    // TODO add update collection info
-    // TODO add freeze
+    /// Update collection info
+    UpdateCollectionInfo {
+        new_collection_info: CollectionInfo<T>,
+    },
+    /// Freeze collection info from further updates
+    FreezeCollectionInfo {},
 }
