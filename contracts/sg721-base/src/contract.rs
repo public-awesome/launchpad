@@ -228,7 +228,7 @@ where
         new_collection: CollectionInfo<T>,
     ) -> Result<Response, ContractError> {
         let collection = self.query_collection_info(deps.as_ref())?;
-        let creator = collection.creator.to_string();
+        let creator = collection.creator;
         if creator != info.sender {
             return Err(ContractError::Unauthorized {});
         }
