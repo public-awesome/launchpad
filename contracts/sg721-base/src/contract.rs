@@ -223,27 +223,54 @@ where
     pub fn update_collection_info(
         &self,
         deps: DepsMut,
-        _env: Env,
+        env: Env,
         info: MessageInfo,
-        new_collection_info: CollectionInfo<T>,
+        new_collection: CollectionInfo<T>,
     ) -> Result<Response, ContractError> {
-        let mut collection_info = self.collection_info.load(deps.storage)?;
-        let creator = collection_info.creator.to_string();
+        let collection = self.query_collection_info(deps.as_ref())?;
+        let creator = collection.creator.to_string();
         if creator != info.sender {
             return Err(ContractError::Unauthorized {});
         }
 
-        deps.api.addr_validate(&new_collection_info.creator)?;
+        deps.api.addr_validate(&new_collection.creator)?;
 
-        collection_info.creator = new_collection_info.creator;
-        collection_info.description = new_collection_info.description;
-        collection_info.image = new_collection_info.image;
-        collection_info.external_link = new_collection_info.external_link;
-        collection_info.start_trading_time = new_collection_info.start_trading_time;
-        // TODO add royalty info
+        if new_collection.description.len() > MAX_DESCRIPTION_LENGTH as usize {
+            return Err(ContractError::DescriptionTooLong {});
+        }
 
-        // self.collection_info
-        //     .save(deps.storage, &new_collection_info)?;
+        let image = Url::parse(&new_collection.image)?;
+
+        if let Some(ref external_link) = new_collection.external_link {
+            Url::parse(external_link)?;
+        }
+
+        if let Some(start_trading_time) = new_collection.start_trading_time {
+            if env.block.time > start_trading_time {
+                return Err(ContractError::InvalidStartTradingTime {});
+            }
+        }
+
+        // TODO fix royalty info
+        let royalty_info = None;
+        // let royalty_info: Option<RoyaltyInfo> = match new_collection.royalty_info {
+        //     Some(royalty_info) => Some(RoyaltyInfo {
+        //         payment_address: deps.api.addr_validate(&royalty_info.payment_address)?,
+        //         share: share_validate(royalty_info.share)?,
+        //     }),
+        //     None => None,
+        // };
+
+        let collection_info = CollectionInfo {
+            creator: new_collection.creator,
+            description: new_collection.description,
+            image: image.to_string(),
+            external_link: new_collection.external_link,
+            start_trading_time: new_collection.start_trading_time,
+            royalty_info,
+        };
+
+        self.collection_info.save(deps.storage, &collection_info)?;
 
         let event = Event::new("update_collection_info").add_attribute("sender", info.sender);
         Ok(Response::new().add_event(event))

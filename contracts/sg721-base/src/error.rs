@@ -41,6 +41,9 @@ pub enum ContractError {
 
     #[error("Description too long")]
     DescriptionTooLong {},
+
+    #[error("InvalidStartTradingTime")]
+    InvalidStartTradingTime {},
 }
 
 impl From<ContractError> for Cw721ContractError {
