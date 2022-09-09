@@ -66,31 +66,49 @@ pub enum ExecuteMsg<T> {
     },
     /// Update start trading time
     UpdateCollectionInfo {
-        new_collection_info: CollectionInfo<T>,
+        new_collection_info: CollectionInfo,
     },
     // Freeze collection info from further updates
     FreezeCollectionInfo,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct CollectionInfo<T> {
+#[serde(rename_all = "snake_case")]
+pub enum RoyaltyAddress {
+    String(String),
+    Addr(Addr),
+}
+
+impl RoyaltyAddress {
+    pub fn string(self) -> String {
+        if let RoyaltyAddress::String(c) = self {
+            c
+        } else {
+            panic!("Not a cat")
+        }
+    }
+
+    pub fn data(self) -> Addr {
+        if let RoyaltyAddress::Addr(d) = self {
+            d
+        } else {
+            panic!("Not a dog")
+        }
+    }
+}
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct CollectionInfo {
     pub creator: String,
     pub description: String,
     pub image: String,
     pub external_link: Option<String>,
     pub start_trading_time: Option<Timestamp>,
-    pub royalty_info: Option<T>,
+    pub royalty_info: Option<RoyaltyInfo>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct RoyaltyInfo {
-    pub payment_address: Addr,
-    pub share: Decimal,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, Default)]
-pub struct RoyaltyInfoResponse {
-    pub payment_address: String,
+    pub payment_address: RoyaltyAddress,
     pub share: Decimal,
 }
 
@@ -99,5 +117,5 @@ pub struct InstantiateMsg {
     pub name: String,
     pub symbol: String,
     pub minter: String,
-    pub collection_info: CollectionInfo<RoyaltyInfoResponse>,
+    pub collection_info: CollectionInfo,
 }

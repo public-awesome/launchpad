@@ -1,5 +1,5 @@
 use cosmwasm_std::Decimal;
-use sg721::{CollectionInfo, RoyaltyInfoResponse};
+use sg721::{CollectionInfo, RoyaltyInfo};
 
 use crate::msg::CollectionParams;
 
@@ -14,8 +14,8 @@ pub fn mock_collection_params() -> CollectionParams {
             image: "https://example.com/image.png".to_string(),
             external_link: Some("https://example.com/external.html".to_string()),
             start_trading_time: None,
-            royalty_info: Some(RoyaltyInfoResponse {
-                payment_address: "creator".to_string(),
+            royalty_info: Some(RoyaltyInfo {
+                payment_address: sg721::RoyaltyAddress::String("creator".to_string()),
                 share: Decimal::percent(10),
             }),
         },

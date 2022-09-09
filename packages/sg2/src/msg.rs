@@ -1,7 +1,7 @@
 use cosmwasm_std::Coin;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use sg721::{CollectionInfo, RoyaltyInfoResponse};
+use sg721::CollectionInfo;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct CreateMinterMsg<T> {
@@ -15,7 +15,7 @@ pub struct CollectionParams {
     pub code_id: u64,
     pub name: String,
     pub symbol: String,
-    pub info: CollectionInfo<RoyaltyInfoResponse>,
+    pub info: CollectionInfo,
 }
 
 /// Message for params so they can be updated invidiually by governance

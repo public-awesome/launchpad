@@ -1,6 +1,6 @@
 use cw_storage_plus::Item;
 use serde::{de::DeserializeOwned, Serialize};
-use sg721::{CollectionInfo, RoyaltyInfo};
+use sg721::CollectionInfo;
 use sg_std::StargazeMsgWrapper;
 
 pub struct Sg721Contract<'a, T>
@@ -9,7 +9,7 @@ where
 {
     pub parent: cw721_base::Cw721Contract<'a, T, StargazeMsgWrapper>,
 
-    pub collection_info: Item<'a, CollectionInfo<RoyaltyInfo>>,
+    pub collection_info: Item<'a, CollectionInfo>,
 
     /// Set to true by the minter to indicate the minter creation process is complete
     pub ready: Item<'a, bool>,

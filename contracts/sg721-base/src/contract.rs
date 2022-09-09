@@ -7,9 +7,7 @@ use cw721::{ContractInfoResponse, Cw721ReceiveMsg};
 use cw_utils::{nonpayable, Expiration};
 use serde::{de::DeserializeOwned, Serialize};
 
-use sg721::{
-    CollectionInfo, ExecuteMsg, InstantiateMsg, MintMsg, RoyaltyInfo, RoyaltyInfoResponse,
-};
+use sg721::{CollectionInfo, ExecuteMsg, InstantiateMsg, MintMsg, RoyaltyInfo};
 use sg_std::Response;
 
 use crate::msg::{CollectionInfoResponse, QueryMsg};
@@ -52,9 +50,13 @@ where
             Url::parse(external_link)?;
         }
 
+        // TODO: validate address
+        // let r = royalty_info.payment_address.string().to_string();
+        // deps.api.addr_validate(&r)?;
+
         let royalty_info: Option<RoyaltyInfo> = match msg.collection_info.royalty_info {
             Some(royalty_info) => Some(RoyaltyInfo {
-                payment_address: deps.api.addr_validate(&royalty_info.payment_address)?,
+                payment_address: royalty_info.payment_address,
                 share: share_validate(royalty_info.share)?,
             }),
             None => None,
@@ -226,7 +228,7 @@ where
         deps: DepsMut,
         env: Env,
         info: MessageInfo,
-        new_collection: CollectionInfo<T>,
+        new_collection: CollectionInfo,
     ) -> Result<Response, ContractError> {
         let frozen_collection_info = self.frozen_collection_info.load(deps.storage)?;
 
@@ -258,14 +260,19 @@ where
         }
 
         // TODO fix royalty info
-        let royalty_info = None;
-        // let royalty_info: Option<RoyaltyInfo> = match new_collection.royalty_info {
-        //     Some(royalty_info) => Some(RoyaltyInfo {
-        //         payment_address: deps.api.addr_validate(&royalty_info.payment_address)?,
-        //         share: share_validate(royalty_info.share)?,
-        //     }),
-        //     None => None,
-        // };
+        // let royalty_info = None;
+        let royalty_info: Option<RoyaltyInfo> = match new_collection.royalty_info {
+            Some(royalty_info) => {
+                let r = royalty_info.payment_address.clone().string();
+                deps.api.addr_validate(&r)?;
+
+                Some(RoyaltyInfo {
+                    payment_address: royalty_info.payment_address,
+                    share: share_validate(royalty_info.share)?,
+                })
+            }
+            None => None,
+        };
 
         let collection_info = CollectionInfo {
             creator: new_collection.creator,
@@ -451,9 +458,9 @@ where
     pub fn query_collection_info(&self, deps: Deps) -> StdResult<CollectionInfoResponse> {
         let info = self.collection_info.load(deps.storage)?;
 
-        let royalty_info_res: Option<RoyaltyInfoResponse> = match info.royalty_info {
-            Some(royalty_info) => Some(RoyaltyInfoResponse {
-                payment_address: royalty_info.payment_address.to_string(),
+        let royalty_info_res: Option<RoyaltyInfo> = match info.royalty_info {
+            Some(royalty_info) => Some(RoyaltyInfo {
+                payment_address: royalty_info.payment_address,
                 share: royalty_info.share,
             }),
             None => None,

@@ -2,7 +2,7 @@ use cosmwasm_std::Timestamp;
 use cw721_base::msg::QueryMsg as Cw721QueryMsg;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use sg721::RoyaltyInfoResponse;
+use sg721::RoyaltyInfo;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -120,5 +120,5 @@ pub struct CollectionInfoResponse {
     pub image: String,
     pub external_link: Option<String>,
     pub start_trading_time: Option<Timestamp>,
-    pub royalty_info: Option<RoyaltyInfoResponse>,
+    pub royalty_info: Option<RoyaltyInfo>,
 }
