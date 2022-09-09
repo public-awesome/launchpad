@@ -1,5 +1,9 @@
-import { Coin, Timestamp } from "./shared-types";
-
+/**
+ * Cw4Contract is a wrapper around Addr that provides a lot of helpers for working with cw4 contracts
+ * 
+ * If you wish to persist this, convert to Cw4CanonicalContract via .canonical()
+ */
+export type Cw4Contract = Addr
 /**
  * A human readable address.
  * 
@@ -11,23 +15,7 @@ import { Coin, Timestamp } from "./shared-types";
  */
 export type Addr = string
 
-/**
- * Saved in every minter
- */
-export interface MinterConfigFor_ConfigExtension {
-collection_code_id: number
-extension: ConfigExtension
-factory: Addr
-mint_price: Coin
-[k: string]: unknown
-}
-export interface ConfigExtension {
-admin: Addr
-base_token_uri: string
-num_tokens: number
-payment_address?: (Addr | null)
-per_address_limit: number
-start_time: Timestamp
-whitelist?: (Addr | null)
+export interface Config {
+group_addr: Cw4Contract
 [k: string]: unknown
 }
