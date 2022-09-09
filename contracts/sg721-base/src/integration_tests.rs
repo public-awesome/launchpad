@@ -252,7 +252,7 @@ mod tests {
 
             // update royalty_info
             let royalty_info: Option<RoyaltyInfoResponse> = Some(RoyaltyInfoResponse {
-                payment_address: creator.clone().to_string(),
+                payment_address: creator.to_string(),
                 share: Decimal::percent(10 / 100),
             });
             let res = app.execute_contract(
