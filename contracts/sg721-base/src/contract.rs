@@ -226,7 +226,7 @@ where
         deps: DepsMut,
         env: Env,
         info: MessageInfo,
-        new_collection: CollectionInfo<T>,
+        new_collection: CollectionInfo<RoyaltyInfoResponse>,
     ) -> Result<Response, ContractError> {
         let frozen_collection_info = self.frozen_collection_info.load(deps.storage)?;
 
@@ -258,14 +258,14 @@ where
         }
 
         // TODO fix royalty info
-        let royalty_info = None;
-        // let royalty_info: Option<RoyaltyInfo> = match new_collection.royalty_info {
-        //     Some(royalty_info) => Some(RoyaltyInfo {
-        //         payment_address: deps.api.addr_validate(&royalty_info.payment_address)?,
-        //         share: share_validate(royalty_info.share)?,
-        //     }),
-        //     None => None,
-        // };
+        // let royalty_info = None;
+        let royalty_info: Option<RoyaltyInfo> = match new_collection.royalty_info {
+            Some(royalty_info) => Some(RoyaltyInfo {
+                payment_address: deps.api.addr_validate(&royalty_info.payment_address)?,
+                share: share_validate(royalty_info.share)?,
+            }),
+            None => None,
+        };
 
         let collection_info = CollectionInfo {
             creator: new_collection.creator,
