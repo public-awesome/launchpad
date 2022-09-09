@@ -257,8 +257,6 @@ where
             }
         }
 
-        // TODO fix royalty info
-        // let royalty_info = None;
         let royalty_info: Option<RoyaltyInfo> = match new_collection.royalty_info {
             Some(royalty_info) => Some(RoyaltyInfo {
                 payment_address: deps.api.addr_validate(&royalty_info.payment_address)?,
