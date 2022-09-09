@@ -189,8 +189,8 @@ mod tests {
     }
 
     mod start_trading_time {
-        use cosmwasm_std::Empty;
-        use sg721::CollectionInfo;
+        use cosmwasm_std::{Decimal, Empty};
+        use sg721::{CollectionInfo, RoyaltyInfoResponse};
 
         use super::*;
         use crate::msg::{CollectionInfoResponse, QueryMsg};
@@ -250,6 +250,36 @@ mod tests {
             );
             assert!(res.is_ok());
 
+            // update royalty_info
+            let royalty_info: Option<RoyaltyInfoResponse> = Some(RoyaltyInfoResponse {
+                payment_address: creator.clone().to_string(),
+                share: Decimal::percent(10 / 100),
+            });
+            let res = app.execute_contract(
+                creator.clone(),
+                contract.clone(),
+                &Sg721ExecuteMsg::<Empty>::UpdateCollectionInfo {
+                    new_collection_info: CollectionInfo {
+                        creator: params.info.creator.clone(),
+                        description: params.info.description.clone(),
+                        image: params.info.image.clone(),
+                        external_link: params.info.external_link.clone(),
+                        royalty_info: royalty_info.clone(),
+                        start_trading_time: Some(
+                            Timestamp::from_nanos(GENESIS_MINT_START_TIME).plus_seconds(1),
+                        ),
+                    },
+                },
+                &[],
+            );
+            assert!(res.is_ok());
+
+            let res: CollectionInfoResponse = app
+                .wrap()
+                .query_wasm_smart(contract.clone(), &QueryMsg::CollectionInfo {})
+                .unwrap();
+            assert_eq!(res.royalty_info.unwrap(), royalty_info.unwrap());
+
             // freeze collection throw err if not creator
             let res = app.execute_contract(
                 Addr::unchecked("badguy"),
@@ -267,7 +297,7 @@ mod tests {
             );
             assert!(res.is_ok());
 
-            // trying to update collection throws err
+            // trying to update collection after frozen should throw err
             let res = app.execute_contract(
                 creator,
                 contract,
