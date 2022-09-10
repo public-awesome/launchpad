@@ -1,0 +1,12 @@
+{
+  "name": "@stargazezone/ts",
+  "version": "1.0.0",
+  "description": "Stargaze CosmWasm Typescript Types",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "codegen": "ts-node codegen.ts"
+  },
+  "author": "Shane Vitarana",
+  "license": "ISC"
+}
