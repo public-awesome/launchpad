@@ -44,6 +44,7 @@ export interface VendingMinterInitMsgExtension {
 base_token_uri: string
 mint_price: Coin
 num_tokens: number
+payment_address?: (string | null)
 per_address_limit: number
 start_time: Timestamp
 whitelist?: (string | null)
