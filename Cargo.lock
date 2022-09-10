@@ -59,7 +59,7 @@ dependencies = [
  "sg1 0.14.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg2",
  "sg4",
- "sg721 0.14.0",
+ "sg721 0.15.0",
  "sg721-base 0.14.0",
  "sg721-nt",
  "thiserror",
@@ -1152,7 +1152,7 @@ dependencies = [
  "cw-utils 0.13.4",
  "schemars",
  "serde",
- "sg721 0.14.0",
+ "sg721 0.15.0",
  "thiserror",
 ]
 
@@ -1161,19 +1161,6 @@ name = "sg4"
 version = "0.12.1"
 dependencies = [
  "cosmwasm-std",
- "schemars",
- "serde",
- "thiserror",
-]
-
-[[package]]
-name = "sg721"
-version = "0.14.0"
-dependencies = [
- "cosmwasm-schema",
- "cosmwasm-std",
- "cw-multi-test",
- "cw-utils 0.13.4",
  "schemars",
  "serde",
  "thiserror",
@@ -1196,6 +1183,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "sg721"
+version = "0.15.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-multi-test",
+ "cw-utils 0.13.4",
+ "schemars",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
 name = "sg721-base"
 version = "0.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1210,7 +1210,7 @@ dependencies = [
  "schemars",
  "serde",
  "sg-std 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sg721 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg721 0.14.0",
  "thiserror",
  "url",
 ]
@@ -1232,7 +1232,7 @@ dependencies = [
  "sg-multi-test 0.15.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg-std 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg2",
- "sg721 0.14.0",
+ "sg721 0.15.0",
  "thiserror",
  "url",
  "vending-factory",
@@ -1252,7 +1252,7 @@ dependencies = [
  "serde",
  "sg-metadata",
  "sg-std 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sg721 0.14.0",
+ "sg721 0.15.0",
  "sg721-base 0.14.0",
 ]
 
@@ -1270,7 +1270,7 @@ dependencies = [
  "schemars",
  "serde",
  "sg-std 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sg721 0.14.0",
+ "sg721 0.15.0",
  "sg721-base 0.14.0",
 ]
 
@@ -1453,7 +1453,7 @@ dependencies = [
  "sg-std 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg1 0.14.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg2",
- "sg721 0.14.0",
+ "sg721 0.15.0",
  "thiserror",
 ]
 
@@ -1482,7 +1482,7 @@ dependencies = [
  "sg1 0.14.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg2",
  "sg4",
- "sg721 0.14.0",
+ "sg721 0.15.0",
  "sg721-base 0.13.1",
  "sha2 0.10.2",
  "shuffle",
