@@ -45,4 +45,4 @@ cw-multi-test = "0.13.4"
 sg-multi-test = "0.15.1"
 vending-minter = { path = "../vending-minter", features = ["library"] }
 vending-factory = { path = "../vending-factory", features = ["library"] }
-sg2 = { path = "../../packages/sg2" }
+sg2 = "0.2.0"

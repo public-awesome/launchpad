@@ -53,9 +53,9 @@ sha2 = "0.10.2"
 cw721 = "0.13.4"
 cw721-base = { version = "0.13.4", features = ["library"] }
 sg1 = "0.14.1"
-sg721 = { path = "../../packages/sg721" }
+sg721 = "0.15.0"
 vending-factory = { path = "../vending-factory", features = ["library"] }
-sg2 = { path = "../../packages/sg2" }
+sg2 = "0.2.0"
 sg4 = { path = "../../packages/sg4" }
 cw4 = "0.13.4"
 
