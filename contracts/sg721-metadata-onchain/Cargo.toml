@@ -3,7 +3,7 @@ name = "sg721-metadata-onchain"
 version = "0.14.0"
 authors = [
   "Shane Vitarana <s@noreply.publicawesome.com>",
-  "larry <gm@larry.engineer>"
+  "larry <gm@larry.engineer>",
 ]
 edition = "2018"
 description = "Example extending SG721 NFT to store metadata on chain"
@@ -35,7 +35,7 @@ schemars = "0.8.8"
 serde = { version = "1.0.137", default-features = false, features = ["derive"] }
 sg-metadata = { path = "../../packages/sg-metadata" }
 sg-std = "0.14.0"
-sg721 = { path = "../../packages/sg721" }
+sg721 = "0.15.0"
 sg721-base = { path = "../sg721-base", features = ["library"] }
 
 [dev-dependencies]
