@@ -1146,13 +1146,13 @@ dependencies = [
 
 [[package]]
 name = "sg2"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "cosmwasm-std",
  "cw-utils 0.13.4",
  "schemars",
  "serde",
- "sg721 0.15.0",
+ "sg721 0.15.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "thiserror",
 ]
 
