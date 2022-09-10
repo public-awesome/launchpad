@@ -8,5 +8,8 @@
     "codegen": "ts-node codegen.ts"
   },
   "author": "Shane Vitarana",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "ts-node": "^10.9.1"
+  }
 }
