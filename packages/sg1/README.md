@@ -2,9 +2,7 @@
 
 Fair Burn is a specification for processing fees in Stargaze, influenced by [EIP-1559](https://eips.ethereum.org/EIPS/eip-1559).
 
-With Fair Burn, a portion of fees are burned, and the remaining portion is distributed to stakers. Currently, 50% is burned, and 50% go to the Community Pool.
-
-NOTE: In a future version, the Community Pool allocation will be distributed to stakers instead.
+With Fair Burn, a portion of fees are burned, and the remaining portion is distributed to stakers. Currently, 50% is burned, and 50% go to stakers.
 
 Fair Burn also includes a way to incentivize custom smart contract development by distributing some of the fee to a developer address. This developer fee is substracted from the amount burned.
 
