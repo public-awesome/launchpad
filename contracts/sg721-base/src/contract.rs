@@ -1,12 +1,15 @@
 use cw721_base::state::TokenInfo;
 use url::Url;
 
-use cosmwasm_std::{to_binary, Binary, Decimal, Deps, DepsMut, Env, Event, MessageInfo, StdResult};
+use cosmwasm_std::{
+    to_binary, Binary, Decimal, Deps, DepsMut, Empty, Env, Event, MessageInfo, StdResult,
+};
 
 use cw721::{ContractInfoResponse, Cw721ReceiveMsg};
 use cw_utils::{nonpayable, Expiration};
 use serde::{de::DeserializeOwned, Serialize};
 
+use sg4::{MinterConfigResponse as Sg4MinterConfigResponse, QueryMsg as SG4QueryMsg};
 use sg721::{
     CollectionInfo, ExecuteMsg, InstantiateMsg, MintMsg, RoyaltyInfo, RoyaltyInfoResponse,
 };
@@ -127,6 +130,11 @@ where
         if minter != info.sender {
             return Err(ContractError::Unauthorized {});
         }
+
+        // check if caller is a minter contract
+        let _res: Sg4MinterConfigResponse<Empty> = deps
+            .querier
+            .query_wasm_smart(minter, &SG4QueryMsg::Config {})?;
 
         self.ready.save(deps.storage, &true)?;
 

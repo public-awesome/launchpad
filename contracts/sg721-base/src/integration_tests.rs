@@ -142,6 +142,7 @@ mod tests {
         let cosmos_msg = factory_contract.call_with_funds(msg, creation_fee).unwrap();
 
         let res = app.execute(Addr::unchecked(ADMIN), cosmos_msg);
+        println!("{:?}", res);
         assert!(res.is_ok());
 
         (app, Addr::unchecked("contract2"))
