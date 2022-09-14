@@ -66,7 +66,7 @@ pub enum ExecuteMsg<T> {
     },
     /// Update start trading time
     UpdateCollectionInfo {
-        new_collection_info: CollectionInfo<RoyaltyInfoResponse>,
+        collection_info: UpdateCollectionInfoMsg<RoyaltyInfoResponse>,
     },
     // Freeze collection info from further updates
     FreezeCollectionInfo,
@@ -80,6 +80,15 @@ pub struct CollectionInfo<T> {
     pub external_link: Option<String>,
     pub start_trading_time: Option<Timestamp>,
     pub royalty_info: Option<T>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct UpdateCollectionInfoMsg<T> {
+    pub description: Option<String>,
+    pub image: Option<String>,
+    pub external_link: Option<Option<String>>,
+    pub start_trading_time: Option<Option<Timestamp>>,
+    pub royalty_info: Option<Option<T>>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

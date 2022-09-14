@@ -9,6 +9,7 @@ use serde::{de::DeserializeOwned, Serialize};
 
 use sg721::{
     CollectionInfo, ExecuteMsg, InstantiateMsg, MintMsg, RoyaltyInfo, RoyaltyInfoResponse,
+    UpdateCollectionInfoMsg,
 };
 use sg_std::Response;
 
@@ -114,9 +115,9 @@ where
             }
             ExecuteMsg::RevokeAll { operator } => self.revoke_all(deps, env, info, operator),
             ExecuteMsg::Burn { token_id } => self.burn(deps, env, info, token_id),
-            ExecuteMsg::UpdateCollectionInfo {
-                new_collection_info,
-            } => self.update_collection_info(deps, env, info, new_collection_info),
+            ExecuteMsg::UpdateCollectionInfo { collection_info } => {
+                self.update_collection_info(deps, env, info, collection_info)
+            }
             ExecuteMsg::FreezeCollectionInfo {} => self.freeze_collection_info(deps, env, info),
             ExecuteMsg::Mint(msg) => self.mint(deps, env, info, msg),
         }
@@ -224,57 +225,25 @@ where
     pub fn update_collection_info(
         &self,
         deps: DepsMut,
-        env: Env,
+        _env: Env,
         info: MessageInfo,
-        new_collection: CollectionInfo<RoyaltyInfoResponse>,
+        collection_msg: UpdateCollectionInfoMsg<RoyaltyInfoResponse>,
     ) -> Result<Response, ContractError> {
+        let mut collection = self.collection_info.load(deps.storage)?;
         let frozen_collection_info = self.frozen_collection_info.load(deps.storage)?;
 
         if frozen_collection_info {
             return Err(ContractError::CollectionInfoFrozen {});
         }
 
-        let collection = self.query_collection_info(deps.as_ref())?;
+        // only creator can update collection info
         if collection.creator != info.sender {
             return Err(ContractError::Unauthorized {});
         }
 
-        deps.api.addr_validate(&new_collection.creator)?;
+        self._update_collection_info(&mut collection, collection_msg.clone(), deps)?;
 
-        if new_collection.description.len() > MAX_DESCRIPTION_LENGTH as usize {
-            return Err(ContractError::DescriptionTooLong {});
-        }
-
-        let image = Url::parse(&new_collection.image)?;
-
-        if let Some(ref external_link) = new_collection.external_link {
-            Url::parse(external_link)?;
-        }
-
-        if let Some(start_trading_time) = new_collection.start_trading_time {
-            if env.block.time > start_trading_time {
-                return Err(ContractError::InvalidStartTradingTime {});
-            }
-        }
-
-        let royalty_info: Option<RoyaltyInfo> = match new_collection.royalty_info {
-            Some(royalty_info) => Some(RoyaltyInfo {
-                payment_address: deps.api.addr_validate(&royalty_info.payment_address)?,
-                share: share_validate(royalty_info.share)?,
-            }),
-            None => None,
-        };
-
-        let collection_info = CollectionInfo {
-            creator: new_collection.creator,
-            description: new_collection.description,
-            image: image.to_string(),
-            external_link: new_collection.external_link,
-            start_trading_time: new_collection.start_trading_time,
-            royalty_info,
-        };
-
-        self.collection_info.save(deps.storage, &collection_info)?;
+        // self.collection_info.save(deps.storage, &collection)?;
 
         let event = Event::new("update_collection_info").add_attribute("sender", info.sender);
         Ok(Response::new().add_event(event))
@@ -295,6 +264,64 @@ where
         self.frozen_collection_info.save(deps.storage, &frozen)?;
         let event = Event::new("freeze_collection").add_attribute("sender", info.sender);
         Ok(Response::new().add_event(event))
+    }
+
+    pub fn _update_collection_info<S, C>(
+        &self,
+        collection: &mut CollectionInfo<S>,
+        collection_msg: UpdateCollectionInfoMsg<C>,
+        _deps: DepsMut,
+    ) -> Result<(), ContractError> {
+        collection.description = collection_msg
+            .description
+            .unwrap_or(collection.description.to_string());
+        if collection.description.len() > MAX_DESCRIPTION_LENGTH as usize {
+            return Err(ContractError::DescriptionTooLong {});
+        }
+
+        collection.image = collection_msg.image.unwrap_or(collection.image.to_string());
+        Url::parse(&collection.image)?;
+
+        collection.external_link = collection_msg
+            .external_link
+            .unwrap_or(collection.external_link.as_ref().map(|s| s.to_string()));
+        Url::parse(&collection.external_link.as_ref().unwrap())?;
+
+        // TODO move to minter, gated by minter
+        // if let Some(start_trading_time) = collection.start_trading_time {
+        //     if env.block.time > start_trading_time {
+        //         return Err(ContractError::InvalidStartTradingTime {});
+        //     }
+        // }
+
+        // TODO fix royalty info
+        // collection.royalty_info = collection_msg
+        //     .royalty_info
+        //     .unwrap_or(collection.royalty_info);
+
+        // old royalty info comparison
+        // let royalty_info: Option<RoyaltyInfo> = match collection.royalty_info {
+        //     Some(royalty_info) => Some(RoyaltyInfo {
+        //         payment_address: deps.api.addr_validate(&royalty_info.payment_address)?,
+        //         share: share_validate(royalty_info.share)?,
+        //     }),
+        //     None => None,
+        // };
+
+        let _collection_info = CollectionInfo::<RoyaltyInfo> {
+            creator: collection.creator.to_string(),
+            description: collection.description.to_string(),
+            image: collection.image.to_string(),
+            external_link: collection.external_link.as_ref().map(|s| s.to_string()),
+            start_trading_time: collection.start_trading_time,
+            // TODO fix royalty
+            royalty_info: None,
+            // royalty_info: collection.royalty_info,
+        };
+
+        // TODO fix data type matching
+        // self.collection_info.save(deps.storage, collection)?;
+        Ok(())
     }
 
     pub fn revoke(
