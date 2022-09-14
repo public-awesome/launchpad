@@ -97,6 +97,16 @@ pub struct RoyaltyInfo {
     pub share: Decimal,
 }
 
+// allows easy conversion from RoyaltyInfo to RoyaltyInfoResponse
+impl RoyaltyInfo {
+    pub fn to_response(&self) -> RoyaltyInfoResponse {
+        RoyaltyInfoResponse {
+            payment_address: self.payment_address.to_string(),
+            share: self.share,
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, Default)]
 pub struct RoyaltyInfoResponse {
     pub payment_address: String,

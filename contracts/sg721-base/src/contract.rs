@@ -230,6 +230,7 @@ where
         collection_msg: UpdateCollectionInfoMsg<RoyaltyInfoResponse>,
     ) -> Result<Response, ContractError> {
         let mut collection = self.collection_info.load(deps.storage)?;
+
         let frozen_collection_info = self.frozen_collection_info.load(deps.storage)?;
 
         if frozen_collection_info {
@@ -241,37 +242,13 @@ where
             return Err(ContractError::Unauthorized {});
         }
 
-        self._update_collection_info(&mut collection, collection_msg.clone(), deps)?;
+        // convert collection royalty info to response for comparison
+        // convert from response to royalty info for storage
+        let royalty_info_str = match collection.royalty_info.as_ref() {
+            Some(royalty_info) => Some(royalty_info.to_response()),
+            None => None,
+        };
 
-        // self.collection_info.save(deps.storage, &collection)?;
-
-        let event = Event::new("update_collection_info").add_attribute("sender", info.sender);
-        Ok(Response::new().add_event(event))
-    }
-
-    pub fn freeze_collection_info(
-        &self,
-        deps: DepsMut,
-        _env: Env,
-        info: MessageInfo,
-    ) -> Result<Response, ContractError> {
-        let collection = self.query_collection_info(deps.as_ref())?;
-        if collection.creator != info.sender {
-            return Err(ContractError::Unauthorized {});
-        }
-
-        let frozen = true;
-        self.frozen_collection_info.save(deps.storage, &frozen)?;
-        let event = Event::new("freeze_collection").add_attribute("sender", info.sender);
-        Ok(Response::new().add_event(event))
-    }
-
-    pub fn _update_collection_info<S, C>(
-        &self,
-        collection: &mut CollectionInfo<S>,
-        collection_msg: UpdateCollectionInfoMsg<C>,
-        _deps: DepsMut,
-    ) -> Result<(), ContractError> {
         collection.description = collection_msg
             .description
             .unwrap_or(collection.description.to_string());
@@ -294,34 +271,37 @@ where
         //     }
         // }
 
-        // TODO fix royalty info
-        // collection.royalty_info = collection_msg
-        //     .royalty_info
-        //     .unwrap_or(collection.royalty_info);
+        let response = collection_msg.royalty_info.unwrap_or(royalty_info_str);
 
-        // old royalty info comparison
-        // let royalty_info: Option<RoyaltyInfo> = match collection.royalty_info {
-        //     Some(royalty_info) => Some(RoyaltyInfo {
-        //         payment_address: deps.api.addr_validate(&royalty_info.payment_address)?,
-        //         share: share_validate(royalty_info.share)?,
-        //     }),
-        //     None => None,
-        // };
-
-        let _collection_info = CollectionInfo::<RoyaltyInfo> {
-            creator: collection.creator.to_string(),
-            description: collection.description.to_string(),
-            image: collection.image.to_string(),
-            external_link: collection.external_link.as_ref().map(|s| s.to_string()),
-            start_trading_time: collection.start_trading_time,
-            // TODO fix royalty
-            royalty_info: None,
-            // royalty_info: collection.royalty_info,
+        collection.royalty_info = match response {
+            Some(royalty_info) => Some(RoyaltyInfo {
+                payment_address: deps.api.addr_validate(&royalty_info.payment_address)?,
+                share: share_validate(royalty_info.share)?,
+            }),
+            None => None,
         };
 
-        // TODO fix data type matching
-        // self.collection_info.save(deps.storage, collection)?;
-        Ok(())
+        self.collection_info.save(deps.storage, &collection)?;
+
+        let event = Event::new("update_collection_info").add_attribute("sender", info.sender);
+        Ok(Response::new().add_event(event))
+    }
+
+    pub fn freeze_collection_info(
+        &self,
+        deps: DepsMut,
+        _env: Env,
+        info: MessageInfo,
+    ) -> Result<Response, ContractError> {
+        let collection = self.query_collection_info(deps.as_ref())?;
+        if collection.creator != info.sender {
+            return Err(ContractError::Unauthorized {});
+        }
+
+        let frozen = true;
+        self.frozen_collection_info.save(deps.storage, &frozen)?;
+        let event = Event::new("freeze_collection").add_attribute("sender", info.sender);
+        Ok(Response::new().add_event(event))
     }
 
     pub fn revoke(
