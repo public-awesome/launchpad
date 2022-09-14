@@ -47,6 +47,7 @@ const CONTRACT_NAME: &str = "crates.io:sg-minter";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 const INSTANTIATE_SG721_REPLY_ID: u64 = 1;
+const UPDATE_SG721_REPLY_ID: u64 = 2;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -193,6 +194,9 @@ pub fn execute(
         ExecuteMsg::Mint {} => execute_mint_sender(deps, env, info),
         ExecuteMsg::UpdateMintPrice { price } => execute_update_mint_price(deps, env, info, price),
         ExecuteMsg::UpdateStartTime(time) => execute_update_start_time(deps, env, info, time),
+        ExecuteMsg::UpdateTradingStartTime(time) => {
+            execute_update_trading_start_time(deps, env, info, time)
+        }
         ExecuteMsg::UpdatePerAddressLimit { per_address_limit } => {
             execute_update_per_address_limit(deps, env, info, per_address_limit)
         }
@@ -655,6 +659,56 @@ pub fn execute_update_start_time(
         .add_attribute("action", "update_start_time")
         .add_attribute("sender", info.sender)
         .add_attribute("start_time", start_time.to_string()))
+}
+
+pub fn execute_update_trading_start_time(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    start_time: Option<Timestamp>,
+) -> Result<Response, ContractError> {
+    nonpayable(&info)?;
+    let config = CONFIG.load(deps.storage)?;
+    let sg721_contract_addr = SG721_ADDRESS.load(deps.storage)?;
+
+    if info.sender != config.extension.admin {
+        return Err(ContractError::Unauthorized(
+            "Sender is not an admin".to_owned(),
+        ));
+    }
+
+    // TODO run checks
+    // add custom rules here
+    // // If current time is after the stored start time return error
+    // if env.block.time >= config.extension.start_time {
+    //     return Err(ContractError::AlreadyStarted {});
+    // }
+
+    // // If current time already passed the new start_time return error
+    // if env.block.time > start_time {
+    //     return Err(ContractError::InvalidStartTime(start_time, env.block.time));
+    // }
+
+    // TODO execute update sg721 start trading time
+    // Submessage to instantiate sg721 contract
+    let submsg = SubMsg {
+        msg: WasmMsg::Execute {
+            contract_addr: sg721_contract_addr.to_string(),
+            msg: to_binary(&Sg721ExecuteMsg::<Empty>::UpdateTradingStartTime(
+                start_time,
+            ))?,
+            funds: vec![],
+        }
+        .into(),
+        id: UPDATE_SG721_REPLY_ID,
+        gas_limit: None,
+        reply_on: ReplyOn::Success,
+    };
+
+    Ok(Response::new()
+        .add_attribute("action", "update_start_time")
+        .add_attribute("sender", info.sender)
+        .add_submessage(submsg))
 }
 
 pub fn execute_update_per_address_limit(

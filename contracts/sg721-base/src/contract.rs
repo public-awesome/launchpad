@@ -1,7 +1,9 @@
 use cw721_base::state::TokenInfo;
 use url::Url;
 
-use cosmwasm_std::{to_binary, Binary, Decimal, Deps, DepsMut, Env, Event, MessageInfo, StdResult};
+use cosmwasm_std::{
+    to_binary, Binary, Decimal, Deps, DepsMut, Env, Event, MessageInfo, StdResult, Timestamp,
+};
 
 use cw721::{ContractInfoResponse, Cw721ReceiveMsg};
 use cw_utils::{nonpayable, Expiration};
@@ -118,6 +120,9 @@ where
             ExecuteMsg::UpdateCollectionInfo { collection_info } => {
                 self.update_collection_info(deps, env, info, collection_info)
             }
+            ExecuteMsg::UpdateTradingStartTime(start_time) => {
+                self.update_trading_start_time(deps, env, info, start_time)
+            }
             ExecuteMsg::FreezeCollectionInfo {} => self.freeze_collection_info(deps, env, info),
             ExecuteMsg::Mint(msg) => self.mint(deps, env, info, msg),
         }
@@ -229,6 +234,9 @@ where
         info: MessageInfo,
         collection_msg: UpdateCollectionInfoMsg<RoyaltyInfoResponse>,
     ) -> Result<Response, ContractError> {
+        if !self.ready.load(deps.storage)? {
+            return Err(ContractError::NotReady {});
+        }
         let mut collection = self.collection_info.load(deps.storage)?;
 
         let frozen_collection_info = self.frozen_collection_info.load(deps.storage)?;
@@ -287,12 +295,40 @@ where
         Ok(Response::new().add_event(event))
     }
 
+    /// Called by the minter reply handler after custom validations on trading start time.
+    /// Minter has start_time, default offset, makes sense to execute from minter.
+    pub fn update_trading_start_time(
+        &self,
+        deps: DepsMut,
+        _env: Env,
+        info: MessageInfo,
+        start_time: Option<Timestamp>,
+    ) -> Result<Response, ContractError> {
+        if !self.ready.load(deps.storage)? {
+            return Err(ContractError::NotReady {});
+        }
+        let minter = self.parent.minter.load(deps.storage)?;
+        if minter != info.sender {
+            return Err(ContractError::Unauthorized {});
+        }
+
+        let mut collection_info = self.collection_info.load(deps.storage)?;
+        collection_info.start_trading_time = start_time;
+        self.collection_info.save(deps.storage, &collection_info)?;
+
+        let event = Event::new("update_trading_start_time").add_attribute("sender", info.sender);
+        Ok(Response::new().add_event(event))
+    }
+
     pub fn freeze_collection_info(
         &self,
         deps: DepsMut,
         _env: Env,
         info: MessageInfo,
     ) -> Result<Response, ContractError> {
+        if !self.ready.load(deps.storage)? {
+            return Err(ContractError::NotReady {});
+        }
         let collection = self.query_collection_info(deps.as_ref())?;
         if collection.creator != info.sender {
             return Err(ContractError::Unauthorized {});

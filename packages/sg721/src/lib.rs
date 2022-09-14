@@ -64,10 +64,12 @@ pub enum ExecuteMsg<T> {
     Burn {
         token_id: String,
     },
-    /// Update start trading time
+    /// Update specific collection info fields
     UpdateCollectionInfo {
         collection_info: UpdateCollectionInfoMsg<RoyaltyInfoResponse>,
     },
+    /// Called by the minter to update trading start time
+    UpdateTradingStartTime(Option<Timestamp>),
     // Freeze collection info from further updates
     FreezeCollectionInfo,
 }
