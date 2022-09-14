@@ -68,7 +68,7 @@ where
             description: msg.collection_info.description,
             image: msg.collection_info.image,
             external_link: msg.collection_info.external_link,
-            start_trading_time: None,
+            start_trading_time: msg.collection_info.start_trading_time,
             royalty_info,
         };
 

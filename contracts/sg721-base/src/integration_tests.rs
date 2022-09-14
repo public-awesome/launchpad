@@ -200,12 +200,15 @@ mod tests {
             let params = mock_collection_params();
             let (app, contract) = proper_instantiate();
 
-            // return current start trading time
+            // default start trading time is start time + default trading start time offset
             let res: CollectionInfoResponse = app
                 .wrap()
                 .query_wasm_smart(contract, &QueryMsg::CollectionInfo {})
                 .unwrap();
-            assert_eq!(res.start_trading_time, None);
+            let default_start_time = mock_init_extension()
+                .start_time
+                .plus_seconds(mock_params().default_trading_offset_secs);
+            assert_eq!(res.start_trading_time, Some(default_start_time));
 
             // update start trading time
             let (mut app, contract) = proper_instantiate();

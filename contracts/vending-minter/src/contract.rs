@@ -110,8 +110,8 @@ pub fn instantiate(
     {
         Some(time) => Some(time),
         None => Some(
-            env.block
-                .time
+            msg.init_msg
+                .start_time
                 .plus_seconds(factory_params.default_trading_offset_secs),
         ),
     };
