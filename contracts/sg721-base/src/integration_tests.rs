@@ -188,7 +188,7 @@ mod tests {
         }
     }
 
-    mod start_trading_time {
+    mod trading_start_time {
         use cosmwasm_std::{Decimal, Empty};
         use sg721::{RoyaltyInfoResponse, UpdateCollectionInfoMsg};
 
@@ -200,7 +200,7 @@ mod tests {
             let params = mock_collection_params();
             let (app, contract) = proper_instantiate();
 
-            // default start trading time is start time + default trading start time offset
+            // default trading start time is start time + default trading start time offset
             let res: CollectionInfoResponse = app
                 .wrap()
                 .query_wasm_smart(contract, &QueryMsg::CollectionInfo {})

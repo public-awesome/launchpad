@@ -2,7 +2,7 @@ use cosmwasm_std::{Addr, Timestamp};
 use cw_storage_plus::{Item, Map};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use sg4::MinterConfig;
+use sg4::{MinterConfig, Status};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct ConfigExtension {
@@ -22,3 +22,6 @@ pub const SG721_ADDRESS: Item<Addr> = Item::new("sg721_address");
 pub const MINTABLE_TOKEN_POSITIONS: Map<u32, u32> = Map::new("mt");
 pub const MINTABLE_NUM_TOKENS: Item<u32> = Item::new("mintable_num_tokens");
 pub const MINTER_ADDRS: Map<&Addr, u32> = Map::new("ma");
+
+/// Holds the status of the minter. Can be changed with on-chain governance proposals.
+pub const STATUS: Item<Status> = Item::new("status");
