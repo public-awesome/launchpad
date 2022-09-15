@@ -56,7 +56,7 @@
             }
           ]
         },
-        "start_trading_time": {
+        "trading_start_time": {
           "anyOf": [
             {
               "$ref": "#/definitions/Timestamp"
