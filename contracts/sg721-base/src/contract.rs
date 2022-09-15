@@ -270,7 +270,7 @@ where
         collection.external_link = collection_msg
             .external_link
             .unwrap_or(collection.external_link.as_ref().map(|s| s.to_string()));
-        Url::parse(&collection.external_link.as_ref().unwrap())?;
+        Url::parse(collection.external_link.as_ref().unwrap())?;
 
         let response = collection_msg.royalty_info.unwrap_or(royalty_info_str);
 
