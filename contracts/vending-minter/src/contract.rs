@@ -7,7 +7,7 @@ use crate::msg::{
 };
 use crate::state::{
     Config, ConfigExtension, CONFIG, MINTABLE_NUM_TOKENS, MINTABLE_TOKEN_POSITIONS, MINTER_ADDRS,
-    SG721_ADDRESS,
+    SG721_ADDRESS, STATUS,
 };
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
@@ -22,6 +22,7 @@ use rand_core::{RngCore, SeedableRng};
 use rand_xoshiro::Xoshiro128PlusPlus;
 use sg1::checked_fair_burn;
 use sg2::query::Sg2QueryMsg;
+use sg4::{Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
 use sg_std::math::U64Ext;
 use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME};
@@ -65,6 +66,9 @@ pub fn instantiate(
         .querier
         .query_wasm_smart(factory.clone(), &Sg2QueryMsg::Params {})?;
     let factory_params = factory_response.params;
+
+    // set default status so it can be queried without failing
+    STATUS.save(deps.storage, &Status::default())?;
 
     if !check_dynamic_per_address_limit(
         msg.init_msg.per_address_limit,
@@ -803,9 +807,37 @@ fn check_dynamic_per_address_limit(
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
+pub fn sudo(deps: DepsMut, _env: Env, msg: SudoMsg) -> Result<Response, ContractError> {
+    match msg {
+        SudoMsg::UpdateStatus {
+            is_verified,
+            is_blocked,
+            is_explicit,
+        } => update_status(deps, is_verified, is_blocked, is_explicit)
+            .map_err(|_| ContractError::UpdateStatus {}),
+    }
+}
+
+/// Only governance can update contract params
+pub fn update_status(
+    deps: DepsMut,
+    is_verified: bool,
+    is_blocked: bool,
+    is_explicit: bool,
+) -> StdResult<Response> {
+    let mut status = STATUS.load(deps.storage)?;
+    status.is_verified = is_verified;
+    status.is_blocked = is_blocked;
+    status.is_explicit = is_explicit;
+
+    Ok(Response::new().add_attribute("action", "sudo_update_status"))
+}
+
+#[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::Config {} => to_binary(&query_config(deps)?),
+        QueryMsg::Status {} => to_binary(&query_status(deps)?),
         QueryMsg::StartTime {} => to_binary(&query_start_time(deps)?),
         QueryMsg::MintableNumTokens {} => to_binary(&query_mintable_num_tokens(deps)?),
         QueryMsg::MintPrice {} => to_binary(&query_mint_price(deps)?),
@@ -829,6 +861,12 @@ fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
         whitelist: config.extension.whitelist.map(|w| w.to_string()),
         factory: config.factory.to_string(),
     })
+}
+
+pub fn query_status(deps: Deps) -> StdResult<StatusResponse> {
+    let status = STATUS.load(deps.storage)?;
+
+    Ok(StatusResponse { status })
 }
 
 fn query_mint_count(deps: Deps, address: String) -> StdResult<MintCountResponse> {
