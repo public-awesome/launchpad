@@ -10,6 +10,7 @@ pub const CONFIG: Item<Config> = Item::new("config");
 /// This is saved after handling a reply in instantiation. Therefore it's not in `Config`.
 pub const COLLECTION_ADDRESS: Item<Addr> = Item::new("collection_address");
 
+/// Holds the status of the minter. Can be changed with on-chain governance proposals.
 pub const STATUS: Item<Status> = Item::new("status");
 
 /// This keeps track of the token index for the token_ids

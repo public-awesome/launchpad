@@ -49,7 +49,7 @@ pub fn nt_contract_collection() -> Box<dyn Contract<StargazeMsgWrapper>> {
     Box::new(contract)
 }
 
-/// non-transferable nft
+/// sg721-base nft collection
 pub fn contract_collection() -> Box<dyn Contract<StargazeMsgWrapper>> {
     let contract = ContractWrapper::new(
         sg721_base::entry::execute,
