@@ -252,24 +252,26 @@ where
 
         // convert collection royalty info to response for comparison
         // convert from response to royalty info for storage
-        let royalty_info_str = match collection.royalty_info.as_ref() {
-            Some(royalty_info) => Some(royalty_info.to_response()),
-            None => None,
-        };
+        let royalty_info_str = collection
+            .royalty_info
+            .as_ref()
+            .map(|royalty_info| royalty_info.to_response());
 
         collection.description = collection_msg
             .description
-            .unwrap_or(collection.description.to_string());
+            .unwrap_or_else(|| collection.description.to_string());
         if collection.description.len() > MAX_DESCRIPTION_LENGTH as usize {
             return Err(ContractError::DescriptionTooLong {});
         }
 
-        collection.image = collection_msg.image.unwrap_or(collection.image.to_string());
+        collection.image = collection_msg
+            .image
+            .unwrap_or_else(|| collection.image.to_string());
         Url::parse(&collection.image)?;
 
         collection.external_link = collection_msg
             .external_link
-            .unwrap_or(collection.external_link.as_ref().map(|s| s.to_string()));
+            .unwrap_or_else(|| collection.external_link.as_ref().map(|s| s.to_string()));
         Url::parse(collection.external_link.as_ref().unwrap())?;
 
         let response = collection_msg.royalty_info.unwrap_or(royalty_info_str);

@@ -1535,7 +1535,7 @@ fn update_trading_start_time() {
     // succeeds
     let res = router.execute_contract(
         Addr::unchecked(creator.clone()),
-        Addr::unchecked(minter_addr.clone()),
+        Addr::unchecked(minter_addr),
         &ExecuteMsg::UpdateTradingStartTime(Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME))),
         &[],
     );

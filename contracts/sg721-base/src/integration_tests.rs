@@ -282,7 +282,7 @@ mod tests {
                     collection_info: UpdateCollectionInfoMsg {
                         description: Some(params.info.description.clone()),
                         image: Some(params.info.image.clone()),
-                        external_link: Some(params.info.external_link.clone()),
+                        external_link: Some(params.info.external_link),
                         royalty_info: None,
                     },
                 },
