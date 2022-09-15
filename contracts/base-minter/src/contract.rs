@@ -59,7 +59,7 @@ pub fn instantiate(
 
     // Use default start trading time if not provided
     let mut collection_info = msg.collection_params.info.clone();
-    let start_trading_time: Option<Timestamp> = match msg.collection_params.info.start_trading_time
+    let trading_start_time: Option<Timestamp> = match msg.collection_params.info.trading_start_time
     {
         Some(time) => Some(time),
         None => Some(
@@ -68,7 +68,7 @@ pub fn instantiate(
                 .plus_seconds(factory_params.params.default_trading_offset_secs),
         ),
     };
-    collection_info.start_trading_time = start_trading_time;
+    collection_info.trading_start_time = trading_start_time;
 
     CONFIG.save(deps.storage, &config)?;
 
@@ -107,6 +107,10 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::Mint { token_uri } => execute_mint_sender(deps, info, token_uri),
+        // TODO
+        // ExecuteMsg::UpdateTradingStartTime(time) => {
+        //     execute_update_trading_start_time(deps, env, info, time)
+        // }
     }
 }
 

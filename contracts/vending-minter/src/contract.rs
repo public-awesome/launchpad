@@ -47,7 +47,6 @@ const CONTRACT_NAME: &str = "crates.io:sg-minter";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 const INSTANTIATE_SG721_REPLY_ID: u64 = 1;
-const UPDATE_SG721_REPLY_ID: u64 = 2;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -107,7 +106,7 @@ pub fn instantiate(
 
     // Use default start trading time if not provided
     let mut collection_info = msg.collection_params.info.clone();
-    let start_trading_time: Option<Timestamp> = match msg.collection_params.info.start_trading_time
+    let trading_start_time: Option<Timestamp> = match msg.collection_params.info.trading_start_time
     {
         Some(time) => Some(time),
         None => Some(
@@ -116,7 +115,7 @@ pub fn instantiate(
                 .plus_seconds(factory_params.default_trading_offset_secs),
         ),
     };
-    collection_info.start_trading_time = start_trading_time;
+    collection_info.trading_start_time = trading_start_time;
 
     let config = Config {
         factory: factory.clone(),
@@ -677,38 +676,30 @@ pub fn execute_update_trading_start_time(
         ));
     }
 
-    // TODO run checks
     // add custom rules here
-    // // If current time is after the stored start time return error
-    // if env.block.time >= config.extension.start_time {
-    //     return Err(ContractError::AlreadyStarted {});
-    // }
-
-    // // If current time already passed the new start_time return error
-    // if env.block.time > start_time {
-    //     return Err(ContractError::InvalidStartTime(start_time, env.block.time));
-    // }
-
-    // TODO execute update sg721 start trading time
-    // Submessage to instantiate sg721 contract
-    let submsg = SubMsg {
-        msg: WasmMsg::Execute {
-            contract_addr: sg721_contract_addr.to_string(),
-            msg: to_binary(&Sg721ExecuteMsg::<Empty>::UpdateTradingStartTime(
+    if let Some(start_time) = start_time {
+        // If current time already passed the new start_time return error
+        if env.block.time > start_time {
+            return Err(ContractError::InvalidTradingStartTime(
+                env.block.time,
                 start_time,
-            ))?,
-            funds: vec![],
+            ));
         }
-        .into(),
-        id: UPDATE_SG721_REPLY_ID,
-        gas_limit: None,
-        reply_on: ReplyOn::Success,
+    }
+
+    // execute sg721 contract
+    let msg = WasmMsg::Execute {
+        contract_addr: sg721_contract_addr.to_string(),
+        msg: to_binary(&Sg721ExecuteMsg::<Empty>::UpdateTradingStartTime(
+            start_time,
+        ))?,
+        funds: vec![],
     };
 
     Ok(Response::new()
         .add_attribute("action", "update_start_time")
         .add_attribute("sender", info.sender)
-        .add_submessage(submsg))
+        .add_message(msg))
 }
 
 pub fn execute_update_per_address_limit(

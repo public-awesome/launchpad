@@ -208,30 +208,12 @@ mod tests {
             let default_start_time = mock_init_extension()
                 .start_time
                 .plus_seconds(mock_params().default_trading_offset_secs);
-            assert_eq!(res.start_trading_time, Some(default_start_time));
+            assert_eq!(res.trading_start_time, Some(default_start_time));
 
-            // update start trading time
+            // update collection info
             let (mut app, contract) = proper_instantiate();
 
             let creator = Addr::unchecked("creator".to_string());
-
-            // TODO move test to minter
-            // invalid start trading time
-            // let res = app.execute_contract(
-            //     creator.clone(),
-            //     contract.clone(),
-            //     &Sg721ExecuteMsg::<Empty>::UpdateCollectionInfo {
-            //         collection_info: UpdateCollectionInfoMsg {
-            //             description: Some(params.info.description.clone()),
-            //             image: Some(params.info.image.clone()),
-            //             external_link: Some(params.info.external_link.clone()),
-            //             royalty_info: None,
-            //             start_trading_time: Some(Some(Timestamp::from_nanos(1))),
-            //         },
-            //     },
-            //     &[],
-            // );
-            // assert!(res.is_err());
 
             // succeeds
             let res = app.execute_contract(
@@ -243,9 +225,6 @@ mod tests {
                         image: Some(params.info.image.clone()),
                         external_link: Some(params.info.external_link.clone()),
                         royalty_info: None,
-                        start_trading_time: Some(Some(
-                            Timestamp::from_nanos(GENESIS_MINT_START_TIME).plus_seconds(1),
-                        )),
                     },
                 },
                 &[],
@@ -266,9 +245,6 @@ mod tests {
                         image: Some(params.info.image.clone()),
                         external_link: Some(params.info.external_link.clone()),
                         royalty_info: Some(royalty_info.clone()),
-                        start_trading_time: Some(Some(
-                            Timestamp::from_nanos(GENESIS_MINT_START_TIME).plus_seconds(1),
-                        )),
                     },
                 },
                 &[],
@@ -308,9 +284,6 @@ mod tests {
                         image: Some(params.info.image.clone()),
                         external_link: Some(params.info.external_link.clone()),
                         royalty_info: None,
-                        start_trading_time: Some(Some(
-                            Timestamp::from_nanos(GENESIS_MINT_START_TIME).plus_seconds(1),
-                        )),
                     },
                 },
                 &[],

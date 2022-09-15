@@ -70,7 +70,7 @@ where
             description: msg.collection_info.description,
             image: msg.collection_info.image,
             external_link: msg.collection_info.external_link,
-            start_trading_time: msg.collection_info.start_trading_time,
+            trading_start_time: msg.collection_info.trading_start_time,
             royalty_info,
         };
 
@@ -272,13 +272,6 @@ where
             .unwrap_or(collection.external_link.as_ref().map(|s| s.to_string()));
         Url::parse(&collection.external_link.as_ref().unwrap())?;
 
-        // TODO move to minter, gated by minter
-        // if let Some(start_trading_time) = collection.start_trading_time {
-        //     if env.block.time > start_trading_time {
-        //         return Err(ContractError::InvalidStartTradingTime {});
-        //     }
-        // }
-
         let response = collection_msg.royalty_info.unwrap_or(royalty_info_str);
 
         collection.royalty_info = match response {
@@ -313,7 +306,7 @@ where
         }
 
         let mut collection_info = self.collection_info.load(deps.storage)?;
-        collection_info.start_trading_time = start_time;
+        collection_info.trading_start_time = start_time;
         self.collection_info.save(deps.storage, &collection_info)?;
 
         let event = Event::new("update_trading_start_time").add_attribute("sender", info.sender);
@@ -505,7 +498,7 @@ where
             description: info.description,
             image: info.image,
             external_link: info.external_link,
-            start_trading_time: info.start_trading_time,
+            trading_start_time: info.trading_start_time,
             royalty_info: royalty_info_res,
         })
     }

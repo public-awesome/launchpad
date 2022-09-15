@@ -119,6 +119,6 @@ pub struct CollectionInfoResponse {
     pub description: String,
     pub image: String,
     pub external_link: Option<String>,
-    pub start_trading_time: Option<Timestamp>,
+    pub trading_start_time: Option<Timestamp>,
     pub royalty_info: Option<RoyaltyInfoResponse>,
 }
