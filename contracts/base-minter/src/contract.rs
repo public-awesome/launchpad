@@ -13,7 +13,7 @@ use cosmwasm_std::{
 
 use cw2::set_contract_version;
 use cw721_base::{msg::ExecuteMsg as Cw721ExecuteMsg, MintMsg};
-use cw_utils::{must_pay, parse_reply_instantiate_data};
+use cw_utils::{must_pay, nonpayable, parse_reply_instantiate_data};
 
 use sg1::checked_fair_burn;
 use sg2::query::Sg2QueryMsg;
@@ -101,16 +101,15 @@ pub fn instantiate(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::Mint { token_uri } => execute_mint_sender(deps, info, token_uri),
-        // TODO
-        // ExecuteMsg::UpdateTradingStartTime(time) => {
-        //     execute_update_trading_start_time(deps, env, info, time)
-        // }
+        ExecuteMsg::UpdateTradingStartTime(time) => {
+            execute_update_trading_start_time(deps, env, info, time)
+        }
     }
 }
 
@@ -176,6 +175,51 @@ pub fn execute_mint_sender(
         .add_attribute("action", "mint")
         .add_attribute("sender", info.sender)
         .add_attribute("network_fee", network_fee.to_string()))
+}
+
+pub fn execute_update_trading_start_time(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    start_time: Option<Timestamp>,
+) -> Result<Response, ContractError> {
+    nonpayable(&info)?;
+    let sg721_contract_addr = COLLECTION_ADDRESS.load(deps.storage)?;
+
+    let collection_info: CollectionInfoResponse = deps.querier.query_wasm_smart(
+        sg721_contract_addr.clone(),
+        &Sg721QueryMsg::CollectionInfo {},
+    )?;
+    if info.sender != collection_info.creator {
+        return Err(ContractError::Unauthorized(
+            "Sender is not creator".to_owned(),
+        ));
+    }
+
+    // add custom rules here
+    if let Some(start_time) = start_time {
+        // If current time already passed the new start_time return error
+        if env.block.time > start_time {
+            return Err(ContractError::InvalidTradingStartTime(
+                env.block.time,
+                start_time,
+            ));
+        }
+    }
+
+    // execute sg721 contract
+    let msg = WasmMsg::Execute {
+        contract_addr: sg721_contract_addr.to_string(),
+        msg: to_binary(&Sg721ExecuteMsg::<Empty>::UpdateTradingStartTime(
+            start_time,
+        ))?,
+        funds: vec![],
+    };
+
+    Ok(Response::new()
+        .add_attribute("action", "update_start_time")
+        .add_attribute("sender", info.sender)
+        .add_message(msg))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
