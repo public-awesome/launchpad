@@ -6,59 +6,75 @@
 
 import * as _0 from "./BaseFactory.types";
 import * as _1 from "./BaseFactory.client";
-import * as _2 from "./BaseFactory.react-query";
-import * as _3 from "./BaseMinter.types";
-import * as _4 from "./BaseMinter.client";
-import * as _5 from "./BaseMinter.react-query";
-import * as _6 from "./Sg721Base.types";
-import * as _7 from "./Sg721Base.client";
-import * as _8 from "./Sg721Base.react-query";
-import * as _9 from "./Sg721MetadataOnchain.types";
-import * as _10 from "./Sg721MetadataOnchain.client";
-import * as _11 from "./Sg721MetadataOnchain.react-query";
-import * as _12 from "./Sg721Nt.types";
-import * as _13 from "./Sg721Nt.client";
-import * as _14 from "./Sg721Nt.react-query";
-import * as _15 from "./Splits.types";
-import * as _16 from "./Splits.client";
-import * as _17 from "./Splits.react-query";
-import * as _18 from "./VendingFactory.types";
-import * as _19 from "./VendingFactory.client";
-import * as _20 from "./VendingFactory.react-query";
-import * as _21 from "./VendingMinter.types";
-import * as _22 from "./VendingMinter.client";
-import * as _23 from "./VendingMinter.react-query";
+import * as _2 from "./BaseFactory.message-composer";
+import * as _3 from "./BaseFactory.react-query";
+import * as _4 from "./BaseMinter.types";
+import * as _5 from "./BaseMinter.client";
+import * as _6 from "./BaseMinter.message-composer";
+import * as _7 from "./BaseMinter.react-query";
+import * as _8 from "./Sg721Base.types";
+import * as _9 from "./Sg721Base.client";
+import * as _10 from "./Sg721Base.message-composer";
+import * as _11 from "./Sg721Base.react-query";
+import * as _12 from "./Sg721MetadataOnchain.types";
+import * as _13 from "./Sg721MetadataOnchain.client";
+import * as _14 from "./Sg721MetadataOnchain.message-composer";
+import * as _15 from "./Sg721MetadataOnchain.react-query";
+import * as _16 from "./Sg721Nt.types";
+import * as _17 from "./Sg721Nt.client";
+import * as _18 from "./Sg721Nt.message-composer";
+import * as _19 from "./Sg721Nt.react-query";
+import * as _20 from "./Splits.types";
+import * as _21 from "./Splits.client";
+import * as _22 from "./Splits.message-composer";
+import * as _23 from "./Splits.react-query";
+import * as _24 from "./VendingFactory.types";
+import * as _25 from "./VendingFactory.client";
+import * as _26 from "./VendingFactory.message-composer";
+import * as _27 from "./VendingFactory.react-query";
+import * as _28 from "./VendingMinter.types";
+import * as _29 from "./VendingMinter.client";
+import * as _30 from "./VendingMinter.message-composer";
+import * as _31 from "./VendingMinter.react-query";
 export namespace contracts {
   export const BaseFactory = { ..._0,
     ..._1,
-    ..._2
+    ..._2,
+    ..._3
   };
-  export const BaseMinter = { ..._3,
-    ..._4,
-    ..._5
+  export const BaseMinter = { ..._4,
+    ..._5,
+    ..._6,
+    ..._7
   };
-  export const Sg721Base = { ..._6,
-    ..._7,
-    ..._8
-  };
-  export const Sg721MetadataOnchain = { ..._9,
+  export const Sg721Base = { ..._8,
+    ..._9,
     ..._10,
     ..._11
   };
-  export const Sg721Nt = { ..._12,
+  export const Sg721MetadataOnchain = { ..._12,
     ..._13,
-    ..._14
+    ..._14,
+    ..._15
   };
-  export const Splits = { ..._15,
-    ..._16,
-    ..._17
+  export const Sg721Nt = { ..._16,
+    ..._17,
+    ..._18,
+    ..._19
   };
-  export const VendingFactory = { ..._18,
-    ..._19,
-    ..._20
-  };
-  export const VendingMinter = { ..._21,
+  export const Splits = { ..._20,
+    ..._21,
     ..._22,
     ..._23
+  };
+  export const VendingFactory = { ..._24,
+    ..._25,
+    ..._26,
+    ..._27
+  };
+  export const VendingMinter = { ..._28,
+    ..._29,
+    ..._30,
+    ..._31
   };
 }
