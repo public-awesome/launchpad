@@ -239,9 +239,7 @@ where
         }
         let mut collection = self.collection_info.load(deps.storage)?;
 
-        let frozen_collection_info = self.frozen_collection_info.load(deps.storage)?;
-
-        if frozen_collection_info {
+        if self.frozen_collection_info.load(deps.storage)? {
             return Err(ContractError::CollectionInfoFrozen {});
         }
 
@@ -252,7 +250,7 @@ where
 
         // convert collection royalty info to response for comparison
         // convert from response to royalty info for storage
-        let royalty_info_str = collection
+        let royalty_info_res = collection
             .royalty_info
             .as_ref()
             .map(|royalty_info| royalty_info.to_response());
@@ -274,7 +272,7 @@ where
             .unwrap_or_else(|| collection.external_link.as_ref().map(|s| s.to_string()));
         Url::parse(collection.external_link.as_ref().unwrap())?;
 
-        let response = collection_msg.royalty_info.unwrap_or(royalty_info_str);
+        let response = collection_msg.royalty_info.unwrap_or(royalty_info_res);
 
         collection.royalty_info = match response {
             Some(royalty_info) => Some(RoyaltyInfo {
