@@ -45,15 +45,17 @@ cosmwasm-storage = "1.0.0"
 cw-storage-plus = "0.13.2"
 cw2 = "0.13.2"
 cw3-flex-multisig = { version = "0.14.0", features = ["library"] }
+cw-utils = "0.14.0"
 schemars = "0.8.8"
 serde = { version = "1.0.137", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0.31" }
-cw4 = "0.14.0"
-cw3 = "0.14.0"
+cw4 = "0.13.2"
+cw3 = "0.13.2"
 sg-std = { path = "../../packages/sg-std" }
+cw4-group = { version = "0.13.2", features = ["library"] }
 
 [dev-dependencies]
 cosmwasm-schema = "1.0.0"
 cw-multi-test = "0.13.2"
-cw4-group = "0.14.0"
+cw4-group = "0.13.2"
 sg-multi-test = { path = "../../packages/sg-multi-test" }

@@ -12,6 +12,12 @@ pub enum ContractError {
     #[error("Contract has no funds")]
     NoFunds {},
 
+    #[error("Invalid reply ID")]
+    InvalidReplyID {},
+
+    #[error("Reply error")]
+    ReplyOnSuccess {},
+
     #[error("Group contract invalid address '{addr}'")]
     InvalidGroup { addr: String },
 

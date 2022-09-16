@@ -276,20 +276,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cw-controllers"
-version = "0.14.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b81b8c4647f13be38baea7345885fcd97cffe8ad4e0454a43f975be9609127ed"
-dependencies = [
- "cosmwasm-std",
- "cw-storage-plus 0.14.0",
- "cw-utils 0.14.0",
- "schemars",
- "serde",
- "thiserror",
-]
-
-[[package]]
 name = "cw-multi-test"
 version = "0.13.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -382,6 +368,18 @@ dependencies = [
 
 [[package]]
 name = "cw3"
+version = "0.13.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fe19462a7f644ba60c19d3443cb90d00c50d9b6b3b0a3a7fca93df8261af979b"
+dependencies = [
+ "cosmwasm-std",
+ "cw-utils 0.13.4",
+ "schemars",
+ "serde",
+]
+
+[[package]]
+name = "cw3"
 version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3c387f56a69bd3ad3bf9e13bb7bd638668a78b4eae9aecaa6a8ab3f7542051f7"
@@ -402,7 +400,7 @@ dependencies = [
  "cw-storage-plus 0.14.0",
  "cw-utils 0.14.0",
  "cw2 0.14.0",
- "cw3",
+ "cw3 0.14.0",
  "schemars",
  "serde",
  "thiserror",
@@ -418,7 +416,7 @@ dependencies = [
  "cw-storage-plus 0.14.0",
  "cw-utils 0.14.0",
  "cw2 0.14.0",
- "cw3",
+ "cw3 0.14.0",
  "cw3-fixed-multisig",
  "cw4 0.14.0",
  "schemars",
@@ -457,28 +455,11 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a6c95c89153e7831c8306c8eba40a3daa76f9c7b8f5179dd0b8628aca168ec7a"
 dependencies = [
  "cosmwasm-std",
- "cw-controllers 0.13.4",
+ "cw-controllers",
  "cw-storage-plus 0.13.4",
  "cw-utils 0.13.4",
  "cw2 0.13.4",
  "cw4 0.13.4",
- "schemars",
- "serde",
- "thiserror",
-]
-
-[[package]]
-name = "cw4-group"
-version = "0.14.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "93204a7aa587466636d001b21831c4b4ac87fccd40c7b39f78ad95dee452309e"
-dependencies = [
- "cosmwasm-std",
- "cw-controllers 0.14.0",
- "cw-storage-plus 0.14.0",
- "cw-utils 0.14.0",
- "cw2 0.14.0",
- "cw4 0.14.0",
  "schemars",
  "serde",
  "thiserror",
@@ -1037,11 +1018,12 @@ dependencies = [
  "cosmwasm-storage",
  "cw-multi-test",
  "cw-storage-plus 0.13.4",
+ "cw-utils 0.14.0",
  "cw2 0.13.4",
- "cw3",
+ "cw3 0.13.4",
  "cw3-flex-multisig",
- "cw4 0.14.0",
- "cw4-group 0.14.0",
+ "cw4 0.13.4",
+ "cw4-group",
  "schemars",
  "serde",
  "sg-multi-test 0.15.1",
@@ -1468,7 +1450,7 @@ dependencies = [
  "cw-utils 0.13.4",
  "cw2 0.13.4",
  "cw4 0.13.4",
- "cw4-group 0.13.4",
+ "cw4-group",
  "cw721",
  "cw721-base",
  "rand_core 0.6.3",

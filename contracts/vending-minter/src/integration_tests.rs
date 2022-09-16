@@ -84,7 +84,9 @@ pub fn contract_splits() -> Box<dyn Contract<StargazeMsgWrapper>> {
         sg_splits::contract::execute,
         sg_splits::contract::instantiate,
         sg_splits::contract::query,
-    );
+    )
+    .with_reply(crate::contract::reply);
+
     Box::new(contract)
 }
 
@@ -272,43 +274,32 @@ const MEMBER1: &str = "member0001";
 const MEMBER2: &str = "member0002";
 const MEMBER3: &str = "member0003";
 
-// uploads code and returns address of group contract
-fn instantiate_group(app: &mut StargazeApp, members: Vec<Member>) -> Addr {
-    let group_id = app.store_code(contract_group());
-    println!("group_id: {}", group_id);
-    let msg = cw4_group::msg::InstantiateMsg {
-        admin: Some(OWNER.into()),
-        members,
-    };
-    app.instantiate_contract(group_id, Addr::unchecked(OWNER), &msg, &[], "group", None)
-        .unwrap()
+fn members() -> Vec<Member> {
+    vec![
+        member(OWNER, 50),
+        member(MEMBER1, 25),
+        member(MEMBER2, 20),
+        member(MEMBER3, 5),
+    ]
 }
 
 #[track_caller]
-fn instantiate_splits(app: &mut StargazeApp, group: Addr) -> Addr {
+fn instantiate_splits(app: &mut StargazeApp) -> Addr {
     let splits_id = app.store_code(contract_splits());
+    let group_id = app.store_code(contract_group());
+
     println!("splits_id: {}", splits_id);
     let msg = sg_splits::msg::InstantiateMsg {
-        group_addr: group.to_string(),
+        group_code_id: group_id,
+        members: members(),
     };
     app.instantiate_contract(splits_id, Addr::unchecked(OWNER), &msg, &[], "splits", None)
         .unwrap()
 }
 
 #[track_caller]
-fn setup_splits_test_case(app: &mut StargazeApp, init_funds: Vec<Coin>) -> (Addr, Addr) {
-    // 1. Instantiate group contract with members (and OWNER as admin)
-    let members = vec![
-        member(OWNER, 50),
-        member(MEMBER1, 25),
-        member(MEMBER2, 20),
-        member(MEMBER3, 5),
-    ];
-    let group_addr = instantiate_group(app, members);
-    app.update_block(next_block);
-
-    // 2. Set up Splits backed by this group
-    let splits_addr = instantiate_splits(app, group_addr.clone());
+fn setup_splits_test_case(app: &mut StargazeApp, init_funds: Vec<Coin>) -> Addr {
+    let splits_addr = instantiate_splits(app);
     app.update_block(next_block);
 
     // Bonus: set some funds on the splits contract for future proposals
@@ -316,7 +307,7 @@ fn setup_splits_test_case(app: &mut StargazeApp, init_funds: Vec<Coin>) -> (Addr
         app.send_tokens(Addr::unchecked(OWNER), splits_addr.clone(), &init_funds)
             .unwrap();
     }
-    (splits_addr, group_addr)
+    splits_addr
 }
 
 // Add a creator account with initial balances
@@ -1607,7 +1598,7 @@ fn update_mint_price() {
 fn mint_and_split() {
     let mut app = custom_mock_app();
 
-    let (splits_addr, _) = setup_splits_test_case(&mut app, vec![]);
+    let splits_addr = setup_splits_test_case(&mut app, vec![]);
 
     let (creator, buyer) = setup_accounts(&mut app);
     let num_tokens = 2;

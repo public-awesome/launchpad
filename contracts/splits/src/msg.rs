@@ -1,12 +1,12 @@
+use cw4::{Cw4Contract, Member};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::state::Config;
-
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {
-    // this is the group contract that contains the member list
-    pub group_addr: String,
+    /// this is the code id for the group contract that contains the member list
+    pub group_code_id: u64,
+    pub members: Vec<Member>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -18,8 +18,8 @@ pub enum ExecuteMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
-    /// Returns the config
-    Config {},
+    /// Returns GroupResponse
+    Group {},
     /// Returns Member
     Member { address: String },
     /// Returns MemberListResponse
@@ -29,7 +29,7 @@ pub enum QueryMsg {
     },
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct ConfigResponse {
-    pub config: Config,
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
+pub struct GroupResponse {
+    pub group: Cw4Contract,
 }
