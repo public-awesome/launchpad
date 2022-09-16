@@ -1,7 +1,7 @@
 use anyhow::{bail, Result as AnyResult};
 use cosmwasm_std::testing::{MockApi, MockQuerier, MockStorage};
 use cosmwasm_std::{
-    Addr, Api, Binary, BlockInfo, CustomQuery, Empty, Querier, QuerierResult, Storage,
+    Addr, Api, Binary, BlockInfo, Coin, CustomQuery, Empty, Querier, QuerierResult, Storage,
 };
 use cosmwasm_std::{BankMsg, OwnedDeps};
 use cw_multi_test::{
@@ -136,6 +136,19 @@ impl StargazeApp {
             BasicAppBuilder::<StargazeMsgWrapper, Empty>::new_custom()
                 .with_custom(StargazeModule {})
                 .build(|_, _, _| {}),
+        )
+    }
+
+    pub fn mock_app(init_funds: &[Coin], account: Addr) -> Self {
+        Self(
+            BasicAppBuilder::<StargazeMsgWrapper, Empty>::new_custom()
+                .with_custom(StargazeModule {})
+                .build(|router, _, storage| {
+                    router
+                        .bank
+                        .init_balance(storage, &account, init_funds.to_vec())
+                        .unwrap();
+                }),
         )
     }
 }

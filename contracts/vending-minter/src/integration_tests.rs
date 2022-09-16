@@ -80,12 +80,12 @@ pub fn contract_sg721() -> Box<dyn Contract<StargazeMsgWrapper>> {
 }
 
 pub fn contract_splits() -> Box<dyn Contract<StargazeMsgWrapper>> {
-    let contract = ContractWrapper::new_with_empty(
+    let contract = ContractWrapper::new(
         sg_splits::contract::execute,
         sg_splits::contract::instantiate,
         sg_splits::contract::query,
     )
-    .with_reply(crate::contract::reply);
+    .with_reply(sg_splits::contract::reply);
 
     Box::new(contract)
 }
@@ -288,10 +288,10 @@ fn instantiate_splits(app: &mut StargazeApp) -> Addr {
     let splits_id = app.store_code(contract_splits());
     let group_id = app.store_code(contract_group());
 
-    println!("splits_id: {}", splits_id);
     let msg = sg_splits::msg::InstantiateMsg {
         group_code_id: group_id,
         members: members(),
+        group_admin: None,
     };
     app.instantiate_contract(splits_id, Addr::unchecked(OWNER), &msg, &[], "splits", None)
         .unwrap()

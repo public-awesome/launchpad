@@ -4,10 +4,12 @@ mod tests {
         msg::{InstantiateMsg, QueryMsg},
         ContractError,
     };
-    use cosmwasm_std::{Addr, Coin, Empty};
+    use cosmwasm_std::{Addr, Coin};
     use cw2::{query_contract_info, ContractVersion};
     use cw4::{Member, MemberListResponse};
-    use cw_multi_test::{next_block, App, AppBuilder, Contract, ContractWrapper, Executor};
+    use cw_multi_test::{next_block, Contract, ContractWrapper, Executor};
+    use sg_multi_test::StargazeApp;
+    use sg_std::StargazeMsgWrapper;
 
     const OWNER: &str = "admin0001";
     const MEMBER1: &str = "member0001";
@@ -30,7 +32,7 @@ mod tests {
         ]
     }
 
-    pub fn contract_splits() -> Box<dyn Contract<Empty>> {
+    pub fn contract_splits() -> Box<dyn Contract<StargazeMsgWrapper>> {
         let contract = ContractWrapper::new(
             crate::contract::execute,
             crate::contract::instantiate,
@@ -41,8 +43,8 @@ mod tests {
         Box::new(contract)
     }
 
-    pub fn contract_group() -> Box<dyn Contract<Empty>> {
-        let contract = ContractWrapper::new(
+    pub fn contract_group() -> Box<dyn Contract<StargazeMsgWrapper>> {
+        let contract = ContractWrapper::new_with_empty(
             cw4_group::contract::execute,
             cw4_group::contract::instantiate,
             cw4_group::contract::query,
@@ -50,23 +52,15 @@ mod tests {
         Box::new(contract)
     }
 
-    fn mock_app(init_funds: &[Coin]) -> App {
-        AppBuilder::new().build(|router, _, storage| {
-            router
-                .bank
-                .init_balance(storage, &Addr::unchecked(OWNER), init_funds.to_vec())
-                .unwrap();
-        })
-    }
-
     #[track_caller]
-    fn instantiate_splits(app: &mut App, members: Vec<Member>) -> Addr {
+    fn instantiate_splits(app: &mut StargazeApp, members: Vec<Member>) -> Addr {
         let splits_id = app.store_code(contract_splits());
         let group_id = app.store_code(contract_group());
 
         let msg = crate::msg::InstantiateMsg {
             group_code_id: group_id,
             members,
+            group_admin: None,
         };
         app.instantiate_contract(splits_id, Addr::unchecked(OWNER), &msg, &[], "splits", None)
             .unwrap()
@@ -74,28 +68,13 @@ mod tests {
 
     #[track_caller]
     fn setup_test_case(
-        app: &mut App,
+        app: &mut StargazeApp,
         init_funds: Vec<Coin>,
         _multisig_as_group_admin: bool,
     ) -> Addr {
-        // 1. Instantiate group contract with members (and OWNER as admin) + Set up Splits backed by this group
+        // Instantiate group contract with members (and OWNER as admin) + Set up Splits backed by this group
         let splits_addr = instantiate_splits(app, members());
         app.update_block(next_block);
-
-        // // 3. (Optional) Set the multisig as the group owner
-        // if multisig_as_group_admin {
-        //     let update_admin = Cw4ExecuteMsg::UpdateAdmin {
-        //         admin: Some(splits_addr.to_string()),
-        //     };
-        //     app.execute_contract(
-        //         Addr::unchecked(OWNER),
-        //         group_addr.clone(),
-        //         &update_admin,
-        //         &[],
-        //     )
-        //     .unwrap();
-        //     app.update_block(next_block);
-        // }
 
         // Bonus: set some funds on the splits contract for future proposals
         if !init_funds.is_empty() {
@@ -107,7 +86,7 @@ mod tests {
 
     #[test]
     fn test_instantiate_works() {
-        let mut app = mock_app(&[]);
+        let mut app = StargazeApp::mock_app(&[], Addr::unchecked("unused"));
         let splits_id = app.store_code(contract_splits());
         let group_id = app.store_code(contract_group());
 
@@ -115,6 +94,7 @@ mod tests {
         let instantiate_msg = InstantiateMsg {
             group_code_id: group_id,
             members: vec![member(OWNER, 0)],
+            group_admin: None,
         };
         let err = app
             .instantiate_contract(
@@ -135,6 +115,7 @@ mod tests {
         let instantiate_msg = InstantiateMsg {
             group_code_id: group_id,
             members: vec![member(OWNER, 1)],
+            group_admin: None,
         };
         let splits_addr = app
             .instantiate_contract(
@@ -185,7 +166,7 @@ mod tests {
 
         #[test]
         fn distribute_zero_funds() {
-            let mut app = mock_app(&[]);
+            let mut app = StargazeApp::mock_app(&[], Addr::unchecked("unused"));
 
             let splits_addr = setup_test_case(&mut app, vec![], false);
 
@@ -201,7 +182,7 @@ mod tests {
         fn distribute_non_member() {
             const DENOM: &str = "ustars";
             let init_funds = coins(100, DENOM);
-            let mut app = mock_app(&init_funds);
+            let mut app = StargazeApp::mock_app(&init_funds, Addr::unchecked(OWNER));
 
             let splits_addr = setup_test_case(&mut app, init_funds, false);
 
@@ -220,7 +201,7 @@ mod tests {
         fn distribute() {
             const DENOM: &str = "ustars";
             let init_funds = coins(100, DENOM);
-            let mut app = mock_app(&init_funds);
+            let mut app = StargazeApp::mock_app(&init_funds, Addr::unchecked(OWNER));
 
             let splits_addr = setup_test_case(&mut app, init_funds, false);
 

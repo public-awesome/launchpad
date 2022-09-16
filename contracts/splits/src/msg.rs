@@ -7,6 +7,7 @@ pub struct InstantiateMsg {
     /// this is the code id for the group contract that contains the member list
     pub group_code_id: u64,
     pub members: Vec<Member>,
+    pub group_admin: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

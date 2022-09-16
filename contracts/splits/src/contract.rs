@@ -1,14 +1,14 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coins, to_binary, BankMsg, Binary, Decimal, Deps, DepsMut, Env, MessageInfo, Reply, Response,
-    StdResult, SubMsg, WasmMsg,
+    coins, to_binary, BankMsg, Binary, Decimal, Deps, DepsMut, Env, MessageInfo, Reply, StdResult,
+    WasmMsg,
 };
 use cw2::set_contract_version;
 use cw4::{Cw4Contract, Member, MemberListResponse, MemberResponse};
 use cw4_group::msg::InstantiateMsg as Cw4GroupInstantiateMsg;
 use cw_utils::parse_reply_instantiate_data;
-use sg_std::NATIVE_DENOM;
+use sg_std::{Response, SubMsg, NATIVE_DENOM};
 
 use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, GroupResponse, InstantiateMsg, QueryMsg};
@@ -23,22 +23,22 @@ const INIT_GROUP_REPLY_ID: u64 = 1;
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
-    env: Env,
-    _info: MessageInfo,
+    _env: Env,
+    info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
-    let splits_addr = env.contract.address;
+    println!("Instantiate splits contract");
 
     // Create a group with an optional admin
     let init_msg = Cw4GroupInstantiateMsg {
-        // TODO: change to optional admin
-        admin: Some(splits_addr.to_string()),
+        admin: msg.group_admin,
         members: msg.members,
     };
     let wasm_msg = WasmMsg::Instantiate {
-        admin: Some(splits_addr.to_string()),
+        // TODO: does it make sense to make the sender the contract admin?
+        admin: Some(info.sender.to_string()),
         code_id: msg.group_code_id,
         msg: to_binary(&init_msg)?,
         funds: vec![],
@@ -105,6 +105,8 @@ pub fn execute_distribute(
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
+    println!("Reply from splits contract");
+
     if msg.id != INIT_GROUP_REPLY_ID {
         return Err(ContractError::InvalidReplyID {});
     }
