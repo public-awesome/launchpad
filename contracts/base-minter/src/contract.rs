@@ -59,15 +59,12 @@ pub fn instantiate(
 
     // Use default start trading time if not provided
     let mut collection_info = msg.collection_params.info.clone();
-    let trading_start_time: Option<Timestamp> = match msg.collection_params.info.trading_start_time
-    {
-        Some(time) => Some(time),
-        None => Some(
-            env.block
-                .time
-                .plus_seconds(factory_params.params.default_trading_offset_secs),
-        ),
-    };
+    let offset = factory_params.params.default_trading_offset_secs;
+    let trading_start_time = msg
+        .collection_params
+        .info
+        .trading_start_time
+        .or_else(|| Some(env.block.time.plus_seconds(offset)));
     collection_info.trading_start_time = trading_start_time;
 
     CONFIG.save(deps.storage, &config)?;
