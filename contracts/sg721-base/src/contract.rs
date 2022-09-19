@@ -37,7 +37,7 @@ where
 
         // check sender is a contract
         let req = WasmQuery::ContractInfo {
-            contract_addr: info.sender.clone().into(),
+            contract_addr: info.sender.into(),
         }
         .into();
         let res: Result<ContractInfoResponse, StdError> = deps.querier.query(&req);
