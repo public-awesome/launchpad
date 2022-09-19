@@ -37,6 +37,18 @@
     {
       "type": "object",
       "required": [
+        "purge"
+      ],
+      "properties": {
+        "purge": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
         "update_mint_price"
       ],
       "properties": {

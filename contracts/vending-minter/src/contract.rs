@@ -193,6 +193,7 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::Mint {} => execute_mint_sender(deps, env, info),
+        ExecuteMsg::Purge {} => execute_purge(deps, env, info),
         ExecuteMsg::UpdateMintPrice { price } => execute_update_mint_price(deps, env, info, price),
         ExecuteMsg::UpdateStartTime(time) => execute_update_start_time(deps, env, info, time),
         ExecuteMsg::UpdateTradingStartTime(time) => {
@@ -211,6 +212,31 @@ pub fn execute(
         }
         ExecuteMsg::Shuffle {} => execute_shuffle(deps, env, info),
     }
+}
+
+// Purge frees data after a mint is sold out
+// Anyone can purge
+pub fn execute_purge(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+) -> Result<Response, ContractError> {
+    // check mint sold out
+    let mintable_num_tokens = MINTABLE_NUM_TOKENS.load(deps.storage)?;
+    if mintable_num_tokens != 0 {
+        return Err(ContractError::NotSoldOut {});
+    }
+
+    let keys = MINTER_ADDRS
+        .keys(deps.storage, None, None, Order::Ascending)
+        .collect::<Vec<_>>();
+    for key in keys {
+        MINTER_ADDRS.remove(deps.storage, &key?);
+    }
+
+    Ok(Response::new()
+        .add_attribute("action", "purge")
+        .add_attribute("sender", info.sender))
 }
 
 // Anyone can pay to shuffle at any time
