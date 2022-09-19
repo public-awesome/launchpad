@@ -608,7 +608,7 @@ fn happy_path() {
     let res: MintCountResponse = router
         .wrap()
         .query_wasm_smart(
-            minter_addr.clone(),
+            minter_addr,
             &QueryMsg::MintCount {
                 address: buyer.to_string(),
             },
