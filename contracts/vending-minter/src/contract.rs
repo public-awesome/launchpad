@@ -218,7 +218,7 @@ pub fn execute(
 // Anyone can purge
 pub fn execute_purge(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
 ) -> Result<Response, ContractError> {
     // check mint sold out
@@ -236,6 +236,7 @@ pub fn execute_purge(
 
     Ok(Response::new()
         .add_attribute("action", "purge")
+        .add_attribute("contract", env.contract.address.to_string())
         .add_attribute("sender", info.sender))
 }
 
