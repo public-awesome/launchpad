@@ -69,6 +69,26 @@
       "additionalProperties": false
     },
     {
+      "description": "Runs custom checks against TradingStartTime on VendingMinter, then updates by calling sg721-base",
+      "type": "object",
+      "required": [
+        "update_trading_start_time"
+      ],
+      "properties": {
+        "update_trading_start_time": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Timestamp"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    {
       "type": "object",
       "required": [
         "update_per_address_limit"

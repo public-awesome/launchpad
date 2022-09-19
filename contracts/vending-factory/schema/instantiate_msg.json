@@ -32,6 +32,7 @@
       "required": [
         "code_id",
         "creation_fee",
+        "default_trading_offset_secs",
         "extension",
         "min_mint_price",
         "mint_fee_bps"
@@ -45,6 +46,11 @@
         },
         "creation_fee": {
           "$ref": "#/definitions/Coin"
+        },
+        "default_trading_offset_secs": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
         },
         "extension": {
           "$ref": "#/definitions/ParamsExtension"

@@ -1,6 +1,6 @@
 [package]
 name = "sg2"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 authors = ["Shane Vitarana <s@noreply.publicawesome.com>"]
 description = "Definition and types for the SG2 interface"
@@ -14,4 +14,4 @@ cw-utils = "0.13.4"
 serde = { version = "1.0.133", default-features = false, features = ["derive"] }
 thiserror = "1.0.30"
 schemars = "0.8.8"
-sg721 = "0.14.0"
+sg721 = { path = "../sg721" }

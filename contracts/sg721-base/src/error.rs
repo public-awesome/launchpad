@@ -36,11 +36,17 @@ pub enum ContractError {
     #[error("Approval not found for: {spender}")]
     ApprovalNotFound { spender: String },
 
-    #[error("Invalid Royalities")]
-    InvalidRoyalities {},
+    #[error("Invalid Royalties")]
+    InvalidRoyalties {},
 
     #[error("Description too long")]
     DescriptionTooLong {},
+
+    #[error("InvalidStartTradingTime")]
+    InvalidStartTradingTime {},
+
+    #[error("CollectionInfoFrozen")]
+    CollectionInfoFrozen {},
 }
 
 impl From<ContractError> for Cw721ContractError {

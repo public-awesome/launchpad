@@ -13,6 +13,7 @@ use cw721_base::ExecuteMsg as Cw721ExecuteMsg;
 use cw_multi_test::{next_block, BankSudo, Contract, ContractWrapper, Executor, SudoMsg};
 use sg2::msg::Sg2ExecuteMsg;
 use sg2::tests::mock_collection_params;
+use sg721_base::msg::{CollectionInfoResponse, QueryMsg as Sg721QueryMsg};
 use sg_multi_test::StargazeApp;
 use sg_splits::msg::ExecuteMsg as SplitsExecuteMsg;
 use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
@@ -126,6 +127,7 @@ pub fn mock_params() -> VendingMinterParams {
         creation_fee: coin(CREATION_FEE, NATIVE_DENOM),
         min_mint_price: coin(MIN_MINT_PRICE, NATIVE_DENOM),
         mint_fee_bps: MINT_FEE_BPS,
+        default_trading_offset_secs: 60 * 60 * 24 * 7,
         extension: ParamsExtension {
             max_token_limit: MAX_TOKEN_LIMIT,
             max_per_address_limit: MAX_PER_ADDRESS_LIMIT,
@@ -1502,6 +1504,52 @@ fn test_invalid_start_time() {
         .execute_contract(creator, minter_addr, &msg, &[])
         .unwrap_err();
     assert_eq!(err.source().unwrap().to_string(), "AlreadyStarted");
+}
+
+#[test]
+fn update_trading_start_time() {
+    let mut router = custom_mock_app();
+    let (creator, buyer) = setup_accounts(&mut router);
+    let num_tokens = 2;
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME - 1, None);
+    let (minter_addr, config) = setup_minter_contract(&mut router, &creator, num_tokens, None);
+
+    // unauthorized
+    let res = router.execute_contract(
+        Addr::unchecked(buyer),
+        Addr::unchecked(minter_addr.clone()),
+        &ExecuteMsg::UpdateTradingStartTime(Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME))),
+        &[],
+    );
+    assert!(res.is_err());
+
+    // invalid start trading time
+    let res = router.execute_contract(
+        Addr::unchecked(creator.clone()),
+        Addr::unchecked(minter_addr.clone()),
+        &ExecuteMsg::UpdateTradingStartTime(Some(Timestamp::from_nanos(0))),
+        &[],
+    );
+    assert!(res.is_err());
+
+    // succeeds
+    let res = router.execute_contract(
+        Addr::unchecked(creator.clone()),
+        Addr::unchecked(minter_addr),
+        &ExecuteMsg::UpdateTradingStartTime(Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME))),
+        &[],
+    );
+    assert!(res.is_ok());
+
+    // confirm trading start time
+    let res: CollectionInfoResponse = router
+        .wrap()
+        .query_wasm_smart(config.sg721_address, &Sg721QueryMsg::CollectionInfo {})
+        .unwrap();
+    assert_eq!(
+        res.trading_start_time,
+        Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME))
+    );
 }
 
 #[test]

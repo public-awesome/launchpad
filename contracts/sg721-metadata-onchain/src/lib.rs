@@ -76,6 +76,7 @@ mod tests {
                 description: "this is a test".to_string(),
                 image: "https://larry.engineer".to_string(),
                 external_link: None,
+                trading_start_time: None,
                 royalty_info: None,
             },
         };

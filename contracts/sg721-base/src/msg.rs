@@ -1,3 +1,4 @@
+use cosmwasm_std::Timestamp;
 use cw721_base::msg::QueryMsg as Cw721QueryMsg;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -118,5 +119,6 @@ pub struct CollectionInfoResponse {
     pub description: String,
     pub image: String,
     pub external_link: Option<String>,
+    pub trading_start_time: Option<Timestamp>,
     pub royalty_info: Option<RoyaltyInfoResponse>,
 }

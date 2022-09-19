@@ -1,7 +1,9 @@
 use cw721_base::state::TokenInfo;
 use url::Url;
 
-use cosmwasm_std::{to_binary, Binary, Decimal, Deps, DepsMut, Env, Event, MessageInfo, StdResult};
+use cosmwasm_std::{
+    to_binary, Binary, Decimal, Deps, DepsMut, Env, Event, MessageInfo, StdResult, Timestamp,
+};
 
 use cw721::{ContractInfoResponse, Cw721ReceiveMsg};
 use cw_utils::{nonpayable, Expiration};
@@ -9,6 +11,7 @@ use serde::{de::DeserializeOwned, Serialize};
 
 use sg721::{
     CollectionInfo, ExecuteMsg, InstantiateMsg, MintMsg, RoyaltyInfo, RoyaltyInfoResponse,
+    UpdateCollectionInfoMsg,
 };
 use sg_std::Response;
 
@@ -67,12 +70,15 @@ where
             description: msg.collection_info.description,
             image: msg.collection_info.image,
             external_link: msg.collection_info.external_link,
+            trading_start_time: msg.collection_info.trading_start_time,
             royalty_info,
         };
 
         self.collection_info.save(deps.storage, &collection_info)?;
 
         self.ready.save(deps.storage, &false)?;
+
+        self.frozen_collection_info.save(deps.storage, &false)?;
 
         Ok(Response::new()
             .add_attribute("action", "instantiate")
@@ -111,6 +117,13 @@ where
             }
             ExecuteMsg::RevokeAll { operator } => self.revoke_all(deps, env, info, operator),
             ExecuteMsg::Burn { token_id } => self.burn(deps, env, info, token_id),
+            ExecuteMsg::UpdateCollectionInfo { collection_info } => {
+                self.update_collection_info(deps, env, info, collection_info)
+            }
+            ExecuteMsg::UpdateTradingStartTime(start_time) => {
+                self.update_trading_start_time(deps, env, info, start_time)
+            }
+            ExecuteMsg::FreezeCollectionInfo {} => self.freeze_collection_info(deps, env, info),
             ExecuteMsg::Mint(msg) => self.mint(deps, env, info, msg),
         }
     }
@@ -212,6 +225,112 @@ where
         let res = Response::new().add_event(event);
 
         Ok(res)
+    }
+
+    pub fn update_collection_info(
+        &self,
+        deps: DepsMut,
+        _env: Env,
+        info: MessageInfo,
+        collection_msg: UpdateCollectionInfoMsg<RoyaltyInfoResponse>,
+    ) -> Result<Response, ContractError> {
+        if !self.ready.load(deps.storage)? {
+            return Err(ContractError::NotReady {});
+        }
+        let mut collection = self.collection_info.load(deps.storage)?;
+
+        if self.frozen_collection_info.load(deps.storage)? {
+            return Err(ContractError::CollectionInfoFrozen {});
+        }
+
+        // only creator can update collection info
+        if collection.creator != info.sender {
+            return Err(ContractError::Unauthorized {});
+        }
+
+        // convert collection royalty info to response for comparison
+        // convert from response to royalty info for storage
+        let royalty_info_res = collection
+            .royalty_info
+            .as_ref()
+            .map(|royalty_info| royalty_info.to_response());
+
+        collection.description = collection_msg
+            .description
+            .unwrap_or_else(|| collection.description.to_string());
+        if collection.description.len() > MAX_DESCRIPTION_LENGTH as usize {
+            return Err(ContractError::DescriptionTooLong {});
+        }
+
+        collection.image = collection_msg
+            .image
+            .unwrap_or_else(|| collection.image.to_string());
+        Url::parse(&collection.image)?;
+
+        collection.external_link = collection_msg
+            .external_link
+            .unwrap_or_else(|| collection.external_link.as_ref().map(|s| s.to_string()));
+        Url::parse(collection.external_link.as_ref().unwrap())?;
+
+        let response = collection_msg.royalty_info.unwrap_or(royalty_info_res);
+
+        collection.royalty_info = match response {
+            Some(royalty_info) => Some(RoyaltyInfo {
+                payment_address: deps.api.addr_validate(&royalty_info.payment_address)?,
+                share: share_validate(royalty_info.share)?,
+            }),
+            None => None,
+        };
+
+        self.collection_info.save(deps.storage, &collection)?;
+
+        let event = Event::new("update_collection_info").add_attribute("sender", info.sender);
+        Ok(Response::new().add_event(event))
+    }
+
+    /// Called by the minter reply handler after custom validations on trading start time.
+    /// Minter has start_time, default offset, makes sense to execute from minter.
+    pub fn update_trading_start_time(
+        &self,
+        deps: DepsMut,
+        _env: Env,
+        info: MessageInfo,
+        start_time: Option<Timestamp>,
+    ) -> Result<Response, ContractError> {
+        if !self.ready.load(deps.storage)? {
+            return Err(ContractError::NotReady {});
+        }
+        let minter = self.parent.minter.load(deps.storage)?;
+        if minter != info.sender {
+            return Err(ContractError::Unauthorized {});
+        }
+
+        let mut collection_info = self.collection_info.load(deps.storage)?;
+        collection_info.trading_start_time = start_time;
+        self.collection_info.save(deps.storage, &collection_info)?;
+
+        let event = Event::new("update_trading_start_time").add_attribute("sender", info.sender);
+        Ok(Response::new().add_event(event))
+    }
+
+    pub fn freeze_collection_info(
+        &self,
+        deps: DepsMut,
+        _env: Env,
+        info: MessageInfo,
+    ) -> Result<Response, ContractError> {
+        if !self.ready.load(deps.storage)? {
+            return Err(ContractError::NotReady {});
+        }
+        let collection = self.query_collection_info(deps.as_ref())?;
+        if collection.creator != info.sender {
+            return Err(ContractError::Unauthorized {});
+        }
+
+        let frozen = true;
+        self.frozen_collection_info.save(deps.storage, &frozen)?;
+        let event = Event::new("freeze_collection").add_attribute("sender", info.sender);
+        Ok(Response::new().add_event(event))
     }
 
     pub fn revoke(
@@ -379,6 +498,7 @@ where
             description: info.description,
             image: info.image,
             external_link: info.external_link,
+            trading_start_time: info.trading_start_time,
             royalty_info: royalty_info_res,
         })
     }
@@ -386,7 +506,7 @@ where
 
 pub fn share_validate(share: Decimal) -> Result<Decimal, ContractError> {
     if share > Decimal::one() {
-        return Err(ContractError::InvalidRoyalities {});
+        return Err(ContractError::InvalidRoyalties {});
     }
 
     Ok(share)

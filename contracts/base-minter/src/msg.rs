@@ -1,5 +1,5 @@
 use base_factory::{msg::BaseMinterCreateMsg, state::BaseMinterParams};
-use cosmwasm_std::Empty;
+use cosmwasm_std::{Empty, Timestamp};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use sg4::MinterConfigResponse;
@@ -14,6 +14,7 @@ pub struct InstantiateMsg {
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
     Mint { token_uri: String },
+    UpdateTradingStartTime(Option<Timestamp>),
 }
 
 pub type ConfigResponse = MinterConfigResponse<Empty>;
