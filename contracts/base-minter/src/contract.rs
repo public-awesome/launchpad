@@ -197,7 +197,7 @@ pub fn execute_update_trading_start_time(
     let config = CONFIG.load(deps.storage)?;
     let factory_params: ParamsResponse = deps
         .querier
-        .query_wasm_smart(config.factory.clone(), &Sg2QueryMsg::Params {})?;
+        .query_wasm_smart(config.factory, &Sg2QueryMsg::Params {})?;
     let default_start_time_with_offset = env
         .block
         .time
