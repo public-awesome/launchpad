@@ -84,11 +84,6 @@ mod tests {
             .instantiate(deps.as_mut(), mock_env(), info.clone(), init_msg)
             .unwrap();
 
-        // set contract to ready
-        contract
-            .ready(deps.as_mut(), mock_env(), info.clone())
-            .unwrap();
-
         // mint token
         let token_id = "Enterprise";
         let mint_msg = MintMsg {

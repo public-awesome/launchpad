@@ -2,8 +2,8 @@ use cw721_base::state::TokenInfo;
 use url::Url;
 
 use cosmwasm_std::{
-    to_binary, Binary, Decimal, Deps, DepsMut, Env, Event, MessageInfo, StdResult, Timestamp,
-    WasmQuery,
+    to_binary, Binary, ContractInfoResponse, Decimal, Deps, DepsMut, Env, Event, MessageInfo,
+    StdError, StdResult, Timestamp, WasmQuery,
 };
 
 use cw721::{ContractInfoResponse as CW721ContractInfoResponse, Cw721ReceiveMsg};
@@ -37,10 +37,16 @@ where
 
         // check sender is a contract
         let req = WasmQuery::ContractInfo {
-            contract_addr: info.sender.into(),
+            contract_addr: info.sender.clone().into(),
         }
         .into();
-        deps.querier.query(&req)?;
+        let res: Result<ContractInfoResponse, StdError> = deps.querier.query(&req);
+        match res {
+            Ok(_) => {}
+            Err(_) => {
+                return Err(ContractError::Unauthorized {});
+            }
+        }
 
         // cw721 instantiation
         let info = CW721ContractInfoResponse {

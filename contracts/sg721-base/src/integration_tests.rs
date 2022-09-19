@@ -5,6 +5,7 @@ mod tests {
     use cw_multi_test::{BankSudo, Contract, ContractWrapper, Executor, SudoMsg};
     use sg2::tests::mock_collection_params;
     use sg721::ExecuteMsg as Sg721ExecuteMsg;
+    use sg721::{CollectionInfo, InstantiateMsg};
     use sg_multi_test::StargazeApp;
     use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME};
     use vending_factory::helpers::FactoryContract;
@@ -143,13 +144,13 @@ mod tests {
         let cosmos_msg = factory_contract.call_with_funds(msg, creation_fee).unwrap();
 
         let res = app.execute(Addr::unchecked(ADMIN), cosmos_msg);
+        dbg!("{:?}", &res);
         assert!(res.is_ok());
 
         (app, Addr::unchecked("contract2"))
     }
 
     mod init {
-        use cosmwasm_std::Empty;
 
         use super::*;
         use crate::msg::QueryMsg;
@@ -167,24 +168,36 @@ mod tests {
 
         #[test]
         fn check_ready_unauthorized() {
-            let (mut app, contract) = proper_instantiate();
-
-            let sender = Addr::unchecked("sender".to_string());
-
-            let res =
-                app.execute_contract(sender, contract, &Sg721ExecuteMsg::<Empty>::_Ready {}, &[]);
+            let mut app = custom_mock_app();
+            let sg721_id = app.store_code(sg721_base_contract());
+            let msg = InstantiateMsg {
+                name: "sg721".to_string(),
+                symbol: "STARGAZE".to_string(),
+                minter: ADMIN.to_string(),
+                collection_info: CollectionInfo {
+                    creator: ADMIN.to_string(),
+                    description: "description".to_string(),
+                    image: "description".to_string(),
+                    external_link: None,
+                    trading_start_time: None,
+                    royalty_info: None,
+                },
+            };
+            let res = app.instantiate_contract(
+                sg721_id,
+                Addr::unchecked(GOVERNANCE),
+                &msg,
+                &[],
+                "sg721-only",
+                None,
+            );
+            // should not let create the contract.
             assert!(res.is_err());
         }
 
         #[test]
         fn check_ready_authorized() {
-            let (mut app, contract) = proper_instantiate();
-
-            let sender = Addr::unchecked("contract1".to_string());
-
-            let res =
-                app.execute_contract(sender, contract, &Sg721ExecuteMsg::<Empty>::_Ready {}, &[]);
-            assert!(res.is_ok());
+            let (_, _) = proper_instantiate();
         }
     }
 
