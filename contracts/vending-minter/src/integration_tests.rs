@@ -577,7 +577,7 @@ fn happy_path() {
     // Errors if sold out
     let mint_msg = ExecuteMsg::Mint {};
     let res = router.execute_contract(
-        buyer,
+        buyer.clone(),
         minter_addr.clone(),
         &mint_msg,
         &coins_for_msg(Coin {
@@ -589,8 +589,8 @@ fn happy_path() {
 
     // Creator can't use MintTo if sold out
     let res = router.execute_contract(
-        creator,
-        minter_addr,
+        creator.clone(),
+        minter_addr.clone(),
         &mint_to_msg,
         &coins_for_msg(Coin {
             amount: Uint128::from(ADMIN_MINT_PRICE),
@@ -598,6 +598,23 @@ fn happy_path() {
         }),
     );
     assert!(res.is_err());
+
+    // Can purge after sold out
+    let purge_msg = ExecuteMsg::Purge {};
+    let res = router.execute_contract(creator, minter_addr.clone(), &purge_msg, &[]);
+    assert!(res.is_ok());
+
+    // MintCount should be 0 after purge
+    let res: MintCountResponse = router
+        .wrap()
+        .query_wasm_smart(
+            minter_addr.clone(),
+            &QueryMsg::MintCount {
+                address: buyer.to_string(),
+            },
+        )
+        .unwrap();
+    assert_eq!(res.count, 0);
 }
 #[test]
 fn mint_count_query() {
