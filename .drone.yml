@@ -15,7 +15,7 @@ steps:
     image: meltwater/drone-cache:dev
     volumes:
       - name: cache
-        path: /code/launchpad/target
+        path: /code/target
     environment:
       AWS_ACCESS_KEY_ID:
         from_secret: minio_key_id
@@ -34,7 +34,7 @@ steps:
     image: meltwater/drone-cache:dev
     volumes:
       - name: cache
-        path: /code/launchpad/target
+        path: /code/target
     environment:
       AWS_ACCESS_KEY_ID:
         from_secret: minio_key_id
@@ -47,7 +47,7 @@ steps:
         from_secret: minio_bucket
       region: us-east-1
       mount:
-        - "/code/launchpad/target"
+        - "/code/target"
 volumes:
   - name: cache
     temp: {}
@@ -61,3 +61,8 @@ trigger:
   event:
     - pull_request
     - push
+---
+kind: signature
+hmac: a4416cff0bbe8fe16efdf8057cc5b69e33eec777967439885795879eae7db0f8
+
+...
