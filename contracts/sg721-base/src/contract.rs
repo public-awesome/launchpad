@@ -6,8 +6,8 @@ use cosmwasm_std::{
     StdResult, Timestamp, WasmQuery,
 };
 
-use cw721::{ContractInfoResponse as CW721ContractInfoResponse, Cw721ReceiveMsg};
-use cw_utils::{nonpayable, Expiration};
+use cw721::{ContractInfoResponse as CW721ContractInfoResponse, Cw721Execute};
+use cw_utils::nonpayable;
 use serde::{de::DeserializeOwned, Serialize};
 
 use sg721::{
@@ -106,25 +106,42 @@ where
             ExecuteMsg::TransferNft {
                 recipient,
                 token_id,
-            } => self.transfer_nft(deps, env, info, recipient, token_id),
+            } => self
+                .parent
+                .transfer_nft(deps, env, info, recipient, token_id)
+                .map_err(|e| e.into()),
             ExecuteMsg::SendNft {
                 contract,
                 token_id,
                 msg,
-            } => self.send_nft(deps, env, info, contract, token_id, msg),
+            } => self
+                .parent
+                .send_nft(deps, env, info, contract, token_id, msg)
+                .map_err(|e| e.into()),
             ExecuteMsg::Approve {
                 spender,
                 token_id,
                 expires,
-            } => self.approve(deps, env, info, spender, token_id, expires),
-            ExecuteMsg::Revoke { spender, token_id } => {
-                self.revoke(deps, env, info, spender, token_id)
-            }
-            ExecuteMsg::ApproveAll { operator, expires } => {
-                self.approve_all(deps, env, info, operator, expires)
-            }
-            ExecuteMsg::RevokeAll { operator } => self.revoke_all(deps, env, info, operator),
-            ExecuteMsg::Burn { token_id } => self.burn(deps, env, info, token_id),
+            } => self
+                .parent
+                .approve(deps, env, info, spender, token_id, expires)
+                .map_err(|e| e.into()),
+            ExecuteMsg::Revoke { spender, token_id } => self
+                .parent
+                .revoke(deps, env, info, spender, token_id)
+                .map_err(|e| e.into()),
+            ExecuteMsg::ApproveAll { operator, expires } => self
+                .parent
+                .approve_all(deps, env, info, operator, expires)
+                .map_err(|e| e.into()),
+            ExecuteMsg::RevokeAll { operator } => self
+                .parent
+                .revoke_all(deps, env, info, operator)
+                .map_err(|e| e.into()),
+            ExecuteMsg::Burn { token_id } => self
+                .parent
+                .burn(deps, env, info, token_id)
+                .map_err(|e| e.into()),
             ExecuteMsg::UpdateCollectionInfo { collection_info } => {
                 self.update_collection_info(deps, env, info, collection_info)
             }
@@ -134,77 +151,6 @@ where
             ExecuteMsg::FreezeCollectionInfo {} => self.freeze_collection_info(deps, env, info),
             ExecuteMsg::Mint(msg) => self.mint(deps, env, info, msg),
         }
-    }
-
-    pub fn approve(
-        &self,
-        deps: DepsMut,
-        env: Env,
-        info: MessageInfo,
-        spender: String,
-        token_id: String,
-        expires: Option<Expiration>,
-    ) -> Result<Response, ContractError> {
-        self.parent
-            ._update_approvals(deps, &env, &info, &spender, &token_id, true, expires)?;
-
-        let event = Event::new("approve")
-            .add_attribute("sender", info.sender)
-            .add_attribute("spender", spender)
-            .add_attribute("token_id", token_id);
-        let res = Response::new().add_event(event);
-
-        Ok(res)
-    }
-
-    pub fn approve_all(
-        &self,
-        deps: DepsMut,
-        env: Env,
-        info: MessageInfo,
-        operator: String,
-        expires: Option<Expiration>,
-    ) -> Result<Response, ContractError> {
-        // reject expired data as invalid
-        let expires = expires.unwrap_or_default();
-        if expires.is_expired(&env.block) {
-            return Err(ContractError::Expired {});
-        }
-
-        // set the operator for us
-        let operator_addr = deps.api.addr_validate(&operator)?;
-        self.parent
-            .operators
-            .save(deps.storage, (&info.sender, &operator_addr), &expires)?;
-
-        let event = Event::new("approve_all")
-            .add_attribute("sender", info.sender)
-            .add_attribute("operator", operator);
-        let res = Response::new().add_event(event);
-
-        Ok(res)
-    }
-
-    pub fn burn(
-        &self,
-        deps: DepsMut,
-        env: Env,
-        info: MessageInfo,
-        token_id: String,
-    ) -> Result<Response, ContractError> {
-        let token = self.parent.tokens.load(deps.storage, &token_id)?;
-        self.parent
-            .check_can_send(deps.as_ref(), &env, &info, &token)?;
-
-        self.parent.tokens.remove(deps.storage, &token_id)?;
-        self.parent.decrement_tokens(deps.storage)?;
-
-        let event = Event::new("burn")
-            .add_attribute("sender", info.sender)
-            .add_attribute("token_id", token_id);
-        let res = Response::new().add_event(event);
-
-        Ok(res)
     }
 
     pub fn update_collection_info(
@@ -302,97 +248,6 @@ where
         self.frozen_collection_info.save(deps.storage, &frozen)?;
         let event = Event::new("freeze_collection").add_attribute("sender", info.sender);
         Ok(Response::new().add_event(event))
-    }
-
-    pub fn revoke(
-        &self,
-        deps: DepsMut,
-        env: Env,
-        info: MessageInfo,
-        spender: String,
-        token_id: String,
-    ) -> Result<Response, ContractError> {
-        self.parent
-            ._update_approvals(deps, &env, &info, &spender, &token_id, false, None)?;
-
-        let event = Event::new("revoke")
-            .add_attribute("sender", info.sender)
-            .add_attribute("spender", spender)
-            .add_attribute("token_id", token_id);
-        let res = Response::new().add_event(event);
-
-        Ok(res)
-    }
-
-    pub fn revoke_all(
-        &self,
-        deps: DepsMut,
-        _env: Env,
-        info: MessageInfo,
-        operator: String,
-    ) -> Result<Response, ContractError> {
-        let operator_addr = deps.api.addr_validate(&operator)?;
-        self.parent
-            .operators
-            .remove(deps.storage, (&info.sender, &operator_addr));
-
-        let event = Event::new("revoke_all")
-            .add_attribute("sender", info.sender)
-            .add_attribute("operator", operator);
-        let res = Response::new().add_event(event);
-
-        Ok(res)
-    }
-
-    pub fn send_nft(
-        &self,
-        deps: DepsMut,
-        env: Env,
-        info: MessageInfo,
-        receiving_contract: String,
-        token_id: String,
-        msg: Binary,
-    ) -> Result<Response, ContractError> {
-        // Transfer token
-        self.parent
-            ._transfer_nft(deps, &env, &info, &receiving_contract, &token_id)?;
-
-        let send = Cw721ReceiveMsg {
-            sender: info.sender.to_string(),
-            token_id: token_id.clone(),
-            msg,
-        };
-
-        // Send message
-        let event = Event::new("send_nft")
-            .add_attribute("sender", info.sender)
-            .add_attribute("recipient", receiving_contract.to_string())
-            .add_attribute("token_id", token_id);
-        let res = Response::new()
-            .add_message(send.into_cosmos_msg(receiving_contract)?)
-            .add_event(event);
-
-        Ok(res)
-    }
-
-    pub fn transfer_nft(
-        &self,
-        deps: DepsMut,
-        env: Env,
-        info: MessageInfo,
-        recipient: String,
-        token_id: String,
-    ) -> Result<Response, ContractError> {
-        self.parent
-            ._transfer_nft(deps, &env, &info, &recipient, &token_id)?;
-
-        let event = Event::new("transfer_nft")
-            .add_attribute("sender", info.sender)
-            .add_attribute("recipient", recipient)
-            .add_attribute("token_id", token_id);
-        let res = Response::new().add_event(event);
-
-        Ok(res)
     }
 
     pub fn mint(
