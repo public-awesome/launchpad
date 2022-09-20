@@ -225,13 +225,6 @@ where
             return Err(ContractError::Unauthorized {});
         }
 
-        // convert collection royalty info to response for comparison
-        // convert from response to royalty info for storage
-        let royalty_info_res = collection
-            .royalty_info
-            .as_ref()
-            .map(|royalty_info| royalty_info.to_response());
-
         collection.description = collection_msg
             .description
             .unwrap_or_else(|| collection.description.to_string());
@@ -249,13 +242,22 @@ where
             .unwrap_or_else(|| collection.external_link.as_ref().map(|s| s.to_string()));
         Url::parse(collection.external_link.as_ref().unwrap())?;
 
-        let response = collection_msg.royalty_info.unwrap_or(royalty_info_res);
+        // convert collection royalty info to response for comparison
+        // convert from response to royalty info for storage
+        let royalty_info_res = collection
+            .royalty_info
+            .as_ref()
+            .map(|royalty_info| royalty_info.to_response());
 
-        // update royalty info to equal or less, else throw error
-        let og_royalty_info = collection.royalty_info;
+        let response = collection_msg
+            .royalty_info
+            .unwrap_or_else(|| royalty_info_res.clone());
+
+        // reminder: collection_msg.royalty_info is Option<Option<RoyaltyInfoResponse>>
         collection.royalty_info = if let Some(royalty_info) = response {
-            if let Some(og_royalty_info) = og_royalty_info {
-                if royalty_info.share > og_royalty_info.share {
+            // update royalty info to equal or less, else throw error
+            if let Some(royalty_info_res) = royalty_info_res {
+                if royalty_info.share > royalty_info_res.share {
                     return Err(ContractError::RoyaltyShareIncreased {});
                 }
             }

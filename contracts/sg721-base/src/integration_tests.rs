@@ -247,7 +247,7 @@ mod tests {
             // update royalty_info
             let royalty_info: Option<RoyaltyInfoResponse> = Some(RoyaltyInfoResponse {
                 payment_address: creator.to_string(),
-                share: Decimal::percent(10 / 100),
+                share: Decimal::percent(10),
             });
             let res = app.execute_contract(
                 creator.clone(),
@@ -269,6 +269,26 @@ mod tests {
                 .query_wasm_smart(contract.clone(), &QueryMsg::CollectionInfo {})
                 .unwrap();
             assert_eq!(res.royalty_info.unwrap(), royalty_info.unwrap());
+
+            // try update royalty_info higher
+            let royalty_info: Option<RoyaltyInfoResponse> = Some(RoyaltyInfoResponse {
+                payment_address: creator.to_string(),
+                share: Decimal::percent(11),
+            });
+            let res = app.execute_contract(
+                creator.clone(),
+                contract.clone(),
+                &Sg721ExecuteMsg::<Empty>::UpdateCollectionInfo {
+                    collection_info: UpdateCollectionInfoMsg {
+                        description: None,
+                        image: None,
+                        external_link: None,
+                        royalty_info: Some(royalty_info),
+                    },
+                },
+                &[],
+            );
+            assert!(res.is_err());
 
             // freeze collection throw err if not creator
             let res = app.execute_contract(
