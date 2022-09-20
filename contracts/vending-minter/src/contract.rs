@@ -12,7 +12,7 @@ use crate::state::{
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coin, to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Deps, DepsMut, Empty, Env,
+    coin, to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Deps, DepsMut, Empty, Env, Event,
     MessageInfo, Order, Reply, ReplyOn, StdError, StdResult, Timestamp, Uint128, WasmMsg,
 };
 use cw2::set_contract_version;
@@ -211,6 +211,7 @@ pub fn execute(
             execute_set_whitelist(deps, env, info, &whitelist)
         }
         ExecuteMsg::Shuffle {} => execute_shuffle(deps, env, info),
+        ExecuteMsg::BurnRemaining {} => execute_burn_remaining(deps, env, info),
     }
 }
 
@@ -792,6 +793,44 @@ pub fn execute_update_per_address_limit(
         .add_attribute("action", "update_per_address_limit")
         .add_attribute("sender", info.sender)
         .add_attribute("limit", per_address_limit.to_string()))
+}
+
+pub fn execute_burn_remaining(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+) -> Result<Response, ContractError> {
+    nonpayable(&info)?;
+    let config = CONFIG.load(deps.storage)?;
+    // Check only admin
+    if info.sender != config.extension.admin {
+        return Err(ContractError::Unauthorized(
+            "Sender is not an admin".to_owned(),
+        ));
+    }
+
+    // check mint not sold out
+    let mintable_num_tokens = MINTABLE_NUM_TOKENS.load(deps.storage)?;
+    if mintable_num_tokens == 0 {
+        return Err(ContractError::SoldOut {});
+    }
+
+    let keys = MINTABLE_TOKEN_POSITIONS
+        .keys(deps.storage, None, None, Order::Ascending)
+        .collect::<Vec<_>>();
+    let mut total: u32 = 0;
+    for key in keys {
+        total += 1;
+        MINTABLE_TOKEN_POSITIONS.remove(deps.storage, key?);
+    }
+    // Decrement mintable num tokens
+    MINTABLE_NUM_TOKENS.save(deps.storage, &(mintable_num_tokens - total))?;
+
+    let event = Event::new("burn-remaining")
+        .add_attribute("sender", info.sender)
+        .add_attribute("tokens_burned", total.to_string())
+        .add_attribute("minter", env.contract.address.to_string());
+    Ok(Response::new().add_event(event))
 }
 
 // if admin_no_fee => no fee,

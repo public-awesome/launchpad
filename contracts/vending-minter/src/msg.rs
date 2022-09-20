@@ -34,6 +34,7 @@ pub enum ExecuteMsg {
         recipient: String,
     },
     Shuffle {},
+    BurnRemaining {},
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
