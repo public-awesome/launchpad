@@ -1,5 +1,4 @@
 use cosmwasm_std::StdError;
-use cw721_base::ContractError as Cw721ContractError;
 use cw_utils::PaymentError;
 use thiserror::Error;
 use url::ParseError;
@@ -47,15 +46,7 @@ pub enum ContractError {
 
     #[error("CollectionInfoFrozen")]
     CollectionInfoFrozen {},
-}
 
-impl From<ContractError> for Cw721ContractError {
-    fn from(err: ContractError) -> Cw721ContractError {
-        match err {
-            ContractError::Unauthorized {} => Cw721ContractError::Unauthorized {},
-            ContractError::Claimed {} => Cw721ContractError::Claimed {},
-            ContractError::Expired {} => Cw721ContractError::Expired {},
-            _ => unreachable!("cannot convert {:?} to Cw721ContractError", err),
-        }
-    }
+    #[error("RoyaltyShareIncreased")]
+    RoyaltyShareIncreased {},
 }

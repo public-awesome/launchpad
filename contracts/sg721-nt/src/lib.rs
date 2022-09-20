@@ -18,6 +18,7 @@ pub mod entry {
 
     use crate::msg::ExecuteMsg;
     use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, StdResult};
+    use cw721::Cw721Execute;
     use sg721_base::ContractError;
     use sg_std::Response;
 
@@ -45,9 +46,10 @@ pub mod entry {
         msg: ExecuteMsg<Extension>,
     ) -> Result<Response, sg721_base::ContractError> {
         match msg {
-            ExecuteMsg::Burn { token_id } => {
-                Sg721NonTransferableContract::default().burn(deps, env, info, token_id)
-            }
+            ExecuteMsg::Burn { token_id } => Sg721NonTransferableContract::default()
+                .parent
+                .burn(deps, env, info, token_id)
+                .map_err(|e| e.into()),
             ExecuteMsg::Mint(msg) => {
                 Sg721NonTransferableContract::default().mint(deps, env, info, msg)
             }
