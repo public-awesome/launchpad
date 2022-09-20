@@ -19,11 +19,12 @@ steps:
       restore: true
       cache_key: "volume"
       archive_format: "gzip"
+      filesystem_cache_root: "/var/lib/cache"
       mount:
         - "/code/target"
     volumes:
       - name: cache
-        path: /code/target
+        path: /var/lib/cache
 
   - name: build-contracts
     image: cosmwasm/workspace-optimizer:0.12.8
@@ -38,13 +39,14 @@ steps:
     image: meltwater/drone-cache:dev
     volumes:
       - name: cache
-        path: /code/target
+        path: /var/lib/cache
     pull: true
     settings:
       backend: "filesystem"
       rebuild: true
       cache_key: "volume"
       archive_format: "gzip"
+      filesystem_cache_root: "/var/lib/cache"
       mount:
         - "/code/target"
 volumes:
@@ -64,5 +66,3 @@ trigger:
 ---
 kind: signature
 hmac: 7bb527353a8987741ae76d01d203ffb8a5dd17e3216a6bda53e7a37add73124e
-
-...
