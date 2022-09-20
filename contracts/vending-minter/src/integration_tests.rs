@@ -1689,3 +1689,135 @@ fn mint_and_split() {
     let amount = app.wrap().query_balance(MEMBER3, NATIVE_DENOM).unwrap();
     assert_eq!(amount.amount.u128(), 4500000);
 }
+
+#[test]
+fn burn_remaining() {
+    let mut router = custom_mock_app();
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME - 1, None);
+    let (creator, buyer) = setup_accounts(&mut router);
+    let num_tokens = 5000;
+    let (minter_addr, _) = setup_minter_contract(&mut router, &creator, num_tokens, None);
+
+    // Default start time genesis mint time
+    let res: StartTimeResponse = router
+        .wrap()
+        .query_wasm_smart(minter_addr.clone(), &QueryMsg::StartTime {})
+        .unwrap();
+    assert_eq!(
+        res.start_time,
+        Timestamp::from_nanos(GENESIS_MINT_START_TIME).to_string()
+    );
+
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 1, None);
+
+    // Succeeds if funds are sent
+    let mint_msg = ExecuteMsg::Mint {};
+    let res = router.execute_contract(
+        buyer.clone(),
+        minter_addr.clone(),
+        &mint_msg,
+        &coins(MINT_PRICE, NATIVE_DENOM),
+    );
+    assert!(res.is_ok());
+
+    // Balances are correct
+    // The creator should get the unit price - mint fee for the mint above
+    let creator_balances = router.wrap().query_all_balances(creator.clone()).unwrap();
+    assert_eq!(
+        creator_balances,
+        coins(INITIAL_BALANCE + MINT_PRICE - MINT_FEE, NATIVE_DENOM)
+    );
+    // The buyer's tokens should reduce by unit price
+    let buyer_balances = router.wrap().query_all_balances(buyer.clone()).unwrap();
+    assert_eq!(
+        buyer_balances,
+        coins(INITIAL_BALANCE - MINT_PRICE, NATIVE_DENOM)
+    );
+
+    let res: MintCountResponse = router
+        .wrap()
+        .query_wasm_smart(
+            minter_addr.clone(),
+            &QueryMsg::MintCount {
+                address: buyer.to_string(),
+            },
+        )
+        .unwrap();
+    assert_eq!(res.count, 1);
+    assert_eq!(res.address, buyer.to_string());
+
+    // Buyer can't call MintTo
+    let mint_to_msg = ExecuteMsg::MintTo {
+        recipient: buyer.to_string(),
+    };
+    // Creator mints an extra NFT for the buyer (who is a friend)
+    let res = router.execute_contract(
+        creator.clone(),
+        minter_addr.clone(),
+        &mint_to_msg,
+        &coins_for_msg(Coin {
+            amount: Uint128::from(ADMIN_MINT_PRICE),
+            denom: NATIVE_DENOM.to_string(),
+        }),
+    );
+    assert!(res.is_ok());
+
+    // Mint count is not increased if admin mints for the user
+    let res: MintCountResponse = router
+        .wrap()
+        .query_wasm_smart(
+            minter_addr.clone(),
+            &QueryMsg::MintCount {
+                address: buyer.to_string(),
+            },
+        )
+        .unwrap();
+    assert_eq!(res.count, 1);
+    assert_eq!(res.address, buyer.to_string());
+
+    // Minter contract should have no balance
+    let minter_balance = router
+        .wrap()
+        .query_all_balances(minter_addr.clone())
+        .unwrap();
+    assert_eq!(0, minter_balance.len());
+
+    let burn_msg = ExecuteMsg::BurnRemaining {};
+    // Creator burns remaining supply
+    let res = router.execute_contract(creator.clone(), minter_addr.clone(), &burn_msg, &[]);
+    assert!(res.is_ok());
+    let burn_msg = ExecuteMsg::BurnRemaining {};
+    //  Creator burns remaining supply again but should return sold out
+    let err = router
+        .execute_contract(creator.clone(), minter_addr.clone(), &burn_msg, &[])
+        .unwrap_err();
+    assert_eq!(
+        err.source().unwrap().to_string(),
+        ContractError::SoldOut {}.to_string()
+    );
+
+    // Errors if sold out
+    let mint_msg = ExecuteMsg::Mint {};
+    let res = router.execute_contract(
+        buyer,
+        minter_addr.clone(),
+        &mint_msg,
+        &coins_for_msg(Coin {
+            amount: Uint128::from(MINT_PRICE),
+            denom: NATIVE_DENOM.to_string(),
+        }),
+    );
+    assert!(res.is_err());
+
+    // Creator can't use MintTo if sold out
+    let res = router.execute_contract(
+        creator,
+        minter_addr,
+        &mint_to_msg,
+        &coins_for_msg(Coin {
+            amount: Uint128::from(ADMIN_MINT_PRICE),
+            denom: NATIVE_DENOM.to_string(),
+        }),
+    );
+    assert!(res.is_err());
+}
