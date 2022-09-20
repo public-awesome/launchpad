@@ -707,11 +707,25 @@ pub fn execute_update_trading_start_time(
     }
 
     // add custom rules here
+    let factory_params: ParamsResponse = deps
+        .querier
+        .query_wasm_smart(config.factory.clone(), &Sg2QueryMsg::Params {})?;
+    let default_start_time_with_offset = config
+        .extension
+        .start_time
+        .plus_seconds(factory_params.params.default_trading_offset_secs);
+
     if let Some(start_time) = start_time {
-        // If current time already passed the new start_time return error
         if env.block.time > start_time {
             return Err(ContractError::InvalidTradingStartTime(
                 env.block.time,
+                start_time,
+            ));
+        }
+        // If old start time + offset > new start_time, return error
+        if default_start_time_with_offset > start_time {
+            return Err(ContractError::InvalidTradingStartTime(
+                default_start_time_with_offset,
                 start_time,
             ));
         }

@@ -195,7 +195,6 @@ pub fn execute_update_trading_start_time(
 
     // add custom rules here
     if let Some(start_time) = start_time {
-        // If current time already passed the new start_time return error
         if env.block.time > start_time {
             return Err(ContractError::InvalidTradingStartTime(
                 env.block.time,

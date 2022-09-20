@@ -1550,10 +1550,14 @@ fn update_trading_start_time() {
     assert!(res.is_err());
 
     // succeeds
+    let params = mock_params();
     let res = router.execute_contract(
         Addr::unchecked(creator.clone()),
         Addr::unchecked(minter_addr),
-        &ExecuteMsg::UpdateTradingStartTime(Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME))),
+        &ExecuteMsg::UpdateTradingStartTime(Some(
+            Timestamp::from_nanos(GENESIS_MINT_START_TIME)
+                .plus_seconds(params.default_trading_offset_secs),
+        )),
         &[],
     );
     assert!(res.is_ok());
@@ -1565,7 +1569,10 @@ fn update_trading_start_time() {
         .unwrap();
     assert_eq!(
         res.trading_start_time,
-        Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME))
+        Some(
+            Timestamp::from_nanos(GENESIS_MINT_START_TIME)
+                .plus_seconds(params.default_trading_offset_secs)
+        )
     );
 }
 
