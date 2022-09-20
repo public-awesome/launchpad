@@ -11,8 +11,18 @@ workspace:
   path: /code
 
 steps:
+  - name: restore-cache
+    image: meltwater/drone-cache:dev
+    volumes:
+      - name: cache
+        path: /code/launchpad/target
+    environment:
+      AWS_ACCESS_KEY_ID:
+        from_secret: minio_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: minio_secret_key
   - name: build-contracts
-    image: cosmwasm/workspace-optimizer:0.12.6
+    image: cosmwasm/workspace-optimizer:0.12.8
   - name: full_test
     image: publicawesome/golang:1.18.0-devtooling
     commands:
@@ -20,6 +30,24 @@ steps:
       - cp artifacts/*.wasm e2e/contracts/
       - cd e2e/
       - go test . -v
+  - name: rebuild-cache
+    image: meltwater/drone-cache:dev
+    volumes:
+      - name: cache
+        path: /code/launchpad/target
+    environment:
+      AWS_ACCESS_KEY_ID:
+        from_secret: minio_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: minio_secret_key
+    pull: true
+    settings:
+      rebuild: true
+      bucket:
+        from_secret: minio_bucket
+      region: us-east-1
+      mount:
+        - "/code/launchpad/target"
 volumes:
   - name: cache
     temp: {}
