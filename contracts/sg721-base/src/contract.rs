@@ -251,12 +251,21 @@ where
 
         let response = collection_msg.royalty_info.unwrap_or(royalty_info_res);
 
-        collection.royalty_info = match response {
-            Some(royalty_info) => Some(RoyaltyInfo {
+        // update royalty info to equal or less, else throw error
+        let og_royalty_info = collection.royalty_info;
+        collection.royalty_info = if let Some(royalty_info) = response {
+            if let Some(og_royalty_info) = og_royalty_info {
+                if royalty_info.share > og_royalty_info.share {
+                    return Err(ContractError::RoyaltyShareIncreased {});
+                }
+            }
+
+            Some(RoyaltyInfo {
                 payment_address: deps.api.addr_validate(&royalty_info.payment_address)?,
                 share: share_validate(royalty_info.share)?,
-            }),
-            None => None,
+            })
+        } else {
+            None
         };
 
         self.collection_info.save(deps.storage, &collection)?;

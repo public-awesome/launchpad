@@ -47,6 +47,9 @@ pub enum ContractError {
 
     #[error("CollectionInfoFrozen")]
     CollectionInfoFrozen {},
+
+    #[error("RoyaltyShareIncreased")]
+    RoyaltyShareIncreased {},
 }
 
 impl From<ContractError> for Cw721ContractError {
