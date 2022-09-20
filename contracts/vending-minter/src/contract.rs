@@ -758,6 +758,7 @@ pub fn execute_burn_remaining(
     _env: Env,
     info: MessageInfo,
 ) -> Result<Response, ContractError> {
+    nonpayable(&info)?;
     let config = CONFIG.load(deps.storage)?;
     // Check only admin
     if info.sender != config.extension.admin {
@@ -777,7 +778,7 @@ pub fn execute_burn_remaining(
         .collect::<Vec<_>>();
     let mut total: u32 = 0;
     for key in keys {
-        total = total + 1;
+        total += 1;
         MINTABLE_TOKEN_POSITIONS.remove(deps.storage, key?);
     }
     // Decrement mintable num tokens
