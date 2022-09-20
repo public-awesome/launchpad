@@ -4,6 +4,51 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use sg721::RoyaltyInfoResponse;
 
+// impl From<ContractError> for Cw721ContractError {
+//     fn from(err: ContractError) -> Cw721ContractError {
+//         match err {
+//             ContractError::Unauthorized {} => Cw721ContractError::Unauthorized {},
+//             ContractError::Claimed {} => Cw721ContractError::Claimed {},
+//             ContractError::Expired {} => Cw721ContractError::Expired {},
+//             _ => unreachable!("cannot convert {:?} to Cw721ContractError", err),
+//         }
+//     }
+// }
+
+// the trait `From<sg721::ExecuteMsg<T>>` is not implemented for `cw721_base::ExecuteMsg<T>`
+
+// impl<T> From<sg721::ExecuteMsg<T>> for cw721_base::ExecuteMsg<T> {
+//     fn from(msg: sg721::ExecuteMsg<T>) -> Self {
+//         match msg {
+//             sg721::ExecuteMsg::TransferNft {
+//                 recipient,
+//                 token_id,
+//             } => cw721_base::ExecuteMsg::TransferNft {
+//                 recipient,
+//                 token_id,
+//             },
+//             sg721::ExecuteMsg::SendNft {
+//                 contract,
+//                 token_id,
+//                 msg,
+//             } => todo!(),
+//             sg721::ExecuteMsg::Approve {
+//                 spender,
+//                 token_id,
+//                 expires,
+//             } => todo!(),
+//             sg721::ExecuteMsg::Revoke { spender, token_id } => todo!(),
+//             sg721::ExecuteMsg::ApproveAll { operator, expires } => todo!(),
+//             sg721::ExecuteMsg::RevokeAll { operator } => todo!(),
+//             sg721::ExecuteMsg::Mint(_) => todo!(),
+//             sg721::ExecuteMsg::Burn { token_id } => todo!(),
+//             sg721::ExecuteMsg::UpdateCollectionInfo { collection_info } => todo!(),
+//             sg721::ExecuteMsg::UpdateTradingStartTime(_) => todo!(),
+//             sg721::ExecuteMsg::FreezeCollectionInfo => todo!(),
+//         }
+//     }
+// }
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
