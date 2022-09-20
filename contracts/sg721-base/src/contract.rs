@@ -6,8 +6,8 @@ use cosmwasm_std::{
     StdResult, Timestamp, WasmQuery,
 };
 
-use cw721::{ContractInfoResponse as CW721ContractInfoResponse, Cw721Execute, Cw721ReceiveMsg};
-use cw_utils::{nonpayable, Expiration};
+use cw721::{ContractInfoResponse as CW721ContractInfoResponse, Cw721Execute};
+use cw_utils::nonpayable;
 use serde::{de::DeserializeOwned, Serialize};
 
 use sg721::{
@@ -248,46 +248,6 @@ where
         self.frozen_collection_info.save(deps.storage, &frozen)?;
         let event = Event::new("freeze_collection").add_attribute("sender", info.sender);
         Ok(Response::new().add_event(event))
-    }
-
-    pub fn revoke(
-        &self,
-        deps: DepsMut,
-        env: Env,
-        info: MessageInfo,
-        spender: String,
-        token_id: String,
-    ) -> Result<Response, ContractError> {
-        self.parent
-            ._update_approvals(deps, &env, &info, &spender, &token_id, false, None)?;
-
-        let event = Event::new("revoke")
-            .add_attribute("sender", info.sender)
-            .add_attribute("spender", spender)
-            .add_attribute("token_id", token_id);
-        let res = Response::new().add_event(event);
-
-        Ok(res)
-    }
-
-    pub fn revoke_all(
-        &self,
-        deps: DepsMut,
-        _env: Env,
-        info: MessageInfo,
-        operator: String,
-    ) -> Result<Response, ContractError> {
-        let operator_addr = deps.api.addr_validate(&operator)?;
-        self.parent
-            .operators
-            .remove(deps.storage, (&info.sender, &operator_addr));
-
-        let event = Event::new("revoke_all")
-            .add_attribute("sender", info.sender)
-            .add_attribute("operator", operator);
-        let res = Response::new().add_event(event);
-
-        Ok(res)
     }
 
     pub fn mint(
