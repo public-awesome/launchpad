@@ -106,3 +106,11 @@ func StoreContract(ctx sdk.Context, msgServer wasmtypes.MsgServer, creator strin
 	}
 	return res.CodeID, nil
 }
+
+func strPtr(s string) *string {
+	return &s
+}
+
+func uint64Ptr(i uint64) *uint64 {
+	return &i
+}
