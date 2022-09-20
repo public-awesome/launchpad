@@ -194,20 +194,10 @@ pub fn execute_update_trading_start_time(
     }
 
     // add custom rules here
-    let config = CONFIG.load(deps.storage)?;
-    let factory_params: ParamsResponse = deps
-        .querier
-        .query_wasm_smart(config.factory, &Sg2QueryMsg::Params {})?;
-    let default_start_time_with_offset = env
-        .block
-        .time
-        .plus_seconds(factory_params.params.default_trading_offset_secs);
-
     if let Some(start_time) = start_time {
-        // If current time already passed the new start_time return error
-        if default_start_time_with_offset > start_time {
+        if env.block.time > start_time {
             return Err(ContractError::InvalidTradingStartTime(
-                default_start_time_with_offset,
+                env.block.time,
                 start_time,
             ));
         }

@@ -664,7 +664,7 @@ pub fn execute_update_start_time(
 
 pub fn execute_update_trading_start_time(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
     start_time: Option<Timestamp>,
 ) -> Result<Response, ContractError> {
@@ -688,6 +688,12 @@ pub fn execute_update_trading_start_time(
         .plus_seconds(factory_params.params.default_trading_offset_secs);
 
     if let Some(start_time) = start_time {
+        if env.block.time > start_time {
+            return Err(ContractError::InvalidTradingStartTime(
+                env.block.time,
+                start_time,
+            ));
+        }
         // If old start time + offset > new start_time, return error
         if default_start_time_with_offset > start_time {
             return Err(ContractError::InvalidTradingStartTime(
