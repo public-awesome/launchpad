@@ -13,14 +13,18 @@ workspace:
 steps:
   - name: restore-cache
     image: meltwater/drone-cache:dev
+    pull: true
+    settings:
+      backend: "filesystem"
+      restore: true
+      cache_key: "volume"
+      archive_format: "gzip"
+      mount:
+        - "/code/target"
     volumes:
       - name: cache
         path: /code/target
-    environment:
-      AWS_ACCESS_KEY_ID:
-        from_secret: minio_key_id
-      AWS_SECRET_ACCESS_KEY:
-        from_secret: minio_secret_key
+
   - name: build-contracts
     image: cosmwasm/workspace-optimizer:0.12.8
   - name: full_test
@@ -35,22 +39,18 @@ steps:
     volumes:
       - name: cache
         path: /code/target
-    environment:
-      AWS_ACCESS_KEY_ID:
-        from_secret: minio_key_id
-      AWS_SECRET_ACCESS_KEY:
-        from_secret: minio_secret_key
     pull: true
     settings:
+      backend: "filesystem"
       rebuild: true
-      bucket:
-        from_secret: minio_bucket
-      region: us-east-1
+      cache_key: "volume"
+      archive_format: "gzip"
       mount:
         - "/code/target"
 volumes:
   - name: cache
-    temp: {}
+    host:
+      path: /var/lib/cache
 
 node:
   runner: integration
@@ -63,6 +63,6 @@ trigger:
     - push
 ---
 kind: signature
-hmac: a4416cff0bbe8fe16efdf8057cc5b69e33eec777967439885795879eae7db0f8
+hmac: 7bb527353a8987741ae76d01d203ffb8a5dd17e3216a6bda53e7a37add73124e
 
 ...
