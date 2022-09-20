@@ -54,15 +54,65 @@ pub mod entry {
 mod tests {
     use super::*;
 
-    use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
+    use cosmwasm_std::testing::{mock_env, mock_info, MockApi, MockQuerier, MockStorage};
+    use cosmwasm_std::{
+        from_slice, to_binary, ContractInfoResponse, ContractResult, Empty, OwnedDeps, Querier,
+        QuerierResult, QueryRequest, SystemError, SystemResult, WasmQuery,
+    };
     use cw721::Cw721Query;
     use sg721::{CollectionInfo, ExecuteMsg, InstantiateMsg, MintMsg};
+    use std::marker::PhantomData;
 
     const CREATOR: &str = "creator";
 
+    pub fn mock_deps() -> OwnedDeps<MockStorage, MockApi, CustomMockQuerier, Empty> {
+        OwnedDeps {
+            storage: MockStorage::default(),
+            api: MockApi::default(),
+            querier: CustomMockQuerier::new(MockQuerier::new(&[])),
+            custom_query_type: PhantomData,
+        }
+    }
+
+    pub struct CustomMockQuerier {
+        base: MockQuerier,
+    }
+
+    impl Querier for CustomMockQuerier {
+        fn raw_query(&self, bin_request: &[u8]) -> QuerierResult {
+            let request: QueryRequest<Empty> = match from_slice(bin_request) {
+                Ok(v) => v,
+                Err(e) => {
+                    return SystemResult::Err(SystemError::InvalidRequest {
+                        error: format!("Parsing query request: {}", e),
+                        request: bin_request.into(),
+                    })
+                }
+            };
+
+            self.handle_query(&request)
+        }
+    }
+
+    impl CustomMockQuerier {
+        pub fn handle_query(&self, request: &QueryRequest<Empty>) -> QuerierResult {
+            match &request {
+                QueryRequest::Wasm(WasmQuery::ContractInfo { contract_addr: _ }) => {
+                    let response = ContractInfoResponse::new(1, CREATOR);
+                    SystemResult::Ok(ContractResult::Ok(to_binary(&response).unwrap()))
+                }
+                _ => self.base.handle_query(request),
+            }
+        }
+
+        pub fn new(base: MockQuerier<Empty>) -> Self {
+            CustomMockQuerier { base }
+        }
+    }
+
     #[test]
     fn use_metadata_extension() {
-        let mut deps = mock_dependencies();
+        let mut deps = mock_deps();
         let contract = Sg721MetadataContract::default();
 
         // instantiate contract
