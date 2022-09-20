@@ -171,13 +171,6 @@ where
             return Err(ContractError::Unauthorized {});
         }
 
-        // convert collection royalty info to response for comparison
-        // convert from response to royalty info for storage
-        let royalty_info_res = collection
-            .royalty_info
-            .as_ref()
-            .map(|royalty_info| royalty_info.to_response());
-
         collection.description = collection_msg
             .description
             .unwrap_or_else(|| collection.description.to_string());
@@ -195,14 +188,32 @@ where
             .unwrap_or_else(|| collection.external_link.as_ref().map(|s| s.to_string()));
         Url::parse(collection.external_link.as_ref().unwrap())?;
 
-        let response = collection_msg.royalty_info.unwrap_or(royalty_info_res);
+        // convert collection royalty info to response for comparison
+        // convert from response to royalty info for storage
+        let royalty_info_res = collection
+            .royalty_info
+            .as_ref()
+            .map(|royalty_info| royalty_info.to_response());
 
-        collection.royalty_info = match response {
-            Some(royalty_info) => Some(RoyaltyInfo {
+        let response = collection_msg
+            .royalty_info
+            .unwrap_or_else(|| royalty_info_res.clone());
+
+        // reminder: collection_msg.royalty_info is Option<Option<RoyaltyInfoResponse>>
+        collection.royalty_info = if let Some(royalty_info) = response {
+            // update royalty info to equal or less, else throw error
+            if let Some(royalty_info_res) = royalty_info_res {
+                if royalty_info.share > royalty_info_res.share {
+                    return Err(ContractError::RoyaltyShareIncreased {});
+                }
+            }
+
+            Some(RoyaltyInfo {
                 payment_address: deps.api.addr_validate(&royalty_info.payment_address)?,
                 share: share_validate(royalty_info.share)?,
-            }),
-            None => None,
+            })
+        } else {
+            None
         };
 
         self.collection_info.save(deps.storage, &collection)?;
