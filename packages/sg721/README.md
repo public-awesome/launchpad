@@ -8,6 +8,7 @@ pub struct CollectionInfo<T> {
     pub description: String,
     pub image: String,
     pub external_link: Option<String>,
+    pub trading_start_time: Option<Timestamp>,
     pub royalty_info: Option<T>,
 }
 

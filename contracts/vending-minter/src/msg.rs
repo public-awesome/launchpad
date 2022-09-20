@@ -13,13 +13,28 @@ pub struct InstantiateMsg {
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
     Mint {},
-    SetWhitelist { whitelist: String },
-    UpdateMintPrice { price: u128 },
+    SetWhitelist {
+        whitelist: String,
+    },
+    Purge {},
+    UpdateMintPrice {
+        price: u128,
+    },
     UpdateStartTime(Timestamp),
-    UpdatePerAddressLimit { per_address_limit: u32 },
-    MintTo { recipient: String },
-    MintFor { token_id: u32, recipient: String },
+    /// Runs custom checks against TradingStartTime on VendingMinter, then updates by calling sg721-base
+    UpdateTradingStartTime(Option<Timestamp>),
+    UpdatePerAddressLimit {
+        per_address_limit: u32,
+    },
+    MintTo {
+        recipient: String,
+    },
+    MintFor {
+        token_id: u32,
+        recipient: String,
+    },
     Shuffle {},
+    BurnRemaining {},
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -30,6 +45,7 @@ pub enum QueryMsg {
     StartTime {},
     MintPrice {},
     MintCount { address: String },
+    Status {},
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

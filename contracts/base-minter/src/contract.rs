@@ -8,12 +8,12 @@ use base_factory::msg::{BaseMinterCreateMsg, Extension, ParamsResponse};
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     to_binary, Addr, Binary, CosmosMsg, Deps, DepsMut, Empty, Env, MessageInfo, Reply, StdResult,
-    WasmMsg,
+    Timestamp, WasmMsg,
 };
 
 use cw2::set_contract_version;
 use cw721_base::{msg::ExecuteMsg as Cw721ExecuteMsg, MintMsg};
-use cw_utils::{must_pay, parse_reply_instantiate_data};
+use cw_utils::{must_pay, nonpayable, parse_reply_instantiate_data};
 
 use sg1::checked_fair_burn;
 use sg2::query::Sg2QueryMsg;
@@ -44,7 +44,7 @@ pub fn instantiate(
 
     // Make sure the sender is the factory contract
     // This will fail if the sender cannot parse a response from the factory contract
-    let res: ParamsResponse = deps
+    let factory_params: ParamsResponse = deps
         .querier
         .query_wasm_smart(factory.clone(), &Sg2QueryMsg::Params {})?;
 
@@ -53,9 +53,19 @@ pub fn instantiate(
         collection_code_id: msg.collection_params.code_id,
         // assume the mint price is the minimum mint price
         // 100% is fair burned
-        mint_price: res.params.min_mint_price,
+        mint_price: factory_params.params.min_mint_price,
         extension: Empty {},
     };
+
+    // Use default start trading time if not provided
+    let mut collection_info = msg.collection_params.info.clone();
+    let offset = factory_params.params.default_trading_offset_secs;
+    let trading_start_time = msg
+        .collection_params
+        .info
+        .trading_start_time
+        .or_else(|| Some(env.block.time.plus_seconds(offset)));
+    collection_info.trading_start_time = trading_start_time;
 
     CONFIG.save(deps.storage, &config)?;
 
@@ -65,7 +75,7 @@ pub fn instantiate(
             name: msg.collection_params.name.clone(),
             symbol: msg.collection_params.symbol,
             minter: env.contract.address.to_string(),
-            collection_info: msg.collection_params.info,
+            collection_info,
         })?,
         funds: info.funds,
         admin: None,
@@ -88,12 +98,15 @@ pub fn instantiate(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::Mint { token_uri } => execute_mint_sender(deps, info, token_uri),
+        ExecuteMsg::UpdateTradingStartTime(time) => {
+            execute_update_trading_start_time(deps, env, info, time)
+        }
     }
 }
 
@@ -161,6 +174,50 @@ pub fn execute_mint_sender(
         .add_attribute("network_fee", network_fee.to_string()))
 }
 
+pub fn execute_update_trading_start_time(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    start_time: Option<Timestamp>,
+) -> Result<Response, ContractError> {
+    nonpayable(&info)?;
+    let sg721_contract_addr = COLLECTION_ADDRESS.load(deps.storage)?;
+
+    let collection_info: CollectionInfoResponse = deps.querier.query_wasm_smart(
+        sg721_contract_addr.clone(),
+        &Sg721QueryMsg::CollectionInfo {},
+    )?;
+    if info.sender != collection_info.creator {
+        return Err(ContractError::Unauthorized(
+            "Sender is not creator".to_owned(),
+        ));
+    }
+
+    // add custom rules here
+    if let Some(start_time) = start_time {
+        if env.block.time > start_time {
+            return Err(ContractError::InvalidTradingStartTime(
+                env.block.time,
+                start_time,
+            ));
+        }
+    }
+
+    // execute sg721 contract
+    let msg = WasmMsg::Execute {
+        contract_addr: sg721_contract_addr.to_string(),
+        msg: to_binary(&Sg721ExecuteMsg::<Empty>::UpdateTradingStartTime(
+            start_time,
+        ))?,
+        funds: vec![],
+    };
+
+    Ok(Response::new()
+        .add_attribute("action", "update_start_time")
+        .add_attribute("sender", info.sender)
+        .add_message(msg))
+}
+
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn sudo(deps: DepsMut, _env: Env, msg: SudoMsg) -> Result<Response, ContractError> {
     match msg {
@@ -224,18 +281,9 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractE
         Ok(res) => {
             let collection_address = res.contract_address;
 
-            // mark the collection contract as ready to mint
-            let msg = WasmMsg::Execute {
-                contract_addr: collection_address.clone(),
-                msg: to_binary(&Sg721ExecuteMsg::<Empty>::_Ready {})?,
-                funds: vec![],
-            };
-
             COLLECTION_ADDRESS.save(deps.storage, &Addr::unchecked(collection_address))?;
 
-            Ok(Response::default()
-                .add_attribute("action", "instantiate_sg721_reply")
-                .add_message(msg))
+            Ok(Response::default().add_attribute("action", "instantiate_sg721_reply"))
         }
         Err(_) => Err(ContractError::InstantiateSg721Error {}),
     }

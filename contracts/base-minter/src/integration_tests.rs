@@ -1,12 +1,13 @@
 use crate::msg::{ConfigResponse, ExecuteMsg};
 use base_factory::msg::BaseMinterCreateMsg;
 use base_factory::state::BaseMinterParams;
-use cosmwasm_std::{coin, coins, Addr};
+use cosmwasm_std::{coin, coins, Addr, Timestamp};
 use cw721::{Cw721ExecuteMsg, Cw721QueryMsg, OwnerOfResponse};
 use cw_multi_test::{BankSudo, Contract, ContractWrapper, Executor, SudoMsg};
 use sg2::msg::Sg2ExecuteMsg;
 use sg2::tests::mock_collection_params;
 use sg4::QueryMsg;
+use sg721_base::msg::{CollectionInfoResponse, QueryMsg as Sg721QueryMsg};
 use sg_multi_test::StargazeApp;
 use sg_std::{StargazeMsgWrapper, NATIVE_DENOM};
 
@@ -48,12 +49,23 @@ pub fn nt_contract_collection() -> Box<dyn Contract<StargazeMsgWrapper>> {
     Box::new(contract)
 }
 
+/// sg721-base nft collection
+pub fn contract_collection() -> Box<dyn Contract<StargazeMsgWrapper>> {
+    let contract = ContractWrapper::new(
+        sg721_base::entry::execute,
+        sg721_base::entry::instantiate,
+        sg721_base::entry::query,
+    );
+    Box::new(contract)
+}
+
 pub fn mock_params() -> BaseMinterParams {
     BaseMinterParams {
         code_id: 1,
         creation_fee: coin(CREATION_FEE, NATIVE_DENOM),
         min_mint_price: coin(MIN_MINT_PRICE, NATIVE_DENOM),
         mint_fee_bps: MINT_FEE_BPS,
+        default_trading_offset_secs: 60 * 60 * 24 * 7,
         extension: None,
     }
 }
@@ -66,7 +78,11 @@ pub fn mock_create_minter() -> BaseMinterCreateMsg {
 }
 
 // Upload contract code and instantiate minter contract
-fn setup_minter_contract(router: &mut StargazeApp, creator: &Addr) -> (Addr, ConfigResponse) {
+fn setup_minter_contract(
+    router: &mut StargazeApp,
+    creator: &Addr,
+    nt_collection: bool,
+) -> (Addr, ConfigResponse) {
     let minter_code_id = router.store_code(contract_minter());
     let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
 
@@ -86,7 +102,11 @@ fn setup_minter_contract(router: &mut StargazeApp, creator: &Addr) -> (Addr, Con
         )
         .unwrap();
 
-    let collection_code_id = router.store_code(nt_contract_collection());
+    let collection_code_id = if nt_collection {
+        router.store_code(nt_contract_collection())
+    } else {
+        router.store_code(contract_collection())
+    };
 
     let mut msg = mock_create_minter();
     msg.collection_params.code_id = collection_code_id;
@@ -153,7 +173,7 @@ fn setup_accounts(router: &mut StargazeApp) -> (Addr, Addr) {
 fn check_mint() {
     let mut router = custom_mock_app();
     let (creator, buyer) = setup_accounts(&mut router);
-    let (minter_addr, config) = setup_minter_contract(&mut router, &creator);
+    let (minter_addr, config) = setup_minter_contract(&mut router, &creator, true);
 
     // Fail with incorrect token uri
     let mint_msg = ExecuteMsg::Mint {
@@ -236,4 +256,48 @@ fn check_mint() {
         &[],
     );
     assert!(err.is_err());
+}
+
+#[test]
+fn update_trading_start_time() {
+    let mut router = custom_mock_app();
+    let (creator, buyer) = setup_accounts(&mut router);
+    let current_block_time = router.block_info().time;
+    let (minter_addr, config) = setup_minter_contract(&mut router, &creator, false);
+    let default_trading_start_time =
+        current_block_time.plus_seconds(mock_params().default_trading_offset_secs + 1);
+
+    // unauthorized
+    let res = router.execute_contract(
+        Addr::unchecked(buyer),
+        Addr::unchecked(minter_addr.clone()),
+        &ExecuteMsg::UpdateTradingStartTime(Some(default_trading_start_time)),
+        &[],
+    );
+    assert!(res.is_err());
+
+    // invalid start trading time
+    let res = router.execute_contract(
+        Addr::unchecked(creator.clone()),
+        Addr::unchecked(minter_addr.clone()),
+        &ExecuteMsg::UpdateTradingStartTime(Some(Timestamp::from_nanos(0))),
+        &[],
+    );
+    assert!(res.is_err());
+
+    // succeeds
+    let res = router.execute_contract(
+        Addr::unchecked(creator.clone()),
+        Addr::unchecked(minter_addr),
+        &ExecuteMsg::UpdateTradingStartTime(Some(default_trading_start_time)),
+        &[],
+    );
+    assert!(res.is_ok());
+
+    // confirm trading start time
+    let res: CollectionInfoResponse = router
+        .wrap()
+        .query_wasm_smart(config.collection_address, &Sg721QueryMsg::CollectionInfo {})
+        .unwrap();
+    assert_eq!(res.trading_start_time, Some(default_trading_start_time));
 }

@@ -37,6 +37,18 @@
     {
       "type": "object",
       "required": [
+        "purge"
+      ],
+      "properties": {
+        "purge": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
         "update_mint_price"
       ],
       "properties": {
@@ -64,6 +76,26 @@
       "properties": {
         "update_start_time": {
           "$ref": "#/definitions/Timestamp"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Runs custom checks against TradingStartTime on VendingMinter, then updates by calling sg721-base",
+      "type": "object",
+      "required": [
+        "update_trading_start_time"
+      ],
+      "properties": {
+        "update_trading_start_time": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Timestamp"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "additionalProperties": false
@@ -143,6 +175,18 @@
       ],
       "properties": {
         "shuffle": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "burn_remaining"
+      ],
+      "properties": {
+        "burn_remaining": {
           "type": "object"
         }
       },

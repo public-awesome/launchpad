@@ -1,14 +1,18 @@
 use cw721_base::state::TokenInfo;
 use url::Url;
 
-use cosmwasm_std::{to_binary, Binary, Decimal, Deps, DepsMut, Env, Event, MessageInfo, StdResult};
+use cosmwasm_std::{
+    to_binary, Binary, ContractInfoResponse, Decimal, Deps, DepsMut, Env, Event, MessageInfo,
+    StdResult, Timestamp, WasmQuery,
+};
 
-use cw721::{ContractInfoResponse, Cw721ReceiveMsg};
+use cw721::{ContractInfoResponse as CW721ContractInfoResponse, Cw721ReceiveMsg};
 use cw_utils::{nonpayable, Expiration};
 use serde::{de::DeserializeOwned, Serialize};
 
 use sg721::{
     CollectionInfo, ExecuteMsg, InstantiateMsg, MintMsg, RoyaltyInfo, RoyaltyInfoResponse,
+    UpdateCollectionInfoMsg,
 };
 use sg_std::Response;
 
@@ -31,8 +35,18 @@ where
         // no funds should be sent to this contract
         nonpayable(&info)?;
 
+        // check sender is a contract
+        let req = WasmQuery::ContractInfo {
+            contract_addr: info.sender.into(),
+        }
+        .into();
+        let _res: ContractInfoResponse = deps
+            .querier
+            .query(&req)
+            .map_err(|_| ContractError::Unauthorized {})?;
+
         // cw721 instantiation
-        let info = ContractInfoResponse {
+        let info = CW721ContractInfoResponse {
             name: msg.name,
             symbol: msg.symbol,
         };
@@ -67,12 +81,13 @@ where
             description: msg.collection_info.description,
             image: msg.collection_info.image,
             external_link: msg.collection_info.external_link,
+            trading_start_time: msg.collection_info.trading_start_time,
             royalty_info,
         };
 
         self.collection_info.save(deps.storage, &collection_info)?;
 
-        self.ready.save(deps.storage, &false)?;
+        self.frozen_collection_info.save(deps.storage, &false)?;
 
         Ok(Response::new()
             .add_attribute("action", "instantiate")
@@ -88,7 +103,6 @@ where
         msg: ExecuteMsg<T>,
     ) -> Result<Response, ContractError> {
         match msg {
-            ExecuteMsg::_Ready {} => self.ready(deps, env, info),
             ExecuteMsg::TransferNft {
                 recipient,
                 token_id,
@@ -111,26 +125,15 @@ where
             }
             ExecuteMsg::RevokeAll { operator } => self.revoke_all(deps, env, info, operator),
             ExecuteMsg::Burn { token_id } => self.burn(deps, env, info, token_id),
+            ExecuteMsg::UpdateCollectionInfo { collection_info } => {
+                self.update_collection_info(deps, env, info, collection_info)
+            }
+            ExecuteMsg::UpdateTradingStartTime(start_time) => {
+                self.update_trading_start_time(deps, env, info, start_time)
+            }
+            ExecuteMsg::FreezeCollectionInfo {} => self.freeze_collection_info(deps, env, info),
             ExecuteMsg::Mint(msg) => self.mint(deps, env, info, msg),
         }
-    }
-
-    /// Called by the minter reply handler after instantiation. Now we can query
-    /// the factory and minter to verify that the collection creation is authorized.
-    pub fn ready(
-        &self,
-        deps: DepsMut,
-        _env: Env,
-        info: MessageInfo,
-    ) -> Result<Response, ContractError> {
-        let minter = self.parent.minter.load(deps.storage)?;
-        if minter != info.sender {
-            return Err(ContractError::Unauthorized {});
-        }
-
-        self.ready.save(deps.storage, &true)?;
-
-        Ok(Response::new())
     }
 
     pub fn approve(
@@ -142,10 +145,6 @@ where
         token_id: String,
         expires: Option<Expiration>,
     ) -> Result<Response, ContractError> {
-        if !self.ready.load(deps.storage)? {
-            return Err(ContractError::NotReady {});
-        }
-
         self.parent
             ._update_approvals(deps, &env, &info, &spender, &token_id, true, expires)?;
 
@@ -166,9 +165,6 @@ where
         operator: String,
         expires: Option<Expiration>,
     ) -> Result<Response, ContractError> {
-        if !self.ready.load(deps.storage)? {
-            return Err(ContractError::NotReady {});
-        }
         // reject expired data as invalid
         let expires = expires.unwrap_or_default();
         if expires.is_expired(&env.block) {
@@ -196,9 +192,6 @@ where
         info: MessageInfo,
         token_id: String,
     ) -> Result<Response, ContractError> {
-        if !self.ready.load(deps.storage)? {
-            return Err(ContractError::NotReady {});
-        }
         let token = self.parent.tokens.load(deps.storage, &token_id)?;
         self.parent
             .check_can_send(deps.as_ref(), &env, &info, &token)?;
@@ -214,6 +207,103 @@ where
         Ok(res)
     }
 
+    pub fn update_collection_info(
+        &self,
+        deps: DepsMut,
+        _env: Env,
+        info: MessageInfo,
+        collection_msg: UpdateCollectionInfoMsg<RoyaltyInfoResponse>,
+    ) -> Result<Response, ContractError> {
+        let mut collection = self.collection_info.load(deps.storage)?;
+
+        if self.frozen_collection_info.load(deps.storage)? {
+            return Err(ContractError::CollectionInfoFrozen {});
+        }
+
+        // only creator can update collection info
+        if collection.creator != info.sender {
+            return Err(ContractError::Unauthorized {});
+        }
+
+        // convert collection royalty info to response for comparison
+        // convert from response to royalty info for storage
+        let royalty_info_res = collection
+            .royalty_info
+            .as_ref()
+            .map(|royalty_info| royalty_info.to_response());
+
+        collection.description = collection_msg
+            .description
+            .unwrap_or_else(|| collection.description.to_string());
+        if collection.description.len() > MAX_DESCRIPTION_LENGTH as usize {
+            return Err(ContractError::DescriptionTooLong {});
+        }
+
+        collection.image = collection_msg
+            .image
+            .unwrap_or_else(|| collection.image.to_string());
+        Url::parse(&collection.image)?;
+
+        collection.external_link = collection_msg
+            .external_link
+            .unwrap_or_else(|| collection.external_link.as_ref().map(|s| s.to_string()));
+        Url::parse(collection.external_link.as_ref().unwrap())?;
+
+        let response = collection_msg.royalty_info.unwrap_or(royalty_info_res);
+
+        collection.royalty_info = match response {
+            Some(royalty_info) => Some(RoyaltyInfo {
+                payment_address: deps.api.addr_validate(&royalty_info.payment_address)?,
+                share: share_validate(royalty_info.share)?,
+            }),
+            None => None,
+        };
+
+        self.collection_info.save(deps.storage, &collection)?;
+
+        let event = Event::new("update_collection_info").add_attribute("sender", info.sender);
+        Ok(Response::new().add_event(event))
+    }
+
+    /// Called by the minter reply handler after custom validations on trading start time.
+    /// Minter has start_time, default offset, makes sense to execute from minter.
+    pub fn update_trading_start_time(
+        &self,
+        deps: DepsMut,
+        _env: Env,
+        info: MessageInfo,
+        start_time: Option<Timestamp>,
+    ) -> Result<Response, ContractError> {
+        let minter = self.parent.minter.load(deps.storage)?;
+        if minter != info.sender {
+            return Err(ContractError::Unauthorized {});
+        }
+
+        let mut collection_info = self.collection_info.load(deps.storage)?;
+        collection_info.trading_start_time = start_time;
+        self.collection_info.save(deps.storage, &collection_info)?;
+
+        let event = Event::new("update_trading_start_time").add_attribute("sender", info.sender);
+        Ok(Response::new().add_event(event))
+    }
+
+    pub fn freeze_collection_info(
+        &self,
+        deps: DepsMut,
+        _env: Env,
+        info: MessageInfo,
+    ) -> Result<Response, ContractError> {
+        let collection = self.query_collection_info(deps.as_ref())?;
+        if collection.creator != info.sender {
+            return Err(ContractError::Unauthorized {});
+        }
+
+        let frozen = true;
+        self.frozen_collection_info.save(deps.storage, &frozen)?;
+        let event = Event::new("freeze_collection").add_attribute("sender", info.sender);
+        Ok(Response::new().add_event(event))
+    }
+
     pub fn revoke(
         &self,
         deps: DepsMut,
@@ -222,9 +312,6 @@ where
         spender: String,
         token_id: String,
     ) -> Result<Response, ContractError> {
-        if !self.ready.load(deps.storage)? {
-            return Err(ContractError::NotReady {});
-        }
         self.parent
             ._update_approvals(deps, &env, &info, &spender, &token_id, false, None)?;
 
@@ -244,9 +331,6 @@ where
         info: MessageInfo,
         operator: String,
     ) -> Result<Response, ContractError> {
-        if !self.ready.load(deps.storage)? {
-            return Err(ContractError::NotReady {});
-        }
         let operator_addr = deps.api.addr_validate(&operator)?;
         self.parent
             .operators
@@ -269,9 +353,6 @@ where
         token_id: String,
         msg: Binary,
     ) -> Result<Response, ContractError> {
-        if !self.ready.load(deps.storage)? {
-            return Err(ContractError::NotReady {});
-        }
         // Transfer token
         self.parent
             ._transfer_nft(deps, &env, &info, &receiving_contract, &token_id)?;
@@ -302,9 +383,6 @@ where
         recipient: String,
         token_id: String,
     ) -> Result<Response, ContractError> {
-        if !self.ready.load(deps.storage)? {
-            return Err(ContractError::NotReady {});
-        }
         self.parent
             ._transfer_nft(deps, &env, &info, &recipient, &token_id)?;
 
@@ -324,9 +402,6 @@ where
         info: MessageInfo,
         msg: MintMsg<T>,
     ) -> Result<Response, ContractError> {
-        if !self.ready.load(deps.storage)? {
-            return Err(ContractError::NotReady {});
-        }
         let minter = self.parent.minter.load(deps.storage)?;
 
         if info.sender != minter {
@@ -379,6 +454,7 @@ where
             description: info.description,
             image: info.image,
             external_link: info.external_link,
+            trading_start_time: info.trading_start_time,
             royalty_info: royalty_info_res,
         })
     }
@@ -386,7 +462,7 @@ where
 
 pub fn share_validate(share: Decimal) -> Result<Decimal, ContractError> {
     if share > Decimal::one() {
-        return Err(ContractError::InvalidRoyalities {});
+        return Err(ContractError::InvalidRoyalties {});
     }
 
     Ok(share)

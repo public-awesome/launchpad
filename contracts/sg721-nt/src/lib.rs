@@ -45,12 +45,22 @@ pub mod entry {
         msg: ExecuteMsg<Extension>,
     ) -> Result<Response, sg721_base::ContractError> {
         match msg {
-            ExecuteMsg::_Ready {} => Sg721NonTransferableContract::default().ready(deps, env, info),
             ExecuteMsg::Burn { token_id } => {
                 Sg721NonTransferableContract::default().burn(deps, env, info, token_id)
             }
             ExecuteMsg::Mint(msg) => {
                 Sg721NonTransferableContract::default().mint(deps, env, info, msg)
+            }
+            ExecuteMsg::UpdateCollectionInfo {
+                new_collection_info,
+            } => Sg721NonTransferableContract::default().update_collection_info(
+                deps,
+                env,
+                info,
+                new_collection_info,
+            ),
+            ExecuteMsg::FreezeCollectionInfo {} => {
+                Sg721NonTransferableContract::default().freeze_collection_info(deps, env, info)
             }
         }
     }

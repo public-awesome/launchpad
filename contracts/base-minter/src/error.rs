@@ -1,4 +1,4 @@
-use cosmwasm_std::StdError;
+use cosmwasm_std::{StdError, Timestamp};
 use cw_utils::PaymentError;
 use sg1::FeeError;
 use thiserror::Error;
@@ -38,4 +38,7 @@ pub enum ContractError {
 
     #[error("Instantiate sg721 error")]
     InstantiateSg721Error {},
+
+    #[error("InvalidTradingStartTime {0} < {1}")]
+    InvalidTradingStartTime(Timestamp, Timestamp),
 }

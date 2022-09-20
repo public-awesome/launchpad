@@ -7,12 +7,12 @@ use crate::msg::{
 };
 use crate::state::{
     Config, ConfigExtension, CONFIG, MINTABLE_NUM_TOKENS, MINTABLE_TOKEN_POSITIONS, MINTER_ADDRS,
-    SG721_ADDRESS,
+    SG721_ADDRESS, STATUS,
 };
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coin, to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Deps, DepsMut, Empty, Env,
+    coin, to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Deps, DepsMut, Empty, Env, Event,
     MessageInfo, Order, Reply, ReplyOn, StdError, StdResult, Timestamp, Uint128, WasmMsg,
 };
 use cw2::set_contract_version;
@@ -22,6 +22,7 @@ use rand_core::{RngCore, SeedableRng};
 use rand_xoshiro::Xoshiro128PlusPlus;
 use sg1::checked_fair_burn;
 use sg2::query::Sg2QueryMsg;
+use sg4::{Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
 use sg_std::math::U64Ext;
 use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME};
@@ -66,6 +67,9 @@ pub fn instantiate(
         .query_wasm_smart(factory.clone(), &Sg2QueryMsg::Params {})?;
     let factory_params = factory_response.params;
 
+    // set default status so it can be queried without failing
+    STATUS.save(deps.storage, &Status::default())?;
+
     if !check_dynamic_per_address_limit(
         msg.init_msg.per_address_limit,
         msg.init_msg.num_tokens,
@@ -103,6 +107,17 @@ pub fn instantiate(
         .init_msg
         .whitelist
         .and_then(|w| deps.api.addr_validate(w.as_str()).ok());
+
+    // Use default start trading time if not provided
+    let mut collection_info = msg.collection_params.info.clone();
+    let offset = factory_params.default_trading_offset_secs;
+    let start_time = msg.init_msg.start_time;
+    let trading_start_time = msg
+        .collection_params
+        .info
+        .trading_start_time
+        .or_else(|| Some(start_time.plus_seconds(offset)));
+    collection_info.trading_start_time = trading_start_time;
 
     let config = Config {
         factory: factory.clone(),
@@ -145,7 +160,7 @@ pub fn instantiate(
                 name: msg.collection_params.name.clone(),
                 symbol: msg.collection_params.symbol,
                 minter: env.contract.address.to_string(),
-                collection_info: msg.collection_params.info,
+                collection_info,
             })?,
             funds: info.funds,
             admin: Some(config.extension.admin.to_string()),
@@ -178,8 +193,12 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::Mint {} => execute_mint_sender(deps, env, info),
+        ExecuteMsg::Purge {} => execute_purge(deps, env, info),
         ExecuteMsg::UpdateMintPrice { price } => execute_update_mint_price(deps, env, info, price),
         ExecuteMsg::UpdateStartTime(time) => execute_update_start_time(deps, env, info, time),
+        ExecuteMsg::UpdateTradingStartTime(time) => {
+            execute_update_trading_start_time(deps, env, info, time)
+        }
         ExecuteMsg::UpdatePerAddressLimit { per_address_limit } => {
             execute_update_per_address_limit(deps, env, info, per_address_limit)
         }
@@ -192,7 +211,35 @@ pub fn execute(
             execute_set_whitelist(deps, env, info, &whitelist)
         }
         ExecuteMsg::Shuffle {} => execute_shuffle(deps, env, info),
+        ExecuteMsg::BurnRemaining {} => execute_burn_remaining(deps, env, info),
     }
+}
+
+// Purge frees data after a mint is sold out
+// Anyone can purge
+pub fn execute_purge(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+) -> Result<Response, ContractError> {
+    nonpayable(&info)?;
+    // check mint sold out
+    let mintable_num_tokens = MINTABLE_NUM_TOKENS.load(deps.storage)?;
+    if mintable_num_tokens != 0 {
+        return Err(ContractError::NotSoldOut {});
+    }
+
+    let keys = MINTER_ADDRS
+        .keys(deps.storage, None, None, Order::Ascending)
+        .collect::<Vec<_>>();
+    for key in keys {
+        MINTER_ADDRS.remove(deps.storage, &key?);
+    }
+
+    Ok(Response::new()
+        .add_attribute("action", "purge")
+        .add_attribute("contract", env.contract.address.to_string())
+        .add_attribute("sender", info.sender))
 }
 
 // Anyone can pay to shuffle at any time
@@ -644,6 +691,62 @@ pub fn execute_update_start_time(
         .add_attribute("start_time", start_time.to_string()))
 }
 
+pub fn execute_update_trading_start_time(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    start_time: Option<Timestamp>,
+) -> Result<Response, ContractError> {
+    nonpayable(&info)?;
+    let config = CONFIG.load(deps.storage)?;
+    let sg721_contract_addr = SG721_ADDRESS.load(deps.storage)?;
+
+    if info.sender != config.extension.admin {
+        return Err(ContractError::Unauthorized(
+            "Sender is not an admin".to_owned(),
+        ));
+    }
+
+    // add custom rules here
+    let factory_params: ParamsResponse = deps
+        .querier
+        .query_wasm_smart(config.factory.clone(), &Sg2QueryMsg::Params {})?;
+    let default_start_time_with_offset = config
+        .extension
+        .start_time
+        .plus_seconds(factory_params.params.default_trading_offset_secs);
+
+    if let Some(start_time) = start_time {
+        if env.block.time > start_time {
+            return Err(ContractError::InvalidTradingStartTime(
+                env.block.time,
+                start_time,
+            ));
+        }
+        // If old start time + offset > new start_time, return error
+        if default_start_time_with_offset > start_time {
+            return Err(ContractError::InvalidTradingStartTime(
+                default_start_time_with_offset,
+                start_time,
+            ));
+        }
+    }
+
+    // execute sg721 contract
+    let msg = WasmMsg::Execute {
+        contract_addr: sg721_contract_addr.to_string(),
+        msg: to_binary(&Sg721ExecuteMsg::<Empty>::UpdateTradingStartTime(
+            start_time,
+        ))?,
+        funds: vec![],
+    };
+
+    Ok(Response::new()
+        .add_attribute("action", "update_start_time")
+        .add_attribute("sender", info.sender)
+        .add_message(msg))
+}
+
 pub fn execute_update_per_address_limit(
     deps: DepsMut,
     _env: Env,
@@ -690,6 +793,44 @@ pub fn execute_update_per_address_limit(
         .add_attribute("action", "update_per_address_limit")
         .add_attribute("sender", info.sender)
         .add_attribute("limit", per_address_limit.to_string()))
+}
+
+pub fn execute_burn_remaining(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+) -> Result<Response, ContractError> {
+    nonpayable(&info)?;
+    let config = CONFIG.load(deps.storage)?;
+    // Check only admin
+    if info.sender != config.extension.admin {
+        return Err(ContractError::Unauthorized(
+            "Sender is not an admin".to_owned(),
+        ));
+    }
+
+    // check mint not sold out
+    let mintable_num_tokens = MINTABLE_NUM_TOKENS.load(deps.storage)?;
+    if mintable_num_tokens == 0 {
+        return Err(ContractError::SoldOut {});
+    }
+
+    let keys = MINTABLE_TOKEN_POSITIONS
+        .keys(deps.storage, None, None, Order::Ascending)
+        .collect::<Vec<_>>();
+    let mut total: u32 = 0;
+    for key in keys {
+        total += 1;
+        MINTABLE_TOKEN_POSITIONS.remove(deps.storage, key?);
+    }
+    // Decrement mintable num tokens
+    MINTABLE_NUM_TOKENS.save(deps.storage, &(mintable_num_tokens - total))?;
+
+    let event = Event::new("burn-remaining")
+        .add_attribute("sender", info.sender)
+        .add_attribute("tokens_burned", total.to_string())
+        .add_attribute("minter", env.contract.address.to_string());
+    Ok(Response::new().add_event(event))
 }
 
 // if admin_no_fee => no fee,
@@ -745,9 +886,37 @@ fn check_dynamic_per_address_limit(
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
+pub fn sudo(deps: DepsMut, _env: Env, msg: SudoMsg) -> Result<Response, ContractError> {
+    match msg {
+        SudoMsg::UpdateStatus {
+            is_verified,
+            is_blocked,
+            is_explicit,
+        } => update_status(deps, is_verified, is_blocked, is_explicit)
+            .map_err(|_| ContractError::UpdateStatus {}),
+    }
+}
+
+/// Only governance can update contract params
+pub fn update_status(
+    deps: DepsMut,
+    is_verified: bool,
+    is_blocked: bool,
+    is_explicit: bool,
+) -> StdResult<Response> {
+    let mut status = STATUS.load(deps.storage)?;
+    status.is_verified = is_verified;
+    status.is_blocked = is_blocked;
+    status.is_explicit = is_explicit;
+
+    Ok(Response::new().add_attribute("action", "sudo_update_status"))
+}
+
+#[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::Config {} => to_binary(&query_config(deps)?),
+        QueryMsg::Status {} => to_binary(&query_status(deps)?),
         QueryMsg::StartTime {} => to_binary(&query_start_time(deps)?),
         QueryMsg::MintableNumTokens {} => to_binary(&query_mintable_num_tokens(deps)?),
         QueryMsg::MintPrice {} => to_binary(&query_mint_price(deps)?),
@@ -771,6 +940,12 @@ fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
         whitelist: config.extension.whitelist.map(|w| w.to_string()),
         factory: config.factory.to_string(),
     })
+}
+
+pub fn query_status(deps: Deps) -> StdResult<StatusResponse> {
+    let status = STATUS.load(deps.storage)?;
+
+    Ok(StatusResponse { status })
 }
 
 fn query_mint_count(deps: Deps, address: String) -> StdResult<MintCountResponse> {
@@ -826,18 +1001,9 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractE
         Ok(res) => {
             let sg721_address = res.contract_address;
 
-            // mark the collection contract as ready to mint
-            let msg = WasmMsg::Execute {
-                contract_addr: sg721_address.clone(),
-                msg: to_binary(&Sg721ExecuteMsg::<Empty>::_Ready {})?,
-                funds: vec![],
-            };
-
             SG721_ADDRESS.save(deps.storage, &Addr::unchecked(sg721_address))?;
 
-            Ok(Response::default()
-                .add_attribute("action", "instantiate_sg721_reply")
-                .add_message(msg))
+            Ok(Response::default().add_attribute("action", "instantiate_sg721_reply"))
         }
         Err(_) => Err(ContractError::InstantiateSg721Error {}),
     }
