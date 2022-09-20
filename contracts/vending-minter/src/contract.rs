@@ -12,7 +12,7 @@ use crate::state::{
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coin, to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Deps, DepsMut, Empty, Env,
+    coin, to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Deps, DepsMut, Empty, Env, Event,
     MessageInfo, Order, Reply, ReplyOn, StdError, StdResult, Timestamp, Uint128, WasmMsg,
 };
 use cw2::set_contract_version;
@@ -797,7 +797,7 @@ pub fn execute_update_per_address_limit(
 
 pub fn execute_burn_remaining(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
 ) -> Result<Response, ContractError> {
     nonpayable(&info)?;
@@ -825,7 +825,12 @@ pub fn execute_burn_remaining(
     }
     // Decrement mintable num tokens
     MINTABLE_NUM_TOKENS.save(deps.storage, &(mintable_num_tokens - total))?;
-    Ok(Response::new())
+
+    let event = Event::new("burn-remaining")
+        .add_attribute("sender", info.sender)
+        .add_attribute("tokens_burned", total.to_string())
+        .add_attribute("minter", env.contract.address.to_string());
+    Ok(Response::new().add_event(event))
 }
 
 // if admin_no_fee => no fee,
