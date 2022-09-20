@@ -193,6 +193,7 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::Mint {} => execute_mint_sender(deps, env, info),
+        ExecuteMsg::Purge {} => execute_purge(deps, env, info),
         ExecuteMsg::UpdateMintPrice { price } => execute_update_mint_price(deps, env, info, price),
         ExecuteMsg::UpdateStartTime(time) => execute_update_start_time(deps, env, info, time),
         ExecuteMsg::UpdateTradingStartTime(time) => {
@@ -212,6 +213,33 @@ pub fn execute(
         ExecuteMsg::Shuffle {} => execute_shuffle(deps, env, info),
         ExecuteMsg::BurnRemaining {} => execute_burn_remaining(deps, env, info),
     }
+}
+
+// Purge frees data after a mint is sold out
+// Anyone can purge
+pub fn execute_purge(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+) -> Result<Response, ContractError> {
+    nonpayable(&info)?;
+    // check mint sold out
+    let mintable_num_tokens = MINTABLE_NUM_TOKENS.load(deps.storage)?;
+    if mintable_num_tokens != 0 {
+        return Err(ContractError::NotSoldOut {});
+    }
+
+    let keys = MINTER_ADDRS
+        .keys(deps.storage, None, None, Order::Ascending)
+        .collect::<Vec<_>>();
+    for key in keys {
+        MINTER_ADDRS.remove(deps.storage, &key?);
+    }
+
+    Ok(Response::new()
+        .add_attribute("action", "purge")
+        .add_attribute("contract", env.contract.address.to_string())
+        .add_attribute("sender", info.sender))
 }
 
 // Anyone can pay to shuffle at any time
@@ -680,11 +708,25 @@ pub fn execute_update_trading_start_time(
     }
 
     // add custom rules here
+    let factory_params: ParamsResponse = deps
+        .querier
+        .query_wasm_smart(config.factory.clone(), &Sg2QueryMsg::Params {})?;
+    let default_start_time_with_offset = config
+        .extension
+        .start_time
+        .plus_seconds(factory_params.params.default_trading_offset_secs);
+
     if let Some(start_time) = start_time {
-        // If current time already passed the new start_time return error
         if env.block.time > start_time {
             return Err(ContractError::InvalidTradingStartTime(
                 env.block.time,
+                start_time,
+            ));
+        }
+        // If old start time + offset > new start_time, return error
+        if default_start_time_with_offset > start_time {
+            return Err(ContractError::InvalidTradingStartTime(
+                default_start_time_with_offset,
                 start_time,
             ));
         }

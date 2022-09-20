@@ -16,6 +16,7 @@ pub enum ExecuteMsg {
     SetWhitelist {
         whitelist: String,
     },
+    Purge {},
     UpdateMintPrice {
         price: u128,
     },

@@ -3,7 +3,7 @@ use url::Url;
 
 use cosmwasm_std::{
     to_binary, Binary, ContractInfoResponse, Decimal, Deps, DepsMut, Env, Event, MessageInfo,
-    StdError, StdResult, Timestamp, WasmQuery,
+    StdResult, Timestamp, WasmQuery,
 };
 
 use cw721::{ContractInfoResponse as CW721ContractInfoResponse, Cw721ReceiveMsg};
@@ -40,13 +40,10 @@ where
             contract_addr: info.sender.into(),
         }
         .into();
-        let res: Result<ContractInfoResponse, StdError> = deps.querier.query(&req);
-        match res {
-            Ok(_) => {}
-            Err(_) => {
-                return Err(ContractError::Unauthorized {});
-            }
-        }
+        let _res: ContractInfoResponse = deps
+            .querier
+            .query(&req)
+            .map_err(|_| ContractError::Unauthorized {})?;
 
         // cw721 instantiation
         let info = CW721ContractInfoResponse {
