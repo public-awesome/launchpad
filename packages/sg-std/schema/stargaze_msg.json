@@ -48,6 +48,29 @@
         }
       },
       "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "fund_fairburn_pool"
+      ],
+      "properties": {
+        "fund_fairburn_pool": {
+          "type": "object",
+          "required": [
+            "amount"
+          ],
+          "properties": {
+            "amount": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Coin"
+              }
+            }
+          }
+        }
+      },
+      "additionalProperties": false
     }
   ],
   "definitions": {

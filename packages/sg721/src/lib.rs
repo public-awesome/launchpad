@@ -20,10 +20,6 @@ pub struct MintMsg<T> {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg<T> {
-    /// Called by the minter to put a collection contract in the ready state.
-    /// When ready it means the factory and minter are properly setup.
-    _Ready {},
-
     /// Transfer is a base message to move a token to another account without triggering actions
     TransferNft {
         recipient: String,

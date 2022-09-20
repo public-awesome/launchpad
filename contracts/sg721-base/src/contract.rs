@@ -2,10 +2,11 @@ use cw721_base::state::TokenInfo;
 use url::Url;
 
 use cosmwasm_std::{
-    to_binary, Binary, Decimal, Deps, DepsMut, Env, Event, MessageInfo, StdResult, Timestamp,
+    to_binary, Binary, ContractInfoResponse, Decimal, Deps, DepsMut, Env, Event, MessageInfo,
+    StdResult, Timestamp, WasmQuery,
 };
 
-use cw721::{ContractInfoResponse, Cw721ReceiveMsg};
+use cw721::{ContractInfoResponse as CW721ContractInfoResponse, Cw721ReceiveMsg};
 use cw_utils::{nonpayable, Expiration};
 use serde::{de::DeserializeOwned, Serialize};
 
@@ -34,8 +35,18 @@ where
         // no funds should be sent to this contract
         nonpayable(&info)?;
 
+        // check sender is a contract
+        let req = WasmQuery::ContractInfo {
+            contract_addr: info.sender.into(),
+        }
+        .into();
+        let _res: ContractInfoResponse = deps
+            .querier
+            .query(&req)
+            .map_err(|_| ContractError::Unauthorized {})?;
+
         // cw721 instantiation
-        let info = ContractInfoResponse {
+        let info = CW721ContractInfoResponse {
             name: msg.name,
             symbol: msg.symbol,
         };
@@ -76,8 +87,6 @@ where
 
         self.collection_info.save(deps.storage, &collection_info)?;
 
-        self.ready.save(deps.storage, &false)?;
-
         self.frozen_collection_info.save(deps.storage, &false)?;
 
         Ok(Response::new()
@@ -94,7 +103,6 @@ where
         msg: ExecuteMsg<T>,
     ) -> Result<Response, ContractError> {
         match msg {
-            ExecuteMsg::_Ready {} => self.ready(deps, env, info),
             ExecuteMsg::TransferNft {
                 recipient,
                 token_id,
@@ -128,24 +136,6 @@ where
         }
     }
 
-    /// Called by the minter reply handler after instantiation. Now we can query
-    /// the factory and minter to verify that the collection creation is authorized.
-    pub fn ready(
-        &self,
-        deps: DepsMut,
-        _env: Env,
-        info: MessageInfo,
-    ) -> Result<Response, ContractError> {
-        let minter = self.parent.minter.load(deps.storage)?;
-        if minter != info.sender {
-            return Err(ContractError::Unauthorized {});
-        }
-
-        self.ready.save(deps.storage, &true)?;
-
-        Ok(Response::new())
-    }
-
     pub fn approve(
         &self,
         deps: DepsMut,
@@ -155,10 +145,6 @@ where
         token_id: String,
         expires: Option<Expiration>,
     ) -> Result<Response, ContractError> {
-        if !self.ready.load(deps.storage)? {
-            return Err(ContractError::NotReady {});
-        }
-
         self.parent
             ._update_approvals(deps, &env, &info, &spender, &token_id, true, expires)?;
 
@@ -179,9 +165,6 @@ where
         operator: String,
         expires: Option<Expiration>,
     ) -> Result<Response, ContractError> {
-        if !self.ready.load(deps.storage)? {
-            return Err(ContractError::NotReady {});
-        }
         // reject expired data as invalid
         let expires = expires.unwrap_or_default();
         if expires.is_expired(&env.block) {
@@ -209,9 +192,6 @@ where
         info: MessageInfo,
         token_id: String,
     ) -> Result<Response, ContractError> {
-        if !self.ready.load(deps.storage)? {
-            return Err(ContractError::NotReady {});
-        }
         let token = self.parent.tokens.load(deps.storage, &token_id)?;
         self.parent
             .check_can_send(deps.as_ref(), &env, &info, &token)?;
@@ -234,9 +214,6 @@ where
         info: MessageInfo,
         collection_msg: UpdateCollectionInfoMsg<RoyaltyInfoResponse>,
     ) -> Result<Response, ContractError> {
-        if !self.ready.load(deps.storage)? {
-            return Err(ContractError::NotReady {});
-        }
         let mut collection = self.collection_info.load(deps.storage)?;
 
         if self.frozen_collection_info.load(deps.storage)? {
@@ -297,9 +274,6 @@ where
         info: MessageInfo,
         start_time: Option<Timestamp>,
     ) -> Result<Response, ContractError> {
-        if !self.ready.load(deps.storage)? {
-            return Err(ContractError::NotReady {});
-        }
         let minter = self.parent.minter.load(deps.storage)?;
         if minter != info.sender {
             return Err(ContractError::Unauthorized {});
@@ -319,9 +293,6 @@ where
         _env: Env,
         info: MessageInfo,
     ) -> Result<Response, ContractError> {
-        if !self.ready.load(deps.storage)? {
-            return Err(ContractError::NotReady {});
-        }
         let collection = self.query_collection_info(deps.as_ref())?;
         if collection.creator != info.sender {
             return Err(ContractError::Unauthorized {});
@@ -341,9 +312,6 @@ where
         spender: String,
         token_id: String,
     ) -> Result<Response, ContractError> {
-        if !self.ready.load(deps.storage)? {
-            return Err(ContractError::NotReady {});
-        }
         self.parent
             ._update_approvals(deps, &env, &info, &spender, &token_id, false, None)?;
 
@@ -363,9 +331,6 @@ where
         info: MessageInfo,
         operator: String,
     ) -> Result<Response, ContractError> {
-        if !self.ready.load(deps.storage)? {
-            return Err(ContractError::NotReady {});
-        }
         let operator_addr = deps.api.addr_validate(&operator)?;
         self.parent
             .operators
@@ -388,9 +353,6 @@ where
         token_id: String,
         msg: Binary,
     ) -> Result<Response, ContractError> {
-        if !self.ready.load(deps.storage)? {
-            return Err(ContractError::NotReady {});
-        }
         // Transfer token
         self.parent
             ._transfer_nft(deps, &env, &info, &receiving_contract, &token_id)?;
@@ -421,9 +383,6 @@ where
         recipient: String,
         token_id: String,
     ) -> Result<Response, ContractError> {
-        if !self.ready.load(deps.storage)? {
-            return Err(ContractError::NotReady {});
-        }
         self.parent
             ._transfer_nft(deps, &env, &info, &recipient, &token_id)?;
 
@@ -443,9 +402,6 @@ where
         info: MessageInfo,
         msg: MintMsg<T>,
     ) -> Result<Response, ContractError> {
-        if !self.ready.load(deps.storage)? {
-            return Err(ContractError::NotReady {});
-        }
         let minter = self.parent.minter.load(deps.storage)?;
 
         if info.sender != minter {

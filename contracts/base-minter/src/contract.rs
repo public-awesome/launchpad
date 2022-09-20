@@ -281,18 +281,9 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractE
         Ok(res) => {
             let collection_address = res.contract_address;
 
-            // mark the collection contract as ready to mint
-            let msg = WasmMsg::Execute {
-                contract_addr: collection_address.clone(),
-                msg: to_binary(&Sg721ExecuteMsg::<Empty>::_Ready {})?,
-                funds: vec![],
-            };
-
             COLLECTION_ADDRESS.save(deps.storage, &Addr::unchecked(collection_address))?;
 
-            Ok(Response::default()
-                .add_attribute("action", "instantiate_sg721_reply")
-                .add_message(msg))
+            Ok(Response::default().add_attribute("action", "instantiate_sg721_reply"))
         }
         Err(_) => Err(ContractError::InstantiateSg721Error {}),
     }

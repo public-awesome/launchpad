@@ -13,9 +13,6 @@ where
 
     pub collection_info: Item<'a, CollectionInfo<RoyaltyInfo>>,
 
-    /// Set to true by the minter to indicate the minter creation process is complete
-    pub ready: Item<'a, bool>,
-
     /// Instantiate set to false by the minter, then true by creator to freeze collection info
     pub frozen_collection_info: Item<'a, bool>,
 }
@@ -28,7 +25,6 @@ where
         Sg721Contract {
             parent: cw721_base::Cw721Contract::default(),
             collection_info: Item::new("collection_info"),
-            ready: Item::new("ready"),
             frozen_collection_info: Item::new("frozen_collection_info"),
         }
     }

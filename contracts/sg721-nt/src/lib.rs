@@ -45,7 +45,6 @@ pub mod entry {
         msg: ExecuteMsg<Extension>,
     ) -> Result<Response, sg721_base::ContractError> {
         match msg {
-            ExecuteMsg::_Ready {} => Sg721NonTransferableContract::default().ready(deps, env, info),
             ExecuteMsg::Burn { token_id } => {
                 Sg721NonTransferableContract::default().burn(deps, env, info, token_id)
             }
