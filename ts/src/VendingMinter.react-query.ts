@@ -35,6 +35,10 @@ export const vendingMinterQueryKeys = {
   mintCount: (contractAddress: string | undefined, args?: Record<string, unknown>) => ([{ ...vendingMinterQueryKeys.address(contractAddress)[0],
     method: "mint_count",
     args
+  }] as const),
+  status: (contractAddress: string | undefined, args?: Record<string, unknown>) => ([{ ...vendingMinterQueryKeys.address(contractAddress)[0],
+    method: "status",
+    args
   }] as const)
 };
 export interface VendingMinterReactQuery<TResponse, TData = TResponse> {
@@ -42,6 +46,15 @@ export interface VendingMinterReactQuery<TResponse, TData = TResponse> {
   options?: Omit<UseQueryOptions<TResponse, Error, TData>, "'queryKey' | 'queryFn' | 'initialData'"> & {
     initialData?: undefined;
   };
+}
+export interface VendingMinterStatusQuery<TData> extends VendingMinterReactQuery<StatusResponse, TData> {}
+export function useVendingMinterStatusQuery<TData = StatusResponse>({
+  client,
+  options
+}: VendingMinterStatusQuery<TData>) {
+  return useQuery<StatusResponse, Error, TData>(vendingMinterQueryKeys.status(client?.contractAddress), () => client ? client.status() : Promise.reject(new Error("Invalid client")), { ...options,
+    enabled: !!client && (options?.enabled != undefined ? options.enabled : true)
+  });
 }
 export interface VendingMinterMintCountQuery<TData> extends VendingMinterReactQuery<MintCountResponse, TData> {
   args: {
@@ -94,6 +107,24 @@ export function useVendingMinterConfigQuery<TData = ConfigResponse>({
   return useQuery<ConfigResponse, Error, TData>(vendingMinterQueryKeys.config(client?.contractAddress), () => client ? client.config() : Promise.reject(new Error("Invalid client")), { ...options,
     enabled: !!client && (options?.enabled != undefined ? options.enabled : true)
   });
+}
+export interface VendingMinterBurnRemainingMutation {
+  client: VendingMinterClient;
+  args?: {
+    fee?: number | StdFee | "auto";
+    memo?: string;
+    funds?: Coin[];
+  };
+}
+export function useVendingMinterBurnRemainingMutation(options?: Omit<UseMutationOptions<ExecuteResult, Error, VendingMinterBurnRemainingMutation>, "mutationFn">) {
+  return useMutation<ExecuteResult, Error, VendingMinterBurnRemainingMutation>(({
+    client,
+    args: {
+      fee,
+      memo,
+      funds
+    } = {}
+  }) => client.burnRemaining(fee, memo, funds), options);
 }
 export interface VendingMinterShuffleMutation {
   client: VendingMinterClient;
@@ -180,6 +211,24 @@ export function useVendingMinterUpdatePerAddressLimitMutation(options?: Omit<Use
     } = {}
   }) => client.updatePerAddressLimit(msg, fee, memo, funds), options);
 }
+export interface VendingMinterUpdateTradingStartTimeMutation {
+  client: VendingMinterClient;
+  args?: {
+    fee?: number | StdFee | "auto";
+    memo?: string;
+    funds?: Coin[];
+  };
+}
+export function useVendingMinterUpdateTradingStartTimeMutation(options?: Omit<UseMutationOptions<ExecuteResult, Error, VendingMinterUpdateTradingStartTimeMutation>, "mutationFn">) {
+  return useMutation<ExecuteResult, Error, VendingMinterUpdateTradingStartTimeMutation>(({
+    client,
+    args: {
+      fee,
+      memo,
+      funds
+    } = {}
+  }) => client.updateTradingStartTime(fee, memo, funds), options);
+}
 export interface VendingMinterUpdateStartTimeMutation {
   client: VendingMinterClient;
   msg: Timestamp;
@@ -221,6 +270,24 @@ export function useVendingMinterUpdateMintPriceMutation(options?: Omit<UseMutati
       funds
     } = {}
   }) => client.updateMintPrice(msg, fee, memo, funds), options);
+}
+export interface VendingMinterPurgeMutation {
+  client: VendingMinterClient;
+  args?: {
+    fee?: number | StdFee | "auto";
+    memo?: string;
+    funds?: Coin[];
+  };
+}
+export function useVendingMinterPurgeMutation(options?: Omit<UseMutationOptions<ExecuteResult, Error, VendingMinterPurgeMutation>, "mutationFn">) {
+  return useMutation<ExecuteResult, Error, VendingMinterPurgeMutation>(({
+    client,
+    args: {
+      fee,
+      memo,
+      funds
+    } = {}
+  }) => client.purge(fee, memo, funds), options);
 }
 export interface VendingMinterSetWhitelistMutation {
   client: VendingMinterClient;

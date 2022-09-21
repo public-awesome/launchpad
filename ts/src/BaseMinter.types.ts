@@ -9,7 +9,11 @@ export type ExecuteMsg = {
     token_uri: string;
     [k: string]: unknown;
   };
+} | {
+  update_trading_start_time: Timestamp | null;
 };
+export type Timestamp = Uint64;
+export type Uint64 = string;
 export type Decimal = string;
 export type Uint128 = string;
 export interface InstantiateMsg {
@@ -35,6 +39,7 @@ export interface CollectionInfoForRoyaltyInfoResponse {
   external_link?: string | null;
   image: string;
   royalty_info?: RoyaltyInfoResponse | null;
+  trading_start_time?: Timestamp | null;
   [k: string]: unknown;
 }
 export interface RoyaltyInfoResponse {
@@ -48,6 +53,7 @@ export interface Empty {
 export interface MinterParamsForNullable_Empty {
   code_id: number;
   creation_fee: Coin;
+  default_trading_offset_secs: number;
   extension?: Empty | null;
   min_mint_price: Coin;
   mint_fee_bps: number;

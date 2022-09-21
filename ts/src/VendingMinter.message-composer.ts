@@ -17,12 +17,14 @@ export interface VendingMinterMessage {
   }: {
     whitelist: string;
   }, funds?: Coin[]) => MsgExecuteContractEncodeObject;
+  purge: (funds?: Coin[]) => MsgExecuteContractEncodeObject;
   updateMintPrice: ({
     price
   }: {
     price: number;
   }, funds?: Coin[]) => MsgExecuteContractEncodeObject;
   updateStartTime: (funds?: Coin[]) => MsgExecuteContractEncodeObject;
+  updateTradingStartTime: (funds?: Coin[]) => MsgExecuteContractEncodeObject;
   updatePerAddressLimit: ({
     perAddressLimit
   }: {
@@ -41,6 +43,7 @@ export interface VendingMinterMessage {
     tokenId: number;
   }, funds?: Coin[]) => MsgExecuteContractEncodeObject;
   shuffle: (funds?: Coin[]) => MsgExecuteContractEncodeObject;
+  burnRemaining: (funds?: Coin[]) => MsgExecuteContractEncodeObject;
 }
 export class VendingMinterMessageComposer implements VendingMinterMessage {
   sender: string;
@@ -51,12 +54,15 @@ export class VendingMinterMessageComposer implements VendingMinterMessage {
     this.contractAddress = contractAddress;
     this.mint = this.mint.bind(this);
     this.setWhitelist = this.setWhitelist.bind(this);
+    this.purge = this.purge.bind(this);
     this.updateMintPrice = this.updateMintPrice.bind(this);
     this.updateStartTime = this.updateStartTime.bind(this);
+    this.updateTradingStartTime = this.updateTradingStartTime.bind(this);
     this.updatePerAddressLimit = this.updatePerAddressLimit.bind(this);
     this.mintTo = this.mintTo.bind(this);
     this.mintFor = this.mintFor.bind(this);
     this.shuffle = this.shuffle.bind(this);
+    this.burnRemaining = this.burnRemaining.bind(this);
   }
 
   mint = (funds?: Coin[]): MsgExecuteContractEncodeObject => {
@@ -91,6 +97,19 @@ export class VendingMinterMessageComposer implements VendingMinterMessage {
       })
     };
   };
+  purge = (funds?: Coin[]): MsgExecuteContractEncodeObject => {
+    return {
+      typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
+      value: MsgExecuteContract.fromPartial({
+        sender: this.sender,
+        contract: this.contractAddress,
+        msg: toUtf8(JSON.stringify({
+          purge: {}
+        })),
+        funds
+      })
+    };
+  };
   updateMintPrice = ({
     price
   }: {
@@ -118,6 +137,19 @@ export class VendingMinterMessageComposer implements VendingMinterMessage {
         contract: this.contractAddress,
         msg: toUtf8(JSON.stringify({
           update_start_time: {}
+        })),
+        funds
+      })
+    };
+  };
+  updateTradingStartTime = (funds?: Coin[]): MsgExecuteContractEncodeObject => {
+    return {
+      typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
+      value: MsgExecuteContract.fromPartial({
+        sender: this.sender,
+        contract: this.contractAddress,
+        msg: toUtf8(JSON.stringify({
+          update_trading_start_time: {}
         })),
         funds
       })
@@ -191,6 +223,19 @@ export class VendingMinterMessageComposer implements VendingMinterMessage {
         contract: this.contractAddress,
         msg: toUtf8(JSON.stringify({
           shuffle: {}
+        })),
+        funds
+      })
+    };
+  };
+  burnRemaining = (funds?: Coin[]): MsgExecuteContractEncodeObject => {
+    return {
+      typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
+      value: MsgExecuteContract.fromPartial({
+        sender: this.sender,
+        contract: this.contractAddress,
+        msg: toUtf8(JSON.stringify({
+          burn_remaining: {}
         })),
         funds
       })
