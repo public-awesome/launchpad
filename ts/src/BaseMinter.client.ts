@@ -6,7 +6,7 @@
 
 import { CosmWasmClient, SigningCosmWasmClient, ExecuteResult } from "@cosmjs/cosmwasm-stargate";
 import { StdFee } from "@cosmjs/amino";
-import { ExecuteMsg, Decimal, Uint128, InstantiateMsg, CreateMinterMsgForNullable_Empty, CollectionParams, CollectionInfoForRoyaltyInfoResponse, RoyaltyInfoResponse, Empty, MinterParamsForNullable_Empty, Coin, Addr, MinterConfigForEmpty, MinterConfigResponseForEmpty, QueryMsg } from "./BaseMinter.types";
+import { ExecuteMsg, Timestamp, Uint64, Decimal, Uint128, InstantiateMsg, CreateMinterMsgForNullable_Empty, CollectionParams, CollectionInfoForRoyaltyInfoResponse, RoyaltyInfoResponse, Empty, MinterParamsForNullable_Empty, Coin, Addr, MinterConfigForEmpty, MinterConfigResponseForEmpty, QueryMsg } from "./BaseMinter.types";
 export interface BaseMinterReadOnlyInterface {
   contractAddress: string;
   config: () => Promise<ConfigResponse>;
@@ -42,6 +42,7 @@ export interface BaseMinterInterface extends BaseMinterReadOnlyInterface {
   }: {
     tokenUri: string;
   }, fee?: number | StdFee | "auto", memo?: string, funds?: Coin[]) => Promise<ExecuteResult>;
+  updateTradingStartTime: (fee?: number | StdFee | "auto", memo?: string, funds?: Coin[]) => Promise<ExecuteResult>;
 }
 export class BaseMinterClient extends BaseMinterQueryClient implements BaseMinterInterface {
   client: SigningCosmWasmClient;
@@ -54,6 +55,7 @@ export class BaseMinterClient extends BaseMinterQueryClient implements BaseMinte
     this.sender = sender;
     this.contractAddress = contractAddress;
     this.mint = this.mint.bind(this);
+    this.updateTradingStartTime = this.updateTradingStartTime.bind(this);
   }
 
   mint = async ({
@@ -65,6 +67,11 @@ export class BaseMinterClient extends BaseMinterQueryClient implements BaseMinte
       mint: {
         token_uri: tokenUri
       }
+    }, fee, memo, funds);
+  };
+  updateTradingStartTime = async (fee: number | StdFee | "auto" = "auto", memo?: string, funds?: Coin[]): Promise<ExecuteResult> => {
+    return await this.client.execute(this.sender, this.contractAddress, {
+      update_trading_start_time: {}
     }, fee, memo, funds);
   };
 }

@@ -7,7 +7,7 @@
 import { MsgExecuteContractEncodeObject } from "cosmwasm";
 import { MsgExecuteContract } from "cosmjs-types/cosmwasm/wasm/v1/tx";
 import { toUtf8 } from "@cosmjs/encoding";
-import { ExecuteMsg, Decimal, Uint128, InstantiateMsg, CreateMinterMsgForNullable_Empty, CollectionParams, CollectionInfoForRoyaltyInfoResponse, RoyaltyInfoResponse, Empty, MinterParamsForNullable_Empty, Coin, Addr, MinterConfigForEmpty, MinterConfigResponseForEmpty, QueryMsg } from "./BaseMinter.types";
+import { ExecuteMsg, Timestamp, Uint64, Decimal, Uint128, InstantiateMsg, CreateMinterMsgForNullable_Empty, CollectionParams, CollectionInfoForRoyaltyInfoResponse, RoyaltyInfoResponse, Empty, MinterParamsForNullable_Empty, Coin, Addr, MinterConfigForEmpty, MinterConfigResponseForEmpty, QueryMsg } from "./BaseMinter.types";
 export interface BaseMinterMessage {
   contractAddress: string;
   sender: string;
@@ -16,6 +16,7 @@ export interface BaseMinterMessage {
   }: {
     tokenUri: string;
   }, funds?: Coin[]) => MsgExecuteContractEncodeObject;
+  updateTradingStartTime: (funds?: Coin[]) => MsgExecuteContractEncodeObject;
 }
 export class BaseMinterMessageComposer implements BaseMinterMessage {
   sender: string;
@@ -25,6 +26,7 @@ export class BaseMinterMessageComposer implements BaseMinterMessage {
     this.sender = sender;
     this.contractAddress = contractAddress;
     this.mint = this.mint.bind(this);
+    this.updateTradingStartTime = this.updateTradingStartTime.bind(this);
   }
 
   mint = ({
@@ -41,6 +43,19 @@ export class BaseMinterMessageComposer implements BaseMinterMessage {
           mint: {
             token_uri: tokenUri
           }
+        })),
+        funds
+      })
+    };
+  };
+  updateTradingStartTime = (funds?: Coin[]): MsgExecuteContractEncodeObject => {
+    return {
+      typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
+      value: MsgExecuteContract.fromPartial({
+        sender: this.sender,
+        contract: this.contractAddress,
+        msg: toUtf8(JSON.stringify({
+          update_trading_start_time: {}
         })),
         funds
       })
