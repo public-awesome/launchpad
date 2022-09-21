@@ -35,12 +35,18 @@ export type ExecuteMsg = {
     [k: string]: unknown;
   };
 } | {
+  purge: {
+    [k: string]: unknown;
+  };
+} | {
   update_mint_price: {
     price: number;
     [k: string]: unknown;
   };
 } | {
   update_start_time: Timestamp;
+} | {
+  update_trading_start_time: Timestamp | null;
 } | {
   update_per_address_limit: {
     per_address_limit: number;
@@ -59,6 +65,10 @@ export type ExecuteMsg = {
   };
 } | {
   shuffle: {
+    [k: string]: unknown;
+  };
+} | {
+  burn_remaining: {
     [k: string]: unknown;
   };
 };
@@ -86,6 +96,7 @@ export interface CollectionInfoForRoyaltyInfoResponse {
   external_link?: string | null;
   image: string;
   royalty_info?: RoyaltyInfoResponse | null;
+  trading_start_time?: Timestamp | null;
   [k: string]: unknown;
 }
 export interface RoyaltyInfoResponse {
@@ -106,6 +117,7 @@ export interface VendingMinterInitMsgExtension {
 export interface MinterParamsForParamsExtension {
   code_id: number;
   creation_fee: Coin;
+  default_trading_offset_secs: number;
   extension: ParamsExtension;
   min_mint_price: Coin;
   mint_fee_bps: number;
@@ -171,6 +183,10 @@ export type QueryMsg = {
 } | {
   mint_count: {
     address: string;
+    [k: string]: unknown;
+  };
+} | {
+  status: {
     [k: string]: unknown;
   };
 };

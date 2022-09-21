@@ -133,6 +133,7 @@ export interface CollectionInfoForRoyaltyInfoResponse {
   external_link?: string | null;
   image: string;
   royalty_info?: RoyaltyInfoResponse | null;
+  trading_start_time?: Timestamp | null;
   [k: string]: unknown;
 }
 export interface RoyaltyInfoResponse {

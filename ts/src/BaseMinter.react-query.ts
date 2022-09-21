@@ -7,7 +7,7 @@
 import { UseQueryOptions, useQuery, useMutation, UseMutationOptions } from "@tanstack/react-query";
 import { ExecuteResult } from "@cosmjs/cosmwasm-stargate";
 import { StdFee } from "@cosmjs/amino";
-import { ExecuteMsg, Decimal, Uint128, InstantiateMsg, CreateMinterMsgForNullable_Empty, CollectionParams, CollectionInfoForRoyaltyInfoResponse, RoyaltyInfoResponse, Empty, MinterParamsForNullable_Empty, Coin, Addr, MinterConfigForEmpty, MinterConfigResponseForEmpty, QueryMsg } from "./BaseMinter.types";
+import { ExecuteMsg, Timestamp, Uint64, Decimal, Uint128, InstantiateMsg, CreateMinterMsgForNullable_Empty, CollectionParams, CollectionInfoForRoyaltyInfoResponse, RoyaltyInfoResponse, Empty, MinterParamsForNullable_Empty, Coin, Addr, MinterConfigForEmpty, MinterConfigResponseForEmpty, QueryMsg } from "./BaseMinter.types";
 import { BaseMinterQueryClient, BaseMinterClient } from "./BaseMinter.client";
 export const baseMinterQueryKeys = {
   contract: ([{
@@ -48,6 +48,24 @@ export function useBaseMinterConfigQuery<TData = ConfigResponse>({
   return useQuery<ConfigResponse, Error, TData>(baseMinterQueryKeys.config(client?.contractAddress), () => client ? client.config() : Promise.reject(new Error("Invalid client")), { ...options,
     enabled: !!client && (options?.enabled != undefined ? options.enabled : true)
   });
+}
+export interface BaseMinterUpdateTradingStartTimeMutation {
+  client: BaseMinterClient;
+  args?: {
+    fee?: number | StdFee | "auto";
+    memo?: string;
+    funds?: Coin[];
+  };
+}
+export function useBaseMinterUpdateTradingStartTimeMutation(options?: Omit<UseMutationOptions<ExecuteResult, Error, BaseMinterUpdateTradingStartTimeMutation>, "mutationFn">) {
+  return useMutation<ExecuteResult, Error, BaseMinterUpdateTradingStartTimeMutation>(({
+    client,
+    args: {
+      fee,
+      memo,
+      funds
+    } = {}
+  }) => client.updateTradingStartTime(fee, memo, funds), options);
 }
 export interface BaseMinterMintMutation {
   client: BaseMinterClient;
