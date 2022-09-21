@@ -110,7 +110,7 @@ pub fn instantiate(
 
     // Use default start trading time if not provided
     let mut collection_info = msg.collection_params.info.clone();
-    let offset = factory_params.default_trading_offset_secs;
+    let offset = factory_params.max_trading_offset_secs;
     let start_time = msg.init_msg.start_time;
     let trading_start_time = msg
         .collection_params
@@ -714,7 +714,7 @@ pub fn execute_update_trading_start_time(
     let default_start_time_with_offset = config
         .extension
         .start_time
-        .plus_seconds(factory_params.params.default_trading_offset_secs);
+        .plus_seconds(factory_params.params.max_trading_offset_secs);
 
     if let Some(start_time) = start_time {
         if env.block.time > start_time {
