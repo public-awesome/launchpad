@@ -1,6 +1,6 @@
 {
   "name": "@stargazezone/ts",
-  "version": "0.16.0",
+  "version": "0.1.0",
   "description": "Stargaze CosmWasm Typescript Types",
   "main": "index.js",
   "scripts": {
