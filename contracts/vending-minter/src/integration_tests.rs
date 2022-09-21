@@ -127,7 +127,7 @@ pub fn mock_params() -> VendingMinterParams {
         creation_fee: coin(CREATION_FEE, NATIVE_DENOM),
         min_mint_price: coin(MIN_MINT_PRICE, NATIVE_DENOM),
         mint_fee_bps: MINT_FEE_BPS,
-        default_trading_offset_secs: 60 * 60 * 24 * 7,
+        max_trading_offset_secs: 60 * 60 * 24 * 7,
         extension: ParamsExtension {
             max_token_limit: MAX_TOKEN_LIMIT,
             max_per_address_limit: MAX_PER_ADDRESS_LIMIT,
@@ -1556,7 +1556,7 @@ fn update_trading_start_time() {
         Addr::unchecked(minter_addr),
         &ExecuteMsg::UpdateTradingStartTime(Some(
             Timestamp::from_nanos(GENESIS_MINT_START_TIME)
-                .plus_seconds(params.default_trading_offset_secs),
+                .plus_seconds(params.max_trading_offset_secs),
         )),
         &[],
     );
@@ -1571,7 +1571,7 @@ fn update_trading_start_time() {
         res.trading_start_time,
         Some(
             Timestamp::from_nanos(GENESIS_MINT_START_TIME)
-                .plus_seconds(params.default_trading_offset_secs)
+                .plus_seconds(params.max_trading_offset_secs)
         )
     );
 }

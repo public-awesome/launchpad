@@ -128,9 +128,9 @@ pub fn update_params<T, C>(
 
     params.mint_fee_bps = param_msg.mint_fee_bps.unwrap_or(params.mint_fee_bps);
 
-    params.default_trading_offset_secs = param_msg
-        .default_trading_offset_secs
-        .unwrap_or(params.default_trading_offset_secs);
+    params.max_trading_offset_secs = param_msg
+        .max_trading_offset_secs
+        .unwrap_or(params.max_trading_offset_secs);
 
     Ok(())
 }
