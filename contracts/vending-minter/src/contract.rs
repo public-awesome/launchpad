@@ -972,8 +972,14 @@ fn query_mintable_num_tokens(deps: Deps) -> StdResult<MintableNumTokensResponse>
 fn query_mint_price(deps: Deps) -> StdResult<MintPriceResponse> {
     let config = CONFIG.load(deps.storage)?;
 
+    let factory: ParamsResponse = deps
+        .querier
+        .query_wasm_smart(config.factory, &Sg2QueryMsg::Params {})?;
+
+    let factory_params = factory.params;
+
     let current_price = mint_price(deps, false)?;
-    let public_price = config.mint_price;
+    let public_price = config.mint_price.clone();
     let whitelist_price: Option<Coin> = if let Some(whitelist) = config.extension.whitelist {
         let wl_config: WhitelistConfigResponse = deps
             .querier
@@ -982,10 +988,15 @@ fn query_mint_price(deps: Deps) -> StdResult<MintPriceResponse> {
     } else {
         None
     };
+    let airdrop_price = coin(
+        factory_params.extension.airdrop_mint_price.amount.u128(),
+        config.mint_price.denom,
+    );
     Ok(MintPriceResponse {
-        current_price,
         public_price,
+        airdrop_price,
         whitelist_price,
+        current_price,
     })
 }
 
