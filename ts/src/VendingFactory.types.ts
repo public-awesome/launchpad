@@ -12,8 +12,8 @@ export interface InstantiateMsg {
 export interface MinterParamsForParamsExtension {
   code_id: number;
   creation_fee: Coin;
-  default_trading_offset_secs: number;
   extension: ParamsExtension;
+  max_trading_offset_secs: number;
   min_mint_price: Coin;
   mint_fee_bps: number;
   [k: string]: unknown;
