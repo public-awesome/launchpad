@@ -179,6 +179,7 @@ mod tests {
                     description: "description".to_string(),
                     image: "description".to_string(),
                     external_link: None,
+                    explicit_content: false,
                     trading_start_time: None,
                     royalty_info: None,
                 },
@@ -237,6 +238,7 @@ mod tests {
                         description: Some(params.info.description.clone()),
                         image: Some(params.info.image.clone()),
                         external_link: Some(params.info.external_link.clone()),
+                        explicit_content: None,
                         royalty_info: None,
                     },
                 },
@@ -257,6 +259,7 @@ mod tests {
                         description: Some(params.info.description.clone()),
                         image: Some(params.info.image.clone()),
                         external_link: Some(params.info.external_link.clone()),
+                        explicit_content: None,
                         royalty_info: Some(royalty_info.clone()),
                     },
                 },
@@ -268,7 +271,31 @@ mod tests {
                 .wrap()
                 .query_wasm_smart(contract.clone(), &QueryMsg::CollectionInfo {})
                 .unwrap();
-            assert_eq!(res.royalty_info.unwrap(), royalty_info.unwrap());
+            assert_eq!(res.royalty_info.unwrap(), royalty_info.clone().unwrap());
+
+            // update explicit content
+            let res = app.execute_contract(
+                creator.clone(),
+                contract.clone(),
+                &Sg721ExecuteMsg::<Empty>::UpdateCollectionInfo {
+                    collection_info: UpdateCollectionInfoMsg {
+                        description: Some(params.info.description.clone()),
+                        image: Some(params.info.image.clone()),
+                        external_link: Some(params.info.external_link.clone()),
+                        explicit_content: Some(true),
+                        royalty_info: Some(royalty_info),
+                    },
+                },
+                &[],
+            );
+            assert!(res.is_ok());
+
+            let res: CollectionInfoResponse = app
+                .wrap()
+                .query_wasm_smart(contract.clone(), &QueryMsg::CollectionInfo {})
+                .unwrap();
+            // check explicit content changed to true
+            assert!(res.explicit_content);
 
             // try update royalty_info higher
             let royalty_info: Option<RoyaltyInfoResponse> = Some(RoyaltyInfoResponse {
@@ -283,6 +310,7 @@ mod tests {
                         description: None,
                         image: None,
                         external_link: None,
+                        explicit_content: None,
                         royalty_info: Some(royalty_info),
                     },
                 },
@@ -316,6 +344,7 @@ mod tests {
                         description: Some(params.info.description.clone()),
                         image: Some(params.info.image.clone()),
                         external_link: Some(params.info.external_link),
+                        explicit_content: None,
                         royalty_info: None,
                     },
                 },

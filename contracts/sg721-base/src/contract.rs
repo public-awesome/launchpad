@@ -81,6 +81,7 @@ where
             description: msg.collection_info.description,
             image: msg.collection_info.image,
             external_link: msg.collection_info.external_link,
+            explicit_content: msg.collection_info.explicit_content,
             trading_start_time: msg.collection_info.trading_start_time,
             royalty_info,
         };
@@ -187,6 +188,10 @@ where
             .external_link
             .unwrap_or_else(|| collection.external_link.as_ref().map(|s| s.to_string()));
         Url::parse(collection.external_link.as_ref().unwrap())?;
+
+        collection.explicit_content = collection_msg
+            .explicit_content
+            .unwrap_or(collection.explicit_content);
 
         // convert collection royalty info to response for comparison
         // convert from response to royalty info for storage
@@ -320,6 +325,7 @@ where
             description: info.description,
             image: info.image,
             external_link: info.external_link,
+            explicit_content: info.explicit_content,
             trading_start_time: info.trading_start_time,
             royalty_info: royalty_info_res,
         })
