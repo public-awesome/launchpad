@@ -28,6 +28,7 @@
       "required": [
         "creator",
         "description",
+        "explicit_content",
         "image"
       ],
       "properties": {
@@ -36,6 +37,9 @@
         },
         "description": {
           "type": "string"
+        },
+        "explicit_content": {
+          "type": "boolean"
         },
         "external_link": {
           "type": [
