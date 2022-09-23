@@ -125,7 +125,7 @@ pub fn instantiate(
         .collection_params
         .info
         .trading_start_time
-        .or_else(|| Some(default_start_time_with_offset));
+        .or(Some(default_start_time_with_offset));
     collection_info.trading_start_time = trading_start_time;
 
     let config = Config {

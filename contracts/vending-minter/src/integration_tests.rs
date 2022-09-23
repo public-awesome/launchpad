@@ -1570,7 +1570,7 @@ fn invalid_trading_time_during_init() {
     let msg = Sg2ExecuteMsg::CreateMinter(msg);
 
     let err = router
-        .execute_contract(creator.clone(), factory_addr, &msg, &creation_fee)
+        .execute_contract(creator, factory_addr, &msg, &creation_fee)
         .unwrap_err();
     assert!(err
         .source()
@@ -1614,7 +1614,7 @@ fn update_trading_start_time() {
         Addr::unchecked(minter_addr.clone()),
         &ExecuteMsg::UpdateTradingStartTime(Some(
             Timestamp::from_nanos(GENESIS_MINT_START_TIME)
-                .plus_seconds(params.clone().max_trading_offset_secs + 100),
+                .plus_seconds(params.max_trading_offset_secs + 100),
         )),
         &[],
     );
@@ -1626,7 +1626,7 @@ fn update_trading_start_time() {
         Addr::unchecked(minter_addr),
         &ExecuteMsg::UpdateTradingStartTime(Some(
             Timestamp::from_nanos(GENESIS_MINT_START_TIME)
-                .plus_seconds(params.clone().max_trading_offset_secs),
+                .plus_seconds(params.max_trading_offset_secs),
         )),
         &[],
     );
