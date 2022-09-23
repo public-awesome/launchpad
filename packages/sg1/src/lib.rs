@@ -1,5 +1,5 @@
 use cosmwasm_std::{coins, Addr, BankMsg, Decimal, Event, MessageInfo, Uint128};
-use cw_utils::{must_pay, PaymentError};
+use cw_utils::{may_pay, PaymentError};
 use sg_std::{create_fund_fairburn_pool_msg, Response, SubMsg, NATIVE_DENOM};
 use thiserror::Error;
 
@@ -14,12 +14,15 @@ pub fn checked_fair_burn(
     developer: Option<Addr>,
     res: &mut Response,
 ) -> Result<(), FeeError> {
-    let payment = must_pay(info, NATIVE_DENOM)?;
+    // Use may_pay because fees could be 0. Add check to avoid transferring 0 funds
+    let payment = may_pay(info, NATIVE_DENOM)?;
     if payment.u128() < fee {
         return Err(FeeError::InsufficientFee(fee, payment.u128()));
     };
 
-    fair_burn(fee, developer, res);
+    if payment.u128() != 0u128 {
+        fair_burn(fee, developer, res);
+    }
 
     Ok(())
 }
