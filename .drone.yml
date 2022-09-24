@@ -12,7 +12,7 @@ workspace:
 
 steps:
   - name: build-contracts
-    image: cosmwasm/workspace-optimizer:0.12.6
+    image: cosmwasm/workspace-optimizer:0.12.8
   - name: full_test
     image: publicawesome/golang:1.18.0-devtooling
     commands:
