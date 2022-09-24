@@ -1,6 +1,6 @@
 {
   "name": "@stargazezone/ts",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "description": "Stargaze CosmWasm Typescript Types",
   "main": "index.js",
   "scripts": {
@@ -10,8 +10,16 @@
   "author": "Shane Vitarana",
   "license": "ISC",
   "dependencies": {
+    "@cosmjs/amino": "0.29.0",
+    "@cosmjs/cosmwasm-stargate": "^0.29.0",
+    "@cosmjs/proto-signing": "0.29.0",
+    "@cosmjs/stargate": "0.29.0",
+    "@cosmjs/tendermint-rpc": "^0.29.0",
+    "@cosmjs/encoding": "0.29.0",
     "@cosmwasm/ts-codegen": "^0.16.4",
+    "cosmjs-types": "^0.5.1",
     "ts-node": "^10.9.1",
-    "typescript": "^4.8.3"
+    "typescript": "^4.8.3",
+    "cosmwasm": "1.1.1"
   }
 }
