@@ -1524,6 +1524,64 @@ fn test_invalid_start_time() {
 }
 
 #[test]
+fn invalid_trading_time_during_init() {
+    let num_tokens = 10;
+    let mut router = custom_mock_app();
+    let (creator, _) = setup_accounts(&mut router);
+
+    let minter_code_id = router.store_code(contract_minter());
+    println!("minter_code_id: {}", minter_code_id);
+    let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
+
+    let factory_code_id = router.store_code(contract_factory());
+    println!("factory_code_id: {}", factory_code_id);
+
+    // set up minter contract
+    let mut params = mock_params();
+    params.code_id = minter_code_id;
+    let factory_addr = router
+        .instantiate_contract(
+            factory_code_id,
+            creator.clone(),
+            &vending_factory::msg::InstantiateMsg {
+                params: params.clone(),
+            },
+            &[],
+            "factory",
+            None,
+        )
+        .unwrap();
+
+    let sg721_code_id = router.store_code(contract_sg721());
+    println!("sg721_code_id: {}", sg721_code_id);
+
+    let mut msg = mock_create_minter(None);
+    msg.init_msg.mint_price = coin(MINT_PRICE, NATIVE_DENOM);
+    msg.init_msg.num_tokens = num_tokens;
+    msg.collection_params.code_id = sg721_code_id;
+    msg.collection_params.info.creator = creator.to_string();
+    // make trading time beyond factory max trading start time offset
+    msg.collection_params.info.trading_start_time = Some(
+        msg.init_msg
+            .start_time
+            .plus_seconds(params.max_trading_offset_secs + 1),
+    );
+
+    let msg = Sg2ExecuteMsg::CreateMinter(msg);
+
+    let err = router
+        .execute_contract(creator, factory_addr, &msg, &creation_fee)
+        .unwrap_err();
+    assert!(err
+        .source()
+        .unwrap()
+        .source()
+        .unwrap()
+        .to_string()
+        .contains("InvalidTradingStartTime"));
+}
+
+#[test]
 fn update_trading_start_time() {
     let mut router = custom_mock_app();
     let (creator, buyer) = setup_accounts(&mut router);
@@ -1549,8 +1607,20 @@ fn update_trading_start_time() {
     );
     assert!(res.is_err());
 
-    // succeeds
+    // invalid start trading time, over offset
     let params = mock_params();
+    let res = router.execute_contract(
+        Addr::unchecked(creator.clone()),
+        Addr::unchecked(minter_addr.clone()),
+        &ExecuteMsg::UpdateTradingStartTime(Some(
+            Timestamp::from_nanos(GENESIS_MINT_START_TIME)
+                .plus_seconds(params.max_trading_offset_secs + 100),
+        )),
+        &[],
+    );
+    assert!(res.is_err());
+
+    // succeeds
     let res = router.execute_contract(
         Addr::unchecked(creator.clone()),
         Addr::unchecked(minter_addr),
