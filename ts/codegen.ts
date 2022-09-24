@@ -50,7 +50,7 @@ codegen({
       enabled: true,
     },
     reactQuery: {
-      enabled: true,
+      enabled: false,
       optionalClient: true,
       version: "v4",
       mutations: true,
