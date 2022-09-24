@@ -3,10 +3,14 @@
   "title": "MintPriceResponse",
   "type": "object",
   "required": [
+    "airdrop_price",
     "current_price",
     "public_price"
   ],
   "properties": {
+    "airdrop_price": {
+      "$ref": "#/definitions/Coin"
+    },
     "current_price": {
       "$ref": "#/definitions/Coin"
     },

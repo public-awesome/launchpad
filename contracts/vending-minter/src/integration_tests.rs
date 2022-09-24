@@ -29,11 +29,11 @@ const MINT_PRICE: u128 = 100_000_000;
 const MINT_FEE: u128 = 10_000_000;
 const WHITELIST_AMOUNT: u128 = 66_000_000;
 const WL_PER_ADDRESS_LIMIT: u32 = 1;
-const ADMIN_MINT_PRICE: u128 = 15_000_000;
+const ADMIN_MINT_PRICE: u128 = 0;
 const MAX_TOKEN_LIMIT: u32 = 10000;
 
 pub const MIN_MINT_PRICE: u128 = 50_000_000;
-pub const AIRDROP_MINT_PRICE: u128 = 15_000_000;
+pub const AIRDROP_MINT_PRICE: u128 = 0;
 pub const MINT_FEE_BPS: u64 = 1_000; // 10%
 pub const AIRDROP_MINT_FEE_BPS: u64 = 10_000; // 100%
 pub const SHUFFLE_FEE: u128 = 500_000_000;
@@ -1364,14 +1364,14 @@ fn mint_for_token_id_addr() {
             minter_addr.clone(),
             &mint_for_msg,
             &coins_for_msg(Coin {
-                amount: Uint128::from(ADMIN_MINT_PRICE - 1),
+                amount: Uint128::from(ADMIN_MINT_PRICE + 1),
                 denom: NATIVE_DENOM.to_string(),
             }),
         )
         .unwrap_err();
     assert_eq!(
         ContractError::IncorrectPaymentAmount(
-            coin(ADMIN_MINT_PRICE - 1, NATIVE_DENOM.to_string()),
+            coin(ADMIN_MINT_PRICE + 1, NATIVE_DENOM.to_string()),
             coin(ADMIN_MINT_PRICE, NATIVE_DENOM.to_string())
         )
         .to_string(),
