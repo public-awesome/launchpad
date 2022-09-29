@@ -8,7 +8,7 @@ use cw721::{
     NumTokensResponse, OperatorsResponse, OwnerOfResponse, TokensResponse,
 };
 use cw721_base::MinterResponse;
-use sg721_metadata_onchain::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use sg721_metadata_onchain::{InstantiateMsg, QueryMsg};
 use sg_metadata::Metadata;
 
 fn main() {
@@ -18,7 +18,6 @@ fn main() {
     remove_schemas(&out_dir).unwrap();
 
     export_schema(&schema_for!(InstantiateMsg), &out_dir);
-    export_schema_with_title(&schema_for!(ExecuteMsg), &out_dir, "ExecuteMsg");
     export_schema(&schema_for!(QueryMsg), &out_dir);
     export_schema_with_title(
         &schema_for!(AllNftInfoResponse<Metadata>),
