@@ -53,6 +53,14 @@ export interface Trait {
   value: string;
   [k: string]: unknown;
 }
+export interface AllOperatorsResponse {
+  operators: Approval[];
+  [k: string]: unknown;
+}
+export interface AllTokensResponse {
+  tokens: string[];
+  [k: string]: unknown;
+}
 export interface ApprovalResponse {
   approval: Approval;
   [k: string]: unknown;
@@ -61,12 +69,27 @@ export interface ApprovalsResponse {
   approvals: Approval[];
   [k: string]: unknown;
 }
+export type Decimal = string;
+export interface CollectionInfoResponse {
+  creator: string;
+  description: string;
+  explicit_content: boolean;
+  external_link?: string | null;
+  image: string;
+  royalty_info?: RoyaltyInfoResponse | null;
+  trading_start_time?: Timestamp | null;
+  [k: string]: unknown;
+}
+export interface RoyaltyInfoResponse {
+  payment_address: string;
+  share: Decimal;
+  [k: string]: unknown;
+}
 export interface ContractInfoResponse {
   name: string;
   symbol: string;
   [k: string]: unknown;
 }
-export type Decimal = string;
 export interface InstantiateMsg {
   collection_info: CollectionInfoForRoyaltyInfoResponse;
   minter: string;
@@ -82,11 +105,6 @@ export interface CollectionInfoForRoyaltyInfoResponse {
   image: string;
   royalty_info?: RoyaltyInfoResponse | null;
   trading_start_time?: Timestamp | null;
-  [k: string]: unknown;
-}
-export interface RoyaltyInfoResponse {
-  payment_address: string;
-  share: Decimal;
   [k: string]: unknown;
 }
 export interface MinterResponse {

@@ -8,6 +8,7 @@ use cw721::{
     NumTokensResponse, OperatorsResponse, OwnerOfResponse, TokensResponse,
 };
 use cw721_base::MinterResponse;
+use sg721_base::msg::CollectionInfoResponse;
 use sg721_metadata_onchain::{InstantiateMsg, QueryMsg};
 use sg_metadata::Metadata;
 
@@ -37,4 +38,11 @@ fn main() {
     export_schema(&schema_for!(NumTokensResponse), &out_dir);
     export_schema(&schema_for!(OwnerOfResponse), &out_dir);
     export_schema(&schema_for!(TokensResponse), &out_dir);
+    export_schema_with_title(
+        &schema_for!(OperatorsResponse),
+        &out_dir,
+        "AllOperatorsResponse",
+    );
+    export_schema_with_title(&schema_for!(TokensResponse), &out_dir, "AllTokensResponse");
+    export_schema(&schema_for!(CollectionInfoResponse), &out_dir);
 }
