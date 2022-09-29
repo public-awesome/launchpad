@@ -7,7 +7,7 @@
 import { MsgExecuteContractEncodeObject } from "cosmwasm";
 import { MsgExecuteContract } from "cosmjs-types/cosmwasm/wasm/v1/tx";
 import { toUtf8 } from "@cosmjs/encoding";
-import { Uint128, Timestamp, Uint64, ConfigResponse, Coin, ExecuteMsg, Decimal, InstantiateMsg, CreateMinterMsgForVendingMinterInitMsgExtension, CollectionParams, CollectionInfoForRoyaltyInfoResponse, RoyaltyInfoResponse, VendingMinterInitMsgExtension, MinterParamsForParamsExtension, ParamsExtension, MintCountResponse, MintPriceResponse, MintableNumTokensResponse, Addr, MinterConfigForConfigExtension, ConfigExtension, QueryMsg, StartTimeResponse } from "./VendingMinter.types";
+import { Uint128, Timestamp, Uint64, ConfigResponse, Coin, ExecuteMsg, Decimal, InstantiateMsg, CreateMinterMsgForVendingMinterInitMsgExtension, CollectionParams, CollectionInfoForRoyaltyInfoResponse, RoyaltyInfoResponse, VendingMinterInitMsgExtension, MinterParamsForParamsExtension, ParamsExtension, MintCountResponse, MintPriceResponse, MintableNumTokensResponse, Addr, MinterConfigForConfigExtension, ConfigExtension, QueryMsg, StartTimeResponse, StatusResponse, Status } from "./VendingMinter.types";
 export interface VendingMinterMessage {
   contractAddress: string;
   sender: string;
