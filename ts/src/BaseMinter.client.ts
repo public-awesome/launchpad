@@ -6,7 +6,7 @@
 
 import { CosmWasmClient, SigningCosmWasmClient, ExecuteResult } from "@cosmjs/cosmwasm-stargate";
 import { StdFee } from "@cosmjs/amino";
-import { ExecuteMsg, Timestamp, Uint64, Decimal, Uint128, InstantiateMsg, CreateMinterMsgForNullable_Empty, CollectionParams, CollectionInfoForRoyaltyInfoResponse, RoyaltyInfoResponse, Empty, MinterParamsForNullable_Empty, Coin, Addr, MinterConfigForEmpty, MinterConfigResponseForEmpty, QueryMsg } from "./BaseMinter.types";
+import { Addr, Uint128, ConfigResponse, MinterConfigForEmpty, Empty, Coin, ExecuteMsg, Timestamp, Uint64, Decimal, InstantiateMsg, CreateMinterMsgForNullable_Empty, CollectionParams, CollectionInfoForRoyaltyInfoResponse, RoyaltyInfoResponse, MinterParamsForNullable_Empty, QueryMsg, StatusResponse, Status } from "./BaseMinter.types";
 export interface BaseMinterReadOnlyInterface {
   contractAddress: string;
   config: () => Promise<ConfigResponse>;
