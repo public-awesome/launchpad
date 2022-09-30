@@ -196,3 +196,13 @@ export interface StartTimeResponse {
   start_time: string;
   [k: string]: unknown;
 }
+export interface StatusResponse {
+  status: Status;
+  [k: string]: unknown;
+}
+export interface Status {
+  is_blocked: boolean;
+  is_explicit: boolean;
+  is_verified: boolean;
+  [k: string]: unknown;
+}

@@ -53,6 +53,14 @@ export interface Trait {
   value: string;
   [k: string]: unknown;
 }
+export interface AllOperatorsResponse {
+  operators: Approval[];
+  [k: string]: unknown;
+}
+export interface AllTokensResponse {
+  tokens: string[];
+  [k: string]: unknown;
+}
 export interface ApprovalResponse {
   approval: Approval;
   [k: string]: unknown;
@@ -61,69 +69,27 @@ export interface ApprovalsResponse {
   approvals: Approval[];
   [k: string]: unknown;
 }
+export type Decimal = string;
+export interface CollectionInfoResponse {
+  creator: string;
+  description: string;
+  explicit_content: boolean;
+  external_link?: string | null;
+  image: string;
+  royalty_info?: RoyaltyInfoResponse | null;
+  trading_start_time?: Timestamp | null;
+  [k: string]: unknown;
+}
+export interface RoyaltyInfoResponse {
+  payment_address: string;
+  share: Decimal;
+  [k: string]: unknown;
+}
 export interface ContractInfoResponse {
   name: string;
   symbol: string;
   [k: string]: unknown;
 }
-export type ExecuteMsg = {
-  __ready: {
-    [k: string]: unknown;
-  };
-} | {
-  transfer_nft: {
-    recipient: string;
-    token_id: string;
-    [k: string]: unknown;
-  };
-} | {
-  send_nft: {
-    contract: string;
-    msg: Binary;
-    token_id: string;
-    [k: string]: unknown;
-  };
-} | {
-  approve: {
-    expires?: Expiration | null;
-    spender: string;
-    token_id: string;
-    [k: string]: unknown;
-  };
-} | {
-  revoke: {
-    spender: string;
-    token_id: string;
-    [k: string]: unknown;
-  };
-} | {
-  approve_all: {
-    expires?: Expiration | null;
-    operator: string;
-    [k: string]: unknown;
-  };
-} | {
-  revoke_all: {
-    operator: string;
-    [k: string]: unknown;
-  };
-} | {
-  mint: MintMsgForMetadata;
-} | {
-  burn: {
-    token_id: string;
-    [k: string]: unknown;
-  };
-};
-export type Binary = string;
-export interface MintMsgForMetadata {
-  extension: Metadata;
-  owner: string;
-  token_id: string;
-  token_uri?: string | null;
-  [k: string]: unknown;
-}
-export type Decimal = string;
 export interface InstantiateMsg {
   collection_info: CollectionInfoForRoyaltyInfoResponse;
   minter: string;
@@ -134,14 +100,11 @@ export interface InstantiateMsg {
 export interface CollectionInfoForRoyaltyInfoResponse {
   creator: string;
   description: string;
+  explicit_content: boolean;
   external_link?: string | null;
   image: string;
   royalty_info?: RoyaltyInfoResponse | null;
-  [k: string]: unknown;
-}
-export interface RoyaltyInfoResponse {
-  payment_address: string;
-  share: Decimal;
+  trading_start_time?: Timestamp | null;
   [k: string]: unknown;
 }
 export interface MinterResponse {

@@ -6,7 +6,7 @@
 
 import { CosmWasmClient, SigningCosmWasmClient, ExecuteResult } from "@cosmjs/cosmwasm-stargate";
 import { Coin, StdFee } from "@cosmjs/amino";
-import { Cw4Contract, Addr, Config, ExecuteMsg, InstantiateMsg, QueryMsg } from "./Splits.types";
+import { Cw4Contract, Addr, ConfigResponse, Config, ExecuteMsg, InstantiateMsg, MemberListResponse, Member, MemberResponse, QueryMsg } from "./Splits.types";
 export interface SplitsReadOnlyInterface {
   contractAddress: string;
   config: () => Promise<ConfigResponse>;
