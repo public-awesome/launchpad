@@ -23,7 +23,7 @@ export interface InstantiateMsg {
   group_addr: string;
   [k: string]: unknown;
 }
-export interface MemberListResponse {
+export interface ListMembersResponse {
   members: Member[];
   [k: string]: unknown;
 }
