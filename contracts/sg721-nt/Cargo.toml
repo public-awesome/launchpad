@@ -38,7 +38,7 @@ serde = { version = "1.0.133", default-features = false, features = ["derive"] }
 sg-std = { path = "../../packages/sg-std" }
 cw721 = "0.13.4"
 cw721-base = { version = "0.13.4", features = ["library"] }
-sg721 = { path = "../../packages/sg721" }
+sg721 = "0.16.0"
 sg721-base = { path = "../sg721-base", features = ["library"] }
 
 [dev-dependencies]

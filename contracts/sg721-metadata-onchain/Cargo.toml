@@ -35,7 +35,7 @@ schemars = "0.8.8"
 serde = { version = "1.0.137", default-features = false, features = ["derive"] }
 sg-metadata = { path = "../../packages/sg-metadata" }
 sg-std = { path = "../../packages/sg-std" }
-sg721 = { path = "../../packages/sg721" }
+sg721 = "0.16.0"
 sg721-base = { path = "../sg721-base", features = ["library"] }
 
 [dev-dependencies]
