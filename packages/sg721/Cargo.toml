@@ -1,6 +1,6 @@
 [package]
 name = "sg721"
-version = "0.15.0"
+version = "0.16.0"
 authors = ["Shane Vitarana <s@noreply.publicawsome.com>"]
 edition = "2018"
 description = "Stargaze Basic NFT Collection Interface"
