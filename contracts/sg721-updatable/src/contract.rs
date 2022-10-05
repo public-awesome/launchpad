@@ -200,7 +200,7 @@ mod tests {
             token_id: "wrong-token-id".to_string(),
             token_uri: updated_token_uri.clone(),
         };
-        let err = execute(deps.as_mut(), mock_env(), info.clone(), update_msg.clone()).unwrap_err();
+        let err = execute(deps.as_mut(), mock_env(), info.clone(), update_msg).unwrap_err();
         assert_eq!(
             err.to_string(),
             ContractError::TokenIdNotFound {}.to_string()
@@ -227,6 +227,18 @@ mod tests {
             .nft_info(deps.as_ref(), token_id.into())
             .unwrap();
         assert_eq!(res.token_uri, updated_token_uri);
+
+        // Update token metadata with None token_uri
+        let update_msg = ExecuteMsg::<Extension>::UpdateTokenMetadata {
+            token_id: token_id.to_string(),
+            token_uri: None,
+        };
+        execute(deps.as_mut(), mock_env(), info.clone(), update_msg).unwrap();
+        let res = contract
+            .parent
+            .nft_info(deps.as_ref(), token_id.into())
+            .unwrap();
+        assert_eq!(res.token_uri, None);
 
         // Freeze token metadata
         let freeze_msg = ExecuteMsg::FreezeTokenMetadata {};
