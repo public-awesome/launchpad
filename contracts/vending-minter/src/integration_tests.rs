@@ -654,7 +654,7 @@ fn invalid_whitelist_instantiate() {
     let msg = Sg2ExecuteMsg::CreateMinter(msg);
 
     let err = router
-        .execute_contract(creator, factory_addr.clone(), &msg, &creation_fee)
+        .execute_contract(creator, factory_addr, &msg, &creation_fee)
         .unwrap_err();
     assert_eq!(
         err.source().unwrap().source().unwrap().to_string(),
@@ -679,7 +679,7 @@ fn set_invalid_whitelist() {
     assert!(res.is_ok());
 
     let wl_msg = WhitelistExecuteMsg::UpdateStartTime(Timestamp::from_nanos(0));
-    let res = router.execute_contract(creator.clone(), whitelist_addr.clone(), &wl_msg, &[]);
+    let res = router.execute_contract(creator.clone(), whitelist_addr, &wl_msg, &[]);
     assert!(res.is_ok());
 
     // Set whitelist in minter contract
@@ -687,12 +687,7 @@ fn set_invalid_whitelist() {
         whitelist: "invalid".to_string(),
     };
     let err = router
-        .execute_contract(
-            creator.clone(),
-            minter_addr.clone(),
-            &set_whitelist_msg,
-            &[],
-        )
+        .execute_contract(creator.clone(), minter_addr, &set_whitelist_msg, &[])
         .unwrap_err();
     assert_eq!(
         err.source().unwrap().source().unwrap().to_string(),
