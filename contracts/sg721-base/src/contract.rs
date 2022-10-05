@@ -102,7 +102,7 @@ where
         deps: DepsMut,
         env: Env,
         info: MessageInfo,
-        msg: ExecuteMsg<T>,
+        msg: ExecuteMsg<T, E>,
     ) -> Result<Response, ContractError> {
         match msg {
             ExecuteMsg::TransferNft {
