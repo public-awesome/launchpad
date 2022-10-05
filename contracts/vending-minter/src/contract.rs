@@ -330,9 +330,14 @@ pub fn execute_set_whitelist(
     }
 
     config.extension.whitelist = Some(deps.api.addr_validate(whitelist)?);
-    // check the whitelist exists
-    deps.querier
+    // check that the new whitelist exists
+    let res = deps
+        .querier
         .query_wasm_smart(config.extension.whitelist, &WhitelistQueryMsg::Config {})?;
+
+    if res.is_active {
+        return Err(ContractError::WhitelistAlreadyStarted {});
+    }
     CONFIG.save(deps.storage, &config)?;
 
     Ok(Response::default()
