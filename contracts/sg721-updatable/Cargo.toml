@@ -50,7 +50,7 @@ serde = { version = "1.0.144", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0.31" }
 cw721-base = { version = "0.13.4", features = ["library"] }
 sg721 = { path = "../../packages/sg721" }
-sg721-base = { path = "../sg721-base" }
+sg721-base = { path = "../sg721-base", features = ["library"] }
 sg-std = { path = "../../packages/sg-std" }
 
 [dev-dependencies]

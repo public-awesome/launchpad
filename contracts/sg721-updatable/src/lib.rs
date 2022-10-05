@@ -1,6 +1,3 @@
-#[cfg(not(feature = "library"))]
-use cosmwasm_std::entry_point;
-
 pub mod contract;
 pub mod error;
 pub mod msg;
@@ -19,6 +16,7 @@ pub mod entry {
         },
         msg::ExecuteMsg,
     };
+    use cosmwasm_std::entry_point;
     use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, StdResult};
     use cw721_base::Extension;
     use sg_std::Response;
