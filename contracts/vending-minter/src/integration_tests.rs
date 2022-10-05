@@ -616,6 +616,51 @@ fn happy_path() {
         .unwrap();
     assert_eq!(res.count, 0);
 }
+
+#[test]
+
+fn invalid_whitelist() {
+    let mut router = custom_mock_app();
+    let (creator, _) = setup_accounts(&mut router);
+
+    let num_tokens = 10;
+    let minter_code_id = router.store_code(contract_minter());
+    let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
+    let factory_code_id = router.store_code(contract_factory());
+
+    let mut params = mock_params();
+    params.code_id = minter_code_id;
+
+    let factory_addr = router
+        .instantiate_contract(
+            factory_code_id,
+            creator.clone(),
+            &vending_factory::msg::InstantiateMsg { params },
+            &[],
+            "factory",
+            None,
+        )
+        .unwrap();
+
+    let sg721_code_id = router.store_code(contract_sg721());
+
+    let mut msg = mock_create_minter(None);
+    msg.init_msg.whitelist = Some("invalid address".to_string());
+    msg.init_msg.mint_price = coin(MINT_PRICE, NATIVE_DENOM);
+    msg.init_msg.num_tokens = num_tokens;
+    msg.collection_params.code_id = sg721_code_id;
+    msg.collection_params.info.creator = creator.to_string();
+
+    let msg = Sg2ExecuteMsg::CreateMinter(msg);
+
+    let err = router
+        .execute_contract(creator.clone(), factory_addr.clone(), &msg, &creation_fee)
+        .unwrap_err();
+    assert_eq!(
+        err.source().unwrap().source().unwrap().to_string(),
+        "Generic error: Querier contract error: cw_multi_test::wasm::ContractData not found"
+    );
+}
 #[test]
 fn mint_count_query() {
     let mut router = custom_mock_app();
