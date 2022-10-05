@@ -1289,6 +1289,7 @@ dependencies = [
  "cw-storage-plus 0.15.1",
  "cw-utils 0.13.4",
  "cw2 0.15.1",
+ "cw721",
  "cw721-base",
  "schemars",
  "serde",

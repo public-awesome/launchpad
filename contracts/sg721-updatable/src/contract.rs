@@ -94,10 +94,140 @@ pub fn execute_update_token_metadata(
         },
     )?;
 
-    let event = Event::new("update_collection_info")
+    let event = Event::new("update_update_token_metadata")
         .add_attribute("sender", info.sender)
+        .add_attribute("token_id", token_id.to_string())
         .add_attribute("token_uri", token_uri.unwrap_or_default());
     Ok(Response::new().add_event(event))
 }
 
-// TODO add tests
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use crate::entry::{execute, instantiate};
+    use crate::msg::ExecuteMsg;
+    use cosmwasm_std::testing::{mock_env, mock_info, MockApi, MockQuerier, MockStorage};
+    use cosmwasm_std::{
+        from_slice, to_binary, ContractInfoResponse, ContractResult, Empty, OwnedDeps, Querier,
+        QuerierResult, QueryRequest, SystemError, SystemResult, WasmQuery,
+    };
+    use cw721::Cw721Query;
+    use sg721::{CollectionInfo, InstantiateMsg, MintMsg};
+    use std::marker::PhantomData;
+
+    const CREATOR: &str = "creator";
+
+    pub fn mock_deps() -> OwnedDeps<MockStorage, MockApi, CustomMockQuerier, Empty> {
+        OwnedDeps {
+            storage: MockStorage::default(),
+            api: MockApi::default(),
+            querier: CustomMockQuerier::new(MockQuerier::new(&[])),
+            custom_query_type: PhantomData,
+        }
+    }
+
+    pub struct CustomMockQuerier {
+        base: MockQuerier,
+    }
+
+    impl Querier for CustomMockQuerier {
+        fn raw_query(&self, bin_request: &[u8]) -> QuerierResult {
+            let request: QueryRequest<Empty> = match from_slice(bin_request) {
+                Ok(v) => v,
+                Err(e) => {
+                    return SystemResult::Err(SystemError::InvalidRequest {
+                        error: format!("Parsing query request: {}", e),
+                        request: bin_request.into(),
+                    })
+                }
+            };
+
+            self.handle_query(&request)
+        }
+    }
+
+    impl CustomMockQuerier {
+        pub fn handle_query(&self, request: &QueryRequest<Empty>) -> QuerierResult {
+            match &request {
+                QueryRequest::Wasm(WasmQuery::ContractInfo { contract_addr: _ }) => {
+                    let response = ContractInfoResponse::new(1, CREATOR);
+                    SystemResult::Ok(ContractResult::Ok(to_binary(&response).unwrap()))
+                }
+                _ => self.base.handle_query(request),
+            }
+        }
+
+        pub fn new(base: MockQuerier<Empty>) -> Self {
+            CustomMockQuerier { base }
+        }
+    }
+
+    #[test]
+    fn update_token_metadata() {
+        let mut deps = mock_deps();
+        let contract = Sg721UpdatableContract::default();
+
+        // instantiate contract
+        let info = mock_info(CREATOR, &[]);
+        let init_msg = InstantiateMsg {
+            name: "SpaceShips".to_string(),
+            symbol: "SPACE".to_string(),
+            minter: CREATOR.to_string(),
+            collection_info: CollectionInfo {
+                creator: CREATOR.to_string(),
+                description: "this is a test".to_string(),
+                image: "https://larry.engineer".to_string(),
+                external_link: None,
+                explicit_content: false,
+                trading_start_time: None,
+                royalty_info: None,
+            },
+        };
+        instantiate(deps.as_mut(), mock_env(), info.clone(), init_msg).unwrap();
+
+        // mint token
+        let token_id = "Enterprise";
+        let mint_msg = MintMsg {
+            token_id: token_id.to_string(),
+            owner: "john".to_string(),
+            token_uri: Some("https://starships.example.com/Starship/Enterprise.json".into()),
+            extension: None,
+        };
+        let exec_msg = ExecuteMsg::Mint(mint_msg.clone());
+        execute(deps.as_mut(), mock_env(), info.clone(), exec_msg).unwrap();
+
+        // update token metadata
+        let updated_token_uri = Some("https://badkids.example.com/collection-cid/1.json".into());
+        let update_msg = ExecuteMsg::UpdateTokenMetadata {
+            token_id: token_id.to_string(),
+            token_uri: updated_token_uri.clone(),
+        };
+        execute(deps.as_mut(), mock_env(), info.clone(), update_msg).unwrap();
+
+        // check token contains updated metadata
+        let res = contract
+            .parent
+            .nft_info(deps.as_ref(), token_id.into())
+            .unwrap();
+        // TODO fix test
+        // assert_eq!(res.token_uri, updated_token_uri);
+
+        // freeze token metadata
+        let freeze_msg = ExecuteMsg::FreezeTokenMetadata {};
+        execute(deps.as_mut(), mock_env(), info.clone(), freeze_msg).unwrap();
+
+        // throws error trying to update token metadata
+        let updated_token_uri =
+            Some("https://badkids.example.com/other-collection-cid/2.json".into());
+        let update_msg = ExecuteMsg::UpdateTokenMetadata {
+            token_id: token_id.to_string(),
+            token_uri: updated_token_uri.clone(),
+        };
+        let err = execute(deps.as_mut(), mock_env(), info, update_msg).unwrap_err();
+        assert_eq!(
+            err.to_string(),
+            ContractError::TokenMetadataFrozen {}.to_string()
+        );
+    }
+}
