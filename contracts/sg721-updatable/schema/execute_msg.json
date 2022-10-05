@@ -3,21 +3,14 @@
   "title": "ExecuteMsg",
   "oneOf": [
     {
+      "description": "freeze token metadata so creator can no longer update token uris",
       "type": "object",
       "required": [
-        "custom_msg"
+        "freeze_token_metadata"
       ],
       "properties": {
-        "custom_msg": {
-          "type": "object",
-          "required": [
-            "val"
-          ],
-          "properties": {
-            "val": {
-              "type": "string"
-            }
-          }
+        "freeze_token_metadata": {
+          "type": "object"
         }
       },
       "additionalProperties": false

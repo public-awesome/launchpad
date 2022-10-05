@@ -2,13 +2,16 @@
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, StdResult};
 use cw2::set_contract_version;
+use sg721_base::msg::CollectionInfoResponse;
 
 use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, QueryMsg};
+use crate::state::FROZEN_TOKEN_METADATA;
 use sg721::InstantiateMsg;
 
 use cw721_base::Extension;
 use cw_utils::nonpayable;
+use sg721_base::ContractError::Unauthorized;
 use sg721_base::Sg721Contract;
 pub type Sg721UpdatableContract<'a> = Sg721Contract<'a, Extension>;
 use sg_std::Response;
@@ -23,7 +26,9 @@ pub fn instantiate(
     info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
-    // instantiate is the same as sg721 base contracts
+    // set frozen to false on instantiate. allows updating token metadata
+    FROZEN_TOKEN_METADATA.save(deps.storage, &false)?;
+
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
     let res = Sg721UpdatableContract::default().instantiate(deps, env, info, msg)?;
     Ok(res
@@ -33,18 +38,48 @@ pub fn instantiate(
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
-    _deps: DepsMut,
-    _env: Env,
-    _info: MessageInfo,
-    _msg: ExecuteMsg,
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
-    unimplemented!()
+    match msg {
+        ExecuteMsg::FreezeTokenMetadata {} => execute_freeze_token_metadata(deps, env, info),
+        // ExecuteMsg::UpdateTokenMetadata {
+        //     token_id,
+        //     token_uri,
+        // } => execute_update_token_metadata(deps, env, info, token_id, token_uri),
+        // add other msgs here
+        // _ => Sg721UpdatableContract::default().execute(deps, env, info,),
+    }
+
+    // update token metadata
+    // freeze token metadata
+}
+
+pub fn execute_freeze_token_metadata(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+) -> Result<Response, ContractError> {
+    // check if sender is creator
+    let owner = deps.api.addr_validate(&info.sender.to_string())?;
+    let collection_info: CollectionInfoResponse =
+        Sg721UpdatableContract::default().query_collection_info(deps.as_ref())?;
+
+    if owner != collection_info.creator {
+        return Err(ContractError::Base(Unauthorized {}));
+    }
+
+    FROZEN_TOKEN_METADATA.save(deps.storage, &true)?;
+
+    Ok(Response::new()
+        .add_attribute("action", "freeze_token_metadata")
+        .add_attribute("frozen", "true"))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(_deps: Deps, _env: Env, _msg: QueryMsg) -> StdResult<Binary> {
+    // all the same but add query freeze status
     unimplemented!()
 }
-
-#[cfg(test)]
-mod tests {}
