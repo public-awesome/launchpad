@@ -108,9 +108,9 @@ pub fn instantiate(
         .whitelist
         .and_then(|w| deps.api.addr_validate(w.as_str()).ok());
 
-    if let Some(wl) = whitelist_addr {
+    if let Some(wl) = whitelist_addr.clone() {
         // check the whitelist exists
-        let res = deps
+        let res: WhitelistConfigResponse = deps
             .querier
             .query_wasm_smart(wl, &WhitelistQueryMsg::Config {})?;
         if res.is_active {
@@ -328,12 +328,12 @@ pub fn execute_set_whitelist(
             return Err(ContractError::WhitelistAlreadyStarted {});
         }
     }
-
-    config.extension.whitelist = Some(deps.api.addr_validate(whitelist)?);
+    let new_wl = deps.api.addr_validate(whitelist)?;
+    config.extension.whitelist = Some(new_wl.clone());
     // check that the new whitelist exists
-    let res = deps
+    let res: WhitelistConfigResponse = deps
         .querier
-        .query_wasm_smart(config.extension.whitelist, &WhitelistQueryMsg::Config {})?;
+        .query_wasm_smart(new_wl, &WhitelistQueryMsg::Config {})?;
 
     if res.is_active {
         return Err(ContractError::WhitelistAlreadyStarted {});
