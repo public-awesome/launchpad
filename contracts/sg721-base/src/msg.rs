@@ -1,4 +1,4 @@
-use cosmwasm_std::Timestamp;
+use cosmwasm_std::{Empty, Timestamp};
 use cw721_base::msg::QueryMsg as Cw721QueryMsg;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -48,8 +48,8 @@ pub enum QueryMsg {
     CollectionInfo {},
 }
 
-impl From<QueryMsg> for Cw721QueryMsg {
-    fn from(msg: QueryMsg) -> Cw721QueryMsg {
+impl From<QueryMsg> for Cw721QueryMsg<Empty> {
+    fn from(msg: QueryMsg) -> Cw721QueryMsg<Empty> {
         match msg {
             QueryMsg::OwnerOf {
                 token_id,

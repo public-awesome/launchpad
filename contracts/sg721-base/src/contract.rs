@@ -1,4 +1,5 @@
 use cw721_base::state::TokenInfo;
+use cw721_base::MintMsg;
 use url::Url;
 
 use cosmwasm_std::{
@@ -11,7 +12,7 @@ use cw_utils::nonpayable;
 use serde::{de::DeserializeOwned, Serialize};
 
 use sg721::{
-    CollectionInfo, ExecuteMsg, InstantiateMsg, MintMsg, RoyaltyInfo, RoyaltyInfoResponse,
+    CollectionInfo, ExecuteMsg, InstantiateMsg, RoyaltyInfo, RoyaltyInfoResponse,
     UpdateCollectionInfoMsg,
 };
 use sg_std::Response;

@@ -38,7 +38,7 @@ serde = { version = "1.0.133", default-features = false, features = ["derive"] }
 sg-std = "0.14.0"
 cw721 = "0.13.4"
 cw721-base = { version = "0.13.4", features = ["library"] }
-sg721 = "0.16.0"
+sg721 = "0.16.1"
 sg721-base = { path = "../sg721-base", features = ["library"] }
 
 [dev-dependencies]
