@@ -16,9 +16,6 @@ pub enum ContractError {
     #[error("TokenIdNotFound")]
     TokenIdNotFound {},
 
-    #[error("TokenUriInvalid")]
-    TokenUriInvalid {},
-
     #[error("TokenMetadataFrozen")]
     TokenMetadataFrozen {},
 }

@@ -67,7 +67,6 @@ pub fn execute_update_token_metadata(
     let owner = deps.api.addr_validate(&info.sender.to_string())?;
     let collection_info: CollectionInfoResponse =
         Sg721UpdatableContract::default().query_collection_info(deps.as_ref())?;
-
     if owner != collection_info.creator {
         return Err(ContractError::Base(Unauthorized {}));
     }
@@ -83,13 +82,10 @@ pub fn execute_update_token_metadata(
         deps.storage,
         &token_id,
         |token| match token {
-            Some(mut token_info) => match token_info.token_uri {
-                Some(uri) => {
-                    token_info.token_uri = Some(uri);
-                    Ok(token_info)
-                }
-                None => Err(ContractError::TokenUriInvalid {}),
-            },
+            Some(mut token_info) => {
+                token_info.token_uri = token_uri.clone();
+                Ok(token_info)
+            }
             None => Err(ContractError::TokenIdNotFound {}),
         },
     )?;
@@ -210,8 +206,7 @@ mod tests {
             .parent
             .nft_info(deps.as_ref(), token_id.into())
             .unwrap();
-        // TODO fix test
-        // assert_eq!(res.token_uri, updated_token_uri);
+        assert_eq!(res.token_uri, updated_token_uri);
 
         // freeze token metadata
         let freeze_msg = ExecuteMsg::FreezeTokenMetadata {};
