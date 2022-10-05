@@ -14,6 +14,33 @@
         }
       },
       "additionalProperties": false
+    },
+    {
+      "description": "creator calls can update token uris",
+      "type": "object",
+      "required": [
+        "update_token_metadata"
+      ],
+      "properties": {
+        "update_token_metadata": {
+          "type": "object",
+          "required": [
+            "token_id"
+          ],
+          "properties": {
+            "token_id": {
+              "type": "string"
+            },
+            "token_uri": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        }
+      },
+      "additionalProperties": false
     }
   ]
 }
