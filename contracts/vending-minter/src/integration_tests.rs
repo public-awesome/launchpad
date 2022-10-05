@@ -654,7 +654,7 @@ fn invalid_whitelist_instantiate() {
     let msg = Sg2ExecuteMsg::CreateMinter(msg);
 
     let err = router
-        .execute_contract(creator.clone(), factory_addr.clone(), &msg, &creation_fee)
+        .execute_contract(creator, factory_addr.clone(), &msg, &creation_fee)
         .unwrap_err();
     assert_eq!(
         err.source().unwrap().source().unwrap().to_string(),
