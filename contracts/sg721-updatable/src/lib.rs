@@ -1,6 +1,58 @@
+#[cfg(not(feature = "library"))]
+use cosmwasm_std::entry_point;
+
 pub mod contract;
-mod error;
+pub mod error;
 pub mod msg;
 pub mod state;
 
-pub use crate::error::ContractError;
+pub type InstantiateMsg = sg721::InstantiateMsg;
+
+pub mod entry {
+    use super::*;
+    use crate::error::ContractError;
+    use crate::{
+        contract::{
+            _instantiate, execute_freeze_token_metadata, execute_update_token_metadata,
+            Sg721UpdatableContract,
+        },
+        msg::{ExecuteMsg, QueryMsg},
+    };
+    use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, StdResult};
+    use sg721_base::entry::execute as _execute;
+    use sg_std::Response;
+
+    #[cfg_attr(not(feature = "library"), entry_point)]
+    pub fn instantiate(
+        deps: DepsMut,
+        env: Env,
+        info: MessageInfo,
+        msg: InstantiateMsg,
+    ) -> Result<Response, ContractError> {
+        _instantiate(deps, env, info, msg)
+    }
+
+    #[cfg_attr(not(feature = "library"), entry_point)]
+    pub fn execute(
+        deps: DepsMut,
+        env: Env,
+        info: MessageInfo,
+        msg: ExecuteMsg,
+    ) -> Result<Response, ContractError> {
+        match msg {
+            ExecuteMsg::FreezeTokenMetadata {} => execute_freeze_token_metadata(deps, env, info),
+            ExecuteMsg::UpdateTokenMetadata {
+                token_id,
+                token_uri,
+            } => execute_update_token_metadata(deps, env, info, token_id, token_uri),
+            // TODO add execute msgs for sg721_base
+            // _ => _execute(deps, env, info, msg.into()),
+        }
+    }
+
+    // TODO add queries
+    // #[cfg_attr(not(feature = "library"), entry_point)]
+    // pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
+    // Sg721UpdatableContract::default().query(deps, env, msg.into())
+    // }
+}

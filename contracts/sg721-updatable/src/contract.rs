@@ -1,11 +1,9 @@
 #[cfg(not(feature = "library"))]
-use cosmwasm_std::entry_point;
-use cosmwasm_std::{Binary, Deps, DepsMut, Env, Event, MessageInfo, StdResult};
+use cosmwasm_std::{DepsMut, Env, Event, MessageInfo};
 use cw2::set_contract_version;
 use sg721_base::msg::CollectionInfoResponse;
 
 use crate::error::ContractError;
-use crate::msg::{ExecuteMsg, QueryMsg};
 use crate::state::FROZEN_TOKEN_METADATA;
 use sg721::InstantiateMsg;
 
@@ -19,8 +17,7 @@ use sg_std::Response;
 const CONTRACT_NAME: &str = "crates.io:sg721-updatable";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-#[entry_point]
-pub fn instantiate(
+pub fn _instantiate(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
@@ -34,27 +31,6 @@ pub fn instantiate(
     Ok(res
         .add_attribute("contract_name", CONTRACT_NAME)
         .add_attribute("contract_version", CONTRACT_VERSION))
-}
-
-#[cfg_attr(not(feature = "library"), entry_point)]
-pub fn execute(
-    deps: DepsMut,
-    env: Env,
-    info: MessageInfo,
-    msg: ExecuteMsg,
-) -> Result<Response, ContractError> {
-    match msg {
-        ExecuteMsg::FreezeTokenMetadata {} => execute_freeze_token_metadata(deps, env, info),
-        ExecuteMsg::UpdateTokenMetadata {
-            token_id,
-            token_uri,
-        } => execute_update_token_metadata(deps, env, info, token_id, token_uri),
-        // add other msgs here
-        // _ => Sg721UpdatableContract::default().execute(deps, env, info,),
-    }
-
-    // update token metadata
-    // freeze token metadata
 }
 
 pub fn execute_freeze_token_metadata(
@@ -124,8 +100,10 @@ pub fn execute_update_token_metadata(
     Ok(Response::new().add_event(event))
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(_deps: Deps, _env: Env, _msg: QueryMsg) -> StdResult<Binary> {
-    // all the same but add query freeze status
-    unimplemented!()
-}
+// #[cfg_attr(not(feature = "library"), entry_point)]
+// pub fn query(_deps: Deps, _env: Env, _msg: QueryMsg) -> StdResult<Binary> {
+//     // all the same but add query freeze status
+//     unimplemented!()
+// }
+
+// TODO add tests
