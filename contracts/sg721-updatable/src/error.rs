@@ -1,6 +1,5 @@
 use cosmwasm_std::StdError;
 use cw_utils::PaymentError;
-use sg721_base::ContractError as Sg721ContractError;
 use thiserror::Error;
 
 #[derive(Error, Debug)]

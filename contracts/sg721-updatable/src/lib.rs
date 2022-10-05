@@ -46,7 +46,9 @@ pub mod entry {
                 token_uri,
             } => execute_update_token_metadata(deps, env, info, token_id, token_uri),
             // TODO add execute msgs for sg721_base
-            _ => Sg721UpdatableContract::default().execute(deps, env, info, msg.into()),
+            _ => Sg721UpdatableContract::default()
+                .execute(deps, env, info, msg.into())
+                .map_err(|e| e.into()),
         }
     }
 
