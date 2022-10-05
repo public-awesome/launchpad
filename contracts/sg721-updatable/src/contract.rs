@@ -23,7 +23,7 @@ pub fn _instantiate(
     info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
-    // set frozen to false on instantiate. allows updating token metadata
+    // Set frozen to false on instantiate. allows updating token metadata
     FROZEN_TOKEN_METADATA.save(deps.storage, &false)?;
 
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
@@ -39,7 +39,7 @@ pub fn execute_freeze_token_metadata(
     info: MessageInfo,
 ) -> Result<Response, ContractError> {
     nonpayable(&info)?;
-    // check if sender is creator
+    // Check if sender is creator
     let owner = deps.api.addr_validate(&info.sender.to_string())?;
     let collection_info: CollectionInfoResponse =
         Sg721UpdatableContract::default().query_collection_info(deps.as_ref())?;
@@ -63,7 +63,7 @@ pub fn execute_update_token_metadata(
     token_uri: Option<String>,
 ) -> Result<Response, ContractError> {
     nonpayable(&info)?;
-    // check if sender is creator
+    // Check if sender is creator
     let owner = deps.api.addr_validate(&info.sender.to_string())?;
     let collection_info: CollectionInfoResponse =
         Sg721UpdatableContract::default().query_collection_info(deps.as_ref())?;
@@ -71,13 +71,13 @@ pub fn execute_update_token_metadata(
         return Err(ContractError::Base(Unauthorized {}));
     }
 
-    // check if token metadata is frozen
+    // Check if token metadata is frozen
     let frozen = FROZEN_TOKEN_METADATA.load(deps.storage)?;
     if frozen {
         return Err(ContractError::TokenMetadataFrozen {});
     }
 
-    // update token metadata
+    // Update token metadata
     Sg721UpdatableContract::default().tokens.update(
         deps.storage,
         &token_id,
@@ -113,6 +113,7 @@ mod tests {
     use std::marker::PhantomData;
 
     const CREATOR: &str = "creator";
+    const HACKER: &str = "hacker";
 
     pub fn mock_deps() -> OwnedDeps<MockStorage, MockApi, CustomMockQuerier, Empty> {
         OwnedDeps {
@@ -164,7 +165,7 @@ mod tests {
         let mut deps = mock_deps();
         let contract = Sg721UpdatableContract::default();
 
-        // instantiate contract
+        // Instantiate contract
         let info = mock_info(CREATOR, &[]);
         let init_msg = InstantiateMsg {
             name: "SpaceShips".to_string(),
@@ -182,7 +183,7 @@ mod tests {
         };
         instantiate(deps.as_mut(), mock_env(), info.clone(), init_msg).unwrap();
 
-        // mint token
+        // Mint token
         let token_id = "Enterprise";
         let mint_msg = MintMsg {
             token_id: token_id.to_string(),
@@ -193,26 +194,34 @@ mod tests {
         let exec_msg = ExecuteMsg::Mint(mint_msg);
         execute(deps.as_mut(), mock_env(), info.clone(), exec_msg).unwrap();
 
-        // update token metadata
+        // Update token metadata fails because sent by hacker
         let updated_token_uri = Some("https://badkids.example.com/collection-cid/1.json".into());
         let update_msg = ExecuteMsg::UpdateTokenMetadata {
             token_id: token_id.to_string(),
             token_uri: updated_token_uri.clone(),
         };
+        let hacker_info = mock_info(HACKER, &[]);
+        let err = execute(deps.as_mut(), mock_env(), hacker_info, update_msg.clone()).unwrap_err();
+        assert_eq!(
+            err.to_string(),
+            ContractError::Base(Unauthorized {}).to_string()
+        );
+
+        // Update token metadata
         execute(deps.as_mut(), mock_env(), info.clone(), update_msg).unwrap();
 
-        // check token contains updated metadata
+        // Check token contains updated metadata
         let res = contract
             .parent
             .nft_info(deps.as_ref(), token_id.into())
             .unwrap();
         assert_eq!(res.token_uri, updated_token_uri);
 
-        // freeze token metadata
+        // Freeze token metadata
         let freeze_msg = ExecuteMsg::FreezeTokenMetadata {};
         execute(deps.as_mut(), mock_env(), info.clone(), freeze_msg).unwrap();
 
-        // throws error trying to update token metadata
+        // Throws error trying to update token metadata
         let updated_token_uri =
             Some("https://badkids.example.com/other-collection-cid/2.json".into());
         let update_msg = ExecuteMsg::UpdateTokenMetadata {

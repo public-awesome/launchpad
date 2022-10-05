@@ -8,9 +8,9 @@ use sg721::MintMsg;
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg<T> {
-    /// freeze token metadata so creator can no longer update token uris
+    /// Freeze token metadata so creator can no longer update token uris
     FreezeTokenMetadata {},
-    /// creator calls can update token uris
+    /// Creator calls can update token uris
     UpdateTokenMetadata {
         token_id: String,
         token_uri: Option<String>,
