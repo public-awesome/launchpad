@@ -54,6 +54,6 @@ pub mod entry {
 
     #[cfg_attr(not(feature = "library"), entry_point)]
     pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
-        Sg721UpdatableContract::default().query(deps, env, msg.into())
+        Sg721UpdatableContract::default().query(deps, env, msg)
     }
 }

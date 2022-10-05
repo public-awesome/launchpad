@@ -190,7 +190,7 @@ mod tests {
             token_uri: Some("https://starships.example.com/Starship/Enterprise.json".into()),
             extension: None,
         };
-        let exec_msg = ExecuteMsg::Mint(mint_msg.clone());
+        let exec_msg = ExecuteMsg::Mint(mint_msg);
         execute(deps.as_mut(), mock_env(), info.clone(), exec_msg).unwrap();
 
         // update token metadata
@@ -217,7 +217,7 @@ mod tests {
             Some("https://badkids.example.com/other-collection-cid/2.json".into());
         let update_msg = ExecuteMsg::UpdateTokenMetadata {
             token_id: token_id.to_string(),
-            token_uri: updated_token_uri.clone(),
+            token_uri: updated_token_uri,
         };
         let err = execute(deps.as_mut(), mock_env(), info, update_msg).unwrap_err();
         assert_eq!(
