@@ -194,8 +194,19 @@ mod tests {
         let exec_msg = ExecuteMsg::Mint(mint_msg);
         execute(deps.as_mut(), mock_env(), info.clone(), exec_msg).unwrap();
 
-        // Update token metadata fails because sent by hacker
+        // Update token metadata fails because token id is not found
         let updated_token_uri = Some("https://badkids.example.com/collection-cid/1.json".into());
+        let update_msg = ExecuteMsg::UpdateTokenMetadata {
+            token_id: "wrong-token-id".to_string(),
+            token_uri: updated_token_uri.clone(),
+        };
+        let err = execute(deps.as_mut(), mock_env(), info.clone(), update_msg.clone()).unwrap_err();
+        assert_eq!(
+            err.to_string(),
+            ContractError::TokenIdNotFound {}.to_string()
+        );
+
+        // Update token metadata fails because sent by hacker
         let update_msg = ExecuteMsg::UpdateTokenMetadata {
             token_id: token_id.to_string(),
             token_uri: updated_token_uri.clone(),
