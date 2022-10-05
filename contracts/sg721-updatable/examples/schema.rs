@@ -5,7 +5,8 @@ use cosmwasm_schema::{export_schema, remove_schemas, schema_for};
 
 use cw721_base::Extension;
 use sg721::InstantiateMsg;
-use sg721_updatable::msg::{ExecuteMsg, QueryMsg};
+use sg721_base::msg::QueryMsg;
+use sg721_updatable::msg::ExecuteMsg;
 
 fn main() {
     let mut out_dir = current_dir().unwrap();

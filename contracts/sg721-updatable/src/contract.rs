@@ -100,10 +100,4 @@ pub fn execute_update_token_metadata(
     Ok(Response::new().add_event(event))
 }
 
-// #[cfg_attr(not(feature = "library"), entry_point)]
-// pub fn query(_deps: Deps, _env: Env, _msg: QueryMsg) -> StdResult<Binary> {
-//     // all the same but add query freeze status
-//     unimplemented!()
-// }
-
 // TODO add tests

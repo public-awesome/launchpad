@@ -7,6 +7,7 @@ pub mod msg;
 pub mod state;
 
 pub type InstantiateMsg = sg721::InstantiateMsg;
+pub type QueryMsg = sg721_base::msg::QueryMsg;
 
 pub mod entry {
     use super::*;
@@ -18,7 +19,7 @@ pub mod entry {
         },
         msg::ExecuteMsg,
     };
-    use cosmwasm_std::{DepsMut, Env, MessageInfo};
+    use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, StdResult};
     use cw721_base::Extension;
     use sg_std::Response;
 
@@ -45,16 +46,14 @@ pub mod entry {
                 token_id,
                 token_uri,
             } => execute_update_token_metadata(deps, env, info, token_id, token_uri),
-            // TODO add execute msgs for sg721_base
             _ => Sg721UpdatableContract::default()
                 .execute(deps, env, info, msg.into())
                 .map_err(|e| e.into()),
         }
     }
 
-    // TODO add queries
-    // #[cfg_attr(not(feature = "library"), entry_point)]
-    // pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
-    // Sg721UpdatableContract::default().query(deps, env, msg.into())
-    // }
+    #[cfg_attr(not(feature = "library"), entry_point)]
+    pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
+        Sg721UpdatableContract::default().query(deps, env, msg.into())
+    }
 }
