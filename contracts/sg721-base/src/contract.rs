@@ -12,13 +12,12 @@ use cw_utils::nonpayable;
 use serde::{de::DeserializeOwned, Serialize};
 
 use sg721::{
-    CollectionInfo, ExecuteMsg, InstantiateMsg, RoyaltyInfo, RoyaltyInfoResponse,
-    UpdateCollectionInfoMsg,
+    CollectionInfo, InstantiateMsg, RoyaltyInfo, RoyaltyInfoResponse, UpdateCollectionInfoMsg,
 };
 use sg_std::Response;
 
 use crate::msg::{CollectionInfoResponse, QueryMsg};
-use crate::{ContractError, Sg721Contract};
+use crate::{ContractError, ExecuteMsg, Sg721Contract};
 
 const MAX_DESCRIPTION_LENGTH: u32 = 512;
 
@@ -102,7 +101,7 @@ where
         deps: DepsMut,
         env: Env,
         info: MessageInfo,
-        msg: ExecuteMsg<T, E>,
+        msg: ExecuteMsg,
     ) -> Result<Response, ContractError> {
         match msg {
             ExecuteMsg::TransferNft {
@@ -152,6 +151,7 @@ where
             }
             ExecuteMsg::FreezeCollectionInfo {} => self.freeze_collection_info(deps, env, info),
             ExecuteMsg::Mint(msg) => self.mint(deps, env, info, msg),
+            ExecuteMsg::Extension { msg } => todo!(),
         }
     }
 
