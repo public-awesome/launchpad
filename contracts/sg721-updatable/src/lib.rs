@@ -16,10 +16,10 @@ pub mod entry {
             _instantiate, execute_freeze_token_metadata, execute_update_token_metadata,
             Sg721UpdatableContract,
         },
-        msg::{ExecuteMsg, QueryMsg},
+        msg::ExecuteMsg,
     };
-    use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, StdResult};
-    use sg721_base::entry::execute as _execute;
+    use cosmwasm_std::{DepsMut, Env, MessageInfo};
+    use cw721_base::Extension;
     use sg_std::Response;
 
     #[cfg_attr(not(feature = "library"), entry_point)]
@@ -37,7 +37,7 @@ pub mod entry {
         deps: DepsMut,
         env: Env,
         info: MessageInfo,
-        msg: ExecuteMsg,
+        msg: ExecuteMsg<Extension>,
     ) -> Result<Response, ContractError> {
         match msg {
             ExecuteMsg::FreezeTokenMetadata {} => execute_freeze_token_metadata(deps, env, info),
@@ -46,7 +46,7 @@ pub mod entry {
                 token_uri,
             } => execute_update_token_metadata(deps, env, info, token_id, token_uri),
             // TODO add execute msgs for sg721_base
-            // _ => _execute(deps, env, info, msg.into()),
+            _ => Sg721UpdatableContract::default().execute(deps, env, info, msg.into()),
         }
     }
 
