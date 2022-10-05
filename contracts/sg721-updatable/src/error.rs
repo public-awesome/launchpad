@@ -6,6 +6,9 @@ pub enum ContractError {
     #[error("{0}")]
     Std(#[from] StdError),
 
-    #[error("Custom Error val: {val:?}")]
-    CustomError { val: String },
+    #[error("{0}")]
+    Base(#[from] sg721_base::ContractError),
+
+    #[error("TokenIdNotFound")]
+    TokenIdNotFound {},
 }
