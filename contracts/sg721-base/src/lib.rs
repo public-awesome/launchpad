@@ -9,7 +9,7 @@ pub use crate::state::Sg721Contract;
 use cosmwasm_std::Empty;
 use cw721_base::Extension;
 
-pub type ExecuteMsg = cw721_base::ExecuteMsg<Extension, Empty>;
+pub type ExecuteMsg = sg721::ExecuteMsg<Extension, Empty>;
 pub type QueryMsg = cw721_base::QueryMsg<Empty>;
 
 pub mod entry {

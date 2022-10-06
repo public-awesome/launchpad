@@ -30,14 +30,14 @@ library = []
 
 [dependencies]
 cosmwasm-std = { version = "1.0.0" }
-cw-storage-plus = "0.13.4"
-cw-utils = "0.13.4"
-cw2 = "0.13.4"
+cw-storage-plus = "0.15.0"
+cw-utils = "0.15.0"
+cw2 = "0.15.0"
 schemars = "0.8.8"
 serde = { version = "1.0.133", default-features = false, features = ["derive"] }
 sg-std = "0.14.0"
-cw721 = "0.13.4"
-cw721-base = { version = "0.13.4", features = ["library"] }
+cw721 = "0.15.0"
+cw721-base = { version = "0.15.0", features = ["library"] }
 sg721 = "0.16.1"
 sg721-base = { path = "../sg721-base", features = ["library"] }
 
