@@ -3,7 +3,7 @@
   "title": "ExecuteMsg_for_Nullable_Empty",
   "oneOf": [
     {
-      "description": "freeze token metadata so creator can no longer update token uris",
+      "description": "Freeze token metadata so creator can no longer update token uris",
       "type": "object",
       "required": [
         "freeze_token_metadata"
@@ -16,7 +16,7 @@
       "additionalProperties": false
     },
     {
-      "description": "creator calls can update token uris",
+      "description": "Creator calls can update token uris",
       "type": "object",
       "required": [
         "update_token_metadata"
@@ -205,18 +205,6 @@
     {
       "type": "object",
       "required": [
-        "mint"
-      ],
-      "properties": {
-        "mint": {
-          "$ref": "#/definitions/MintMsg_for_Nullable_Empty"
-        }
-      },
-      "additionalProperties": false
-    },
-    {
-      "type": "object",
-      "required": [
         "burn"
       ],
       "properties": {
@@ -233,11 +221,78 @@
         }
       },
       "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "update_collection_info"
+      ],
+      "properties": {
+        "update_collection_info": {
+          "type": "object",
+          "required": [
+            "collection_info"
+          ],
+          "properties": {
+            "collection_info": {
+              "$ref": "#/definitions/UpdateCollectionInfoMsg_for_RoyaltyInfoResponse"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "update_trading_start_time"
+      ],
+      "properties": {
+        "update_trading_start_time": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Timestamp"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "freeze_collection_info"
+      ],
+      "properties": {
+        "freeze_collection_info": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "mint"
+      ],
+      "properties": {
+        "mint": {
+          "$ref": "#/definitions/MintMsg_for_Nullable_Empty"
+        }
+      },
+      "additionalProperties": false
     }
   ],
   "definitions": {
     "Binary": {
       "description": "Binary is a wrapper around Vec<u8> to add base64 de/serialization with serde. It also adds some helper methods to help encode inline.\n\nThis is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>. See also <https://github.com/CosmWasm/cosmwasm/blob/main/docs/MESSAGE_TYPES.md>.",
+      "type": "string"
+    },
+    "Decimal": {
+      "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
       "type": "string"
     },
     "Empty": {
@@ -325,6 +380,21 @@
         }
       }
     },
+    "RoyaltyInfoResponse": {
+      "type": "object",
+      "required": [
+        "payment_address",
+        "share"
+      ],
+      "properties": {
+        "payment_address": {
+          "type": "string"
+        },
+        "share": {
+          "$ref": "#/definitions/Decimal"
+        }
+      }
+    },
     "Timestamp": {
       "description": "A point in time in nanosecond precision.\n\nThis type can represent times from 1970-01-01T00:00:00Z to 2554-07-21T23:34:33Z.\n\n## Examples\n\n``` # use cosmwasm_std::Timestamp; let ts = Timestamp::from_nanos(1_000_000_202); assert_eq!(ts.nanos(), 1_000_000_202); assert_eq!(ts.seconds(), 1); assert_eq!(ts.subsec_nanos(), 202);\n\nlet ts = ts.plus_seconds(2); assert_eq!(ts.nanos(), 3_000_000_202); assert_eq!(ts.seconds(), 3); assert_eq!(ts.subsec_nanos(), 202); ```",
       "allOf": [
@@ -336,6 +406,52 @@
     "Uint64": {
       "description": "A thin wrapper around u64 that is using strings for JSON encoding/decoding, such that the full u64 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u64` to get the value out:\n\n``` # use cosmwasm_std::Uint64; let a = Uint64::from(42u64); assert_eq!(a.u64(), 42);\n\nlet b = Uint64::from(70u32); assert_eq!(b.u64(), 70); ```",
       "type": "string"
+    },
+    "UpdateCollectionInfoMsg_for_RoyaltyInfoResponse": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "explicit_content": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "external_link": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "image": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "royalty_info": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/RoyaltyInfoResponse"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
     }
   }
 }

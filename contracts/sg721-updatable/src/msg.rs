@@ -1,9 +1,9 @@
 use cosmwasm_std::Binary;
+use cosmwasm_std::Timestamp;
 use cw_utils::Expiration;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use sg721::ExecuteMsg as Sg721ExecuteMsg;
-use sg721::MintMsg;
+use sg721::{ExecuteMsg as Sg721ExecuteMsg, MintMsg, RoyaltyInfoResponse, UpdateCollectionInfoMsg};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -41,10 +41,15 @@ pub enum ExecuteMsg<T> {
     RevokeAll {
         operator: String,
     },
-    Mint(MintMsg<T>),
     Burn {
         token_id: String,
     },
+    UpdateCollectionInfo {
+        collection_info: UpdateCollectionInfoMsg<RoyaltyInfoResponse>,
+    },
+    UpdateTradingStartTime(Option<Timestamp>),
+    FreezeCollectionInfo {},
+    Mint(MintMsg<T>),
 }
 
 impl<T> From<ExecuteMsg<T>> for Sg721ExecuteMsg<T> {
@@ -82,6 +87,14 @@ impl<T> From<ExecuteMsg<T>> for Sg721ExecuteMsg<T> {
                 Sg721ExecuteMsg::Revoke { spender, token_id }
             }
             ExecuteMsg::RevokeAll { operator } => Sg721ExecuteMsg::RevokeAll { operator },
+            ExecuteMsg::Burn { token_id } => Sg721ExecuteMsg::Burn { token_id },
+            ExecuteMsg::UpdateCollectionInfo { collection_info } => {
+                Sg721ExecuteMsg::UpdateCollectionInfo { collection_info }
+            }
+            ExecuteMsg::UpdateTradingStartTime(start_time) => {
+                Sg721ExecuteMsg::UpdateTradingStartTime(start_time)
+            }
+            ExecuteMsg::FreezeCollectionInfo {} => Sg721ExecuteMsg::FreezeCollectionInfo {},
             ExecuteMsg::Mint(MintMsg {
                 token_id,
                 owner,
@@ -93,7 +106,6 @@ impl<T> From<ExecuteMsg<T>> for Sg721ExecuteMsg<T> {
                 token_uri,
                 extension,
             }),
-            ExecuteMsg::Burn { token_id } => Sg721ExecuteMsg::Burn { token_id },
             _ => unreachable!("Invalid ExecuteMsg"),
         }
     }
