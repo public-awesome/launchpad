@@ -26,7 +26,7 @@ backtraces = ["cosmwasm-std/backtraces"]
 library = []
 
 [dependencies]
-cosmwasm-std = { version = "1.0.0", features = ["staking"] }
+cosmwasm-std = { version = "1.1.4", features = ["staking"] }
 cw-storage-plus = "0.15.0"
 cw2 = "0.15.0"
 schemars = "0.8.8"
@@ -40,6 +40,6 @@ sg2 = { path = "../../packages/sg2" }
 base-factory = { path = "../base-factory", features = ["library"] }
 
 [dev-dependencies]
-cosmwasm-schema = "1.0.0"
+cosmwasm-schema = "1.1.4"
 cw-multi-test = "0.15.0"
 sg-multi-test = { path = "../../packages/sg-multi-test" }

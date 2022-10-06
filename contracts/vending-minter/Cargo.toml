@@ -60,7 +60,7 @@ sg4 = { path = "../../packages/sg4" }
 cw4 = "0.15.0"
 
 [dev-dependencies]
-cosmwasm-schema = { version = "1.0.0" }
+cosmwasm-schema = { version = "1.1.4" }
 cw-multi-test = "0.15.0"
 sg-multi-test = { path = "../../packages/sg-multi-test" }
 sg721-base = { path = "../sg721-base", features = ["library"] }
