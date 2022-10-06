@@ -32,7 +32,7 @@ dependencies = [
  "cw2 0.15.1",
  "schemars",
  "serde",
- "sg-multi-test 0.15.1",
+ "sg-multi-test",
  "sg-std 0.15.0",
  "sg1 0.14.1",
  "sg2 0.2.0",
@@ -72,7 +72,7 @@ dependencies = [
  "cw721-base 0.15.0",
  "schemars",
  "serde",
- "sg-multi-test 0.15.1",
+ "sg-multi-test",
  "sg-std 0.15.0",
  "sg1 0.14.1",
  "sg2 0.2.0",
@@ -1155,24 +1155,10 @@ version = "0.15.1"
 dependencies = [
  "anyhow",
  "cosmwasm-std",
- "cw-multi-test 0.13.4",
+ "cw-multi-test 0.15.1",
  "schemars",
  "serde",
  "sg-std 0.15.0",
-]
-
-[[package]]
-name = "sg-multi-test"
-version = "0.16.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c9801b53d4f04d470942a9587c56f1a176d28fba4689645a6941f50cac265b3c"
-dependencies = [
- "anyhow",
- "cosmwasm-std",
- "cw-multi-test 0.13.4",
- "schemars",
- "serde",
- "sg-std 0.14.0",
 ]
 
 [[package]]
@@ -1191,7 +1177,7 @@ dependencies = [
  "cw4-group 0.14.0",
  "schemars",
  "serde",
- "sg-multi-test 0.15.1",
+ "sg-multi-test",
  "sg-std 0.15.0",
  "thiserror",
 ]
@@ -1373,20 +1359,6 @@ dependencies = [
 
 [[package]]
 name = "sg721"
-version = "0.16.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "115e821af5f61c1fc3225dc6e3cb3de1f54e304d8110a6c17ba0e490f863e350"
-dependencies = [
- "cosmwasm-std",
- "cw-utils 0.13.4",
- "cw721-base 0.15.0",
- "schemars",
- "serde",
- "thiserror",
-]
-
-[[package]]
-name = "sg721"
 version = "0.18.0"
 dependencies = [
  "cosmwasm-schema",
@@ -1411,9 +1383,9 @@ dependencies = [
  "cw721 0.15.0",
  "cw721-base 0.15.0",
  "serde",
- "sg-multi-test 0.16.0",
+ "sg-multi-test",
  "sg-std 0.15.0",
- "sg2 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg2 0.2.0",
  "sg721 0.18.0",
  "thiserror",
  "url",
@@ -1427,14 +1399,14 @@ version = "0.14.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
- "cw2 0.13.4",
- "cw721 0.13.4",
- "cw721-base 0.13.4",
+ "cw2 0.15.1",
+ "cw721 0.15.0",
+ "cw721-base 0.15.0",
  "schemars",
  "serde",
  "sg-metadata",
- "sg-std 0.14.0",
- "sg721 0.16.1",
+ "sg-std 0.15.0",
+ "sg721 0.18.0",
  "sg721-base",
 ]
 
@@ -1451,8 +1423,8 @@ dependencies = [
  "cw721-base 0.15.0",
  "schemars",
  "serde",
- "sg-std 0.14.0",
- "sg721 0.16.1",
+ "sg-std 0.15.0",
+ "sg721 0.18.0",
  "sg721-base",
 ]
 
@@ -1641,7 +1613,7 @@ dependencies = [
  "cw2 0.15.1",
  "schemars",
  "serde",
- "sg-multi-test 0.15.1",
+ "sg-multi-test",
  "sg-std 0.15.0",
  "sg1 0.14.1",
  "sg2 0.2.0",
@@ -1687,7 +1659,7 @@ dependencies = [
  "rand_xoshiro",
  "schemars",
  "serde",
- "sg-multi-test 0.15.1",
+ "sg-multi-test",
  "sg-splits 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg-std 0.15.0",
  "sg-whitelist 0.12.4",

@@ -12,7 +12,7 @@ use cosmwasm_std::{
 };
 
 use cw2::set_contract_version;
-use cw721_base::{msg::ExecuteMsg as Cw721ExecuteMsg, MintMsg};
+use cw721_base::MintMsg;
 use cw_utils::{must_pay, nonpayable, parse_reply_instantiate_data};
 
 use sg1::checked_fair_burn;
@@ -155,7 +155,7 @@ pub fn execute_mint_sender(
     checked_fair_burn(&info, network_fee.u128(), None, &mut res)?;
 
     // Create mint msgs
-    let mint_msg = Cw721ExecuteMsg::Mint(MintMsg::<Extension> {
+    let mint_msg = Sg721ExecuteMsg::<Extension, Empty>::Mint(MintMsg::<Extension> {
         token_id: increment_token_index(deps.storage)?.to_string(),
         owner: info.sender.to_string(),
         token_uri: Some(token_uri),
@@ -206,9 +206,7 @@ pub fn execute_update_trading_start_time(
     // execute sg721 contract
     let msg = WasmMsg::Execute {
         contract_addr: sg721_contract_addr.to_string(),
-        msg: to_binary(&Sg721ExecuteMsg::<Empty>::UpdateTradingStartTime(
-            start_time,
-        ))?,
+        msg: to_binary(&Sg721ExecuteMsg::<Extension, Empty>::UpdateTradingStartTime(start_time))?,
         funds: vec![],
     };
 
