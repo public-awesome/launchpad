@@ -1394,7 +1394,7 @@ dependencies = [
  "schemars",
  "serde",
  "sg-multi-test 0.16.0",
- "sg-std 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg-std 0.14.0",
  "sg2 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg721 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "thiserror",
