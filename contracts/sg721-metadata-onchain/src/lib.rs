@@ -1,4 +1,5 @@
 use cosmwasm_std::Empty;
+
 pub use sg721_base::ContractError;
 use sg_metadata::Metadata;
 
@@ -60,6 +61,7 @@ mod tests {
         from_slice, to_binary, ContractInfoResponse, ContractResult, Empty, OwnedDeps, Querier,
         QuerierResult, QueryRequest, SystemError, SystemResult, WasmQuery,
     };
+    use cw721::Cw721Query;
     use cw721_base::MintMsg;
     use sg721::{CollectionInfo, ExecuteMsg, InstantiateMsg};
     use std::marker::PhantomData;

@@ -85,7 +85,7 @@ mod tests {
                 airdrop_mint_fee_bps: AIRDROP_MINT_FEE_BPS,
                 shuffle_fee: coin(SHUFFLE_FEE, NATIVE_DENOM),
             },
-            default_trading_offset_secs: 60 * 60 * 24 * 7,
+            max_trading_offset_secs: 60 * 60 * 24 * 7,
         }
     }
 
@@ -221,7 +221,7 @@ mod tests {
                 .unwrap();
             let default_start_time = mock_init_extension()
                 .start_time
-                .plus_seconds(mock_params().default_trading_offset_secs);
+                .plus_seconds(mock_params().max_trading_offset_secs);
             assert_eq!(res.trading_start_time, Some(default_start_time));
 
             // update collection info
