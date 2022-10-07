@@ -1,3 +1,4 @@
+#[cfg(not(feature = "library"))]
 pub mod contract;
 pub mod error;
 pub mod msg;
@@ -21,7 +22,7 @@ pub mod entry {
     use cw721_base::Extension;
     use sg_std::Response;
 
-    #[cfg_attr(not(feature = "library"), entry_point)]
+    #[entry_point]
     pub fn instantiate(
         deps: DepsMut,
         env: Env,
@@ -31,7 +32,7 @@ pub mod entry {
         _instantiate(deps, env, info, msg)
     }
 
-    #[cfg_attr(not(feature = "library"), entry_point)]
+    #[entry_point]
     pub fn execute(
         deps: DepsMut,
         env: Env,
@@ -50,7 +51,7 @@ pub mod entry {
         }
     }
 
-    #[cfg_attr(not(feature = "library"), entry_point)]
+    #[entry_point]
     pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         Sg721UpdatableContract::default().query(deps, env, msg)
     }
