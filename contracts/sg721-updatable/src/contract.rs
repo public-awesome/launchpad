@@ -40,11 +40,9 @@ pub fn execute_freeze_token_metadata(
 ) -> Result<Response, ContractError> {
     nonpayable(&info)?;
     // Check if sender is creator
-    let owner = deps.api.addr_validate(&info.sender.to_string())?;
     let collection_info: CollectionInfoResponse =
         Sg721UpdatableContract::default().query_collection_info(deps.as_ref())?;
-
-    if owner != collection_info.creator {
+    if info.sender != collection_info.creator {
         return Err(ContractError::Base(Unauthorized {}));
     }
 
