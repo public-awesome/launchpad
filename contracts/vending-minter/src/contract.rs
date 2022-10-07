@@ -108,6 +108,16 @@ pub fn instantiate(
         .whitelist
         .and_then(|w| deps.api.addr_validate(w.as_str()).ok());
 
+    if let Some(wl) = whitelist_addr.clone() {
+        // check the whitelist exists
+        let res: WhitelistConfigResponse = deps
+            .querier
+            .query_wasm_smart(wl, &WhitelistQueryMsg::Config {})?;
+        if res.is_active {
+            return Err(ContractError::WhitelistAlreadyStarted {});
+        }
+    }
+
     // Use default start trading time if not provided
     let mut collection_info = msg.collection_params.info.clone();
     let offset = factory_params.max_trading_offset_secs;
@@ -318,8 +328,16 @@ pub fn execute_set_whitelist(
             return Err(ContractError::WhitelistAlreadyStarted {});
         }
     }
+    let new_wl = deps.api.addr_validate(whitelist)?;
+    config.extension.whitelist = Some(new_wl.clone());
+    // check that the new whitelist exists
+    let res: WhitelistConfigResponse = deps
+        .querier
+        .query_wasm_smart(new_wl, &WhitelistQueryMsg::Config {})?;
 
-    config.extension.whitelist = Some(deps.api.addr_validate(whitelist)?);
+    if res.is_active {
+        return Err(ContractError::WhitelistAlreadyStarted {});
+    }
     CONFIG.save(deps.storage, &config)?;
 
     Ok(Response::default()

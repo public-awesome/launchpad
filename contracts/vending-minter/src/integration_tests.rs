@@ -18,7 +18,10 @@ use sg_multi_test::StargazeApp;
 use sg_splits::msg::ExecuteMsg as SplitsExecuteMsg;
 use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use sg_whitelist::msg::InstantiateMsg as WhitelistInstantiateMsg;
-use sg_whitelist::msg::{AddMembersMsg, ExecuteMsg as WhitelistExecuteMsg};
+use sg_whitelist::msg::{
+    AddMembersMsg, ConfigResponse as WhitelistConfigResponse, ExecuteMsg as WhitelistExecuteMsg,
+    QueryMsg as WhitelistQueryMsg,
+};
 use vending_factory::msg::{VendingMinterCreateMsg, VendingMinterInitMsgExtension};
 use vending_factory::state::{ParamsExtension, VendingMinterParams};
 
@@ -615,6 +618,118 @@ fn happy_path() {
         )
         .unwrap();
     assert_eq!(res.count, 0);
+}
+
+#[test]
+
+fn invalid_whitelist_instantiate() {
+    let mut router = custom_mock_app();
+    let (creator, _) = setup_accounts(&mut router);
+
+    let num_tokens = 10;
+    let minter_code_id = router.store_code(contract_minter());
+    let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
+    let factory_code_id = router.store_code(contract_factory());
+
+    let mut params = mock_params();
+    params.code_id = minter_code_id;
+
+    let factory_addr = router
+        .instantiate_contract(
+            factory_code_id,
+            creator.clone(),
+            &vending_factory::msg::InstantiateMsg { params },
+            &[],
+            "factory",
+            None,
+        )
+        .unwrap();
+
+    let sg721_code_id = router.store_code(contract_sg721());
+
+    let mut msg = mock_create_minter(None);
+    msg.init_msg.whitelist = Some("invalid address".to_string());
+    msg.init_msg.mint_price = coin(MINT_PRICE, NATIVE_DENOM);
+    msg.init_msg.num_tokens = num_tokens;
+    msg.collection_params.code_id = sg721_code_id;
+    msg.collection_params.info.creator = creator.to_string();
+
+    let msg = Sg2ExecuteMsg::CreateMinter(msg);
+
+    let err = router
+        .execute_contract(creator, factory_addr, &msg, &creation_fee)
+        .unwrap_err();
+    assert_eq!(
+        err.source().unwrap().source().unwrap().to_string(),
+        "Generic error: Querier contract error: cw_multi_test::wasm::ContractData not found"
+    );
+}
+
+#[test]
+fn set_invalid_whitelist() {
+    let mut router = custom_mock_app();
+    let (creator, _) = setup_accounts(&mut router);
+    let num_tokens = 10;
+    let (minter_addr, _) = setup_minter_contract(&mut router, &creator, num_tokens, None);
+    let whitelist_addr = setup_whitelist_contract(&mut router, &creator);
+    const EXPIRATION_TIME: Timestamp = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000);
+
+    // Set block to before genesis mint start time
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME - 1000, None);
+
+    // Update to a start time after genesis
+    let msg = ExecuteMsg::UpdateStartTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 1000));
+    router
+        .execute_contract(creator.clone(), minter_addr.clone(), &msg, &[])
+        .unwrap();
+
+    // update wl times
+    const WL_START: Timestamp = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 200);
+
+    let wl_msg = WhitelistExecuteMsg::UpdateStartTime(WL_START);
+    let res = router.execute_contract(creator.clone(), whitelist_addr.clone(), &wl_msg, &[]);
+    assert!(res.is_ok());
+    let wl_msg = WhitelistExecuteMsg::UpdateEndTime(EXPIRATION_TIME);
+    let res = router.execute_contract(creator.clone(), whitelist_addr.clone(), &wl_msg, &[]);
+    assert!(res.is_ok());
+
+    // Set whitelist in minter contract
+    let set_whitelist_msg = ExecuteMsg::SetWhitelist {
+        whitelist: "invalid".to_string(),
+    };
+    let err = router
+        .execute_contract(
+            creator.clone(),
+            minter_addr.clone(),
+            &set_whitelist_msg,
+            &[],
+        )
+        .unwrap_err();
+    assert_eq!(
+        err.source().unwrap().source().unwrap().to_string(),
+        "Generic error: Querier contract error: cw_multi_test::wasm::ContractData not found"
+    );
+
+    // move time to make wl start
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 201, Some(11));
+
+    // check that the new whitelist exists
+    let wl_res: WhitelistConfigResponse = router
+        .wrap()
+        .query_wasm_smart(whitelist_addr.to_string(), &WhitelistQueryMsg::Config {})
+        .unwrap();
+
+    assert!(wl_res.is_active);
+
+    // Set whitelist in minter contract
+    let set_whitelist_msg = ExecuteMsg::SetWhitelist {
+        whitelist: whitelist_addr.to_string(),
+    };
+
+    let err = router
+        .execute_contract(creator.clone(), minter_addr, &set_whitelist_msg, &[])
+        .unwrap_err();
+    assert_eq!(err.source().unwrap().to_string(), "WhitelistAlreadyStarted");
 }
 #[test]
 fn mint_count_query() {
