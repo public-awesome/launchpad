@@ -10,6 +10,7 @@ pub struct Config {
     pub end_time: Timestamp,
     pub merkle_root: String,
     pub mint_price: Coin,
+    pub per_address_limit: u32,
 }
 
 pub const CONFIG: Item<Config> = Item::new("config");

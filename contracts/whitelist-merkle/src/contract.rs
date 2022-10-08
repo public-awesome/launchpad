@@ -80,6 +80,7 @@ pub fn instantiate(
         end_time: msg.end_time,
         mint_price: msg.mint_price,
         merkle_root: msg.merkle_root.clone(),
+        per_address_limit: msg.per_address_limit,
     };
     CONFIG.save(deps.storage, &config)?;
 
@@ -284,6 +285,7 @@ fn query_config(deps: Deps, env: Env) -> StdResult<ConfigResponse> {
         start_time: config.start_time,
         end_time: config.end_time,
         mint_price: config.mint_price,
+        per_address_limit: config.per_address_limit,
         is_active: (env.block.time >= config.start_time) && (env.block.time < config.end_time),
     })
 }

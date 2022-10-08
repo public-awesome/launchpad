@@ -70,4 +70,5 @@ pub struct ConfigResponse {
     pub end_time: Timestamp,
     pub mint_price: Coin,
     pub is_active: bool,
+    pub per_address_limit: u32,
 }

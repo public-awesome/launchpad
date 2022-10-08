@@ -70,6 +70,7 @@ pub struct WhitelistConfig {
     pub end_time: Timestamp,
     pub is_active: bool,    
     pub mint_price: Coin,
+    pub per_address_limit: u32,
 }
 
 pub fn whitelist_config (deps: Deps, whitelist: Whitelist) -> Result<WhitelistConfig, StdError> {
@@ -83,6 +84,7 @@ pub fn whitelist_config (deps: Deps, whitelist: Whitelist) -> Result<WhitelistCo
                 start_time: res.start_time,
                 is_active: res.is_active,
                 mint_price: res.mint_price,
+                per_address_limit: res.per_address_limit,
             })
         },
         Whitelist::MerkleTree { address, merkle_root: _ } => {
@@ -94,6 +96,7 @@ pub fn whitelist_config (deps: Deps, whitelist: Whitelist) -> Result<WhitelistCo
                 start_time: res.start_time,
                 is_active: res.is_active,
                 mint_price: res.mint_price,
+                per_address_limit: res.per_address_limit,
             })
         },
     }

@@ -336,8 +336,8 @@ pub fn execute_set_whitelist(
     }
 
     if config.extension.whitelist.is_some() {
-        let wl_config = whitelist_config(deps.as_ref(), config.extension.whitelist.unwrap());
-        if wl_config.is_ok() && wl_config.unwrap().is_active {
+        let wl_config = whitelist_config(deps.as_ref(), config.extension.whitelist.unwrap())?;
+        if wl_config.is_active {
             return Err(ContractError::WhitelistAlreadyStarted {});
         }
     }
@@ -418,10 +418,10 @@ fn is_public_mint(deps: Deps, info: &MessageInfo, proof: Option<Vec<String>>) ->
             }
 
             // Check wl per address limit
-            // let mint_count = mint_count(deps, info)?;
-            // if mint_count >= wl_config.per_address_limit {
-            //     return Err(ContractError::MaxPerAddressLimitExceeded {});
-            // }
+            let mint_count = mint_count(deps, info)?;
+            if mint_count >= wl_config.per_address_limit {
+                return Err(ContractError::MaxPerAddressLimitExceeded {});
+            }
         },
         Whitelist::MerkleTree { address, merkle_root: _ } => {
             let res: MerkleHasMemberResponse = deps.querier.query_wasm_smart(
@@ -435,6 +435,11 @@ fn is_public_mint(deps: Deps, info: &MessageInfo, proof: Option<Vec<String>>) ->
                 return Err(ContractError::NotWhitelisted {
                     addr: info.sender.to_string(),
                 });
+            }
+            // Check wl per address limit
+            let mint_count = mint_count(deps, info)?;
+            if mint_count >= wl_config.per_address_limit {
+                return Err(ContractError::MaxPerAddressLimitExceeded {});
             }
         }   
     }    
