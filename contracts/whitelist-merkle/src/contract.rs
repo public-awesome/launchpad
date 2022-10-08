@@ -1,15 +1,15 @@
 use crate::error::ContractError;
 use crate::msg::{
-    ConfigResponse, ExecuteMsg, HasEndedResponse, HasMemberResponse,
-    HasStartedResponse, InstantiateMsg, IsActiveResponse, QueryMsg, MerkleRootResponse,
+    ConfigResponse, ExecuteMsg, HasEndedResponse, HasMemberResponse, HasStartedResponse,
+    InstantiateMsg, IsActiveResponse, MerkleRootResponse, QueryMsg,
 };
 use crate::state::{Config, CONFIG, MERKLE_ROOT};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
+use cosmwasm_std::Timestamp;
 use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult};
-use cosmwasm_std::{Timestamp};
 use cw2::set_contract_version;
-use cw_utils::{must_pay};
+use cw_utils::must_pay;
 use rust_decimal::prelude::ToPrimitive;
 use rust_decimal::Decimal;
 use sg1::checked_fair_burn;
@@ -25,7 +25,6 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 const PRICE_PER_1000_MEMBERS: u128 = 100_000_000;
 const MIN_MINT_PRICE: u128 = 25_000_000;
 const MAX_PER_ADDRESS_LIMIT: u32 = 30;
-
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -197,9 +196,7 @@ pub fn execute_update_end_time(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::MerkleRoot {} => {
-            to_binary(&query_merkle_root(deps)?)
-        }
+        QueryMsg::MerkleRoot {} => to_binary(&query_merkle_root(deps)?),
 
         QueryMsg::HasStarted {} => to_binary(&query_has_started(deps, env)?),
         QueryMsg::HasEnded {} => to_binary(&query_has_ended(deps, env)?),
@@ -230,14 +227,18 @@ fn query_is_active(deps: Deps, env: Env) -> StdResult<IsActiveResponse> {
     })
 }
 
-fn query_merkle_root(
-    deps: Deps,
-) -> StdResult<MerkleRootResponse> {
+fn query_merkle_root(deps: Deps) -> StdResult<MerkleRootResponse> {
     let result = MERKLE_ROOT.load(deps.storage)?;
-    Ok(MerkleRootResponse { merkle_root: result })
+    Ok(MerkleRootResponse {
+        merkle_root: result,
+    })
 }
 
-fn query_has_member(deps: Deps, member: String, proof: Vec<String>) -> StdResult<HasMemberResponse> {
+fn query_has_member(
+    deps: Deps,
+    member: String,
+    proof: Vec<String>,
+) -> StdResult<HasMemberResponse> {
     let merkle_root = MERKLE_ROOT.load(deps.storage).unwrap_or_default();
     // println!("merkle_root {}", merkle_root);
     println!("member {}", member);
@@ -245,37 +246,35 @@ fn query_has_member(deps: Deps, member: String, proof: Vec<String>) -> StdResult
     let hash = sha2::Sha256::digest(member.as_bytes())
         .as_slice()
         .try_into()
-        .map_err(|_| ContractError::Unauthorized {}).unwrap_or_default();
+        .map_err(|_| ContractError::Unauthorized {})
+        .unwrap_or_default();
     println!("hash {:?}", hash);
 
-
-    let hash = proof.into_iter().try_fold(hash, |hash, p| {
-        let mut proof_buf = [0; 32];
-        hex::decode_to_slice(p, &mut proof_buf).unwrap_or_default();
-        let hashes = [hash, proof_buf];
-        sha2::Sha256::digest(&hashes.concat())
-            .as_slice()
-            .try_into()
-            .map_err(|_| ContractError::Unauthorized {})
-    }).unwrap_or_default();
+    let hash = proof
+        .into_iter()
+        .try_fold(hash, |hash, p| {
+            let mut proof_buf = [0; 32];
+            hex::decode_to_slice(p, &mut proof_buf).unwrap_or_default();
+            let hashes = [hash, proof_buf];
+            sha2::Sha256::digest(&hashes.concat())
+                .as_slice()
+                .try_into()
+                .map_err(|_| ContractError::Unauthorized {})
+        })
+        .unwrap_or_default();
     println!("hash {:?}", hash);
-
 
     let mut root_buf: [u8; 32] = [0; 32];
-    hex::decode_to_slice(merkle_root , &mut root_buf).unwrap_or_default();
+    hex::decode_to_slice(merkle_root, &mut root_buf).unwrap_or_default();
 
     println!("hash {:?}", hash);
     println!("root_buf {:?}", root_buf);
 
     if root_buf != hash {
-        return Ok(HasMemberResponse{
-            has_member: false,
-        });
+        return Ok(HasMemberResponse { has_member: false });
     }
 
-    Ok(HasMemberResponse {
-        has_member: true,
-    })
+    Ok(HasMemberResponse { has_member: true })
 }
 
 fn query_config(deps: Deps, env: Env) -> StdResult<ConfigResponse> {
@@ -307,7 +306,8 @@ mod tests {
 
     fn setup_contract(deps: DepsMut) {
         let msg = InstantiateMsg {
-            merkle_root: "b097c35bb87dc749db869ee8f28b49ac53f6ab817a9e1bab5f1eec98223d416f".to_string(),
+            merkle_root: "b097c35bb87dc749db869ee8f28b49ac53f6ab817a9e1bab5f1eec98223d416f"
+                .to_string(),
             start_time: GENESIS_START_TIME,
             end_time: END_TIME,
             mint_price: coin(UNIT_AMOUNT, NATIVE_DENOM),
@@ -329,7 +329,8 @@ mod tests {
     fn improper_initialization() {
         let mut deps = mock_dependencies();
         let msg = InstantiateMsg {
-            merkle_root: "0x7075152d03a5cd92104887b476862778ec0c87be5c2fa1c0a90f87c49fad6eff".to_string(),
+            merkle_root: "0x7075152d03a5cd92104887b476862778ec0c87be5c2fa1c0a90f87c49fad6eff"
+                .to_string(),
             start_time: END_TIME,
             end_time: END_TIME,
             mint_price: coin(1, NATIVE_DENOM),
@@ -344,7 +345,8 @@ mod tests {
     fn improper_initialization_invalid_denom() {
         let mut deps = mock_dependencies();
         let msg = InstantiateMsg {
-            merkle_root: "0x7075152d03a5cd92104887b476862778ec0c87be5c2fa1c0a90f87c49fad6eff".to_string(),
+            merkle_root: "0x7075152d03a5cd92104887b476862778ec0c87be5c2fa1c0a90f87c49fad6eff"
+                .to_string(),
             start_time: END_TIME,
             end_time: END_TIME,
             mint_price: coin(UNIT_AMOUNT, "not_ustars"),
@@ -360,7 +362,8 @@ mod tests {
     fn improper_initialization_invalid_creation_fee() {
         let mut deps = mock_dependencies();
         let msg = InstantiateMsg {
-            merkle_root: "0x7075152d03a5cd92104887b476862778ec0c87be5c2fa1c0a90f87c49fad6eff".to_string(),
+            merkle_root: "0x7075152d03a5cd92104887b476862778ec0c87be5c2fa1c0a90f87c49fad6eff"
+                .to_string(),
             start_time: END_TIME,
             end_time: END_TIME,
             mint_price: coin(UNIT_AMOUNT, "ustars"),
@@ -378,7 +381,8 @@ mod tests {
     #[test]
     fn check_start_time_after_end_time() {
         let msg = InstantiateMsg {
-            merkle_root: "0x7075152d03a5cd92104887b476862778ec0c87be5c2fa1c0a90f87c49fad6eff".to_string(),
+            merkle_root: "0x7075152d03a5cd92104887b476862778ec0c87be5c2fa1c0a90f87c49fad6eff"
+                .to_string(),
             start_time: END_TIME,
             end_time: GENESIS_START_TIME,
             mint_price: coin(UNIT_AMOUNT, NATIVE_DENOM),
@@ -425,7 +429,7 @@ mod tests {
 
         let valid_user = mock_info("stars1ye63jpm474yfrq02nyplrspyw75y82tptsls9t", &[]);
         let proof = vec![
-            "8b231ee54c7e265bca6482e6a6a0f251c5da97be74f4e9720ae81a1bc08beea9".to_string(), 
+            "8b231ee54c7e265bca6482e6a6a0f251c5da97be74f4e9720ae81a1bc08beea9".to_string(),
             "28fc41471ab92238e98664e99671e906cb29c048dd0343f3acf5295e424270e1".to_string(),
         ];
         let res = query_has_member(deps.as_ref(), valid_user.sender.to_string(), proof).unwrap();

@@ -22,7 +22,9 @@ use sg_whitelist::msg::{
     AddMembersMsg, ConfigResponse as WhitelistConfigResponse, ExecuteMsg as WhitelistExecuteMsg,
     QueryMsg as WhitelistQueryMsg,
 };
-use vending_factory::msg::{VendingMinterCreateMsg, VendingMinterInitMsgExtension, Whitelist, InitWhitelist};
+use vending_factory::msg::{
+    InitWhitelist, VendingMinterCreateMsg, VendingMinterInitMsgExtension, Whitelist,
+};
 use vending_factory::state::{ParamsExtension, VendingMinterParams};
 
 const CREATION_FEE: u128 = 5_000_000_000;
@@ -649,7 +651,9 @@ fn invalid_whitelist_instantiate() {
     let sg721_code_id = router.store_code(contract_sg721());
 
     let mut msg = mock_create_minter(None);
-    msg.init_msg.whitelist = Some(InitWhitelist::List { address: "invalid_address".to_string() });
+    msg.init_msg.whitelist = Some(InitWhitelist::List {
+        address: "invalid_address".to_string(),
+    });
     msg.init_msg.mint_price = coin(MINT_PRICE, NATIVE_DENOM);
     msg.init_msg.num_tokens = num_tokens;
     msg.collection_params.code_id = sg721_code_id;
@@ -696,9 +700,9 @@ fn set_invalid_whitelist() {
 
     // Set whitelist in minter contract
     let set_whitelist_msg = ExecuteMsg::SetWhitelist {
-        whitelist: InitWhitelist::List { 
-            address: "invalid_address".to_string()
-        }
+        whitelist: InitWhitelist::List {
+            address: "invalid_address".to_string(),
+        },
     };
     let err = router
         .execute_contract(
@@ -726,9 +730,9 @@ fn set_invalid_whitelist() {
 
     // Set whitelist in minter contract
     let set_whitelist_msg = ExecuteMsg::SetWhitelist {
-        whitelist: InitWhitelist::List { 
-            address: whitelist_addr.to_string()
-        }
+        whitelist: InitWhitelist::List {
+            address: whitelist_addr.to_string(),
+        },
     };
 
     let err = router
@@ -759,9 +763,9 @@ fn mint_count_query() {
 
     // Set whitelist in minter contract
     let set_whitelist_msg = ExecuteMsg::SetWhitelist {
-        whitelist: InitWhitelist::List { 
-            address: whitelist_addr.to_string()
-        }
+        whitelist: InitWhitelist::List {
+            address: whitelist_addr.to_string(),
+        },
     };
     let res = router.execute_contract(
         creator.clone(),
@@ -947,9 +951,9 @@ fn whitelist_already_started() {
 
     // set whitelist in minter contract
     let set_whitelist_msg = ExecuteMsg::SetWhitelist {
-        whitelist: InitWhitelist::List { 
-            address: whitelist_addr.to_string()
-        }
+        whitelist: InitWhitelist::List {
+            address: whitelist_addr.to_string(),
+        },
     };
     router
         .execute_contract(
@@ -973,9 +977,9 @@ fn whitelist_can_update_before_start() {
 
     // set whitelist in minter contract
     let set_whitelist_msg = ExecuteMsg::SetWhitelist {
-        whitelist: InitWhitelist::List { 
-            address: whitelist_addr.to_string()
-        }
+        whitelist: InitWhitelist::List {
+            address: whitelist_addr.to_string(),
+        },
     };
     router
         .execute_contract(
@@ -1022,9 +1026,9 @@ fn whitelist_access_len_add_remove_expiration() {
 
     // Set whitelist in minter contract
     let set_whitelist_msg = ExecuteMsg::SetWhitelist {
-        whitelist: InitWhitelist::List { 
-            address: whitelist_addr.to_string()
-        }
+        whitelist: InitWhitelist::List {
+            address: whitelist_addr.to_string(),
+        },
     };
     let res = router.execute_contract(
         creator.clone(),

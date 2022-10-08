@@ -1,5 +1,5 @@
 use cosmwasm_std::{Addr, Coin, Timestamp};
-use cw_storage_plus::{Item};
+use cw_storage_plus::Item;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 

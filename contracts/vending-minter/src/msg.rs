@@ -1,7 +1,10 @@
 use cosmwasm_std::{Coin, Timestamp};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vending_factory::{msg::{VendingMinterCreateMsg, Whitelist, InitWhitelist}, state::VendingMinterParams};
+use vending_factory::{
+    msg::{InitWhitelist, VendingMinterCreateMsg, Whitelist},
+    state::VendingMinterParams,
+};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {

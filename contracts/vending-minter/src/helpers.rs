@@ -2,17 +2,18 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use cosmwasm_std::{
-    to_binary, Addr, Coin, ContractInfoResponse, CustomQuery, Querier, QuerierWrapper, StdResult,
-    WasmMsg, WasmQuery, DepsMut, Deps, Timestamp, StdError,
+    to_binary, Addr, Coin, ContractInfoResponse, CustomQuery, Deps, DepsMut, Querier,
+    QuerierWrapper, StdError, StdResult, Timestamp, WasmMsg, WasmQuery,
 };
 use sg_std::CosmosMsg;
-use vending_factory::msg::{Whitelist, InitWhitelist};
 use sg_whitelist::msg::{
     ConfigResponse as WhitelistConfigResponse, HasMemberResponse, QueryMsg as WhitelistQueryMsg,
 };
 use sg_whitelist_merkle::msg::{
-    QueryMsg as MerkleWhitelistQueryMsg, HasMemberResponse as MerkleHasMemberResponse, ConfigResponse as MerkleWhitelistConfigResponse
+    ConfigResponse as MerkleWhitelistConfigResponse, HasMemberResponse as MerkleHasMemberResponse,
+    QueryMsg as MerkleWhitelistQueryMsg,
 };
+use vending_factory::msg::{InitWhitelist, Whitelist};
 
 use crate::{msg::ExecuteMsg, ContractError};
 
@@ -68,12 +69,12 @@ impl MinterContract {
 pub struct WhitelistConfig {
     pub start_time: Timestamp,
     pub end_time: Timestamp,
-    pub is_active: bool,    
+    pub is_active: bool,
     pub mint_price: Coin,
     pub per_address_limit: u32,
 }
 
-pub fn whitelist_config (deps: Deps, whitelist: Whitelist) -> Result<WhitelistConfig, StdError> {
+pub fn whitelist_config(deps: Deps, whitelist: Whitelist) -> Result<WhitelistConfig, StdError> {
     match whitelist {
         Whitelist::List { address } => {
             let res: WhitelistConfigResponse = deps
@@ -86,8 +87,11 @@ pub fn whitelist_config (deps: Deps, whitelist: Whitelist) -> Result<WhitelistCo
                 mint_price: res.mint_price,
                 per_address_limit: res.per_address_limit,
             })
-        },
-        Whitelist::MerkleTree { address, merkle_root: _ } => {
+        }
+        Whitelist::MerkleTree {
+            address,
+            merkle_root: _,
+        } => {
             let res: MerkleWhitelistConfigResponse = deps
                 .querier
                 .query_wasm_smart(address, &MerkleWhitelistQueryMsg::Config {})?;
@@ -98,37 +102,45 @@ pub fn whitelist_config (deps: Deps, whitelist: Whitelist) -> Result<WhitelistCo
                 mint_price: res.mint_price,
                 per_address_limit: res.per_address_limit,
             })
-        },
+        }
     }
 }
 
-pub fn parse_init_whitelist (deps: Deps, wl: InitWhitelist) -> Result<Whitelist, ContractError> {
+pub fn parse_init_whitelist(deps: Deps, wl: InitWhitelist) -> Result<Whitelist, ContractError> {
     match wl {
         InitWhitelist::List { address } => {
             let addr = deps.api.addr_validate(&address)?;
             Ok(Whitelist::List { address: addr })
-
-        },
-        InitWhitelist::MerkleTree { address, merkle_root } => {
+        }
+        InitWhitelist::MerkleTree {
+            address,
+            merkle_root,
+        } => {
             let addr = deps.api.addr_validate(&address)?;
-            Ok(Whitelist::MerkleTree { address: addr, merkle_root, })
-        },
+            Ok(Whitelist::MerkleTree {
+                address: addr,
+                merkle_root,
+            })
+        }
     }
 }
 
-pub fn whitelist_exists (deps: DepsMut, wl: Whitelist) -> Result<(), ContractError> {
+pub fn whitelist_exists(deps: DepsMut, wl: Whitelist) -> Result<(), ContractError> {
     match wl {
         Whitelist::List { address } => {
             let res: WhitelistConfigResponse = deps
                 .querier
                 .query_wasm_smart(address, &WhitelistQueryMsg::Config {})?;
             Ok(())
-        },
-        Whitelist::MerkleTree { address, merkle_root } => {
+        }
+        Whitelist::MerkleTree {
+            address,
+            merkle_root,
+        } => {
             let res: MerkleWhitelistConfigResponse = deps
                 .querier
                 .query_wasm_smart(address, &MerkleWhitelistQueryMsg::Config {})?;
             Ok(())
         }
-    }   
+    }
 }

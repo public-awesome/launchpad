@@ -26,10 +26,7 @@ pub enum QueryMsg {
     HasEnded {},
     IsActive {},
     MerkleRoot {},
-    HasMember {
-        member: String,
-        proof: Vec<String>,
-    },
+    HasMember { member: String, proof: Vec<String> },
     Config {},
 }
 

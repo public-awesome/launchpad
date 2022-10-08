@@ -2,7 +2,7 @@ use std::borrow::BorrowMut;
 use std::convert::TryInto;
 
 use crate::error::ContractError;
-use crate::helpers::{parse_init_whitelist, whitelist_exists, whitelist_config};
+use crate::helpers::{parse_init_whitelist, whitelist_config, whitelist_exists};
 use crate::msg::{
     ConfigResponse, ExecuteMsg, MintCountResponse, MintPriceResponse, MintableNumTokensResponse,
     QueryMsg, StartTimeResponse,
@@ -32,13 +32,14 @@ use sg_whitelist::msg::{
     ConfigResponse as WhitelistConfigResponse, HasMemberResponse, QueryMsg as WhitelistQueryMsg,
 };
 use sg_whitelist_merkle::msg::{
-    QueryMsg as MerkleWhitelistQueryMsg, HasMemberResponse as MerkleHasMemberResponse, ConfigResponse as MerkleWhitelistConfigResponse
+    ConfigResponse as MerkleWhitelistConfigResponse, HasMemberResponse as MerkleHasMemberResponse,
+    QueryMsg as MerkleWhitelistQueryMsg,
 };
 use sha2::{Digest, Sha256};
 use shuffle::{fy::FisherYates, shuffler::Shuffler};
 use url::Url;
 
-use vending_factory::msg::{ParamsResponse, VendingMinterCreateMsg, Whitelist, InitWhitelist};
+use vending_factory::msg::{InitWhitelist, ParamsResponse, VendingMinterCreateMsg, Whitelist};
 
 pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 pub type SubMsg = cosmwasm_std::SubMsg<StargazeMsgWrapper>;
@@ -64,7 +65,7 @@ pub fn instantiate(
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
     let factory = info.sender.clone();
-    
+
     // Make sure the sender is the factory contract
     // This will fail if the sender cannot parse a response from the factory contract
     let factory_response: ParamsResponse = deps
@@ -115,14 +116,13 @@ pub fn instantiate(
                 return Err(ContractError::WhitelistAlreadyStarted {});
             }
             Ok(Some(whitelist))
-        },
+        }
         None => Ok(None),
     };
     if whitelist.is_err() {
         return Err(ContractError::WhitelistAlreadyStarted {});
     }
     let whitelist = whitelist.unwrap();
-    
 
     // Use default start trading time if not provided
     let mut collection_info = msg.collection_params.info.clone();
@@ -220,15 +220,13 @@ pub fn execute(
         }
         ExecuteMsg::MintTo { recipient, proof } => {
             execute_mint_to(deps, env, info, recipient, proof)
-        },
+        }
         ExecuteMsg::MintFor {
             token_id,
             recipient,
             proof,
         } => execute_mint_for(deps, env, info, token_id, recipient, proof),
-        ExecuteMsg::SetWhitelist { whitelist } => {
-            execute_set_whitelist(deps, env, info, whitelist)
-        }
+        ExecuteMsg::SetWhitelist { whitelist } => execute_set_whitelist(deps, env, info, whitelist),
         ExecuteMsg::Shuffle {} => execute_shuffle(deps, env, info),
         ExecuteMsg::BurnRemaining {} => execute_burn_remaining(deps, env, info),
     }
@@ -348,7 +346,10 @@ pub fn execute_set_whitelist(
 
     let whitlist_address = match parsed_whitelist {
         Whitelist::List { address } => address,
-        Whitelist::MerkleTree { address, merkle_root: _ } => address,
+        Whitelist::MerkleTree {
+            address,
+            merkle_root: _,
+        } => address,
     };
 
     Ok(Response::default()
@@ -367,7 +368,9 @@ pub fn execute_mint_sender(
 
     // If there is no active whitelist right now, check public mint
     // Check if after start_time
-    if is_public_mint(deps.as_ref(), &info, proof.clone())? && (env.block.time < config.extension.start_time) {
+    if is_public_mint(deps.as_ref(), &info, proof.clone())?
+        && (env.block.time < config.extension.start_time)
+    {
         return Err(ContractError::BeforeMintStartTime {});
     }
 
@@ -382,7 +385,11 @@ pub fn execute_mint_sender(
 
 // Check if a whitelist exists and not ended
 // Sender has to be whitelisted to mint
-fn is_public_mint(deps: Deps, info: &MessageInfo, proof: Option<Vec<String>>) -> Result<bool, ContractError> {
+fn is_public_mint(
+    deps: Deps,
+    info: &MessageInfo,
+    proof: Option<Vec<String>>,
+) -> Result<bool, ContractError> {
     let config = CONFIG.load(deps.storage)?;
 
     // If there is no whitelist, there's only a public mint
@@ -415,8 +422,11 @@ fn is_public_mint(deps: Deps, info: &MessageInfo, proof: Option<Vec<String>>) ->
             if mint_count >= wl_config.per_address_limit {
                 return Err(ContractError::MaxPerAddressLimitExceeded {});
             }
-        },
-        Whitelist::MerkleTree { address, merkle_root: _ } => {
+        }
+        Whitelist::MerkleTree {
+            address,
+            merkle_root: _,
+        } => {
             let res: MerkleHasMemberResponse = deps.querier.query_wasm_smart(
                 address,
                 &MerkleWhitelistQueryMsg::HasMember {
@@ -434,8 +444,8 @@ fn is_public_mint(deps: Deps, info: &MessageInfo, proof: Option<Vec<String>>) ->
             if mint_count >= wl_config.per_address_limit {
                 return Err(ContractError::MaxPerAddressLimitExceeded {});
             }
-        }   
-    }    
+        }
+    }
 
     Ok(false)
 }
@@ -525,7 +535,7 @@ fn _execute_mint(
         Some(some_recipient) => some_recipient,
         None => info.sender.clone(),
     };
-    
+
     let mint_price: Coin = mint_price(deps.as_ref(), is_admin)?;
     // Exact payment only accepted
     let payment = may_pay(&info, &config.mint_price.denom)?;
@@ -535,9 +545,9 @@ fn _execute_mint(
             mint_price,
         ));
     }
-    
+
     let mut res = Response::new();
-    
+
     let factory: ParamsResponse = deps
         .querier
         .query_wasm_smart(config.factory, &Sg2QueryMsg::Params {})?;
@@ -907,7 +917,7 @@ pub fn mint_price(deps: Deps, is_admin: bool) -> Result<Coin, StdError> {
     if config.extension.whitelist.is_none() {
         return Ok(config.mint_price);
     }
-    
+
     let whitelist = config.extension.whitelist.unwrap();
     let wl_config = whitelist_config(deps, whitelist)?;
     if wl_config.is_active {
@@ -1033,7 +1043,7 @@ fn query_mint_price(deps: Deps) -> StdResult<MintPriceResponse> {
         Some(wl) => {
             let wl_config = whitelist_config(deps, wl)?;
             Some(wl_config.mint_price)
-        },
+        }
         None => None,
     };
     let airdrop_price = coin(

@@ -1,4 +1,4 @@
-use cosmwasm_std::{Coin, Timestamp, Addr};
+use cosmwasm_std::{Addr, Coin, Timestamp};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use sg2::msg::{CreateMinterMsg, Sg2ExecuteMsg, UpdateMinterParamsMsg};
@@ -7,13 +7,18 @@ use crate::state::VendingMinterParams;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub enum InitWhitelist {
-    List { address: String, },
-    MerkleTree { address: String, merkle_root: String },
+    List {
+        address: String,
+    },
+    MerkleTree {
+        address: String,
+        merkle_root: String,
+    },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub enum Whitelist {
-    List { address: Addr, },
+    List { address: Addr },
     MerkleTree { address: Addr, merkle_root: String },
 }
 
