@@ -1,9 +1,21 @@
-use cosmwasm_std::{Coin, Timestamp};
+use cosmwasm_std::{Coin, Timestamp, Addr};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use sg2::msg::{CreateMinterMsg, Sg2ExecuteMsg, UpdateMinterParamsMsg};
 
 use crate::state::VendingMinterParams;
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub enum InitWhitelist {
+    List { address: String, },
+    MerkleTree { address: String, merkle_root: String },
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub enum Whitelist {
+    List { address: Addr, },
+    MerkleTree { address: Addr, merkle_root: String },
+}
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {
@@ -19,7 +31,8 @@ pub struct VendingMinterInitMsgExtension {
     pub num_tokens: u32,
     pub mint_price: Coin,
     pub per_address_limit: u32,
-    pub whitelist: Option<String>,
+
+    pub whitelist: Option<InitWhitelist>,
 }
 pub type VendingMinterCreateMsg = CreateMinterMsg<VendingMinterInitMsgExtension>;
 
