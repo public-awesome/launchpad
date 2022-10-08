@@ -1,0 +1,48 @@
+[package]
+name = "sg-whitelist-merkle"
+version = "0.0.1"
+authors = ["Arb <arb@subtract.fi>"]
+edition = "2018"
+description = "Stargaze NFT whitelist contract"
+license = "Apache-2.0"
+
+exclude = [
+  # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
+  "contract.wasm",
+  "hash.txt",
+]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+# for more explicit tests, cargo test --features=backtraces
+backtraces = ["cosmwasm-std/backtraces"]
+# use library feature to disable all instantiate/execute/query exports
+library = []
+
+[package.metadata.scripts]
+optimize = """docker run --rm -v "$(pwd)":/code \
+  --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
+  --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
+  cosmwasm/rust-optimizer:0.12.8
+"""
+
+[dependencies]
+cosmwasm-std = { version = "1.0.0" }
+cw-storage-plus = "0.13.4"
+cw-utils = "0.13.4"
+cw2 = "0.13.4"
+schemars = "0.8"
+rust_decimal = { version = "1.14.3" }
+serde = { version = "1.0", default-features = false, features = ["derive"] }
+thiserror = { version = "1.0" }
+sg-std = { path = "../../packages/sg-std" }
+sg1 = { path = "../../packages/sg1" }
+hex = "0.4"
+sha2 = { version = "0.9.9", default-features = false }
+
+[dev-dependencies]
+cosmwasm-schema = { version = "1.0.0" }
