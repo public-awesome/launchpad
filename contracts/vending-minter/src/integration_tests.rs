@@ -22,7 +22,7 @@ use sg_whitelist::msg::{
     AddMembersMsg, ConfigResponse as WhitelistConfigResponse, ExecuteMsg as WhitelistExecuteMsg,
     QueryMsg as WhitelistQueryMsg,
 };
-use vending_factory::msg::{VendingMinterCreateMsg, VendingMinterInitMsgExtension};
+use vending_factory::msg::{VendingMinterCreateMsg, VendingMinterInitMsgExtension, Whitelist, InitWhitelist};
 use vending_factory::state::{ParamsExtension, VendingMinterParams};
 
 const CREATION_FEE: u128 = 5_000_000_000;
@@ -461,7 +461,7 @@ fn happy_path() {
     setup_block_time(&mut router, GENESIS_MINT_START_TIME + 1, None);
 
     // Fail with incorrect tokens
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof: None };
     let err = router.execute_contract(
         buyer.clone(),
         minter_addr.clone(),
@@ -471,7 +471,7 @@ fn happy_path() {
     assert!(err.is_err());
 
     // Succeeds if funds are sent
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof: None };
     let res = router.execute_contract(
         buyer.clone(),
         minter_addr.clone(),
@@ -521,6 +521,7 @@ fn happy_path() {
 
     // Buyer can't call MintTo
     let mint_to_msg = ExecuteMsg::MintTo {
+        proof: None,
         recipient: buyer.to_string(),
     };
     let res = router.execute_contract(
@@ -578,7 +579,7 @@ fn happy_path() {
     assert_eq!(res.owner, buyer.to_string());
 
     // Errors if sold out
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof: None };
     let res = router.execute_contract(
         buyer.clone(),
         minter_addr.clone(),
@@ -648,7 +649,7 @@ fn invalid_whitelist_instantiate() {
     let sg721_code_id = router.store_code(contract_sg721());
 
     let mut msg = mock_create_minter(None);
-    msg.init_msg.whitelist = Some("invalid address".to_string());
+    msg.init_msg.whitelist = Some(InitWhitelist::List { address: "invalid_address".to_string() });
     msg.init_msg.mint_price = coin(MINT_PRICE, NATIVE_DENOM);
     msg.init_msg.num_tokens = num_tokens;
     msg.collection_params.code_id = sg721_code_id;
@@ -695,7 +696,9 @@ fn set_invalid_whitelist() {
 
     // Set whitelist in minter contract
     let set_whitelist_msg = ExecuteMsg::SetWhitelist {
-        whitelist: "invalid".to_string(),
+        whitelist: InitWhitelist::List { 
+            address: "invalid_address".to_string()
+        }
     };
     let err = router
         .execute_contract(
@@ -723,7 +726,9 @@ fn set_invalid_whitelist() {
 
     // Set whitelist in minter contract
     let set_whitelist_msg = ExecuteMsg::SetWhitelist {
-        whitelist: whitelist_addr.to_string(),
+        whitelist: InitWhitelist::List { 
+            address: whitelist_addr.to_string()
+        }
     };
 
     let err = router
@@ -754,7 +759,9 @@ fn mint_count_query() {
 
     // Set whitelist in minter contract
     let set_whitelist_msg = ExecuteMsg::SetWhitelist {
-        whitelist: whitelist_addr.to_string(),
+        whitelist: InitWhitelist::List { 
+            address: whitelist_addr.to_string()
+        }
     };
     let res = router.execute_contract(
         creator.clone(),
@@ -787,7 +794,7 @@ fn mint_count_query() {
     setup_block_time(&mut router, GENESIS_MINT_START_TIME, Some(10));
 
     // Mint succeeds
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof: None };
     let res = router.execute_contract(
         buyer.clone(),
         minter_addr.clone(),
@@ -810,7 +817,7 @@ fn mint_count_query() {
     assert_eq!(res.address, buyer.to_string());
 
     // Mint fails, over whitelist per address limit
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof: None };
     let err = router
         .execute_contract(
             buyer.clone(),
@@ -828,7 +835,7 @@ fn mint_count_query() {
     setup_block_time(&mut router, GENESIS_MINT_START_TIME + 20_000, Some(11));
 
     // Public mint succeeds
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof: None };
     let res = router.execute_contract(
         buyer.clone(),
         minter_addr.clone(),
@@ -877,7 +884,7 @@ fn mint_count_query() {
     assert!(res.is_ok());
 
     // Mint succeeds
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof: None };
     let res = router.execute_contract(
         buyer.clone(),
         minter_addr.clone(),
@@ -900,7 +907,7 @@ fn mint_count_query() {
     assert_eq!(res.address, buyer.to_string());
 
     // Mint fails
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof: None };
     let err = router
         .execute_contract(
             buyer.clone(),
@@ -940,7 +947,9 @@ fn whitelist_already_started() {
 
     // set whitelist in minter contract
     let set_whitelist_msg = ExecuteMsg::SetWhitelist {
-        whitelist: whitelist_addr.to_string(),
+        whitelist: InitWhitelist::List { 
+            address: whitelist_addr.to_string()
+        }
     };
     router
         .execute_contract(
@@ -964,7 +973,9 @@ fn whitelist_can_update_before_start() {
 
     // set whitelist in minter contract
     let set_whitelist_msg = ExecuteMsg::SetWhitelist {
-        whitelist: whitelist_addr.to_string(),
+        whitelist: InitWhitelist::List { 
+            address: whitelist_addr.to_string()
+        }
     };
     router
         .execute_contract(
@@ -1011,7 +1022,9 @@ fn whitelist_access_len_add_remove_expiration() {
 
     // Set whitelist in minter contract
     let set_whitelist_msg = ExecuteMsg::SetWhitelist {
-        whitelist: whitelist_addr.to_string(),
+        whitelist: InitWhitelist::List { 
+            address: whitelist_addr.to_string()
+        }
     };
     let res = router.execute_contract(
         creator.clone(),
@@ -1022,7 +1035,7 @@ fn whitelist_access_len_add_remove_expiration() {
     assert!(res.is_ok());
 
     // Mint fails, buyer is not on whitelist
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof: None };
     let res = router.execute_contract(
         buyer.clone(),
         minter_addr.clone(),
@@ -1040,7 +1053,7 @@ fn whitelist_access_len_add_remove_expiration() {
     assert!(res.is_ok());
 
     // Mint fails, not whitelist price
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof: None };
     router
         .execute_contract(
             buyer.clone(),
@@ -1072,7 +1085,7 @@ fn whitelist_access_len_add_remove_expiration() {
     );
 
     // Mint succeeds with whitelist price
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof: None };
     let res = router.execute_contract(
         buyer.clone(),
         minter_addr.clone(),
@@ -1082,7 +1095,7 @@ fn whitelist_access_len_add_remove_expiration() {
     assert!(res.is_ok());
 
     // Mint fails, over whitelist per address limit
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof: None };
     let err = router
         .execute_contract(
             buyer.clone(),
@@ -1110,7 +1123,7 @@ fn whitelist_access_len_add_remove_expiration() {
     assert!(res.is_ok());
 
     // Mint fails, buyer exceeded per address limit
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof: None };
     let err = router
         .execute_contract(
             buyer.clone(),
@@ -1131,7 +1144,7 @@ fn whitelist_access_len_add_remove_expiration() {
     assert!(res.is_ok());
 
     // Mint fails
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof: None };
     let res = router.execute_contract(
         buyer,
         minter_addr,
@@ -1162,7 +1175,7 @@ fn before_start_time() {
     assert!(res.is_err());
 
     // Buyer can't mint before start_time
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof: None };
     let res = router.execute_contract(
         buyer.clone(),
         minter_addr.clone(),
@@ -1185,7 +1198,7 @@ fn before_start_time() {
     setup_block_time(&mut router, GENESIS_MINT_START_TIME + 10_000_000, None);
 
     // Mint succeeds
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof: None };
     let res = router.execute_contract(
         buyer,
         minter_addr,
@@ -1254,7 +1267,7 @@ fn check_per_address_limit() {
     assert!(res.is_ok());
 
     // First mint succeeds
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof: None };
     let res = router.execute_contract(
         buyer.clone(),
         minter_addr.clone(),
@@ -1265,7 +1278,7 @@ fn check_per_address_limit() {
     assert!(res.is_ok());
 
     // Second mint fails from exceeding per address limit
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof: None };
     let res = router.execute_contract(
         buyer,
         minter_addr,
@@ -1370,6 +1383,7 @@ fn mint_for_token_id_addr() {
 
     // Try mint_for, test unauthorized
     let mint_for_msg = ExecuteMsg::MintFor {
+        proof: None,
         token_id: 1,
         recipient: buyer.to_string(),
     };
@@ -1392,7 +1406,7 @@ fn mint_for_token_id_addr() {
     // Test token id already sold
     // 1. random mint token_id
     // 2. mint_for same token_id
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof: None };
     let res = router.execute_contract(
         buyer.clone(),
         minter_addr.clone(),
@@ -1423,6 +1437,7 @@ fn mint_for_token_id_addr() {
     // Mint fails, invalid token_id
     let token_id: u32 = 0;
     let mint_for_msg = ExecuteMsg::MintFor {
+        proof: None,
         token_id,
         recipient: buyer.to_string(),
     };
@@ -1444,6 +1459,7 @@ fn mint_for_token_id_addr() {
 
     // Mint fails, token_id already sold
     let mint_for_msg = ExecuteMsg::MintFor {
+        proof: None,
         token_id: sold_token_id,
         recipient: buyer.to_string(),
     };
@@ -1496,6 +1512,7 @@ fn mint_for_token_id_addr() {
     // Test mint_for token_id 2 then normal mint
     let token_id = 2;
     let mint_for_msg = ExecuteMsg::MintFor {
+        proof: None,
         token_id,
         recipient: buyer.to_string(),
     };
@@ -1699,7 +1716,7 @@ fn unhappy_path() {
     let (minter_addr, _config) = setup_minter_contract(&mut router, &creator, num_tokens, None);
 
     // Fails if too little funds are sent
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof: None };
     let res = router.execute_contract(
         buyer.clone(),
         minter_addr.clone(),
@@ -1709,7 +1726,7 @@ fn unhappy_path() {
     assert!(res.is_err());
 
     // Fails if too many funds are sent
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof: None };
     let res = router.execute_contract(
         buyer.clone(),
         minter_addr.clone(),
@@ -1719,7 +1736,7 @@ fn unhappy_path() {
     assert!(res.is_err());
 
     // Fails wrong denom is sent
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof: None };
     let res = router.execute_contract(buyer, minter_addr, &mint_msg, &coins(MINT_PRICE, "uatom"));
     assert!(res.is_err());
 }
@@ -1780,7 +1797,7 @@ fn update_mint_price() {
     assert!(res.is_ok());
 
     // Mint succeeds
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof: None };
     let res = router.execute_contract(
         buyer,
         minter_addr,
@@ -1806,7 +1823,7 @@ fn mint_and_split() {
     );
     setup_block_time(&mut app, GENESIS_MINT_START_TIME + 1, None);
 
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof: None };
     let res = app.execute_contract(
         buyer,
         minter_addr,
@@ -1850,7 +1867,7 @@ fn burn_remaining() {
     setup_block_time(&mut router, GENESIS_MINT_START_TIME + 1, None);
 
     // Succeeds if funds are sent
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof: None };
     let res = router.execute_contract(
         buyer.clone(),
         minter_addr.clone(),
@@ -1887,6 +1904,7 @@ fn burn_remaining() {
 
     // Buyer can't call MintTo
     let mint_to_msg = ExecuteMsg::MintTo {
+        proof: None,
         recipient: buyer.to_string(),
     };
     // Creator mints an extra NFT for the buyer (who is a friend)
@@ -1936,7 +1954,7 @@ fn burn_remaining() {
     );
 
     // Errors if sold out
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof: None };
     let res = router.execute_contract(
         buyer,
         minter_addr.clone(),

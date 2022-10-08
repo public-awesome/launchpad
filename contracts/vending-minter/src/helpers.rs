@@ -3,11 +3,18 @@ use serde::{Deserialize, Serialize};
 
 use cosmwasm_std::{
     to_binary, Addr, Coin, ContractInfoResponse, CustomQuery, Querier, QuerierWrapper, StdResult,
-    WasmMsg, WasmQuery,
+    WasmMsg, WasmQuery, DepsMut, Deps, Timestamp, StdError,
 };
 use sg_std::CosmosMsg;
+use vending_factory::msg::{Whitelist, InitWhitelist};
+use sg_whitelist::msg::{
+    ConfigResponse as WhitelistConfigResponse, HasMemberResponse, QueryMsg as WhitelistQueryMsg,
+};
+use sg_whitelist_merkle::msg::{
+    QueryMsg as MerkleWhitelistQueryMsg, HasMemberResponse as MerkleHasMemberResponse, ConfigResponse as MerkleWhitelistConfigResponse
+};
 
-use crate::msg::ExecuteMsg;
+use crate::{msg::ExecuteMsg, ContractError};
 
 /// MinterContract is a wrapper around Addr that provides a lot of helpers
 /// for working with this.
@@ -56,4 +63,69 @@ impl MinterContract {
         let res: ContractInfoResponse = QuerierWrapper::<CQ>::new(querier).query(&query)?;
         Ok(res)
     }
+}
+
+pub struct WhitelistConfig {
+    pub start_time: Timestamp,
+    pub end_time: Timestamp,
+    pub is_active: bool,    
+    pub mint_price: Coin,
+}
+
+pub fn whitelist_config (deps: Deps, whitelist: Whitelist) -> Result<WhitelistConfig, StdError> {
+    match whitelist {
+        Whitelist::List { address } => {
+            let res: WhitelistConfigResponse = deps
+                .querier
+                .query_wasm_smart(address, &WhitelistQueryMsg::Config {})?;
+            Ok(WhitelistConfig {
+                end_time: res.end_time,
+                start_time: res.start_time,
+                is_active: res.is_active,
+                mint_price: res.mint_price,
+            })
+        },
+        Whitelist::MerkleTree { address, merkle_root: _ } => {
+            let res: MerkleWhitelistConfigResponse = deps
+                .querier
+                .query_wasm_smart(address, &MerkleWhitelistQueryMsg::Config {})?;
+            Ok(WhitelistConfig {
+                end_time: res.end_time,
+                start_time: res.start_time,
+                is_active: res.is_active,
+                mint_price: res.mint_price,
+            })
+        },
+    }
+}
+
+pub fn parse_init_whitelist (deps: Deps, wl: InitWhitelist) -> Result<Whitelist, ContractError> {
+    match wl {
+        InitWhitelist::List { address } => {
+            let addr = deps.api.addr_validate(&address)?;
+            Ok(Whitelist::List { address: addr })
+
+        },
+        InitWhitelist::MerkleTree { address, merkle_root } => {
+            let addr = deps.api.addr_validate(&address)?;
+            Ok(Whitelist::MerkleTree { address: addr, merkle_root, })
+        },
+    }
+}
+
+pub fn whitelist_exists (deps: DepsMut, wl: Whitelist) -> Result<(), ContractError> {
+    match wl {
+        Whitelist::List { address } => {
+            let res: WhitelistConfigResponse = deps
+                .querier
+                .query_wasm_smart(address, &WhitelistQueryMsg::Config {})?;
+            Ok(())
+        },
+        Whitelist::MerkleTree { address, merkle_root } => {
+            let res: MerkleWhitelistConfigResponse = deps
+                .querier
+                .query_wasm_smart(address, &MerkleWhitelistQueryMsg::Config {})?;
+            Ok(())
+        }
+    }   
 }

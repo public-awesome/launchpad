@@ -69,6 +69,9 @@ pub enum ContractError {
     #[error("WhitelistAlreadyStarted")]
     WhitelistAlreadyStarted {},
 
+    #[error("InvalidWhitelist")]
+    InvalidWhitelist {},
+
     #[error("InvalidStartTime {0} < {1}")]
     InvalidStartTime(Timestamp, Timestamp),
 

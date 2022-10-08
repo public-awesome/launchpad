@@ -1,6 +1,8 @@
+use std::borrow::BorrowMut;
 use std::convert::TryInto;
 
 use crate::error::ContractError;
+use crate::helpers::{parse_init_whitelist, whitelist_exists, whitelist_config};
 use crate::msg::{
     ConfigResponse, ExecuteMsg, MintCountResponse, MintPriceResponse, MintableNumTokensResponse,
     QueryMsg, StartTimeResponse,
@@ -29,11 +31,14 @@ use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME};
 use sg_whitelist::msg::{
     ConfigResponse as WhitelistConfigResponse, HasMemberResponse, QueryMsg as WhitelistQueryMsg,
 };
+use sg_whitelist_merkle::msg::{
+    QueryMsg as MerkleWhitelistQueryMsg, HasMemberResponse as MerkleHasMemberResponse, ConfigResponse as MerkleWhitelistConfigResponse
+};
 use sha2::{Digest, Sha256};
 use shuffle::{fy::FisherYates, shuffler::Shuffler};
 use url::Url;
 
-use vending_factory::msg::{ParamsResponse, VendingMinterCreateMsg};
+use vending_factory::msg::{ParamsResponse, VendingMinterCreateMsg, Whitelist, InitWhitelist};
 
 pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 pub type SubMsg = cosmwasm_std::SubMsg<StargazeMsgWrapper>;
@@ -59,7 +64,7 @@ pub fn instantiate(
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
     let factory = info.sender.clone();
-
+    
     // Make sure the sender is the factory contract
     // This will fail if the sender cannot parse a response from the factory contract
     let factory_response: ParamsResponse = deps
@@ -102,21 +107,22 @@ pub fn instantiate(
         ));
     }
 
-    // Validate address for the optional whitelist contract
-    let whitelist_addr = msg
-        .init_msg
-        .whitelist
-        .and_then(|w| deps.api.addr_validate(w.as_str()).ok());
-
-    if let Some(wl) = whitelist_addr.clone() {
-        // check the whitelist exists
-        let res: WhitelistConfigResponse = deps
-            .querier
-            .query_wasm_smart(wl, &WhitelistQueryMsg::Config {})?;
-        if res.is_active {
-            return Err(ContractError::WhitelistAlreadyStarted {});
-        }
+    let whitelist: Result<Option<Whitelist>, ContractError> = match msg.init_msg.whitelist {
+        Some(wl) => {
+            let whitelist = parse_init_whitelist(deps.as_ref(), wl)?;
+            let config = whitelist_config(deps.as_ref(), whitelist.clone())?;
+            if config.is_active {
+                return Err(ContractError::WhitelistAlreadyStarted {});
+            }
+            Ok(Some(whitelist))
+        },
+        None => Ok(None),
+    };
+    if whitelist.is_err() {
+        return Err(ContractError::WhitelistAlreadyStarted {});
     }
+    let whitelist = whitelist.unwrap();
+    
 
     // Use default start trading time if not provided
     let mut collection_info = msg.collection_params.info.clone();
@@ -140,7 +146,7 @@ pub fn instantiate(
             base_token_uri: msg.init_msg.base_token_uri,
             num_tokens: msg.init_msg.num_tokens,
             per_address_limit: msg.init_msg.per_address_limit,
-            whitelist: whitelist_addr,
+            whitelist,
             start_time: msg.init_msg.start_time,
         },
         mint_price: msg.init_msg.mint_price,
@@ -202,7 +208,10 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
-        ExecuteMsg::Mint {} => execute_mint_sender(deps, env, info),
+        ExecuteMsg::Mint { proof } => {
+            println!("Mint");
+            execute_mint_sender(deps, env, info, proof)
+        },
         ExecuteMsg::Purge {} => execute_purge(deps, env, info),
         ExecuteMsg::UpdateMintPrice { price } => execute_update_mint_price(deps, env, info, price),
         ExecuteMsg::UpdateStartTime(time) => execute_update_start_time(deps, env, info, time),
@@ -212,13 +221,20 @@ pub fn execute(
         ExecuteMsg::UpdatePerAddressLimit { per_address_limit } => {
             execute_update_per_address_limit(deps, env, info, per_address_limit)
         }
-        ExecuteMsg::MintTo { recipient } => execute_mint_to(deps, env, info, recipient),
+        ExecuteMsg::MintTo { recipient, proof } => {
+            println!("MintTo");
+            execute_mint_to(deps, env, info, recipient, proof)
+        },
         ExecuteMsg::MintFor {
             token_id,
             recipient,
-        } => execute_mint_for(deps, env, info, token_id, recipient),
+            proof,
+        } => {
+            println!("MintFor");
+            execute_mint_for(deps, env, info, token_id, recipient, proof)
+        },
         ExecuteMsg::SetWhitelist { whitelist } => {
-            execute_set_whitelist(deps, env, info, &whitelist)
+            execute_set_whitelist(deps, env, info, whitelist)
         }
         ExecuteMsg::Shuffle {} => execute_shuffle(deps, env, info),
         ExecuteMsg::BurnRemaining {} => execute_burn_remaining(deps, env, info),
@@ -305,7 +321,7 @@ pub fn execute_set_whitelist(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    whitelist: &str,
+    whitelist: InitWhitelist,
 ) -> Result<Response, ContractError> {
     nonpayable(&info)?;
     let mut config = CONFIG.load(deps.storage)?;
@@ -319,43 +335,46 @@ pub fn execute_set_whitelist(
         return Err(ContractError::AlreadyStarted {});
     }
 
-    if let Some(wl) = config.extension.whitelist {
-        let res: WhitelistConfigResponse = deps
-            .querier
-            .query_wasm_smart(wl, &WhitelistQueryMsg::Config {})?;
-
-        if res.is_active {
+    if config.extension.whitelist.is_some() {
+        let wl_config = whitelist_config(deps.as_ref(), config.extension.whitelist.unwrap());
+        if wl_config.is_ok() && wl_config.unwrap().is_active {
             return Err(ContractError::WhitelistAlreadyStarted {});
         }
     }
-    let new_wl = deps.api.addr_validate(whitelist)?;
-    config.extension.whitelist = Some(new_wl.clone());
-    // check that the new whitelist exists
-    let res: WhitelistConfigResponse = deps
-        .querier
-        .query_wasm_smart(new_wl, &WhitelistQueryMsg::Config {})?;
 
-    if res.is_active {
+    let parsed_whitelist = parse_init_whitelist(deps.as_ref(), whitelist.clone())?;
+    let wl_config = whitelist_config(deps.as_ref(), parsed_whitelist.clone())?;
+
+    if wl_config.is_active {
         return Err(ContractError::WhitelistAlreadyStarted {});
     }
+
+    config.extension.whitelist = Some(parsed_whitelist.clone());
+
     CONFIG.save(deps.storage, &config)?;
+
+    let whitlist_address = match parsed_whitelist {
+        Whitelist::List { address } => address,
+        Whitelist::MerkleTree { address, merkle_root: _ } => address,
+    };
 
     Ok(Response::default()
         .add_attribute("action", "set_whitelist")
-        .add_attribute("whitelist", whitelist.to_string()))
+        .add_attribute("whitelist", whitlist_address.to_string()))
 }
 
 pub fn execute_mint_sender(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
+    proof: Option<Vec<String>>,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
     let action = "mint_sender";
 
     // If there is no active whitelist right now, check public mint
     // Check if after start_time
-    if is_public_mint(deps.as_ref(), &info)? && (env.block.time < config.extension.start_time) {
+    if is_public_mint(deps.as_ref(), &info, proof.clone())? && (env.block.time < config.extension.start_time) {
         return Err(ContractError::BeforeMintStartTime {});
     }
 
@@ -365,12 +384,12 @@ pub fn execute_mint_sender(
         return Err(ContractError::MaxPerAddressLimitExceeded {});
     }
 
-    _execute_mint(deps, env, info, action, false, None, None)
+    _execute_mint(deps, env, info, action, false, None, None, proof)
 }
 
 // Check if a whitelist exists and not ended
 // Sender has to be whitelisted to mint
-fn is_public_mint(deps: Deps, info: &MessageInfo) -> Result<bool, ContractError> {
+fn is_public_mint(deps: Deps, info: &MessageInfo, proof: Option<Vec<String>>) -> Result<bool, ContractError> {
     let config = CONFIG.load(deps.storage)?;
 
     // If there is no whitelist, there's only a public mint
@@ -379,32 +398,46 @@ fn is_public_mint(deps: Deps, info: &MessageInfo) -> Result<bool, ContractError>
     }
 
     let whitelist = config.extension.whitelist.unwrap();
-
-    let wl_config: WhitelistConfigResponse = deps
-        .querier
-        .query_wasm_smart(whitelist.clone(), &WhitelistQueryMsg::Config {})?;
-
+    let wl_config = whitelist_config(deps, whitelist.clone())?;
     if !wl_config.is_active {
         return Ok(true);
     }
 
-    let res: HasMemberResponse = deps.querier.query_wasm_smart(
-        whitelist,
-        &WhitelistQueryMsg::HasMember {
-            member: info.sender.to_string(),
-        },
-    )?;
-    if !res.has_member {
-        return Err(ContractError::NotWhitelisted {
-            addr: info.sender.to_string(),
-        });
-    }
+    match whitelist {
+        Whitelist::List { address } => {
+            let res: HasMemberResponse = deps.querier.query_wasm_smart(
+                address,
+                &WhitelistQueryMsg::HasMember {
+                    member: info.sender.to_string(),
+                },
+            )?;
+            if !res.has_member {
+                return Err(ContractError::NotWhitelisted {
+                    addr: info.sender.to_string(),
+                });
+            }
 
-    // Check wl per address limit
-    let mint_count = mint_count(deps, info)?;
-    if mint_count >= wl_config.per_address_limit {
-        return Err(ContractError::MaxPerAddressLimitExceeded {});
-    }
+            // Check wl per address limit
+            // let mint_count = mint_count(deps, info)?;
+            // if mint_count >= wl_config.per_address_limit {
+            //     return Err(ContractError::MaxPerAddressLimitExceeded {});
+            // }
+        },
+        Whitelist::MerkleTree { address, merkle_root: _ } => {
+            let res: MerkleHasMemberResponse = deps.querier.query_wasm_smart(
+                address,
+                &MerkleWhitelistQueryMsg::HasMember {
+                    member: info.sender.to_string(),
+                    proof: proof.unwrap(),
+                },
+            )?;
+            if !res.has_member {
+                return Err(ContractError::NotWhitelisted {
+                    addr: info.sender.to_string(),
+                });
+            }
+        }   
+    }    
 
     Ok(false)
 }
@@ -414,6 +447,7 @@ pub fn execute_mint_to(
     env: Env,
     info: MessageInfo,
     recipient: String,
+    proof: Option<Vec<String>>,
 ) -> Result<Response, ContractError> {
     let recipient = deps.api.addr_validate(&recipient)?;
     let config = CONFIG.load(deps.storage)?;
@@ -426,7 +460,7 @@ pub fn execute_mint_to(
         ));
     }
 
-    _execute_mint(deps, env, info, action, true, Some(recipient), None)
+    _execute_mint(deps, env, info, action, true, Some(recipient), None, proof)
 }
 
 pub fn execute_mint_for(
@@ -435,6 +469,7 @@ pub fn execute_mint_for(
     info: MessageInfo,
     token_id: u32,
     recipient: String,
+    proof: Option<Vec<String>>,
 ) -> Result<Response, ContractError> {
     let recipient = deps.api.addr_validate(&recipient)?;
     let config = CONFIG.load(deps.storage)?;
@@ -455,6 +490,7 @@ pub fn execute_mint_for(
         true,
         Some(recipient),
         Some(token_id),
+        proof,
     )
 }
 
@@ -470,8 +506,12 @@ fn _execute_mint(
     is_admin: bool,
     recipient: Option<Addr>,
     token_id: Option<u32>,
+    proof: Option<Vec<String>>,
 ) -> Result<Response, ContractError> {
+    println!("ExecuteMint");
+
     let mintable_num_tokens = MINTABLE_NUM_TOKENS.load(deps.storage)?;
+    println!("mintable_num_tokens {}", mintable_num_tokens);
     if mintable_num_tokens == 0 {
         return Err(ContractError::SoldOut {});
     }
@@ -872,18 +912,10 @@ pub fn mint_price(deps: Deps, is_admin: bool) -> Result<Coin, StdError> {
     if config.extension.whitelist.is_none() {
         return Ok(config.mint_price);
     }
-
     let whitelist = config.extension.whitelist.unwrap();
 
-    let wl_config: WhitelistConfigResponse = deps
-        .querier
-        .query_wasm_smart(whitelist, &WhitelistQueryMsg::Config {})?;
-
-    if wl_config.is_active {
-        Ok(wl_config.mint_price)
-    } else {
-        Ok(config.mint_price)
-    }
+    let wl_config = whitelist_config(deps, whitelist)?;
+    Ok(wl_config.mint_price)
 }
 
 fn mint_count(deps: Deps, info: &MessageInfo) -> Result<u32, StdError> {
@@ -955,7 +987,7 @@ fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
         start_time: config.extension.start_time,
         mint_price: config.mint_price,
         per_address_limit: config.extension.per_address_limit,
-        whitelist: config.extension.whitelist.map(|w| w.to_string()),
+        whitelist: config.extension.whitelist,
         factory: config.factory.to_string(),
     })
 }
@@ -998,13 +1030,12 @@ fn query_mint_price(deps: Deps) -> StdResult<MintPriceResponse> {
 
     let current_price = mint_price(deps, false)?;
     let public_price = config.mint_price.clone();
-    let whitelist_price: Option<Coin> = if let Some(whitelist) = config.extension.whitelist {
-        let wl_config: WhitelistConfigResponse = deps
-            .querier
-            .query_wasm_smart(whitelist, &WhitelistQueryMsg::Config {})?;
-        Some(wl_config.mint_price)
-    } else {
-        None
+    let whitelist_price: Option<Coin> = match config.extension.whitelist {
+        Some(wl) => {
+            let wl_config = whitelist_config(deps, wl)?;
+            Some(wl_config.mint_price)
+        },
+        None => None,
     };
     let airdrop_price = coin(
         factory_params.extension.airdrop_mint_price.amount.u128(),

@@ -1,7 +1,7 @@
 use cosmwasm_std::{Coin, Timestamp};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vending_factory::{msg::VendingMinterCreateMsg, state::VendingMinterParams};
+use vending_factory::{msg::{VendingMinterCreateMsg, Whitelist, InitWhitelist}, state::VendingMinterParams};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {
@@ -12,9 +12,11 @@ pub struct InstantiateMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
-    Mint {},
+    Mint {
+        proof: Option<Vec<String>>,
+    },
     SetWhitelist {
-        whitelist: String,
+        whitelist: InitWhitelist,
     },
     Purge {},
     UpdateMintPrice {
@@ -28,10 +30,12 @@ pub enum ExecuteMsg {
     },
     MintTo {
         recipient: String,
+        proof: Option<Vec<String>>,
     },
     MintFor {
         token_id: u32,
         recipient: String,
+        proof: Option<Vec<String>>,
     },
     Shuffle {},
     BurnRemaining {},
@@ -58,7 +62,7 @@ pub struct ConfigResponse {
     pub sg721_code_id: u64,
     pub start_time: Timestamp,
     pub mint_price: Coin,
-    pub whitelist: Option<String>,
+    pub whitelist: Option<Whitelist>,
     pub factory: String,
 }
 

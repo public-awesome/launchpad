@@ -3,6 +3,7 @@ use cw_storage_plus::{Item, Map};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use sg4::{MinterConfig, Status};
+use vending_factory::msg::Whitelist;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct ConfigExtension {
@@ -10,7 +11,7 @@ pub struct ConfigExtension {
     pub payment_address: Option<Addr>,
     pub base_token_uri: String,
     pub num_tokens: u32,
-    pub whitelist: Option<Addr>,
+    pub whitelist: Option<Whitelist>,
     pub start_time: Timestamp,
     pub per_address_limit: u32,
 }

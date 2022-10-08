@@ -46,6 +46,7 @@ thiserror = { version = "1.0" }
 url = "2.2.0"
 sg-std = { path = "../../packages/sg-std"}
 sg-whitelist = { path = "../whitelist", features = ["library"] }
+sg-whitelist-merkle = { path = "../whitelist-merkle", features = ["library"] }
 rand_core = { version = "0.6", default-features = false }
 rand_xoshiro = { version = "0.6.0", default-features = false }
 shuffle = { git = "https://github.com/webmaster128/shuffle", branch = "rm-getrandom", version = "0.1.7" }
