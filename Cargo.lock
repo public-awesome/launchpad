@@ -1108,6 +1108,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "sg-whitelist-merkle"
+version = "0.0.1"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus 0.13.4",
+ "cw-utils 0.13.4",
+ "cw2 0.13.4",
+ "hex",
+ "rust_decimal",
+ "schemars",
+ "serde",
+ "sg-std 0.14.0",
+ "sg1",
+ "sha2 0.9.9",
+ "thiserror",
+]
+
+[[package]]
 name = "sg1"
 version = "0.14.1"
 dependencies = [
@@ -1417,6 +1436,7 @@ dependencies = [
  "sg-splits 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg-std 0.14.0",
  "sg-whitelist",
+ "sg-whitelist-merkle",
  "sg1",
  "sg2",
  "sg4",
