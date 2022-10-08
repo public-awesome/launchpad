@@ -208,10 +208,7 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
-        ExecuteMsg::Mint { proof } => {
-            println!("Mint");
-            execute_mint_sender(deps, env, info, proof)
-        },
+        ExecuteMsg::Mint { proof } => execute_mint_sender(deps, env, info, proof),
         ExecuteMsg::Purge {} => execute_purge(deps, env, info),
         ExecuteMsg::UpdateMintPrice { price } => execute_update_mint_price(deps, env, info, price),
         ExecuteMsg::UpdateStartTime(time) => execute_update_start_time(deps, env, info, time),
@@ -222,17 +219,13 @@ pub fn execute(
             execute_update_per_address_limit(deps, env, info, per_address_limit)
         }
         ExecuteMsg::MintTo { recipient, proof } => {
-            println!("MintTo");
             execute_mint_to(deps, env, info, recipient, proof)
         },
         ExecuteMsg::MintFor {
             token_id,
             recipient,
             proof,
-        } => {
-            println!("MintFor");
-            execute_mint_for(deps, env, info, token_id, recipient, proof)
-        },
+        } => execute_mint_for(deps, env, info, token_id, recipient, proof),
         ExecuteMsg::SetWhitelist { whitelist } => {
             execute_set_whitelist(deps, env, info, whitelist)
         }
@@ -513,10 +506,7 @@ fn _execute_mint(
     token_id: Option<u32>,
     proof: Option<Vec<String>>,
 ) -> Result<Response, ContractError> {
-    println!("ExecuteMint");
-
     let mintable_num_tokens = MINTABLE_NUM_TOKENS.load(deps.storage)?;
-    println!("mintable_num_tokens {}", mintable_num_tokens);
     if mintable_num_tokens == 0 {
         return Err(ContractError::SoldOut {});
     }
@@ -535,7 +525,7 @@ fn _execute_mint(
         Some(some_recipient) => some_recipient,
         None => info.sender.clone(),
     };
-
+    
     let mint_price: Coin = mint_price(deps.as_ref(), is_admin)?;
     // Exact payment only accepted
     let payment = may_pay(&info, &config.mint_price.denom)?;
@@ -545,9 +535,9 @@ fn _execute_mint(
             mint_price,
         ));
     }
-
+    
     let mut res = Response::new();
-
+    
     let factory: ParamsResponse = deps
         .querier
         .query_wasm_smart(config.factory, &Sg2QueryMsg::Params {})?;
@@ -917,10 +907,14 @@ pub fn mint_price(deps: Deps, is_admin: bool) -> Result<Coin, StdError> {
     if config.extension.whitelist.is_none() {
         return Ok(config.mint_price);
     }
+    
     let whitelist = config.extension.whitelist.unwrap();
-
     let wl_config = whitelist_config(deps, whitelist)?;
-    Ok(wl_config.mint_price)
+    if wl_config.is_active {
+        Ok(wl_config.mint_price)
+    } else {
+        Ok(config.mint_price)
+    }
 }
 
 fn mint_count(deps: Deps, info: &MessageInfo) -> Result<u32, StdError> {
