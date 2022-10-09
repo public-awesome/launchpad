@@ -23,12 +23,11 @@ use sg_whitelist::msg::{
     QueryMsg as WhitelistQueryMsg,
 };
 use sg_whitelist_merkle::msg::{
-    ConfigResponse as MerkleWhitelistConfigResponse, ExecuteMsg as MerkleWhitelistExecuteMsg,
-    InstantiateMsg as MerkleWhitelistInstantiateMsg, QueryMsg as MerkleWhitelistQueryMsg,
+    ExecuteMsg as MerkleWhitelistExecuteMsg,
+    InstantiateMsg as MerkleWhitelistInstantiateMsg,
 };
-use sg_whitelist_merkle::state::MERKLE_ROOT;
 use vending_factory::msg::{
-    InitWhitelist, VendingMinterCreateMsg, VendingMinterInitMsgExtension, Whitelist,
+    InitWhitelist, VendingMinterCreateMsg, VendingMinterInitMsgExtension,
 };
 use vending_factory::state::{ParamsExtension, VendingMinterParams};
 
@@ -556,7 +555,6 @@ fn happy_path() {
 
     // Buyer can't call MintTo
     let mint_to_msg = ExecuteMsg::MintTo {
-        proof: None,
         recipient: buyer.to_string(),
     };
     let res = router.execute_contract(
@@ -1260,7 +1258,7 @@ fn merkle_whitelist_access() {
 
     // Mint fails, buyer is not on whitelist (mismatching proof)
     let mint_msg = ExecuteMsg::Mint {
-        proof: Some(MERKLE_PROOF.into_iter().map(|x| x.to_string()).collect()),
+        proof: Some(MERKLE_PROOF.iter().map(|x| x.to_string()).collect()),
     };
     let res = router.execute_contract(
         buyer.clone(),
@@ -1272,7 +1270,7 @@ fn merkle_whitelist_access() {
 
     // Mint fails, not whitelist price
     let mint_msg = ExecuteMsg::Mint {
-        proof: Some(MERKLE_PROOF.into_iter().map(|x| x.to_string()).collect()),
+        proof: Some(MERKLE_PROOF.iter().map(|x| x.to_string()).collect()),
     };
     router
         .execute_contract(
@@ -1306,7 +1304,7 @@ fn merkle_whitelist_access() {
 
     // Mint succeeds with whitelist price
     let mint_msg = ExecuteMsg::Mint {
-        proof: Some(MERKLE_PROOF.into_iter().map(|x| x.to_string()).collect()),
+        proof: Some(MERKLE_PROOF.iter().map(|x| x.to_string()).collect()),
     };
     let res = router.execute_contract(
         merkle_buyer.clone(),
@@ -1318,7 +1316,7 @@ fn merkle_whitelist_access() {
 
     // Mint fails, over whitelist per address limit
     let mint_msg = ExecuteMsg::Mint {
-        proof: Some(MERKLE_PROOF.into_iter().map(|x| x.to_string()).collect()),
+        proof: Some(MERKLE_PROOF.iter().map(|x| x.to_string()).collect()),
     };
     let err = router
         .execute_contract(
@@ -1348,7 +1346,7 @@ fn merkle_whitelist_access() {
 
     // Mint fails, buyer exceeded per address limit
     let mint_msg = ExecuteMsg::Mint {
-        proof: Some(MERKLE_PROOF.into_iter().map(|x| x.to_string()).collect()),
+        proof: Some(MERKLE_PROOF.iter().map(|x| x.to_string()).collect()),
     };
     let err = router
         .execute_contract(
@@ -1593,7 +1591,6 @@ fn mint_for_token_id_addr() {
 
     // Try mint_for, test unauthorized
     let mint_for_msg = ExecuteMsg::MintFor {
-        proof: None,
         token_id: 1,
         recipient: buyer.to_string(),
     };
@@ -1647,7 +1644,6 @@ fn mint_for_token_id_addr() {
     // Mint fails, invalid token_id
     let token_id: u32 = 0;
     let mint_for_msg = ExecuteMsg::MintFor {
-        proof: None,
         token_id,
         recipient: buyer.to_string(),
     };
@@ -1669,7 +1665,6 @@ fn mint_for_token_id_addr() {
 
     // Mint fails, token_id already sold
     let mint_for_msg = ExecuteMsg::MintFor {
-        proof: None,
         token_id: sold_token_id,
         recipient: buyer.to_string(),
     };
@@ -1722,7 +1717,6 @@ fn mint_for_token_id_addr() {
     // Test mint_for token_id 2 then normal mint
     let token_id = 2;
     let mint_for_msg = ExecuteMsg::MintFor {
-        proof: None,
         token_id,
         recipient: buyer.to_string(),
     };
@@ -2114,7 +2108,6 @@ fn burn_remaining() {
 
     // Buyer can't call MintTo
     let mint_to_msg = ExecuteMsg::MintTo {
-        proof: None,
         recipient: buyer.to_string(),
     };
     // Creator mints an extra NFT for the buyer (who is a friend)

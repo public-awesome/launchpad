@@ -33,12 +33,10 @@ pub enum ExecuteMsg {
     },
     MintTo {
         recipient: String,
-        proof: Option<Vec<String>>,
     },
     MintFor {
         token_id: u32,
         recipient: String,
-        proof: Option<Vec<String>>,
     },
     Shuffle {},
     BurnRemaining {},

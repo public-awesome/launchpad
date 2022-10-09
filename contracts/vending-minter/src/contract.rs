@@ -1,8 +1,7 @@
-use std::borrow::BorrowMut;
 use std::convert::TryInto;
 
 use crate::error::ContractError;
-use crate::helpers::{parse_init_whitelist, whitelist_config, whitelist_exists};
+use crate::helpers::{parse_init_whitelist, whitelist_config};
 use crate::msg::{
     ConfigResponse, ExecuteMsg, MintCountResponse, MintPriceResponse, MintableNumTokensResponse,
     QueryMsg, StartTimeResponse,
@@ -29,10 +28,10 @@ use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg
 use sg_std::math::U64Ext;
 use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME};
 use sg_whitelist::msg::{
-    ConfigResponse as WhitelistConfigResponse, HasMemberResponse, QueryMsg as WhitelistQueryMsg,
+    HasMemberResponse, QueryMsg as WhitelistQueryMsg,
 };
 use sg_whitelist_merkle::msg::{
-    ConfigResponse as MerkleWhitelistConfigResponse, HasMemberResponse as MerkleHasMemberResponse,
+    HasMemberResponse as MerkleHasMemberResponse,
     QueryMsg as MerkleWhitelistQueryMsg,
 };
 use sha2::{Digest, Sha256};
@@ -218,14 +217,13 @@ pub fn execute(
         ExecuteMsg::UpdatePerAddressLimit { per_address_limit } => {
             execute_update_per_address_limit(deps, env, info, per_address_limit)
         }
-        ExecuteMsg::MintTo { recipient, proof } => {
-            execute_mint_to(deps, env, info, recipient, proof)
+        ExecuteMsg::MintTo { recipient } => {
+            execute_mint_to(deps, env, info, recipient)
         }
         ExecuteMsg::MintFor {
             token_id,
             recipient,
-            proof,
-        } => execute_mint_for(deps, env, info, token_id, recipient, proof),
+        } => execute_mint_for(deps, env, info, token_id, recipient),
         ExecuteMsg::SetWhitelist { whitelist } => execute_set_whitelist(deps, env, info, whitelist),
         ExecuteMsg::Shuffle {} => execute_shuffle(deps, env, info),
         ExecuteMsg::BurnRemaining {} => execute_burn_remaining(deps, env, info),
@@ -377,7 +375,7 @@ pub fn execute_mint_sender(
         return Err(ContractError::MaxPerAddressLimitExceeded {});
     }
 
-    _execute_mint(deps, env, info, action, false, None, None, proof)
+    _execute_mint(deps, env, info, action, false, None, None)
 }
 
 // Check if a whitelist exists and not ended
@@ -449,7 +447,6 @@ pub fn execute_mint_to(
     env: Env,
     info: MessageInfo,
     recipient: String,
-    proof: Option<Vec<String>>,
 ) -> Result<Response, ContractError> {
     let recipient = deps.api.addr_validate(&recipient)?;
     let config = CONFIG.load(deps.storage)?;
@@ -462,7 +459,7 @@ pub fn execute_mint_to(
         ));
     }
 
-    _execute_mint(deps, env, info, action, true, Some(recipient), None, proof)
+    _execute_mint(deps, env, info, action, true, Some(recipient), None)
 }
 
 pub fn execute_mint_for(
@@ -471,7 +468,6 @@ pub fn execute_mint_for(
     info: MessageInfo,
     token_id: u32,
     recipient: String,
-    proof: Option<Vec<String>>,
 ) -> Result<Response, ContractError> {
     let recipient = deps.api.addr_validate(&recipient)?;
     let config = CONFIG.load(deps.storage)?;
@@ -492,7 +488,6 @@ pub fn execute_mint_for(
         true,
         Some(recipient),
         Some(token_id),
-        proof,
     )
 }
 
@@ -508,7 +503,6 @@ fn _execute_mint(
     is_admin: bool,
     recipient: Option<Addr>,
     token_id: Option<u32>,
-    proof: Option<Vec<String>>,
 ) -> Result<Response, ContractError> {
     let mintable_num_tokens = MINTABLE_NUM_TOKENS.load(deps.storage)?;
     if mintable_num_tokens == 0 {

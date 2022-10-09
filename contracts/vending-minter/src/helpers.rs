@@ -2,15 +2,15 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use cosmwasm_std::{
-    to_binary, Addr, Coin, ContractInfoResponse, CustomQuery, Deps, DepsMut, Querier,
+    to_binary, Addr, Coin, ContractInfoResponse, CustomQuery, Deps, Querier,
     QuerierWrapper, StdError, StdResult, Timestamp, WasmMsg, WasmQuery,
 };
 use sg_std::CosmosMsg;
 use sg_whitelist::msg::{
-    ConfigResponse as WhitelistConfigResponse, HasMemberResponse, QueryMsg as WhitelistQueryMsg,
+    ConfigResponse as WhitelistConfigResponse, QueryMsg as WhitelistQueryMsg,
 };
 use sg_whitelist_merkle::msg::{
-    ConfigResponse as MerkleWhitelistConfigResponse, HasMemberResponse as MerkleHasMemberResponse,
+    ConfigResponse as MerkleWhitelistConfigResponse,
     QueryMsg as MerkleWhitelistQueryMsg,
 };
 use vending_factory::msg::{InitWhitelist, Whitelist};
@@ -112,23 +112,6 @@ pub fn parse_init_whitelist(deps: Deps, wl: InitWhitelist) -> Result<Whitelist, 
         InitWhitelist::MerkleTree { address } => {
             let addr = deps.api.addr_validate(&address)?;
             Ok(Whitelist::MerkleTree { address: addr })
-        }
-    }
-}
-
-pub fn whitelist_exists(deps: DepsMut, wl: Whitelist) -> Result<(), ContractError> {
-    match wl {
-        Whitelist::List { address } => {
-            let _: WhitelistConfigResponse = deps
-                .querier
-                .query_wasm_smart(address, &WhitelistQueryMsg::Config {})?;
-            Ok(())
-        }
-        Whitelist::MerkleTree { address } => {
-            let _: MerkleWhitelistConfigResponse = deps
-                .querier
-                .query_wasm_smart(address, &MerkleWhitelistQueryMsg::Config {})?;
-            Ok(())
         }
     }
 }
