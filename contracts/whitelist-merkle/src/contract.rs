@@ -10,7 +10,6 @@ use cosmwasm_std::Timestamp;
 use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult};
 use cw2::set_contract_version;
 use cw_utils::must_pay;
-use hex::encode;
 use rust_decimal::prelude::ToPrimitive;
 use rust_decimal::Decimal;
 use sg1::checked_fair_burn;
@@ -308,11 +307,11 @@ mod tests {
     const GENESIS_START_TIME: Timestamp = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
     const END_TIME: Timestamp = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 1000);
 
-    const MERKLE_ROOT: &str = &"5ab281bca33c9819e0daa0708d20ff8a25e65de7d1f6659dbdeb1d2050652b80";
+    const MERKLE_ROOT: &str = "5ab281bca33c9819e0daa0708d20ff8a25e65de7d1f6659dbdeb1d2050652b80";
 
     fn setup_contract(deps: DepsMut) {
         let msg = InstantiateMsg {
-            merkle_root: MERKLE_ROOT.clone().to_string(),
+            merkle_root: MERKLE_ROOT.to_string(),
             start_time: GENESIS_START_TIME,
             end_time: END_TIME,
             mint_price: coin(UNIT_AMOUNT, NATIVE_DENOM),
@@ -334,7 +333,7 @@ mod tests {
     fn improper_initialization() {
         let mut deps = mock_dependencies();
         let msg = InstantiateMsg {
-            merkle_root: MERKLE_ROOT.clone().to_string(),
+            merkle_root: MERKLE_ROOT.to_string(),
             start_time: END_TIME,
             end_time: END_TIME,
             mint_price: coin(1, NATIVE_DENOM),
@@ -349,7 +348,7 @@ mod tests {
     fn improper_initialization_invalid_denom() {
         let mut deps = mock_dependencies();
         let msg = InstantiateMsg {
-            merkle_root: MERKLE_ROOT.clone().to_string(),
+            merkle_root: MERKLE_ROOT.to_string(),
             start_time: END_TIME,
             end_time: END_TIME,
             mint_price: coin(UNIT_AMOUNT, "not_ustars"),
@@ -365,7 +364,7 @@ mod tests {
     fn improper_initialization_invalid_creation_fee() {
         let mut deps = mock_dependencies();
         let msg = InstantiateMsg {
-            merkle_root: MERKLE_ROOT.clone().to_string(),
+            merkle_root: MERKLE_ROOT.to_string(),
             start_time: END_TIME,
             end_time: END_TIME,
             mint_price: coin(UNIT_AMOUNT, "ustars"),
@@ -383,7 +382,7 @@ mod tests {
     #[test]
     fn check_start_time_after_end_time() {
         let msg = InstantiateMsg {
-            merkle_root: MERKLE_ROOT.clone().to_string(),
+            merkle_root: MERKLE_ROOT.to_string(),
             start_time: END_TIME,
             end_time: GENESIS_START_TIME,
             mint_price: coin(UNIT_AMOUNT, NATIVE_DENOM),
@@ -462,7 +461,7 @@ mod tests {
             "28fc41471ab92238e98664e99671e906cb29c048dd0343f3acf5295e424270e1".to_string(),
         ];
         let res = query_has_member(deps.as_ref(), user.sender.to_string(), proof).unwrap();
-        assert_eq!(res.has_member, false);
+        assert!(!res.has_member);
 
         // invalid proof
         let user = mock_info("stars1ye63jpm474yfrq02nyplrspyw75y82tptsls9t", &[]);
