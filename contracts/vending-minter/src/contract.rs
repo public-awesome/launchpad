@@ -346,10 +346,7 @@ pub fn execute_set_whitelist(
 
     let whitlist_address = match parsed_whitelist {
         Whitelist::List { address } => address,
-        Whitelist::MerkleTree {
-            address,
-            merkle_root: _,
-        } => address,
+        Whitelist::MerkleTree { address } => address,
     };
 
     Ok(Response::default()
@@ -423,10 +420,7 @@ fn is_public_mint(
                 return Err(ContractError::MaxPerAddressLimitExceeded {});
             }
         }
-        Whitelist::MerkleTree {
-            address,
-            merkle_root: _,
-        } => {
+        Whitelist::MerkleTree { address } => {
             let res: MerkleHasMemberResponse = deps.querier.query_wasm_smart(
                 address,
                 &MerkleWhitelistQueryMsg::HasMember {

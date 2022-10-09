@@ -12,14 +12,13 @@ pub enum InitWhitelist {
     },
     MerkleTree {
         address: String,
-        merkle_root: String,
     },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub enum Whitelist {
     List { address: Addr },
-    MerkleTree { address: Addr, merkle_root: String },
+    MerkleTree { address: Addr },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

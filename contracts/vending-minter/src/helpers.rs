@@ -88,10 +88,7 @@ pub fn whitelist_config(deps: Deps, whitelist: Whitelist) -> Result<WhitelistCon
                 per_address_limit: res.per_address_limit,
             })
         }
-        Whitelist::MerkleTree {
-            address,
-            merkle_root: _,
-        } => {
+        Whitelist::MerkleTree { address } => {
             let res: MerkleWhitelistConfigResponse = deps
                 .querier
                 .query_wasm_smart(address, &MerkleWhitelistQueryMsg::Config {})?;
@@ -112,15 +109,9 @@ pub fn parse_init_whitelist(deps: Deps, wl: InitWhitelist) -> Result<Whitelist, 
             let addr = deps.api.addr_validate(&address)?;
             Ok(Whitelist::List { address: addr })
         }
-        InitWhitelist::MerkleTree {
-            address,
-            merkle_root,
-        } => {
+        InitWhitelist::MerkleTree { address } => {
             let addr = deps.api.addr_validate(&address)?;
-            Ok(Whitelist::MerkleTree {
-                address: addr,
-                merkle_root,
-            })
+            Ok(Whitelist::MerkleTree { address: addr })
         }
     }
 }
@@ -128,16 +119,13 @@ pub fn parse_init_whitelist(deps: Deps, wl: InitWhitelist) -> Result<Whitelist, 
 pub fn whitelist_exists(deps: DepsMut, wl: Whitelist) -> Result<(), ContractError> {
     match wl {
         Whitelist::List { address } => {
-            let res: WhitelistConfigResponse = deps
+            let _: WhitelistConfigResponse = deps
                 .querier
                 .query_wasm_smart(address, &WhitelistQueryMsg::Config {})?;
             Ok(())
         }
-        Whitelist::MerkleTree {
-            address,
-            merkle_root,
-        } => {
-            let res: MerkleWhitelistConfigResponse = deps
+        Whitelist::MerkleTree { address } => {
+            let _: MerkleWhitelistConfigResponse = deps
                 .querier
                 .query_wasm_smart(address, &MerkleWhitelistQueryMsg::Config {})?;
             Ok(())

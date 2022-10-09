@@ -22,6 +22,11 @@ use sg_whitelist::msg::{
     AddMembersMsg, ConfigResponse as WhitelistConfigResponse, ExecuteMsg as WhitelistExecuteMsg,
     QueryMsg as WhitelistQueryMsg,
 };
+use sg_whitelist_merkle::msg::{
+    ConfigResponse as MerkleWhitelistConfigResponse, ExecuteMsg as MerkleWhitelistExecuteMsg,
+    InstantiateMsg as MerkleWhitelistInstantiateMsg, QueryMsg as MerkleWhitelistQueryMsg,
+};
+use sg_whitelist_merkle::state::MERKLE_ROOT;
 use vending_factory::msg::{
     InitWhitelist, VendingMinterCreateMsg, VendingMinterInitMsgExtension, Whitelist,
 };
@@ -113,6 +118,28 @@ fn setup_whitelist_contract(router: &mut StargazeApp, creator: &Addr) -> Addr {
         mint_price: coin(WHITELIST_AMOUNT, NATIVE_DENOM),
         per_address_limit: WL_PER_ADDRESS_LIMIT,
         member_limit: 1000,
+    };
+    router
+        .instantiate_contract(
+            whitelist_code_id,
+            creator.clone(),
+            &msg,
+            &[coin(100_000_000, NATIVE_DENOM)],
+            "whitelist",
+            None,
+        )
+        .unwrap()
+}
+
+fn setup_merkle_whitelist_contract(router: &mut StargazeApp, creator: &Addr) -> Addr {
+    let whitelist_code_id = router.store_code(contract_whitelist());
+
+    let msg = MerkleWhitelistInstantiateMsg {
+        merkle_root: "5ab281bca33c9819e0daa0708d20ff8a25e65de7d1f6659dbdeb1d2050652b80".to_string(),
+        start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME + 100),
+        end_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10000000),
+        mint_price: coin(WHITELIST_AMOUNT, NATIVE_DENOM),
+        per_address_limit: WL_PER_ADDRESS_LIMIT,
     };
     router
         .instantiate_contract(
@@ -279,6 +306,11 @@ const MEMBER1: &str = "member0001";
 const MEMBER2: &str = "member0002";
 const MEMBER3: &str = "member0003";
 
+const MERKLE_PROOF: [&'static str; 2] = [
+    "8b231ee54c7e265bca6482e6a6a0f251c5da97be74f4e9720ae81a1bc08beea9",
+    "4c0801ba42388ec349cfeae552dfa64271008f37b10c2601e32c0cf2729c0278",
+];
+
 // uploads code and returns address of group contract
 fn instantiate_group(app: &mut StargazeApp, members: Vec<Member>) -> Addr {
     let group_id = app.store_code(contract_group());
@@ -327,8 +359,9 @@ fn setup_splits_test_case(app: &mut StargazeApp, init_funds: Vec<Coin>) -> (Addr
 }
 
 // Add a creator account with initial balances
-fn setup_accounts(router: &mut StargazeApp) -> (Addr, Addr) {
+fn setup_accounts(router: &mut StargazeApp) -> (Addr, Addr, Addr) {
     let buyer = Addr::unchecked("buyer");
+    let merkle_buyer = Addr::unchecked("stars1ye63jpm474yfrq02nyplrspyw75y82tptsls9t");
     let creator = Addr::unchecked("creator");
     // 3,000 tokens
     let creator_funds = coins(INITIAL_BALANCE + CREATION_FEE, NATIVE_DENOM);
@@ -362,7 +395,7 @@ fn setup_accounts(router: &mut StargazeApp) -> (Addr, Addr) {
     let buyer_native_balances = router.wrap().query_all_balances(buyer.clone()).unwrap();
     assert_eq!(buyer_native_balances, buyer_funds);
 
-    (creator, buyer)
+    (creator, buyer, merkle_buyer)
 }
 
 // Set blockchain time to after mint by default
@@ -446,7 +479,7 @@ fn initialization() {
 fn happy_path() {
     let mut router = custom_mock_app();
     setup_block_time(&mut router, GENESIS_MINT_START_TIME - 1, None);
-    let (creator, buyer) = setup_accounts(&mut router);
+    let (creator, buyer, _) = setup_accounts(&mut router);
     let num_tokens = 2;
     let (minter_addr, config) = setup_minter_contract(&mut router, &creator, num_tokens, None);
 
@@ -627,7 +660,7 @@ fn happy_path() {
 
 fn invalid_whitelist_instantiate() {
     let mut router = custom_mock_app();
-    let (creator, _) = setup_accounts(&mut router);
+    let (creator, _, _) = setup_accounts(&mut router);
 
     let num_tokens = 10;
     let minter_code_id = router.store_code(contract_minter());
@@ -673,7 +706,7 @@ fn invalid_whitelist_instantiate() {
 #[test]
 fn set_invalid_whitelist() {
     let mut router = custom_mock_app();
-    let (creator, _) = setup_accounts(&mut router);
+    let (creator, _, _) = setup_accounts(&mut router);
     let num_tokens = 10;
     let (minter_addr, _) = setup_minter_contract(&mut router, &creator, num_tokens, None);
     let whitelist_addr = setup_whitelist_contract(&mut router, &creator);
@@ -743,7 +776,7 @@ fn set_invalid_whitelist() {
 #[test]
 fn mint_count_query() {
     let mut router = custom_mock_app();
-    let (creator, buyer) = setup_accounts(&mut router);
+    let (creator, buyer, _) = setup_accounts(&mut router);
     let num_tokens = 10;
     let (minter_addr, config) = setup_minter_contract(&mut router, &creator, num_tokens, None);
     let sg721_addr = Addr::unchecked(config.sg721_address);
@@ -942,7 +975,7 @@ fn mint_count_query() {
 #[test]
 fn whitelist_already_started() {
     let mut router = custom_mock_app();
-    let (creator, _) = setup_accounts(&mut router);
+    let (creator, _, _) = setup_accounts(&mut router);
     let num_tokens = 1;
     let (minter_addr, _) = setup_minter_contract(&mut router, &creator, num_tokens, None);
     let whitelist_addr = setup_whitelist_contract(&mut router, &creator);
@@ -968,7 +1001,7 @@ fn whitelist_already_started() {
 #[test]
 fn whitelist_can_update_before_start() {
     let mut router = custom_mock_app();
-    let (creator, _) = setup_accounts(&mut router);
+    let (creator, _, _) = setup_accounts(&mut router);
     let num_tokens = 1;
     let (minter_addr, _) = setup_minter_contract(&mut router, &creator, num_tokens, None);
     let whitelist_addr = setup_whitelist_contract(&mut router, &creator);
@@ -999,7 +1032,7 @@ fn whitelist_can_update_before_start() {
 #[test]
 fn whitelist_access_len_add_remove_expiration() {
     let mut router = custom_mock_app();
-    let (creator, buyer) = setup_accounts(&mut router);
+    let (creator, buyer, _) = setup_accounts(&mut router);
     let num_tokens = 1;
     let (minter_addr, config) = setup_minter_contract(&mut router, &creator, num_tokens, None);
     let sg721_addr = config.sg721_address;
@@ -1113,7 +1146,7 @@ fn whitelist_access_len_add_remove_expiration() {
         ContractError::MaxPerAddressLimitExceeded {}.to_string()
     );
 
-    // Muyer is generous and transfers to creator
+    // Buyer is generous and transfers to creator
     let transfer_msg: Cw721ExecuteMsg<Empty> = Cw721ExecuteMsg::TransferNft {
         recipient: creator.to_string(),
         token_id: "1".to_string(),
@@ -1159,9 +1192,182 @@ fn whitelist_access_len_add_remove_expiration() {
 }
 
 #[test]
+fn merkle_whitelist_access() {
+    let mut router = custom_mock_app();
+    let (creator, buyer, merkle_buyer) = setup_accounts(&mut router);
+    let num_tokens = 1;
+    let (minter_addr, config) = setup_minter_contract(&mut router, &creator, num_tokens, None);
+    let sg721_addr = config.sg721_address;
+    let whitelist_addr = setup_merkle_whitelist_contract(&mut router, &creator);
+    const AFTER_GENESIS_TIME: Timestamp = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 100);
+
+    // Set to just before genesis mint start time
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME - 10, None);
+
+    // Update whitelist_expiration fails if not admin
+    let wl_msg = MerkleWhitelistExecuteMsg::UpdateEndTime(AFTER_GENESIS_TIME);
+    router
+        .execute_contract(buyer.clone(), whitelist_addr.clone(), &wl_msg, &[])
+        .unwrap_err();
+
+    // Update whitelist_expiration succeeds when from admin
+    let wl_msg = MerkleWhitelistExecuteMsg::UpdateEndTime(AFTER_GENESIS_TIME);
+    let res = router.execute_contract(creator.clone(), whitelist_addr.clone(), &wl_msg, &[]);
+    assert!(res.is_ok());
+
+    let wl_msg = MerkleWhitelistExecuteMsg::UpdateStartTime(Timestamp::from_nanos(0));
+    let res = router.execute_contract(creator.clone(), whitelist_addr.clone(), &wl_msg, &[]);
+    assert!(res.is_ok());
+
+    // Set whitelist in minter contract
+    let set_whitelist_msg = ExecuteMsg::SetWhitelist {
+        whitelist: InitWhitelist::MerkleTree {
+            address: whitelist_addr.to_string(),
+        },
+    };
+    let res = router.execute_contract(
+        creator.clone(),
+        minter_addr.clone(),
+        &set_whitelist_msg,
+        &[],
+    );
+    assert!(res.is_ok());
+
+    // Mint fails, no proof is given
+    let mint_msg = ExecuteMsg::Mint { proof: None };
+    let res = router.execute_contract(
+        merkle_buyer.clone(),
+        minter_addr.clone(),
+        &mint_msg,
+        &coins(MINT_PRICE, NATIVE_DENOM),
+    );
+    assert!(res.is_err());
+
+    // Mint fails, invalid proof is given
+    let mint_msg = ExecuteMsg::Mint {
+        proof: Some(vec![
+            "ea930af5025204fc0dda1b69b567b6b41766107d65d46a1acd9725af65604531".to_string(),
+            "28fc41471ab92238e98664e99671e906cb29c048dd0343f3acf5295e424270e1".to_string(),
+        ]),
+    };
+    let res = router.execute_contract(
+        merkle_buyer.clone(),
+        minter_addr.clone(),
+        &mint_msg,
+        &coins(MINT_PRICE, NATIVE_DENOM),
+    );
+    assert!(res.is_err());
+
+    // Mint fails, buyer is not on whitelist (mismatching proof)
+    let mint_msg = ExecuteMsg::Mint {
+        proof: Some(MERKLE_PROOF.into_iter().map(|x| x.to_string()).collect()),
+    };
+    let res = router.execute_contract(
+        buyer.clone(),
+        minter_addr.clone(),
+        &mint_msg,
+        &coins(MINT_PRICE, NATIVE_DENOM),
+    );
+    assert!(res.is_err());
+
+    // Mint fails, not whitelist price
+    let mint_msg = ExecuteMsg::Mint {
+        proof: Some(MERKLE_PROOF.into_iter().map(|x| x.to_string()).collect()),
+    };
+    router
+        .execute_contract(
+            merkle_buyer.clone(),
+            minter_addr.clone(),
+            &mint_msg,
+            &coins(MINT_PRICE, NATIVE_DENOM),
+        )
+        .unwrap_err();
+
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME, None);
+
+    // Query mint price
+    let mint_price_response: MintPriceResponse = router
+        .wrap()
+        .query_wasm_smart(minter_addr.clone(), &QueryMsg::MintPrice {})
+        .unwrap();
+
+    assert_eq!(
+        coin(WHITELIST_AMOUNT, NATIVE_DENOM),
+        mint_price_response.whitelist_price.unwrap()
+    );
+    assert_eq!(
+        coin(WHITELIST_AMOUNT, NATIVE_DENOM),
+        mint_price_response.current_price
+    );
+    assert_eq!(
+        coin(MINT_PRICE, NATIVE_DENOM),
+        mint_price_response.public_price
+    );
+
+    // Mint succeeds with whitelist price
+    let mint_msg = ExecuteMsg::Mint {
+        proof: Some(MERKLE_PROOF.into_iter().map(|x| x.to_string()).collect()),
+    };
+    let res = router.execute_contract(
+        merkle_buyer.clone(),
+        minter_addr.clone(),
+        &mint_msg,
+        &coins(WHITELIST_AMOUNT, NATIVE_DENOM),
+    );
+    assert!(res.is_ok());
+
+    // Mint fails, over whitelist per address limit
+    let mint_msg = ExecuteMsg::Mint {
+        proof: Some(MERKLE_PROOF.into_iter().map(|x| x.to_string()).collect()),
+    };
+    let err = router
+        .execute_contract(
+            buyer.clone(),
+            minter_addr.clone(),
+            &mint_msg,
+            &coins(WHITELIST_AMOUNT, NATIVE_DENOM),
+        )
+        .unwrap_err();
+    assert_eq!(
+        err.source().unwrap().to_string(),
+        ContractError::MaxPerAddressLimitExceeded {}.to_string()
+    );
+
+    // Buyer is generous and transfers to creator
+    let transfer_msg: Cw721ExecuteMsg<Empty> = Cw721ExecuteMsg::TransferNft {
+        recipient: creator.to_string(),
+        token_id: "1".to_string(),
+    };
+    let res = router.execute_contract(
+        merkle_buyer.clone(),
+        Addr::unchecked(sg721_addr),
+        &transfer_msg,
+        &coins_for_msg(coin(123, NATIVE_DENOM)),
+    );
+    assert!(res.is_ok());
+
+    // Mint fails, buyer exceeded per address limit
+    let mint_msg = ExecuteMsg::Mint {
+        proof: Some(MERKLE_PROOF.into_iter().map(|x| x.to_string()).collect()),
+    };
+    let err = router
+        .execute_contract(
+            buyer.clone(),
+            minter_addr.clone(),
+            &mint_msg,
+            &coins(WHITELIST_AMOUNT, NATIVE_DENOM),
+        )
+        .unwrap_err();
+    assert_eq!(
+        err.source().unwrap().to_string(),
+        ContractError::MaxPerAddressLimitExceeded {}.to_string()
+    );
+}
+
+#[test]
 fn before_start_time() {
     let mut router = custom_mock_app();
-    let (creator, buyer) = setup_accounts(&mut router);
+    let (creator, buyer, _) = setup_accounts(&mut router);
     let num_tokens = 1;
     let (minter_addr, _) = setup_minter_contract(&mut router, &creator, num_tokens, None);
 
@@ -1215,7 +1421,7 @@ fn before_start_time() {
 #[test]
 fn check_per_address_limit() {
     let mut router = custom_mock_app();
-    let (creator, buyer) = setup_accounts(&mut router);
+    let (creator, buyer, _) = setup_accounts(&mut router);
     let num_tokens = 2;
     let (minter_addr, _config) = setup_minter_contract(&mut router, &creator, num_tokens, None);
 
@@ -1296,7 +1502,7 @@ fn check_per_address_limit() {
 fn check_dynamic_per_address_limit() {
     let mut router = custom_mock_app();
     setup_block_time(&mut router, GENESIS_MINT_START_TIME - 1, None);
-    let (creator, _) = setup_accounts(&mut router);
+    let (creator, _, _) = setup_accounts(&mut router);
 
     // if per address limit > 1%, throw error when instantiating
     // num_tokens: 400, per_address_limit: 5
@@ -1378,7 +1584,7 @@ fn check_dynamic_per_address_limit() {
 #[test]
 fn mint_for_token_id_addr() {
     let mut router = custom_mock_app();
-    let (creator, buyer) = setup_accounts(&mut router);
+    let (creator, buyer, _) = setup_accounts(&mut router);
     let num_tokens = 4;
     let (minter_addr, config) = setup_minter_contract(&mut router, &creator, num_tokens, None);
 
@@ -1553,7 +1759,7 @@ fn mint_for_token_id_addr() {
 #[test]
 fn test_update_start_time() {
     let mut router = custom_mock_app();
-    let (creator, _) = setup_accounts(&mut router);
+    let (creator, _, _) = setup_accounts(&mut router);
     let num_tokens = 10;
 
     let (minter_addr, _) = setup_minter_contract(&mut router, &creator, num_tokens, None);
@@ -1575,7 +1781,7 @@ fn test_update_start_time() {
 #[test]
 fn test_invalid_start_time() {
     let mut router = custom_mock_app();
-    let (creator, _) = setup_accounts(&mut router);
+    let (creator, _, _) = setup_accounts(&mut router);
 
     // Upload contract code
     let sg721_code_id = router.store_code(contract_sg721());
@@ -1662,7 +1868,7 @@ fn test_invalid_start_time() {
 #[test]
 fn update_trading_start_time() {
     let mut router = custom_mock_app();
-    let (creator, buyer) = setup_accounts(&mut router);
+    let (creator, buyer, _) = setup_accounts(&mut router);
     let num_tokens = 2;
     setup_block_time(&mut router, GENESIS_MINT_START_TIME - 1, None);
     let (minter_addr, config) = setup_minter_contract(&mut router, &creator, num_tokens, None);
@@ -1715,7 +1921,7 @@ fn update_trading_start_time() {
 #[test]
 fn unhappy_path() {
     let mut router = custom_mock_app();
-    let (creator, buyer) = setup_accounts(&mut router);
+    let (creator, buyer, _) = setup_accounts(&mut router);
     let num_tokens = 1;
     let (minter_addr, _config) = setup_minter_contract(&mut router, &creator, num_tokens, None);
 
@@ -1748,7 +1954,7 @@ fn unhappy_path() {
 #[test]
 fn update_mint_price() {
     let mut router = custom_mock_app();
-    let (creator, buyer) = setup_accounts(&mut router);
+    let (creator, buyer, _) = setup_accounts(&mut router);
     let num_tokens = 1;
     let (minter_addr, _) = setup_minter_contract(&mut router, &creator, num_tokens, None);
 
@@ -1817,7 +2023,7 @@ fn mint_and_split() {
 
     let (splits_addr, _) = setup_splits_test_case(&mut app, vec![]);
 
-    let (creator, buyer) = setup_accounts(&mut app);
+    let (creator, buyer, _) = setup_accounts(&mut app);
     let num_tokens = 2;
     let (minter_addr, _) = setup_minter_contract_with_splits(
         &mut app,
@@ -1854,7 +2060,7 @@ fn mint_and_split() {
 fn burn_remaining() {
     let mut router = custom_mock_app();
     setup_block_time(&mut router, GENESIS_MINT_START_TIME - 1, None);
-    let (creator, buyer) = setup_accounts(&mut router);
+    let (creator, buyer, _) = setup_accounts(&mut router);
     let num_tokens = 5000;
     let (minter_addr, _) = setup_minter_contract(&mut router, &creator, num_tokens, None);
 
