@@ -7,12 +7,8 @@ use crate::state::VendingMinterParams;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub enum InitWhitelist {
-    List {
-        address: String,
-    },
-    MerkleTree {
-        address: String,
-    },
+    List { address: String },
+    MerkleTree { address: String },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
