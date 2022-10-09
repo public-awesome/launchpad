@@ -9,7 +9,6 @@ pub struct InstantiateMsg {
     pub end_time: Timestamp,
     pub mint_price: Coin,
     pub per_address_limit: u32,
-    pub member_limit: u32,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

@@ -60,7 +60,8 @@ pub fn instantiate(
         });
     }
 
-    let creation_fee = Decimal::new(msg.member_limit.into(), 3)
+    // TODO: what is the creation fee for a merkle tree whitelist?
+    let creation_fee = Decimal::new(1000, 3)
         .ceil()
         .to_u128()
         .unwrap()
@@ -316,7 +317,6 @@ mod tests {
             end_time: END_TIME,
             mint_price: coin(UNIT_AMOUNT, NATIVE_DENOM),
             per_address_limit: 1,
-            member_limit: 1000,
         };
         let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
         let res = instantiate(deps, mock_env(), info, msg).unwrap();
@@ -338,7 +338,6 @@ mod tests {
             end_time: END_TIME,
             mint_price: coin(1, NATIVE_DENOM),
             per_address_limit: 1,
-            member_limit: 1000,
         };
         let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
         instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
@@ -353,31 +352,29 @@ mod tests {
             end_time: END_TIME,
             mint_price: coin(UNIT_AMOUNT, "not_ustars"),
             per_address_limit: 1,
-            member_limit: 1000,
         };
         let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
         let err = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
         assert_eq!(err.to_string(), "InvalidDenom: not_ustars");
     }
 
-    #[test]
-    fn improper_initialization_invalid_creation_fee() {
-        let mut deps = mock_dependencies();
-        let msg = InstantiateMsg {
-            merkle_root: MERKLE_ROOT.to_string(),
-            start_time: END_TIME,
-            end_time: END_TIME,
-            mint_price: coin(UNIT_AMOUNT, "ustars"),
-            per_address_limit: 1,
-            member_limit: 3000,
-        };
-        let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
-        let err = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
-        assert_eq!(
-            err.to_string(),
-            "IncorrectCreationFee 100000000 < 300000000"
-        );
-    }
+    // #[test]
+    // fn improper_initialization_invalid_creation_fee() {
+    //     let mut deps = mock_dependencies();
+    //     let msg = InstantiateMsg {
+    //         merkle_root: MERKLE_ROOT.to_string(),
+    //         start_time: END_TIME,
+    //         end_time: END_TIME,
+    //         mint_price: coin(UNIT_AMOUNT, "ustars"),
+    //         per_address_limit: 1,
+    //     };
+    //     let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
+    //     let err = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
+    //     assert_eq!(
+    //         err.to_string(),
+    //         "IncorrectCreationFee 100000000 < 300000000"
+    //     );
+    // }
 
     #[test]
     fn check_start_time_after_end_time() {
@@ -387,7 +384,6 @@ mod tests {
             end_time: GENESIS_START_TIME,
             mint_price: coin(UNIT_AMOUNT, NATIVE_DENOM),
             per_address_limit: 1,
-            member_limit: 1000,
         };
         let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
         let mut deps = mock_dependencies();
