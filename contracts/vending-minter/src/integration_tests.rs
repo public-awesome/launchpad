@@ -70,6 +70,15 @@ pub fn contract_whitelist() -> Box<dyn Contract<StargazeMsgWrapper>> {
     Box::new(contract)
 }
 
+pub fn contract_merkle_whitelist() -> Box<dyn Contract<StargazeMsgWrapper>> {
+    let contract = ContractWrapper::new(
+        sg_whitelist_merkle::contract::execute,
+        sg_whitelist_merkle::contract::instantiate,
+        sg_whitelist_merkle::contract::query,
+    );
+    Box::new(contract)
+}
+
 pub fn contract_minter() -> Box<dyn Contract<StargazeMsgWrapper>> {
     let contract = ContractWrapper::new(
         crate::contract::execute,
@@ -131,7 +140,7 @@ fn setup_whitelist_contract(router: &mut StargazeApp, creator: &Addr) -> Addr {
 }
 
 fn setup_merkle_whitelist_contract(router: &mut StargazeApp, creator: &Addr) -> Addr {
-    let whitelist_code_id = router.store_code(contract_whitelist());
+    let merkle_whitelist_code_id = router.store_code(contract_merkle_whitelist());
 
     let msg = MerkleWhitelistInstantiateMsg {
         merkle_root: "5ab281bca33c9819e0daa0708d20ff8a25e65de7d1f6659dbdeb1d2050652b80".to_string(),
@@ -142,11 +151,11 @@ fn setup_merkle_whitelist_contract(router: &mut StargazeApp, creator: &Addr) -> 
     };
     router
         .instantiate_contract(
-            whitelist_code_id,
+            merkle_whitelist_code_id,
             creator.clone(),
             &msg,
             &[coin(100_000_000, NATIVE_DENOM)],
-            "whitelist",
+            "merkle_whitelist",
             None,
         )
         .unwrap()
@@ -376,23 +385,25 @@ fn setup_accounts(router: &mut StargazeApp) -> (Addr, Addr, Addr) {
         .map_err(|err| println!("{:?}", err))
         .ok();
 
-    router
-        .sudo(SudoMsg::Bank({
-            BankSudo::Mint {
-                to_address: buyer.to_string(),
-                amount: buyer_funds.clone(),
-            }
-        }))
-        .map_err(|err| println!("{:?}", err))
-        .ok();
+    for address in vec![buyer.clone(), merkle_buyer.clone()] {
+        router
+            .sudo(SudoMsg::Bank({
+                BankSudo::Mint {
+                    to_address: address.to_string(),
+                    amount: buyer_funds.clone(),
+                }
+            }))
+            .map_err(|err| println!("{:?}", err))
+            .ok();
+
+        // Check native balances
+        let buyer_native_balances = router.wrap().query_all_balances(address).unwrap();
+        assert_eq!(buyer_native_balances, buyer_funds);
+    }
 
     // Check native balances
     let creator_native_balances = router.wrap().query_all_balances(creator.clone()).unwrap();
     assert_eq!(creator_native_balances, creator_funds);
-
-    // Check native balances
-    let buyer_native_balances = router.wrap().query_all_balances(buyer.clone()).unwrap();
-    assert_eq!(buyer_native_balances, buyer_funds);
 
     (creator, buyer, merkle_buyer)
 }
@@ -1288,6 +1299,7 @@ fn merkle_whitelist_access() {
         .wrap()
         .query_wasm_smart(minter_addr.clone(), &QueryMsg::MintPrice {})
         .unwrap();
+    println!("Mint {}{}", mint_price_response.current_price.amount, mint_price_response.current_price.denom);
 
     assert_eq!(
         coin(WHITELIST_AMOUNT, NATIVE_DENOM),
@@ -1306,13 +1318,15 @@ fn merkle_whitelist_access() {
     let mint_msg = ExecuteMsg::Mint {
         proof: Some(MERKLE_PROOF.iter().map(|x| x.to_string()).collect()),
     };
+
     let res = router.execute_contract(
         merkle_buyer.clone(),
         minter_addr.clone(),
         &mint_msg,
         &coins(WHITELIST_AMOUNT, NATIVE_DENOM),
     );
-    assert!(res.is_ok());
+    res.unwrap();
+    // assert!(res.is_ok());
 
     // Mint fails, over whitelist per address limit
     let mint_msg = ExecuteMsg::Mint {
@@ -1320,7 +1334,7 @@ fn merkle_whitelist_access() {
     };
     let err = router
         .execute_contract(
-            buyer.clone(),
+            merkle_buyer.clone(),
             minter_addr.clone(),
             &mint_msg,
             &coins(WHITELIST_AMOUNT, NATIVE_DENOM),
@@ -1350,7 +1364,7 @@ fn merkle_whitelist_access() {
     };
     let err = router
         .execute_contract(
-            buyer.clone(),
+            merkle_buyer.clone(),
             minter_addr.clone(),
             &mint_msg,
             &coins(WHITELIST_AMOUNT, NATIVE_DENOM),
