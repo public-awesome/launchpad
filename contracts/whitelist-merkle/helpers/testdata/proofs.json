@@ -1,0 +1,33 @@
+{
+  "root": "5ab281bca33c9819e0daa0708d20ff8a25e65de7d1f6659dbdeb1d2050652b80",
+  "data": [
+    {
+      "address": "stars1ye63jpm474yfrq02nyplrspyw75y82tptsls9t",
+      "proof": [
+        "8b231ee54c7e265bca6482e6a6a0f251c5da97be74f4e9720ae81a1bc08beea9",
+        "4c0801ba42388ec349cfeae552dfa64271008f37b10c2601e32c0cf2729c0278"
+      ]
+    },
+    {
+      "address": "stars130dxx3nr2ste4fwsum57k3en60wqd76m9pvpsy",
+      "proof": [
+        "ea930af5025204fc0dda1b69b567b6b41766107d65d46a1acd9725af65604531",
+        "4c0801ba42388ec349cfeae552dfa64271008f37b10c2601e32c0cf2729c0278"
+      ]
+    },
+    {
+      "address": "stars1x97rgyyudwr29xkauhxuvkgyhsrdxx3tuzr0mj",
+      "proof": [
+        "4f4c25c0e08b1dba1aff2710f16ad20142c82b6cedd9e0e0be8f58fe862996e6",
+        "8e9abbdd48390cd7ed2d6f6934b713f7839801716ad8b5ae674c1d682db6de34"
+      ]
+    },
+    {
+      "address": "stars16epdu6c7h8apxrnuu06yzfxflrede0mtu4qqz4",
+      "proof": [
+        "28fc41471ab92238e98664e99671e906cb29c048dd0343f3acf5295e424270e1",
+        "8e9abbdd48390cd7ed2d6f6934b713f7839801716ad8b5ae674c1d682db6de34"
+      ]
+    }
+  ]
+}

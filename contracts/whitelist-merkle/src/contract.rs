@@ -10,6 +10,7 @@ use cosmwasm_std::Timestamp;
 use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult};
 use cw2::set_contract_version;
 use cw_utils::must_pay;
+use hex::encode;
 use rust_decimal::prelude::ToPrimitive;
 use rust_decimal::Decimal;
 use sg1::checked_fair_burn;
@@ -31,7 +32,7 @@ pub fn instantiate(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    mut msg: InstantiateMsg,
+    msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
@@ -108,7 +109,7 @@ pub fn instantiate(
     let mut res = Response::new();
     checked_fair_burn(&info, creation_fee, None, &mut res)?;
 
-    MERKLE_ROOT.save(deps.storage, &msg.merkle_root);
+    MERKLE_ROOT.save(deps.storage, &msg.merkle_root)?;
 
     Ok(res
         .add_attribute("action", "instantiate")
@@ -239,36 +240,38 @@ fn query_has_member(
     member: String,
     proof: Vec<String>,
 ) -> StdResult<HasMemberResponse> {
-    let merkle_root = MERKLE_ROOT.load(deps.storage).unwrap_or_default();
-    // println!("merkle_root {}", merkle_root);
-    println!("member {}", member);
+    let merkle_root = MERKLE_ROOT.load(deps.storage)?;
+    
+    let mut root_buf: [u8; 32] = [0; 32];
+    let decode_result = hex::decode_to_slice(merkle_root, &mut root_buf);
+    if decode_result.is_err() {
+        return Err(cosmwasm_std::StdError::GenericErr { msg: "invalid merkle root".to_string() });
+    }
 
     let hash = sha2::Sha256::digest(member.as_bytes())
         .as_slice()
         .try_into()
         .map_err(|_| ContractError::Unauthorized {})
         .unwrap_or_default();
-    println!("hash {:?}", hash);
 
     let hash = proof
         .into_iter()
         .try_fold(hash, |hash, p| {
             let mut proof_buf = [0; 32];
-            hex::decode_to_slice(p, &mut proof_buf).unwrap_or_default();
-            let hashes = [hash, proof_buf];
+            hex::decode_to_slice(p, &mut proof_buf)?;
+            let mut hashes = [hash, proof_buf];
+            hashes.sort_unstable();
             sha2::Sha256::digest(&hashes.concat())
                 .as_slice()
                 .try_into()
                 .map_err(|_| ContractError::Unauthorized {})
-        })
-        .unwrap_or_default();
-    println!("hash {:?}", hash);
+        });
+        
+    if hash.is_err() {
+        return Err(cosmwasm_std::StdError::GenericErr { msg: "invalid proof".to_string() });
+    }
+    let hash = hash.unwrap();
 
-    let mut root_buf: [u8; 32] = [0; 32];
-    hex::decode_to_slice(merkle_root, &mut root_buf).unwrap_or_default();
-
-    println!("hash {:?}", hash);
-    println!("root_buf {:?}", root_buf);
 
     if root_buf != hash {
         return Ok(HasMemberResponse { has_member: false });
@@ -304,10 +307,11 @@ mod tests {
     const GENESIS_START_TIME: Timestamp = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
     const END_TIME: Timestamp = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 1000);
 
+    const MERKLE_ROOT: &str = &"5ab281bca33c9819e0daa0708d20ff8a25e65de7d1f6659dbdeb1d2050652b80";
+
     fn setup_contract(deps: DepsMut) {
         let msg = InstantiateMsg {
-            merkle_root: "b097c35bb87dc749db869ee8f28b49ac53f6ab817a9e1bab5f1eec98223d416f"
-                .to_string(),
+            merkle_root: MERKLE_ROOT.clone().to_string(),
             start_time: GENESIS_START_TIME,
             end_time: END_TIME,
             mint_price: coin(UNIT_AMOUNT, NATIVE_DENOM),
@@ -329,8 +333,7 @@ mod tests {
     fn improper_initialization() {
         let mut deps = mock_dependencies();
         let msg = InstantiateMsg {
-            merkle_root: "0x7075152d03a5cd92104887b476862778ec0c87be5c2fa1c0a90f87c49fad6eff"
-                .to_string(),
+            merkle_root: MERKLE_ROOT.clone().to_string(),
             start_time: END_TIME,
             end_time: END_TIME,
             mint_price: coin(1, NATIVE_DENOM),
@@ -345,8 +348,7 @@ mod tests {
     fn improper_initialization_invalid_denom() {
         let mut deps = mock_dependencies();
         let msg = InstantiateMsg {
-            merkle_root: "0x7075152d03a5cd92104887b476862778ec0c87be5c2fa1c0a90f87c49fad6eff"
-                .to_string(),
+            merkle_root: MERKLE_ROOT.clone().to_string(),
             start_time: END_TIME,
             end_time: END_TIME,
             mint_price: coin(UNIT_AMOUNT, "not_ustars"),
@@ -362,8 +364,7 @@ mod tests {
     fn improper_initialization_invalid_creation_fee() {
         let mut deps = mock_dependencies();
         let msg = InstantiateMsg {
-            merkle_root: "0x7075152d03a5cd92104887b476862778ec0c87be5c2fa1c0a90f87c49fad6eff"
-                .to_string(),
+            merkle_root: MERKLE_ROOT.clone().to_string(),
             start_time: END_TIME,
             end_time: END_TIME,
             mint_price: coin(UNIT_AMOUNT, "ustars"),
@@ -381,8 +382,7 @@ mod tests {
     #[test]
     fn check_start_time_after_end_time() {
         let msg = InstantiateMsg {
-            merkle_root: "0x7075152d03a5cd92104887b476862778ec0c87be5c2fa1c0a90f87c49fad6eff"
-                .to_string(),
+            merkle_root: MERKLE_ROOT.clone().to_string(),
             start_time: END_TIME,
             end_time: GENESIS_START_TIME,
             mint_price: coin(UNIT_AMOUNT, NATIVE_DENOM),
@@ -427,27 +427,48 @@ mod tests {
         let mut deps = mock_dependencies();
         setup_contract(deps.as_mut());
 
-        let valid_user = mock_info("stars1ye63jpm474yfrq02nyplrspyw75y82tptsls9t", &[]);
+        // valid cases
+        let user = mock_info("stars1ye63jpm474yfrq02nyplrspyw75y82tptsls9t", &[]);
         let proof = vec![
             "8b231ee54c7e265bca6482e6a6a0f251c5da97be74f4e9720ae81a1bc08beea9".to_string(),
+            "4c0801ba42388ec349cfeae552dfa64271008f37b10c2601e32c0cf2729c0278".to_string(),
+        ];
+        let res = query_has_member(deps.as_ref(), user.sender.to_string(), proof).unwrap();
+        assert!(res.has_member);
+
+        let user = mock_info("stars130dxx3nr2ste4fwsum57k3en60wqd76m9pvpsy", &[]);
+        let proof = vec![
+            "ea930af5025204fc0dda1b69b567b6b41766107d65d46a1acd9725af65604531".to_string(),
+            "4c0801ba42388ec349cfeae552dfa64271008f37b10c2601e32c0cf2729c0278".to_string(),
+        ];
+        let res = query_has_member(deps.as_ref(), user.sender.to_string(), proof).unwrap();
+        assert!(res.has_member);
+
+        let user = mock_info("stars16epdu6c7h8apxrnuu06yzfxflrede0mtu4qqz4", &[]);
+        let proof = vec![
+            "28fc41471ab92238e98664e99671e906cb29c048dd0343f3acf5295e424270e1".to_string(),
+            "8e9abbdd48390cd7ed2d6f6934b713f7839801716ad8b5ae674c1d682db6de34".to_string(),
+        ];
+        let res = query_has_member(deps.as_ref(), user.sender.to_string(), proof).unwrap();
+        assert!(res.has_member);
+
+        // invalid cases
+
+        // mismatched proof
+        let user = mock_info("stars1ye63jpm474yfrq02nyplrspyw75y82tptsls9t", &[]);
+        let proof = vec![
+            "ea930af5025204fc0dda1b69b567b6b41766107d65d46a1acd9725af65604531".to_string(),
             "28fc41471ab92238e98664e99671e906cb29c048dd0343f3acf5295e424270e1".to_string(),
         ];
-        let res = query_has_member(deps.as_ref(), valid_user.sender.to_string(), proof).unwrap();
-        assert_eq!(res.has_member, true);
+        let res = query_has_member(deps.as_ref(), user.sender.to_string(), proof).unwrap();
+        assert_eq!(res.has_member, false);
 
-        // let valid_user = mock_info("b", &[]);
-        // let proof = "".to_string();
-        // let res = query_has_member(deps.as_ref(), valid_user.sender.to_string(), proof).unwrap();
-        // assert_eq!(res.has_member, true);
-
-        // let valid_user = mock_info("c", &[]);
-        // let proof = "".to_string();
-        // let res = query_has_member(deps.as_ref(), valid_user.sender.to_string(), proof).unwrap();
-        // assert_eq!(res.has_member, true);
-
-        // let valid_user = mock_info("d", &[]);
-        // let proof = "".to_string();
-        // let res = query_has_member(deps.as_ref(), valid_user.sender.to_string(), proof).unwrap();
-        // assert_eq!(res.has_member, false);
+        // invalid proof
+        let user = mock_info("stars1ye63jpm474yfrq02nyplrspyw75y82tptsls9t", &[]);
+        let proof = vec![
+            "x".to_string(),
+            "x".to_string(),
+        ];
+        let _ = query_has_member(deps.as_ref(), user.sender.to_string(), proof).unwrap_err();
     }
 }

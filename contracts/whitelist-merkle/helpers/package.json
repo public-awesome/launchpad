@@ -1,7 +1,10 @@
 {
-  "name": "ts",
+  "name": "helpers",
   "version": "1.0.0",
   "main": "index.js",
+  "scripts": {
+    "generate": "ts-node -T index.ts"
+  },
   "license": "MIT",
   "dependencies": {
     "crypto-js": "^4.1.1",

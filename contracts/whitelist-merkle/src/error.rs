@@ -2,17 +2,24 @@ use cosmwasm_std::{StdError, Timestamp};
 use cw_utils::PaymentError;
 use sg1::FeeError;
 use thiserror::Error;
+use hex::FromHexError;
 
 #[derive(Error, Debug)]
 pub enum ContractError {
     #[error("{0}")]
     Std(#[from] StdError),
 
+    #[error("{0}")]
+    Hex(#[from] FromHexError),
+
     #[error("Unauthorized")]
     Unauthorized {},
 
     #[error("AlreadyStarted")]
     AlreadyStarted {},
+
+    #[error("InvalidProof")]
+    InvalidProof {},
 
     #[error("DuplicateMember: {0}")]
     DuplicateMember(String),
