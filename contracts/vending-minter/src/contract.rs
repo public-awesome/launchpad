@@ -27,12 +27,9 @@ use sg4::{Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
 use sg_std::math::U64Ext;
 use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME};
-use sg_whitelist::msg::{
-    HasMemberResponse, QueryMsg as WhitelistQueryMsg,
-};
+use sg_whitelist::msg::{HasMemberResponse, QueryMsg as WhitelistQueryMsg};
 use sg_whitelist_merkle::msg::{
-    HasMemberResponse as MerkleHasMemberResponse,
-    QueryMsg as MerkleWhitelistQueryMsg,
+    HasMemberResponse as MerkleHasMemberResponse, QueryMsg as MerkleWhitelistQueryMsg,
 };
 use sha2::{Digest, Sha256};
 use shuffle::{fy::FisherYates, shuffler::Shuffler};
@@ -217,9 +214,7 @@ pub fn execute(
         ExecuteMsg::UpdatePerAddressLimit { per_address_limit } => {
             execute_update_per_address_limit(deps, env, info, per_address_limit)
         }
-        ExecuteMsg::MintTo { recipient } => {
-            execute_mint_to(deps, env, info, recipient)
-        }
+        ExecuteMsg::MintTo { recipient } => execute_mint_to(deps, env, info, recipient),
         ExecuteMsg::MintFor {
             token_id,
             recipient,

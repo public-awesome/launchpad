@@ -23,12 +23,9 @@ use sg_whitelist::msg::{
     QueryMsg as WhitelistQueryMsg,
 };
 use sg_whitelist_merkle::msg::{
-    ExecuteMsg as MerkleWhitelistExecuteMsg,
-    InstantiateMsg as MerkleWhitelistInstantiateMsg,
+    ExecuteMsg as MerkleWhitelistExecuteMsg, InstantiateMsg as MerkleWhitelistInstantiateMsg,
 };
-use vending_factory::msg::{
-    InitWhitelist, VendingMinterCreateMsg, VendingMinterInitMsgExtension,
-};
+use vending_factory::msg::{InitWhitelist, VendingMinterCreateMsg, VendingMinterInitMsgExtension};
 use vending_factory::state::{ParamsExtension, VendingMinterParams};
 
 const CREATION_FEE: u128 = 5_000_000_000;
@@ -1299,7 +1296,10 @@ fn merkle_whitelist_access() {
         .wrap()
         .query_wasm_smart(minter_addr.clone(), &QueryMsg::MintPrice {})
         .unwrap();
-    println!("Mint {}{}", mint_price_response.current_price.amount, mint_price_response.current_price.denom);
+    println!(
+        "Mint {}{}",
+        mint_price_response.current_price.amount, mint_price_response.current_price.denom
+    );
 
     assert_eq!(
         coin(WHITELIST_AMOUNT, NATIVE_DENOM),

@@ -2,16 +2,13 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use cosmwasm_std::{
-    to_binary, Addr, Coin, ContractInfoResponse, CustomQuery, Deps, Querier,
-    QuerierWrapper, StdError, StdResult, Timestamp, WasmMsg, WasmQuery,
+    to_binary, Addr, Coin, ContractInfoResponse, CustomQuery, Deps, Querier, QuerierWrapper,
+    StdError, StdResult, Timestamp, WasmMsg, WasmQuery,
 };
 use sg_std::CosmosMsg;
-use sg_whitelist::msg::{
-    ConfigResponse as WhitelistConfigResponse, QueryMsg as WhitelistQueryMsg,
-};
+use sg_whitelist::msg::{ConfigResponse as WhitelistConfigResponse, QueryMsg as WhitelistQueryMsg};
 use sg_whitelist_merkle::msg::{
-    ConfigResponse as MerkleWhitelistConfigResponse,
-    QueryMsg as MerkleWhitelistQueryMsg,
+    ConfigResponse as MerkleWhitelistConfigResponse, QueryMsg as MerkleWhitelistQueryMsg,
 };
 use vending_factory::msg::{InitWhitelist, Whitelist};
 
