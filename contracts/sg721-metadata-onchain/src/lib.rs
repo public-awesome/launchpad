@@ -1,3 +1,5 @@
+use cosmwasm_std::Empty;
+
 pub use sg721_base::ContractError;
 use sg_metadata::Metadata;
 
@@ -7,7 +9,7 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub type Sg721MetadataContract<'a> = sg721_base::Sg721Contract<'a, Metadata>;
 pub type InstantiateMsg = sg721::InstantiateMsg;
-pub type ExecuteMsg = sg721::ExecuteMsg<Metadata>;
+pub type ExecuteMsg = sg721::ExecuteMsg<Metadata, Empty>;
 pub type QueryMsg = sg721_base::msg::QueryMsg;
 
 #[cfg(not(feature = "library"))]
@@ -60,7 +62,8 @@ mod tests {
         QuerierResult, QueryRequest, SystemError, SystemResult, WasmQuery,
     };
     use cw721::Cw721Query;
-    use sg721::{CollectionInfo, ExecuteMsg, InstantiateMsg, MintMsg};
+    use cw721_base::MintMsg;
+    use sg721::{CollectionInfo, ExecuteMsg, InstantiateMsg};
     use std::marker::PhantomData;
 
     const CREATOR: &str = "creator";

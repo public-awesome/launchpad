@@ -85,7 +85,7 @@ mod tests {
                 airdrop_mint_fee_bps: AIRDROP_MINT_FEE_BPS,
                 shuffle_fee: coin(SHUFFLE_FEE, NATIVE_DENOM),
             },
-            default_trading_offset_secs: 60 * 60 * 24 * 7,
+            max_trading_offset_secs: 60 * 60 * 24 * 7,
         }
     }
 
@@ -221,7 +221,7 @@ mod tests {
                 .unwrap();
             let default_start_time = mock_init_extension()
                 .start_time
-                .plus_seconds(mock_params().default_trading_offset_secs);
+                .plus_seconds(mock_params().max_trading_offset_secs);
             assert_eq!(res.trading_start_time, Some(default_start_time));
 
             // update collection info
@@ -233,7 +233,7 @@ mod tests {
             let res = app.execute_contract(
                 creator.clone(),
                 contract.clone(),
-                &Sg721ExecuteMsg::<Empty>::UpdateCollectionInfo {
+                &Sg721ExecuteMsg::<Empty, Empty>::UpdateCollectionInfo {
                     collection_info: UpdateCollectionInfoMsg {
                         description: Some(params.info.description.clone()),
                         image: Some(params.info.image.clone()),
@@ -254,7 +254,7 @@ mod tests {
             let res = app.execute_contract(
                 creator.clone(),
                 contract.clone(),
-                &Sg721ExecuteMsg::<Empty>::UpdateCollectionInfo {
+                &Sg721ExecuteMsg::<Empty, Empty>::UpdateCollectionInfo {
                     collection_info: UpdateCollectionInfoMsg {
                         description: Some(params.info.description.clone()),
                         image: Some(params.info.image.clone()),
@@ -277,7 +277,7 @@ mod tests {
             let res = app.execute_contract(
                 creator.clone(),
                 contract.clone(),
-                &Sg721ExecuteMsg::<Empty>::UpdateCollectionInfo {
+                &Sg721ExecuteMsg::<Empty, Empty>::UpdateCollectionInfo {
                     collection_info: UpdateCollectionInfoMsg {
                         description: Some(params.info.description.clone()),
                         image: Some(params.info.image.clone()),
@@ -305,7 +305,7 @@ mod tests {
             let res = app.execute_contract(
                 creator.clone(),
                 contract.clone(),
-                &Sg721ExecuteMsg::<Empty>::UpdateCollectionInfo {
+                &Sg721ExecuteMsg::<Empty, Empty>::UpdateCollectionInfo {
                     collection_info: UpdateCollectionInfoMsg {
                         description: None,
                         image: None,
@@ -322,7 +322,7 @@ mod tests {
             let res = app.execute_contract(
                 Addr::unchecked("badguy"),
                 contract.clone(),
-                &Sg721ExecuteMsg::<Empty>::FreezeCollectionInfo {},
+                &Sg721ExecuteMsg::<Empty, Empty>::FreezeCollectionInfo {},
                 &[],
             );
             assert!(res.is_err());
@@ -330,7 +330,7 @@ mod tests {
             let res = app.execute_contract(
                 creator.clone(),
                 contract.clone(),
-                &Sg721ExecuteMsg::<Empty>::FreezeCollectionInfo {},
+                &Sg721ExecuteMsg::<Empty, Empty>::FreezeCollectionInfo {},
                 &[],
             );
             assert!(res.is_ok());
@@ -339,7 +339,7 @@ mod tests {
             let res = app.execute_contract(
                 creator,
                 contract,
-                &Sg721ExecuteMsg::<Empty>::UpdateCollectionInfo {
+                &Sg721ExecuteMsg::<Empty, Empty>::UpdateCollectionInfo {
                     collection_info: UpdateCollectionInfoMsg {
                         description: Some(params.info.description.clone()),
                         image: Some(params.info.image.clone()),

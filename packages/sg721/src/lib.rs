@@ -1,11 +1,9 @@
+use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, Binary, Decimal, Timestamp};
 use cw721_base::MintMsg;
 use cw_utils::Expiration;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
 pub enum ExecuteMsg<T, E> {
     /// Transfer is a base message to move a token to another account without triggering actions
     TransferNft {
@@ -61,7 +59,7 @@ pub enum ExecuteMsg<T, E> {
     FreezeCollectionInfo,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct CollectionInfo<T> {
     pub creator: String,
     pub description: String,
@@ -72,7 +70,7 @@ pub struct CollectionInfo<T> {
     pub royalty_info: Option<T>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct UpdateCollectionInfoMsg<T> {
     pub description: Option<String>,
     pub image: Option<String>,
@@ -81,7 +79,7 @@ pub struct UpdateCollectionInfoMsg<T> {
     pub royalty_info: Option<Option<T>>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct RoyaltyInfo {
     pub payment_address: Addr,
     pub share: Decimal,
@@ -97,13 +95,13 @@ impl RoyaltyInfo {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, Default)]
+#[cw_serde]
 pub struct RoyaltyInfoResponse {
     pub payment_address: String,
     pub share: Decimal,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct InstantiateMsg {
     pub name: String,
     pub symbol: String,
