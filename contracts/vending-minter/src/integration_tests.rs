@@ -863,7 +863,7 @@ fn mint_count_query() {
     let sold_token_id: u32 = res.tokens[1].parse::<u32>().unwrap();
     // Buyer transfers NFT to creator
     // random mint token id: 8
-    let transfer_msg: Cw721ExecuteMsg<Empty> = Cw721ExecuteMsg::TransferNft {
+    let transfer_msg: Cw721ExecuteMsg<Empty, Empty> = Cw721ExecuteMsg::TransferNft {
         recipient: creator.to_string(),
         // token_id: "8".to_string(),
         token_id: sold_token_id.to_string(),
@@ -1097,7 +1097,7 @@ fn whitelist_access_len_add_remove_expiration() {
     );
 
     // Muyer is generous and transfers to creator
-    let transfer_msg: Cw721ExecuteMsg<Empty> = Cw721ExecuteMsg::TransferNft {
+    let transfer_msg: Cw721ExecuteMsg<Empty, Empty> = Cw721ExecuteMsg::TransferNft {
         recipient: creator.to_string(),
         token_id: "1".to_string(),
     };

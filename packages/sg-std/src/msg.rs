@@ -1,14 +1,11 @@
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
-
 use crate::route::StargazeRoute;
+use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Coin, CosmosMsg, CustomMsg};
 use cw721::CustomMsg as Cw721CustomMsg;
 static MSG_DATA_VERSION: &str = "1.0.0";
 
 /// StargazeMsg is an override of CosmosMsg::Custom to add support for Stargaze's custom message types
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
 pub struct StargazeMsgWrapper {
     pub route: StargazeRoute,
     pub msg_data: StargazeMsg,
@@ -24,8 +21,7 @@ impl From<StargazeMsgWrapper> for CosmosMsg<StargazeMsgWrapper> {
 impl CustomMsg for StargazeMsgWrapper {}
 impl Cw721CustomMsg for StargazeMsgWrapper {}
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
 pub enum StargazeMsg {
     ClaimFor {
         address: String,
@@ -39,8 +35,7 @@ pub enum StargazeMsg {
     },
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
 pub enum ClaimAction {
     #[serde(rename = "mint_nft")]
     MintNFT,
