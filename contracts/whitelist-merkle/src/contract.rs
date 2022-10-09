@@ -241,11 +241,13 @@ fn query_has_member(
     proof: Vec<String>,
 ) -> StdResult<HasMemberResponse> {
     let merkle_root = MERKLE_ROOT.load(deps.storage)?;
-    
+
     let mut root_buf: [u8; 32] = [0; 32];
     let decode_result = hex::decode_to_slice(merkle_root, &mut root_buf);
     if decode_result.is_err() {
-        return Err(cosmwasm_std::StdError::GenericErr { msg: "invalid merkle root".to_string() });
+        return Err(cosmwasm_std::StdError::GenericErr {
+            msg: "invalid merkle root".to_string(),
+        });
     }
 
     let hash = sha2::Sha256::digest(member.as_bytes())
@@ -254,24 +256,23 @@ fn query_has_member(
         .map_err(|_| ContractError::Unauthorized {})
         .unwrap_or_default();
 
-    let hash = proof
-        .into_iter()
-        .try_fold(hash, |hash, p| {
-            let mut proof_buf = [0; 32];
-            hex::decode_to_slice(p, &mut proof_buf)?;
-            let mut hashes = [hash, proof_buf];
-            hashes.sort_unstable();
-            sha2::Sha256::digest(&hashes.concat())
-                .as_slice()
-                .try_into()
-                .map_err(|_| ContractError::Unauthorized {})
-        });
-        
+    let hash = proof.into_iter().try_fold(hash, |hash, p| {
+        let mut proof_buf = [0; 32];
+        hex::decode_to_slice(p, &mut proof_buf)?;
+        let mut hashes = [hash, proof_buf];
+        hashes.sort_unstable();
+        sha2::Sha256::digest(&hashes.concat())
+            .as_slice()
+            .try_into()
+            .map_err(|_| ContractError::Unauthorized {})
+    });
+
     if hash.is_err() {
-        return Err(cosmwasm_std::StdError::GenericErr { msg: "invalid proof".to_string() });
+        return Err(cosmwasm_std::StdError::GenericErr {
+            msg: "invalid proof".to_string(),
+        });
     }
     let hash = hash.unwrap();
-
 
     if root_buf != hash {
         return Ok(HasMemberResponse { has_member: false });
@@ -465,10 +466,7 @@ mod tests {
 
         // invalid proof
         let user = mock_info("stars1ye63jpm474yfrq02nyplrspyw75y82tptsls9t", &[]);
-        let proof = vec![
-            "x".to_string(),
-            "x".to_string(),
-        ];
+        let proof = vec!["x".to_string(), "x".to_string()];
         let _ = query_has_member(deps.as_ref(), user.sender.to_string(), proof).unwrap_err();
     }
 }

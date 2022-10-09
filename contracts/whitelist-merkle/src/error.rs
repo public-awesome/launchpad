@@ -1,8 +1,8 @@
 use cosmwasm_std::{StdError, Timestamp};
 use cw_utils::PaymentError;
+use hex::FromHexError;
 use sg1::FeeError;
 use thiserror::Error;
-use hex::FromHexError;
 
 #[derive(Error, Debug)]
 pub enum ContractError {
