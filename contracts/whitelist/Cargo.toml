@@ -39,8 +39,8 @@ schemars = "0.8"
 rust_decimal = { version = "1.14.3" }
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0" }
-sg-std = { path = "../../packages/sg-std" }
-sg1 = { path = "../../packages/sg1" }
+sg-std = "0.19.0"
+sg1 = "0.19.0"
 
 [dev-dependencies]
 cosmwasm-schema = { version = "1.1.4" }

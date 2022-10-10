@@ -1,6 +1,6 @@
 [package]
 name = "sg-std"
-version = "0.15.0"
+version = "0.19.0"
 edition = "2021"
 
 authors = ["Jorge Hernandez <jorge@publicawesome.com>"]

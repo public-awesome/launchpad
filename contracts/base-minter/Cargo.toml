@@ -1,6 +1,6 @@
 [package]
 name = "base-minter"
-version = "0.14.1"
+version = "0.19.0"
 authors = ["Shane Vitarana <s@noreply.publicawesome.com>"]
 edition = "2018"
 description = "Stargaze NFT basic 1/1 minter contract"
@@ -39,19 +39,18 @@ schemars = "0.8"
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0" }
 url = "2.2.0"
-sg-std = { path = "../../packages/sg-std" }
+sg-std = "0.19.0"
 cw721 = "0.15.0"
 cw721-base = { version = "0.15.0", features = ["library"] }
-sg721-base = { path = "../sg721-base" }
+sg721-base = "0.19.0"
 base-factory = { path = "../base-factory" }
-sg1 = { path = "../../packages/sg1" }
-sg721 = { path = "../../packages/sg721" }
-
-sg2 = { path = "../../packages/sg2" }
-sg4 = { path = "../../packages/sg4" }
+sg1 = "0.19.0"
+sg721 = "0.19.0"
+sg2 = "0.19.0"
+sg4 = "0.19.0"
 
 [dev-dependencies]
 cosmwasm-schema = { version = "1.1.4" }
 cw-multi-test = "0.15.0"
-sg-multi-test = { path = "../../packages/sg-multi-test" }
+sg-multi-test = "0.19.0"
 sg721-nt = { path = "../sg721-nt" }

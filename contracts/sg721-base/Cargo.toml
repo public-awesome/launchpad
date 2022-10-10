@@ -1,6 +1,6 @@
 [package]
 name = "sg721-base"
-version = "0.15.1"
+version = "0.19.0"
 authors = ["Shane Vitarana <s@noreply.publicawesome.com>"]
 edition = "2018"
 description = "Stargaze NFT collection contract"
@@ -33,15 +33,15 @@ cw-utils = "0.15.0"
 cw2 = "0.15.0"
 serde = { version = "1.0.137", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0.30" }
-sg-std = { path = "../../packages/sg-std" }
+sg-std = "0.19.0"
 url = "2.2.2"
 cw721 = "0.15.0"
 cw721-base = { version = "0.15.0", features = ["library"] }
-sg721 = { path = "../../packages/sg721" }
+sg721 = "0.19.0"
 
 [dev-dependencies]
 cw-multi-test = "0.15.0"
-sg-multi-test = { path = "../../packages/sg-multi-test" }
+sg-multi-test = "0.19.0"
 vending-minter = { path = "../vending-minter", features = ["library"] }
 vending-factory = { path = "../vending-factory", features = ["library"] }
-sg2 = { path = "../../packages/sg2" }
+sg2 = "0.19.0"
