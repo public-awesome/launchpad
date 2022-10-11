@@ -1,6 +1,6 @@
 [package]
 name = "sg721"
-version = "0.15.0"
+version = "0.18.0"
 authors = ["Shane Vitarana <s@noreply.publicawsome.com>"]
 edition = "2018"
 description = "Stargaze Basic NFT Collection Interface"
@@ -26,12 +26,12 @@ backtraces = ["cosmwasm-std/backtraces"]
 library = []
 
 [dependencies]
-cosmwasm-std = "1.0.0"
-schemars = "0.8.8"
+cosmwasm-schema = "1.1.4"
+cosmwasm-std = "1.1.4"
 serde = { version = "1.0.137", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0.31" }
-cw-utils = "0.13.4"
+cw-utils = "0.15.0"
+cw721-base = "0.15.0"
 
 [dev-dependencies]
-cosmwasm-schema = "1.0.0"
-cw-multi-test = "0.13.4"
+cw-multi-test = "0.15.0"

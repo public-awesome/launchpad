@@ -75,6 +75,7 @@ pub struct StartTimeResponse {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct MintPriceResponse {
     pub public_price: Coin,
+    pub airdrop_price: Coin,
     pub whitelist_price: Option<Coin>,
     pub current_price: Coin,
 }

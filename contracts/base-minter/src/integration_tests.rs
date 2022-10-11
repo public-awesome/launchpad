@@ -65,7 +65,7 @@ pub fn mock_params() -> BaseMinterParams {
         creation_fee: coin(CREATION_FEE, NATIVE_DENOM),
         min_mint_price: coin(MIN_MINT_PRICE, NATIVE_DENOM),
         mint_fee_bps: MINT_FEE_BPS,
-        default_trading_offset_secs: 60 * 60 * 24 * 7,
+        max_trading_offset_secs: 60 * 60 * 24 * 7,
         extension: None,
     }
 }
@@ -265,7 +265,7 @@ fn update_trading_start_time() {
     let current_block_time = router.block_info().time;
     let (minter_addr, config) = setup_minter_contract(&mut router, &creator, false);
     let default_trading_start_time =
-        current_block_time.plus_seconds(mock_params().default_trading_offset_secs + 1);
+        current_block_time.plus_seconds(mock_params().max_trading_offset_secs + 1);
 
     // unauthorized
     let res = router.execute_contract(

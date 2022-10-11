@@ -16,7 +16,7 @@ use cosmwasm_std::{
     MessageInfo, Order, Reply, ReplyOn, StdError, StdResult, Timestamp, Uint128, WasmMsg,
 };
 use cw2::set_contract_version;
-use cw721_base::{msg::ExecuteMsg as Cw721ExecuteMsg, MintMsg};
+use cw721_base::{Extension, MintMsg};
 use cw_utils::{may_pay, maybe_addr, nonpayable, parse_reply_instantiate_data};
 use rand_core::{RngCore, SeedableRng};
 use rand_xoshiro::Xoshiro128PlusPlus;
@@ -108,9 +108,19 @@ pub fn instantiate(
         .whitelist
         .and_then(|w| deps.api.addr_validate(w.as_str()).ok());
 
+    if let Some(wl) = whitelist_addr.clone() {
+        // check the whitelist exists
+        let res: WhitelistConfigResponse = deps
+            .querier
+            .query_wasm_smart(wl, &WhitelistQueryMsg::Config {})?;
+        if res.is_active {
+            return Err(ContractError::WhitelistAlreadyStarted {});
+        }
+    }
+
     // Use default start trading time if not provided
     let mut collection_info = msg.collection_params.info.clone();
-    let offset = factory_params.default_trading_offset_secs;
+    let offset = factory_params.max_trading_offset_secs;
     let start_time = msg.init_msg.start_time;
     let trading_start_time = msg
         .collection_params
@@ -318,8 +328,16 @@ pub fn execute_set_whitelist(
             return Err(ContractError::WhitelistAlreadyStarted {});
         }
     }
+    let new_wl = deps.api.addr_validate(whitelist)?;
+    config.extension.whitelist = Some(new_wl.clone());
+    // check that the new whitelist exists
+    let res: WhitelistConfigResponse = deps
+        .querier
+        .query_wasm_smart(new_wl, &WhitelistQueryMsg::Config {})?;
 
-    config.extension.whitelist = Some(deps.api.addr_validate(whitelist)?);
+    if res.is_active {
+        return Err(ContractError::WhitelistAlreadyStarted {});
+    }
     CONFIG.save(deps.storage, &config)?;
 
     Ok(Response::default()
@@ -524,14 +542,14 @@ fn _execute_mint(
     };
 
     // Create mint msgs
-    let mint_msg = Cw721ExecuteMsg::Mint(MintMsg::<Empty> {
+    let mint_msg = Sg721ExecuteMsg::<Extension, Empty>::Mint(MintMsg::<Extension> {
         token_id: mintable_token_mapping.token_id.to_string(),
         owner: recipient_addr.to_string(),
         token_uri: Some(format!(
             "{}/{}",
             config.extension.base_token_uri, mintable_token_mapping.token_id
         )),
-        extension: Empty {},
+        extension: None,
     });
     let msg = CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: sg721_address.to_string(),
@@ -714,7 +732,7 @@ pub fn execute_update_trading_start_time(
     let default_start_time_with_offset = config
         .extension
         .start_time
-        .plus_seconds(factory_params.params.default_trading_offset_secs);
+        .plus_seconds(factory_params.params.max_trading_offset_secs);
 
     if let Some(start_time) = start_time {
         if env.block.time > start_time {
@@ -735,7 +753,7 @@ pub fn execute_update_trading_start_time(
     // execute sg721 contract
     let msg = WasmMsg::Execute {
         contract_addr: sg721_contract_addr.to_string(),
-        msg: to_binary(&Sg721ExecuteMsg::<Empty>::UpdateTradingStartTime(
+        msg: to_binary(&Sg721ExecuteMsg::<Empty, Empty>::UpdateTradingStartTime(
             start_time,
         ))?,
         funds: vec![],
@@ -972,8 +990,14 @@ fn query_mintable_num_tokens(deps: Deps) -> StdResult<MintableNumTokensResponse>
 fn query_mint_price(deps: Deps) -> StdResult<MintPriceResponse> {
     let config = CONFIG.load(deps.storage)?;
 
+    let factory: ParamsResponse = deps
+        .querier
+        .query_wasm_smart(config.factory, &Sg2QueryMsg::Params {})?;
+
+    let factory_params = factory.params;
+
     let current_price = mint_price(deps, false)?;
-    let public_price = config.mint_price;
+    let public_price = config.mint_price.clone();
     let whitelist_price: Option<Coin> = if let Some(whitelist) = config.extension.whitelist {
         let wl_config: WhitelistConfigResponse = deps
             .querier
@@ -982,10 +1006,15 @@ fn query_mint_price(deps: Deps) -> StdResult<MintPriceResponse> {
     } else {
         None
     };
+    let airdrop_price = coin(
+        factory_params.extension.airdrop_mint_price.amount.u128(),
+        config.mint_price.denom,
+    );
     Ok(MintPriceResponse {
-        current_price,
         public_price,
+        airdrop_price,
         whitelist_price,
+        current_price,
     })
 }
 

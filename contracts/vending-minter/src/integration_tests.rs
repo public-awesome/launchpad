@@ -18,7 +18,10 @@ use sg_multi_test::StargazeApp;
 use sg_splits::msg::ExecuteMsg as SplitsExecuteMsg;
 use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use sg_whitelist::msg::InstantiateMsg as WhitelistInstantiateMsg;
-use sg_whitelist::msg::{AddMembersMsg, ExecuteMsg as WhitelistExecuteMsg};
+use sg_whitelist::msg::{
+    AddMembersMsg, ConfigResponse as WhitelistConfigResponse, ExecuteMsg as WhitelistExecuteMsg,
+    QueryMsg as WhitelistQueryMsg,
+};
 use vending_factory::msg::{VendingMinterCreateMsg, VendingMinterInitMsgExtension};
 use vending_factory::state::{ParamsExtension, VendingMinterParams};
 
@@ -29,11 +32,11 @@ const MINT_PRICE: u128 = 100_000_000;
 const MINT_FEE: u128 = 10_000_000;
 const WHITELIST_AMOUNT: u128 = 66_000_000;
 const WL_PER_ADDRESS_LIMIT: u32 = 1;
-const ADMIN_MINT_PRICE: u128 = 15_000_000;
+const ADMIN_MINT_PRICE: u128 = 0;
 const MAX_TOKEN_LIMIT: u32 = 10000;
 
 pub const MIN_MINT_PRICE: u128 = 50_000_000;
-pub const AIRDROP_MINT_PRICE: u128 = 15_000_000;
+pub const AIRDROP_MINT_PRICE: u128 = 0;
 pub const MINT_FEE_BPS: u64 = 1_000; // 10%
 pub const AIRDROP_MINT_FEE_BPS: u64 = 10_000; // 100%
 pub const SHUFFLE_FEE: u128 = 500_000_000;
@@ -127,7 +130,7 @@ pub fn mock_params() -> VendingMinterParams {
         creation_fee: coin(CREATION_FEE, NATIVE_DENOM),
         min_mint_price: coin(MIN_MINT_PRICE, NATIVE_DENOM),
         mint_fee_bps: MINT_FEE_BPS,
-        default_trading_offset_secs: 60 * 60 * 24 * 7,
+        max_trading_offset_secs: 60 * 60 * 24 * 7,
         extension: ParamsExtension {
             max_token_limit: MAX_TOKEN_LIMIT,
             max_per_address_limit: MAX_PER_ADDRESS_LIMIT,
@@ -616,6 +619,118 @@ fn happy_path() {
         .unwrap();
     assert_eq!(res.count, 0);
 }
+
+#[test]
+
+fn invalid_whitelist_instantiate() {
+    let mut router = custom_mock_app();
+    let (creator, _) = setup_accounts(&mut router);
+
+    let num_tokens = 10;
+    let minter_code_id = router.store_code(contract_minter());
+    let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
+    let factory_code_id = router.store_code(contract_factory());
+
+    let mut params = mock_params();
+    params.code_id = minter_code_id;
+
+    let factory_addr = router
+        .instantiate_contract(
+            factory_code_id,
+            creator.clone(),
+            &vending_factory::msg::InstantiateMsg { params },
+            &[],
+            "factory",
+            None,
+        )
+        .unwrap();
+
+    let sg721_code_id = router.store_code(contract_sg721());
+
+    let mut msg = mock_create_minter(None);
+    msg.init_msg.whitelist = Some("invalid address".to_string());
+    msg.init_msg.mint_price = coin(MINT_PRICE, NATIVE_DENOM);
+    msg.init_msg.num_tokens = num_tokens;
+    msg.collection_params.code_id = sg721_code_id;
+    msg.collection_params.info.creator = creator.to_string();
+
+    let msg = Sg2ExecuteMsg::CreateMinter(msg);
+
+    let err = router
+        .execute_contract(creator, factory_addr, &msg, &creation_fee)
+        .unwrap_err();
+    assert_eq!(
+        err.source().unwrap().source().unwrap().to_string(),
+        "Generic error: Querier contract error: cw_multi_test::wasm::ContractData not found"
+    );
+}
+
+#[test]
+fn set_invalid_whitelist() {
+    let mut router = custom_mock_app();
+    let (creator, _) = setup_accounts(&mut router);
+    let num_tokens = 10;
+    let (minter_addr, _) = setup_minter_contract(&mut router, &creator, num_tokens, None);
+    let whitelist_addr = setup_whitelist_contract(&mut router, &creator);
+    const EXPIRATION_TIME: Timestamp = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000);
+
+    // Set block to before genesis mint start time
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME - 1000, None);
+
+    // Update to a start time after genesis
+    let msg = ExecuteMsg::UpdateStartTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 1000));
+    router
+        .execute_contract(creator.clone(), minter_addr.clone(), &msg, &[])
+        .unwrap();
+
+    // update wl times
+    const WL_START: Timestamp = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 200);
+
+    let wl_msg = WhitelistExecuteMsg::UpdateStartTime(WL_START);
+    let res = router.execute_contract(creator.clone(), whitelist_addr.clone(), &wl_msg, &[]);
+    assert!(res.is_ok());
+    let wl_msg = WhitelistExecuteMsg::UpdateEndTime(EXPIRATION_TIME);
+    let res = router.execute_contract(creator.clone(), whitelist_addr.clone(), &wl_msg, &[]);
+    assert!(res.is_ok());
+
+    // Set whitelist in minter contract
+    let set_whitelist_msg = ExecuteMsg::SetWhitelist {
+        whitelist: "invalid".to_string(),
+    };
+    let err = router
+        .execute_contract(
+            creator.clone(),
+            minter_addr.clone(),
+            &set_whitelist_msg,
+            &[],
+        )
+        .unwrap_err();
+    assert_eq!(
+        err.source().unwrap().source().unwrap().to_string(),
+        "Generic error: Querier contract error: cw_multi_test::wasm::ContractData not found"
+    );
+
+    // move time to make wl start
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 201, Some(11));
+
+    // check that the new whitelist exists
+    let wl_res: WhitelistConfigResponse = router
+        .wrap()
+        .query_wasm_smart(whitelist_addr.to_string(), &WhitelistQueryMsg::Config {})
+        .unwrap();
+
+    assert!(wl_res.is_active);
+
+    // Set whitelist in minter contract
+    let set_whitelist_msg = ExecuteMsg::SetWhitelist {
+        whitelist: whitelist_addr.to_string(),
+    };
+
+    let err = router
+        .execute_contract(creator.clone(), minter_addr, &set_whitelist_msg, &[])
+        .unwrap_err();
+    assert_eq!(err.source().unwrap().to_string(), "WhitelistAlreadyStarted");
+}
 #[test]
 fn mint_count_query() {
     let mut router = custom_mock_app();
@@ -748,7 +863,7 @@ fn mint_count_query() {
     let sold_token_id: u32 = res.tokens[1].parse::<u32>().unwrap();
     // Buyer transfers NFT to creator
     // random mint token id: 8
-    let transfer_msg: Cw721ExecuteMsg<Empty> = Cw721ExecuteMsg::TransferNft {
+    let transfer_msg: Cw721ExecuteMsg<Empty, Empty> = Cw721ExecuteMsg::TransferNft {
         recipient: creator.to_string(),
         // token_id: "8".to_string(),
         token_id: sold_token_id.to_string(),
@@ -982,7 +1097,7 @@ fn whitelist_access_len_add_remove_expiration() {
     );
 
     // Muyer is generous and transfers to creator
-    let transfer_msg: Cw721ExecuteMsg<Empty> = Cw721ExecuteMsg::TransferNft {
+    let transfer_msg: Cw721ExecuteMsg<Empty, Empty> = Cw721ExecuteMsg::TransferNft {
         recipient: creator.to_string(),
         token_id: "1".to_string(),
     };
@@ -1364,14 +1479,14 @@ fn mint_for_token_id_addr() {
             minter_addr.clone(),
             &mint_for_msg,
             &coins_for_msg(Coin {
-                amount: Uint128::from(ADMIN_MINT_PRICE - 1),
+                amount: Uint128::from(ADMIN_MINT_PRICE + 1),
                 denom: NATIVE_DENOM.to_string(),
             }),
         )
         .unwrap_err();
     assert_eq!(
         ContractError::IncorrectPaymentAmount(
-            coin(ADMIN_MINT_PRICE - 1, NATIVE_DENOM.to_string()),
+            coin(ADMIN_MINT_PRICE + 1, NATIVE_DENOM.to_string()),
             coin(ADMIN_MINT_PRICE, NATIVE_DENOM.to_string())
         )
         .to_string(),
@@ -1556,7 +1671,7 @@ fn update_trading_start_time() {
         Addr::unchecked(minter_addr),
         &ExecuteMsg::UpdateTradingStartTime(Some(
             Timestamp::from_nanos(GENESIS_MINT_START_TIME)
-                .plus_seconds(params.default_trading_offset_secs),
+                .plus_seconds(params.max_trading_offset_secs),
         )),
         &[],
     );
@@ -1571,7 +1686,7 @@ fn update_trading_start_time() {
         res.trading_start_time,
         Some(
             Timestamp::from_nanos(GENESIS_MINT_START_TIME)
-                .plus_seconds(params.default_trading_offset_secs)
+                .plus_seconds(params.max_trading_offset_secs)
         )
     );
 }

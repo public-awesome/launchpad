@@ -6,6 +6,11 @@ mod state;
 
 pub use crate::error::ContractError;
 pub use crate::state::Sg721Contract;
+use cosmwasm_std::Empty;
+use cw721_base::Extension;
+
+pub type ExecuteMsg = sg721::ExecuteMsg<Extension, Empty>;
+pub type QueryMsg = cw721_base::QueryMsg<Empty>;
 
 pub mod entry {
     use super::*;
@@ -16,7 +21,7 @@ pub mod entry {
     use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, StdResult};
     use cw2::set_contract_version;
     use cw721_base::Extension;
-    use sg721::{ExecuteMsg, InstantiateMsg};
+    use sg721::InstantiateMsg;
     use sg_std::Response;
 
     // version info for migration info
@@ -44,7 +49,7 @@ pub mod entry {
         deps: DepsMut,
         env: Env,
         info: MessageInfo,
-        msg: ExecuteMsg<Extension>,
+        msg: ExecuteMsg,
     ) -> Result<Response, ContractError> {
         Sg721Contract::<Extension>::default().execute(deps, env, info, msg)
     }
