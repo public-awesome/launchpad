@@ -21,10 +21,10 @@ type MarketplaceTestSuite struct {
 	startTime time.Time
 
 	accounts          []Account
-	claimCodeID       uint64
 	sg721CodeID       uint64
 	minterCodeID      uint64
 	marketplaceCodeID uint64
+	factoryCodeID     uint64
 }
 
 func (suite *MarketplaceTestSuite) SetupSuite() {
@@ -34,7 +34,7 @@ func (suite *MarketplaceTestSuite) SetupSuite() {
 
 	suite.app = simapp.SetupWithGenesisAccounts(suite.T(), suite.T().TempDir(), genAccs, balances...)
 
-	startDateTime, err := time.Parse(time.RFC3339Nano, "2022-03-11T20:59:00Z")
+	startDateTime, err := time.Parse(time.RFC3339Nano, "2022-09-18T20:00:00Z")
 	suite.Require().NoError(err)
 	suite.startTime = startDateTime
 	suite.parentCtx = suite.app.BaseApp.NewContext(false, tmproto.Header{Height: 1, ChainID: "stargaze-1", Time: startDateTime})
@@ -57,6 +57,10 @@ func (suite *MarketplaceTestSuite) SetupSuite() {
 	suite.marketplaceCodeID, err = StoreContract(suite.parentCtx, suite.msgServer, suite.accounts[0].Address.String(), marketplaceURL)
 	suite.Require().NoError(err)
 	suite.Require().Equal(uint64(3), suite.marketplaceCodeID)
+
+	suite.factoryCodeID, err = StoreContract(suite.parentCtx, suite.msgServer, suite.accounts[0].Address.String(), "vending_factory.wasm")
+	suite.Require().NoError(err)
+	suite.Require().Equal(uint64(4), suite.factoryCodeID)
 }
 
 func TestMarketplaceTestSuite(t *testing.T) {

@@ -34,7 +34,7 @@ steps:
       - mkdir -p e2e/contracts
       - cp artifacts/*.wasm e2e/contracts/
       - cd e2e/
-      - go test . -v
+      - 10K_ENABLED=true go test . -v
   - name: rebuild-cache
     image: meltwater/drone-cache:dev
     volumes:
@@ -65,4 +65,6 @@ trigger:
     - push
 ---
 kind: signature
-hmac: 7bb527353a8987741ae76d01d203ffb8a5dd17e3216a6bda53e7a37add73124e
+hmac: 0a8067dbbf554087734808160fdeaddec652c08ae6c9edbf64422943231eee54
+
+...

@@ -23,8 +23,8 @@ type Account struct {
 }
 
 func GetAccounts() []Account {
-	accounts := make([]Account, 0, 150)
-	for i := 0; i < 150; i++ {
+	accounts := make([]Account, 0, 300)
+	for i := 0; i < 300; i++ {
 		priv := secp256k1.GenPrivKey()
 		pub := priv.PubKey()
 		addr := sdk.AccAddress(pub.Address())
@@ -111,6 +111,34 @@ func strPtr(s string) *string {
 	return &s
 }
 
-func uint64Ptr(i uint64) *uint64 {
-	return &i
+// func uint64Ptr(i uint64) *uint64 {
+// 	return &i
+// }
+
+func coin(amount uint64) Coin {
+	return Coin{Amount: fmt.Sprintf("%d", amount), Denom: "ustars"}
+}
+
+func sdkCoins(amount int64) sdk.Coins {
+	return sdk.NewCoins(sdk.NewInt64Coin("ustars", int64(amount)))
+}
+
+func FindEventsByType(events sdk.Events, eventType string) []sdk.StringEvent {
+	evts := make([]sdk.StringEvent, 0)
+	for _, event := range events.ToABCIEvents() {
+		// normalize wasm-event_type
+		if strings.ReplaceAll(event.Type, "_", "-") == eventType {
+			sEvt := sdk.StringifyEvent(event)
+			evts = append(evts, sEvt)
+		}
+	}
+	return evts
+}
+func FindAttributeByKey(event sdk.StringEvent, key string) (string, bool) {
+	for _, attr := range event.Attributes {
+		if attr.Key == key {
+			return attr.Value, true
+		}
+	}
+	return "", false
 }
