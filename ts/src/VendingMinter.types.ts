@@ -98,12 +98,10 @@ export interface CollectionInfoForRoyaltyInfoResponse {
   image: string;
   royalty_info?: RoyaltyInfoResponse | null;
   trading_start_time?: Timestamp | null;
-  [k: string]: unknown;
 }
 export interface RoyaltyInfoResponse {
   payment_address: string;
   share: Decimal;
-  [k: string]: unknown;
 }
 export interface VendingMinterInitMsgExtension {
   base_token_uri: string;

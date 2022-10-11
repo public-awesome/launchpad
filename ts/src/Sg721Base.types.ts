@@ -9,50 +9,40 @@ export type Expiration = {
 } | {
   at_time: Timestamp;
 } | {
-  never: {
-    [k: string]: unknown;
-  };
+  never: {};
 };
 export type Timestamp = Uint64;
 export type Uint64 = string;
 export interface AllNftInfoResponse {
   access: OwnerOfResponse;
   info: NftInfoResponseForEmpty;
-  [k: string]: unknown;
 }
 export interface OwnerOfResponse {
   approvals: Approval[];
   owner: string;
-  [k: string]: unknown;
 }
 export interface Approval {
   expires: Expiration;
   spender: string;
-  [k: string]: unknown;
 }
 export interface NftInfoResponseForEmpty {
   extension: Empty;
   token_uri?: string | null;
-  [k: string]: unknown;
 }
 export interface Empty {
   [k: string]: unknown;
 }
 export interface AllOperatorsResponse {
   operators: Approval[];
-  [k: string]: unknown;
 }
 export interface AllTokensResponse {
   tokens: string[];
-  [k: string]: unknown;
 }
 export interface ApprovalResponse {
   approval: Approval;
-  [k: string]: unknown;
 }
 export interface ApprovalsResponse {
   approvals: Approval[];
-  [k: string]: unknown;
 }
 export type Decimal = string;
 export interface CollectionInfoResponse {
@@ -63,24 +53,20 @@ export interface CollectionInfoResponse {
   image: string;
   royalty_info?: RoyaltyInfoResponse | null;
   trading_start_time?: Timestamp | null;
-  [k: string]: unknown;
 }
 export interface RoyaltyInfoResponse {
   payment_address: string;
   share: Decimal;
-  [k: string]: unknown;
 }
 export interface ContractInfoResponse {
   name: string;
   symbol: string;
-  [k: string]: unknown;
 }
 export interface InstantiateMsg {
   collection_info: CollectionInfoForRoyaltyInfoResponse;
   minter: string;
   name: string;
   symbol: string;
-  [k: string]: unknown;
 }
 export interface CollectionInfoForRoyaltyInfoResponse {
   creator: string;
@@ -90,43 +76,35 @@ export interface CollectionInfoForRoyaltyInfoResponse {
   image: string;
   royalty_info?: RoyaltyInfoResponse | null;
   trading_start_time?: Timestamp | null;
-  [k: string]: unknown;
 }
 export interface MinterResponse {
   minter: string;
-  [k: string]: unknown;
 }
 export interface NftInfoResponse {
   extension: Empty;
   token_uri?: string | null;
-  [k: string]: unknown;
 }
 export interface NumTokensResponse {
   count: number;
-  [k: string]: unknown;
 }
 export interface OperatorsResponse {
   operators: Approval[];
-  [k: string]: unknown;
 }
 export type QueryMsg = {
   owner_of: {
     include_expired?: boolean | null;
     token_id: string;
-    [k: string]: unknown;
   };
 } | {
   approval: {
     include_expired?: boolean | null;
     spender: string;
     token_id: string;
-    [k: string]: unknown;
   };
 } | {
   approvals: {
     include_expired?: boolean | null;
     token_id: string;
-    [k: string]: unknown;
   };
 } | {
   all_operators: {
@@ -134,50 +112,36 @@ export type QueryMsg = {
     limit?: number | null;
     owner: string;
     start_after?: string | null;
-    [k: string]: unknown;
   };
 } | {
-  num_tokens: {
-    [k: string]: unknown;
-  };
+  num_tokens: {};
 } | {
-  contract_info: {
-    [k: string]: unknown;
-  };
+  contract_info: {};
 } | {
   nft_info: {
     token_id: string;
-    [k: string]: unknown;
   };
 } | {
   all_nft_info: {
     include_expired?: boolean | null;
     token_id: string;
-    [k: string]: unknown;
   };
 } | {
   tokens: {
     limit?: number | null;
     owner: string;
     start_after?: string | null;
-    [k: string]: unknown;
   };
 } | {
   all_tokens: {
     limit?: number | null;
     start_after?: string | null;
-    [k: string]: unknown;
   };
 } | {
-  minter: {
-    [k: string]: unknown;
-  };
+  minter: {};
 } | {
-  collection_info: {
-    [k: string]: unknown;
-  };
+  collection_info: {};
 };
 export interface TokensResponse {
   tokens: string[];
-  [k: string]: unknown;
 }
