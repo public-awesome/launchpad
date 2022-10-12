@@ -219,7 +219,28 @@ func (suite *MarketplaceTestSuite) TestStartTradingTime() {
 			Funds:    sdkCoins(MINT_PRICE),
 		})
 		suite.Require().NoError(err)
-
 	}
 
+}
+
+func (suite *MarketplaceTestSuite) TestInvalidTradingStartTime() {
+	ctx, _ := suite.parentCtx.CacheContext()
+	creator := suite.accounts[0]
+	factoryAddress, err := InstantiateFactory(ctx, suite.msgServer, creator.Address, suite.factoryCodeID, suite.minterCodeID)
+	suite.Require().NoError(err)
+	suite.Require().NotEmpty(factoryAddress)
+	invalidTime := suite.startTime.Add(time.Hour * 24 * 365)
+	createMinterMsg := FactoryMessages{
+		CreateMinter: CreateMinterMessage(creator.Address, suite.sg721CodeID, suite.startTime, 1000, 10, &invalidTime),
+	}
+	bz, err := json.Marshal(&createMinterMsg)
+	suite.Require().NoError(err)
+
+	_, err = suite.msgServer.ExecuteContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgExecuteContract{
+		Contract: factoryAddress,
+		Sender:   creator.Address.String(),
+		Msg:      bz,
+		Funds:    sdk.NewCoins(sdk.NewInt64Coin("ustars", CREATION_FEE)),
+	})
+	suite.Require().Error(err)
 }
