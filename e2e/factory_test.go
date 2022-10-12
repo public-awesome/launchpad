@@ -183,13 +183,13 @@ func (suite *MarketplaceTestSuite) TestStartTradingTime() {
 	suite.Require().NoError(err)
 	suite.Require().NotEmpty(factoryAddress)
 
-	invalidTime := suite.startTime.Add(time.Hour * 24 * 10)
+	invalidTime := suite.startTime.Add(time.Hour * 1)
 	createMinterMsg := FactoryMessages{
 		CreateMinter: CreateMinterMessage(creator.Address, suite.sg721CodeID, suite.startTime, 1000, 10, &invalidTime),
 	}
 	bz, err := json.Marshal(&createMinterMsg)
 	fmt.Println(string(bz))
-	suite.Require().Error(err)
+	suite.Require().NoError(err)
 
 	_, err = suite.msgServer.ExecuteContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgExecuteContract{
 		Contract: factoryAddress,
