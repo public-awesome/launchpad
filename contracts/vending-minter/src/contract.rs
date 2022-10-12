@@ -121,12 +121,21 @@ pub fn instantiate(
     // Use default start trading time if not provided
     let mut collection_info = msg.collection_params.info.clone();
     let offset = factory_params.max_trading_offset_secs;
-    let start_time = msg.init_msg.start_time;
+    let default_start_time_with_offset = msg.init_msg.start_time.plus_seconds(offset);
+    if let Some(trading_start_time) = msg.collection_params.info.trading_start_time {
+        // If trading start time > start_time + offset, return error
+        if trading_start_time > default_start_time_with_offset {
+            return Err(ContractError::InvalidTradingStartTime(
+                trading_start_time,
+                default_start_time_with_offset,
+            ));
+        }
+    }
     let trading_start_time = msg
         .collection_params
         .info
         .trading_start_time
-        .or_else(|| Some(start_time.plus_seconds(offset)));
+        .or(Some(default_start_time_with_offset));
     collection_info.trading_start_time = trading_start_time;
 
     let config = Config {
@@ -734,18 +743,18 @@ pub fn execute_update_trading_start_time(
         .start_time
         .plus_seconds(factory_params.params.max_trading_offset_secs);
 
-    if let Some(start_time) = start_time {
-        if env.block.time > start_time {
+    if let Some(trading_start_time) = start_time {
+        if env.block.time > trading_start_time {
             return Err(ContractError::InvalidTradingStartTime(
                 env.block.time,
-                start_time,
+                trading_start_time,
             ));
         }
-        // If old start time + offset > new start_time, return error
-        if default_start_time_with_offset > start_time {
+        // If new trading_start_time > old start time + offset , return error
+        if trading_start_time > default_start_time_with_offset {
             return Err(ContractError::InvalidTradingStartTime(
+                trading_start_time,
                 default_start_time_with_offset,
-                start_time,
             ));
         }
     }
