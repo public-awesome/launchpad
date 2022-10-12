@@ -11,18 +11,50 @@ workspace:
   path: /code
 
 steps:
+  - name: restore-cache
+    image: meltwater/drone-cache:dev
+    pull: true
+    settings:
+      backend: "filesystem"
+      restore: true
+      cache_key: "volume"
+      archive_format: "gzip"
+      filesystem_cache_root: "/var/lib/cache"
+      mount:
+        - "/code/target"
+    volumes:
+      - name: cache
+        path: /var/lib/cache
+
   - name: build-contracts
     image: cosmwasm/workspace-optimizer:0.12.8
   - name: full_test
     image: publicawesome/golang:1.18.0-devtooling
+    environment:
+      10K_ENABLED: true
     commands:
       - mkdir -p e2e/contracts
       - cp artifacts/*.wasm e2e/contracts/
       - cd e2e/
       - go test . -v
+  - name: rebuild-cache
+    image: meltwater/drone-cache:dev
+    volumes:
+      - name: cache
+        path: /var/lib/cache
+    pull: true
+    settings:
+      backend: "filesystem"
+      rebuild: true
+      cache_key: "volume"
+      archive_format: "gzip"
+      filesystem_cache_root: "/var/lib/cache"
+      mount:
+        - "/code/target"
 volumes:
   - name: cache
-    temp: {}
+    host:
+      path: /var/lib/cache
 
 node:
   runner: integration
@@ -33,3 +65,8 @@ trigger:
   event:
     - pull_request
     - push
+---
+kind: signature
+hmac: c05218f18242f4fd76535bec8bea0f3c37137d2efd5f4fdd33c812bbb3b790db
+
+...
