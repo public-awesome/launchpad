@@ -30,11 +30,13 @@ steps:
     image: cosmwasm/workspace-optimizer:0.12.8
   - name: full_test
     image: publicawesome/golang:1.18.0-devtooling
+    environment:
+      10K_ENABLED: true
     commands:
       - mkdir -p e2e/contracts
       - cp artifacts/*.wasm e2e/contracts/
       - cd e2e/
-      - 10K_ENABLED=true go test . -v
+      - go test . -v
   - name: rebuild-cache
     image: meltwater/drone-cache:dev
     volumes:
@@ -65,6 +67,6 @@ trigger:
     - push
 ---
 kind: signature
-hmac: 0a8067dbbf554087734808160fdeaddec652c08ae6c9edbf64422943231eee54
+hmac: c05218f18242f4fd76535bec8bea0f3c37137d2efd5f4fdd33c812bbb3b790db
 
 ...
