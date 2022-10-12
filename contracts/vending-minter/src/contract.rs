@@ -183,11 +183,7 @@ pub fn instantiate(
             })?,
             funds: info.funds,
             admin: Some(config.extension.admin.to_string()),
-            label: format!(
-                "SG721-{}-{}",
-                msg.collection_params.code_id,
-                msg.collection_params.name.trim()
-            ),
+            label: format!("SG721-{}", msg.collection_params.name.trim()),
         }
         .into(),
         id: INSTANTIATE_SG721_REPLY_ID,
@@ -769,7 +765,7 @@ pub fn execute_update_trading_start_time(
     };
 
     Ok(Response::new()
-        .add_attribute("action", "update_start_time")
+        .add_attribute("action", "update_trading_start_time")
         .add_attribute("sender", info.sender)
         .add_message(msg))
 }
