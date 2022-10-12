@@ -278,10 +278,10 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractE
     match reply {
         Ok(res) => {
             let collection_address = res.contract_address;
-
-            COLLECTION_ADDRESS.save(deps.storage, &Addr::unchecked(collection_address))?;
-
-            Ok(Response::default().add_attribute("action", "instantiate_sg721_reply"))
+            COLLECTION_ADDRESS.save(deps.storage, &Addr::unchecked(collection_address.clone()))?;
+            Ok(Response::default()
+                .add_attribute("action", "instantiate_sg721_reply")
+                .add_attribute("sg721_address", collection_address))
         }
         Err(_) => Err(ContractError::InstantiateSg721Error {}),
     }

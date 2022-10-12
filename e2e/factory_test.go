@@ -189,7 +189,7 @@ func (suite *MarketplaceTestSuite) TestStartTradingTime() {
 	}
 	bz, err := json.Marshal(&createMinterMsg)
 	fmt.Println(string(bz))
-	suite.Require().NoError(err)
+	suite.Require().Error(err)
 
 	_, err = suite.msgServer.ExecuteContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgExecuteContract{
 		Contract: factoryAddress,
