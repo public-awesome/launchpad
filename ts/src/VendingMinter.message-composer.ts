@@ -24,7 +24,7 @@ export interface VendingMinterMessage {
     price: number;
   }, funds?: Coin[]) => MsgExecuteContractEncodeObject;
   updateStartTime: (funds?: Coin[]) => MsgExecuteContractEncodeObject;
-  updateTradingStartTime: (funds?: Coin[]) => MsgExecuteContractEncodeObject;
+  updateStartTradingTime: (funds?: Coin[]) => MsgExecuteContractEncodeObject;
   updatePerAddressLimit: ({
     perAddressLimit
   }: {
@@ -57,7 +57,7 @@ export class VendingMinterMessageComposer implements VendingMinterMessage {
     this.purge = this.purge.bind(this);
     this.updateMintPrice = this.updateMintPrice.bind(this);
     this.updateStartTime = this.updateStartTime.bind(this);
-    this.updateTradingStartTime = this.updateTradingStartTime.bind(this);
+    this.updateStartTradingTime = this.updateStartTradingTime.bind(this);
     this.updatePerAddressLimit = this.updatePerAddressLimit.bind(this);
     this.mintTo = this.mintTo.bind(this);
     this.mintFor = this.mintFor.bind(this);
@@ -142,14 +142,14 @@ export class VendingMinterMessageComposer implements VendingMinterMessage {
       })
     };
   };
-  updateTradingStartTime = (funds?: Coin[]): MsgExecuteContractEncodeObject => {
+  updateStartTradingTime = (funds?: Coin[]): MsgExecuteContractEncodeObject => {
     return {
       typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
       value: MsgExecuteContract.fromPartial({
         sender: this.sender,
         contract: this.contractAddress,
         msg: toUtf8(JSON.stringify({
-          update_trading_start_time: {}
+          update_start_trading_time: {}
         })),
         funds
       })

@@ -88,7 +88,7 @@ export interface VendingMinterInterface extends VendingMinterReadOnlyInterface {
     price: number;
   }, fee?: number | StdFee | "auto", memo?: string, funds?: Coin[]) => Promise<ExecuteResult>;
   updateStartTime: (fee?: number | StdFee | "auto", memo?: string, funds?: Coin[]) => Promise<ExecuteResult>;
-  updateTradingStartTime: (fee?: number | StdFee | "auto", memo?: string, funds?: Coin[]) => Promise<ExecuteResult>;
+  updateStartTradingTime: (fee?: number | StdFee | "auto", memo?: string, funds?: Coin[]) => Promise<ExecuteResult>;
   updatePerAddressLimit: ({
     perAddressLimit
   }: {
@@ -124,7 +124,7 @@ export class VendingMinterClient extends VendingMinterQueryClient implements Ven
     this.purge = this.purge.bind(this);
     this.updateMintPrice = this.updateMintPrice.bind(this);
     this.updateStartTime = this.updateStartTime.bind(this);
-    this.updateTradingStartTime = this.updateTradingStartTime.bind(this);
+    this.updateStartTradingTime = this.updateStartTradingTime.bind(this);
     this.updatePerAddressLimit = this.updatePerAddressLimit.bind(this);
     this.mintTo = this.mintTo.bind(this);
     this.mintFor = this.mintFor.bind(this);
@@ -169,9 +169,9 @@ export class VendingMinterClient extends VendingMinterQueryClient implements Ven
       update_start_time: {}
     }, fee, memo, funds);
   };
-  updateTradingStartTime = async (fee: number | StdFee | "auto" = "auto", memo?: string, funds?: Coin[]): Promise<ExecuteResult> => {
+  updateStartTradingTime = async (fee: number | StdFee | "auto" = "auto", memo?: string, funds?: Coin[]): Promise<ExecuteResult> => {
     return await this.client.execute(this.sender, this.contractAddress, {
-      update_trading_start_time: {}
+      update_start_trading_time: {}
     }, fee, memo, funds);
   };
   updatePerAddressLimit = async ({

@@ -5,8 +5,8 @@ type CollectionInfo struct {
 	Description      string       `json:"description"`
 	Image            string       `json:"image"`
 	ExternalLink     *string      `json:"external_link"`
-	ExplicitContent  bool         `json:"explicit_content"`
-	TradingStartTime *string      `json:"trading_start_time,omitempty"`
+	ExplicitContent  *bool        `json:"explicit_content"`
+	StartTradingTime *string      `json:"start_trading_time,omitempty"`
 	RoyaltyInfo      *RoyaltyInfo `json:"royalty_info,omitempty"`
 }
 type SG721InstantiateMsg struct {

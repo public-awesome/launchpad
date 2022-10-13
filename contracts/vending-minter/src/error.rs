@@ -72,8 +72,8 @@ pub enum ContractError {
     #[error("InvalidStartTime {0} < {1}")]
     InvalidStartTime(Timestamp, Timestamp),
 
-    #[error("InvalidTradingStartTime {0} < {1}")]
-    InvalidTradingStartTime(Timestamp, Timestamp),
+    #[error("InvalidStartTradingTime {0} < {1}")]
+    InvalidStartTradingTime(Timestamp, Timestamp),
 
     #[error("Instantiate sg721 error")]
     InstantiateSg721Error {},

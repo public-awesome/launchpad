@@ -42,7 +42,7 @@ export interface BaseMinterInterface extends BaseMinterReadOnlyInterface {
   }: {
     tokenUri: string;
   }, fee?: number | StdFee | "auto", memo?: string, funds?: Coin[]) => Promise<ExecuteResult>;
-  updateTradingStartTime: (fee?: number | StdFee | "auto", memo?: string, funds?: Coin[]) => Promise<ExecuteResult>;
+  updateStartTradingTime: (fee?: number | StdFee | "auto", memo?: string, funds?: Coin[]) => Promise<ExecuteResult>;
 }
 export class BaseMinterClient extends BaseMinterQueryClient implements BaseMinterInterface {
   client: SigningCosmWasmClient;
@@ -55,7 +55,7 @@ export class BaseMinterClient extends BaseMinterQueryClient implements BaseMinte
     this.sender = sender;
     this.contractAddress = contractAddress;
     this.mint = this.mint.bind(this);
-    this.updateTradingStartTime = this.updateTradingStartTime.bind(this);
+    this.updateStartTradingTime = this.updateStartTradingTime.bind(this);
   }
 
   mint = async ({
@@ -69,9 +69,9 @@ export class BaseMinterClient extends BaseMinterQueryClient implements BaseMinte
       }
     }, fee, memo, funds);
   };
-  updateTradingStartTime = async (fee: number | StdFee | "auto" = "auto", memo?: string, funds?: Coin[]): Promise<ExecuteResult> => {
+  updateStartTradingTime = async (fee: number | StdFee | "auto" = "auto", memo?: string, funds?: Coin[]): Promise<ExecuteResult> => {
     return await this.client.execute(this.sender, this.contractAddress, {
-      update_trading_start_time: {}
+      update_start_trading_time: {}
     }, fee, memo, funds);
   };
 }

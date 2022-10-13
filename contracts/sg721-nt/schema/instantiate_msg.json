@@ -29,7 +29,6 @@
       "required": [
         "creator",
         "description",
-        "explicit_content",
         "image"
       ],
       "properties": {
@@ -40,7 +39,10 @@
           "type": "string"
         },
         "explicit_content": {
-          "type": "boolean"
+          "type": [
+            "boolean",
+            "null"
+          ]
         },
         "external_link": {
           "type": [
@@ -61,7 +63,7 @@
             }
           ]
         },
-        "trading_start_time": {
+        "start_trading_time": {
           "anyOf": [
             {
               "$ref": "#/definitions/Timestamp"

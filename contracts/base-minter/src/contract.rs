@@ -60,12 +60,12 @@ pub fn instantiate(
     // Use default start trading time if not provided
     let mut collection_info = msg.collection_params.info.clone();
     let offset = factory_params.params.max_trading_offset_secs;
-    let trading_start_time = msg
+    let start_trading_time = msg
         .collection_params
         .info
-        .trading_start_time
+        .start_trading_time
         .or_else(|| Some(env.block.time.plus_seconds(offset)));
-    collection_info.trading_start_time = trading_start_time;
+    collection_info.start_trading_time = start_trading_time;
 
     CONFIG.save(deps.storage, &config)?;
 
@@ -104,8 +104,8 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::Mint { token_uri } => execute_mint_sender(deps, info, token_uri),
-        ExecuteMsg::UpdateTradingStartTime(time) => {
-            execute_update_trading_start_time(deps, env, info, time)
+        ExecuteMsg::UpdateStartTradingTime(time) => {
+            execute_update_start_trading_time(deps, env, info, time)
         }
     }
 }
@@ -174,7 +174,7 @@ pub fn execute_mint_sender(
         .add_attribute("network_fee", network_fee.to_string()))
 }
 
-pub fn execute_update_trading_start_time(
+pub fn execute_update_start_trading_time(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
@@ -196,7 +196,7 @@ pub fn execute_update_trading_start_time(
     // add custom rules here
     if let Some(start_time) = start_time {
         if env.block.time > start_time {
-            return Err(ContractError::InvalidTradingStartTime(
+            return Err(ContractError::InvalidStartTradingTime(
                 env.block.time,
                 start_time,
             ));
@@ -206,7 +206,7 @@ pub fn execute_update_trading_start_time(
     // execute sg721 contract
     let msg = WasmMsg::Execute {
         contract_addr: sg721_contract_addr.to_string(),
-        msg: to_binary(&Sg721ExecuteMsg::<Extension, Empty>::UpdateTradingStartTime(start_time))?,
+        msg: to_binary(&Sg721ExecuteMsg::<Extension, Empty>::UpdateStartTradingTime(start_time))?,
         funds: vec![],
     };
 

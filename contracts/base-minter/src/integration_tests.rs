@@ -259,19 +259,19 @@ fn check_mint() {
 }
 
 #[test]
-fn update_trading_start_time() {
+fn update_start_trading_time() {
     let mut router = custom_mock_app();
     let (creator, buyer) = setup_accounts(&mut router);
     let current_block_time = router.block_info().time;
     let (minter_addr, config) = setup_minter_contract(&mut router, &creator, false);
-    let default_trading_start_time =
+    let default_start_trading_time =
         current_block_time.plus_seconds(mock_params().max_trading_offset_secs + 1);
 
     // unauthorized
     let res = router.execute_contract(
         Addr::unchecked(buyer),
         Addr::unchecked(minter_addr.clone()),
-        &ExecuteMsg::UpdateTradingStartTime(Some(default_trading_start_time)),
+        &ExecuteMsg::UpdateStartTradingTime(Some(default_start_trading_time)),
         &[],
     );
     assert!(res.is_err());
@@ -280,7 +280,7 @@ fn update_trading_start_time() {
     let res = router.execute_contract(
         Addr::unchecked(creator.clone()),
         Addr::unchecked(minter_addr.clone()),
-        &ExecuteMsg::UpdateTradingStartTime(Some(Timestamp::from_nanos(0))),
+        &ExecuteMsg::UpdateStartTradingTime(Some(Timestamp::from_nanos(0))),
         &[],
     );
     assert!(res.is_err());
@@ -289,7 +289,7 @@ fn update_trading_start_time() {
     let res = router.execute_contract(
         Addr::unchecked(creator.clone()),
         Addr::unchecked(minter_addr),
-        &ExecuteMsg::UpdateTradingStartTime(Some(default_trading_start_time)),
+        &ExecuteMsg::UpdateStartTradingTime(Some(default_start_trading_time)),
         &[],
     );
     assert!(res.is_ok());
@@ -299,5 +299,5 @@ fn update_trading_start_time() {
         .wrap()
         .query_wasm_smart(config.collection_address, &Sg721QueryMsg::CollectionInfo {})
         .unwrap();
-    assert_eq!(res.trading_start_time, Some(default_trading_start_time));
+    assert_eq!(res.start_trading_time, Some(default_start_trading_time));
 }

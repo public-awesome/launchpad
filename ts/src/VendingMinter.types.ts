@@ -46,7 +46,7 @@ export type ExecuteMsg = {
 } | {
   update_start_time: Timestamp;
 } | {
-  update_trading_start_time: Timestamp | null;
+  update_start_trading_time: Timestamp | null;
 } | {
   update_per_address_limit: {
     per_address_limit: number;
@@ -93,11 +93,11 @@ export interface CollectionParams {
 export interface CollectionInfoForRoyaltyInfoResponse {
   creator: string;
   description: string;
-  explicit_content: boolean;
+  explicit_content?: boolean | null;
   external_link?: string | null;
   image: string;
   royalty_info?: RoyaltyInfoResponse | null;
-  trading_start_time?: Timestamp | null;
+  start_trading_time?: Timestamp | null;
 }
 export interface RoyaltyInfoResponse {
   payment_address: string;
