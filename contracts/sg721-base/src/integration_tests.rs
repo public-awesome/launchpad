@@ -180,7 +180,7 @@ mod tests {
                     image: "description".to_string(),
                     external_link: None,
                     explicit_content: false,
-                    trading_start_time: None,
+                    start_trading_time: None,
                     royalty_info: None,
                 },
             };
@@ -202,7 +202,7 @@ mod tests {
         }
     }
 
-    mod trading_start_time {
+    mod start_trading_time {
         use cosmwasm_std::{Decimal, Empty};
         use sg721::{RoyaltyInfoResponse, UpdateCollectionInfoMsg};
 
@@ -222,7 +222,7 @@ mod tests {
             let default_start_time = mock_init_extension()
                 .start_time
                 .plus_seconds(mock_params().max_trading_offset_secs);
-            assert_eq!(res.trading_start_time, Some(default_start_time));
+            assert_eq!(res.start_trading_time, Some(default_start_time));
 
             // update collection info
             let (mut app, contract) = proper_instantiate();

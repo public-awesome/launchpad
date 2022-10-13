@@ -60,12 +60,12 @@ pub fn instantiate(
     // Use default start trading time if not provided
     let mut collection_info = msg.collection_params.info.clone();
     let offset = factory_params.params.max_trading_offset_secs;
-    let trading_start_time = msg
+    let start_trading_time = msg
         .collection_params
         .info
-        .trading_start_time
+        .start_trading_time
         .or_else(|| Some(env.block.time.plus_seconds(offset)));
-    collection_info.trading_start_time = trading_start_time;
+    collection_info.start_trading_time = start_trading_time;
 
     CONFIG.save(deps.storage, &config)?;
 
@@ -105,7 +105,7 @@ pub fn execute(
     match msg {
         ExecuteMsg::Mint { token_uri } => execute_mint_sender(deps, info, token_uri),
         ExecuteMsg::UpdateTradingStartTime(time) => {
-            execute_update_trading_start_time(deps, env, info, time)
+            execute_update_start_trading_time(deps, env, info, time)
         }
     }
 }
@@ -174,7 +174,7 @@ pub fn execute_mint_sender(
         .add_attribute("network_fee", network_fee.to_string()))
 }
 
-pub fn execute_update_trading_start_time(
+pub fn execute_update_start_trading_time(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,

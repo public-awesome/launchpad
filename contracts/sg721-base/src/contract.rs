@@ -83,7 +83,7 @@ where
             image: msg.collection_info.image,
             external_link: msg.collection_info.external_link,
             explicit_content: msg.collection_info.explicit_content,
-            trading_start_time: msg.collection_info.trading_start_time,
+            start_trading_time: msg.collection_info.start_trading_time,
             royalty_info,
         };
 
@@ -148,7 +148,7 @@ where
                 self.update_collection_info(deps, env, info, collection_info)
             }
             ExecuteMsg::UpdateTradingStartTime(start_time) => {
-                self.update_trading_start_time(deps, env, info, start_time)
+                self.update_start_trading_time(deps, env, info, start_time)
             }
             ExecuteMsg::FreezeCollectionInfo {} => self.freeze_collection_info(deps, env, info),
             ExecuteMsg::Mint(msg) => self.mint(deps, env, info, msg),
@@ -231,7 +231,7 @@ where
 
     /// Called by the minter reply handler after custom validations on trading start time.
     /// Minter has start_time, default offset, makes sense to execute from minter.
-    pub fn update_trading_start_time(
+    pub fn update_start_trading_time(
         &self,
         deps: DepsMut,
         _env: Env,
@@ -244,10 +244,10 @@ where
         }
 
         let mut collection_info = self.collection_info.load(deps.storage)?;
-        collection_info.trading_start_time = start_time;
+        collection_info.start_trading_time = start_time;
         self.collection_info.save(deps.storage, &collection_info)?;
 
-        let event = Event::new("update_trading_start_time").add_attribute("sender", info.sender);
+        let event = Event::new("update_start_trading_time").add_attribute("sender", info.sender);
         Ok(Response::new().add_event(event))
     }
 
@@ -328,7 +328,7 @@ where
             image: info.image,
             external_link: info.external_link,
             explicit_content: info.explicit_content,
-            trading_start_time: info.trading_start_time,
+            start_trading_time: info.start_trading_time,
             royalty_info: royalty_info_res,
         })
     }

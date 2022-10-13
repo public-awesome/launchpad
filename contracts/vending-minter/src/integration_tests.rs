@@ -1676,7 +1676,7 @@ fn invalid_trading_time_during_init() {
     msg.collection_params.code_id = sg721_code_id;
     msg.collection_params.info.creator = creator.to_string();
     // make trading time beyond factory max trading start time offset
-    msg.collection_params.info.trading_start_time = Some(
+    msg.collection_params.info.start_trading_time = Some(
         msg.init_msg
             .start_time
             .plus_seconds(params.max_trading_offset_secs + 1),
@@ -1697,7 +1697,7 @@ fn invalid_trading_time_during_init() {
 }
 
 #[test]
-fn update_trading_start_time() {
+fn update_start_trading_time() {
     let mut router = custom_mock_app();
     let (creator, buyer) = setup_accounts(&mut router);
     let num_tokens = 2;
@@ -1753,7 +1753,7 @@ fn update_trading_start_time() {
         .query_wasm_smart(config.sg721_address, &Sg721QueryMsg::CollectionInfo {})
         .unwrap();
     assert_eq!(
-        res.trading_start_time,
+        res.start_trading_time,
         Some(
             Timestamp::from_nanos(GENESIS_MINT_START_TIME)
                 .plus_seconds(params.max_trading_offset_secs)

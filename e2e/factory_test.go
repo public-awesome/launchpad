@@ -20,10 +20,10 @@ func (suite *MarketplaceTestSuite) TestInstantiateFactory() {
 	suite.Require().NoError(err)
 }
 
-func CreateMinterMessage(creator sdk.AccAddress, sg721CodeID uint64, start time.Time, numTokens, limit int, tradingStartTime *time.Time) *CreateMinterMsg {
-	var tradingStartTimeStr *string
-	if tradingStartTime != nil {
-		tradingStartTimeStr = strPtr(fmt.Sprintf("%d", tradingStartTime.UnixNano()))
+func CreateMinterMessage(creator sdk.AccAddress, sg721CodeID uint64, start time.Time, numTokens, limit int, startTradingTime *time.Time) *CreateMinterMsg {
+	var startTradingTimeStr *string
+	if startTradingTime != nil {
+		startTradingTimeStr = strPtr(fmt.Sprintf("%d", startTradingTime.UnixNano()))
 	}
 	return &CreateMinterMsg{
 		InitMsg: VendingMinterInitMsgExtension{
@@ -43,7 +43,7 @@ func CreateMinterMessage(creator sdk.AccAddress, sg721CodeID uint64, start time.
 				Creator:          creator.String(),
 				Description:      "Description",
 				Image:            "https://example.com/image.png",
-				TradingStartTime: tradingStartTimeStr,
+				StartTradingTime: startTradingTimeStr,
 			},
 		},
 	}
@@ -223,7 +223,7 @@ func (suite *MarketplaceTestSuite) TestStartTradingTime() {
 
 }
 
-func (suite *MarketplaceTestSuite) TestInvalidTradingStartTime() {
+func (suite *MarketplaceTestSuite) TestInvalidstartTradingTime() {
 	ctx, _ := suite.parentCtx.CacheContext()
 	creator := suite.accounts[0]
 	factoryAddress, err := InstantiateFactory(ctx, suite.msgServer, creator.Address, suite.factoryCodeID, suite.minterCodeID)

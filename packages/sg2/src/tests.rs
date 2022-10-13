@@ -13,7 +13,7 @@ pub fn mock_collection_params() -> CollectionParams {
             description: String::from("Stargaze Monkeys"),
             image: "https://example.com/image.png".to_string(),
             external_link: Some("https://example.com/external.html".to_string()),
-            trading_start_time: None,
+            start_trading_time: None,
             explicit_content: false,
             royalty_info: Some(RoyaltyInfoResponse {
                 payment_address: "creator".to_string(),

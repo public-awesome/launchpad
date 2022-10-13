@@ -122,21 +122,21 @@ pub fn instantiate(
     let mut collection_info = msg.collection_params.info.clone();
     let offset = factory_params.max_trading_offset_secs;
     let default_start_time_with_offset = msg.init_msg.start_time.plus_seconds(offset);
-    if let Some(trading_start_time) = msg.collection_params.info.trading_start_time {
+    if let Some(start_trading_time) = msg.collection_params.info.start_trading_time {
         // If trading start time > start_time + offset, return error
-        if trading_start_time > default_start_time_with_offset {
+        if start_trading_time > default_start_time_with_offset {
             return Err(ContractError::InvalidTradingStartTime(
-                trading_start_time,
+                start_trading_time,
                 default_start_time_with_offset,
             ));
         }
     }
-    let trading_start_time = msg
+    let start_trading_time = msg
         .collection_params
         .info
-        .trading_start_time
+        .start_trading_time
         .or(Some(default_start_time_with_offset));
-    collection_info.trading_start_time = trading_start_time;
+    collection_info.start_trading_time = start_trading_time;
 
     let config = Config {
         factory: factory.clone(),
@@ -212,7 +212,7 @@ pub fn execute(
         ExecuteMsg::UpdateMintPrice { price } => execute_update_mint_price(deps, env, info, price),
         ExecuteMsg::UpdateStartTime(time) => execute_update_start_time(deps, env, info, time),
         ExecuteMsg::UpdateTradingStartTime(time) => {
-            execute_update_trading_start_time(deps, env, info, time)
+            execute_update_start_trading_time(deps, env, info, time)
         }
         ExecuteMsg::UpdatePerAddressLimit { per_address_limit } => {
             execute_update_per_address_limit(deps, env, info, per_address_limit)
@@ -714,7 +714,7 @@ pub fn execute_update_start_time(
         .add_attribute("start_time", start_time.to_string()))
 }
 
-pub fn execute_update_trading_start_time(
+pub fn execute_update_start_trading_time(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
@@ -739,17 +739,17 @@ pub fn execute_update_trading_start_time(
         .start_time
         .plus_seconds(factory_params.params.max_trading_offset_secs);
 
-    if let Some(trading_start_time) = start_time {
-        if env.block.time > trading_start_time {
+    if let Some(start_trading_time) = start_time {
+        if env.block.time > start_trading_time {
             return Err(ContractError::InvalidTradingStartTime(
                 env.block.time,
-                trading_start_time,
+                start_trading_time,
             ));
         }
-        // If new trading_start_time > old start time + offset , return error
-        if trading_start_time > default_start_time_with_offset {
+        // If new start_trading_time > old start time + offset , return error
+        if start_trading_time > default_start_time_with_offset {
             return Err(ContractError::InvalidTradingStartTime(
-                trading_start_time,
+                start_trading_time,
                 default_start_time_with_offset,
             ));
         }
@@ -765,7 +765,7 @@ pub fn execute_update_trading_start_time(
     };
 
     Ok(Response::new()
-        .add_attribute("action", "update_trading_start_time")
+        .add_attribute("action", "update_start_trading_time")
         .add_attribute("sender", info.sender)
         .add_message(msg))
 }
