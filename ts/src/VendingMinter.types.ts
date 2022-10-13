@@ -97,7 +97,7 @@ export interface CollectionInfoForRoyaltyInfoResponse {
   external_link?: string | null;
   image: string;
   royalty_info?: RoyaltyInfoResponse | null;
-  trading_start_time?: Timestamp | null;
+  start_trading_time?: Timestamp | null;
 }
 export interface RoyaltyInfoResponse {
   payment_address: string;
