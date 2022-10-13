@@ -1693,7 +1693,7 @@ fn invalid_trading_time_during_init() {
         .source()
         .unwrap()
         .to_string()
-        .contains("InvalidTradingStartTime"));
+        .contains("InvalidStartTradingTime"));
 }
 
 #[test]

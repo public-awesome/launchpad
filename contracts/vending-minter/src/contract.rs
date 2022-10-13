@@ -125,7 +125,7 @@ pub fn instantiate(
     if let Some(start_trading_time) = msg.collection_params.info.start_trading_time {
         // If trading start time > start_time + offset, return error
         if start_trading_time > default_start_time_with_offset {
-            return Err(ContractError::InvalidTradingStartTime(
+            return Err(ContractError::InvalidStartTradingTime(
                 start_trading_time,
                 default_start_time_with_offset,
             ));
@@ -741,14 +741,14 @@ pub fn execute_update_start_trading_time(
 
     if let Some(start_trading_time) = start_time {
         if env.block.time > start_trading_time {
-            return Err(ContractError::InvalidTradingStartTime(
+            return Err(ContractError::InvalidStartTradingTime(
                 env.block.time,
                 start_trading_time,
             ));
         }
         // If new start_trading_time > old start time + offset , return error
         if start_trading_time > default_start_time_with_offset {
-            return Err(ContractError::InvalidTradingStartTime(
+            return Err(ContractError::InvalidStartTradingTime(
                 start_trading_time,
                 default_start_time_with_offset,
             ));
