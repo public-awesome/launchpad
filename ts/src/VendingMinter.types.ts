@@ -46,7 +46,7 @@ export type ExecuteMsg = {
 } | {
   update_start_time: Timestamp;
 } | {
-  update_trading_start_time: Timestamp | null;
+  update_start_trading_time: Timestamp | null;
 } | {
   update_per_address_limit: {
     per_address_limit: number;

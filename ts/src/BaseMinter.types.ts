@@ -32,7 +32,7 @@ export type ExecuteMsg = {
     [k: string]: unknown;
   };
 } | {
-  update_trading_start_time: Timestamp | null;
+  update_start_trading_time: Timestamp | null;
 };
 export type Timestamp = Uint64;
 export type Uint64 = string;

@@ -211,7 +211,7 @@ pub fn execute(
         ExecuteMsg::Purge {} => execute_purge(deps, env, info),
         ExecuteMsg::UpdateMintPrice { price } => execute_update_mint_price(deps, env, info, price),
         ExecuteMsg::UpdateStartTime(time) => execute_update_start_time(deps, env, info, time),
-        ExecuteMsg::UpdateTradingStartTime(time) => {
+        ExecuteMsg::UpdateStartTradingTime(time) => {
             execute_update_start_trading_time(deps, env, info, time)
         }
         ExecuteMsg::UpdatePerAddressLimit { per_address_limit } => {
@@ -758,7 +758,7 @@ pub fn execute_update_start_trading_time(
     // execute sg721 contract
     let msg = WasmMsg::Execute {
         contract_addr: sg721_contract_addr.to_string(),
-        msg: to_binary(&Sg721ExecuteMsg::<Empty, Empty>::UpdateTradingStartTime(
+        msg: to_binary(&Sg721ExecuteMsg::<Empty, Empty>::UpdateStartTradingTime(
             start_time,
         ))?,
         funds: vec![],

@@ -22,7 +22,7 @@ pub enum ExecuteMsg {
     },
     UpdateStartTime(Timestamp),
     /// Runs custom checks against TradingStartTime on VendingMinter, then updates by calling sg721-base
-    UpdateTradingStartTime(Option<Timestamp>),
+    UpdateStartTradingTime(Option<Timestamp>),
     UpdatePerAddressLimit {
         per_address_limit: u32,
     },

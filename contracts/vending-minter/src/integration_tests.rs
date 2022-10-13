@@ -1708,7 +1708,7 @@ fn update_start_trading_time() {
     let res = router.execute_contract(
         Addr::unchecked(buyer),
         Addr::unchecked(minter_addr.clone()),
-        &ExecuteMsg::UpdateTradingStartTime(Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME))),
+        &ExecuteMsg::UpdateStartTradingTime(Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME))),
         &[],
     );
     assert!(res.is_err());
@@ -1717,7 +1717,7 @@ fn update_start_trading_time() {
     let res = router.execute_contract(
         Addr::unchecked(creator.clone()),
         Addr::unchecked(minter_addr.clone()),
-        &ExecuteMsg::UpdateTradingStartTime(Some(Timestamp::from_nanos(0))),
+        &ExecuteMsg::UpdateStartTradingTime(Some(Timestamp::from_nanos(0))),
         &[],
     );
     assert!(res.is_err());
@@ -1727,7 +1727,7 @@ fn update_start_trading_time() {
     let res = router.execute_contract(
         Addr::unchecked(creator.clone()),
         Addr::unchecked(minter_addr.clone()),
-        &ExecuteMsg::UpdateTradingStartTime(Some(
+        &ExecuteMsg::UpdateStartTradingTime(Some(
             Timestamp::from_nanos(GENESIS_MINT_START_TIME)
                 .plus_seconds(params.max_trading_offset_secs + 100),
         )),
@@ -1739,7 +1739,7 @@ fn update_start_trading_time() {
     let res = router.execute_contract(
         Addr::unchecked(creator.clone()),
         Addr::unchecked(minter_addr),
-        &ExecuteMsg::UpdateTradingStartTime(Some(
+        &ExecuteMsg::UpdateStartTradingTime(Some(
             Timestamp::from_nanos(GENESIS_MINT_START_TIME)
                 .plus_seconds(params.max_trading_offset_secs),
         )),

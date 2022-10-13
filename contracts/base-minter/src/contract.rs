@@ -104,7 +104,7 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::Mint { token_uri } => execute_mint_sender(deps, info, token_uri),
-        ExecuteMsg::UpdateTradingStartTime(time) => {
+        ExecuteMsg::UpdateStartTradingTime(time) => {
             execute_update_start_trading_time(deps, env, info, time)
         }
     }
@@ -206,7 +206,7 @@ pub fn execute_update_start_trading_time(
     // execute sg721 contract
     let msg = WasmMsg::Execute {
         contract_addr: sg721_contract_addr.to_string(),
-        msg: to_binary(&Sg721ExecuteMsg::<Extension, Empty>::UpdateTradingStartTime(start_time))?,
+        msg: to_binary(&Sg721ExecuteMsg::<Extension, Empty>::UpdateStartTradingTime(start_time))?,
         funds: vec![],
     };
 

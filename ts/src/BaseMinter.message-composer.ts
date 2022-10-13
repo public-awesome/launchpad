@@ -16,7 +16,7 @@ export interface BaseMinterMessage {
   }: {
     tokenUri: string;
   }, funds?: Coin[]) => MsgExecuteContractEncodeObject;
-  updateTradingStartTime: (funds?: Coin[]) => MsgExecuteContractEncodeObject;
+  updateStartTradingTime: (funds?: Coin[]) => MsgExecuteContractEncodeObject;
 }
 export class BaseMinterMessageComposer implements BaseMinterMessage {
   sender: string;
@@ -26,7 +26,7 @@ export class BaseMinterMessageComposer implements BaseMinterMessage {
     this.sender = sender;
     this.contractAddress = contractAddress;
     this.mint = this.mint.bind(this);
-    this.updateTradingStartTime = this.updateTradingStartTime.bind(this);
+    this.updateStartTradingTime = this.updateStartTradingTime.bind(this);
   }
 
   mint = ({
@@ -48,14 +48,14 @@ export class BaseMinterMessageComposer implements BaseMinterMessage {
       })
     };
   };
-  updateTradingStartTime = (funds?: Coin[]): MsgExecuteContractEncodeObject => {
+  updateStartTradingTime = (funds?: Coin[]): MsgExecuteContractEncodeObject => {
     return {
       typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
       value: MsgExecuteContract.fromPartial({
         sender: this.sender,
         contract: this.contractAddress,
         msg: toUtf8(JSON.stringify({
-          update_trading_start_time: {}
+          update_start_trading_time: {}
         })),
         funds
       })

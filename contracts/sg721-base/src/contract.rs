@@ -147,7 +147,7 @@ where
             ExecuteMsg::UpdateCollectionInfo { collection_info } => {
                 self.update_collection_info(deps, env, info, collection_info)
             }
-            ExecuteMsg::UpdateTradingStartTime(start_time) => {
+            ExecuteMsg::UpdateStartTradingTime(start_time) => {
                 self.update_start_trading_time(deps, env, info, start_time)
             }
             ExecuteMsg::FreezeCollectionInfo {} => self.freeze_collection_info(deps, env, info),

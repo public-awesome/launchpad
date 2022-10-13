@@ -271,7 +271,7 @@ fn update_start_trading_time() {
     let res = router.execute_contract(
         Addr::unchecked(buyer),
         Addr::unchecked(minter_addr.clone()),
-        &ExecuteMsg::UpdateTradingStartTime(Some(default_start_trading_time)),
+        &ExecuteMsg::UpdateStartTradingTime(Some(default_start_trading_time)),
         &[],
     );
     assert!(res.is_err());
@@ -280,7 +280,7 @@ fn update_start_trading_time() {
     let res = router.execute_contract(
         Addr::unchecked(creator.clone()),
         Addr::unchecked(minter_addr.clone()),
-        &ExecuteMsg::UpdateTradingStartTime(Some(Timestamp::from_nanos(0))),
+        &ExecuteMsg::UpdateStartTradingTime(Some(Timestamp::from_nanos(0))),
         &[],
     );
     assert!(res.is_err());
@@ -289,7 +289,7 @@ fn update_start_trading_time() {
     let res = router.execute_contract(
         Addr::unchecked(creator.clone()),
         Addr::unchecked(minter_addr),
-        &ExecuteMsg::UpdateTradingStartTime(Some(default_start_trading_time)),
+        &ExecuteMsg::UpdateStartTradingTime(Some(default_start_trading_time)),
         &[],
     );
     assert!(res.is_ok());

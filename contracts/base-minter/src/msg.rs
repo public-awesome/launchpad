@@ -14,7 +14,7 @@ pub struct InstantiateMsg {
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
     Mint { token_uri: String },
-    UpdateTradingStartTime(Option<Timestamp>),
+    UpdateStartTradingTime(Option<Timestamp>),
 }
 
 pub type ConfigResponse = MinterConfigResponse<Empty>;

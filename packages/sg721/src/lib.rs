@@ -54,7 +54,7 @@ pub enum ExecuteMsg<T, E> {
         collection_info: UpdateCollectionInfoMsg<RoyaltyInfoResponse>,
     },
     /// Called by the minter to update trading start time
-    UpdateTradingStartTime(Option<Timestamp>),
+    UpdateStartTradingTime(Option<Timestamp>),
     // Freeze collection info from further updates
     FreezeCollectionInfo,
 }

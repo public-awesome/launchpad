@@ -84,10 +84,10 @@
       "description": "Runs custom checks against TradingStartTime on VendingMinter, then updates by calling sg721-base",
       "type": "object",
       "required": [
-        "update_trading_start_time"
+        "update_start_trading_time"
       ],
       "properties": {
-        "update_trading_start_time": {
+        "update_start_trading_time": {
           "anyOf": [
             {
               "$ref": "#/definitions/Timestamp"
