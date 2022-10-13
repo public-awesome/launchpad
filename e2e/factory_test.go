@@ -188,7 +188,6 @@ func (suite *MarketplaceTestSuite) TestStartTradingTime() {
 		CreateMinter: CreateMinterMessage(creator.Address, suite.sg721CodeID, suite.startTime, 1000, 10, &invalidTime),
 	}
 	bz, err := json.Marshal(&createMinterMsg)
-	fmt.Println(string(bz))
 	suite.Require().NoError(err)
 
 	_, err = suite.msgServer.ExecuteContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgExecuteContract{

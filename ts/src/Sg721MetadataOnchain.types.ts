@@ -63,7 +63,7 @@ export type Decimal = string;
 export interface CollectionInfoResponse {
   creator: string;
   description: string;
-  explicit_content: boolean;
+  explicit_content?: boolean | null;
   external_link?: string | null;
   image: string;
   royalty_info?: RoyaltyInfoResponse | null;
@@ -86,7 +86,7 @@ export interface InstantiateMsg {
 export interface CollectionInfoForRoyaltyInfoResponse {
   creator: string;
   description: string;
-  explicit_content: boolean;
+  explicit_content?: boolean | null;
   external_link?: string | null;
   image: string;
   royalty_info?: RoyaltyInfoResponse | null;

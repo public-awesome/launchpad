@@ -14,7 +14,7 @@ pub fn mock_collection_params() -> CollectionParams {
             image: "https://example.com/image.png".to_string(),
             external_link: Some("https://example.com/external.html".to_string()),
             start_trading_time: None,
-            explicit_content: false,
+            explicit_content: Some(false),
             royalty_info: Some(RoyaltyInfoResponse {
                 payment_address: "creator".to_string(),
                 share: Decimal::percent(10),

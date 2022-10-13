@@ -5,7 +5,7 @@ type CollectionInfo struct {
 	Description      string       `json:"description"`
 	Image            string       `json:"image"`
 	ExternalLink     *string      `json:"external_link"`
-	ExplicitContent  bool         `json:"explicit_content"`
+	ExplicitContent  *bool        `json:"explicit_content"`
 	StartTradingTime *string      `json:"start_trading_time,omitempty"`
 	RoyaltyInfo      *RoyaltyInfo `json:"royalty_info,omitempty"`
 }

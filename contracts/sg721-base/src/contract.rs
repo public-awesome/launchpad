@@ -191,9 +191,7 @@ where
             .unwrap_or_else(|| collection.external_link.as_ref().map(|s| s.to_string()));
         Url::parse(collection.external_link.as_ref().unwrap())?;
 
-        collection.explicit_content = collection_msg
-            .explicit_content
-            .unwrap_or(collection.explicit_content);
+        collection.explicit_content = collection_msg.explicit_content;
 
         // convert collection royalty info to response for comparison
         // convert from response to royalty info for storage

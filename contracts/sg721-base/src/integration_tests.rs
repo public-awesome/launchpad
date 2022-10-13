@@ -179,7 +179,7 @@ mod tests {
                     description: "description".to_string(),
                     image: "description".to_string(),
                     external_link: None,
-                    explicit_content: false,
+                    explicit_content: None,
                     start_trading_time: None,
                     royalty_info: None,
                 },
@@ -295,7 +295,7 @@ mod tests {
                 .query_wasm_smart(contract.clone(), &QueryMsg::CollectionInfo {})
                 .unwrap();
             // check explicit content changed to true
-            assert!(res.explicit_content);
+            assert!(res.explicit_content.unwrap());
 
             // try update royalty_info higher
             let royalty_info: Option<RoyaltyInfoResponse> = Some(RoyaltyInfoResponse {
