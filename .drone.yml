@@ -31,7 +31,7 @@ steps:
   - name: full_test
     image: publicawesome/golang:1.18.0-devtooling
     environment:
-      10K_ENABLED: true
+      ENABLE_MAX_COLLECTION: true
     commands:
       - mkdir -p e2e/contracts
       - cp artifacts/*.wasm e2e/contracts/
@@ -67,6 +67,6 @@ trigger:
     - push
 ---
 kind: signature
-hmac: c05218f18242f4fd76535bec8bea0f3c37137d2efd5f4fdd33c812bbb3b790db
+hmac: fec39fad1f5304494a78b310ceff844de8522482c79f8f4c690430fa5e3fc34a
 
 ...

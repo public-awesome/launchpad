@@ -49,7 +49,7 @@ func CreateMinterMessage(creator sdk.AccAddress, sg721CodeID uint64, start time.
 	}
 }
 func (suite *MarketplaceTestSuite) TestCreateMinter() {
-	if os.Getenv("10K_ENABLED") == "" {
+	if os.Getenv("ENABLE_MAX_COLLECTION") == "" {
 		suite.T().Skip()
 	}
 
@@ -103,6 +103,7 @@ func (suite *MarketplaceTestSuite) TestCreateMinter() {
 	suite.Require().NoError(err)
 	totalMints := 0
 	mints := make(map[string]bool)
+	initialBalance := suite.app.BankKeeper.GetBalance(ctx, creator.Address, "ustars")
 	for i := 0; i < 10_000; i++ {
 		totalMints += 1
 		evtManager := sdk.NewEventManager()
@@ -125,6 +126,12 @@ func (suite *MarketplaceTestSuite) TestCreateMinter() {
 		suite.Require().True(minted)
 	}
 	suite.Require().Equal(totalMints, 10_000)
+
+	endBalance := suite.app.BankKeeper.GetBalance(ctx, creator.Address, "ustars")
+	// 10k x MINT_PRICE = 1M STARS x 0.9 (10% fee)
+	totalMintAmount := int64(900_000_000_000)
+	suite.Require().Equal(initialBalance.Amount.Add(sdk.NewInt(totalMintAmount)), endBalance.Amount)
+
 	// mint nft
 	_, err = suite.msgServer.ExecuteContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgExecuteContract{
 		Contract: minter,
@@ -176,8 +183,8 @@ func InstantiateFactory(ctx sdk.Context, msgServer wasmtypes.MsgServer,
 }
 
 func (suite *MarketplaceTestSuite) TestStartTradingTime() {
-
 	ctx, _ := suite.parentCtx.CacheContext()
+	intialTotalSupply := suite.app.BankKeeper.GetSupply(ctx, "ustars")
 	creator := suite.accounts[0]
 	factoryAddress, err := InstantiateFactory(ctx, suite.msgServer, creator.Address, suite.factoryCodeID, suite.minterCodeID)
 	suite.Require().NoError(err)
@@ -210,6 +217,7 @@ func (suite *MarketplaceTestSuite) TestStartTradingTime() {
 	suite.Require().NotEmpty(sg721)
 	suite.Require().NoError(err)
 
+	initialBalance := suite.app.BankKeeper.GetBalance(ctx, creator.Address, "ustars")
 	for i := 0; i < 100; i++ {
 		_, err = suite.msgServer.ExecuteContract(sdk.WrapSDKContext(ctx), &wasmtypes.MsgExecuteContract{
 			Contract: minter,
@@ -220,6 +228,21 @@ func (suite *MarketplaceTestSuite) TestStartTradingTime() {
 		suite.Require().NoError(err)
 	}
 
+	endBalance := suite.app.BankKeeper.GetBalance(ctx, creator.Address, "ustars")
+	// 100 x MINT_PRICE = 10k STARS x 0.9 (10% fee)
+	totalMintAmount := int64(9_000_000_000)
+	suite.Require().Equal(initialBalance.Amount.Add(sdk.NewInt(totalMintAmount)), endBalance.Amount)
+
+	// fairburn fees
+	fairburnPoolAddress := suite.app.AccountKeeper.GetModuleAccount(ctx, "fairburn_pool").GetAddress()
+	collectedFairburnFees := suite.app.BankKeeper.GetBalance(ctx, fairburnPoolAddress, "ustars")
+	// half of the 10% fees should be sent to fairburn pool
+	// 500STARS + 500STARS initially sent for collection creation fee
+	suite.Require().Equal(collectedFairburnFees.Amount.Int64(), int64(1_000_000_000))
+	// the other half burned
+	suite.Require().Equal(
+		intialTotalSupply.Amount.Sub(sdk.NewInt(1_000_000_000)).String(),
+		suite.app.BankKeeper.GetSupply(ctx, "ustars").Amount.String())
 }
 
 func (suite *MarketplaceTestSuite) TestInvalidstartTradingTime() {
