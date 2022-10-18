@@ -46,8 +46,6 @@ optimize = """docker run --rm -v "$(pwd)":/code \
 [dependencies]
 cosmwasm-std      = { workspace = true }
 cw2               = { workspace = true }
-cw3               = { workspace = true }
-cw3-flex-multisig = { workspace = true, features = ["library"] }
 cw4               = { workspace = true }
 cw-storage-plus   = { workspace = true }
 schemars          = { workspace = true }

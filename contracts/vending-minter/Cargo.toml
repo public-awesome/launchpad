@@ -39,7 +39,6 @@ optimize = """docker run --rm -v "$(pwd)":/code \
 cosmwasm-schema = { workspace = true }
 cosmwasm-std    = { workspace = true }
 cw2             = { workspace = true }
-cw4             = { workspace = true }
 cw721           = { workspace = true }
 cw721-base      = { workspace = true, features = ["library"] }
 cw-storage-plus = { workspace = true }
@@ -61,6 +60,7 @@ url             = { workspace = true }
 vending-factory = { path = "../vending-factory", features = ["library"] }
 
 [dev-dependencies]
+cw4           = { workspace = true }
 cw-multi-test = { workspace = true }
 sg-multi-test = { path = "../../packages/sg-multi-test" }
 sg721-base    = { path = "../sg721-base" }
