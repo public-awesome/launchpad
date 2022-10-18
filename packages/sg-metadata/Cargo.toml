@@ -1,15 +1,15 @@
 [package]
-name = "sg-metadata"
-version = "0.14.0"
-authors = [
+name        = "sg-metadata"
+authors     = [
   "Shane Vitarana <s@noreply.publicawsome.com>",
-  "larry <gm@larry.engineer>"
+  "Larry Engineer <gm@larry.engineer>",
 ]
-edition = "2018"
 description = "Rust definition of the OpenSea metadata standard, used by Stargaze marketplace"
-license = "Apache-2.0"
-repository = "https://github.com/public-awesome/launchpad"
-homepage = "https://stargaze.zone"
+version     = { workspace = true }
+edition     = { workspace = true }
+homepage    = { workspace = true }
+repository  = { workspace = true }
+license     = { workspace = true }
 
 exclude = [
   # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
@@ -23,5 +23,5 @@ exclude = [
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-schemars = "0.8.8"
-serde = { version = "1.0.137", default-features = false, features = ["derive"] }
+schemars = { workspace = true }
+serde    = { workspace = true }

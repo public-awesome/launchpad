@@ -1,12 +1,12 @@
 [package]
-name = "sg-splits"
-version = "0.1.0"
-authors = ["Shane Vitarana <s@noreply.publicawesome.com>"]
-edition = "2018"
+name        = "sg-splits"
+authors     = ["Shane Vitarana <s@noreply.publicawesome.com>"]
 description = "Stargaze Splits contract"
-license = "Apache-2.0"
-repository = "https://github.com/public-awesome/launchpad"
-homepage = "https://stargaze.zone"
+version     = { workspace = true }
+edition     = { workspace = true }
+homepage    = { workspace = true }
+repository  = { workspace = true }
+license     = { workspace = true }
 
 exclude = [
   # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
@@ -44,20 +44,19 @@ optimize = """docker run --rm -v "$(pwd)":/code \
 """
 
 [dependencies]
-cosmwasm-std = "1.1.4"
-cosmwasm-storage = "1.1.4"
-cw-storage-plus = "0.13.2"
-cw2 = "0.13.2"
-cw3-flex-multisig = { version = "0.14.0", features = ["library"] }
-schemars = "0.8.8"
-serde = { version = "1.0.137", default-features = false, features = ["derive"] }
-thiserror = { version = "1.0.31" }
-cw4 = "0.14.0"
-cw3 = "0.14.0"
-sg-std = { path = "../../packages/sg-std" }
+cosmwasm-std      = { workspace = true }
+cw2               = { workspace = true }
+cw3               = { workspace = true }
+cw3-flex-multisig = { workspace = true, features = ["library"] }
+cw4               = { workspace = true }
+cw-storage-plus   = { workspace = true }
+schemars          = { workspace = true }
+serde             = { workspace = true }
+sg-std            = { path = "../../packages/sg-std" }
+thiserror         = { workspace = true }
 
 [dev-dependencies]
-cosmwasm-schema = "1.1.4"
-cw-multi-test = "0.13.2"
-cw4-group = "0.14.0"
-sg-multi-test = { path = "../../packages/sg-multi-test" }
+cosmwasm-schema = { workspace = true }
+cw4-group       = { workspace = true }
+cw-multi-test   = { workspace = true }
+sg-multi-test   = { path = "../../packages/sg-multi-test" }

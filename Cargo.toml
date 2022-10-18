@@ -2,6 +2,31 @@
 members = ["packages/*", "contracts/*"]
 resolver = "2"
 
+[workspace.package]
+version    = "0.20.0"
+edition    = "2021"
+homepage   = "https://stargaze.zone"
+repository = "https://github.com/public-awesome/launchpad"
+license    = "Apache-2.0"
+
+[workspace.dependencies]
+cosmwasm-schema   = "1.1.4"
+cosmwasm-std      = "1.1.4"
+cw2               = "0.15.0"
+cw3               = "0.15.0"
+cw3-flex-multisig = "0.15.0"
+cw4               = "0.15.0"
+cw4-group         = "0.15.0"
+cw721             = "0.15.0"
+cw721-base        = "0.15.0"
+cw-multi-test     = "0.15.0"
+cw-storage-plus   = "0.15.0"
+cw-utils          = "0.15.0"
+schemars          = "0.8.8"
+serde             = { version = "1.0.133", default-features = false, features = ["derive"] }
+thiserror         = "1.0.31"
+url               = "2.2.2"
+
 [profile.release.package.sg721]
 codegen-units = 1
 incremental = false
@@ -57,7 +82,6 @@ incremental = false
 [profile.release.package.sg-splits]
 codegen-units = 1
 incremental = false
-
 
 [profile.release]
 rpath = false
