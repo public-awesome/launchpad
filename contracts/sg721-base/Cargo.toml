@@ -1,12 +1,12 @@
 [package]
-name = "sg721-base"
-version = "0.15.1"
-authors = ["Shane Vitarana <s@noreply.publicawesome.com>"]
-edition = "2018"
+name        = "sg721-base"
+authors     = ["Shane Vitarana <s@noreply.publicawesome.com>"]
 description = "Stargaze NFT collection contract"
-license = "Apache-2.0"
-repository = "https://github.com/public-awesome/launchpad"
-homepage = "https://stargaze.zone"
+version     = { workspace = true }
+edition     = { workspace = true }
+homepage    = { workspace = true }
+repository  = { workspace = true }
+license     = { workspace = true }
 
 exclude = [
   # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
@@ -26,22 +26,22 @@ backtraces = ["cosmwasm-std/backtraces"]
 library = []
 
 [dependencies]
-cosmwasm-schema = { version = "1.1.4" }
-cosmwasm-std = { version = "1.1.4" }
-cw-storage-plus = "0.15.0"
-cw-utils = "0.15.0"
-cw2 = "0.15.0"
-serde = { version = "1.0.137", default-features = false, features = ["derive"] }
-thiserror = { version = "1.0.30" }
-sg-std = { path = "../../packages/sg-std" }
-url = "2.2.2"
-cw721 = "0.15.0"
-cw721-base = { version = "0.15.0", features = ["library"] }
-sg721 = { path = "../../packages/sg721" }
+cosmwasm-schema = { workspace = true }
+cosmwasm-std    = { workspace = true, features = ["staking"] }
+cw2             = { workspace = true }
+cw721           = { workspace = true }
+cw721-base      = { workspace = true, features = ["library"] }
+cw-storage-plus = { workspace = true }
+cw-utils        = { workspace = true }
+serde           = { workspace = true }
+sg721           = { path = "../../packages/sg721" }
+sg-std          = { path = "../../packages/sg-std" }
+thiserror       = { workspace = true }
+url             = { workspace = true }
 
 [dev-dependencies]
-cw-multi-test = "0.15.0"
-sg-multi-test = { path = "../../packages/sg-multi-test" }
-vending-minter = { path = "../vending-minter", features = ["library"] }
-vending-factory = { path = "../vending-factory", features = ["library"] }
-sg2 = { path = "../../packages/sg2" }
+cw-multi-test   = { workspace = true }
+sg2             = { path = "../../packages/sg2" }
+sg-multi-test   = { path = "../../packages/sg-multi-test" }
+vending-factory = { path = "../vending-factory" }
+vending-minter  = { path = "../vending-minter" }
