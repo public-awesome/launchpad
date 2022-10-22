@@ -9,5 +9,6 @@
     "is_active": {
       "type": "boolean"
     }
-  }
+  },
+  "additionalProperties": false
 }

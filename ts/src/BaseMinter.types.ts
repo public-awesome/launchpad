@@ -9,14 +9,12 @@ export type Uint128 = string;
 export interface ConfigResponse {
   collection_address: string;
   config: MinterConfigForEmpty;
-  [k: string]: unknown;
 }
 export interface MinterConfigForEmpty {
   collection_code_id: number;
   extension: Empty;
   factory: Addr;
   mint_price: Coin;
-  [k: string]: unknown;
 }
 export interface Empty {
   [k: string]: unknown;
@@ -29,7 +27,6 @@ export interface Coin {
 export type ExecuteMsg = {
   mint: {
     token_uri: string;
-    [k: string]: unknown;
   };
 } | {
   update_start_trading_time: Timestamp | null;
@@ -40,19 +37,16 @@ export type Decimal = string;
 export interface InstantiateMsg {
   create_msg: CreateMinterMsgForNullable_Empty;
   params: MinterParamsForNullable_Empty;
-  [k: string]: unknown;
 }
 export interface CreateMinterMsgForNullable_Empty {
   collection_params: CollectionParams;
   init_msg?: Empty | null;
-  [k: string]: unknown;
 }
 export interface CollectionParams {
   code_id: number;
   info: CollectionInfoForRoyaltyInfoResponse;
   name: string;
   symbol: string;
-  [k: string]: unknown;
 }
 export interface CollectionInfoForRoyaltyInfoResponse {
   creator: string;
@@ -74,24 +68,17 @@ export interface MinterParamsForNullable_Empty {
   max_trading_offset_secs: number;
   min_mint_price: Coin;
   mint_fee_bps: number;
-  [k: string]: unknown;
 }
 export type QueryMsg = {
-  config: {
-    [k: string]: unknown;
-  };
+  config: {};
 } | {
-  status: {
-    [k: string]: unknown;
-  };
+  status: {};
 };
 export interface StatusResponse {
   status: Status;
-  [k: string]: unknown;
 }
 export interface Status {
   is_blocked: boolean;
   is_explicit: boolean;
   is_verified: boolean;
-  [k: string]: unknown;
 }

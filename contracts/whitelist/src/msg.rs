@@ -1,8 +1,7 @@
+use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Coin, Timestamp};
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct InstantiateMsg {
     pub members: Vec<String>,
     pub start_time: Timestamp,
@@ -12,8 +11,7 @@ pub struct InstantiateMsg {
     pub member_limit: u32,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
 pub enum ExecuteMsg {
     UpdateStartTime(Timestamp),
     UpdateEndTime(Timestamp),
@@ -23,18 +21,17 @@ pub enum ExecuteMsg {
     IncreaseMemberLimit(u32),
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct AddMembersMsg {
     pub to_add: Vec<String>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct RemoveMembersMsg {
     pub to_remove: Vec<String>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
 pub enum QueryMsg {
     HasStarted {},
     HasEnded {},
@@ -49,37 +46,37 @@ pub enum QueryMsg {
     Config {},
 }
 
-#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
+#[cw_serde]
 pub struct MembersResponse {
     pub members: Vec<String>,
 }
 
-#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
+#[cw_serde]
 pub struct HasMemberResponse {
     pub has_member: bool,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct HasEndedResponse {
     pub has_ended: bool,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct HasStartedResponse {
     pub has_started: bool,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct IsActiveResponse {
     pub is_active: bool,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct MintPriceResponse {
     pub mint_price: Coin,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct ConfigResponse {
     pub num_members: u32,
     pub per_address_limit: u32,

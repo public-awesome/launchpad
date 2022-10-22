@@ -39,13 +39,11 @@ export interface Metadata {
   image_data?: string | null;
   name?: string | null;
   youtube_url?: string | null;
-  [k: string]: unknown;
 }
 export interface Trait {
   display_type?: string | null;
   trait_type: string;
   value: string;
-  [k: string]: unknown;
 }
 export interface AllOperatorsResponse {
   operators: Approval[];

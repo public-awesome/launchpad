@@ -18,7 +18,6 @@ export interface ConfigResponse {
   sg721_code_id: number;
   start_time: Timestamp;
   whitelist?: string | null;
-  [k: string]: unknown;
 }
 export interface Coin {
   amount: Uint128;
@@ -26,22 +25,16 @@ export interface Coin {
   [k: string]: unknown;
 }
 export type ExecuteMsg = {
-  mint: {
-    [k: string]: unknown;
-  };
+  mint: {};
 } | {
   set_whitelist: {
     whitelist: string;
-    [k: string]: unknown;
   };
 } | {
-  purge: {
-    [k: string]: unknown;
-  };
+  purge: {};
 } | {
   update_mint_price: {
     price: number;
-    [k: string]: unknown;
   };
 } | {
   update_start_time: Timestamp;
@@ -50,45 +43,35 @@ export type ExecuteMsg = {
 } | {
   update_per_address_limit: {
     per_address_limit: number;
-    [k: string]: unknown;
   };
 } | {
   mint_to: {
     recipient: string;
-    [k: string]: unknown;
   };
 } | {
   mint_for: {
     recipient: string;
     token_id: number;
-    [k: string]: unknown;
   };
 } | {
-  shuffle: {
-    [k: string]: unknown;
-  };
+  shuffle: {};
 } | {
-  burn_remaining: {
-    [k: string]: unknown;
-  };
+  burn_remaining: {};
 };
 export type Decimal = string;
 export interface InstantiateMsg {
   create_msg: CreateMinterMsgForVendingMinterInitMsgExtension;
   params: MinterParamsForParamsExtension;
-  [k: string]: unknown;
 }
 export interface CreateMinterMsgForVendingMinterInitMsgExtension {
   collection_params: CollectionParams;
   init_msg: VendingMinterInitMsgExtension;
-  [k: string]: unknown;
 }
 export interface CollectionParams {
   code_id: number;
   info: CollectionInfoForRoyaltyInfoResponse;
   name: string;
   symbol: string;
-  [k: string]: unknown;
 }
 export interface CollectionInfoForRoyaltyInfoResponse {
   creator: string;
@@ -111,7 +94,6 @@ export interface VendingMinterInitMsgExtension {
   per_address_limit: number;
   start_time: Timestamp;
   whitelist?: string | null;
-  [k: string]: unknown;
 }
 export interface MinterParamsForParamsExtension {
   code_id: number;
@@ -120,7 +102,6 @@ export interface MinterParamsForParamsExtension {
   max_trading_offset_secs: number;
   min_mint_price: Coin;
   mint_fee_bps: number;
-  [k: string]: unknown;
 }
 export interface ParamsExtension {
   airdrop_mint_fee_bps: number;
@@ -128,23 +109,19 @@ export interface ParamsExtension {
   max_per_address_limit: number;
   max_token_limit: number;
   shuffle_fee: Coin;
-  [k: string]: unknown;
 }
 export interface MintCountResponse {
   address: string;
   count: number;
-  [k: string]: unknown;
 }
 export interface MintPriceResponse {
   airdrop_price: Coin;
   current_price: Coin;
   public_price: Coin;
   whitelist_price?: Coin | null;
-  [k: string]: unknown;
 }
 export interface MintableNumTokensResponse {
   count: number;
-  [k: string]: unknown;
 }
 export type Addr = string;
 export interface MinterConfigForConfigExtension {
@@ -152,7 +129,6 @@ export interface MinterConfigForConfigExtension {
   extension: ConfigExtension;
   factory: Addr;
   mint_price: Coin;
-  [k: string]: unknown;
 }
 export interface ConfigExtension {
   admin: Addr;
@@ -162,45 +138,30 @@ export interface ConfigExtension {
   per_address_limit: number;
   start_time: Timestamp;
   whitelist?: Addr | null;
-  [k: string]: unknown;
 }
 export type QueryMsg = {
-  config: {
-    [k: string]: unknown;
-  };
+  config: {};
 } | {
-  mintable_num_tokens: {
-    [k: string]: unknown;
-  };
+  mintable_num_tokens: {};
 } | {
-  start_time: {
-    [k: string]: unknown;
-  };
+  start_time: {};
 } | {
-  mint_price: {
-    [k: string]: unknown;
-  };
+  mint_price: {};
 } | {
   mint_count: {
     address: string;
-    [k: string]: unknown;
   };
 } | {
-  status: {
-    [k: string]: unknown;
-  };
+  status: {};
 };
 export interface StartTimeResponse {
   start_time: string;
-  [k: string]: unknown;
 }
 export interface StatusResponse {
   status: Status;
-  [k: string]: unknown;
 }
 export interface Status {
   is_blocked: boolean;
   is_explicit: boolean;
   is_verified: boolean;
-  [k: string]: unknown;
 }

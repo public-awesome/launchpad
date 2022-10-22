@@ -10,6 +10,7 @@
       "$ref": "#/definitions/Status"
     }
   },
+  "additionalProperties": false,
   "definitions": {
     "Status": {
       "type": "object",
@@ -28,7 +29,8 @@
         "is_verified": {
           "type": "boolean"
         }
-      }
+      },
+      "additionalProperties": false
     }
   }
 }

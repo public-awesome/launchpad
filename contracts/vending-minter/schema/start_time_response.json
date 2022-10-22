@@ -9,5 +9,6 @@
     "start_time": {
       "type": "string"
     }
-  }
+  },
+  "additionalProperties": false
 }

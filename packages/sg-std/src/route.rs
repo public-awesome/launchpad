@@ -1,10 +1,7 @@
-use schemars::JsonSchema;
-
-use serde::{Deserialize, Serialize};
+use cosmwasm_schema::cw_serde;
 
 /// StargazeRoute is enum type to represent stargaze query route path
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
 pub enum StargazeRoute {
     Alloc,
     Claim,

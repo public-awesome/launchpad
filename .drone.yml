@@ -27,7 +27,7 @@ steps:
         path: /var/lib/cache
 
   - name: build-contracts
-    image: cosmwasm/workspace-optimizer:0.12.8
+    image: cosmwasm/workspace-optimizer:0.12.9
   - name: full_test
     image: publicawesome/golang:1.18.0-devtooling
     environment:
@@ -67,6 +67,6 @@ trigger:
     - push
 ---
 kind: signature
-hmac: fec39fad1f5304494a78b310ceff844de8522482c79f8f4c690430fa5e3fc34a
+hmac: 3835e408c3f5583663b70801d77505cae92916612a5638d337ea1aad374298d2
 
 ...

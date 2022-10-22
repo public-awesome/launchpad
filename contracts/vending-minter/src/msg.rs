@@ -1,16 +1,14 @@
+use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Coin, Timestamp};
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 use vending_factory::{msg::VendingMinterCreateMsg, state::VendingMinterParams};
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct InstantiateMsg {
     pub create_msg: VendingMinterCreateMsg,
     pub params: VendingMinterParams,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
 pub enum ExecuteMsg {
     Mint {},
     SetWhitelist {
@@ -37,8 +35,7 @@ pub enum ExecuteMsg {
     BurnRemaining {},
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
 pub enum QueryMsg {
     Config {},
     MintableNumTokens {},
@@ -48,7 +45,7 @@ pub enum QueryMsg {
     Status {},
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct ConfigResponse {
     pub admin: String,
     pub base_token_uri: String,
@@ -62,17 +59,17 @@ pub struct ConfigResponse {
     pub factory: String,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct MintableNumTokensResponse {
     pub count: u32,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct StartTimeResponse {
     pub start_time: String,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct MintPriceResponse {
     pub public_price: Coin,
     pub airdrop_price: Coin,
@@ -80,7 +77,7 @@ pub struct MintPriceResponse {
     pub current_price: Coin,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct MintCountResponse {
     pub address: String,
     pub count: u32,

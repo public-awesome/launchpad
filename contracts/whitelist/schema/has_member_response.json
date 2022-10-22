@@ -9,5 +9,6 @@
     "has_member": {
       "type": "boolean"
     }
-  }
+  },
+  "additionalProperties": false
 }

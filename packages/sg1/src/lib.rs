@@ -67,7 +67,7 @@ pub fn fair_burn(fee: u128, developer: Option<Addr>, res: &mut Response) {
     res.events.push(event);
 }
 
-#[derive(Error, Debug, PartialEq)]
+#[derive(Error, Debug, PartialEq, Eq)]
 pub enum FeeError {
     #[error("Insufficient fee: expected {0}, got {1}")]
     InsufficientFee(u128, u128),

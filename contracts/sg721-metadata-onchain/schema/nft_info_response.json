@@ -94,7 +94,8 @@
             "null"
           ]
         }
-      }
+      },
+      "additionalProperties": false
     },
     "Trait": {
       "description": "An attribute of the token as defined by the [OpenSea metadata standard](https://docs.opensea.io/docs/metadata-standards#attributes).",
@@ -116,7 +117,8 @@
         "value": {
           "type": "string"
         }
-      }
+      },
+      "additionalProperties": false
     }
   }
 }

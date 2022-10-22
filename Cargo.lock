@@ -868,6 +868,7 @@ dependencies = [
 name = "sg-controllers"
 version = "0.20.0"
 dependencies = [
+ "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus",
  "cw-utils",
@@ -881,6 +882,7 @@ dependencies = [
 name = "sg-metadata"
 version = "0.20.0"
 dependencies = [
+ "cosmwasm-schema",
  "schemars",
  "serde",
 ]
@@ -968,6 +970,7 @@ dependencies = [
 name = "sg2"
 version = "0.20.0"
 dependencies = [
+ "cosmwasm-schema",
  "cosmwasm-std",
  "cw-utils",
  "schemars",
@@ -980,6 +983,7 @@ dependencies = [
 name = "sg4"
 version = "0.20.0"
 dependencies = [
+ "cosmwasm-schema",
  "cosmwasm-std",
  "schemars",
  "serde",
