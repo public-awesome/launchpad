@@ -8,47 +8,36 @@ export type Cw4Contract = Addr;
 export type Addr = string;
 export interface ConfigResponse {
   config: Config;
-  [k: string]: unknown;
 }
 export interface Config {
   group_addr: Cw4Contract;
   [k: string]: unknown;
 }
 export type ExecuteMsg = {
-  distribute: {
-    [k: string]: unknown;
-  };
+  distribute: {};
 };
 export interface InstantiateMsg {
   group_addr: string;
-  [k: string]: unknown;
 }
 export interface ListMembersResponse {
   members: Member[];
-  [k: string]: unknown;
 }
 export interface Member {
   addr: string;
   weight: number;
-  [k: string]: unknown;
 }
 export interface MemberResponse {
   weight?: number | null;
-  [k: string]: unknown;
 }
 export type QueryMsg = {
-  config: {
-    [k: string]: unknown;
-  };
+  config: {};
 } | {
   member: {
     address: string;
-    [k: string]: unknown;
   };
 } | {
   list_members: {
     limit?: number | null;
     start_after?: string | null;
-    [k: string]: unknown;
   };
 };

@@ -7,7 +7,6 @@
 export type Uint128 = string;
 export interface InstantiateMsg {
   params: MinterParamsForNullable_Empty;
-  [k: string]: unknown;
 }
 export interface MinterParamsForNullable_Empty {
   code_id: number;
@@ -16,7 +15,6 @@ export interface MinterParamsForNullable_Empty {
   max_trading_offset_secs: number;
   min_mint_price: Coin;
   mint_fee_bps: number;
-  [k: string]: unknown;
 }
 export interface Coin {
   amount: Uint128;
@@ -27,7 +25,5 @@ export interface Empty {
   [k: string]: unknown;
 }
 export type Sg2QueryMsg = {
-  params: {
-    [k: string]: unknown;
-  };
+  params: {};
 };
