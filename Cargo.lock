@@ -881,6 +881,7 @@ dependencies = [
 name = "sg-metadata"
 version = "0.20.0"
 dependencies = [
+ "cosmwasm-schema",
  "schemars",
  "serde",
 ]
