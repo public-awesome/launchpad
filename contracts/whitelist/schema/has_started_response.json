@@ -9,5 +9,6 @@
     "has_started": {
       "type": "boolean"
     }
-  }
+  },
+  "additionalProperties": false
 }

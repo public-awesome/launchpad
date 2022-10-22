@@ -37,6 +37,7 @@
       "$ref": "#/definitions/Timestamp"
     }
   },
+  "additionalProperties": false,
   "definitions": {
     "Coin": {
       "type": "object",

@@ -9,5 +9,6 @@
     "group_addr": {
       "type": "string"
     }
-  }
+  },
+  "additionalProperties": false
 }

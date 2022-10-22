@@ -9,7 +9,8 @@
       ],
       "properties": {
         "distribute": {
-          "type": "object"
+          "type": "object",
+          "additionalProperties": false
         }
       },
       "additionalProperties": false
