@@ -9,9 +9,10 @@ repository  = { workspace = true }
 license     = { workspace = true }
 
 [dependencies]
-cosmwasm-std = { workspace = true }
-cw-utils     = { workspace = true }
-schemars     = { workspace = true }
-serde        = { workspace = true }
-sg721        = { path = "../sg721" }
-thiserror    = { workspace = true }
+cosmwasm-schema = { workspace = true }
+cosmwasm-std    = { workspace = true }
+cw-utils        = { workspace = true }
+schemars        = { workspace = true }
+serde           = { workspace = true }
+sg721           = { path = "../sg721" }
+thiserror       = { workspace = true }

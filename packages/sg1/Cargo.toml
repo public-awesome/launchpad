@@ -9,8 +9,8 @@ repository  = { workspace = true }
 license     = { workspace = true }
 
 [dependencies]
-cosmwasm-std = { workspace = true }
-cw-utils     = { workspace = true }
-serde        = { workspace = true }
-sg-std       = { path = "../sg-std" }
-thiserror    = { workspace = true }
+cosmwasm-std    = { workspace = true }
+cw-utils        = { workspace = true }
+serde           = { workspace = true }
+sg-std          = { path = "../sg-std" }
+thiserror       = { workspace = true }

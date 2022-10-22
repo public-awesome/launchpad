@@ -1,15 +1,14 @@
+use cosmwasm_schema::cw_serde;
 use cosmwasm_std::Coin;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 use sg721::{CollectionInfo, RoyaltyInfoResponse};
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct CreateMinterMsg<T> {
     pub init_msg: T,
     pub collection_params: CollectionParams,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct CollectionParams {
     /// The collection code id
     pub code_id: u64,
@@ -19,8 +18,7 @@ pub struct CollectionParams {
 }
 
 /// Message for params so they can be updated invidiually by governance
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
 pub struct UpdateMinterParamsMsg<T> {
     /// The minter code id
     pub code_id: Option<u64>,
@@ -31,8 +29,7 @@ pub struct UpdateMinterParamsMsg<T> {
     pub extension: T,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
 pub enum Sg2ExecuteMsg<T> {
     CreateMinter(CreateMinterMsg<T>),
 }
