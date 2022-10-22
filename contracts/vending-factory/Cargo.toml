@@ -26,7 +26,7 @@ backtraces = ["cosmwasm-std/backtraces"]
 library = []
 
 [dependencies]
-base-factory    = { path = "../base-factory", features = ["library"] }
+base-factory    = { workspace = true, features = ["library"] }
 cosmwasm-schema = { workspace = true }
 cosmwasm-std    = { workspace = true, features = ["staking"] }
 cw2             = { workspace = true }
@@ -34,12 +34,12 @@ cw-storage-plus = { workspace = true }
 cw-utils        = { workspace = true }
 schemars        = { workspace = true }
 serde           = { workspace = true }
-sg1             = { path = "../../packages/sg1" }
-sg2             = { path = "../../packages/sg2" }
-sg721           = { path = "../../packages/sg721" }
-sg-std          = { path = "../../packages/sg-std" }
+sg1             = { workspace = true }
+sg2             = { workspace = true }
+sg721           = { workspace = true }
+sg-std          = { workspace = true }
 thiserror       = { workspace = true }
 
 [dev-dependencies]
 cw-multi-test = { workspace = true }
-sg-multi-test = { path = "../../packages/sg-multi-test" }
+sg-multi-test = { workspace = true }

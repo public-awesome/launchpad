@@ -49,20 +49,20 @@ schemars        = { workspace = true }
 serde           = { workspace = true }
 sha2            = "0.10.2"
 shuffle         = { git = "https://github.com/webmaster128/shuffle", branch = "rm-getrandom", version = "0.1.7" }
-sg1             = { path = "../../packages/sg1" }
-sg2             = { path = "../../packages/sg2" }
-sg4             = { path = "../../packages/sg4" }
-sg721           = { path = "../../packages/sg721" }
-sg-std          = { path = "../../packages/sg-std"}
-sg-whitelist    = { path = "../whitelist", features = ["library"] }
+sg1             = { workspace = true }
+sg2             = { workspace = true }
+sg4             = { workspace = true }
+sg721           = { workspace = true }
+sg-std          = { workspace = true }
+sg-whitelist    = { workspace = true, features = ["library"] }
 thiserror       = { workspace = true }
 url             = { workspace = true }
-vending-factory = { path = "../vending-factory", features = ["library"] }
+vending-factory = { workspace = true, features = ["library"] }
 
 [dev-dependencies]
 cw4           = { workspace = true }
 cw-multi-test = { workspace = true }
-sg-multi-test = { path = "../../packages/sg-multi-test" }
-sg721-base    = { path = "../sg721-base" }
+sg-multi-test = { workspace = true }
+sg721-base    = { workspace = true }
 cw4-group     = { workspace = true }
-sg-splits     = { path = "../splits" }
+sg-splits     = { workspace = true }

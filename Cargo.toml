@@ -10,6 +10,7 @@ repository = "https://github.com/public-awesome/launchpad"
 license    = "Apache-2.0"
 
 [workspace.dependencies]
+base-factory      = "0.20.0"
 cosmwasm-schema   = "1.1.0"
 cosmwasm-std      = "1.1.0"
 cw2               = "0.15.0"
@@ -22,8 +23,19 @@ cw-storage-plus   = "0.15.0"
 cw-utils          = "0.15.0"
 schemars          = "0.8.8"
 serde             = { version = "1.0.133", default-features = false, features = ["derive"] }
+sg1               = "0.20.0"
+sg2               = "0.20.0"
+sg4               = "0.20.0"
+sg721             = "0.20.0"
+sg721-base        = "0.20.0"
+sg-metadata       = "0.20.0"
+sg-multi-test     = "0.20.0"
+sg-splits         = "0.20.0"
+sg-std            = "0.20.0"
+sg-whitelist      = "0.20.0"
 thiserror         = "1.0.31"
 url               = "2.2.2"
+vending-factory   = "0.20.0"
 
 [profile.release.package.sg721]
 codegen-units = 1

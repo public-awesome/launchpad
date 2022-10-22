@@ -41,8 +41,8 @@ cw-utils        = { workspace = true }
 rust_decimal    = { version = "1.14.3" }
 schemars        = { workspace = true }
 serde           = { workspace = true }
-sg1             = { path = "../../packages/sg1" }
-sg-std          = { path = "../../packages/sg-std" }
+sg1             = { workspace = true }
+sg-std          = { workspace = true }
 thiserror       = { workspace = true }
 
 [dev-dependencies]
