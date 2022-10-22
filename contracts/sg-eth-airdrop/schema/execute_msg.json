@@ -1,0 +1,38 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ExecuteMsg",
+  "oneOf": [
+    {
+      "type": "object",
+      "required": [
+        "claim_airdrop"
+      ],
+      "properties": {
+        "claim_airdrop": {
+          "type": "object",
+          "required": [
+            "eth_address",
+            "eth_sig",
+            "stargaze_address",
+            "stargaze_sig"
+          ],
+          "properties": {
+            "eth_address": {
+              "type": "string"
+            },
+            "eth_sig": {
+              "type": "string"
+            },
+            "stargaze_address": {
+              "type": "string"
+            },
+            "stargaze_sig": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  ]
+}
