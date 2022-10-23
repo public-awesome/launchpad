@@ -14,5 +14,5 @@ cosmwasm-std    = { workspace = true }
 cw-utils        = { workspace = true }
 schemars        = { workspace = true }
 serde           = { workspace = true }
-sg721           = { path = "../sg721" }
+sg721           = { workspace = true }
 thiserror       = { workspace = true }

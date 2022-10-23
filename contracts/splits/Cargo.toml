@@ -40,11 +40,11 @@ cw4               = { workspace = true }
 cw-storage-plus   = { workspace = true }
 schemars          = { workspace = true }
 serde             = { workspace = true }
-sg-std            = { path = "../../packages/sg-std" }
+sg-std            = { workspace = true }
 thiserror         = { workspace = true }
 
 [dev-dependencies]
 cosmwasm-schema = { workspace = true }
 cw4-group       = { workspace = true }
 cw-multi-test   = { workspace = true }
-sg-multi-test   = { path = "../../packages/sg-multi-test" }
+sg-multi-test   = { workspace = true }
