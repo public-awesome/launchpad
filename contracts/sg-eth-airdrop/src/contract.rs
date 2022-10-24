@@ -1,14 +1,13 @@
-
-use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult};
+use cosmwasm_std::{to_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, StdResult};
 use cw2::set_contract_version;
 
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 
 use crate::error::ContractError;
-use crate::msg::{EligibleResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
-use crate::state::{Config, CONFIG};
-use sg_std::{Response};
+use crate::msg::{EligibleResponse, ExecuteMsg, InstantiateMsg, QueryMsg, AirdropEligibleResponse};
+use crate::state::{Config, CONFIG, ELIGIBLE_ETH_ADDRS};
+use sg_std::Response;
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sg-eth-airdrop";
@@ -24,7 +23,7 @@ pub fn instantiate(
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
     let cfg = Config {
-        config: "test".to_string(),
+        admin: info.sender.clone(),
     };
     CONFIG.save(deps.storage, &cfg)?;
     let res = Response::new();
@@ -49,16 +48,21 @@ pub fn execute(
             stargaze_address,
             stargaze_sig,
         } => claim_airdrop(deps, eth_address, eth_sig, stargaze_address, stargaze_sig),
+        ExecuteMsg::AddEligibleEth {eth_address} => add_eligible_eth(deps, eth_address, info.sender)
     }
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
-    match msg {
-        QueryMsg::AirdropEligible { eth_address } => {
-            to_binary(&airdrop_check_eligible(deps, env, eth_address)?)
-        }
-    }
+    println!("we are in query");
+    let test_msg = AirdropEligibleResponse {eligible: true};
+    to_binary(&test_msg)
+    // match msg {
+    //     QueryMsg::AirdropEligible { eth_address } => {
+    //         to_binary(&test_msg)
+    //         // to_binary(&airdrop_check_eligible(deps, eth_address)?)
+    //     }
+    // }
 }
 
 fn claim_airdrop(
@@ -77,10 +81,37 @@ fn claim_airdrop(
         .add_attribute("minter_page", minter_page))
 }
 
-fn airdrop_check_eligible(deps: Deps, env: Env, eth_address: String) -> StdResult<EligibleResponse> {
-    let eligible = true;
-    Ok(EligibleResponse { eligible })
+fn airdrop_check_eligible(
+    deps: Deps,
+    eth_address: Addr,
+) -> StdResult<EligibleResponse> {
+    println!("we are in airdrop check");
+    let is_eligible_addr =
+        ELIGIBLE_ETH_ADDRS.load(deps.storage, &Addr::unchecked(eth_address.to_string()));
+    println!("after eligible check");
+    let response = Ok(EligibleResponse { eligible: true });
+    println!("response is {:?}", response);
+    response
+    // match is_eligible_addr {
+    //     Ok(is_eligible) => Ok(EligibleResponse { eligible: is_eligible }),
+    //     Err(_) => Ok(EligibleResponse { eligible: false }),
+    // }
 }
+
+fn add_eligible_eth(
+    deps: DepsMut,
+    eth_address: String,
+    sender: Addr
+) -> Result<Response, ContractError> {
+    let config = CONFIG.load(deps.storage)?;
+    if sender != config.admin {
+        return Err(ContractError::Unauthorized{ sender: sender});
+    }
+    let result = ELIGIBLE_ETH_ADDRS.save(deps.storage, &Addr::unchecked(eth_address.to_string()), &true);
+    Ok(Response::new())
+}
+
+
 
 // internal function only
 fn airdrop_check_valid(deps: Deps, env: Env, msg: QueryMsg) -> bool {

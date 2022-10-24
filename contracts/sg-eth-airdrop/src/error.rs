@@ -1,4 +1,4 @@
-use cosmwasm_std::StdError;
+use cosmwasm_std::{StdError, Addr};
 use thiserror::Error;
 
 #[derive(Error, Debug, PartialEq)]
@@ -6,9 +6,15 @@ pub enum ContractError {
     #[error("{0}")]
     Std(#[from] StdError),
 
-    #[error("Unauthorized")]
-    Unauthorized {},
+    // #[error("Unauthorized")]
+    // Unauthorized {},
 
     #[error("Contract has no funds")]
     NoFunds {},
+
+    // #[error("Sender {sender} is not an admin")]
+    // Unauthorized { sender: Addr},
+
+    #[error("Unauthorized admin, sender is {sender}")]
+    Unauthorized { sender: Addr},
 }

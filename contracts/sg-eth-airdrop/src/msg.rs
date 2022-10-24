@@ -1,5 +1,7 @@
+use cosmwasm_std::Addr;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+
 
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -27,20 +29,23 @@ pub enum ExecuteMsg {
         eth_sig: String,
         stargaze_address: String,
         stargaze_sig: String
+    },
+    AddEligibleEth {
+        eth_address: String
     }
 }
+
 
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
     AirdropEligible {
-        eth_address: String
+        eth_address: Addr
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
-#[serde(rename_all = "snake_case")]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct AirdropEligibleResponse {
     pub eligible: bool,
 }

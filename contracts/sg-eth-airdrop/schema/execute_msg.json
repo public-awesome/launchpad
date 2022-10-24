@@ -33,6 +33,26 @@
         }
       },
       "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "add_eligible_eth"
+      ],
+      "properties": {
+        "add_eligible_eth": {
+          "type": "object",
+          "required": [
+            "eth_address"
+          ],
+          "properties": {
+            "eth_address": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
     }
   ]
 }
