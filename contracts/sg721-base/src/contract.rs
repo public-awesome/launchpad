@@ -189,7 +189,9 @@ where
         collection.external_link = collection_msg
             .external_link
             .unwrap_or_else(|| collection.external_link.as_ref().map(|s| s.to_string()));
-        Url::parse(collection.external_link.as_ref().unwrap())?;
+        if collection.external_link.as_ref().is_some() {
+            Url::parse(collection.external_link.as_ref().unwrap())?;
+        }
 
         collection.explicit_content = collection_msg.explicit_content;
 

@@ -3,6 +3,7 @@ mod tests {
     use cosmwasm_std::{coin, Addr, Timestamp};
     use cw721::NumTokensResponse;
     use cw_multi_test::{BankSudo, Contract, ContractWrapper, Executor, SudoMsg};
+    use sg2::msg::{CollectionParams, CreateMinterMsg};
     use sg2::tests::mock_collection_params;
     use sg721::ExecuteMsg as Sg721ExecuteMsg;
     use sg721::{CollectionInfo, InstantiateMsg};
@@ -96,6 +97,13 @@ mod tests {
         }
     }
 
+    pub fn custom_mock_create_minter(custom_params: CollectionParams) -> VendingMinterCreateMsg {
+        VendingMinterCreateMsg {
+            init_msg: mock_init_extension(),
+            collection_params: custom_params,
+        }
+    }
+
     fn proper_instantiate_factory() -> (StargazeApp, FactoryContract) {
         let mut app = custom_mock_app();
         let factory_id = app.store_code(factory_contract());
@@ -126,6 +134,37 @@ mod tests {
         let sg721_id = app.store_code(sg721_base_contract());
 
         let mut m = mock_create_minter();
+        m.collection_params.code_id = sg721_id;
+        let msg = ExecuteMsg::CreateMinter(m);
+
+        let creation_fee = coin(CREATION_FEE, NATIVE_DENOM);
+
+        app.sudo(SudoMsg::Bank(BankSudo::Mint {
+            to_address: ADMIN.to_string(),
+            amount: vec![creation_fee.clone()],
+        }))
+        .unwrap();
+
+        let bal = app.wrap().query_all_balances(ADMIN).unwrap();
+        assert_eq!(bal, vec![creation_fee.clone()]);
+
+        // this should create the minter + sg721
+        let cosmos_msg = factory_contract.call_with_funds(msg, creation_fee).unwrap();
+
+        let res = app.execute(Addr::unchecked(ADMIN), cosmos_msg);
+        dbg!("{:?}", &res);
+        assert!(res.is_ok());
+
+        (app, Addr::unchecked("contract2"))
+    }
+
+    fn custom_proper_instantiate(
+        custom_create_minter_msg: CreateMinterMsg<VendingMinterInitMsgExtension>,
+    ) -> (StargazeApp, Addr) {
+        let (mut app, factory_contract) = proper_instantiate_factory();
+        let sg721_id = app.store_code(sg721_base_contract());
+
+        let mut m = custom_create_minter_msg;
         m.collection_params.code_id = sg721_id;
         let msg = ExecuteMsg::CreateMinter(m);
 
@@ -211,8 +250,11 @@ mod tests {
 
         #[test]
         fn update_collection_info() {
-            let params = mock_collection_params();
-            let (app, contract) = proper_instantiate();
+            // customize params so external_link is None
+            let mut params = mock_collection_params();
+            params.info.external_link = None;
+            let custom_create_minter_msg = custom_mock_create_minter(params.clone());
+            let (app, contract) = custom_proper_instantiate(custom_create_minter_msg.clone());
 
             // default trading start time is start time + default trading start time offset
             let res: CollectionInfoResponse = app
@@ -225,7 +267,7 @@ mod tests {
             assert_eq!(res.start_trading_time, Some(default_start_time));
 
             // update collection info
-            let (mut app, contract) = proper_instantiate();
+            let (mut app, contract) = custom_proper_instantiate(custom_create_minter_msg);
 
             let creator = Addr::unchecked("creator".to_string());
 
