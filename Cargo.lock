@@ -898,6 +898,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "sg-eth-aidrop"
+version = "0.1.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cosmwasm-storage",
+ "cw-multi-test 0.15.1",
+ "cw-storage-plus 0.15.1",
+ "cw-utils 0.15.1",
+ "cw2 0.15.1",
+ "rust_decimal",
+ "schemars",
+ "serde",
+ "sg-multi-test",
+ "sg-std 0.15.0",
+ "sg-whitelist",
+ "sg1",
+ "thiserror",
+]
+
+[[package]]
 name = "sg-metadata"
 version = "0.20.0"
 dependencies = [
