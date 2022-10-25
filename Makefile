@@ -15,11 +15,4 @@ publish:
 	sh scripts/publish.sh
 
 schema:
-	cd contracts/base-factory && cargo schema
-	cd contracts/base-minter && cargo schema
-	cd contracts/sg721-base && cargo schema
-	cd contracts/sg721-metadata-onchain && cargo schema
-	cd contracts/sg721-nt && cargo schema
-	cd contracts/vending-factory && cargo schema
-	cd contracts/vending-minter && cargo schema
-	cd ts && yarn codegen
+	sh scripts/schema.sh
