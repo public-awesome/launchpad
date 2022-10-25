@@ -54,15 +54,11 @@ pub fn execute(
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
-    println!("we are in query");
-    let test_msg = AirdropEligibleResponse {eligible: true};
-    to_binary(&test_msg)
-    // match msg {
-    //     QueryMsg::AirdropEligible { eth_address } => {
-    //         to_binary(&test_msg)
-    //         // to_binary(&airdrop_check_eligible(deps, eth_address)?)
-    //     }
-    // }
+    match msg {
+        QueryMsg::AirdropEligible { eth_address } => {
+            to_binary(&airdrop_check_eligible(deps, eth_address)?)
+        }
+    }
 }
 
 fn claim_airdrop(
@@ -85,17 +81,12 @@ fn airdrop_check_eligible(
     deps: Deps,
     eth_address: Addr,
 ) -> StdResult<EligibleResponse> {
-    println!("we are in airdrop check");
     let is_eligible_addr =
         ELIGIBLE_ETH_ADDRS.load(deps.storage, &Addr::unchecked(eth_address.to_string()));
-    println!("after eligible check");
-    let response = Ok(EligibleResponse { eligible: true });
-    println!("response is {:?}", response);
-    response
-    // match is_eligible_addr {
-    //     Ok(is_eligible) => Ok(EligibleResponse { eligible: is_eligible }),
-    //     Err(_) => Ok(EligibleResponse { eligible: false }),
-    // }
+    match is_eligible_addr {
+        Ok(is_eligible) => Ok(EligibleResponse { eligible: is_eligible }),
+        Err(_) => Ok(EligibleResponse { eligible: false }),
+    }
 }
 
 fn add_eligible_eth(
