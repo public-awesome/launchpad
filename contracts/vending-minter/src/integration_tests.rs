@@ -509,7 +509,7 @@ fn happy_path() {
     // Check NFT owned by buyer
     // Random mint token_id 1
     let query_owner_msg = Cw721QueryMsg::OwnerOf {
-        token_id: String::from("1"),
+        token_id: String::from("2"),
         include_expired: None,
     };
 
