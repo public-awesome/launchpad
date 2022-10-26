@@ -7,6 +7,7 @@ use cosmwasm_std::{
 use cw2::set_contract_version;
 use cw721_base::{msg::ExecuteMsg as Cw721ExecuteMsg, MintMsg};
 use cw_utils::{may_pay, nonpayable, parse_reply_instantiate_data};
+use semver::Version;
 use sg721::msg::InstantiateMsg as Sg721InstantiateMsg;
 use url::Url;
 
@@ -654,4 +655,31 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractE
         }
         Err(_) => Err(ContractError::InstantiateSg721Error {}),
     }
+}
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
+    let current_version = cw2::get_contract_version(deps.storage)?;
+    if current_version.contract != CONTRACT_NAME {
+        return Err(StdError::generic_err("Cannot upgrade to a different contract").into());
+    }
+    let version: Version = current_version
+        .version
+        .parse()
+        .map_err(|_| StdError::generic_err("Invalid contract version"))?;
+    let new_version: Version = CONTRACT_VERSION
+        .parse()
+        .map_err(|_| StdError::generic_err("Invalid contract version"))?;
+
+    if version > new_version {
+        return Err(StdError::generic_err("Cannot upgrade to a previous contract version").into());
+    }
+    // if same version return
+    if version == new_version {
+        return Ok(Response::new());
+    }
+
+    // set new contract version
+    set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+    Ok(Response::new())
 }

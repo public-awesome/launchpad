@@ -54,6 +54,7 @@ sg-std = { path = "../../packages/sg-std" }
 whitelist = { path = "../whitelist" }
 cw721 = "0.12.0"
 cw721-base = { version = "0.12.0", features = ["library"] }
+semver = "1"
 
 [dev-dependencies]
 cosmwasm-schema = { version = "1.0.0" }
