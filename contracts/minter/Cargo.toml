@@ -42,9 +42,9 @@ optimize = """docker run --rm -v "$(pwd)":/code \
 [dependencies]
 cosmwasm-std = { version = "1.0.0" }
 cosmwasm-storage = { version = "1.0.0" }
-cw-storage-plus = "0.12.1"
-cw2 = "0.12.1"
-cw-utils = "0.12.1"
+cw-storage-plus = "0.13.4"
+cw2 = "0.13.4"
+cw-utils = "0.13.4"
 schemars = "0.8"
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 sg721 = { path = "../sg721", features = ["library"] }
@@ -58,5 +58,5 @@ semver = "1"
 
 [dev-dependencies]
 cosmwasm-schema = { version = "1.0.0" }
-cw-multi-test = "0.12.1"
+cw-multi-test = "0.13.4"
 anyhow = "1"
