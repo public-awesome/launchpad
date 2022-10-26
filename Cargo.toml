@@ -10,7 +10,7 @@ repository = "https://github.com/public-awesome/launchpad"
 license    = "Apache-2.0"
 
 [workspace.dependencies]
-base-factory      = { path = "contracts/base-factory" }
+base-factory      = { version = "0.21.1", path = "contracts/base-factory" }
 cosmwasm-schema   = "1.1.5"
 cosmwasm-std      = "1.1.5"
 cw2               = "0.16.0"
@@ -27,15 +27,15 @@ sg1               = "0.21.1"
 sg2               = "0.21.1"
 sg4               = "0.21.1"
 sg721             = "0.21.1"
-sg721-base        = { path = "contracts/sg721-base" }
+sg721-base        = { version = "0.21.1", path = "contracts/sg721-base" }
 sg-metadata       = "0.21.1"
 sg-multi-test     = "0.21.1"
-sg-splits         = { path = "contracts/splits" }
+sg-splits         = { version = "0.21.1", path = "contracts/splits" }
 sg-std            = "0.21.1"
-sg-whitelist      = { path = "contracts/whitelist" }
+sg-whitelist      = { version = "0.21.1", path = "contracts/whitelist" }
 thiserror         = "1.0.31"
 url               = "2.2.2"
-vending-factory   = { path = "contracts/vending-factory" }
+vending-factory   = { version = "0.21.1", path = "contracts/vending-factory" }
 
 [profile.release.package.sg721]
 codegen-units = 1
