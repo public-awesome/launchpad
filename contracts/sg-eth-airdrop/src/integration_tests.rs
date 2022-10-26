@@ -59,8 +59,7 @@ async fn get_signature(
     wallet: Wallet<SigningKey>,
     plaintext_msg: &str,
 ) -> Result<ethers_core::types::Signature, WalletError> {
-    let signature = wallet.sign_message(plaintext_msg).await;
-    signature
+    wallet.sign_message(plaintext_msg).await
 }
 
 fn get_wallet_and_sig(
