@@ -62,9 +62,10 @@ rlp = "0.5"
 sha2 = "0.10"
 sha3 = "0.10"
 ethers-signers = "1.0.0"
-tokio = { version = "1.18", features = ["macros", "rt-multi-thread"] }
 ethers-core = "1.0.0"
 eyre = "0.6"
+futures = "0.3"
+async-std = "1.12.0"
 
 cosmwasm-storage = "1.1.4"
 

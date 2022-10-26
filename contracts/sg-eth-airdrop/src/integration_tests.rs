@@ -1,15 +1,18 @@
+use async_std;
+use async_std::task;
 use cosmwasm_std::{Addr, Attribute};
 use cw_multi_test::error::Error;
-use cw_multi_test::{Contract, ContractWrapper, Executor, AppResponse};
+use cw_multi_test::{AppResponse, Contract, ContractWrapper, Executor};
 use ethers_core::k256::ecdsa::SigningKey;
 use ethers_core::types::H160;
+
 use sg_multi_test::StargazeApp;
 use sg_std::StargazeMsgWrapper;
 use std::str;
 
 use crate::msg::{AirdropEligibleResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
 use crate::state::Config;
-use ethers_core::rand::thread_rng;
+use ethers_core::rand::{thread_rng};
 use ethers_signers::{LocalWallet, Signer, Wallet, WalletError};
 use eyre::Result;
 
@@ -52,14 +55,15 @@ fn get_instantiate_contract<'a>(claim_plaintext: &str) -> StargazeApp {
     app
 }
 
-#[tokio::main]
 async fn get_signature(
     wallet: Wallet<SigningKey>,
     plaintext_msg: &str,
 ) -> Result<ethers_core::types::Signature, WalletError> {
-    let signature = wallet.sign_message(plaintext_msg).await?;
-    println!("Produced signature {}", signature);
-    Ok(signature)
+    let signature = wallet.sign_message(plaintext_msg).await;
+    match signature {
+        Ok(sig) => Ok(sig),
+        Err(err) => Err(err),
+    }
 }
 
 fn get_wallet_and_sig(
@@ -71,7 +75,7 @@ fn get_wallet_and_sig(
     std::string::String,
 ) {
     let wallet = LocalWallet::new(&mut thread_rng());
-    let eth_sig_str = get_signature(wallet.clone(), &claim_plaintext)
+    let eth_sig_str = task::block_on(get_signature(wallet.clone(), &claim_plaintext))
         .unwrap()
         .to_string();
     let eth_address = wallet.address();
@@ -88,7 +92,6 @@ fn execute_contract_with_msg(msg: ExecuteMsg, app: &mut StargazeApp) -> Result<A
         .unwrap();
     Ok(result)
 }
-
 
 #[test]
 fn test_instantiate() {
@@ -115,7 +118,6 @@ fn test_not_authorized_add_eth() {
 
 #[test]
 fn test_authorized_add_eth() {
-    let true_admin = Addr::unchecked("true_admin");
     let claim_plaintext = "I Want a Winter Pal.";
     let mut app = get_instantiate_contract(claim_plaintext);
     let sg_eth_addr = Addr::unchecked(AIRDROP_CONTRACT);
@@ -167,12 +169,11 @@ fn test_add_eth_and_verify() {
     assert_eq!(result, expected_result);
 }
 
-
 #[test]
 fn test_valid_eth_sig_claim() {
     let claim_plaintext: String = "I Want a Winter Pal.".to_string();
     let (_, eth_sig_str, _, eth_addr_str) = get_wallet_and_sig(claim_plaintext.clone());
-    
+
     let execute_msg = ExecuteMsg::AddEligibleEth {
         eth_address: eth_addr_str.clone(),
     };
@@ -209,7 +210,6 @@ fn test_valid_eth_sig_claim() {
     assert_eq!(res.events[1].attributes, expected_attributes);
 }
 
-
 #[test]
 fn test_invalid_eth_sig_claim() {
     let claim_plaintext: String = "I Want a Winter Pal.".to_string();
@@ -217,7 +217,7 @@ fn test_invalid_eth_sig_claim() {
     let (_, _, _, eth_addr_str) = get_wallet_and_sig(claim_plaintext.clone());
     let (_, eth_sig_str_2, _, _) = get_wallet_and_sig(claim_plaintext.clone());
 
-    let mut app = get_instantiate_contract( &claim_plaintext);
+    let mut app = get_instantiate_contract(&claim_plaintext);
     let execute_msg = ExecuteMsg::AddEligibleEth {
         eth_address: eth_addr_str.clone(),
     };
