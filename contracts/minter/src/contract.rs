@@ -521,6 +521,13 @@ pub fn execute_update_unit_price(
             updated: price,
         });
     }
+    // Check that the price is greater than the minimum
+    if MIN_MINT_PRICE > price {
+        return Err(ContractError::InsufficientMintPrice {
+            expected: MIN_MINT_PRICE,
+            got: price,
+        });
+    }
     config.unit_price = coin(price, config.unit_price.denom);
     CONFIG.save(deps.storage, &config)?;
     Ok(Response::new()
