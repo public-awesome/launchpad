@@ -19,7 +19,7 @@ backtraces = ["cosmwasm-std/backtraces"]
 library = []
 
 [dependencies]
-cosmwasm-std = { version = "1.0.0-beta5" }
+cosmwasm-std = { version = "1.0.0" }
 cw-utils = "0.12.1"
 cw721 = "0.12.0"
 cw721-base = { version = "0.12.0", features = ["library"] }
@@ -28,4 +28,4 @@ serde = { version = "1.0.133", default-features = false, features = ["derive"] }
 thiserror = "1.0.30"
 
 [dev-dependencies]
-cosmwasm-schema = { version = "1.0.0-beta5" }
+cosmwasm-schema = { version = "1.0.0" }

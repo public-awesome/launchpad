@@ -26,7 +26,7 @@ backtraces = ["cosmwasm-std/backtraces"]
 library = []
 
 [dependencies]
-cosmwasm-std = { version = "1.0.0-beta5" }
+cosmwasm-std = { version = "1.0.0" }
 cw-controllers = "0.12.1"
 cw-storage-plus = "0.12.1"
 cw0 = "0.10.3"
@@ -38,4 +38,4 @@ thiserror = { version = "1.0.23" }
 sg-std = { path = "../../packages/sg-std" }
 
 [dev-dependencies]
-cosmwasm-schema = { version = "1.0.0-beta5" }
+cosmwasm-schema = { version = "1.0.0" }
