@@ -6,6 +6,7 @@ use cw_storage_plus::{Item, Map};
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 pub struct Config {
     pub admin : Addr,
+    pub claim_msg_plaintext: String
 
 }// unique items
 

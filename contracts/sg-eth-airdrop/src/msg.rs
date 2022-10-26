@@ -2,12 +2,11 @@ use cosmwasm_std::Addr;
 use cosmwasm_schema::cw_serde;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-
-
+use crate::state::Config;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {
-    pub config: Option<String> 
+    pub config: Config
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -49,4 +48,10 @@ pub enum QueryMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct AirdropEligibleResponse {
     pub eligible: bool,
+}
+
+
+#[cw_serde]
+pub struct VerifyResponse {
+    pub verifies: bool,
 }
