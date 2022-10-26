@@ -1,7 +1,7 @@
 [package]
 name = "minter"
-version = "0.8.0"
-authors = ["Jake Hartnell <jake@stargaze.zone>"]
+version = "0.8.1"
+authors = ["Jake Hartnell <jake@stargaze.zone>", "Jorge Hernandez <jorge@stargaze.zone>"]
 edition = "2018"
 
 exclude = [
