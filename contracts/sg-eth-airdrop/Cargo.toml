@@ -60,6 +60,7 @@ ethers-core = "1.0.0"
 eyre = "0.6"
 futures = "0.3"
 async-std = "1.12.0"
+coins-core = "0.7.0"
 
 cosmwasm-storage = "1.1.4"
 cosmwasm-schema = { workspace = true }

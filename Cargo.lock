@@ -2067,6 +2067,7 @@ name = "sg-eth-aidrop"
 version = "0.1.0"
 dependencies = [
  "async-std",
+ "coins-core",
  "cosmwasm-crypto",
  "cosmwasm-schema",
  "cosmwasm-std",
