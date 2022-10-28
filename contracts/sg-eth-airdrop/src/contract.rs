@@ -126,11 +126,7 @@ fn add_eligible_eth(
     if sender != config.admin {
         return Err(ContractError::Unauthorized { sender });
     }
-    let _ = ELIGIBLE_ETH_ADDRS.save(
-        deps.storage,
-        &Addr::unchecked(eth_address),
-        &true,
-    );
+    let _ = ELIGIBLE_ETH_ADDRS.save(deps.storage, &Addr::unchecked(eth_address), &true);
     Ok(Response::new())
 }
 

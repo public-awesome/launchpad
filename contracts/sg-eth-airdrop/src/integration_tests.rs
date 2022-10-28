@@ -153,9 +153,7 @@ fn test_add_eth_and_verify() {
     let _ = app.execute_contract(true_admin, sg_eth_addr.clone(), &execute_msg, &[]);
 
     //test after add
-    let query_msg = QueryMsg::AirdropEligible {
-        eth_address,
-    };
+    let query_msg = QueryMsg::AirdropEligible { eth_address };
     let expected_result = AirdropEligibleResponse { eligible: true };
     let result: AirdropEligibleResponse = app
         .wrap()
