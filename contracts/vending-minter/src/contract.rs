@@ -601,8 +601,14 @@ fn random_token_list(
     sender: Addr,
     mut tokens: Vec<u32>,
 ) -> Result<Vec<u32>, ContractError> {
-    let sha256 =
-        Sha256::digest(format!("{}{}{}", sender, env.block.height, tokens.len()).into_bytes());
+    let tx_index = if let Some(tx) = &env.transaction {
+        tx.index
+    } else {
+        0
+    };
+    let sha256 = Sha256::digest(
+        format!("{}{}{}{}", sender, env.block.height, tokens.len(), tx_index).into_bytes(),
+    );
     // Cut first 16 bytes from 32 byte value
     let randomness: [u8; 16] = sha256.to_vec()[0..16].try_into().unwrap();
     let mut rng = Xoshiro128PlusPlus::from_seed(randomness);
@@ -620,8 +626,14 @@ fn random_mintable_token_mapping(
     sender: Addr,
 ) -> Result<TokenPositionMapping, ContractError> {
     let num_tokens = MINTABLE_NUM_TOKENS.load(deps.storage)?;
-    let sha256 =
-        Sha256::digest(format!("{}{}{}", sender, num_tokens, env.block.height).into_bytes());
+    let tx_index = if let Some(tx) = &env.transaction {
+        tx.index
+    } else {
+        0
+    };
+    let sha256 = Sha256::digest(
+        format!("{}{}{}{}", sender, num_tokens, env.block.height, tx_index).into_bytes(),
+    );
     // Cut first 16 bytes from 32 byte value
     let randomness: [u8; 16] = sha256.to_vec()[0..16].try_into().unwrap();
 
@@ -666,6 +678,19 @@ pub fn execute_update_mint_price(
         return Err(ContractError::UpdatedMintPriceTooHigh {
             allowed: config.mint_price.amount.u128(),
             updated: price,
+        });
+    }
+
+    let factory: ParamsResponse = deps
+        .querier
+        .query_wasm_smart(config.clone().factory, &Sg2QueryMsg::Params {})?;
+    let factory_params = factory.params;
+
+    // Check that the price is greater than the minimum
+    if factory_params.min_mint_price.amount.u128() > price {
+        return Err(ContractError::InsufficientMintPrice {
+            expected: factory_params.min_mint_price.amount.u128(),
+            got: price,
         });
     }
 

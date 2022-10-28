@@ -509,7 +509,7 @@ fn happy_path() {
     // Check NFT owned by buyer
     // Random mint token_id 1
     let query_owner_msg = Cw721QueryMsg::OwnerOf {
-        token_id: String::from("1"),
+        token_id: String::from("2"),
         include_expired: None,
     };
 
@@ -1817,6 +1817,11 @@ fn update_mint_price() {
     };
     let res = router.execute_contract(creator.clone(), minter_addr.clone(), &update_msg, &[]);
     assert!(res.is_ok());
+
+    // Update mint price lower than min price
+    let update_msg = ExecuteMsg::UpdateMintPrice { price: 1 };
+    let res = router.execute_contract(creator.clone(), minter_addr.clone(), &update_msg, &[]);
+    assert!(res.is_err());
 
     // Update mint price higher
     let update_msg = ExecuteMsg::UpdateMintPrice {
