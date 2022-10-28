@@ -48,7 +48,6 @@ pub fn query_verify_ethereum_text(
         Some(pair) => pair,
         None => return Err(StdError::generic_err("Signature must not be empty")),
     };
-    println!("v message is {:?}", v);
     let recovery = get_recovery_param(*v)?;
 
     // Verification
