@@ -1,4 +1,3 @@
-use async_std;
 use async_std::task;
 use cosmwasm_std::{Addr, Attribute};
 use cw_multi_test::error::Error;
@@ -32,7 +31,7 @@ pub fn contract() -> Box<dyn Contract<StargazeMsgWrapper>> {
     Box::new(contract)
 }
 
-fn get_instantiate_contract<'a>(claim_plaintext: &str) -> StargazeApp {
+fn get_instantiate_contract(claim_plaintext: &str) -> StargazeApp {
     let mut app = custom_mock_app();
     let true_admin = Addr::unchecked("true_admin");
     let sg_eth_id = app.store_code(contract());
@@ -84,7 +83,7 @@ fn execute_contract_with_msg(msg: ExecuteMsg, app: &mut StargazeApp) -> Result<A
     let sg_eth_addr = Addr::unchecked(AIRDROP_CONTRACT);
 
     let result = app
-        .execute_contract(true_admin.clone(), sg_eth_addr.clone(), &msg, &[])
+        .execute_contract(true_admin, sg_eth_addr, &msg, &[])
         .unwrap();
     Ok(result)
 }
@@ -155,7 +154,7 @@ fn test_add_eth_and_verify() {
 
     //test after add
     let query_msg = QueryMsg::AirdropEligible {
-        eth_address: eth_address,
+        eth_address,
     };
     let expected_result = AirdropEligibleResponse { eligible: true };
     let result: AirdropEligibleResponse = app
@@ -233,7 +232,7 @@ fn test_invalid_eth_sig_claim() {
         stargaze_address: "abc123".to_string(),
         stargaze_sig: "0xabc123".to_string(),
     };
-    let res = execute_contract_with_msg(claim_message.clone(), &mut app).unwrap();
+    let res = execute_contract_with_msg(claim_message, &mut app).unwrap();
 
     let expected_attributes = [
         Attribute {

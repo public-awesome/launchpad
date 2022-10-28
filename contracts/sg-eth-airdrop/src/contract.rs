@@ -5,6 +5,7 @@ use cw2::set_contract_version;
 
 use crate::error::ContractError;
 use crate::msg::{EligibleResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
+#[allow(unused_imports)]
 use crate::signature_verify::{query_verify_cosmos, query_verify_ethereum_text};
 use crate::state::{Config, CONFIG, ELIGIBLE_ETH_ADDRS};
 use sg_std::Response;
@@ -14,6 +15,7 @@ const CONTRACT_NAME: &str = "crates.io:sg-eth-airdrop";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[cfg_attr(not(feature = "library"), entry_point)]
+#[allow(unused_variables)]
 pub fn instantiate(
     deps: DepsMut,
     env: Env,
@@ -36,6 +38,7 @@ pub fn instantiate(
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
+#[allow(unused_variables)]
 pub fn execute(
     deps: DepsMut,
     env: Env,
@@ -56,6 +59,7 @@ pub fn execute(
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
+#[allow(unused_variables)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::AirdropEligible { eth_address } => {
@@ -68,8 +72,8 @@ fn claim_airdrop(
     deps: DepsMut,
     eth_address: String,
     eth_sig: String,
-    stargaze_address: String,
-    stargaze_sig: String,
+    _stargaze_address: String,
+    _stargaze_sig: String,
 ) -> Result<Response, ContractError> {
     let amount: u32 = 30000;
     let minter_page: String = "http://levana_page/airdrop".to_string();
@@ -120,17 +124,18 @@ fn add_eligible_eth(
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
     if sender != config.admin {
-        return Err(ContractError::Unauthorized { sender: sender });
+        return Err(ContractError::Unauthorized { sender });
     }
-    let result = ELIGIBLE_ETH_ADDRS.save(
+    let _ = ELIGIBLE_ETH_ADDRS.save(
         deps.storage,
-        &Addr::unchecked(eth_address.to_string()),
+        &Addr::unchecked(eth_address),
         &true,
     );
     Ok(Response::new())
 }
 
-// internal function only
+#[allow(dead_code)]
+#[allow(unused_variables)]
 fn airdrop_check_valid(deps: Deps, env: Env, msg: QueryMsg) -> bool {
     true
 }
