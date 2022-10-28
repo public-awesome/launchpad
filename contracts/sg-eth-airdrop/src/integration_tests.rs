@@ -195,8 +195,16 @@ fn test_valid_eth_sig_claim() {
             value: "30000".to_string(),
         },
         Attribute {
-            key: "result".to_string(),
+            key: "valid_eth_sig".to_string(),
             value: "true".to_string(),
+        },
+        Attribute {
+            key: "valid_cosmos_sig".to_string(),
+            value: "false".to_string(),
+        },
+        Attribute {
+            key: "valid_claim".to_string(),
+            value: "false".to_string(),
         },
         Attribute {
             key: "minter_page".to_string(),
@@ -237,7 +245,15 @@ fn test_invalid_eth_sig_claim() {
             value: "30000".to_string(),
         },
         Attribute {
-            key: "result".to_string(),
+            key: "valid_eth_sig".to_string(),
+            value: "false".to_string(),
+        },
+        Attribute {
+            key: "valid_cosmos_sig".to_string(),
+            value: "false".to_string(),
+        },
+        Attribute {
+            key: "valid_claim".to_string(),
             value: "false".to_string(),
         },
         Attribute {
