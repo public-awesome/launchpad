@@ -12,7 +12,7 @@ use std::str;
 
 use crate::msg::{AirdropEligibleResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
 use crate::state::Config;
-use ethers_core::rand::{thread_rng};
+use ethers_core::rand::thread_rng;
 use ethers_signers::{LocalWallet, Signer, Wallet, WalletError};
 use eyre::Result;
 

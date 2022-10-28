@@ -2,13 +2,10 @@ use cosmwasm_std::{Deps, StdError, StdResult};
 use sha2::{Digest, Sha256};
 use sha3::Keccak256;
 
-use crate::ethereum::{
-    decode_address, ethereum_address_raw, get_recovery_param
-};
-use crate::msg::{VerifyResponse,};
+use crate::ethereum::{decode_address, ethereum_address_raw, get_recovery_param};
+use crate::msg::VerifyResponse;
 
 pub const VERSION: &str = "crypto-verify-v2";
-
 
 pub fn query_verify_cosmos(
     deps: Deps,

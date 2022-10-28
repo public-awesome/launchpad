@@ -91,9 +91,9 @@ fn claim_airdrop(
     //     stargaze_address.as_bytes(),
     // )
     // .unwrap();
-    let valid_cosmos_sig = false; 
+    let valid_cosmos_sig = false;
 
-    let valid_claim: bool = valid_eth_signature.verifies && valid_cosmos_sig; 
+    let valid_claim: bool = valid_eth_signature.verifies && valid_cosmos_sig;
     Ok(Response::new()
         .add_attribute("amount", amount.to_string())
         .add_attribute("valid_eth_sig", valid_eth_signature.verifies.to_string())

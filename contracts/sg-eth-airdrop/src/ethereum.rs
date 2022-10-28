@@ -1,7 +1,6 @@
 use cosmwasm_std::{StdError, StdResult};
 use sha3::{Digest, Keccak256};
 
-
 /// Get the recovery param from the value `v` when no chain ID for replay protection is used.
 ///
 /// This is needed for chain-agnostig aignatures like signed text.
@@ -16,7 +15,6 @@ pub fn get_recovery_param(v: u8) -> StdResult<u8> {
         _ => Err(StdError::generic_err("Values of v other than 27 and 28 not supported. Replay protection (EIP-155) cannot be used here."))
     }
 }
-
 
 /// Returns a raw 20 byte Ethereum address
 pub fn ethereum_address_raw(pubkey: &[u8]) -> StdResult<[u8; 20]> {

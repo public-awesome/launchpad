@@ -49,7 +49,7 @@ cw-storage-plus = "0.15.0"
 cw-utils = "0.15.0"
 cw2 = "0.15.0"
 rust_decimal = { version = "1.14.3" }
-thiserror = { version = "1.0" }
+thiserror  = { workspace = true }
 sg-whitelist = { path = "../whitelist", features = ["library"] }
 sg1 = { path = "../../packages/sg1" }
 hex = "0.4"
