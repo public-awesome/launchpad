@@ -26,9 +26,7 @@ pub struct AirdropClaimResponse {
 pub enum ExecuteMsg {
     ClaimAirdrop {
         eth_address: String,
-        eth_sig: String,
-        stargaze_address: String,
-        stargaze_sig: String,
+        eth_sig: String
     },
     AddEligibleEth {
         eth_address: String,
@@ -38,12 +36,7 @@ pub enum ExecuteMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
-    AirdropEligible { eth_address: Addr },
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-pub struct AirdropEligibleResponse {
-    pub eligible: bool,
+    AirdropEligible { eth_address: String },
 }
 
 #[cw_serde]

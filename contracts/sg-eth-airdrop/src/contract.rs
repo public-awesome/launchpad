@@ -27,6 +27,8 @@ pub fn instantiate(
     let cfg = Config {
         admin: info.sender.clone(),
         claim_msg_plaintext: msg.config.claim_msg_plaintext,
+        amount: msg.config.amount, 
+        minter_page: msg.config.minter_page
     };
     CONFIG.save(deps.storage, &cfg)?;
     let res = Response::new();
@@ -48,10 +50,8 @@ pub fn execute(
     match msg {
         ExecuteMsg::ClaimAirdrop {
             eth_address,
-            eth_sig,
-            stargaze_address,
-            stargaze_sig,
-        } => claim_airdrop(deps, eth_address, eth_sig, stargaze_address, stargaze_sig),
+            eth_sig
+        } => claim_airdrop(deps, eth_address, eth_sig, info),
         ExecuteMsg::AddEligibleEth { eth_address } => {
             add_eligible_eth(deps, eth_address, info.sender)
         }
@@ -72,43 +72,43 @@ fn claim_airdrop(
     deps: DepsMut,
     eth_address: String,
     eth_sig: String,
-    _stargaze_address: String,
-    _stargaze_sig: String,
+    info: MessageInfo,
 ) -> Result<Response, ContractError> {
-    let amount: u32 = 30000;
-    let minter_page: String = "http://levana_page/airdrop".to_string();
-    let eth_sig_hex = hex::decode(eth_sig).unwrap();
-    // let sg_sig_hex = hex::decode(stargaze_sig).unwrap();
     let config = CONFIG.load(deps.storage)?;
 
-    let valid_eth_signature = query_verify_ethereum_text(
-        deps.as_ref(),
+    let plaintext_msg = str::replace(
         &config.claim_msg_plaintext,
-        &eth_sig_hex,
-        &eth_address,
-    )
-    .unwrap();
-    // let valid_cosmos_sig = query_verify_cosmos(
-    //     deps.as_ref(),
-    //     config.claim_msg_plaintext.as_bytes(),
-    //     &stargaze_sig.as_bytes(),
-    //     stargaze_address.as_bytes(),
-    // )
-    // .unwrap();
-    let valid_cosmos_sig = false;
+        "{wallet}",
+        &info.sender.to_string(),
+    );
+    let is_eligible: EligibleResponse = airdrop_check_eligible(deps.as_ref(), eth_address.clone())?; 
+    let eth_sig_hex = hex::decode(eth_sig).unwrap();
+    let valid_eth_signature =
+        query_verify_ethereum_text(deps.as_ref(), &plaintext_msg, &eth_sig_hex, &eth_address)
+            .unwrap();
 
-    let valid_claim: bool = valid_eth_signature.verifies && valid_cosmos_sig;
+    if is_eligible.eligible && valid_eth_signature.verifies {
+        remove_eth_address_from_eligible(deps, eth_address);
+    }
+    
     Ok(Response::new()
-        .add_attribute("amount", amount.to_string())
+        .add_attribute("amount", config.amount.to_string())
         .add_attribute("valid_eth_sig", valid_eth_signature.verifies.to_string())
-        .add_attribute("valid_cosmos_sig", valid_cosmos_sig.to_string())
-        .add_attribute("valid_claim", valid_claim.to_string())
-        .add_attribute("minter_page", minter_page))
+        .add_attribute("is_eligible", is_eligible.eligible.to_string())
+        .add_attribute("minter_page", &config.minter_page))
 }
 
-fn airdrop_check_eligible(deps: Deps, eth_address: Addr) -> StdResult<EligibleResponse> {
+fn remove_eth_address_from_eligible(deps: DepsMut, eth_address: String) {
+    let address_exists = ELIGIBLE_ETH_ADDRS.load(deps.storage, &eth_address);
+    match address_exists {
+        Ok(_) => ELIGIBLE_ETH_ADDRS.save(deps.storage, &eth_address, &false).unwrap(), 
+        Err(_) => ()
+    }
+}
+
+fn airdrop_check_eligible(deps: Deps, eth_address: String) -> StdResult<EligibleResponse> {
     let is_eligible_addr =
-        ELIGIBLE_ETH_ADDRS.load(deps.storage, &Addr::unchecked(eth_address.to_string()));
+        ELIGIBLE_ETH_ADDRS.load(deps.storage, &eth_address);
     match is_eligible_addr {
         Ok(is_eligible) => Ok(EligibleResponse {
             eligible: is_eligible,
@@ -126,7 +126,7 @@ fn add_eligible_eth(
     if sender != config.admin {
         return Err(ContractError::Unauthorized { sender });
     }
-    let _ = ELIGIBLE_ETH_ADDRS.save(deps.storage, &Addr::unchecked(eth_address), &true);
+    let _ = ELIGIBLE_ETH_ADDRS.save(deps.storage, &eth_address, &true);
     Ok(Response::new())
 }
 
