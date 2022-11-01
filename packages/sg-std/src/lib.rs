@@ -1,5 +1,5 @@
 mod math;
-pub(crate) mod msg;
+mod internal_msg;
 mod query;
 mod route;
 
@@ -7,7 +7,7 @@ pub const NATIVE_DENOM: &str = "ustars";
 // 3/11/2022 16:00:00 ET
 pub const GENESIS_MINT_START_TIME: u64 = 1647032400000000000;
 
-pub use msg::{
+pub use internal_msg::{
     create_claim_for_msg, create_fund_community_pool_msg, create_fund_fairburn_pool_msg,
     ClaimAction, StargazeMsg, StargazeMsgWrapper,
 };
