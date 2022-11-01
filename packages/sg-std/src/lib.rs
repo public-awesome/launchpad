@@ -1,5 +1,5 @@
 pub mod math;
-mod msg;
+pub mod msg;
 mod query;
 mod route;
 
