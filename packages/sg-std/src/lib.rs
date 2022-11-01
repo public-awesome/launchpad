@@ -1,5 +1,5 @@
-pub mod math;
-pub mod msg;
+mod math;
+pub(crate) mod msg;
 mod query;
 mod route;
 
