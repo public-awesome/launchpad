@@ -143,7 +143,7 @@ pub fn mock_params() -> VendingMinterParams {
 
 pub fn mock_init_extension(splits_addr: Option<String>) -> VendingMinterInitMsgExtension {
     VendingMinterInitMsgExtension {
-        base_token_uri: "ipfs://aldkfjads".to_string(),
+        base_token_uri: "IPFS://aldkfjads".to_string(),
         payment_address: splits_addr,
         start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
         num_tokens: 100,
