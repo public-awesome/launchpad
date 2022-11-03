@@ -2064,7 +2064,7 @@ dependencies = [
 
 [[package]]
 name = "sg-eth-aidrop"
-version = "0.1.0"
+version = "0.21.1"
 dependencies = [
  "async-std",
  "coins-core",
@@ -2144,7 +2144,7 @@ dependencies = [
 [[package]]
 name = "sg-name-minter"
 version = "0.12.0"
-source = "git+https://github.com/public-awesome/names.git?rev=21d4ac1a2bdfb5fe42b98c62557a17f5c2f1f3bf#21d4ac1a2bdfb5fe42b98c62557a17f5c2f1f3bf"
+source = "git+https://github.com/public-awesome/names.git?rev=91256f9ccfcec66fa8d4c2040acc9e10415c711a#91256f9ccfcec66fa8d4c2040acc9e10415c711a"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -2227,7 +2227,7 @@ dependencies = [
 [[package]]
 name = "sg-whitelist-basic"
 version = "0.12.0"
-source = "git+https://github.com/public-awesome/names.git?rev=21d4ac1a2bdfb5fe42b98c62557a17f5c2f1f3bf#21d4ac1a2bdfb5fe42b98c62557a17f5c2f1f3bf"
+source = "git+https://github.com/public-awesome/names.git?rev=91256f9ccfcec66fa8d4c2040acc9e10415c711a#91256f9ccfcec66fa8d4c2040acc9e10415c711a"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -2836,7 +2836,7 @@ dependencies = [
 [[package]]
 name = "whitelist-generic"
 version = "0.12.0"
-source = "git+https://github.com/public-awesome/names.git?rev=21d4ac1a2bdfb5fe42b98c62557a17f5c2f1f3bf#21d4ac1a2bdfb5fe42b98c62557a17f5c2f1f3bf"
+source = "git+https://github.com/public-awesome/names.git?rev=91256f9ccfcec66fa8d4c2040acc9e10415c711a#91256f9ccfcec66fa8d4c2040acc9e10415c711a"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",

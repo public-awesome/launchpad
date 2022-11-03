@@ -1,6 +1,6 @@
 [package]
 name = "sg-eth-aidrop"
-version = "0.1.0"
+version = {workspace = true}
 authors = ["Michael Scotto <m@publicawesome.com>"]
 edition = "2021"
 description = "Stargaze Ethereum Airdrop"
@@ -69,8 +69,8 @@ schemars      = { workspace = true }
 serde         = { workspace = true }
 sg-std        = { workspace = true }
 thiserror       = { workspace = true }
+whitelist-generic = { git = "https://github.com/public-awesome/names.git",  rev = "91256f9ccfcec66fa8d4c2040acc9e10415c711a", features = ["library"] }
 
-whitelist-generic = { git = "https://github.com/public-awesome/names.git",  rev = "21d4ac1a2bdfb5fe42b98c62557a17f5c2f1f3bf"  }
 
 
 [dev-dependencies]

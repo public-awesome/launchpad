@@ -10,7 +10,7 @@ use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Reply, St
 use cw2::set_contract_version;
 use cw_utils::parse_reply_instantiate_data;
 use sg_std::{Response, SubMsg};
-use whitelist_generic::helpers::WhitelistUpdatableContract;
+use whitelist_generic::helpers::WhitelistGenericContract;
 use whitelist_generic::msg::ExecuteMsg as WGExecuteMsg;
 use whitelist_generic::msg::InstantiateMsg as WGInstantiateMsg;
 const INIT_WHITELIST_REPLY_ID: u64 = 1;
@@ -130,7 +130,7 @@ fn remove_eth_address_from_eligible(deps: DepsMut, eth_address: String) {
 fn airdrop_check_eligible(deps: Deps, eth_address: String) -> StdResult<bool> {
     let config = CONFIG.load(deps.storage)?;
     match config.whitelist_address {
-        Some(address) => WhitelistUpdatableContract(deps.api.addr_validate(&address)?)
+        Some(address) => WhitelistGenericContract(deps.api.addr_validate(&address)?)
             .includes(&deps.querier, eth_address),
         None => Err(cosmwasm_std::StdError::NotFound {
             kind: "Whitelist Contract".to_string(),
@@ -156,8 +156,7 @@ fn add_eligible_eth(
     let execute_msg = WGExecuteMsg::AddAddresses { addresses };
     let mut res = Response::new();
     res = res.add_message(
-        WhitelistUpdatableContract(deps.api.addr_validate(&whitelist_address)?)
-            .call(execute_msg)?,
+        WhitelistGenericContract(deps.api.addr_validate(&whitelist_address)?).call(execute_msg)?,
     );
     Ok(res)
 }
