@@ -6,9 +6,7 @@ use crate::signature_verify::{query_verify_cosmos, query_verify_ethereum_text};
 use crate::state::{Config, CONFIG, ELIGIBLE_ETH_ADDRS};
 
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{
-    to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Reply, StdResult, WasmMsg,
-};
+use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Reply, StdResult, WasmMsg};
 use cw2::set_contract_version;
 use cw_utils::parse_reply_instantiate_data;
 use sg_std::{Response, SubMsg};
