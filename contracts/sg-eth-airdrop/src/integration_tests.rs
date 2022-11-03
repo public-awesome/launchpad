@@ -1,5 +1,5 @@
 use async_std::task;
-use cosmwasm_std::{Addr};
+use cosmwasm_std::Addr;
 use cw_multi_test::error::Error;
 use cw_multi_test::{AppResponse, Contract, ContractWrapper, Executor};
 use ethers_core::k256::ecdsa::SigningKey;
@@ -59,7 +59,7 @@ fn get_instantiate_contract(addresses: Vec<String>) -> StargazeApp {
         claim_msg_plaintext: Addr::unchecked(CONTRACT_CONFIG_PLAINTEXT).into_string(),
         amount: 3000,
         minter_page: "http://levana_page/airdrop".to_string(),
-        addresses: addresses,
+        addresses,
         minter_code_id: whitelist_code_id,
     };
     app.instantiate_contract(

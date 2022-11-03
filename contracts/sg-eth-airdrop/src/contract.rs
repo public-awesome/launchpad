@@ -100,7 +100,7 @@ fn claim_airdrop(
     let plaintext_msg = str::replace(
         &config.claim_msg_plaintext,
         "{wallet}",
-        &info.sender.to_string(),
+        info.sender.as_ref(),
     );
     let is_eligible = EligibleResponse { eligible: true };
     let eth_sig_hex = hex::decode(eth_sig).unwrap();
@@ -120,11 +120,10 @@ fn claim_airdrop(
 
 fn remove_eth_address_from_eligible(deps: DepsMut, eth_address: String) {
     let address_exists = ELIGIBLE_ETH_ADDRS.load(deps.storage, &eth_address);
-    match address_exists {
-        Ok(_) => ELIGIBLE_ETH_ADDRS
+    if address_exists.is_ok() {
+        ELIGIBLE_ETH_ADDRS
             .save(deps.storage, &eth_address, &false)
-            .unwrap(),
-        Err(_) => (),
+            .unwrap()
     }
 }
 
@@ -154,9 +153,7 @@ fn add_eligible_eth(
         Some(address) => address,
         None => return Err(ContractError::WhitelistContractNotSet2 {}),
     };
-    let execute_msg = WGExecuteMsg::AddAddresses {
-        addresses: addresses,
-    };
+    let execute_msg = WGExecuteMsg::AddAddresses { addresses };
     let mut res = Response::new();
     res = res.add_message(
         WhitelistUpdatableContract(deps.api.addr_validate(&whitelist_address)?)
