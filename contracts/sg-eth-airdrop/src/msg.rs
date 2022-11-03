@@ -10,7 +10,7 @@ pub struct InstantiateMsg {
     pub amount: u64,
     pub minter_page: String,
     pub addresses: Vec<String>,
-    pub minter_code_id: u64
+    pub minter_code_id: u64,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
@@ -30,10 +30,10 @@ pub struct AirdropClaimResponse {
 pub enum ExecuteMsg {
     ClaimAirdrop {
         eth_address: String,
-        eth_sig: String
+        eth_sig: String,
     },
     AddEligibleEth {
-        eth_address: String,
+        eth_addresses: Vec<String>,
     },
 }
 

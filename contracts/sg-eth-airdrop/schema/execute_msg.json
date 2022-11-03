@@ -12,21 +12,13 @@
           "type": "object",
           "required": [
             "eth_address",
-            "eth_sig",
-            "stargaze_address",
-            "stargaze_sig"
+            "eth_sig"
           ],
           "properties": {
             "eth_address": {
               "type": "string"
             },
             "eth_sig": {
-              "type": "string"
-            },
-            "stargaze_address": {
-              "type": "string"
-            },
-            "stargaze_sig": {
               "type": "string"
             }
           }
@@ -43,11 +35,14 @@
         "add_eligible_eth": {
           "type": "object",
           "required": [
-            "eth_address"
+            "eth_addresses"
           ],
           "properties": {
-            "eth_address": {
-              "type": "string"
+            "eth_addresses": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         }

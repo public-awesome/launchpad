@@ -1,23 +1,26 @@
+#[cfg(not(feature = "library"))]
 use crate::error::ContractError;
 use crate::msg::{EligibleResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
 #[allow(unused_imports)]
 use crate::signature_verify::{query_verify_cosmos, query_verify_ethereum_text};
 use crate::state::{Config, CONFIG, ELIGIBLE_ETH_ADDRS};
-#[cfg(not(feature = "library"))]
+
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Reply, StdResult, WasmMsg,
+    to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Reply, StdResult, WasmMsg,
 };
 use cw2::set_contract_version;
 use cw_utils::parse_reply_instantiate_data;
 use sg_std::{Response, SubMsg};
 use whitelist_generic::helpers::WhitelistUpdatableContract;
+use whitelist_generic::msg::ExecuteMsg as WGExecuteMsg;
 use whitelist_generic::msg::InstantiateMsg as WGInstantiateMsg;
 const INIT_WHITELIST_REPLY_ID: u64 = 1;
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sg-eth-airdrop";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
+const GENERIC_WHITELIST_LABEL: &str = "Generic Whitelist for Airdrop";
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 #[allow(unused_variables)]
@@ -47,7 +50,7 @@ pub fn instantiate(
         code_id: msg.minter_code_id,
         admin: Some(env.contract.address.to_string()),
         funds: info.funds,
-        label: "Generic Whitelist for Airdrop".to_string(),
+        label: GENERIC_WHITELIST_LABEL.to_string(),
         msg: to_binary(&whitelist_instantiate_msg)?,
     };
     let submsg = SubMsg::reply_on_success(wasm_msg, INIT_WHITELIST_REPLY_ID);
@@ -74,9 +77,7 @@ pub fn execute(
             eth_address,
             eth_sig,
         } => claim_airdrop(deps, eth_address, eth_sig, info),
-        ExecuteMsg::AddEligibleEth { eth_address } => {
-            add_eligible_eth(deps, eth_address, info.sender)
-        }
+        ExecuteMsg::AddEligibleEth { eth_addresses } => add_eligible_eth(deps, eth_addresses, info),
     }
 }
 
@@ -129,39 +130,41 @@ fn remove_eth_address_from_eligible(deps: DepsMut, eth_address: String) {
     }
 }
 
-// fn airdrop_check_eligible(deps: Deps, eth_address: String) -> StdResult<EligibleResponse> {
-//     let is_eligible_addr =
-//         ELIGIBLE_ETH_ADDRS.load(deps.storage, &eth_address);
-//     match is_eligible_addr {
-//         Ok(is_eligible) => Ok(EligibleResponse {
-//             eligible: is_eligible,
-//         }),
-//         Err(_) => Ok(EligibleResponse { eligible: false }),
-//     }
-// }
-
 fn airdrop_check_eligible(deps: Deps, eth_address: String) -> StdResult<bool> {
     let config = CONFIG.load(deps.storage)?;
     match config.whitelist_address {
         Some(address) => WhitelistUpdatableContract(deps.api.addr_validate(&address)?)
             .includes(&deps.querier, eth_address),
-        None => Err(cosmwasm_std::StdError::GenericErr {
-            msg: "msg".to_string(),
+        None => Err(cosmwasm_std::StdError::NotFound {
+            kind: "Whitelist Contract".to_string(),
         }),
     }
 }
 
 fn add_eligible_eth(
     deps: DepsMut,
-    eth_address: String,
-    sender: Addr,
+    addresses: Vec<String>,
+    info: MessageInfo,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
-    if sender != config.admin {
-        return Err(ContractError::Unauthorized { sender });
+    if info.sender != config.admin {
+        return Err(ContractError::Unauthorized {
+            sender: info.sender,
+        });
     }
-    let _ = ELIGIBLE_ETH_ADDRS.save(deps.storage, &eth_address, &true);
-    Ok(Response::new())
+    let whitelist_address = match config.whitelist_address {
+        Some(address) => address,
+        None => return Err(ContractError::WhitelistContractNotSet2 {}),
+    };
+    let execute_msg = WGExecuteMsg::AddAddresses {
+        addresses: addresses,
+    };
+    let mut res = Response::new();
+    res = res.add_message(
+        WhitelistUpdatableContract(deps.api.addr_validate(&whitelist_address)?)
+            .call(execute_msg)?,
+    );
+    Ok(res)
 }
 
 #[allow(dead_code)]
