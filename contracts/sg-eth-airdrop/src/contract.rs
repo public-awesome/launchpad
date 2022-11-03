@@ -1,9 +1,8 @@
 #[cfg(not(feature = "library"))]
 use crate::error::ContractError;
-use crate::msg::{EligibleResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
-#[allow(unused_imports)]
-use crate::signature_verify::{query_verify_cosmos, query_verify_ethereum_text};
-use crate::state::{Config, CONFIG, ELIGIBLE_ETH_ADDRS};
+use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use crate::signature_verify::query_verify_ethereum_text;
+use crate::state::{Config, CONFIG};
 
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Reply, StdResult, WasmMsg};
@@ -102,29 +101,42 @@ fn claim_airdrop(
         "{wallet}",
         info.sender.as_ref(),
     );
-    let is_eligible = EligibleResponse { eligible: true };
+    let is_eligible = airdrop_check_eligible(deps.as_ref(), eth_address.clone())?;
     let eth_sig_hex = hex::decode(eth_sig).unwrap();
     let valid_eth_signature =
         query_verify_ethereum_text(deps.as_ref(), &plaintext_msg, &eth_sig_hex, &eth_address)
             .unwrap();
 
-    if is_eligible.eligible && valid_eth_signature.verifies {
-        remove_eth_address_from_eligible(deps, eth_address);
+    let mut res = Response::new();
+    if is_eligible && valid_eth_signature.verifies {
+        res = remove_eth_address_from_eligible(deps, eth_address).unwrap();
     }
-    Ok(Response::new()
+    Ok(res
         .add_attribute("amount", config.amount.to_string())
         .add_attribute("valid_eth_sig", valid_eth_signature.verifies.to_string())
-        .add_attribute("is_eligible", is_eligible.eligible.to_string())
+        .add_attribute("is_eligible", is_eligible.to_string())
         .add_attribute("minter_page", &config.minter_page))
 }
 
-fn remove_eth_address_from_eligible(deps: DepsMut, eth_address: String) {
-    let address_exists = ELIGIBLE_ETH_ADDRS.load(deps.storage, &eth_address);
-    if address_exists.is_ok() {
-        ELIGIBLE_ETH_ADDRS
-            .save(deps.storage, &eth_address, &false)
-            .unwrap()
-    }
+fn remove_eth_address_from_eligible(
+    deps: DepsMut,
+    eth_address: String,
+) -> Result<Response, ContractError> {
+    let config = CONFIG.load(deps.storage)?;
+    let whitelist_address = match config.whitelist_address {
+        Some(address) => address,
+        None => return Err(ContractError::WhitelistContractNotSet {}),
+    };
+
+    let execute_msg = WGExecuteMsg::RemoveAddresses {
+        addresses: vec![eth_address],
+    };
+    let mut res = Response::new();
+    println!("about to remove here");
+    res = res.add_message(
+        WhitelistGenericContract(deps.api.addr_validate(&whitelist_address)?).call(execute_msg)?,
+    );
+    Ok(res)
 }
 
 fn airdrop_check_eligible(deps: Deps, eth_address: String) -> StdResult<bool> {
@@ -151,7 +163,7 @@ fn add_eligible_eth(
     }
     let whitelist_address = match config.whitelist_address {
         Some(address) => address,
-        None => return Err(ContractError::WhitelistContractNotSet2 {}),
+        None => return Err(ContractError::WhitelistContractNotSet {}),
     };
     let execute_msg = WGExecuteMsg::AddAddresses { addresses };
     let mut res = Response::new();

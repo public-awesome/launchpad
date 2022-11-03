@@ -14,11 +14,6 @@ pub struct InstantiateMsg {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-pub struct EligibleResponse {
-    pub eligible: bool,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct AirdropClaimResponse {
     result: bool,
     amount: u32,

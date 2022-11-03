@@ -19,5 +19,5 @@ pub enum ContractError {
     ReplyOnSuccess {},
 
     #[error("Whitelist contract has not been set")]
-    WhitelistContractNotSet2 {},
+    WhitelistContractNotSet {},
 }

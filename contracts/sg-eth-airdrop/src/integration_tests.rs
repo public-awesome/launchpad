@@ -1,9 +1,8 @@
 use async_std::task;
-use cosmwasm_std::Addr;
+use cosmwasm_std::{Addr, Attribute};
 use cw_multi_test::error::Error;
 use cw_multi_test::{AppResponse, Contract, ContractWrapper, Executor};
 use ethers_core::k256::ecdsa::SigningKey;
-use ethers_core::k256::elliptic_curve::bigint::AddMod;
 use ethers_core::types::H160;
 
 use sg_multi_test::StargazeApp;
@@ -13,7 +12,7 @@ use sg_std::{self, StargazeMsgWrapper};
 use std::str;
 
 use crate::contract::reply;
-use crate::msg::{EligibleResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
+use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
 use ethers_core::rand::thread_rng;
 use ethers_signers::{LocalWallet, Signer, Wallet, WalletError};
@@ -211,162 +210,146 @@ fn test_add_eth_and_verify() {
     assert!(result);
 }
 
-// #[test]
-// fn test_valid_eth_sig_claim() {
-//     let claim_plaintext = &get_msg_plaintext(STARGAZE_WALLET_01.to_string());
-//     let (_, eth_sig_str, _, eth_addr_str) = get_wallet_and_sig(claim_plaintext.clone());
+#[test]
+fn test_valid_eth_sig_claim() {
+    let claim_plaintext = &get_msg_plaintext(STARGAZE_WALLET_01.to_string());
+    let (_, eth_sig_str, _, eth_addr_str) = get_wallet_and_sig(claim_plaintext.clone());
 
-//     let execute_msg = ExecuteMsg::AddEligibleEth {
-//         eth_address: eth_addr_str.clone(),
-//     };
-//     let mut app = get_instantiate_contract();
-//     let owner_admin = Addr::unchecked(OWNER);
-//     let _ = execute_contract_with_msg(execute_msg, &mut app, owner_admin);
+    let mut app = get_instantiate_contract(vec![eth_addr_str.clone()]);
 
-//     let claim_message = ExecuteMsg::ClaimAirdrop {
-//         eth_address: eth_addr_str,
-//         eth_sig: eth_sig_str,
-//     };
-//     let stargaze_wallet_01 = Addr::unchecked(STARGAZE_WALLET_01);
-//     let res = execute_contract_with_msg(claim_message, &mut app, stargaze_wallet_01).unwrap();
+    let claim_message = ExecuteMsg::ClaimAirdrop {
+        eth_address: eth_addr_str,
+        eth_sig: eth_sig_str,
+    };
+    let stargaze_wallet_01 = Addr::unchecked(STARGAZE_WALLET_01);
+    let res = execute_contract_with_msg(claim_message, &mut app, stargaze_wallet_01).unwrap();
 
-//     let expected_attributes = [
-//         Attribute {
-//             key: "_contract_addr".to_string(),
-//             value: "contract0".to_string(),
-//         },
-//         Attribute {
-//             key: "amount".to_string(),
-//             value: "3000".to_string(),
-//         },
-//         Attribute {
-//             key: "valid_eth_sig".to_string(),
-//             value: "true".to_string(),
-//         },
-//         Attribute {
-//             key: "is_eligible".to_string(),
-//             value: "true".to_string(),
-//         },
-//         Attribute {
-//             key: "minter_page".to_string(),
-//             value: "http://levana_page/airdrop".to_string(),
-//         },
-//     ];
-//     assert_eq!(res.events[1].attributes, expected_attributes);
-// }
+    let expected_attributes = [
+        Attribute {
+            key: "_contract_addr".to_string(),
+            value: "contract0".to_string(),
+        },
+        Attribute {
+            key: "amount".to_string(),
+            value: "3000".to_string(),
+        },
+        Attribute {
+            key: "valid_eth_sig".to_string(),
+            value: "true".to_string(),
+        },
+        Attribute {
+            key: "is_eligible".to_string(),
+            value: "true".to_string(),
+        },
+        Attribute {
+            key: "minter_page".to_string(),
+            value: "http://levana_page/airdrop".to_string(),
+        },
+    ];
+    assert_eq!(res.events[1].attributes, expected_attributes);
+}
 
-// #[test]
-// fn test_invalid_eth_sig_claim() {
-//     let claim_plaintext = &get_msg_plaintext(STARGAZE_WALLET_01.to_string());
-//     let (_, _, _, eth_addr_str) = get_wallet_and_sig(claim_plaintext.clone());
-//     let (_, eth_sig_str_2, _, _) = get_wallet_and_sig(claim_plaintext.clone());
+#[test]
+fn test_invalid_eth_sig_claim() {
+    let claim_plaintext = &get_msg_plaintext(STARGAZE_WALLET_01.to_string());
+    let (_, _, _, eth_addr_str) = get_wallet_and_sig(claim_plaintext.clone());
+    let (_, eth_sig_str_2, _, _) = get_wallet_and_sig(claim_plaintext.clone());
 
-//     let mut app = get_instantiate_contract();
-//     let execute_msg = ExecuteMsg::AddEligibleEth {
-//         eth_address: eth_addr_str.clone(),
-//     };
-//     let owner_admin = Addr::unchecked(OWNER);
-//     let _ = execute_contract_with_msg(execute_msg, &mut app, owner_admin);
+    let mut app = get_instantiate_contract(vec![eth_addr_str.clone()]);
 
-//     let claim_message = ExecuteMsg::ClaimAirdrop {
-//         eth_address: eth_addr_str,
-//         eth_sig: eth_sig_str_2,
-//     };
-//     let stargaze_wallet_01 = Addr::unchecked(STARGAZE_WALLET_01);
-//     let res = execute_contract_with_msg(claim_message, &mut app, stargaze_wallet_01).unwrap();
+    let claim_message = ExecuteMsg::ClaimAirdrop {
+        eth_address: eth_addr_str,
+        eth_sig: eth_sig_str_2,
+    };
+    let stargaze_wallet_01 = Addr::unchecked(STARGAZE_WALLET_01);
+    let res = execute_contract_with_msg(claim_message, &mut app, stargaze_wallet_01).unwrap();
 
-//     let expected_attributes = [
-//         Attribute {
-//             key: "_contract_addr".to_string(),
-//             value: "contract0".to_string(),
-//         },
-//         Attribute {
-//             key: "amount".to_string(),
-//             value: "3000".to_string(),
-//         },
-//         Attribute {
-//             key: "valid_eth_sig".to_string(),
-//             value: "false".to_string(),
-//         },
-//         Attribute {
-//             key: "is_eligible".to_string(),
-//             value: "true".to_string(),
-//         },
-//         Attribute {
-//             key: "minter_page".to_string(),
-//             value: "http://levana_page/airdrop".to_string(),
-//         },
-//     ];
-//     assert_eq!(res.events[1].attributes, expected_attributes);
-// }
+    let expected_attributes = [
+        Attribute {
+            key: "_contract_addr".to_string(),
+            value: "contract0".to_string(),
+        },
+        Attribute {
+            key: "amount".to_string(),
+            value: "3000".to_string(),
+        },
+        Attribute {
+            key: "valid_eth_sig".to_string(),
+            value: "false".to_string(),
+        },
+        Attribute {
+            key: "is_eligible".to_string(),
+            value: "true".to_string(),
+        },
+        Attribute {
+            key: "minter_page".to_string(),
+            value: "http://levana_page/airdrop".to_string(),
+        },
+    ];
+    assert_eq!(res.events[1].attributes, expected_attributes);
+}
 
-// #[test]
-// fn test_can_not_claim_twice() {
-//     let claim_plaintext = &get_msg_plaintext(STARGAZE_WALLET_01.to_string());
-//     let (_, eth_sig_str, _, eth_addr_str) = get_wallet_and_sig(claim_plaintext.clone());
+#[test]
+fn test_can_not_claim_twice() {
+    let claim_plaintext = &get_msg_plaintext(STARGAZE_WALLET_01.to_string());
+    let (_, eth_sig_str, _, eth_addr_str) = get_wallet_and_sig(claim_plaintext.clone());
 
-//     let execute_msg = ExecuteMsg::AddEligibleEth {
-//         eth_address: eth_addr_str.clone(),
-//     };
-//     let mut app = get_instantiate_contract();
-//     let owner_admin = Addr::unchecked(OWNER);
-//     let _ = execute_contract_with_msg(execute_msg, &mut app, owner_admin);
+    let mut app = get_instantiate_contract(vec![eth_addr_str.clone()]);
+    let claim_message = ExecuteMsg::ClaimAirdrop {
+        eth_address: eth_addr_str,
+        eth_sig: eth_sig_str,
+    };
+    let stargaze_wallet_01 = Addr::unchecked(STARGAZE_WALLET_01);
+    let res =
+        execute_contract_with_msg(claim_message.clone(), &mut app, stargaze_wallet_01.clone())
+            .unwrap();
 
-//     let claim_message = ExecuteMsg::ClaimAirdrop {
-//         eth_address: eth_addr_str,
-//         eth_sig: eth_sig_str,
-//     };
-//     let stargaze_wallet_01 = Addr::unchecked(STARGAZE_WALLET_01);
-//     let res =
-//         execute_contract_with_msg(claim_message.clone(), &mut app, stargaze_wallet_01.clone())
-//             .unwrap();
+    let expected_attributes = [
+        Attribute {
+            key: "_contract_addr".to_string(),
+            value: "contract0".to_string(),
+        },
+        Attribute {
+            key: "amount".to_string(),
+            value: "3000".to_string(),
+        },
+        Attribute {
+            key: "valid_eth_sig".to_string(),
+            value: "true".to_string(),
+        },
+        Attribute {
+            key: "is_eligible".to_string(),
+            value: "true".to_string(),
+        },
+        Attribute {
+            key: "minter_page".to_string(),
+            value: "http://levana_page/airdrop".to_string(),
+        },
+    ];
+    assert_eq!(res.events[1].attributes, expected_attributes);
 
-//     let expected_attributes = [
-//         Attribute {
-//             key: "_contract_addr".to_string(),
-//             value: "contract0".to_string(),
-//         },
-//         Attribute {
-//             key: "amount".to_string(),
-//             value: "3000".to_string(),
-//         },
-//         Attribute {
-//             key: "valid_eth_sig".to_string(),
-//             value: "true".to_string(),
-//         },
-//         Attribute {
-//             key: "is_eligible".to_string(),
-//             value: "true".to_string(),
-//         },
-//         Attribute {
-//             key: "minter_page".to_string(),
-//             value: "http://levana_page/airdrop".to_string(),
-//         },
-//     ];
-//     assert_eq!(res.events[1].attributes, expected_attributes);
-
-//     let res = execute_contract_with_msg(claim_message, &mut app, stargaze_wallet_01).unwrap();
-//     let expected_attributes = [
-//         Attribute {
-//             key: "_contract_addr".to_string(),
-//             value: "contract0".to_string(),
-//         },
-//         Attribute {
-//             key: "amount".to_string(),
-//             value: "3000".to_string(),
-//         },
-//         Attribute {
-//             key: "valid_eth_sig".to_string(),
-//             value: "true".to_string(),
-//         },
-//         Attribute {
-//             key: "is_eligible".to_string(),
-//             value: "false".to_string(),
-//         },
-//         Attribute {
-//             key: "minter_page".to_string(),
-//             value: "http://levana_page/airdrop".to_string(),
-//         },
-//     ];
-//     assert_eq!(res.events[1].attributes, expected_attributes);
-// }
+    let res = execute_contract_with_msg(claim_message, &mut app, stargaze_wallet_01).unwrap();
+    let expected_attributes = [
+        Attribute {
+            key: "_contract_addr".to_string(),
+            value: "contract0".to_string(),
+        },
+        Attribute {
+            key: "amount".to_string(),
+            value: "3000".to_string(),
+        },
+        Attribute {
+            key: "valid_eth_sig".to_string(),
+            value: "true".to_string(),
+        },
+        Attribute {
+            key: "is_eligible".to_string(),
+            value: "false".to_string(),
+        },
+        Attribute {
+            key: "minter_page".to_string(),
+            value: "http://levana_page/airdrop".to_string(),
+        },
+    ];
+    assert_eq!(res.events[1].attributes, expected_attributes);
+}
