@@ -1,14 +1,19 @@
-#[cfg(not(feature = "library"))]
-use cosmwasm_std::entry_point;
-use cosmwasm_std::{to_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, StdResult};
-use cw2::set_contract_version;
-
 use crate::error::ContractError;
 use crate::msg::{EligibleResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
 #[allow(unused_imports)]
 use crate::signature_verify::{query_verify_cosmos, query_verify_ethereum_text};
 use crate::state::{Config, CONFIG, ELIGIBLE_ETH_ADDRS};
-use sg_std::Response;
+#[cfg(not(feature = "library"))]
+use cosmwasm_std::entry_point;
+use cosmwasm_std::{
+    to_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Reply, StdResult, WasmMsg,
+};
+use cw2::set_contract_version;
+use cw_utils::parse_reply_instantiate_data;
+use sg_std::{Response, SubMsg};
+use whitelist_generic::helpers::WhitelistUpdatableContract;
+use whitelist_generic::msg::InstantiateMsg as WGInstantiateMsg;
+const INIT_WHITELIST_REPLY_ID: u64 = 1;
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sg-eth-airdrop";
@@ -26,17 +31,34 @@ pub fn instantiate(
 
     let cfg = Config {
         admin: info.sender.clone(),
-        claim_msg_plaintext: msg.config.claim_msg_plaintext,
-        amount: msg.config.amount, 
-        minter_page: msg.config.minter_page
+        claim_msg_plaintext: msg.claim_msg_plaintext,
+        amount: msg.amount,
+        minter_page: msg.minter_page,
+        whitelist_address: None,
     };
     CONFIG.save(deps.storage, &cfg)?;
+
+    let whitelist_instantiate_msg = WGInstantiateMsg {
+        addresses: msg.addresses,
+        mint_discount_bps: Some(0),
+        per_address_limit: 1,
+    };
+    let wasm_msg = WasmMsg::Instantiate {
+        code_id: msg.minter_code_id,
+        admin: Some(env.contract.address.to_string()),
+        funds: info.funds,
+        label: "Generic Whitelist for Airdrop".to_string(),
+        msg: to_binary(&whitelist_instantiate_msg)?,
+    };
+    let submsg = SubMsg::reply_on_success(wasm_msg, INIT_WHITELIST_REPLY_ID);
+
     let res = Response::new();
     Ok(res
         .add_attribute("action", "instantiate")
         .add_attribute("contract_name", CONTRACT_NAME)
         .add_attribute("contract_version", CONTRACT_VERSION)
-        .add_attribute("sender", info.sender))
+        .add_attribute("sender", info.sender)
+        .add_submessage(submsg))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -50,7 +72,7 @@ pub fn execute(
     match msg {
         ExecuteMsg::ClaimAirdrop {
             eth_address,
-            eth_sig
+            eth_sig,
         } => claim_airdrop(deps, eth_address, eth_sig, info),
         ExecuteMsg::AddEligibleEth { eth_address } => {
             add_eligible_eth(deps, eth_address, info.sender)
@@ -81,7 +103,7 @@ fn claim_airdrop(
         "{wallet}",
         &info.sender.to_string(),
     );
-    let is_eligible: EligibleResponse = airdrop_check_eligible(deps.as_ref(), eth_address.clone())?; 
+    let is_eligible = EligibleResponse { eligible: true };
     let eth_sig_hex = hex::decode(eth_sig).unwrap();
     let valid_eth_signature =
         query_verify_ethereum_text(deps.as_ref(), &plaintext_msg, &eth_sig_hex, &eth_address)
@@ -90,7 +112,6 @@ fn claim_airdrop(
     if is_eligible.eligible && valid_eth_signature.verifies {
         remove_eth_address_from_eligible(deps, eth_address);
     }
-    
     Ok(Response::new()
         .add_attribute("amount", config.amount.to_string())
         .add_attribute("valid_eth_sig", valid_eth_signature.verifies.to_string())
@@ -101,19 +122,32 @@ fn claim_airdrop(
 fn remove_eth_address_from_eligible(deps: DepsMut, eth_address: String) {
     let address_exists = ELIGIBLE_ETH_ADDRS.load(deps.storage, &eth_address);
     match address_exists {
-        Ok(_) => ELIGIBLE_ETH_ADDRS.save(deps.storage, &eth_address, &false).unwrap(), 
-        Err(_) => ()
+        Ok(_) => ELIGIBLE_ETH_ADDRS
+            .save(deps.storage, &eth_address, &false)
+            .unwrap(),
+        Err(_) => (),
     }
 }
 
-fn airdrop_check_eligible(deps: Deps, eth_address: String) -> StdResult<EligibleResponse> {
-    let is_eligible_addr =
-        ELIGIBLE_ETH_ADDRS.load(deps.storage, &eth_address);
-    match is_eligible_addr {
-        Ok(is_eligible) => Ok(EligibleResponse {
-            eligible: is_eligible,
+// fn airdrop_check_eligible(deps: Deps, eth_address: String) -> StdResult<EligibleResponse> {
+//     let is_eligible_addr =
+//         ELIGIBLE_ETH_ADDRS.load(deps.storage, &eth_address);
+//     match is_eligible_addr {
+//         Ok(is_eligible) => Ok(EligibleResponse {
+//             eligible: is_eligible,
+//         }),
+//         Err(_) => Ok(EligibleResponse { eligible: false }),
+//     }
+// }
+
+fn airdrop_check_eligible(deps: Deps, eth_address: String) -> StdResult<bool> {
+    let config = CONFIG.load(deps.storage)?;
+    match config.whitelist_address {
+        Some(address) => WhitelistUpdatableContract(deps.api.addr_validate(&address)?)
+            .includes(&deps.querier, eth_address),
+        None => Err(cosmwasm_std::StdError::GenericErr {
+            msg: "msg".to_string(),
         }),
-        Err(_) => Ok(EligibleResponse { eligible: false }),
     }
 }
 
@@ -134,4 +168,26 @@ fn add_eligible_eth(
 #[allow(unused_variables)]
 fn airdrop_check_valid(deps: Deps, env: Env, msg: QueryMsg) -> bool {
     true
+}
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
+    if msg.id != INIT_WHITELIST_REPLY_ID {
+        return Err(ContractError::InvalidReplyID {});
+    }
+
+    let reply = parse_reply_instantiate_data(msg);
+    match reply {
+        Ok(res) => {
+            let whitelist_address = &res.contract_address;
+            let mut config = CONFIG.load(deps.storage)?;
+            config.whitelist_address = Some(whitelist_address.to_string());
+            CONFIG.save(deps.storage, &config)?;
+
+            Ok(Response::default()
+                .add_attribute("action", "init_whitelist_reply")
+                .add_attribute("whitelist_address", whitelist_address))
+        }
+        Err(_) => Err(ContractError::ReplyOnSuccess {}),
+    }
 }

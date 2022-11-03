@@ -72,9 +72,9 @@ dependencies = [
 
 [[package]]
 name = "async-global-executor"
-version = "2.3.0"
+version = "2.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0da5b41ee986eed3f524c380e6d64965aea573882a8907682ad100f7859305ca"
+checksum = "f1b6f5d7df27bd294849f8eec66ecfc63d11814df7a4f5d74168a2394467b776"
 dependencies = [
  "async-channel",
  "async-executor",
@@ -212,7 +212,7 @@ dependencies = [
  "cw-storage-plus 0.16.0",
  "cw-utils 0.16.0",
  "cw2 0.16.0",
- "cw721",
+ "cw721 0.16.0",
  "cw721-base",
  "schemars",
  "serde",
@@ -420,9 +420,9 @@ checksum = "c1db59621ec70f09c5e9b597b220c7a2b43611f4710dc03ceb8748637775692c"
 
 [[package]]
 name = "cc"
-version = "1.0.73"
+version = "1.0.74"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2fff2a6927b3bb87f9595d67196a70493f627687a71d87a0d692242c33f58c11"
+checksum = "581f5dba903aac52ea3feb5ec4810848460ee833876f1f9b0fdeab1f19091574"
 
 [[package]]
 name = "cfg-if"
@@ -686,6 +686,21 @@ dependencies = [
 
 [[package]]
 name = "cw-controllers"
+version = "0.15.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "09b3ababe9f0a473c2d878b7c973eee08e05e5d768253fbb08d475daeadba503"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus 0.15.1",
+ "cw-utils 0.15.1",
+ "schemars",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "cw-controllers"
 version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "24bd6738c3fd59c87d2f84911c1cad1e4f2d1c58ecaa6e52549b4f78f4ed6f07"
@@ -816,7 +831,7 @@ checksum = "dba1d15bff40b97bde05f36a0d44ac3369a085a4bda6c4673e33a9359513fdd2"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
- "cw-controllers",
+ "cw-controllers 0.16.0",
  "cw-storage-plus 0.16.0",
  "cw-utils 0.16.0",
  "cw2 0.16.0",
@@ -824,6 +839,19 @@ dependencies = [
  "schemars",
  "serde",
  "thiserror",
+]
+
+[[package]]
+name = "cw721"
+version = "0.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "20dfe04f86e5327956b559ffcc86d9a43167391f37402afd8bf40b0be16bee4d"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-utils 0.15.1",
+ "schemars",
+ "serde",
 ]
 
 [[package]]
@@ -850,7 +878,7 @@ dependencies = [
  "cw-storage-plus 0.16.0",
  "cw-utils 0.16.0",
  "cw2 0.16.0",
- "cw721",
+ "cw721 0.16.0",
  "schemars",
  "serde",
  "thiserror",
@@ -1127,9 +1155,9 @@ dependencies = [
 
 [[package]]
 name = "ff"
-version = "0.12.0"
+version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "df689201f395c6b90dfe87127685f8dbfc083a5e779e613575d8bd7314300c3e"
+checksum = "d013fc25338cc558c5c2cfbad646908fb23591e2404481826742b651c9af7160"
 dependencies = [
  "rand_core 0.6.4",
  "subtle",
@@ -1530,9 +1558,9 @@ dependencies = [
 
 [[package]]
 name = "once_cell"
-version = "1.15.0"
+version = "1.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e82dad04139b71a90c080c8463fe0dc7902db5192d939bd0950f074d014339e1"
+checksum = "86f0b0d4bf799edbc74508c1e8bf170ff5f41238e5f8225603ca7caaae2b7860"
 
 [[package]]
 name = "opaque-debug"
@@ -1919,9 +1947,9 @@ dependencies = [
 
 [[package]]
 name = "scale-info"
-version = "2.2.0"
+version = "2.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "333af15b02563b8182cd863f925bd31ef8fa86a0e095d30c091956057d436153"
+checksum = "88d8a765117b237ef233705cc2cc4c6a27fccd46eea6ef0c8c6dae5f3ef407f8"
 dependencies = [
  "cfg-if",
  "derive_more",
@@ -1931,9 +1959,9 @@ dependencies = [
 
 [[package]]
 name = "scale-info-derive"
-version = "2.2.0"
+version = "2.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "53f56acbd0743d29ffa08f911ab5397def774ad01bab3786804cf6ee057fb5e1"
+checksum = "cdcd47b380d8c4541044e341dcd9475f55ba37ddc50c908d945fc036a8642496"
 dependencies = [
  "proc-macro-crate",
  "proc-macro2",
@@ -2092,6 +2120,8 @@ dependencies = [
  "sha2 0.10.6",
  "sha3",
  "thiserror",
+ "whitelist-generic",
+ "whitelist-updatable",
 ]
 
 [[package]]
@@ -2141,6 +2171,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "sg-name-minter"
+version = "0.12.0"
+source = "git+https://github.com/public-awesome/names.git?rev=21d4ac1a2bdfb5fe42b98c62557a17f5c2f1f3bf#21d4ac1a2bdfb5fe42b98c62557a17f5c2f1f3bf"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-controllers 0.16.0",
+ "schemars",
+ "serde",
+]
+
+[[package]]
+name = "sg-name-minter"
+version = "0.12.0"
+source = "git+https://github.com/public-awesome/names.git#ad5e298042ed52a6eda7476f55668ffe9c3665ed"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-controllers 0.15.1",
+ "schemars",
+ "serde",
+]
+
+[[package]]
 name = "sg-splits"
 version = "0.21.1"
 dependencies = [
@@ -2160,12 +2214,27 @@ dependencies = [
 
 [[package]]
 name = "sg-std"
+version = "0.20.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e79e1fd5120014c1967533df1624996ab862887cec7be51437d08641c6198feb"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-utils 0.15.1",
+ "cw721 0.15.0",
+ "schemars",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "sg-std"
 version = "0.21.1"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-utils 0.16.0",
- "cw721",
+ "cw721 0.16.0",
  "schemars",
  "serde",
  "thiserror",
@@ -2180,7 +2249,7 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-utils 0.16.0",
- "cw721",
+ "cw721 0.16.0",
  "schemars",
  "serde",
  "thiserror",
@@ -2209,6 +2278,28 @@ dependencies = [
  "sg-std 0.21.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg1 0.21.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "thiserror",
+]
+
+[[package]]
+name = "sg-whitelist-basic"
+version = "0.12.0"
+source = "git+https://github.com/public-awesome/names.git?rev=21d4ac1a2bdfb5fe42b98c62557a17f5c2f1f3bf#21d4ac1a2bdfb5fe42b98c62557a17f5c2f1f3bf"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "schemars",
+ "serde",
+]
+
+[[package]]
+name = "sg-whitelist-basic"
+version = "0.12.0"
+source = "git+https://github.com/public-awesome/names.git#ad5e298042ed52a6eda7476f55668ffe9c3665ed"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "schemars",
+ "serde",
 ]
 
 [[package]]
@@ -2324,7 +2415,7 @@ dependencies = [
  "cw-storage-plus 0.16.0",
  "cw-utils 0.16.0",
  "cw2 0.16.0",
- "cw721",
+ "cw721 0.16.0",
  "cw721-base",
  "serde",
  "sg-multi-test 0.21.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2344,7 +2435,7 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw2 0.16.0",
- "cw721",
+ "cw721 0.16.0",
  "cw721-base",
  "schemars",
  "serde",
@@ -2362,7 +2453,7 @@ dependencies = [
  "cosmwasm-std",
  "cw-utils 0.16.0",
  "cw2 0.16.0",
- "cw721",
+ "cw721 0.16.0",
  "cw721-base",
  "schemars",
  "serde",
@@ -2684,7 +2775,7 @@ dependencies = [
  "cw2 0.16.0",
  "cw4",
  "cw4-group",
- "cw721",
+ "cw721 0.16.0",
  "cw721-base",
  "rand_core 0.6.4",
  "rand_xoshiro",
@@ -2807,6 +2898,44 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d743fdedc5c64377b5fc2bc036b01c7fd642205a0d96356034ae3404d49eb7fb"
 dependencies = [
  "cc",
+]
+
+[[package]]
+name = "whitelist-generic"
+version = "0.12.0"
+source = "git+https://github.com/public-awesome/names.git?rev=21d4ac1a2bdfb5fe42b98c62557a17f5c2f1f3bf#21d4ac1a2bdfb5fe42b98c62557a17f5c2f1f3bf"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-controllers 0.16.0",
+ "cw-storage-plus 0.16.0",
+ "cw-utils 0.16.0",
+ "cw2 0.16.0",
+ "schemars",
+ "serde",
+ "sg-name-minter 0.12.0 (git+https://github.com/public-awesome/names.git?rev=21d4ac1a2bdfb5fe42b98c62557a17f5c2f1f3bf)",
+ "sg-std 0.21.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg-whitelist-basic 0.12.0 (git+https://github.com/public-awesome/names.git?rev=21d4ac1a2bdfb5fe42b98c62557a17f5c2f1f3bf)",
+ "thiserror",
+]
+
+[[package]]
+name = "whitelist-updatable"
+version = "0.12.0"
+source = "git+https://github.com/public-awesome/names.git#ad5e298042ed52a6eda7476f55668ffe9c3665ed"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-controllers 0.15.1",
+ "cw-storage-plus 0.15.1",
+ "cw-utils 0.15.1",
+ "cw2 0.15.1",
+ "schemars",
+ "serde",
+ "sg-name-minter 0.12.0 (git+https://github.com/public-awesome/names.git)",
+ "sg-std 0.20.0",
+ "sg-whitelist-basic 0.12.0 (git+https://github.com/public-awesome/names.git)",
+ "thiserror",
 ]
 
 [[package]]

@@ -1,4 +1,3 @@
-use crate::state::Config;
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::Addr;
 use schemars::JsonSchema;
@@ -6,7 +5,12 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct InstantiateMsg {
-    pub config: Config,
+    pub admin: Addr,
+    pub claim_msg_plaintext: String,
+    pub amount: u64,
+    pub minter_page: String,
+    pub addresses: Vec<String>,
+    pub minter_code_id: u64
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]

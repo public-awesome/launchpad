@@ -70,6 +70,10 @@ serde         = { workspace = true }
 sg-std        = { workspace = true }
 thiserror       = { workspace = true }
 
+whitelist-generic = { git = "https://github.com/public-awesome/names.git",  rev = "21d4ac1a2bdfb5fe42b98c62557a17f5c2f1f3bf"  }
+whitelist-updatable = { git = "https://github.com/public-awesome/names.git"}
+
+
 [dev-dependencies]
 cw-multi-test = { workspace = true }
 sg-multi-test = { workspace = true }

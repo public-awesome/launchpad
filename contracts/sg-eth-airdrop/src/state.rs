@@ -8,7 +8,8 @@ pub struct Config {
     pub admin: Addr,
     pub claim_msg_plaintext: String,
     pub minter_page: String,
-    pub amount: u64
+    pub amount: u64,
+    pub whitelist_address: Option<String>
 }
 
 pub const CONFIG: Item<Config> = Item::new("cfg");
