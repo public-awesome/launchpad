@@ -20,7 +20,6 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 const GENERIC_WHITELIST_LABEL: &str = "Generic Whitelist for Airdrop";
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-#[allow(unused_variables)]
 pub fn instantiate(
     deps: DepsMut,
     env: Env,
@@ -62,10 +61,9 @@ pub fn instantiate(
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-#[allow(unused_variables)]
 pub fn execute(
     deps: DepsMut,
-    env: Env,
+    _env: Env,
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
@@ -79,8 +77,7 @@ pub fn execute(
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-#[allow(unused_variables)]
-pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
+pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::AirdropEligible { eth_address } => {
             to_binary(&airdrop_check_eligible(deps, eth_address)?)
