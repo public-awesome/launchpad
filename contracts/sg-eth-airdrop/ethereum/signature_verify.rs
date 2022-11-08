@@ -1,5 +1,5 @@
 use cosmwasm_std::{Deps, StdError, StdResult};
-use sha2::{Digest, Sha256};
+use sha2::Digest;
 use sha3::Keccak256;
 
 use crate::ethereum::{decode_address, ethereum_address_raw, get_recovery_param};
@@ -7,26 +7,6 @@ use crate::msg::VerifyResponse;
 
 #[allow(dead_code)]
 pub const VERSION: &str = "crypto-verify-v2";
-
-#[allow(dead_code)]
-pub fn query_verify_cosmos(
-    deps: Deps,
-    message: &[u8],
-    signature: &[u8],
-    public_key: &[u8],
-) -> StdResult<VerifyResponse> {
-    // Hashing
-    let hash = Sha256::digest(message);
-
-    // Verification
-    let result = deps
-        .api
-        .secp256k1_verify(hash.as_ref(), signature, public_key);
-    match result {
-        Ok(verifies) => Ok(VerifyResponse { verifies }),
-        Err(err) => Err(err.into()),
-    }
-}
 
 pub fn query_verify_ethereum_text(
     deps: Deps,

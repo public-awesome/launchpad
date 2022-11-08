@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 pub struct InstantiateMsg {
     pub admin: Addr,
     pub claim_msg_plaintext: String,
-    pub amount: u64,
+    pub airdrop_amount: u128,
     pub minter_page: String,
     pub addresses: Vec<String>,
     pub minter_code_id: u64,

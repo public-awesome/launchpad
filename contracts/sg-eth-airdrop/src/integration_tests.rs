@@ -1,7 +1,7 @@
 use async_std::task;
-use cosmwasm_std::{Addr, Attribute};
+use cosmwasm_std::{coins, Addr, Attribute, Coin, Uint128};
 use cw_multi_test::error::Error;
-use cw_multi_test::{AppResponse, Contract, ContractWrapper, Executor};
+use cw_multi_test::{AppResponse, BankSudo, Contract, ContractWrapper, Executor, SudoMsg};
 use ethers_core::k256::ecdsa::SigningKey;
 use ethers_core::types::H160;
 
@@ -24,6 +24,7 @@ const OWNER: &str = "admin0001";
 const AIRDROP_CONTRACT: &str = "contract0";
 const STARGAZE_WALLET_01: &str = "0xstargaze_wallet_01";
 const CONTRACT_CONFIG_PLAINTEXT: &str = "My Stargaze address is {wallet} and I want a Winter Pal.";
+const NATIVE_DENOM: &str = "ustars";
 
 fn custom_mock_app() -> StargazeApp {
     StargazeApp::default()
@@ -48,15 +49,24 @@ pub fn whitelist_generic_contract() -> Box<dyn Contract<StargazeMsgWrapper>> {
     Box::new(contract)
 }
 
-fn get_instantiate_contract(addresses: Vec<String>) -> StargazeApp {
+fn get_instantiate_contract(addresses: Vec<String>, funds_amount: u128) -> StargazeApp {
     let mut app = custom_mock_app();
+    app.sudo(SudoMsg::Bank({
+        BankSudo::Mint {
+            to_address: OWNER.to_string(),
+            amount: coins(funds_amount, NATIVE_DENOM),
+        }
+    }))
+    .map_err(|err| println!("{:?}", err))
+    .ok();
+
     let sg_eth_id = app.store_code(contract());
     let whitelist_code_id = app.store_code(whitelist_generic_contract());
     assert_eq!(sg_eth_id, 1);
     let msg: InstantiateMsg = InstantiateMsg {
         admin: Addr::unchecked(OWNER),
         claim_msg_plaintext: Addr::unchecked(CONTRACT_CONFIG_PLAINTEXT).into_string(),
-        amount: 3000,
+        airdrop_amount: 3000,
         minter_page: "http://levana_page/airdrop".to_string(),
         addresses,
         minter_code_id: whitelist_code_id,
@@ -65,7 +75,7 @@ fn get_instantiate_contract(addresses: Vec<String>) -> StargazeApp {
         sg_eth_id,
         Addr::unchecked(OWNER),
         &msg,
-        &[],
+        &coins(funds_amount, NATIVE_DENOM),
         "sg-eg-airdrop",
         Some(Addr::unchecked(OWNER).to_string()),
     )
@@ -114,7 +124,7 @@ fn get_msg_plaintext(wallet_address: String) -> String {
 
 #[test]
 fn test_instantiate() {
-    get_instantiate_contract(vec![]);
+    get_instantiate_contract(vec![], 10000);
 }
 
 #[test]
@@ -124,7 +134,7 @@ fn test_instantiate_with_addresses() {
         "addr2".to_string(),
         "addr3".to_string(),
     ];
-    let app = get_instantiate_contract(addresses);
+    let app = get_instantiate_contract(addresses, 10000);
     let sg_eth_addr = Addr::unchecked(AIRDROP_CONTRACT);
 
     let query_msg = QueryMsg::AirdropEligible {
@@ -148,7 +158,7 @@ fn test_instantiate_with_addresses() {
 
 #[test]
 fn test_not_authorized_add_eth() {
-    let mut app = get_instantiate_contract(vec![]);
+    let mut app = get_instantiate_contract(vec![], 10000);
 
     let fake_admin = Addr::unchecked("fake_admin");
     let sg_eth_addr = Addr::unchecked(AIRDROP_CONTRACT);
@@ -164,7 +174,7 @@ fn test_not_authorized_add_eth() {
 
 #[test]
 fn test_authorized_add_eth() {
-    let mut app = get_instantiate_contract(vec![]);
+    let mut app = get_instantiate_contract(vec![], 10000);
     let sg_eth_addr = Addr::unchecked(AIRDROP_CONTRACT);
 
     let eth_address = Addr::unchecked("testing_addr");
@@ -178,7 +188,7 @@ fn test_authorized_add_eth() {
 
 #[test]
 fn test_add_eth_and_verify() {
-    let mut app = get_instantiate_contract(vec![]);
+    let mut app = get_instantiate_contract(vec![], 10000);
     let sg_eth_addr = Addr::unchecked(AIRDROP_CONTRACT);
 
     let eth_address_str = Addr::unchecked("testing_addr").to_string();
@@ -215,7 +225,7 @@ fn test_valid_eth_sig_claim() {
     let claim_plaintext = &get_msg_plaintext(STARGAZE_WALLET_01.to_string());
     let (_, eth_sig_str, _, eth_addr_str) = get_wallet_and_sig(claim_plaintext.clone());
 
-    let mut app = get_instantiate_contract(vec![eth_addr_str.clone()]);
+    let mut app = get_instantiate_contract(vec![eth_addr_str.clone()], 10000);
 
     let claim_message = ExecuteMsg::ClaimAirdrop {
         eth_address: eth_addr_str,
@@ -230,7 +240,7 @@ fn test_valid_eth_sig_claim() {
             value: "contract0".to_string(),
         },
         Attribute {
-            key: "amount".to_string(),
+            key: "claimed_amount".to_string(),
             value: "3000".to_string(),
         },
         Attribute {
@@ -238,7 +248,7 @@ fn test_valid_eth_sig_claim() {
             value: "true".to_string(),
         },
         Attribute {
-            key: "is_eligible".to_string(),
+            key: "eligible_at_request".to_string(),
             value: "true".to_string(),
         },
         Attribute {
@@ -255,7 +265,7 @@ fn test_invalid_eth_sig_claim() {
     let (_, _, _, eth_addr_str) = get_wallet_and_sig(claim_plaintext.clone());
     let (_, eth_sig_str_2, _, _) = get_wallet_and_sig(claim_plaintext.clone());
 
-    let mut app = get_instantiate_contract(vec![eth_addr_str.clone()]);
+    let mut app = get_instantiate_contract(vec![eth_addr_str.clone()], 10000);
 
     let claim_message = ExecuteMsg::ClaimAirdrop {
         eth_address: eth_addr_str,
@@ -270,15 +280,15 @@ fn test_invalid_eth_sig_claim() {
             value: "contract0".to_string(),
         },
         Attribute {
-            key: "amount".to_string(),
-            value: "3000".to_string(),
+            key: "claimed_amount".to_string(),
+            value: "0".to_string(),
         },
         Attribute {
             key: "valid_eth_sig".to_string(),
             value: "false".to_string(),
         },
         Attribute {
-            key: "is_eligible".to_string(),
+            key: "eligible_at_request".to_string(),
             value: "true".to_string(),
         },
         Attribute {
@@ -294,7 +304,7 @@ fn test_can_not_claim_twice() {
     let claim_plaintext = &get_msg_plaintext(STARGAZE_WALLET_01.to_string());
     let (_, eth_sig_str, _, eth_addr_str) = get_wallet_and_sig(claim_plaintext.clone());
 
-    let mut app = get_instantiate_contract(vec![eth_addr_str.clone()]);
+    let mut app = get_instantiate_contract(vec![eth_addr_str.clone()], 10000);
     let claim_message = ExecuteMsg::ClaimAirdrop {
         eth_address: eth_addr_str,
         eth_sig: eth_sig_str,
@@ -310,7 +320,7 @@ fn test_can_not_claim_twice() {
             value: "contract0".to_string(),
         },
         Attribute {
-            key: "amount".to_string(),
+            key: "claimed_amount".to_string(),
             value: "3000".to_string(),
         },
         Attribute {
@@ -318,7 +328,7 @@ fn test_can_not_claim_twice() {
             value: "true".to_string(),
         },
         Attribute {
-            key: "is_eligible".to_string(),
+            key: "eligible_at_request".to_string(),
             value: "true".to_string(),
         },
         Attribute {
@@ -335,15 +345,15 @@ fn test_can_not_claim_twice() {
             value: "contract0".to_string(),
         },
         Attribute {
-            key: "amount".to_string(),
-            value: "3000".to_string(),
+            key: "claimed_amount".to_string(),
+            value: "0".to_string(),
         },
         Attribute {
             key: "valid_eth_sig".to_string(),
             value: "true".to_string(),
         },
         Attribute {
-            key: "is_eligible".to_string(),
+            key: "eligible_at_request".to_string(),
             value: "false".to_string(),
         },
         Attribute {
@@ -352,4 +362,77 @@ fn test_can_not_claim_twice() {
         },
     ];
     assert_eq!(res.events[1].attributes, expected_attributes);
+}
+
+#[test]
+fn test_claim_one_valid_airdrop() {
+    let claim_plaintext = &get_msg_plaintext(STARGAZE_WALLET_01.to_string());
+    let (_, eth_sig_str, _, eth_addr_str) = get_wallet_and_sig(claim_plaintext.clone());
+
+    let stargaze_wallet_01 = Addr::unchecked(STARGAZE_WALLET_01);
+
+    let mut app = get_instantiate_contract(vec![eth_addr_str.clone()], 10000);
+
+    let balances = app
+        .wrap()
+        .query_all_balances(stargaze_wallet_01.clone())
+        .unwrap();
+    assert_eq!(balances, []);
+
+    let claim_message = ExecuteMsg::ClaimAirdrop {
+        eth_address: eth_addr_str,
+        eth_sig: eth_sig_str,
+    };
+
+    let _ = execute_contract_with_msg(claim_message, &mut app, stargaze_wallet_01.clone())
+        .unwrap();
+
+    let balances = app.wrap().query_all_balances(stargaze_wallet_01).unwrap();
+    let expected_balance = [Coin {
+        denom: NATIVE_DENOM.to_string(),
+        amount: Uint128::new(3000),
+    }];
+    assert_eq!(balances, expected_balance)
+}
+
+#[test]
+fn test_claim_twice_receive_funds_once() {
+    let claim_plaintext = &get_msg_plaintext(STARGAZE_WALLET_01.to_string());
+    let (_, eth_sig_str, _, eth_addr_str) = get_wallet_and_sig(claim_plaintext.clone());
+
+    let stargaze_wallet_01 = Addr::unchecked(STARGAZE_WALLET_01);
+
+    let mut app = get_instantiate_contract(vec![eth_addr_str.clone()], 10000);
+    let balances = app
+        .wrap()
+        .query_all_balances(stargaze_wallet_01.clone())
+        .unwrap();
+    assert_eq!(balances, []);
+
+    let claim_message = ExecuteMsg::ClaimAirdrop {
+        eth_address: eth_addr_str,
+        eth_sig: eth_sig_str,
+    };
+    let _ = execute_contract_with_msg(claim_message.clone(), &mut app, stargaze_wallet_01.clone())
+        .unwrap();
+
+    let balances = app
+        .wrap()
+        .query_all_balances(stargaze_wallet_01.clone())
+        .unwrap();
+    let expected_balance = [Coin {
+        denom: NATIVE_DENOM.to_string(),
+        amount: Uint128::new(3000),
+    }];
+    assert_eq!(balances, expected_balance);
+
+    let _ = execute_contract_with_msg(claim_message, &mut app, stargaze_wallet_01.clone())
+        .unwrap();
+
+    let balances = app.wrap().query_all_balances(stargaze_wallet_01).unwrap();
+    let expected_balance = [Coin {
+        denom: NATIVE_DENOM.to_string(),
+        amount: Uint128::new(3000),
+    }];
+    assert_eq!(balances, expected_balance);
 }
