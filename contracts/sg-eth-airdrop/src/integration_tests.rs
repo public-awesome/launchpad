@@ -384,8 +384,7 @@ fn test_claim_one_valid_airdrop() {
         eth_sig: eth_sig_str,
     };
 
-    let _ = execute_contract_with_msg(claim_message, &mut app, stargaze_wallet_01.clone())
-        .unwrap();
+    let _ = execute_contract_with_msg(claim_message, &mut app, stargaze_wallet_01.clone()).unwrap();
 
     let balances = app.wrap().query_all_balances(stargaze_wallet_01).unwrap();
     let expected_balance = [Coin {
@@ -426,8 +425,7 @@ fn test_claim_twice_receive_funds_once() {
     }];
     assert_eq!(balances, expected_balance);
 
-    let _ = execute_contract_with_msg(claim_message, &mut app, stargaze_wallet_01.clone())
-        .unwrap();
+    let _ = execute_contract_with_msg(claim_message, &mut app, stargaze_wallet_01.clone()).unwrap();
 
     let balances = app.wrap().query_all_balances(stargaze_wallet_01).unwrap();
     let expected_balance = [Coin {
