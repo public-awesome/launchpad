@@ -1,23 +1,19 @@
 #[cfg(not(feature = "library"))]
 use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
-use crate::signature_verify::query_verify_ethereum_text;
 use crate::state::{Config, CONFIG};
 
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Reply, StdResult, WasmMsg};
+use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Reply, StdResult};
 use cw2::set_contract_version;
 use cw_utils::parse_reply_instantiate_data;
-use sg_std::{Response, SubMsg};
+use sg_std::Response;
 use whitelist_generic::helpers::WhitelistGenericContract;
-use whitelist_generic::msg::ExecuteMsg as WGExecuteMsg;
-use whitelist_generic::msg::InstantiateMsg as WGInstantiateMsg;
-const INIT_WHITELIST_REPLY_ID: u64 = 1;
 
-// version info for migration info
-const CONTRACT_NAME: &str = "crates.io:sg-eth-airdrop";
-const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
-const GENERIC_WHITELIST_LABEL: &str = "Generic Whitelist for Airdrop";
+use crate::build_msg::{build_bank_message, build_whitelist_instantiate_msg};
+use crate::computation::compute_valid_eth_sig;
+use crate::constants::{CONTRACT_NAME, CONTRACT_VERSION, INIT_WHITELIST_REPLY_ID};
+use crate::responses::{get_add_eligible_eth_response, get_remove_eligible_eth_response};
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -30,26 +26,14 @@ pub fn instantiate(
 
     let cfg = Config {
         admin: info.sender.clone(),
-        claim_msg_plaintext: msg.claim_msg_plaintext,
-        amount: msg.amount,
-        minter_page: msg.minter_page,
+        claim_msg_plaintext: msg.clone().claim_msg_plaintext,
+        airdrop_amount: msg.airdrop_amount,
+        minter_page: msg.clone().minter_page,
         whitelist_address: None,
     };
     CONFIG.save(deps.storage, &cfg)?;
 
-    let whitelist_instantiate_msg = WGInstantiateMsg {
-        addresses: msg.addresses,
-        mint_discount_bps: Some(0),
-        per_address_limit: 1,
-    };
-    let wasm_msg = WasmMsg::Instantiate {
-        code_id: msg.minter_code_id,
-        admin: Some(env.contract.address.to_string()),
-        funds: info.funds,
-        label: GENERIC_WHITELIST_LABEL.to_string(),
-        msg: to_binary(&whitelist_instantiate_msg)?,
-    };
-    let submsg = SubMsg::reply_on_success(wasm_msg, INIT_WHITELIST_REPLY_ID);
+    let whitelist_instantiate_msg = build_whitelist_instantiate_msg(env, msg);
 
     let res = Response::new();
     Ok(res
@@ -57,7 +41,7 @@ pub fn instantiate(
         .add_attribute("contract_name", CONTRACT_NAME)
         .add_attribute("contract_version", CONTRACT_VERSION)
         .add_attribute("sender", info.sender)
-        .add_submessage(submsg))
+        .add_submessage(whitelist_instantiate_msg))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -71,8 +55,10 @@ pub fn execute(
         ExecuteMsg::ClaimAirdrop {
             eth_address,
             eth_sig,
-        } => claim_airdrop(deps, eth_address, eth_sig, info),
-        ExecuteMsg::AddEligibleEth { eth_addresses } => add_eligible_eth(deps, eth_addresses, info),
+        } => claim_airdrop(deps, info, eth_address, eth_sig),
+        ExecuteMsg::AddEligibleEth { eth_addresses } => {
+            get_add_eligible_eth_response(deps, info, eth_addresses)
+        }
     }
 }
 
@@ -87,53 +73,27 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
 
 fn claim_airdrop(
     deps: DepsMut,
+    info: MessageInfo,
     eth_address: String,
     eth_sig: String,
-    info: MessageInfo,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
 
-    let plaintext_msg = str::replace(
-        &config.claim_msg_plaintext,
-        "{wallet}",
-        info.sender.as_ref(),
-    );
-    let is_eligible = airdrop_check_eligible(deps.as_ref(), eth_address.clone())?;
-    let eth_sig_hex = hex::decode(eth_sig).unwrap();
+    let is_eligible = airdrop_check_eligible(deps.as_ref(), eth_address.clone()).unwrap();
     let valid_eth_signature =
-        query_verify_ethereum_text(deps.as_ref(), &plaintext_msg, &eth_sig_hex, &eth_address)
-            .unwrap();
+        compute_valid_eth_sig(&deps, info.clone(), &config, eth_sig, eth_address.clone());
 
-    let mut res = Response::new();
+    let (mut res, mut claimed_amount) = (Response::new(), 0);
     if is_eligible && valid_eth_signature.verifies {
-        res = remove_eth_address_from_eligible(deps, eth_address).unwrap();
+        res = get_remove_eligible_eth_response(deps, eth_address).unwrap();
+        res = res.add_submessage(build_bank_message(info, config.airdrop_amount));
+        claimed_amount = config.airdrop_amount;
     }
     Ok(res
-        .add_attribute("amount", config.amount.to_string())
+        .add_attribute("claimed_amount", claimed_amount.to_string())
         .add_attribute("valid_eth_sig", valid_eth_signature.verifies.to_string())
-        .add_attribute("is_eligible", is_eligible.to_string())
+        .add_attribute("eligible_at_request", is_eligible.to_string())
         .add_attribute("minter_page", &config.minter_page))
-}
-
-fn remove_eth_address_from_eligible(
-    deps: DepsMut,
-    eth_address: String,
-) -> Result<Response, ContractError> {
-    let config = CONFIG.load(deps.storage)?;
-    let whitelist_address = match config.whitelist_address {
-        Some(address) => address,
-        None => return Err(ContractError::WhitelistContractNotSet {}),
-    };
-
-    let execute_msg = WGExecuteMsg::RemoveAddresses {
-        addresses: vec![eth_address],
-    };
-    let mut res = Response::new();
-    println!("about to remove here");
-    res = res.add_message(
-        WhitelistGenericContract(deps.api.addr_validate(&whitelist_address)?).call(execute_msg)?,
-    );
-    Ok(res)
 }
 
 fn airdrop_check_eligible(deps: Deps, eth_address: String) -> StdResult<bool> {
@@ -145,29 +105,6 @@ fn airdrop_check_eligible(deps: Deps, eth_address: String) -> StdResult<bool> {
             kind: "Whitelist Contract".to_string(),
         }),
     }
-}
-
-fn add_eligible_eth(
-    deps: DepsMut,
-    addresses: Vec<String>,
-    info: MessageInfo,
-) -> Result<Response, ContractError> {
-    let config = CONFIG.load(deps.storage)?;
-    if info.sender != config.admin {
-        return Err(ContractError::Unauthorized {
-            sender: info.sender,
-        });
-    }
-    let whitelist_address = match config.whitelist_address {
-        Some(address) => address,
-        None => return Err(ContractError::WhitelistContractNotSet {}),
-    };
-    let execute_msg = WGExecuteMsg::AddAddresses { addresses };
-    let mut res = Response::new();
-    res = res.add_message(
-        WhitelistGenericContract(deps.api.addr_validate(&whitelist_address)?).call(execute_msg)?,
-    );
-    Ok(res)
 }
 
 #[allow(dead_code)]

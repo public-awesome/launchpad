@@ -1,11 +1,22 @@
 pub mod contract;
 mod error;
-mod ethereum;
-pub mod helpers;
+
 #[cfg(test)]
 mod integration_tests;
 pub mod msg;
-mod signature_verify;
+
+#[path = "./helpers/build_msg.rs"]
+pub mod build_msg;
+#[path = "./helpers/computation.rs"]
+pub mod computation;
+#[path = "./helpers/constants.rs"]
+pub mod constants;
+#[path = "./helpers/responses.rs"]
+pub mod responses;
 pub mod state;
 
 pub use crate::error::ContractError;
+#[path = "../ethereum/ethereum.rs"]
+mod ethereum;
+#[path = "../ethereum/signature_verify.rs"]
+mod signature_verify;
