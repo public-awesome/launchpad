@@ -15,6 +15,7 @@ use crate::computation::compute_valid_eth_sig;
 use crate::constants::{CONTRACT_NAME, CONTRACT_VERSION, INIT_WHITELIST_REPLY_ID};
 use crate::responses::{get_add_eligible_eth_response, get_remove_eligible_eth_response};
 
+
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut,

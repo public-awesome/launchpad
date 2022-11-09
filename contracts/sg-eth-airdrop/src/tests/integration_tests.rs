@@ -1,15 +1,16 @@
 use async_std::task;
-use cosmwasm_std::{coins, Addr, Attribute, Coin, Uint128};
+use cosmwasm_std::{Addr, Attribute, coins, coin, Coin, Uint128, Timestamp};
 use cw_multi_test::error::Error;
 use cw_multi_test::{AppResponse, BankSudo, Contract, ContractWrapper, Executor, SudoMsg};
 use ethers_core::k256::ecdsa::SigningKey;
 use ethers_core::types::H160;
 use std::str;
 
-use sg_multi_test::StargazeApp;
-use sg_std::{self, StargazeMsgWrapper};
 
-use crate::contract::reply;
+use sg_multi_test::StargazeApp;
+use sg_std::{self, StargazeMsgWrapper, GENESIS_MINT_START_TIME};
+
+
 use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
 use ethers_core::rand::thread_rng;
@@ -25,6 +26,7 @@ const STARGAZE_WALLET_02: &str = "0xstargaze_wallet_02";
 const CONTRACT_CONFIG_PLAINTEXT: &str = "My Stargaze address is {wallet} and I want a Winter Pal.";
 const NATIVE_DENOM: &str = "ustars";
 
+
 fn custom_mock_app() -> StargazeApp {
     StargazeApp::default()
 }
@@ -35,7 +37,7 @@ pub fn contract() -> Box<dyn Contract<sg_std::StargazeMsgWrapper>> {
         crate::contract::instantiate,
         crate::contract::query,
     )
-    .with_reply(reply);
+    .with_reply(crate::contract::reply);
     Box::new(contract)
 }
 
@@ -47,6 +49,7 @@ pub fn whitelist_generic_contract() -> Box<dyn Contract<StargazeMsgWrapper>> {
     );
     Box::new(contract)
 }
+
 
 fn get_instantiate_contract(addresses: Vec<String>, funds_amount: u128) -> StargazeApp {
     let mut app = custom_mock_app();

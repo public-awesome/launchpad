@@ -70,10 +70,13 @@ serde         = { workspace = true }
 sg-std        = { workspace = true }
 thiserror       = { workspace = true }
 whitelist-generic = { git = "https://github.com/public-awesome/names.git",  rev = "91256f9ccfcec66fa8d4c2040acc9e10415c711a", features = ["library"] }
-
-
+sg2             = { workspace = true }
 
 [dev-dependencies]
+vending-minter  = { path = "../vending-minter" }
+vending-factory  = { path = "../vending-factory" }
+sg721-base  = { path = "../sg721-base" }
 cw-multi-test = { workspace = true }
 sg-multi-test = { workspace = true }
+sg2             = { workspace = true }
 cosmwasm-schema = { workspace = true }

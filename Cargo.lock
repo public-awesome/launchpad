@@ -2089,9 +2089,13 @@ dependencies = [
  "sg-std 0.21.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg-whitelist",
  "sg1 0.21.1",
+ "sg2 0.21.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg721-base",
  "sha2 0.10.6",
  "sha3",
  "thiserror",
+ "vending-factory",
+ "vending-minter",
  "whitelist-generic",
 ]
 
