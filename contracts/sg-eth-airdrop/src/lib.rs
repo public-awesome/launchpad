@@ -1,13 +1,10 @@
 pub mod contract;
 mod error;
 
-#[cfg(test)]
-#[path = "./tests/integration_tests.rs"]
-mod integration_tests;
-#[cfg(test)]
-#[path = "./tests/collection_whitelist_tests.rs"]
-mod collection_whitelist_tests;
 pub mod msg;
+#[cfg(test)]
+#[path = "./tests/lib.rs"]
+pub mod tests_folder;
 
 #[path = "./helpers/build_msg.rs"]
 pub mod build_msg;
