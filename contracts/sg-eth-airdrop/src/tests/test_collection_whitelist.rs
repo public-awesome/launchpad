@@ -6,9 +6,17 @@ use sg_multi_test::StargazeApp;
 use sg_std::{self, StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
 use crate::contract::reply;
+use crate::msg::QueryMsg;
+use crate::tests_folder::constants::STARGAZE_WALLET_01;
+use crate::tests_folder::shared::{
+    get_msg_plaintext, get_wallet_and_sig, instantiate_contract, instantiate_contract_get_app,
+};
 use sg2::tests::mock_collection_params;
 use vending_factory::msg::{VendingMinterCreateMsg, VendingMinterInitMsgExtension};
 use vending_factory::state::{ParamsExtension, VendingMinterParams};
+
+use super::constants::OWNER;
+use super::shared::{custom_mock_app, execute_contract_with_msg};
 
 extern crate whitelist_generic;
 
@@ -28,10 +36,6 @@ pub const MINT_FEE_BPS: u64 = 1_000; // 10%
 pub const AIRDROP_MINT_FEE_BPS: u64 = 10_000; // 100%
 pub const SHUFFLE_FEE: u128 = 500_000_000;
 pub const MAX_PER_ADDRESS_LIMIT: u32 = 50;
-
-fn custom_mock_app() -> StargazeApp {
-    StargazeApp::default()
-}
 
 pub fn contract() -> Box<dyn Contract<sg_std::StargazeMsgWrapper>> {
     let contract = ContractWrapper::new(
@@ -294,48 +298,57 @@ fn configure_collection_whitelist(
     whitelist_addr
 }
 
-#[test]
-fn whitelist_access_len_add_remove_expiration() {
-    let mut router = custom_mock_app();
-    let (creator, buyer) = setup_accounts(&mut router);
+fn configure_minter_with_whitelist(app: &mut StargazeApp) -> (Addr, Addr, Addr, Addr) {
+    let (creator, buyer) = setup_accounts(app);
     let num_tokens = 1;
-    let (minter_addr, config) = setup_minter_contract(&mut router, &creator, num_tokens, None);
+    let (minter_addr, config) = setup_minter_contract(app, &creator, num_tokens, None);
     let sg721_addr = config.sg721_address;
 
-    let whitelist_addr = configure_collection_whitelist(
-        &mut router,
-        creator.clone(),
-        buyer.clone(),
-        minter_addr.clone(),
-    );
+    let whitelist_addr =
+        configure_collection_whitelist(app, creator.clone(), buyer.clone(), minter_addr.clone());
 
-    // Mint fails, buyer is not on whitelist
-    let mint_msg = vending_minter::msg::ExecuteMsg::Mint {};
-    let res = router.execute_contract(
-        buyer.clone(),
-        minter_addr.clone(),
-        &mint_msg,
-        &coins(MINT_PRICE, NATIVE_DENOM),
-    );
-    assert!(res.is_err());
+    setup_block_time(app, GENESIS_MINT_START_TIME, None);
+    (minter_addr, whitelist_addr, creator, buyer)
+}
 
-    // Add buyer to whitelist
-    let inner_msg = sg_whitelist::msg::AddMembersMsg {
-        to_add: vec![buyer.to_string()],
+#[test]
+fn test_set_minter_contract() {
+    let mut app = custom_mock_app();
+    let (minter_addr, _, _, _) = configure_minter_with_whitelist(&mut app);
+
+    let claim_plaintext = &get_msg_plaintext(STARGAZE_WALLET_01.to_string());
+    let (_, _, _, eth_addr_str) = get_wallet_and_sig(claim_plaintext.clone());
+
+    let first_minter = Addr::unchecked("first_minter");
+    instantiate_contract(
+        vec![eth_addr_str.clone()],
+        10000,
+        5,
+        first_minter.clone(),
+        &mut app,
+    );
+    let airdrop_contract = Addr::unchecked("contract4");
+    let query_msg = QueryMsg::GetMinter {};
+    let result: Addr = app
+        .wrap()
+        .query_wasm_smart(airdrop_contract.clone(), &query_msg)
+        .unwrap();
+    assert_eq!(result, first_minter);
+
+    let owner_admin = Addr::unchecked(OWNER);
+    let update_minter_message = crate::msg::ExecuteMsg::UpdateMinterAddress {
+        minter_address: minter_addr.to_string(),
     };
-    let wasm_msg = sg_whitelist::msg::ExecuteMsg::AddMembers(inner_msg);
-    let res = router.execute_contract(creator.clone(), whitelist_addr.clone(), &wasm_msg, &[]);
-    assert!(res.is_ok());
 
-    setup_block_time(&mut router, GENESIS_MINT_START_TIME, None);
-
-    // Mint succeeds with whitelist price
-    let mint_msg = vending_minter::msg::ExecuteMsg::Mint {};
-    let res = router.execute_contract(
-        buyer.clone(),
-        minter_addr.clone(),
-        &mint_msg,
-        &coins(WHITELIST_AMOUNT, NATIVE_DENOM),
+    let _ = execute_contract_with_msg(
+        update_minter_message,
+        &mut app,
+        owner_admin,
+        airdrop_contract.clone(),
     );
-    assert!(res.is_ok());
+    let result: Addr = app
+        .wrap()
+        .query_wasm_smart(airdrop_contract.clone(), &query_msg)
+        .unwrap();
+    assert_eq!(result, minter_addr);
 }

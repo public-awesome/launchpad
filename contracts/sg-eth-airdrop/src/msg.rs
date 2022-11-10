@@ -8,9 +8,9 @@ pub struct InstantiateMsg {
     pub admin: Addr,
     pub claim_msg_plaintext: String,
     pub airdrop_amount: u128,
-    pub minter_page: String,
     pub addresses: Vec<String>,
-    pub minter_code_id: u64,
+    pub whitelist_code_id: u64,
+    pub minter_address: Addr,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
@@ -30,12 +30,16 @@ pub enum ExecuteMsg {
     AddEligibleEth {
         eth_addresses: Vec<String>,
     },
+    UpdateMinterAddress {
+        minter_address: String,
+    },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
     AirdropEligible { eth_address: String },
+    GetMinter {},
 }
 
 #[cw_serde]

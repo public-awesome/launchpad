@@ -43,8 +43,13 @@ pub fn whitelist_generic_contract() -> Box<dyn Contract<StargazeMsgWrapper>> {
     Box::new(contract)
 }
 
-pub fn get_instantiate_contract(addresses: Vec<String>, funds_amount: u128) -> StargazeApp {
-    let mut app = custom_mock_app();
+pub fn instantiate_contract(
+    addresses: Vec<String>,
+    funds_amount: u128,
+    expected_airdrop_contract_id: u64,
+    minter_address: Addr,
+    app: &mut StargazeApp,
+) {
     app.sudo(SudoMsg::Bank({
         BankSudo::Mint {
             to_address: OWNER.to_string(),
@@ -56,24 +61,42 @@ pub fn get_instantiate_contract(addresses: Vec<String>, funds_amount: u128) -> S
 
     let sg_eth_id = app.store_code(contract());
     let whitelist_code_id = app.store_code(whitelist_generic_contract());
-    assert_eq!(sg_eth_id, 1);
+    assert_eq!(sg_eth_id, expected_airdrop_contract_id);
     let msg: InstantiateMsg = InstantiateMsg {
         admin: Addr::unchecked(OWNER),
         claim_msg_plaintext: Addr::unchecked(CONTRACT_CONFIG_PLAINTEXT).into_string(),
         airdrop_amount: 3000,
-        minter_page: "http://levana_page/airdrop".to_string(),
         addresses,
-        minter_code_id: whitelist_code_id,
+        whitelist_code_id: whitelist_code_id,
+        minter_address: minter_address,
     };
-    app.instantiate_contract(
-        sg_eth_id,
-        Addr::unchecked(OWNER),
-        &msg,
-        &coins(funds_amount, NATIVE_DENOM),
-        "sg-eg-airdrop",
-        Some(Addr::unchecked(OWNER).to_string()),
-    )
-    .unwrap();
+    let _ = app
+        .instantiate_contract(
+            sg_eth_id,
+            Addr::unchecked(OWNER),
+            &msg,
+            &coins(funds_amount, NATIVE_DENOM),
+            "sg-eg-airdrop",
+            Some(Addr::unchecked(OWNER).to_string()),
+        )
+        .unwrap();
+}
+
+pub fn instantiate_contract_get_app(
+    addresses: Vec<String>,
+    funds_amount: u128,
+    expected_airdrop_contract_id: u64,
+    minter_address: Addr,
+) -> StargazeApp {
+    let mut app = custom_mock_app();
+
+    instantiate_contract(
+        addresses,
+        funds_amount,
+        expected_airdrop_contract_id,
+        minter_address,
+        &mut app,
+    );
     app
 }
 
@@ -105,10 +128,11 @@ pub fn execute_contract_with_msg(
     msg: ExecuteMsg,
     app: &mut StargazeApp,
     user: Addr,
+    target_address: Addr,
 ) -> Result<AppResponse, Error> {
-    let sg_eth_addr = Addr::unchecked(AIRDROP_CONTRACT);
-
-    let result = app.execute_contract(user, sg_eth_addr, &msg, &[]).unwrap();
+    let result = app
+        .execute_contract(user, target_address, &msg, &[])
+        .unwrap();
     Ok(result)
 }
 

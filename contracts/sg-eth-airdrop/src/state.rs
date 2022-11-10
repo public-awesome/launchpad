@@ -7,9 +7,9 @@ use serde::{Deserialize, Serialize};
 pub struct Config {
     pub admin: Addr,
     pub claim_msg_plaintext: String,
-    pub minter_page: String,
     pub airdrop_amount: u128,
     pub whitelist_address: Option<String>,
+    pub minter_address: Addr,
 }
 
 pub const CONFIG: Item<Config> = Item::new("cfg");

@@ -6,30 +6,43 @@ use ethers_core::rand::thread_rng;
 use ethers_signers::{LocalWallet, Signer};
 
 use crate::tests_folder::shared::{
-    execute_contract_with_msg, get_instantiate_contract, get_msg_plaintext, get_signature,
-    get_wallet_and_sig,
+    execute_contract_with_msg, get_msg_plaintext, get_signature, get_wallet_and_sig,
+    instantiate_contract_get_app,
 };
 
-use crate::tests_folder::constants::{NATIVE_DENOM, STARGAZE_WALLET_01, STARGAZE_WALLET_02};
+use crate::tests_folder::constants::{
+    AIRDROP_CONTRACT, NATIVE_DENOM, STARGAZE_WALLET_01, STARGAZE_WALLET_02,
+};
+
+use super::constants::MINTER_CONTRACT;
 
 #[test]
 fn test_instantiate() {
-    get_instantiate_contract(vec![], 10000);
+    let minter_address = Addr::unchecked(MINTER_CONTRACT);
+    instantiate_contract_get_app(vec![], 10000, 1, minter_address);
 }
 
 #[test]
 fn test_valid_eth_sig_claim() {
     let claim_plaintext = &get_msg_plaintext(STARGAZE_WALLET_01.to_string());
     let (_, eth_sig_str, _, eth_addr_str) = get_wallet_and_sig(claim_plaintext.clone());
-
-    let mut app = get_instantiate_contract(vec![eth_addr_str.clone()], 10000);
+    let minter_address = Addr::unchecked(MINTER_CONTRACT);
+    let mut app =
+        instantiate_contract_get_app(vec![eth_addr_str.clone()], 10000, 1, minter_address);
 
     let claim_message = ExecuteMsg::ClaimAirdrop {
         eth_address: eth_addr_str,
         eth_sig: eth_sig_str,
     };
     let stargaze_wallet_01 = Addr::unchecked(STARGAZE_WALLET_01);
-    let res = execute_contract_with_msg(claim_message, &mut app, stargaze_wallet_01).unwrap();
+    let airdrop_contract = Addr::unchecked(AIRDROP_CONTRACT);
+    let res = execute_contract_with_msg(
+        claim_message,
+        &mut app,
+        stargaze_wallet_01,
+        airdrop_contract,
+    )
+    .unwrap();
 
     let expected_attributes = [
         Attribute {
@@ -49,8 +62,8 @@ fn test_valid_eth_sig_claim() {
             value: "true".to_string(),
         },
         Attribute {
-            key: "minter_page".to_string(),
-            value: "http://levana_page/airdrop".to_string(),
+            key: "minter_address".to_string(),
+            value: MINTER_CONTRACT.to_string(),
         },
     ];
     assert_eq!(res.events[1].attributes, expected_attributes);
@@ -62,14 +75,23 @@ fn test_invalid_eth_sig_claim() {
     let (_, _, _, eth_addr_str) = get_wallet_and_sig(claim_plaintext.clone());
     let (_, eth_sig_str_2, _, _) = get_wallet_and_sig(claim_plaintext.clone());
 
-    let mut app = get_instantiate_contract(vec![eth_addr_str.clone()], 10000);
+    let minter_address = Addr::unchecked(MINTER_CONTRACT);
+    let mut app =
+        instantiate_contract_get_app(vec![eth_addr_str.clone()], 10000, 1, minter_address);
 
     let claim_message = ExecuteMsg::ClaimAirdrop {
         eth_address: eth_addr_str,
         eth_sig: eth_sig_str_2,
     };
     let stargaze_wallet_01 = Addr::unchecked(STARGAZE_WALLET_01);
-    let res = execute_contract_with_msg(claim_message, &mut app, stargaze_wallet_01).unwrap();
+    let airdrop_contract = Addr::unchecked(AIRDROP_CONTRACT);
+    let res = execute_contract_with_msg(
+        claim_message,
+        &mut app,
+        stargaze_wallet_01,
+        airdrop_contract,
+    )
+    .unwrap();
 
     let expected_attributes = [
         Attribute {
@@ -89,8 +111,8 @@ fn test_invalid_eth_sig_claim() {
             value: "true".to_string(),
         },
         Attribute {
-            key: "minter_page".to_string(),
-            value: "http://levana_page/airdrop".to_string(),
+            key: "minter_address".to_string(),
+            value: MINTER_CONTRACT.to_string(),
         },
     ];
     assert_eq!(res.events[1].attributes, expected_attributes);
@@ -101,15 +123,22 @@ fn test_can_not_claim_twice() {
     let claim_plaintext = &get_msg_plaintext(STARGAZE_WALLET_01.to_string());
     let (_, eth_sig_str, _, eth_addr_str) = get_wallet_and_sig(claim_plaintext.clone());
 
-    let mut app = get_instantiate_contract(vec![eth_addr_str.clone()], 10000);
+    let minter_address = Addr::unchecked(MINTER_CONTRACT);
+    let mut app =
+        instantiate_contract_get_app(vec![eth_addr_str.clone()], 10000, 1, minter_address);
     let claim_message = ExecuteMsg::ClaimAirdrop {
         eth_address: eth_addr_str,
         eth_sig: eth_sig_str,
     };
     let stargaze_wallet_01 = Addr::unchecked(STARGAZE_WALLET_01);
-    let res =
-        execute_contract_with_msg(claim_message.clone(), &mut app, stargaze_wallet_01.clone())
-            .unwrap();
+    let airdrop_contract = Addr::unchecked(AIRDROP_CONTRACT);
+    let res = execute_contract_with_msg(
+        claim_message.clone(),
+        &mut app,
+        stargaze_wallet_01.clone(),
+        airdrop_contract.clone(),
+    )
+    .unwrap();
 
     let expected_attributes = [
         Attribute {
@@ -129,13 +158,18 @@ fn test_can_not_claim_twice() {
             value: "true".to_string(),
         },
         Attribute {
-            key: "minter_page".to_string(),
-            value: "http://levana_page/airdrop".to_string(),
+            key: "minter_address".to_string(),
+            value: MINTER_CONTRACT.to_string(),
         },
     ];
     assert_eq!(res.events[1].attributes, expected_attributes);
-
-    let res = execute_contract_with_msg(claim_message, &mut app, stargaze_wallet_01).unwrap();
+    let res = execute_contract_with_msg(
+        claim_message,
+        &mut app,
+        stargaze_wallet_01,
+        airdrop_contract,
+    )
+    .unwrap();
     let expected_attributes = [
         Attribute {
             key: "_contract_addr".to_string(),
@@ -154,8 +188,8 @@ fn test_can_not_claim_twice() {
             value: "false".to_string(),
         },
         Attribute {
-            key: "minter_page".to_string(),
-            value: "http://levana_page/airdrop".to_string(),
+            key: "minter_address".to_string(),
+            value: MINTER_CONTRACT.to_string(),
         },
     ];
     assert_eq!(res.events[1].attributes, expected_attributes);
@@ -167,8 +201,9 @@ fn test_claim_one_valid_airdrop() {
     let (_, eth_sig_str, _, eth_addr_str) = get_wallet_and_sig(claim_plaintext.clone());
 
     let stargaze_wallet_01 = Addr::unchecked(STARGAZE_WALLET_01);
-
-    let mut app = get_instantiate_contract(vec![eth_addr_str.clone()], 10000);
+    let minter_address = Addr::unchecked(MINTER_CONTRACT);
+    let mut app =
+        instantiate_contract_get_app(vec![eth_addr_str.clone()], 10000, 1, minter_address);
 
     let balances = app
         .wrap()
@@ -180,8 +215,14 @@ fn test_claim_one_valid_airdrop() {
         eth_address: eth_addr_str,
         eth_sig: eth_sig_str,
     };
-
-    let _ = execute_contract_with_msg(claim_message, &mut app, stargaze_wallet_01.clone()).unwrap();
+    let airdrop_contract = Addr::unchecked(AIRDROP_CONTRACT);
+    let _ = execute_contract_with_msg(
+        claim_message,
+        &mut app,
+        stargaze_wallet_01.clone(),
+        airdrop_contract,
+    )
+    .unwrap();
 
     let balances = app.wrap().query_all_balances(stargaze_wallet_01).unwrap();
     let expected_balance = [Coin {
@@ -197,8 +238,9 @@ fn test_claim_twice_receive_funds_once() {
     let (_, eth_sig_str, _, eth_addr_str) = get_wallet_and_sig(claim_plaintext.clone());
 
     let stargaze_wallet_01 = Addr::unchecked(STARGAZE_WALLET_01);
-
-    let mut app = get_instantiate_contract(vec![eth_addr_str.clone()], 10000);
+    let minter_address = Addr::unchecked(MINTER_CONTRACT);
+    let mut app =
+        instantiate_contract_get_app(vec![eth_addr_str.clone()], 10000, 1, minter_address);
     let balances = app
         .wrap()
         .query_all_balances(stargaze_wallet_01.clone())
@@ -209,8 +251,14 @@ fn test_claim_twice_receive_funds_once() {
         eth_address: eth_addr_str,
         eth_sig: eth_sig_str,
     };
-    let _ = execute_contract_with_msg(claim_message.clone(), &mut app, stargaze_wallet_01.clone())
-        .unwrap();
+    let airdrop_contract = Addr::unchecked(AIRDROP_CONTRACT);
+    let _ = execute_contract_with_msg(
+        claim_message.clone(),
+        &mut app,
+        stargaze_wallet_01.clone(),
+        airdrop_contract,
+    )
+    .unwrap();
 
     let balances = app
         .wrap()
@@ -221,8 +269,14 @@ fn test_claim_twice_receive_funds_once() {
         amount: Uint128::new(3000),
     }];
     assert_eq!(balances, expected_balance);
-
-    let _ = execute_contract_with_msg(claim_message, &mut app, stargaze_wallet_01.clone()).unwrap();
+    let airdrop_contract = Addr::unchecked(AIRDROP_CONTRACT);
+    let _ = execute_contract_with_msg(
+        claim_message,
+        &mut app,
+        stargaze_wallet_01.clone(),
+        airdrop_contract,
+    )
+    .unwrap();
 
     let balances = app.wrap().query_all_balances(stargaze_wallet_01).unwrap();
     let expected_balance = [Coin {
@@ -236,8 +290,8 @@ fn test_claim_twice_receive_funds_once() {
 fn test_ineligible_does_not_receive_funds() {
     let claim_plaintext = &get_msg_plaintext(STARGAZE_WALLET_01.to_string());
     let (_, _, _, eth_addr_str) = get_wallet_and_sig(claim_plaintext.clone());
-
-    let mut app = get_instantiate_contract(vec![eth_addr_str], 10000);
+    let minter_address = Addr::unchecked(MINTER_CONTRACT);
+    let mut app = instantiate_contract_get_app(vec![eth_addr_str], 10000, 1, minter_address);
 
     let stargaze_wallet_02 = Addr::unchecked(STARGAZE_WALLET_02);
     let balances = app
@@ -253,7 +307,14 @@ fn test_ineligible_does_not_receive_funds() {
         eth_address: eth_addr_str_2,
         eth_sig: eth_sig_str_2,
     };
-    let _ = execute_contract_with_msg(claim_message, &mut app, stargaze_wallet_02.clone()).unwrap();
+    let airdrop_contract = Addr::unchecked(AIRDROP_CONTRACT);
+    let _ = execute_contract_with_msg(
+        claim_message,
+        &mut app,
+        stargaze_wallet_02.clone(),
+        airdrop_contract,
+    )
+    .unwrap();
 
     let balances = app.wrap().query_all_balances(stargaze_wallet_02).unwrap();
     let expected_balance = [];
@@ -272,16 +333,23 @@ fn test_one_eth_claim_two_stargaze_addresses_invalid() {
         .to_string();
     let eth_address = wallet_1.address();
     let eth_addr_str_1 = format!("{:?}", eth_address);
-
-    let mut app = get_instantiate_contract(vec![eth_addr_str_1.clone()], 10000);
+    let minter_address = Addr::unchecked(MINTER_CONTRACT);
+    let mut app =
+        instantiate_contract_get_app(vec![eth_addr_str_1.clone()], 10000, 1, minter_address);
 
     // claim with eth address 1, stargaze wallet 1
     let claim_message = ExecuteMsg::ClaimAirdrop {
         eth_address: eth_addr_str_1.clone(),
         eth_sig: eth_sig_str_1,
     };
-
-    let res = execute_contract_with_msg(claim_message, &mut app, stargaze_wallet_01).unwrap();
+    let airdrop_contract = Addr::unchecked(AIRDROP_CONTRACT);
+    let res = execute_contract_with_msg(
+        claim_message,
+        &mut app,
+        stargaze_wallet_01,
+        airdrop_contract,
+    )
+    .unwrap();
 
     let expected_attributes = [
         Attribute {
@@ -301,8 +369,8 @@ fn test_one_eth_claim_two_stargaze_addresses_invalid() {
             value: "true".to_string(),
         },
         Attribute {
-            key: "minter_page".to_string(),
-            value: "http://levana_page/airdrop".to_string(),
+            key: "minter_address".to_string(),
+            value: MINTER_CONTRACT.to_string(),
         },
     ];
     assert_eq!(res.events[1].attributes, expected_attributes);
@@ -317,7 +385,14 @@ fn test_one_eth_claim_two_stargaze_addresses_invalid() {
         eth_address: eth_addr_str_1,
         eth_sig: eth_sig_str_2,
     };
-    let res_2 = execute_contract_with_msg(claim_message, &mut app, stargaze_wallet_02).unwrap();
+    let airdrop_contract = Addr::unchecked(AIRDROP_CONTRACT);
+    let res_2 = execute_contract_with_msg(
+        claim_message,
+        &mut app,
+        stargaze_wallet_02,
+        airdrop_contract,
+    )
+    .unwrap();
 
     let expected_attributes = [
         Attribute {
@@ -337,8 +412,8 @@ fn test_one_eth_claim_two_stargaze_addresses_invalid() {
             value: "false".to_string(),
         },
         Attribute {
-            key: "minter_page".to_string(),
-            value: "http://levana_page/airdrop".to_string(),
+            key: "minter_address".to_string(),
+            value: MINTER_CONTRACT.to_string(),
         },
     ];
     assert_eq!(res_2.events[1].attributes, expected_attributes);

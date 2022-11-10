@@ -1,6 +1,6 @@
-use crate::error::ContractError;
 use crate::state::CONFIG;
-use cosmwasm_std::{DepsMut, MessageInfo};
+use crate::{build_msg::build_update_minter_address_msg, error::ContractError};
+use cosmwasm_std::{Addr, DepsMut, MessageInfo};
 use sg_std::Response;
 
 use crate::build_msg::{build_add_eth_eligible_msg, build_remove_eth_eligible_msg};

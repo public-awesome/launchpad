@@ -3,7 +3,7 @@ use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 use crate::state::{Config, CONFIG};
 
-use cosmwasm_std::entry_point;
+use cosmwasm_std::{entry_point, Addr};
 use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Reply, StdResult};
 use cw2::set_contract_version;
 use cw_utils::parse_reply_instantiate_data;
@@ -14,7 +14,6 @@ use crate::build_msg::{build_bank_message, build_whitelist_instantiate_msg};
 use crate::computation::compute_valid_eth_sig;
 use crate::constants::{CONTRACT_NAME, CONTRACT_VERSION, INIT_WHITELIST_REPLY_ID};
 use crate::responses::{get_add_eligible_eth_response, get_remove_eligible_eth_response};
-
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -28,14 +27,15 @@ pub fn instantiate(
     let cfg = Config {
         admin: info.sender.clone(),
         claim_msg_plaintext: msg.clone().claim_msg_plaintext,
-        airdrop_amount: msg.airdrop_amount,
-        minter_page: msg.clone().minter_page,
+        airdrop_amount: msg.clone().airdrop_amount,
         whitelist_address: None,
+        minter_address: deps
+            .api
+            .addr_validate(&msg.clone().minter_address.to_string())?,
     };
     CONFIG.save(deps.storage, &cfg)?;
 
-    let whitelist_instantiate_msg = build_whitelist_instantiate_msg(env, msg);
-
+    let whitelist_instantiate_msg = build_whitelist_instantiate_msg(env.clone(), msg);
     let res = Response::new();
     Ok(res
         .add_attribute("action", "instantiate")
@@ -60,6 +60,9 @@ pub fn execute(
         ExecuteMsg::AddEligibleEth { eth_addresses } => {
             get_add_eligible_eth_response(deps, info, eth_addresses)
         }
+        ExecuteMsg::UpdateMinterAddress { minter_address } => {
+            update_minter(deps, info, minter_address)
+        }
     }
 }
 
@@ -69,6 +72,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::AirdropEligible { eth_address } => {
             to_binary(&airdrop_check_eligible(deps, eth_address)?)
         }
+        QueryMsg::GetMinter {} => to_binary(&get_minter(deps)?),
     }
 }
 
@@ -94,7 +98,25 @@ fn claim_airdrop(
         .add_attribute("claimed_amount", claimed_amount.to_string())
         .add_attribute("valid_eth_sig", valid_eth_signature.verifies.to_string())
         .add_attribute("eligible_at_request", is_eligible.to_string())
-        .add_attribute("minter_page", &config.minter_page))
+        .add_attribute("minter_address", config.minter_address.to_string()))
+}
+
+pub fn update_minter(
+    deps: DepsMut,
+    info: MessageInfo,
+    minter_address: String,
+) -> Result<Response, ContractError> {
+    let mut config = CONFIG.load(deps.storage)?;
+    if info.sender != config.admin {
+        return Err(ContractError::Unauthorized {
+            sender: info.sender,
+        });
+    }
+    let minter_address = deps.api.addr_validate(&minter_address)?;
+    config.minter_address = minter_address.clone();
+    let _ = CONFIG.save(deps.storage, &config);
+    let res = Response::new();
+    Ok(res.add_attribute("updated_minter_address", minter_address.to_string()))
 }
 
 fn airdrop_check_eligible(deps: Deps, eth_address: String) -> StdResult<bool> {
@@ -108,10 +130,9 @@ fn airdrop_check_eligible(deps: Deps, eth_address: String) -> StdResult<bool> {
     }
 }
 
-#[allow(dead_code)]
-#[allow(unused_variables)]
-fn airdrop_check_valid(deps: Deps, env: Env, msg: QueryMsg) -> bool {
-    true
+fn get_minter(deps: Deps) -> StdResult<Addr> {
+    let config = CONFIG.load(deps.storage)?;
+    Ok(config.minter_address)
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -119,7 +140,6 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractE
     if msg.id != INIT_WHITELIST_REPLY_ID {
         return Err(ContractError::InvalidReplyID {});
     }
-
     let reply = parse_reply_instantiate_data(msg);
     match reply {
         Ok(res) => {

@@ -18,7 +18,7 @@ pub fn build_whitelist_instantiate_msg(
         per_address_limit: 1,
     };
     let wasm_msg = WasmMsg::Instantiate {
-        code_id: msg.minter_code_id,
+        code_id: msg.whitelist_code_id,
         admin: Some(env.contract.address.to_string()),
         funds: vec![],
         label: GENERIC_WHITELIST_LABEL.to_string(),
@@ -50,6 +50,17 @@ pub fn build_remove_eth_eligible_msg(
 ) -> StdResult<CosmosMsg> {
     let execute_msg = WGExecuteMsg::RemoveAddresses {
         addresses: vec![eth_address],
+    };
+    WhitelistGenericContract(deps.api.addr_validate(&whitelist_address)?).call(execute_msg)
+}
+
+pub fn build_update_minter_address_msg(
+    deps: DepsMut,
+    whitelist_address: String,
+    minter_address: String,
+) -> StdResult<CosmosMsg> {
+    let execute_msg = WGExecuteMsg::UpdateMinterContract {
+        minter_contract: minter_address,
     };
     WhitelistGenericContract(deps.api.addr_validate(&whitelist_address)?).call(execute_msg)
 }
