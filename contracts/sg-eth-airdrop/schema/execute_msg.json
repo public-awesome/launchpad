@@ -48,6 +48,26 @@
         }
       },
       "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "update_minter_address"
+      ],
+      "properties": {
+        "update_minter_address": {
+          "type": "object",
+          "required": [
+            "minter_address"
+          ],
+          "properties": {
+            "minter_address": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
     }
   ]
 }

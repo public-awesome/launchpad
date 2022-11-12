@@ -7,8 +7,8 @@
     "admin",
     "airdrop_amount",
     "claim_msg_plaintext",
-    "minter_code_id",
-    "minter_page"
+    "minter_address",
+    "whitelist_code_id"
   ],
   "properties": {
     "addresses": {
@@ -28,13 +28,13 @@
     "claim_msg_plaintext": {
       "type": "string"
     },
-    "minter_code_id": {
+    "minter_address": {
+      "$ref": "#/definitions/Addr"
+    },
+    "whitelist_code_id": {
       "type": "integer",
       "format": "uint64",
       "minimum": 0.0
-    },
-    "minter_page": {
-      "type": "string"
     }
   },
   "definitions": {
