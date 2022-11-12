@@ -71,7 +71,7 @@ sg-std        = { workspace = true }
 thiserror       = { workspace = true }
 whitelist-generic = { git = "https://github.com/public-awesome/names.git",  rev = "91256f9ccfcec66fa8d4c2040acc9e10415c711a", features = ["library"] }
 sg2             = { workspace = true }
-vending-minter  = { path = "../vending-minter", features = ["library"]}
+vending-minter  = { workspace = true, features = ["library"]}
 
 [dev-dependencies]
 vending-factory  = { workspace = true }

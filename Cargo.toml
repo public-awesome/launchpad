@@ -36,6 +36,7 @@ sg-whitelist      = { version = "0.21.1", path = "contracts/whitelist" }
 thiserror         = "1.0.31"
 url               = "2.2.2"
 vending-factory   = { version = "0.21.1", path = "contracts/vending-factory" }
+vending-minter  = { version = "0.21.1", path = "contracts/vending-minter" }
 
 [profile.release.package.sg721]
 codegen-units = 1
