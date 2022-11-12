@@ -20,4 +20,7 @@ pub enum ContractError {
 
     #[error("Whitelist contract has not been set")]
     WhitelistContractNotSet {},
+
+    #[error("Collection Whitelist on Minter contract has not been set")]
+    CollectionWhitelistMinterNotSet {},
 }

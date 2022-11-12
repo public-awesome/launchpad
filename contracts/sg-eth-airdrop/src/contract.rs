@@ -8,6 +8,7 @@ use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Reply, St
 use cw2::set_contract_version;
 use cw_utils::parse_reply_instantiate_data;
 use sg_std::Response;
+use vending_minter::helpers::MinterContract;
 use whitelist_generic::helpers::WhitelistGenericContract;
 
 use crate::build_msg::{build_bank_message, build_whitelist_instantiate_msg};
@@ -27,15 +28,13 @@ pub fn instantiate(
     let cfg = Config {
         admin: info.sender.clone(),
         claim_msg_plaintext: msg.clone().claim_msg_plaintext,
-        airdrop_amount: msg.clone().airdrop_amount,
+        airdrop_amount: msg.airdrop_amount,
         whitelist_address: None,
-        minter_address: deps
-            .api
-            .addr_validate(&msg.clone().minter_address.to_string())?,
+        minter_address: deps.api.addr_validate(msg.minter_address.as_ref())?,
     };
     CONFIG.save(deps.storage, &cfg)?;
 
-    let whitelist_instantiate_msg = build_whitelist_instantiate_msg(env.clone(), msg);
+    let whitelist_instantiate_msg = build_whitelist_instantiate_msg(env, msg);
     let res = Response::new();
     Ok(res
         .add_attribute("action", "instantiate")
@@ -56,7 +55,7 @@ pub fn execute(
         ExecuteMsg::ClaimAirdrop {
             eth_address,
             eth_sig,
-        } => claim_airdrop(deps, info, eth_address, eth_sig),
+        } => claim_airdrop(deps, info, _env, eth_address, eth_sig),
         ExecuteMsg::AddEligibleEth { eth_addresses } => {
             get_add_eligible_eth_response(deps, info, eth_addresses)
         }
@@ -79,6 +78,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
 fn claim_airdrop(
     deps: DepsMut,
     info: MessageInfo,
+    _env: Env,
     eth_address: String,
     eth_sig: String,
 ) -> Result<Response, ContractError> {
@@ -90,15 +90,38 @@ fn claim_airdrop(
 
     let (mut res, mut claimed_amount) = (Response::new(), 0);
     if is_eligible && valid_eth_signature.verifies {
-        res = get_remove_eligible_eth_response(deps, eth_address).unwrap();
-        res = res.add_submessage(build_bank_message(info, config.airdrop_amount));
+        res = get_remove_eligible_eth_response(&deps, eth_address).unwrap();
+        let test = build_bank_message(info, config.airdrop_amount);
+        res = res.add_submessage(test);
+        let _ = get_collection_whitelist(&deps)?;
+
+        // res = res.add_message(build_add_member_minter_msg(
+        //     deps,
+        //     config.clone().admin,
+        //     collection_whitelist
+        // )?);
         claimed_amount = config.airdrop_amount;
+        // info.sender = _env.contract.address;
     }
     Ok(res
         .add_attribute("claimed_amount", claimed_amount.to_string())
         .add_attribute("valid_eth_sig", valid_eth_signature.verifies.to_string())
         .add_attribute("eligible_at_request", is_eligible.to_string())
         .add_attribute("minter_address", config.minter_address.to_string()))
+}
+
+pub fn get_collection_whitelist(deps: &DepsMut) -> Result<String, ContractError> {
+    let config = CONFIG.load(deps.storage)?;
+    let minter_addr = config.minter_address;
+
+    let config = MinterContract(minter_addr).config(&deps.querier);
+    match config {
+        Ok(result) => {
+            let whitelist = result.whitelist.unwrap();
+            Ok(whitelist)
+        }
+        Err(_) => Err(ContractError::CollectionWhitelistMinterNotSet {}),
+    }
 }
 
 pub fn update_minter(

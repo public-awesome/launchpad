@@ -1,11 +1,11 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
-    to_binary, Addr, Coin, ContractInfoResponse, CustomQuery, Querier, QuerierWrapper, StdResult,
-    WasmMsg, WasmQuery,
+    to_binary, Addr, Coin, ContractInfoResponse, CustomQuery, Querier, QuerierWrapper,
+    QueryRequest, StdResult, WasmMsg, WasmQuery,
 };
 use sg_std::CosmosMsg;
 
-use crate::msg::ExecuteMsg;
+use crate::msg::{ConfigResponse, ExecuteMsg, QueryMsg};
 
 /// MinterContract is a wrapper around Addr that provides a lot of helpers
 /// for working with this.
@@ -52,6 +52,15 @@ impl MinterContract {
         }
         .into();
         let res: ContractInfoResponse = QuerierWrapper::<CQ>::new(querier).query(&query)?;
+        Ok(res)
+    }
+
+    pub fn config(&self, querier: &QuerierWrapper) -> StdResult<ConfigResponse> {
+        let res: ConfigResponse = querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
+            contract_addr: self.addr().into(),
+            msg: to_binary(&QueryMsg::Config {})?,
+        }))?;
+
         Ok(res)
     }
 }

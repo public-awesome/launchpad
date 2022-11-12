@@ -1,27 +1,55 @@
-use async_std::task;
 use cosmwasm_std::{coins, Addr};
 use cw_multi_test::error::Error;
 use cw_multi_test::{AppResponse, BankSudo, Contract, ContractWrapper, Executor, SudoMsg};
-use ethers_core::k256::ecdsa::SigningKey;
-use ethers_core::types::H160;
-use std::str;
 
 use sg_multi_test::StargazeApp;
 use sg_std::{self, StargazeMsgWrapper};
 
 use crate::msg::{ExecuteMsg, InstantiateMsg};
-
-use ethers_core::rand::thread_rng;
-use ethers_signers::{LocalWallet, Signer, Wallet, WalletError};
 use eyre::Result;
 
 extern crate whitelist_generic;
-use crate::tests_folder::constants::{
-    AIRDROP_CONTRACT, CONTRACT_CONFIG_PLAINTEXT, NATIVE_DENOM, OWNER,
-};
+use crate::tests_folder::claim_constants::{CONTRACT_CONFIG_PLAINTEXT, NATIVE_DENOM, OWNER};
 
 pub fn custom_mock_app() -> StargazeApp {
     StargazeApp::default()
+}
+
+pub fn contract_minter() -> Box<dyn Contract<StargazeMsgWrapper>> {
+    let contract = ContractWrapper::new(
+        vending_minter::contract::execute,
+        vending_minter::contract::instantiate,
+        vending_minter::contract::query,
+    )
+    .with_reply(vending_minter::contract::reply);
+    Box::new(contract)
+}
+
+pub fn contract_whitelist() -> Box<dyn Contract<StargazeMsgWrapper>> {
+    let contract = ContractWrapper::new(
+        sg_whitelist::contract::execute,
+        sg_whitelist::contract::instantiate,
+        sg_whitelist::contract::query,
+    );
+    Box::new(contract)
+}
+
+pub fn contract_factory() -> Box<dyn Contract<StargazeMsgWrapper>> {
+    let contract = ContractWrapper::new(
+        vending_factory::contract::execute,
+        vending_factory::contract::instantiate,
+        vending_factory::contract::query,
+    );
+    Box::new(contract)
+}
+
+pub fn contract_sg721() -> Box<dyn Contract<StargazeMsgWrapper>> {
+    let contract = ContractWrapper::new(
+        sg721_base::entry::execute,
+        sg721_base::entry::instantiate,
+        sg721_base::entry::query,
+    );
+    Box::new(contract)
 }
 
 pub fn contract() -> Box<dyn Contract<sg_std::StargazeMsgWrapper>> {
@@ -48,11 +76,12 @@ pub fn instantiate_contract(
     funds_amount: u128,
     expected_airdrop_contract_id: u64,
     minter_address: Addr,
+    admin_account: Addr,
     app: &mut StargazeApp,
 ) {
     app.sudo(SudoMsg::Bank({
         BankSudo::Mint {
-            to_address: OWNER.to_string(),
+            to_address: admin_account.to_string(),
             amount: coins(funds_amount, NATIVE_DENOM),
         }
     }))
@@ -67,17 +96,17 @@ pub fn instantiate_contract(
         claim_msg_plaintext: Addr::unchecked(CONTRACT_CONFIG_PLAINTEXT).into_string(),
         airdrop_amount: 3000,
         addresses,
-        whitelist_code_id: whitelist_code_id,
-        minter_address: minter_address,
+        whitelist_code_id,
+        minter_address,
     };
     let _ = app
         .instantiate_contract(
             sg_eth_id,
-            Addr::unchecked(OWNER),
+            Addr::unchecked(admin_account.clone()),
             &msg,
             &coins(funds_amount, NATIVE_DENOM),
             "sg-eg-airdrop",
-            Some(Addr::unchecked(OWNER).to_string()),
+            Some(Addr::unchecked(admin_account).to_string()),
         )
         .unwrap();
 }
@@ -95,33 +124,10 @@ pub fn instantiate_contract_get_app(
         funds_amount,
         expected_airdrop_contract_id,
         minter_address,
+        Addr::unchecked(OWNER),
         &mut app,
     );
     app
-}
-
-pub async fn get_signature(
-    wallet: Wallet<SigningKey>,
-    plaintext_msg: &str,
-) -> Result<ethers_core::types::Signature, WalletError> {
-    wallet.sign_message(plaintext_msg).await
-}
-
-pub fn get_wallet_and_sig(
-    claim_plaintext: String,
-) -> (
-    Wallet<ethers_core::k256::ecdsa::SigningKey>,
-    std::string::String,
-    H160,
-    std::string::String,
-) {
-    let wallet = LocalWallet::new(&mut thread_rng());
-    let eth_sig_str = task::block_on(get_signature(wallet.clone(), &claim_plaintext))
-        .unwrap()
-        .to_string();
-    let eth_address = wallet.address();
-    let eth_addr_str = format!("{:?}", eth_address);
-    (wallet, eth_sig_str, eth_address, eth_addr_str)
 }
 
 pub fn execute_contract_with_msg(
@@ -134,8 +140,4 @@ pub fn execute_contract_with_msg(
         .execute_contract(user, target_address, &msg, &[])
         .unwrap();
     Ok(result)
-}
-
-pub fn get_msg_plaintext(wallet_address: String) -> String {
-    str::replace(CONTRACT_CONFIG_PLAINTEXT, "{wallet}", &wallet_address)
 }

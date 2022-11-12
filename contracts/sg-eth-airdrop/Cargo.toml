@@ -71,11 +71,11 @@ sg-std        = { workspace = true }
 thiserror       = { workspace = true }
 whitelist-generic = { git = "https://github.com/public-awesome/names.git",  rev = "91256f9ccfcec66fa8d4c2040acc9e10415c711a", features = ["library"] }
 sg2             = { workspace = true }
+vending-minter  = { path = "../vending-minter", features = ["library"]}
 
 [dev-dependencies]
-vending-minter  = { path = "../vending-minter" }
-vending-factory  = { path = "../vending-factory" }
-sg721-base  = { path = "../sg721-base" }
+vending-factory  = { workspace = true }
+sg721-base  = { workspace = true }
 cw-multi-test = { workspace = true }
 sg-multi-test = { workspace = true }
 sg2             = { workspace = true }

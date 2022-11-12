@@ -1,9 +1,12 @@
 use crate::constants::{GENERIC_WHITELIST_LABEL, INIT_WHITELIST_REPLY_ID, NATIVE_DENOM};
 #[cfg(not(feature = "library"))]
 use crate::msg::InstantiateMsg;
-use cosmwasm_std::{coins, BankMsg};
+use cosmwasm_std::{coins, Addr, BankMsg};
 use cosmwasm_std::{to_binary, DepsMut, Env, MessageInfo, StdResult, WasmMsg};
 use sg_std::{CosmosMsg, StargazeMsgWrapper, SubMsg};
+use sg_whitelist::helpers::CollectionWhitelistContract;
+use sg_whitelist::msg::AddMembersMsg;
+use sg_whitelist::msg::ExecuteMsg as CollectionWhitelistExecuteMsg;
 use whitelist_generic::helpers::WhitelistGenericContract;
 use whitelist_generic::msg::ExecuteMsg as WGExecuteMsg;
 use whitelist_generic::msg::InstantiateMsg as WGInstantiateMsg;
@@ -44,7 +47,7 @@ pub fn build_add_eth_eligible_msg(
 }
 
 pub fn build_remove_eth_eligible_msg(
-    deps: DepsMut,
+    deps: &DepsMut,
     eth_address: String,
     whitelist_address: String,
 ) -> StdResult<CosmosMsg> {
@@ -63,4 +66,16 @@ pub fn build_update_minter_address_msg(
         minter_contract: minter_address,
     };
     WhitelistGenericContract(deps.api.addr_validate(&whitelist_address)?).call(execute_msg)
+}
+
+pub fn build_add_member_minter_msg(
+    deps: DepsMut,
+    wallet_address: Addr,
+    collection_whitelist: String,
+) -> StdResult<CosmosMsg> {
+    let inner_msg = AddMembersMsg {
+        to_add: vec![wallet_address.to_string()],
+    };
+    let execute_msg = CollectionWhitelistExecuteMsg::AddMembers(inner_msg);
+    CollectionWhitelistContract(deps.api.addr_validate(&collection_whitelist)?).call(execute_msg)
 }

@@ -3,7 +3,7 @@ mod error;
 
 pub mod msg;
 #[cfg(test)]
-#[path = "./tests/lib.rs"]
+#[path = "./testing/lib.rs"]
 pub mod tests_folder;
 
 #[path = "./helpers/build_msg.rs"]
