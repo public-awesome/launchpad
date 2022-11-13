@@ -7,7 +7,6 @@ description = "Stargaze Ethereum Airdrop"
 license = "Apache-2.0"
 repository = "https://github.com/public-awesome/launchpad"
 homepage = "https://stargaze.zone"
-resolver = "2"
 
 exclude = [
   # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
@@ -49,31 +48,30 @@ cw-storage-plus = {workspace = true }
 cw-utils = { workspace = true}
 cw2 = {workspace = true }
 rust_decimal = { version = "1.14.3" }
-sg-whitelist = { workspace = true, features = ["library"] }
+sg-whitelist = { workspace = true }
 sg1 = { workspace = true}
-hex = "0.4"
-rlp = "0.5"
-sha2 = "0.10"
+sha2 = {workspace = true}
 sha3 = "0.10"
-ethers-signers = "1.0.0"
-ethers-core = "1.0.0"
-eyre = "0.6"
-futures = "0.3"
-async-std = "1.12.0"
-coins-core = "0.7.0"
+hex = "0.4"
 
 cosmwasm-schema = { workspace = true }
+
 cosmwasm-std  = { workspace = true, features = ["staking"] }
 schemars      = { workspace = true }
-serde         = { workspace = true, features = ["derive"]}
+serde         = { workspace = true }
 sg-std        = { workspace = true }
 thiserror       = { workspace = true }
 whitelist-generic = { git = "https://github.com/public-awesome/names.git",  rev = "91256f9ccfcec66fa8d4c2040acc9e10415c711a", features = ["library"] }
-sg2             = { workspace = true }
-vending-minter  = { workspace = true, features = ["library"]}
+vending-minter  = { workspace = true, features = ["library"] }
 
 [dev-dependencies]
-vending-factory  = { workspace = true }
+async-std = "1.12.0"
+ethers-signers = "1.0.0"
+ethers-core = "1.0.0"
+eyre = "0.6"
+rlp = "0.5"
+sg2             = { workspace = true }
+vending-factory  = { workspace = true}
 sg721-base  = { workspace = true }
 cw-multi-test = { workspace = true }
 sg-multi-test = { workspace = true }

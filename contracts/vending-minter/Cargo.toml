@@ -10,7 +10,6 @@ edition     = { workspace = true }
 homepage    = { workspace = true }
 repository  = { workspace = true }
 license     = { workspace = true }
-resolver = "2"
 
 exclude = [
   # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
@@ -44,11 +43,11 @@ cw721           = { workspace = true }
 cw721-base      = { workspace = true, features = ["library"] }
 cw-storage-plus = { workspace = true }
 cw-utils        = { workspace = true }
-rand_core       = { version = "0.6.0", default-features = false }
+rand_core       = { workspace = true, default-features = false }
 rand_xoshiro    = { version = "0.6.0", default-features = false }
 schemars        = { workspace = true }
 serde           = { workspace = true }
-sha2            = "0.10.2"
+sha2            =  {workspace = true}
 shuffle         = { git = "https://github.com/webmaster128/shuffle", branch = "rm-getrandom", version = "0.1.7" }
 sg1             = { workspace = true }
 sg2             = { workspace = true }

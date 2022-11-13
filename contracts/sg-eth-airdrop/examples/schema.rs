@@ -4,6 +4,9 @@ use std::fs::create_dir_all;
 use cosmwasm_schema::{export_schema, remove_schemas, schema_for};
 
 use sg_eth_airdrop::msg::{ExecuteMsg, InstantiateMsg, QueryMsg, AirdropClaimResponse, VerifyResponse };
+use vending_minter::msg::{ConfigResponse as VendingConfigResponse, ExecuteMsg as VendingMinterExecuteMessage};
+use vending_minter::state::Config as VendingConfig;
+
 
 fn main() {
     let mut out_dir = current_dir().unwrap();
@@ -15,4 +18,7 @@ fn main() {
     export_schema(&schema_for!(QueryMsg), &out_dir);
     export_schema(&schema_for!(AirdropClaimResponse), &out_dir);
     export_schema(&schema_for!(VerifyResponse), &out_dir);
+    export_schema(&schema_for!(VendingConfig), &out_dir);
+    export_schema(&schema_for!(VendingConfigResponse), &out_dir);
+    export_schema(&schema_for!(VendingMinterExecuteMessage), &out_dir);
 }
