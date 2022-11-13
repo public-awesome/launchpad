@@ -1,5 +1,5 @@
 [package]
-name = "sg-eth-aidrop"
+name = "sg-eth-airdrop"
 version = {workspace = true}
 authors = ["Michael Scotto <m@publicawesome.com>"]
 edition = "2021"
