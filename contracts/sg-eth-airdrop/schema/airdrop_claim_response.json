@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AirdropClaimResponse",
+  "type": "object",
+  "required": [
+    "amount",
+    "minter_page",
+    "result"
+  ],
+  "properties": {
+    "amount": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    },
+    "minter_page": {
+      "type": "string"
+    },
+    "result": {
+      "type": "boolean"
+    }
+  }
+}

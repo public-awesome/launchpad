@@ -3,7 +3,7 @@ use std::fs::create_dir_all;
 
 use cosmwasm_schema::{export_schema, remove_schemas, schema_for};
 
-use sg_eth_airdrop::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use sg_eth_airdrop::msg::{ExecuteMsg, InstantiateMsg, QueryMsg, AirdropClaimResponse, VerifyResponse };
 
 fn main() {
     let mut out_dir = current_dir().unwrap();
@@ -13,4 +13,6 @@ fn main() {
     export_schema(&schema_for!(ExecuteMsg), &out_dir);
     export_schema(&schema_for!(InstantiateMsg), &out_dir);
     export_schema(&schema_for!(QueryMsg), &out_dir);
+    export_schema(&schema_for!(AirdropClaimResponse), &out_dir);
+    export_schema(&schema_for!(VerifyResponse), &out_dir);
 }
