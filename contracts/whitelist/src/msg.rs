@@ -9,6 +9,7 @@ pub struct InstantiateMsg {
     pub mint_price: Coin,
     pub per_address_limit: u32,
     pub member_limit: u32,
+    pub operators: Vec<String>,
 }
 
 #[cw_serde]
@@ -85,4 +86,12 @@ pub struct ConfigResponse {
     pub end_time: Timestamp,
     pub mint_price: Coin,
     pub is_active: bool,
+}
+
+#[cw_serde]
+pub enum SudoMsg {
+    /// Add a new operator
+    AddOperator { operator: String },
+    /// Remove operator
+    RemoveOperator { operator: String },
 }

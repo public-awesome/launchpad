@@ -52,4 +52,13 @@ pub enum ContractError {
 
     #[error("{0}")]
     PaymentError(#[from] PaymentError),
+
+    #[error("Given operator address already registered as an operator")]
+    OperatorAlreadyRegistered {},
+
+    #[error("Given operator address is not registered as an operator")]
+    OperatorNotRegistered {},
+
+    #[error("UnauthorizedOperator")]
+    UnauthorizedOperator {},
 }
