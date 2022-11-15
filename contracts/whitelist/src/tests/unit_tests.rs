@@ -13,8 +13,8 @@ use cosmwasm_std::{
 };
 
 const ADMIN: &str = "admin";
-const NOT_OPERATOR: &str = "not_operator";
-const SECOND_OPERATOR: &str = "second_operator";
+const NOT_ADMIN: &str = "not_admin";
+const SECOND_ADMIN: &str = "second_admin";
 const UNIT_AMOUNT: u128 = 100_000_000;
 
 const GENESIS_START_TIME: Timestamp = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
@@ -28,7 +28,8 @@ fn setup_contract(deps: DepsMut) {
         mint_price: coin(UNIT_AMOUNT, NATIVE_DENOM),
         per_address_limit: 1,
         member_limit: 1000,
-        operators: vec![ADMIN.to_string(), SECOND_OPERATOR.to_string()],
+        admins: vec![ADMIN.to_string(), SECOND_ADMIN.to_string()],
+        admins_mutable: true,
     };
     let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
     let res = instantiate(deps, mock_env(), info, msg).unwrap();
@@ -51,7 +52,8 @@ fn improper_initialization() {
         mint_price: coin(1, NATIVE_DENOM),
         per_address_limit: 1,
         member_limit: 1000,
-        operators: vec![ADMIN.to_string()],
+        admins: vec![ADMIN.to_string()],
+        admins_mutable: true,
     };
     let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
     instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
@@ -67,7 +69,8 @@ fn improper_initialization_invalid_denom() {
         mint_price: coin(UNIT_AMOUNT, "not_ustars"),
         per_address_limit: 1,
         member_limit: 1000,
-        operators: vec![ADMIN.to_string()],
+        admins: vec![ADMIN.to_string()],
+        admins_mutable: true,
     };
     let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
     let err = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
@@ -84,7 +87,8 @@ fn improper_initialization_invalid_creation_fee() {
         mint_price: coin(UNIT_AMOUNT, "ustars"),
         per_address_limit: 1,
         member_limit: 3000,
-        operators: vec![ADMIN.to_string()],
+        admins: vec![ADMIN.to_string()],
+        admins_mutable: true,
     };
     let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
     let err = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
@@ -108,7 +112,8 @@ fn improper_initialization_dedup() {
         mint_price: coin(UNIT_AMOUNT, NATIVE_DENOM),
         per_address_limit: 1,
         member_limit: 1000,
-        operators: vec![ADMIN.to_string()],
+        admins: vec![ADMIN.to_string()],
+        admins_mutable: true,
     };
     let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
     let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
@@ -125,7 +130,8 @@ fn check_start_time_after_end_time() {
         mint_price: coin(UNIT_AMOUNT, NATIVE_DENOM),
         per_address_limit: 1,
         member_limit: 1000,
-        operators: vec![ADMIN.to_string()],
+        admins: vec![ADMIN.to_string()],
+        admins_mutable: true,
     };
     let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
     let mut deps = mock_dependencies();
@@ -254,7 +260,8 @@ fn query_members_pagination() {
         mint_price: coin(UNIT_AMOUNT, NATIVE_DENOM),
         per_address_limit: 1,
         member_limit: 1000,
-        operators: vec![ADMIN.to_string()],
+        admins: vec![ADMIN.to_string()],
+        admins_mutable: true,
     };
     let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
     let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
@@ -377,13 +384,13 @@ fn cant_update_members_non_admin() {
         to_add: vec!["adsfsa1".to_string(), "adsfsa1".to_string()],
     };
     let msg = ExecuteMsg::AddMembers(add_msg);
-    let info = mock_info(NOT_OPERATOR, &[]);
+    let info = mock_info(NOT_ADMIN, &[]);
     let res = execute(deps.as_mut(), mock_env(), info, msg);
 
-    assert_eq!(res.unwrap_err().to_string(), "UnauthorizedOperator");
+    assert_eq!(res.unwrap_err().to_string(), "Unauthorized")
 }
 
-fn add_members_with_specified_operator(operator: &str) {
+fn add_members_with_specified_admin(admin: &str) {
     let mut deps = mock_dependencies();
     setup_contract(deps.as_mut());
 
@@ -392,7 +399,7 @@ fn add_members_with_specified_operator(operator: &str) {
         to_add: vec!["adsfsa1".to_string(), "adsfsa1".to_string()],
     };
     let msg = ExecuteMsg::AddMembers(add_msg);
-    let info = mock_info(operator, &[]);
+    let info = mock_info(admin, &[]);
     let res = execute(deps.as_mut(), mock_env(), info.clone(), msg.clone()).unwrap();
     assert_eq!(res.attributes.len(), 2);
     let res = query_members(deps.as_ref(), None, None).unwrap();
@@ -411,6 +418,6 @@ fn add_members_with_specified_operator(operator: &str) {
 }
 
 #[test]
-fn second_operator_can_add_members() {
-    add_members_with_specified_operator(SECOND_OPERATOR);
+fn second_admin_can_add_members() {
+    add_members_with_specified_admin(SECOND_ADMIN);
 }
