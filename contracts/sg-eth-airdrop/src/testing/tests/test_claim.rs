@@ -1,4 +1,5 @@
 use crate::msg::ExecuteMsg;
+use crate::tests_folder::collection_constants::WHITELIST_AMOUNT;
 use async_std::task;
 use cosmwasm_std::{Addr, Attribute, Coin, Uint128};
 
@@ -30,7 +31,7 @@ fn test_valid_eth_sig_claim() {
 
     instantiate_contract(
         vec![eth_addr_str.clone()],
-        10000,
+        WHITELIST_AMOUNT,
         5,
         minter_addr,
         Addr::unchecked(OWNER),
@@ -58,7 +59,7 @@ fn test_valid_eth_sig_claim() {
         },
         Attribute {
             key: "claimed_amount".to_string(),
-            value: "3000".to_string(),
+            value: WHITELIST_AMOUNT.to_string(),
         },
         Attribute {
             key: "valid_eth_sig".to_string(),
@@ -168,7 +169,7 @@ fn test_can_not_claim_twice() {
         },
         Attribute {
             key: "claimed_amount".to_string(),
-            value: "3000".to_string(),
+            value: WHITELIST_AMOUNT.to_string(),
         },
         Attribute {
             key: "valid_eth_sig".to_string(),
@@ -410,7 +411,7 @@ fn test_one_eth_claim_two_stargaze_addresses_invalid() {
         },
         Attribute {
             key: "claimed_amount".to_string(),
-            value: "3000".to_string(),
+            value: WHITELIST_AMOUNT.to_string(),
         },
         Attribute {
             key: "valid_eth_sig".to_string(),

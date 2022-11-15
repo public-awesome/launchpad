@@ -6,6 +6,7 @@ use sg_multi_test::StargazeApp;
 use sg_std::{self, StargazeMsgWrapper};
 
 use crate::msg::{ExecuteMsg, InstantiateMsg};
+use crate::tests_folder::collection_constants::{WHITELIST_AMOUNT};
 use eyre::Result;
 
 extern crate whitelist_generic;
@@ -94,7 +95,7 @@ pub fn instantiate_contract(
     let msg: InstantiateMsg = InstantiateMsg {
         admin: Addr::unchecked(OWNER),
         claim_msg_plaintext: Addr::unchecked(CONTRACT_CONFIG_PLAINTEXT).into_string(),
-        airdrop_amount: 3000,
+        airdrop_amount: WHITELIST_AMOUNT,
         addresses,
         whitelist_code_id,
         minter_address,

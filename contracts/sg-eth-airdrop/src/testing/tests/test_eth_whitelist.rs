@@ -1,5 +1,6 @@
 use crate::msg::{ExecuteMsg, QueryMsg};
 use crate::tests_folder::claim_constants::{AIRDROP_CONTRACT, OWNER};
+use crate::tests_folder::collection_constants::WHITELIST_AMOUNT;
 use crate::tests_folder::setup_contracts::{custom_mock_app, instantiate_contract};
 use crate::tests_folder::setup_minter::configure_minter_with_whitelist;
 use cosmwasm_std::Addr;
@@ -18,7 +19,7 @@ fn test_instantiate_with_addresses() {
 
     instantiate_contract(
         addresses,
-        10000,
+        WHITELIST_AMOUNT,
         5,
         minter_addr,
         Addr::unchecked(OWNER),
@@ -52,7 +53,7 @@ fn test_not_authorized_add_eth() {
 
     instantiate_contract(
         vec![],
-        10000,
+        WHITELIST_AMOUNT,
         5,
         minter_addr,
         Addr::unchecked(OWNER),
@@ -78,7 +79,7 @@ fn test_authorized_add_eth() {
 
     instantiate_contract(
         vec![],
-        10000,
+        WHITELIST_AMOUNT,
         5,
         minter_addr,
         Addr::unchecked(OWNER),
@@ -103,7 +104,7 @@ fn test_add_eth_and_verify() {
 
     instantiate_contract(
         vec![],
-        10000,
+        WHITELIST_AMOUNT,
         5,
         minter_addr,
         Addr::unchecked(OWNER),

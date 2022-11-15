@@ -1,11 +1,16 @@
-use crate::msg::QueryMsg;
-use crate::tests_folder::claim_constants::{AIRDROP_CONTRACT, STARGAZE_WALLET_01};
-use crate::tests_folder::setup_contracts::instantiate_contract;
-use crate::tests_folder::setup_minter::configure_minter_with_whitelist;
-use crate::tests_folder::setup_signatures::{get_msg_plaintext, get_wallet_and_sig};
 use cosmwasm_std::Addr;
 
-use super::setup_contracts::{custom_mock_app, execute_contract_with_msg};
+use crate::msg::QueryMsg;
+use crate::tests_folder::claim_constants::{AIRDROP_CONTRACT, STARGAZE_WALLET_01};
+use crate::tests_folder::collection_constants::{MINT_PRICE, WHITELIST_AMOUNT};
+use crate::tests_folder::collection_whitelist_helpers::{
+    execute_airdrop_claim, execute_mint_fail_not_on_whitelist, execute_mint_success,
+    send_funds_to_address, update_admin_for_whitelist,
+};
+use crate::tests_folder::setup_contracts::instantiate_contract;
+use crate::tests_folder::setup_contracts::{custom_mock_app, execute_contract_with_msg};
+use crate::tests_folder::setup_minter::configure_minter_with_whitelist;
+use crate::tests_folder::setup_signatures::{get_msg_plaintext, get_wallet_and_sig};
 
 extern crate whitelist_generic;
 
@@ -55,29 +60,30 @@ fn test_set_minter_contract() {
 #[test]
 fn test_claim_added_to_minter_whitelist() {
     let mut app = custom_mock_app();
-    let (minter_addr, _, creator, _, _) = configure_minter_with_whitelist(&mut app);
-    // println!("minter_config is {:?}", minter_config);
-
+    let (minter_addr, whiltelist_addr, creator, _, _) = configure_minter_with_whitelist(&mut app);
     let claim_plaintext = &get_msg_plaintext(STARGAZE_WALLET_01.to_string());
     let (_, eth_sig_str, _, eth_addr_str) = get_wallet_and_sig(claim_plaintext.clone());
 
     let airdrop_contract = Addr::unchecked(AIRDROP_CONTRACT);
-    // let contract_admin = Addr::unchecked(minter_config.admin);
+
     instantiate_contract(
         vec![eth_addr_str.clone()],
-        10000,
+        WHITELIST_AMOUNT,
         5,
-        minter_addr,
+        minter_addr.clone(),
         creator.clone(),
         &mut app,
     );
-    // let stargaze_wallet_01 = Addr::unchecked(STARGAZE_WALLET_01);
-    let claim_message = crate::msg::ExecuteMsg::ClaimAirdrop {
-        eth_address: eth_addr_str,
-        eth_sig: eth_sig_str,
-    };
-
-    let res =
-        execute_contract_with_msg(claim_message, &mut app, creator, airdrop_contract).unwrap();
-    println!("res is {:?}", res);
+    let stargaze_wallet_01 = Addr::unchecked(STARGAZE_WALLET_01);
+    update_admin_for_whitelist(&mut app, creator, airdrop_contract.clone(), whiltelist_addr);
+    send_funds_to_address(&mut app, STARGAZE_WALLET_01, MINT_PRICE);
+    execute_mint_fail_not_on_whitelist(&mut app, minter_addr.clone());
+    execute_airdrop_claim(
+        &mut app,
+        eth_addr_str,
+        eth_sig_str,
+        stargaze_wallet_01.clone(),
+        airdrop_contract,
+    );
+    execute_mint_success(&mut app, stargaze_wallet_01, minter_addr);
 }

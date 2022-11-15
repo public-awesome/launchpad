@@ -11,7 +11,7 @@ use sg_std::Response;
 use vending_minter::helpers::MinterContract;
 use whitelist_generic::helpers::WhitelistGenericContract;
 
-use crate::build_msg::{build_bank_message, build_whitelist_instantiate_msg};
+use crate::build_msg::{build_bank_message, build_whitelist_instantiate_msg, build_add_member_minter_msg};
 use crate::computation::compute_valid_eth_sig;
 use crate::constants::{CONTRACT_NAME, CONTRACT_VERSION, INIT_WHITELIST_REPLY_ID};
 use crate::responses::{get_add_eligible_eth_response, get_remove_eligible_eth_response};
@@ -91,17 +91,15 @@ fn claim_airdrop(
     let (mut res, mut claimed_amount) = (Response::new(), 0);
     if is_eligible && valid_eth_signature.verifies {
         res = get_remove_eligible_eth_response(&deps, eth_address).unwrap();
-        let test = build_bank_message(info, config.airdrop_amount);
-        res = res.add_submessage(test);
-        let _ = get_collection_whitelist(&deps)?;
-
-        // res = res.add_message(build_add_member_minter_msg(
-        //     deps,
-        //     config.clone().admin,
-        //     collection_whitelist
-        // )?);
+        let bank_send = build_bank_message(info.clone(), config.airdrop_amount);
+        res = res.add_submessage(bank_send);
+        let collection_whitelist = get_collection_whitelist(&deps)?;
+        res = res.add_message(build_add_member_minter_msg(
+            deps,
+            info.sender,
+            collection_whitelist
+        )?);
         claimed_amount = config.airdrop_amount;
-        // info.sender = _env.contract.address;
     }
     Ok(res
         .add_attribute("claimed_amount", claimed_amount.to_string())
