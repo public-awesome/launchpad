@@ -3,8 +3,9 @@ use cw_multi_test::{BankSudo, Contract, ContractWrapper, Executor, SudoMsg as CW
 use sg_multi_test::StargazeApp;
 use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
-use crate::msg::{
-    AddMembersMsg, ExecuteMsg, InstantiateMsg, MembersResponse, QueryMsg, RemoveMembersMsg,
+use crate::{
+    msg::{AddMembersMsg, ExecuteMsg, InstantiateMsg, MembersResponse, QueryMsg, RemoveMembersMsg},
+    state::AdminList,
 };
 
 const COLLECTION_WHITELIST_ADDR: &str = "contract0";
@@ -164,10 +165,7 @@ fn add_members_blocked(admin: &str, members: Vec<String>, app: &mut StargazeApp)
     let add_msg = AddMembersMsg { to_add: members };
     let msg = ExecuteMsg::AddMembers(add_msg);
     let res = app.execute_contract(admin_addr, collection_whitelist_contract.clone(), &msg, &[]);
-    assert_eq!(
-        res.unwrap_err().root_cause().to_string(),
-        "UnauthorizedAdmin"
-    );
+    assert_eq!(res.unwrap_err().root_cause().to_string(), "Unauthorized");
 
     let query_result: MembersResponse = app
         .wrap()
@@ -224,4 +222,49 @@ fn test_remove_admin() {
 
     let members = vec!["member1".to_string()];
     add_members_blocked(SECOND_ADMIN, members, &mut app);
+}
+
+#[test]
+fn test_query_admin_list() {
+    let mut app = custom_mock_app();
+    instantiate_contract(ADMIN, &mut app);
+    let collection_whitelist_contract = Addr::unchecked(COLLECTION_WHITELIST_ADDR);
+
+    let query_msg = QueryMsg::AdminList {};
+    let query_result: AdminList = app
+        .wrap()
+        .query_wasm_smart(collection_whitelist_contract, &query_msg)
+        .unwrap();
+    let expected_result = AdminList {
+        admins: vec![Addr::unchecked("admin"), Addr::unchecked("second_admin")],
+        mutable: true,
+    };
+    assert_eq!(query_result, expected_result);
+}
+
+#[test]
+fn test_freeze_admins() {
+    let mut app = custom_mock_app();
+    instantiate_contract(ADMIN, &mut app);
+    let collection_whitelist_addr = Addr::unchecked(COLLECTION_WHITELIST_ADDR);
+
+    let freeze_admins_msg = ExecuteMsg::Freeze {};
+    let _ = app.execute_contract(
+        Addr::unchecked(ADMIN),
+        Addr::unchecked(collection_whitelist_addr.clone()),
+        &freeze_admins_msg,
+        &[],
+    );
+
+    let update_admin_message = ExecuteMsg::UpdateAdmins {
+        admins: vec![ADMIN.to_string()],
+    };
+
+    let res = app.execute_contract(
+        Addr::unchecked(ADMIN),
+        Addr::unchecked(collection_whitelist_addr),
+        &update_admin_message,
+        &[],
+    );
+    assert_eq!(res.unwrap_err().root_cause().to_string(), "Unauthorized");
 }

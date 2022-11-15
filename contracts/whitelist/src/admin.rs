@@ -30,7 +30,7 @@ pub fn can_execute(deps: &DepsMut, sender: Addr) -> Result<Addr, ContractError> 
     let cfg = ADMIN_LIST.load(deps.storage)?;
     let can = cfg.is_admin(&sender);
     if !can {
-        return Err(ContractError::UnauthorizedAdmin {});
+        return Err(ContractError::Unauthorized {});
     }
     Ok(sender)
 }

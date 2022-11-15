@@ -1,4 +1,6 @@
-use crate::admin::{can_execute, execute_update_admins, query_admin_list, query_can_execute};
+use crate::admin::{
+    can_execute, execute_freeze, execute_update_admins, query_admin_list, query_can_execute,
+};
 use crate::error::ContractError;
 use crate::msg::{
     AddMembersMsg, ConfigResponse, ExecuteMsg, HasEndedResponse, HasMemberResponse,
@@ -171,6 +173,7 @@ pub fn execute(
             execute_increase_member_limit(deps, info, member_limit)
         }
         ExecuteMsg::UpdateAdmins { admins } => execute_update_admins(deps, env, info, admins),
+        ExecuteMsg::Freeze {} => execute_freeze(deps, env, info),
     }
 }
 
@@ -333,7 +336,7 @@ pub fn execute_increase_member_limit(
         });
     }
 
-    // if new limit crosses 1,000 members, requires upgrade fee. Otherwise, free upgrade.
+    // if new limit crosses 1,000 members, requires upgrade fee. Otherwise,  upgrade.
     let old_limit = Decimal::new(config.member_limit.into(), 3).ceil();
     let new_limit = Decimal::new(member_limit.into(), 3).ceil();
     let upgrade_fee: u128 = if new_limit > old_limit {

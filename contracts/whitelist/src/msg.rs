@@ -22,6 +22,7 @@ pub enum ExecuteMsg {
     UpdatePerAddressLimit(u32),
     IncreaseMemberLimit(u32),
     UpdateAdmins { admins: Vec<String> },
+    Freeze {},
 }
 
 #[cw_serde]

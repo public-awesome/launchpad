@@ -387,7 +387,7 @@ fn cant_update_members_non_admin() {
     let info = mock_info(NOT_ADMIN, &[]);
     let res = execute(deps.as_mut(), mock_env(), info, msg);
 
-    assert_eq!(res.unwrap_err().to_string(), "UnauthorizedAdmin")
+    assert_eq!(res.unwrap_err().to_string(), "Unauthorized")
 }
 
 fn add_members_with_specified_admin(admin: &str) {
