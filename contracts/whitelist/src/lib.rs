@@ -10,8 +10,8 @@ pub mod state;
 pub mod unit_tests;
 
 pub mod admin;
-#[path = "./helpers/validators.rs"]
-pub mod validators;
 #[path = "./helpers/interface.rs"]
 pub mod interface;
+#[path = "./helpers/validators.rs"]
+pub mod validators;
 pub use crate::error::ContractError;
