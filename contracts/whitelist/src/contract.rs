@@ -1,11 +1,11 @@
+use crate::admin::{can_execute, execute_update_admins, query_admin_list, query_can_execute};
 use crate::error::ContractError;
 use crate::msg::{
     AddMembersMsg, ConfigResponse, ExecuteMsg, HasEndedResponse, HasMemberResponse,
     HasStartedResponse, InstantiateMsg, IsActiveResponse, MembersResponse, QueryMsg,
     RemoveMembersMsg,
 };
-use crate::state::{Config, SudoParams, CONFIG, SUDO_PARAMS, WHITELIST};
-use crate::sudo::only_operator;
+use crate::state::{AdminList, Config, ADMIN_LIST, CONFIG, WHITELIST};
 use crate::validators::map_validate;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
@@ -75,11 +75,6 @@ pub fn instantiate(
         });
     }
 
-    let params = SudoParams {
-        operators: map_validate(deps.api, &msg.operators)?,
-    };
-    SUDO_PARAMS.save(deps.storage, &params)?;
-
     let creation_fee = Decimal::new(msg.member_limit.into(), 3)
         .ceil()
         .to_u128()
@@ -106,6 +101,12 @@ pub fn instantiate(
         member_limit: msg.member_limit,
     };
     CONFIG.save(deps.storage, &config)?;
+
+    let admin_config = AdminList {
+        admins: map_validate(deps.api, &msg.admins)?,
+        mutable: msg.admins_mutable,
+    };
+    ADMIN_LIST.save(deps.storage, &admin_config)?;
 
     if msg.start_time > msg.end_time {
         return Err(ContractError::InvalidStartTime(
@@ -169,6 +170,7 @@ pub fn execute(
         ExecuteMsg::IncreaseMemberLimit(member_limit) => {
             execute_increase_member_limit(deps, info, member_limit)
         }
+        ExecuteMsg::UpdateAdmins { admins } => execute_update_admins(deps, env, info, admins),
     }
 }
 
@@ -179,7 +181,7 @@ pub fn execute_update_start_time(
     start_time: Timestamp,
 ) -> Result<Response, ContractError> {
     let mut config = CONFIG.load(deps.storage)?;
-    only_operator(deps.storage, &info)?;
+    can_execute(&deps, info.sender.clone())?;
 
     // don't allow updating start time if whitelist is active
     if env.block.time >= config.start_time {
@@ -212,7 +214,7 @@ pub fn execute_update_end_time(
     end_time: Timestamp,
 ) -> Result<Response, ContractError> {
     let mut config = CONFIG.load(deps.storage)?;
-    only_operator(deps.storage, &info)?;
+    can_execute(&deps, info.sender.clone())?;
 
     // don't allow updating end time if whitelist is active
     if env.block.time >= config.start_time {
@@ -238,7 +240,7 @@ pub fn execute_add_members(
     mut msg: AddMembersMsg,
 ) -> Result<Response, ContractError> {
     let mut config = CONFIG.load(deps.storage)?;
-    only_operator(deps.storage, &info)?;
+    can_execute(&deps, info.sender.clone())?;
     // remove duplicate members
     msg.to_add.sort_unstable();
     msg.to_add.dedup();
@@ -272,7 +274,7 @@ pub fn execute_remove_members(
     msg: RemoveMembersMsg,
 ) -> Result<Response, ContractError> {
     let mut config = CONFIG.load(deps.storage)?;
-    only_operator(deps.storage, &info)?;
+    can_execute(&deps, info.sender.clone())?;
 
     if env.block.time >= config.start_time {
         return Err(ContractError::AlreadyStarted {});
@@ -300,7 +302,7 @@ pub fn execute_update_per_address_limit(
     per_address_limit: u32,
 ) -> Result<Response, ContractError> {
     let mut config = CONFIG.load(deps.storage)?;
-    only_operator(deps.storage, &info)?;
+    can_execute(&deps, info.sender)?;
 
     if per_address_limit > MAX_PER_ADDRESS_LIMIT {
         return Err(ContractError::InvalidPerAddressLimit {
@@ -371,6 +373,8 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::IsActive {} => to_binary(&query_is_active(deps, env)?),
         QueryMsg::HasMember { member } => to_binary(&query_has_member(deps, member)?),
         QueryMsg::Config {} => to_binary(&query_config(deps, env)?),
+        QueryMsg::AdminList {} => to_binary(&query_admin_list(deps)?),
+        QueryMsg::CanExecute { sender, .. } => to_binary(&query_can_execute(deps, &sender)?),
     }
 }
 

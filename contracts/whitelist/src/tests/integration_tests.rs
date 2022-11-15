@@ -4,12 +4,12 @@ use sg_multi_test::StargazeApp;
 use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
 use crate::msg::{
-    AddMembersMsg, ExecuteMsg, InstantiateMsg, MembersResponse, QueryMsg, RemoveMembersMsg, SudoMsg,
+    AddMembersMsg, ExecuteMsg, InstantiateMsg, MembersResponse, QueryMsg, RemoveMembersMsg,
 };
 
 const COLLECTION_WHITELIST_ADDR: &str = "contract0";
 const ADMIN: &str = "admin";
-const SECOND_OPERATOR: &str = "second_operator";
+const SECOND_ADMIN: &str = "second_admin";
 const UNIT_AMOUNT: u128 = 100_000_000;
 
 const GENESIS_START_TIME: Timestamp = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
@@ -24,8 +24,7 @@ pub fn collection_whitelist() -> Box<dyn Contract<StargazeMsgWrapper>> {
         crate::contract::execute,
         crate::contract::instantiate,
         crate::contract::query,
-    )
-    .with_sudo(crate::sudo::sudo);
+    );
     Box::new(contract)
 }
 
@@ -41,7 +40,8 @@ fn instantiate_contract(admin_account: &str, app: &mut StargazeApp) {
         mint_price: coin(UNIT_AMOUNT, NATIVE_DENOM),
         per_address_limit: 1,
         member_limit: 1000,
-        operators: vec![ADMIN.to_string(), SECOND_OPERATOR.to_string()],
+        admins: vec![ADMIN.to_string(), SECOND_ADMIN.to_string()],
+        admins_mutable: true,
     };
     app.sudo(CWSudoMsg::Bank({
         BankSudo::Mint {
@@ -63,12 +63,8 @@ fn instantiate_contract(admin_account: &str, app: &mut StargazeApp) {
     );
 }
 
-fn add_members_with_specified_operator(
-    operator: &str,
-    members: Vec<String>,
-    app: &mut StargazeApp,
-) {
-    let operator_addr = Addr::unchecked(operator);
+fn add_members_with_specified_admin(admin: &str, members: Vec<String>, app: &mut StargazeApp) {
+    let admin_addr = Addr::unchecked(admin);
     let collection_whitelist_contract = Addr::unchecked("contract0");
     let initial_members = vec!["member0".to_string()];
 
@@ -89,12 +85,7 @@ fn add_members_with_specified_operator(
         to_add: members.clone(),
     };
     let msg = ExecuteMsg::AddMembers(add_msg);
-    let res = app.execute_contract(
-        operator_addr,
-        collection_whitelist_contract.clone(),
-        &msg,
-        &[],
-    );
+    let res = app.execute_contract(admin_addr, collection_whitelist_contract.clone(), &msg, &[]);
     assert_eq!(res.unwrap().events.len(), 2);
 
     let query_msg = QueryMsg::Members {
@@ -111,12 +102,8 @@ fn add_members_with_specified_operator(
     assert_eq!(query_result, expected_result);
 }
 
-fn remove_members_with_specified_operator(
-    operator: &str,
-    members: Vec<String>,
-    app: &mut StargazeApp,
-) {
-    let operator_addr = Addr::unchecked(operator);
+fn remove_members_with_specified_admin(admin: &str, members: Vec<String>, app: &mut StargazeApp) {
+    let admin_addr = Addr::unchecked(admin);
     let collection_whitelist_contract = Addr::unchecked("contract0");
     let initial_members = vec![
         "member0".to_string(),
@@ -139,12 +126,7 @@ fn remove_members_with_specified_operator(
 
     let remove_msg = RemoveMembersMsg { to_remove: members };
     let msg = ExecuteMsg::RemoveMembers(remove_msg);
-    let res = app.execute_contract(
-        operator_addr,
-        collection_whitelist_contract.clone(),
-        &msg,
-        &[],
-    );
+    let res = app.execute_contract(admin_addr, collection_whitelist_contract.clone(), &msg, &[]);
     assert_eq!(res.unwrap().events.len(), 2);
 
     let query_msg = QueryMsg::Members {
@@ -161,8 +143,8 @@ fn remove_members_with_specified_operator(
     assert_eq!(query_result, expected_result);
 }
 
-fn add_members_blocked(operator: &str, members: Vec<String>, app: &mut StargazeApp) {
-    let operator_addr = Addr::unchecked(operator);
+fn add_members_blocked(admin: &str, members: Vec<String>, app: &mut StargazeApp) {
+    let admin_addr = Addr::unchecked(admin);
     let collection_whitelist_contract = Addr::unchecked("contract0");
     let initial_members = vec!["member0".to_string()];
 
@@ -181,15 +163,10 @@ fn add_members_blocked(operator: &str, members: Vec<String>, app: &mut StargazeA
 
     let add_msg = AddMembersMsg { to_add: members };
     let msg = ExecuteMsg::AddMembers(add_msg);
-    let res = app.execute_contract(
-        operator_addr,
-        collection_whitelist_contract.clone(),
-        &msg,
-        &[],
-    );
+    let res = app.execute_contract(admin_addr, collection_whitelist_contract.clone(), &msg, &[]);
     assert_eq!(
         res.unwrap_err().root_cause().to_string(),
-        "UnauthorizedOperator"
+        "UnauthorizedAdmin"
     );
 
     let query_result: MembersResponse = app
@@ -207,34 +184,44 @@ fn test_instantiate() {
 }
 
 #[test]
-fn test_add_operator() {
+fn test_add_admin() {
     let mut app = custom_mock_app();
     instantiate_contract(ADMIN, &mut app);
     let collection_whitelist_addr = Addr::unchecked(COLLECTION_WHITELIST_ADDR);
 
-    let new_operator: &str = "new_operator";
-    let add_msg = SudoMsg::AddOperator {
-        operator: new_operator.to_string(),
+    let new_admin: &str = "new_admin";
+    let update_admins_message = ExecuteMsg::UpdateAdmins {
+        admins: vec![ADMIN.to_string(), new_admin.to_string()],
     };
-    let res = app.wasm_sudo(collection_whitelist_addr, &add_msg);
-    println!("res is {:?}", res);
+    let _ = app.execute_contract(
+        Addr::unchecked(ADMIN),
+        Addr::unchecked(collection_whitelist_addr),
+        &update_admins_message,
+        &[],
+    );
     let members = vec!["member1".to_string(), "member2".to_string()];
 
-    add_members_with_specified_operator(new_operator, members.clone(), &mut app);
-    remove_members_with_specified_operator(new_operator, members, &mut app);
+    add_members_with_specified_admin(new_admin, members.clone(), &mut app);
+    remove_members_with_specified_admin(new_admin, members, &mut app);
 }
 
 #[test]
-fn test_remove_operator() {
+fn test_remove_admin() {
     let mut app = custom_mock_app();
     instantiate_contract(ADMIN, &mut app);
     let collection_whitelist_addr = Addr::unchecked(COLLECTION_WHITELIST_ADDR);
 
-    let remove_msg = SudoMsg::RemoveOperator {
-        operator: SECOND_OPERATOR.to_string(),
+    let update_admin_message = ExecuteMsg::UpdateAdmins {
+        admins: vec![ADMIN.to_string()],
     };
-    let res = app.wasm_sudo(collection_whitelist_addr, &remove_msg);
-    println!("res is {:?}", res);
-    let members = vec!["member0".to_string()];
-    add_members_blocked(SECOND_OPERATOR, members, &mut app);
+
+    let _ = app.execute_contract(
+        Addr::unchecked(ADMIN),
+        Addr::unchecked(collection_whitelist_addr),
+        &update_admin_message,
+        &[],
+    );
+
+    let members = vec!["member1".to_string()];
+    add_members_blocked(SECOND_ADMIN, members, &mut app);
 }
