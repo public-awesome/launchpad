@@ -26,3 +26,4 @@ impl CollectionWhitelistContract {
         .into())
     }
 }
+

@@ -1,6 +1,5 @@
 pub mod contract;
 mod error;
-pub mod helpers;
 #[path = "./tests/integration_tests.rs"]
 #[cfg(test)]
 pub mod integration_tests;
@@ -13,4 +12,6 @@ pub mod unit_tests;
 pub mod admin;
 #[path = "./helpers/validators.rs"]
 pub mod validators;
+#[path = "./helpers/interface.rs"]
+pub mod interface;
 pub use crate::error::ContractError;
