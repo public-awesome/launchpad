@@ -156,7 +156,6 @@ pub fn execute_contract_with_msg(
     user: Addr,
     target_address: Addr,
 ) -> Result<AppResponse, Error> {
-    println!("msg being sent is {:?}", msg);
     let result = app
         .execute_contract(user, target_address, &msg, &[])
         .unwrap();

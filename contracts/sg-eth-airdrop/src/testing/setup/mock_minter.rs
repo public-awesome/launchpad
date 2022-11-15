@@ -51,7 +51,6 @@ pub fn query(_deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
 }
 
 fn query_config() -> ConfigResponse {
-    println!("config is being returned hhere");
     ConfigResponse {
         admin: "some_admin".to_string(),
         whitelist: Some("contract2".to_string()),
