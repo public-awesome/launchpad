@@ -1,8 +1,8 @@
 use cosmwasm_std::Addr;
 
 use crate::msg::QueryMsg;
-use crate::tests_folder::claim_constants::{AIRDROP_CONTRACT, STARGAZE_WALLET_01};
-use crate::tests_folder::collection_constants::{MINT_PRICE, WHITELIST_AMOUNT};
+use crate::tests_folder::claim_constants::STARGAZE_WALLET_01;
+use crate::tests_folder::collection_constants::{AIRDROP_ADDR_STR, MINT_PRICE, WHITELIST_AMOUNT};
 use crate::tests_folder::collection_whitelist_helpers::{
     execute_airdrop_claim, execute_mint_fail_not_on_whitelist, execute_mint_success,
     send_funds_to_address, update_admin_for_whitelist,
@@ -32,7 +32,7 @@ fn test_set_minter_contract() {
         contract_admin.clone(),
         &mut app,
     );
-    let airdrop_contract = Addr::unchecked(AIRDROP_CONTRACT);
+    let airdrop_contract = Addr::unchecked(AIRDROP_ADDR_STR);
     let query_msg = QueryMsg::GetMinter {};
     let result: Addr = app
         .wrap()
@@ -64,7 +64,7 @@ fn test_claim_added_to_minter_whitelist() {
     let claim_plaintext = &get_msg_plaintext(STARGAZE_WALLET_01.to_string());
     let (_, eth_sig_str, _, eth_addr_str) = get_wallet_and_sig(claim_plaintext.clone());
 
-    let airdrop_contract = Addr::unchecked(AIRDROP_CONTRACT);
+    let airdrop_contract = Addr::unchecked(AIRDROP_ADDR_STR);
 
     instantiate_contract(
         vec![eth_addr_str.clone()],

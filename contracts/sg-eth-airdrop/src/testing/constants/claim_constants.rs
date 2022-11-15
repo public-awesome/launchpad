@@ -1,6 +1,6 @@
 pub const OWNER: &str = "admin0001";
-pub const AIRDROP_CONTRACT: &str = "contract4";
-pub const MINTER_CONTRACT: &str = "contract1";
+pub const MOCK_AIRDROP_ADDR_STR: &str = "contract3";
+pub const MOCK_MINTER_ADDR_STR: &str = "contract1";
 pub const STARGAZE_WALLET_01: &str = "0xstargaze_wallet_01";
 pub const STARGAZE_WALLET_02: &str = "0xstargaze_wallet_02";
 pub const CONTRACT_CONFIG_PLAINTEXT: &str =

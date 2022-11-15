@@ -13,14 +13,19 @@ mod setup_minter;
 #[path = "./setup/setup_signatures.rs"]
 mod setup_signatures;
 
+#[path = "./setup/mock_minter.rs"]
+mod mock_minter;
+#[path = "./setup/mock_whitelist.rs"]
+mod mock_whitelist;
+
+#[path = "./tests/collection_whitelist_helpers.rs"]
+pub mod collection_whitelist_helpers;
 #[cfg(test)]
 #[path = "./tests/test_claim.rs"]
 pub mod test_claim;
 #[cfg(test)]
 #[path = "./tests/test_collection_whitelist.rs"]
 pub mod test_collection_whitelist;
-#[path = "./tests/collection_whitelist_helpers.rs"]
-pub mod collection_whitelist_helpers;
 #[cfg(test)]
 #[path = "./tests/test_eth_whitelist.rs"]
 pub mod test_eth_whitelist;

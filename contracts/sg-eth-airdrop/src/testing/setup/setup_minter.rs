@@ -1,4 +1,7 @@
-use crate::tests_folder::setup_collection_whitelist::configure_collection_whitelist;
+use crate::tests_folder::setup_collection_whitelist::{
+    configure_collection_whitelist, setup_whitelist_contract,
+};
+use crate::tests_folder::setup_contracts::mock_whitelist;
 use cosmwasm_std::{coin, coins, Addr, Timestamp};
 use cw_multi_test::Executor;
 use sg2::{msg::Sg2ExecuteMsg, tests::mock_collection_params};
@@ -14,7 +17,9 @@ use crate::tests_folder::collection_constants::{
     MINT_FEE_BPS, MINT_PRICE, MIN_MINT_PRICE, SHUFFLE_FEE,
 };
 use crate::tests_folder::setup_accounts_and_block::{setup_accounts, setup_block_time};
-use crate::tests_folder::setup_contracts::{contract_factory, contract_minter, contract_sg721};
+use crate::tests_folder::setup_contracts::{
+    contract_factory, contract_minter, contract_sg721, mock_minter,
+};
 
 pub fn mock_init_extension(splits_addr: Option<String>) -> VendingMinterInitMsgExtension {
     vending_factory::msg::VendingMinterInitMsgExtension {
@@ -114,11 +119,45 @@ pub fn configure_minter_with_whitelist(
     let (creator, buyer) = setup_accounts(app);
     let num_tokens = 1;
     let (minter_addr, config) = setup_minter_contract(app, &creator, num_tokens, None);
-    // config.clone().sg721_address;
 
     let whitelist_addr =
         configure_collection_whitelist(app, creator.clone(), buyer.clone(), minter_addr.clone());
 
     setup_block_time(app, GENESIS_MINT_START_TIME, None);
     (minter_addr, whitelist_addr, creator, buyer, config)
+}
+
+fn configure_mock_minter(app: &mut StargazeApp, creator: Addr) {
+    let minter_code_id = app.store_code(mock_minter());
+
+    println!("minter_code_id: {}", minter_code_id);
+    let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
+
+    let factory_code_id = app.store_code(contract_factory());
+    println!("factory_code_id: {}", factory_code_id);
+
+    let mut params = mock_params();
+    params.code_id = minter_code_id;
+
+    let factory_addr = app
+        .instantiate_contract(
+            factory_code_id,
+            creator.clone(),
+            &vending_factory::msg::InstantiateMsg { params },
+            &[],
+            "factory",
+            None,
+        )
+        .unwrap();
+
+    let msg = mock_create_minter(None);
+    let msg = Sg2ExecuteMsg::CreateMinter(msg);
+    let res = app.execute_contract(creator, factory_addr, &msg, &creation_fee);
+    assert!(res.is_ok());
+}
+pub fn configure_mock_minter_with_mock_whitelist(app: &mut StargazeApp) {
+    let (creator, _) = setup_accounts(app);
+    configure_mock_minter(app, creator.clone());
+    let whitelist_code_id = app.store_code(mock_whitelist());
+    setup_whitelist_contract(app, &creator, whitelist_code_id);
 }

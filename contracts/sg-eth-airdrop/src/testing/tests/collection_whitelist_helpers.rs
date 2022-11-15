@@ -1,5 +1,5 @@
 use crate::constants::NATIVE_DENOM;
-use crate::tests_folder::claim_constants::{STARGAZE_WALLET_01};
+use crate::tests_folder::claim_constants::STARGAZE_WALLET_01;
 use crate::tests_folder::collection_constants::{MINT_PRICE, WHITELIST_AMOUNT};
 use cosmwasm_std::{coins, Addr};
 use cw_multi_test::{BankSudo, Executor, SudoMsg};
@@ -38,8 +38,8 @@ pub fn execute_mint_fail_not_on_whitelist(app: &mut StargazeApp, minter_addr: Ad
     let stargaze_wallet_01 = Addr::unchecked(STARGAZE_WALLET_01);
     let mint_msg = vending_minter::msg::ExecuteMsg::Mint {};
     let res = app.execute_contract(
-        stargaze_wallet_01.clone(),
-        minter_addr.clone(),
+        stargaze_wallet_01,
+        minter_addr,
         &mint_msg,
         &coins(MINT_PRICE, NATIVE_DENOM),
     );
@@ -67,7 +67,7 @@ pub fn execute_mint_success(app: &mut StargazeApp, sender: Addr, minter_addr: Ad
     let mint_msg = vending_minter::msg::ExecuteMsg::Mint {};
     let res = app.execute_contract(
         sender,
-        minter_addr.clone(),
+        minter_addr,
         &mint_msg,
         &coins(WHITELIST_AMOUNT, NATIVE_DENOM),
     );

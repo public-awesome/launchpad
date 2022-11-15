@@ -11,7 +11,9 @@ use sg_std::Response;
 use vending_minter::helpers::MinterContract;
 use whitelist_generic::helpers::WhitelistGenericContract;
 
-use crate::build_msg::{build_bank_message, build_whitelist_instantiate_msg, build_add_member_minter_msg};
+use crate::build_msg::{
+    build_add_member_minter_msg, build_bank_message, build_whitelist_instantiate_msg,
+};
 use crate::computation::compute_valid_eth_sig;
 use crate::constants::{CONTRACT_NAME, CONTRACT_VERSION, INIT_WHITELIST_REPLY_ID};
 use crate::responses::{get_add_eligible_eth_response, get_remove_eligible_eth_response};
@@ -24,7 +26,6 @@ pub fn instantiate(
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-
     let cfg = Config {
         admin: info.sender.clone(),
         claim_msg_plaintext: msg.clone().claim_msg_plaintext,
@@ -97,7 +98,7 @@ fn claim_airdrop(
         res = res.add_message(build_add_member_minter_msg(
             deps,
             info.sender,
-            collection_whitelist
+            collection_whitelist,
         )?);
         claimed_amount = config.airdrop_amount;
     }
@@ -111,7 +112,6 @@ fn claim_airdrop(
 pub fn get_collection_whitelist(deps: &DepsMut) -> Result<String, ContractError> {
     let config = CONFIG.load(deps.storage)?;
     let minter_addr = config.minter_address;
-
     let config = MinterContract(minter_addr).config(&deps.querier);
     match config {
         Ok(result) => {

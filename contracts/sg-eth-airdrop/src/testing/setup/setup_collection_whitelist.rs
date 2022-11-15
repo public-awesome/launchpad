@@ -1,16 +1,13 @@
 use crate::tests_folder::collection_constants::WHITELIST_AMOUNT;
 use crate::tests_folder::collection_constants::WL_PER_ADDRESS_LIMIT;
 use crate::tests_folder::setup_accounts_and_block::setup_block_time;
+use crate::tests_folder::setup_contracts::contract_whitelist;
 use cosmwasm_std::{coin, Addr, Timestamp};
 use cw_multi_test::Executor;
 use sg_multi_test::StargazeApp;
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
-use crate::tests_folder::setup_contracts::contract_whitelist;
-
-pub fn setup_whitelist_contract(router: &mut StargazeApp, creator: &Addr) -> Addr {
-    let whitelist_code_id = router.store_code(contract_whitelist());
-
+pub fn setup_whitelist_contract(router: &mut StargazeApp, creator: &Addr, code_id: u64) -> Addr {
     let msg = sg_whitelist::msg::InstantiateMsg {
         members: vec![],
         start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME + 100),
@@ -23,7 +20,7 @@ pub fn setup_whitelist_contract(router: &mut StargazeApp, creator: &Addr) -> Add
     };
     router
         .instantiate_contract(
-            whitelist_code_id,
+            code_id,
             creator.clone(),
             &msg,
             &[coin(100_000_000, NATIVE_DENOM)],
@@ -39,7 +36,8 @@ pub fn configure_collection_whitelist(
     buyer: Addr,
     minter_addr: Addr,
 ) -> Addr {
-    let whitelist_addr = setup_whitelist_contract(router, &creator);
+    let whitelist_code_id = router.store_code(contract_whitelist());
+    let whitelist_addr = setup_whitelist_contract(router, &creator, whitelist_code_id);
     const AFTER_GENESIS_TIME: Timestamp = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 100);
 
     // Set to just before genesis mint start time

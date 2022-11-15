@@ -12,3 +12,5 @@ pub const MINT_FEE_BPS: u64 = 1_000; // 10%
 pub const AIRDROP_MINT_FEE_BPS: u64 = 10_000; // 100%
 pub const SHUFFLE_FEE: u128 = 500_000_000;
 pub const MAX_PER_ADDRESS_LIMIT: u32 = 50;
+
+pub const AIRDROP_ADDR_STR: &str = "contract4";

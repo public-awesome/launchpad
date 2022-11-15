@@ -6,14 +6,33 @@ use sg_multi_test::StargazeApp;
 use sg_std::{self, StargazeMsgWrapper};
 
 use crate::msg::{ExecuteMsg, InstantiateMsg};
-use crate::tests_folder::collection_constants::{WHITELIST_AMOUNT};
+use crate::tests_folder::collection_constants::WHITELIST_AMOUNT;
 use eyre::Result;
 
 extern crate whitelist_generic;
 use crate::tests_folder::claim_constants::{CONTRACT_CONFIG_PLAINTEXT, NATIVE_DENOM, OWNER};
+use crate::tests_folder::{mock_minter, mock_whitelist};
 
 pub fn custom_mock_app() -> StargazeApp {
     StargazeApp::default()
+}
+
+pub fn mock_minter() -> Box<dyn Contract<StargazeMsgWrapper>> {
+    let contract = ContractWrapper::new(
+        mock_minter::execute,
+        mock_minter::instantiate,
+        mock_minter::query,
+    );
+    Box::new(contract)
+}
+
+pub fn mock_whitelist() -> Box<dyn Contract<StargazeMsgWrapper>> {
+    let contract = ContractWrapper::new(
+        mock_whitelist::execute,
+        mock_whitelist::instantiate,
+        mock_whitelist::query,
+    );
+    Box::new(contract)
 }
 
 pub fn contract_minter() -> Box<dyn Contract<StargazeMsgWrapper>> {
@@ -137,6 +156,7 @@ pub fn execute_contract_with_msg(
     user: Addr,
     target_address: Addr,
 ) -> Result<AppResponse, Error> {
+    println!("msg being sent is {:?}", msg);
     let result = app
         .execute_contract(user, target_address, &msg, &[])
         .unwrap();
