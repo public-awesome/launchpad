@@ -19,7 +19,7 @@ pub fn setup_whitelist_contract(router: &mut StargazeApp, creator: &Addr) -> Add
         per_address_limit: WL_PER_ADDRESS_LIMIT,
         member_limit: 1000,
         admins: vec![creator.to_string()],
-        admins_mutable: true
+        admins_mutable: true,
     };
     router
         .instantiate_contract(
