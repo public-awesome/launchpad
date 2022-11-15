@@ -78,7 +78,7 @@ pub fn contract() -> Box<dyn Contract<sg_std::StargazeMsgWrapper>> {
         crate::contract::instantiate,
         crate::contract::query,
     )
-    .with_reply(crate::contract::reply);
+    .with_reply(crate::reply::reply);
     Box::new(contract)
 }
 

@@ -4,19 +4,18 @@ use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 use crate::state::{Config, CONFIG};
 
 use cosmwasm_std::{entry_point, Addr};
-use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Reply, StdResult};
+use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult};
 use cw2::set_contract_version;
-use cw_utils::parse_reply_instantiate_data;
 use sg_std::Response;
 use vending_minter::helpers::MinterContract;
 use whitelist_generic::helpers::WhitelistGenericContract;
 
 use crate::build_msg::{
-    build_add_member_minter_msg, build_bank_message, build_whitelist_instantiate_msg,
+    build_messages_for_claim_and_whitelist_add, build_whitelist_instantiate_msg,
 };
 use crate::computation::compute_valid_eth_sig;
-use crate::constants::{CONTRACT_NAME, CONTRACT_VERSION, INIT_WHITELIST_REPLY_ID};
-use crate::responses::{get_add_eligible_eth_response, get_remove_eligible_eth_response};
+use crate::constants::{CONTRACT_NAME, CONTRACT_VERSION};
+use crate::responses::get_add_eligible_eth_response;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -84,22 +83,18 @@ fn claim_airdrop(
     eth_sig: String,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
-
     let is_eligible = airdrop_check_eligible(deps.as_ref(), eth_address.clone()).unwrap();
     let valid_eth_signature =
         compute_valid_eth_sig(&deps, info.clone(), &config, eth_sig, eth_address.clone());
 
     let (mut res, mut claimed_amount) = (Response::new(), 0);
     if is_eligible && valid_eth_signature.verifies {
-        res = get_remove_eligible_eth_response(&deps, eth_address).unwrap();
-        let bank_send = build_bank_message(info.clone(), config.airdrop_amount);
-        res = res.add_submessage(bank_send);
-        let collection_whitelist = get_collection_whitelist(&deps)?;
-        res = res.add_message(build_add_member_minter_msg(
+        res = build_messages_for_claim_and_whitelist_add(
             deps,
-            info.sender,
-            collection_whitelist,
-        )?);
+            info,
+            eth_address,
+            config.airdrop_amount,
+        )?;
         claimed_amount = config.airdrop_amount;
     }
     Ok(res
@@ -154,25 +149,4 @@ fn airdrop_check_eligible(deps: Deps, eth_address: String) -> StdResult<bool> {
 fn get_minter(deps: Deps) -> StdResult<Addr> {
     let config = CONFIG.load(deps.storage)?;
     Ok(config.minter_address)
-}
-
-#[cfg_attr(not(feature = "library"), entry_point)]
-pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
-    if msg.id != INIT_WHITELIST_REPLY_ID {
-        return Err(ContractError::InvalidReplyID {});
-    }
-    let reply = parse_reply_instantiate_data(msg);
-    match reply {
-        Ok(res) => {
-            let whitelist_address = &res.contract_address;
-            let mut config = CONFIG.load(deps.storage)?;
-            config.whitelist_address = Some(whitelist_address.to_string());
-            CONFIG.save(deps.storage, &config)?;
-
-            Ok(Response::default()
-                .add_attribute("action", "init_whitelist_reply")
-                .add_attribute("whitelist_address", whitelist_address))
-        }
-        Err(_) => Err(ContractError::ReplyOnSuccess {}),
-    }
 }

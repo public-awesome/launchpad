@@ -1,9 +1,12 @@
 use crate::constants::{GENERIC_WHITELIST_LABEL, INIT_WHITELIST_REPLY_ID, NATIVE_DENOM};
+use crate::contract::get_collection_whitelist;
 #[cfg(not(feature = "library"))]
 use crate::msg::InstantiateMsg;
+use crate::responses::get_remove_eligible_eth_response;
+use crate::ContractError;
 use cosmwasm_std::{coins, Addr, BankMsg};
 use cosmwasm_std::{to_binary, DepsMut, Env, MessageInfo, StdResult, WasmMsg};
-use sg_std::{CosmosMsg, StargazeMsgWrapper, SubMsg};
+use sg_std::{CosmosMsg, Response, StargazeMsgWrapper, SubMsg};
 use sg_whitelist::interface::CollectionWhitelistContract;
 use sg_whitelist::msg::AddMembersMsg;
 use sg_whitelist::msg::ExecuteMsg as CollectionWhitelistExecuteMsg;
@@ -78,4 +81,18 @@ pub fn build_add_member_minter_msg(
     };
     let execute_msg = CollectionWhitelistExecuteMsg::AddMembers(inner_msg);
     CollectionWhitelistContract(deps.api.addr_validate(&collection_whitelist)?).call(execute_msg)
+}
+
+pub fn build_messages_for_claim_and_whitelist_add(
+    deps: DepsMut,
+    info: MessageInfo,
+    eth_address: String,
+    airdrop_amount: u128,
+) -> Result<Response, ContractError> {
+    let mut res = get_remove_eligible_eth_response(&deps, eth_address).unwrap();
+    res = res.add_submessage(build_bank_message(info.clone(), airdrop_amount));
+    let collection_whitelist = get_collection_whitelist(&deps)?;
+    let res = res
+        .add_message(build_add_member_minter_msg(deps, info.sender, collection_whitelist).unwrap());
+    Ok(res)
 }

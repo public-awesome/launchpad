@@ -1,13 +1,14 @@
 pub mod contract;
 mod error;
-
 pub mod msg;
+pub mod reply;
 #[cfg(test)]
 #[path = "./testing/lib.rs"]
 pub mod tests_folder;
 
 #[path = "./helpers/build_msg.rs"]
 pub mod build_msg;
+
 #[path = "./helpers/computation.rs"]
 pub mod computation;
 #[path = "./helpers/constants.rs"]
