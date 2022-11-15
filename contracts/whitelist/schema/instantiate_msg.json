@@ -3,6 +3,8 @@
   "title": "InstantiateMsg",
   "type": "object",
   "required": [
+    "admins",
+    "admins_mutable",
     "end_time",
     "member_limit",
     "members",
@@ -11,6 +13,15 @@
     "start_time"
   ],
   "properties": {
+    "admins": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "admins_mutable": {
+      "type": "boolean"
+    },
     "end_time": {
       "$ref": "#/definitions/Timestamp"
     },

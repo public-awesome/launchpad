@@ -4,7 +4,7 @@ use crate::msg::InstantiateMsg;
 use cosmwasm_std::{coins, Addr, BankMsg};
 use cosmwasm_std::{to_binary, DepsMut, Env, MessageInfo, StdResult, WasmMsg};
 use sg_std::{CosmosMsg, StargazeMsgWrapper, SubMsg};
-use sg_whitelist::helpers::CollectionWhitelistContract;
+use sg_whitelist::interface::CollectionWhitelistContract;
 use sg_whitelist::msg::AddMembersMsg;
 use sg_whitelist::msg::ExecuteMsg as CollectionWhitelistExecuteMsg;
 use whitelist_generic::helpers::WhitelistGenericContract;

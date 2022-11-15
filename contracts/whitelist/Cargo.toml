@@ -47,3 +47,5 @@ thiserror       = { workspace = true }
 
 [dev-dependencies]
 cosmwasm-schema = { workspace = true }
+sg-multi-test = { workspace = true }
+cw-multi-test = { workspace = true }
