@@ -60,17 +60,6 @@ pub fn build_remove_eth_eligible_msg(
     WhitelistGenericContract(deps.api.addr_validate(&whitelist_address)?).call(execute_msg)
 }
 
-pub fn build_update_minter_address_msg(
-    deps: DepsMut,
-    whitelist_address: String,
-    minter_address: String,
-) -> StdResult<CosmosMsg> {
-    let execute_msg = WGExecuteMsg::UpdateMinterContract {
-        minter_contract: minter_address,
-    };
-    WhitelistGenericContract(deps.api.addr_validate(&whitelist_address)?).call(execute_msg)
-}
-
 pub fn build_add_member_minter_msg(
     deps: DepsMut,
     wallet_address: Addr,
