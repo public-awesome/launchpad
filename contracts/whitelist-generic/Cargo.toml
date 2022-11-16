@@ -57,6 +57,4 @@ sg-std = { workspace = true }
 
 [dev-dependencies]
 cw-multi-test = { workspace = true }
-# sg-name = { workspace = true}
 sg-multi-test = { workspace = true }
-# sg721-name = { workspace = true }
