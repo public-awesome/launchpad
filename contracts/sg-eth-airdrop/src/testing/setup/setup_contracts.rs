@@ -94,13 +94,7 @@ pub fn whitelist_generic_contract() -> Box<dyn Contract<StargazeMsgWrapper>> {
 }
 
 pub fn instantiate_contract(
-    // addresses: Vec<String>,
-    // funds_amount: u128,
-    // expected_airdrop_contract_id: u64,
-    // minter_address: Addr,
-    // admin_account: Addr,
-    // app: &mut StargazeApp,
-    params: InstantiateParams,
+    params: InstantiateParams
 ) {
     let addresses = params.addresses;
     let minter_address = params.minter_address;
