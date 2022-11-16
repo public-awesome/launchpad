@@ -1984,7 +1984,7 @@ dependencies = [
  "thiserror",
  "vending-factory",
  "vending-minter",
- "whitelist-generic",
+ "whitelist-generic 0.12.0",
 ]
 
 [[package]]
@@ -2116,6 +2116,18 @@ dependencies = [
  "sg-std 0.21.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg1 0.21.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "thiserror",
+]
+
+[[package]]
+name = "sg-whitelist-basic"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bf0670b0de4489224faa3c18ceb28af7251441118473f454110739a69df587b9"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "schemars",
+ "serde",
 ]
 
 [[package]]
@@ -2742,7 +2754,26 @@ dependencies = [
  "serde",
  "sg-name-minter",
  "sg-std 0.21.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "sg-whitelist-basic",
+ "sg-whitelist-basic 0.12.0 (git+https://github.com/public-awesome/names.git?rev=91256f9ccfcec66fa8d4c2040acc9e10415c711a)",
+ "thiserror",
+]
+
+[[package]]
+name = "whitelist-generic"
+version = "0.21.1"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-controllers",
+ "cw-multi-test",
+ "cw-storage-plus",
+ "cw-utils",
+ "cw2",
+ "schemars",
+ "serde",
+ "sg-multi-test 0.21.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg-std 0.21.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg-whitelist-basic 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "thiserror",
 ]
 

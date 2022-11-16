@@ -3,42 +3,43 @@ members = ["packages/*", "contracts/*"]
 resolver = "2"
 
 [workspace.package]
-version    = "0.21.1"
-edition    = "2021"
-homepage   = "https://stargaze.zone"
+version = "0.21.1"
+edition = "2021"
+homepage = "https://stargaze.zone"
 repository = "https://github.com/public-awesome/launchpad"
-license    = "Apache-2.0"
+license = "Apache-2.0"
 
 [workspace.dependencies]
-base-factory      = { version = "0.21.1", path = "contracts/base-factory" }
-cosmwasm-schema   = "1.1.5"
-cosmwasm-std      = "1.1.5"
-cw2               = "0.16.0"
-cw4               = "0.16.0"
-cw4-group         = "0.16.0"
-cw721             = "0.16.0"
-cw721-base        = "0.16.0"
-cw-multi-test     = "0.16.0"
-cw-storage-plus   = "0.16.0"
-cw-utils          = "0.16.0"
-schemars          = "0.8.11"
-serde             = { version = "1.0.145", default-features = false, features = ["derive"] }
-sg1               = "0.21.1"
-sg2               = "0.21.1"
-sg4               = "0.21.1"
-sg721             = "0.21.1"
-sg721-base        = { version = "0.21.1", path = "contracts/sg721-base" }
-sg-metadata       = "0.21.1"
-sg-multi-test     = "0.21.1"
-sg-splits         = { version = "0.21.1", path = "contracts/splits" }
-sg-std            = "0.21.1"
-sg-whitelist      = { version = "0.21.1", path = "contracts/whitelist" }
-thiserror         = "1.0.31"
-url               = "2.2.2"
-sha2            = {version = "0.10.2", default-features = false }
-rand_core       = { version = "0.6.4", default-features = false }
-vending-factory   = { version = "0.21.1", path = "contracts/vending-factory" }
-vending-minter  = { version = "0.21.1", path = "contracts/vending-minter" }
+base-factory = { version = "0.21.1", path = "contracts/base-factory" }
+cosmwasm-schema = "1.1.5"
+cosmwasm-std = "1.1.5"
+cw2 = "0.16.0"
+cw4 = "0.16.0"
+cw4-group = "0.16.0"
+cw721 = "0.16.0"
+cw721-base = "0.16.0"
+cw-multi-test = "0.16.0"
+cw-storage-plus = "0.16.0"
+cw-utils = "0.16.0"
+schemars = "0.8.11"
+serde = { version = "1.0.145", default-features = false, features = ["derive"] }
+sg1 = "0.21.1"
+sg2 = "0.21.1"
+sg4 = "0.21.1"
+sg721 = "0.21.1"
+sg721-base = { version = "0.21.1", path = "contracts/sg721-base" }
+sg-metadata = "0.21.1"
+sg-multi-test = "0.21.1"
+sg-splits = { version = "0.21.1", path = "contracts/splits" }
+sg-std = "0.21.1"
+sg-whitelist = { version = "0.21.1", path = "contracts/whitelist" }
+thiserror = "1.0.31"
+url = "2.2.2"
+sha2 = { version = "0.10.2", default-features = false }
+rand_core = { version = "0.6.4", default-features = false }
+vending-factory = { version = "0.21.1", path = "contracts/vending-factory" }
+vending-minter = { version = "0.21.1", path = "contracts/vending-minter" }
+sg-whitelist-basic = { version = "0.12.0" }
 
 [profile.release.package.sg721]
 codegen-units = 1
