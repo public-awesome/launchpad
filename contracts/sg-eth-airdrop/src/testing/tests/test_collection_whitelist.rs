@@ -11,7 +11,7 @@ use crate::tests_folder::setup_contracts::instantiate_contract;
 use crate::tests_folder::setup_contracts::{custom_mock_app, execute_contract_with_msg};
 use crate::tests_folder::setup_minter::configure_minter_with_whitelist;
 use crate::tests_folder::setup_signatures::{get_msg_plaintext, get_wallet_and_sig};
-
+use crate::tests_folder::test_msgs::InstantiateParams;
 extern crate whitelist_generic;
 
 #[test]
@@ -24,14 +24,16 @@ fn test_set_minter_contract() {
 
     let first_minter = Addr::unchecked("first_minter");
     let contract_admin = Addr::unchecked(config.admin);
-    instantiate_contract(
-        vec![eth_addr_str],
-        10000,
-        5,
-        first_minter.clone(),
-        contract_admin.clone(),
-        &mut app,
-    );
+    let params = InstantiateParams {
+        addresses: vec![eth_addr_str],
+        funds_amount: WHITELIST_AMOUNT,
+        expected_airdrop_contract_id: 5,
+        minter_address: first_minter.clone(),
+        admin_account: contract_admin.clone(),
+        app: &mut app,
+        per_address_limit: 1,
+    };
+    instantiate_contract(params);
     let airdrop_contract = Addr::unchecked(AIRDROP_ADDR_STR);
     let query_msg = QueryMsg::GetMinter {};
     let result: Addr = app
@@ -65,15 +67,17 @@ fn test_claim_added_to_minter_whitelist() {
     let (_, eth_sig_str, _, eth_addr_str) = get_wallet_and_sig(claim_plaintext.clone());
 
     let airdrop_contract = Addr::unchecked(AIRDROP_ADDR_STR);
+    let params = InstantiateParams {
+        addresses: vec![eth_addr_str.clone()],
+        funds_amount: WHITELIST_AMOUNT,
+        expected_airdrop_contract_id: 5,
+        minter_address: minter_addr.clone(),
+        admin_account: creator.clone(),
+        app: &mut app,
+        per_address_limit: 1,
+    };
+    instantiate_contract(params);
 
-    instantiate_contract(
-        vec![eth_addr_str.clone()],
-        WHITELIST_AMOUNT,
-        5,
-        minter_addr.clone(),
-        creator.clone(),
-        &mut app,
-    );
     let stargaze_wallet_01 = Addr::unchecked(STARGAZE_WALLET_01);
     update_admin_for_whitelist(&mut app, creator, airdrop_contract.clone(), whiltelist_addr);
     send_funds_to_address(&mut app, STARGAZE_WALLET_01, MINT_PRICE);

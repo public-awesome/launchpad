@@ -10,6 +10,7 @@ use crate::tests_folder::collection_constants::WHITELIST_AMOUNT;
 use eyre::Result;
 
 extern crate whitelist_generic;
+use super::test_msgs::InstantiateParams;
 use crate::tests_folder::claim_constants::{CONTRACT_CONFIG_PLAINTEXT, NATIVE_DENOM, OWNER};
 use crate::tests_folder::{mock_minter, mock_whitelist};
 
@@ -91,26 +92,28 @@ pub fn whitelist_generic_contract() -> Box<dyn Contract<StargazeMsgWrapper>> {
     Box::new(contract)
 }
 
-pub fn instantiate_contract(
-    addresses: Vec<String>,
-    funds_amount: u128,
-    expected_airdrop_contract_id: u64,
-    minter_address: Addr,
-    admin_account: Addr,
-    app: &mut StargazeApp,
-) {
-    app.sudo(SudoMsg::Bank({
-        BankSudo::Mint {
-            to_address: admin_account.to_string(),
-            amount: coins(funds_amount, NATIVE_DENOM),
-        }
-    }))
-    .map_err(|err| println!("{:?}", err))
-    .ok();
+pub fn instantiate_contract(params: InstantiateParams) {
+    let addresses = params.addresses;
+    let minter_address = params.minter_address;
+    let admin_account = params.admin_account;
+    let funds_amount = params.funds_amount;
+    let per_address_limit = params.per_address_limit;
 
-    let sg_eth_id = app.store_code(contract());
-    let whitelist_code_id = app.store_code(whitelist_generic_contract());
-    assert_eq!(sg_eth_id, expected_airdrop_contract_id);
+    params
+        .app
+        .sudo(SudoMsg::Bank({
+            BankSudo::Mint {
+                to_address: admin_account.to_string(),
+                amount: coins(params.funds_amount, NATIVE_DENOM),
+            }
+        }))
+        .map_err(|err| println!("{:?}", err))
+        .ok();
+
+    let sg_eth_id = params.app.store_code(contract());
+    let whitelist_code_id = params.app.store_code(whitelist_generic_contract());
+    assert_eq!(sg_eth_id, params.expected_airdrop_contract_id);
+
     let msg: InstantiateMsg = InstantiateMsg {
         admin: Addr::unchecked(OWNER),
         claim_msg_plaintext: Addr::unchecked(CONTRACT_CONFIG_PLAINTEXT).into_string(),
@@ -118,8 +121,10 @@ pub fn instantiate_contract(
         addresses,
         whitelist_code_id,
         minter_address,
+        per_address_limit,
     };
-    let _ = app
+    let _ = params
+        .app
         .instantiate_contract(
             sg_eth_id,
             Addr::unchecked(admin_account.clone()),
@@ -129,25 +134,6 @@ pub fn instantiate_contract(
             Some(Addr::unchecked(admin_account).to_string()),
         )
         .unwrap();
-}
-
-pub fn instantiate_contract_get_app(
-    addresses: Vec<String>,
-    funds_amount: u128,
-    expected_airdrop_contract_id: u64,
-    minter_address: Addr,
-) -> StargazeApp {
-    let mut app = custom_mock_app();
-
-    instantiate_contract(
-        addresses,
-        funds_amount,
-        expected_airdrop_contract_id,
-        minter_address,
-        Addr::unchecked(OWNER),
-        &mut app,
-    );
-    app
 }
 
 pub fn execute_contract_with_msg(
@@ -160,4 +146,16 @@ pub fn execute_contract_with_msg(
         .execute_contract(user, target_address, &msg, &[])
         .unwrap();
     Ok(result)
+}
+
+pub fn execute_contract_error_with_msg(
+    msg: ExecuteMsg,
+    app: &mut StargazeApp,
+    user: Addr,
+    target_address: Addr,
+) -> String {
+    let result = app
+        .execute_contract(user, target_address, &msg, &[])
+        .unwrap_err();
+    result.root_cause().to_string()
 }

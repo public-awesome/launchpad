@@ -8,6 +8,7 @@
     "airdrop_amount",
     "claim_msg_plaintext",
     "minter_address",
+    "per_address_limit",
     "whitelist_code_id"
   ],
   "properties": {
@@ -30,6 +31,11 @@
     },
     "minter_address": {
       "$ref": "#/definitions/Addr"
+    },
+    "per_address_limit": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
     },
     "whitelist_code_id": {
       "type": "integer",
