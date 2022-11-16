@@ -18,6 +18,9 @@ mod mock_minter;
 #[path = "./setup/mock_whitelist.rs"]
 mod mock_whitelist;
 
+#[path = "./setup/test_msgs.rs"]
+mod test_msgs;
+
 #[path = "./tests/collection_whitelist_helpers.rs"]
 pub mod collection_whitelist_helpers;
 #[cfg(test)]

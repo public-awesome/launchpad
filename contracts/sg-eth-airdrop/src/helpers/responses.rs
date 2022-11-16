@@ -3,7 +3,7 @@ use crate::state::CONFIG;
 use cosmwasm_std::{DepsMut, MessageInfo};
 use sg_std::Response;
 
-use crate::build_msg::{build_add_eth_eligible_msg, build_remove_eth_eligible_msg};
+use crate::build_msg::{build_add_eth_eligible_msg, build_process_eth_eligible_msg};
 
 pub fn get_add_eligible_eth_response(
     deps: DepsMut,
@@ -26,7 +26,7 @@ pub fn get_add_eligible_eth_response(
     Ok(res)
 }
 
-pub fn get_remove_eligible_eth_response(
+pub fn get_process_eligible_eth_response(
     deps: &DepsMut,
     eth_address: String,
 ) -> Result<Response, ContractError> {
@@ -37,7 +37,7 @@ pub fn get_remove_eligible_eth_response(
     };
 
     let mut res = Response::new();
-    let remove_eth_msg = build_remove_eth_eligible_msg(deps, eth_address, whitelist_address)?;
+    let remove_eth_msg = build_process_eth_eligible_msg(deps, eth_address, whitelist_address)?;
     res = res.add_message(remove_eth_msg);
     Ok(res)
 }

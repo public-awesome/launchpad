@@ -3,6 +3,7 @@ use crate::tests_folder::claim_constants::{MOCK_AIRDROP_ADDR_STR, MOCK_MINTER_AD
 use crate::tests_folder::collection_constants::WHITELIST_AMOUNT;
 use crate::tests_folder::setup_contracts::{custom_mock_app, instantiate_contract};
 use crate::tests_folder::setup_minter::configure_mock_minter_with_mock_whitelist;
+use crate::tests_folder::test_msgs::InstantiateParams;
 use cosmwasm_std::Addr;
 use cw_multi_test::Executor;
 
@@ -19,14 +20,16 @@ fn test_instantiate_with_addresses() {
     let minter_addr = Addr::unchecked(MOCK_MINTER_ADDR_STR);
     let airdrop_contract = Addr::unchecked(MOCK_AIRDROP_ADDR_STR);
 
-    instantiate_contract(
+    let params = InstantiateParams {
         addresses,
-        WHITELIST_AMOUNT,
-        4,
-        minter_addr,
-        Addr::unchecked(OWNER),
-        &mut app,
-    );
+        funds_amount: WHITELIST_AMOUNT,
+        expected_airdrop_contract_id: 4,
+        minter_address: minter_addr,
+        admin_account: Addr::unchecked(OWNER),
+        app: &mut app,
+        per_address_limit: 1,
+    };
+    instantiate_contract(params);
 
     let query_msg = QueryMsg::AirdropEligible {
         eth_address: "addr1".to_string(),
@@ -53,14 +56,17 @@ fn test_not_authorized_add_eth() {
     configure_mock_minter_with_mock_whitelist(&mut app);
     let minter_addr = Addr::unchecked(MOCK_MINTER_ADDR_STR);
     let airdrop_contract = Addr::unchecked(MOCK_AIRDROP_ADDR_STR);
-    instantiate_contract(
-        vec![],
-        WHITELIST_AMOUNT,
-        4,
-        minter_addr,
-        Addr::unchecked(OWNER),
-        &mut app,
-    );
+
+    let params = InstantiateParams {
+        addresses: vec![],
+        funds_amount: WHITELIST_AMOUNT,
+        expected_airdrop_contract_id: 4,
+        minter_address: minter_addr,
+        admin_account: Addr::unchecked(OWNER),
+        app: &mut app,
+        per_address_limit: 1,
+    };
+    instantiate_contract(params);
 
     let fake_admin = Addr::unchecked("fake_admin");
     let eth_address = Addr::unchecked("testing_addr");
@@ -79,14 +85,17 @@ fn test_authorized_add_eth() {
     configure_mock_minter_with_mock_whitelist(&mut app);
     let minter_addr = Addr::unchecked(MOCK_MINTER_ADDR_STR);
     let airdrop_contract = Addr::unchecked(MOCK_AIRDROP_ADDR_STR);
-    instantiate_contract(
-        vec![],
-        WHITELIST_AMOUNT,
-        4,
-        minter_addr,
-        Addr::unchecked(OWNER),
-        &mut app,
-    );
+
+    let params = InstantiateParams {
+        addresses: vec![],
+        funds_amount: WHITELIST_AMOUNT,
+        expected_airdrop_contract_id: 4,
+        minter_address: minter_addr,
+        admin_account: Addr::unchecked(OWNER),
+        app: &mut app,
+        per_address_limit: 1,
+    };
+    instantiate_contract(params);
 
     let eth_address = Addr::unchecked("testing_addr");
     let execute_msg = ExecuteMsg::AddEligibleEth {
@@ -104,14 +113,17 @@ fn test_add_eth_and_verify() {
     let minter_addr = Addr::unchecked(MOCK_MINTER_ADDR_STR);
     let airdrop_contract = Addr::unchecked(MOCK_AIRDROP_ADDR_STR);
 
-    instantiate_contract(
-        vec![],
-        WHITELIST_AMOUNT,
-        4,
-        minter_addr,
-        Addr::unchecked(OWNER),
-        &mut app,
-    );
+    let params = InstantiateParams {
+        addresses: vec![],
+        funds_amount: WHITELIST_AMOUNT,
+        expected_airdrop_contract_id: 4,
+        minter_address: minter_addr,
+        admin_account: Addr::unchecked(OWNER),
+        app: &mut app,
+        per_address_limit: 1,
+    };
+    instantiate_contract(params);
+
     let eth_address_str = Addr::unchecked("testing_addr").to_string();
     let execute_msg = ExecuteMsg::AddEligibleEth {
         eth_addresses: vec![eth_address_str.clone()],

@@ -11,6 +11,7 @@ pub struct InstantiateMsg {
     pub addresses: Vec<String>,
     pub whitelist_code_id: u64,
     pub minter_address: Addr,
+    pub per_address_limit: u32,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
