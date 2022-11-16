@@ -25,7 +25,6 @@ pub fn instantiate(
     let config = Config {
         admin: info.sender,
         per_address_limit: msg.per_address_limit,
-        minter_contract: None,
         /// 1% = 100, 50% = 5000
         mint_discount_bps: msg.mint_discount_bps,
     };
@@ -69,7 +68,6 @@ pub fn execute(
         ExecuteMsg::Purge {} => execute_purge(deps, info),
     }
 }
-
 
 pub fn execute_update_admin(
     deps: DepsMut,

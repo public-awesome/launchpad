@@ -1,5 +1,3 @@
-use crate::integration_tests::tests::instantiate_with_addresses;
-
 #[cfg(test)]
 mod tests {
     use crate::msg::*;
@@ -39,26 +37,24 @@ mod tests {
     }
 
     pub fn instantiate_with_addresses(app: &mut StargazeApp) -> Addr {
-        let addrs = get_init_address_list();    
+        let addrs = get_init_address_list();
         let msg = InstantiateMsg {
             per_address_limit: PER_ADDRESS_LIMIT,
-            addresses: addrs.clone(),
+            addresses: addrs,
             mint_discount_bps: None,
         };
         let wl_id = app.store_code(wl_contract());
-        let wl_addr = app
-            .instantiate_contract(
-                wl_id,
-                Addr::unchecked(CREATOR),
-                &msg,
-                &[],
-                "wl-contract".to_string(),
-                None,
-            )
-            .unwrap();
-            wl_addr
-        }
-    
+        app.instantiate_contract(
+            wl_id,
+            Addr::unchecked(CREATOR),
+            &msg,
+            &[],
+            "wl-contract".to_string(),
+            None,
+        )
+        .unwrap()
+    }
+
     #[test]
     pub fn test_instantiate_with_addresses() {
         let mut app = custom_mock_app();
@@ -183,32 +179,28 @@ mod tests {
             .query_wasm_smart(&wl_addr, &QueryMsg::AddressCount {})
             .unwrap();
         assert_eq!(res, 5);
-
     }
 
-    pub fn add_addresses(addresses: Vec<String> ) {
-        let mut app = custom_mock_app();
-        let wl_addr = instantiate_with_addresses(&mut app);
-
-        let msg = ExecuteMsg::AddAddresses {
-            addresses: addresses,
-        };
-        let res = app.execute_contract(Addr::unchecked(CREATOR), wl_addr.clone(), &msg, &[]);
+    pub fn add_addresses(app: &mut StargazeApp, wl_addr: Addr, addresses: Vec<String>) {
+        let msg = ExecuteMsg::AddAddresses { addresses };
+        let res = app.execute_contract(Addr::unchecked(CREATOR), wl_addr, &msg, &[]);
         assert!(res.is_ok());
     }
 
     #[test]
     pub fn add_addresses_success() {
-        let addresses = vec!["addr0007".to_string(), "addr0006".to_string()];
-        add_addresses(addresses);
-    }
-
-    #[test]
-    pub fn remove_addresses_fail(){
         let mut app = custom_mock_app();
         let wl_addr = instantiate_with_addresses(&mut app);
         let addresses = vec!["addr0007".to_string(), "addr0006".to_string()];
-        add_addresses(addresses);
+        add_addresses(&mut app, wl_addr, addresses);
+    }
+
+    #[test]
+    pub fn remove_invalid_address_list_fail() {
+        let mut app = custom_mock_app();
+        let wl_addr = instantiate_with_addresses(&mut app);
+        let addresses = vec!["addr0007".to_string(), "addr0006".to_string()];
+        add_addresses(&mut app, wl_addr.clone(), addresses);
 
         let res: bool = app
             .wrap()
@@ -219,7 +211,6 @@ mod tests {
                 },
             )
             .unwrap();
-        println!("res is {:?}", res);
         assert!(res);
         let res: u64 = app
             .wrap()
@@ -238,121 +229,144 @@ mod tests {
                 "addr0006".to_string(),
             ],
         };
+        let res = app.execute_contract(Addr::unchecked(CREATOR), wl_addr, &msg, &[]);
+        assert!(res.is_err());
+    }
+    #[test]
+    pub fn test_remove_addresses_success() {
+        let mut app = custom_mock_app();
+        let wl_addr = instantiate_with_addresses(&mut app);
+        let addresses = vec!["addr0007".to_string(), "addr0006".to_string()];
+        add_addresses(&mut app, wl_addr.clone(), addresses);
+
+        let msg = ExecuteMsg::RemoveAddresses {
+            addresses: vec![
+                "addr0001".to_string(),
+                "addr0002".to_string(),
+                "addr0003".to_string(),
+                "addr0004".to_string(),
+                "addr0006".to_string(),
+            ],
+        };
         let res = app.execute_contract(Addr::unchecked(CREATOR), wl_addr.clone(), &msg, &[]);
-        println!("res is {:?}", res);
+        assert!(res.is_ok());
+        let res: bool = app
+            .wrap()
+            .query_wasm_smart(
+                &wl_addr,
+                &QueryMsg::IncludesAddress {
+                    address: "addr0006".to_string(),
+                },
+            )
+            .unwrap();
+        assert!(!res);
+        let res: u64 = app
+            .wrap()
+            .query_wasm_smart(&wl_addr, &QueryMsg::AddressCount {})
+            .unwrap();
+        assert_eq!(res, 2);
+    }
+
+    pub fn update_per_address_limit(app: &mut StargazeApp, wl_addr: Addr) {
+        // per address limit
+        let new_per_address_limit = 1;
+        let msg = ExecuteMsg::UpdatePerAddressLimit {
+            limit: new_per_address_limit,
+        };
+        let res = app.execute_contract(Addr::unchecked(CREATOR), wl_addr.clone(), &msg, &[]);
+        assert!(res.is_ok());
+        let res: u32 = app
+            .wrap()
+            .query_wasm_smart(&wl_addr, &QueryMsg::PerAddressLimit {})
+            .unwrap();
+        assert_eq!(res, 1);
+    }
+    #[test]
+    pub fn test_update_per_address_limit() {
+        let mut app = custom_mock_app();
+        let wl_addr = instantiate_with_addresses(&mut app);
+        let addresses = vec!["addr0006".to_string()];
+        add_addresses(&mut app, wl_addr.clone(), addresses);
+        update_per_address_limit(&mut app, wl_addr)
+    }
+    #[test]
+    pub fn test_surpass_process_limit() {
+        let mut app = custom_mock_app();
+        let wl_addr = instantiate_with_addresses(&mut app);
+        let addresses = vec!["addr0007".to_string()];
+        add_addresses(&mut app, wl_addr.clone(), addresses);
+        update_per_address_limit(&mut app, wl_addr.clone());
+
+        // surpass limit
+        let res: bool = app
+            .wrap()
+            .query_wasm_smart(
+                &wl_addr,
+                &QueryMsg::IsProcessable {
+                    address: "addr0007".to_string(),
+                },
+            )
+            .unwrap();
+        assert!(res);
+        let msg = ExecuteMsg::ProcessAddress {
+            address: "addr0007".to_string(),
+        };
+        let res = app.execute_contract(Addr::unchecked(CREATOR), wl_addr.clone(), &msg, &[]);
+
+        assert!(res.is_ok());
+        let res: bool = app
+            .wrap()
+            .query_wasm_smart(
+                &wl_addr,
+                &QueryMsg::IsProcessable {
+                    address: "addr0007".to_string(),
+                },
+            )
+            .unwrap();
+
+        assert!(!res);
+        let msg = ExecuteMsg::ProcessAddress {
+            address: "addr0007".to_string(),
+        };
+        let res = app.execute_contract(Addr::unchecked(CREATOR), wl_addr, &msg, &[]);
         assert!(res.is_err());
     }
 
-//         let msg = ExecuteMsg::RemoveAddresses {
-//             addresses: vec![
-//                 "addr0001".to_string(),
-//                 "addr0002".to_string(),
-//                 "addr0003".to_string(),
-//                 "addr0004".to_string(),
-//                 "addr0006".to_string(),
-//             ],
-//         };
-//         let res = app.execute_contract(Addr::unchecked(OTHER_ADMIN), wl_addr.clone(), &msg, &[]);
-//         assert!(res.is_ok());
-//         let res: bool = app
-//             .wrap()
-//             .query_wasm_smart(
-//                 &wl_addr,
-//                 &QueryMsg::IncludesAddress {
-//                     address: "addr0006".to_string(),
-//                 },
-//             )
-//             .unwrap();
-//         assert!(!res);
-//         let res: u64 = app
-//             .wrap()
-//             .query_wasm_smart(&wl_addr, &QueryMsg::AddressCount {})
-//             .unwrap();
-//         assert_eq!(res, 2);
+    #[test]
+    pub fn test_purge_whitelist() {
+        let mut app = custom_mock_app();
+        let wl_addr = instantiate_with_addresses(&mut app);
+        let addresses = vec!["addr0007".to_string()];
+        add_addresses(&mut app, wl_addr.clone(), addresses);
+        update_per_address_limit(&mut app, wl_addr.clone());
 
-//         // per address limit
-//         let new_per_address_limit = 1;
-//         let msg = ExecuteMsg::UpdatePerAddressLimit {
-//             limit: new_per_address_limit,
-//         };
-//         let res = app.execute_contract(Addr::unchecked(OTHER_ADMIN), wl_addr.clone(), &msg, &[]);
-//         assert!(res.is_ok());
-//         let res: u32 = app
-//             .wrap()
-//             .query_wasm_smart(&wl_addr, &QueryMsg::PerAddressLimit {})
-//             .unwrap();
-//         assert_eq!(res, 1);
+        // purge
+        let msg = ExecuteMsg::Purge {};
+        let res = app.execute_contract(Addr::unchecked(CREATOR), wl_addr.clone(), &msg, &[]);
+        assert!(res.is_ok());
+        let res: u32 = app
+            .wrap()
+            .query_wasm_smart(&wl_addr, &QueryMsg::AddressCount {})
+            .unwrap();
+        assert_eq!(res, 0);
+        // does not include addr0007
+        let res: bool = app
+            .wrap()
+            .query_wasm_smart(
+                &wl_addr,
+                &QueryMsg::IncludesAddress {
+                    address: "addr0007".to_string(),
+                },
+            )
+            .unwrap();
+        assert!(!res);
 
-//         // surpass limit
-//         let res: bool = app
-//             .wrap()
-//             .query_wasm_smart(
-//                 &wl_addr,
-//                 &QueryMsg::IsProcessable {
-//                     address: "addr0007".to_string(),
-//                 },
-//             )
-//             .unwrap();
-//         assert!(res);
-//         let msg = ExecuteMsg::ProcessAddress {
-//             address: "addr0007".to_string(),
-//         };
-//         let res = app.execute_contract(
-//             Addr::unchecked(OTHER_ADMIN.clone()),
-//             wl_addr.clone(),
-//             &msg,
-//             &[],
-//         );
-
-//         assert!(res.is_ok());
-//         let res: bool = app
-//             .wrap()
-//             .query_wasm_smart(
-//                 &wl_addr,
-//                 &QueryMsg::IsProcessable {
-//                     address: "addr0007".to_string(),
-//                 },
-//             )
-//             .unwrap();
-//         assert!(!res);
-//         let msg = ExecuteMsg::ProcessAddress {
-//             address: "addr0007".to_string(),
-//         };
-//         let res = app.execute_contract(
-//             Addr::unchecked(OTHER_ADMIN.clone()),
-//             wl_addr.clone(),
-//             &msg,
-//             &[],
-//         );
-//         assert!(res.is_err());
-
-//         // purge
-//         let msg = ExecuteMsg::Purge {};
-//         let res = app.execute_contract(Addr::unchecked(OTHER_ADMIN), wl_addr.clone(), &msg, &[]);
-//         assert!(res.is_ok());
-//         let res: u32 = app
-//             .wrap()
-//             .query_wasm_smart(&wl_addr, &QueryMsg::AddressCount {})
-//             .unwrap();
-//         assert_eq!(res, 0);
-//         // does not include addr0007
-//         let res: bool = app
-//             .wrap()
-//             .query_wasm_smart(
-//                 &wl_addr,
-//                 &QueryMsg::IncludesAddress {
-//                     address: "addr0007".to_string(),
-//                 },
-//             )
-//             .unwrap();
-//         assert!(!res);
-
-//         // query config
-//         let res: ConfigResponse = app
-//             .wrap()
-//             .query_wasm_smart(&wl_addr, &QueryMsg::Config {})
-//             .unwrap();
-//         assert_eq!(res.config.admin, Addr::unchecked(OTHER_ADMIN).to_string());
-//         assert_eq!(res.config.per_address_limit, new_per_address_limit);
-//     }
+        // query config
+        let res: ConfigResponse = app
+            .wrap()
+            .query_wasm_smart(&wl_addr, &QueryMsg::Config {})
+            .unwrap();
+        assert_eq!(res.config.admin, Addr::unchecked(CREATOR).to_string());
+        assert_eq!(res.config.per_address_limit, 1);
+    }
 }
