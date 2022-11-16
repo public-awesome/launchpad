@@ -482,7 +482,7 @@ fn test_two_claims_allowed_success() {
 
     let params = InstantiateParams {
         addresses: vec![eth_addr_str.clone()],
-        funds_amount: WHITELIST_AMOUNT,
+        funds_amount: WHITELIST_AMOUNT * 2,
         expected_airdrop_contract_id: 4,
         minter_address: minter_addr,
         admin_account: Addr::unchecked(OWNER),
@@ -496,6 +496,28 @@ fn test_two_claims_allowed_success() {
         .query_all_balances(stargaze_wallet_01.clone())
         .unwrap();
     assert_eq!(balances, []);
+
+    let claim_message = ExecuteMsg::ClaimAirdrop {
+        eth_address: eth_addr_str.clone(),
+        eth_sig: eth_sig_str.clone(),
+    };
+    let _ = execute_contract_with_msg(
+        claim_message,
+        &mut app,
+        stargaze_wallet_01.clone(),
+        airdrop_contract.clone(),
+    )
+    .unwrap();
+
+    let balances = app
+        .wrap()
+        .query_all_balances(stargaze_wallet_01.clone())
+        .unwrap();
+    let expected_balance = [Coin {
+        denom: NATIVE_DENOM.to_string(),
+        amount: Uint128::new(WHITELIST_AMOUNT),
+    }];
+    assert_eq!(balances, expected_balance);
 
     let claim_message = ExecuteMsg::ClaimAirdrop {
         eth_address: eth_addr_str,
@@ -512,7 +534,7 @@ fn test_two_claims_allowed_success() {
     let balances = app.wrap().query_all_balances(stargaze_wallet_01).unwrap();
     let expected_balance = [Coin {
         denom: NATIVE_DENOM.to_string(),
-        amount: Uint128::new(WHITELIST_AMOUNT),
+        amount: Uint128::new(2 * WHITELIST_AMOUNT),
     }];
     assert_eq!(balances, expected_balance)
 }

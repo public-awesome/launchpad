@@ -10,10 +10,9 @@ use crate::tests_folder::collection_constants::WHITELIST_AMOUNT;
 use eyre::Result;
 
 extern crate whitelist_generic;
+use super::test_msgs::InstantiateParams;
 use crate::tests_folder::claim_constants::{CONTRACT_CONFIG_PLAINTEXT, NATIVE_DENOM, OWNER};
 use crate::tests_folder::{mock_minter, mock_whitelist};
-
-use super::test_msgs::InstantiateParams;
 
 pub fn custom_mock_app() -> StargazeApp {
     StargazeApp::default()
@@ -93,13 +92,12 @@ pub fn whitelist_generic_contract() -> Box<dyn Contract<StargazeMsgWrapper>> {
     Box::new(contract)
 }
 
-pub fn instantiate_contract(
-    params: InstantiateParams
-) {
+pub fn instantiate_contract(params: InstantiateParams) {
     let addresses = params.addresses;
     let minter_address = params.minter_address;
     let admin_account = params.admin_account;
     let funds_amount = params.funds_amount;
+    let per_address_limit = params.per_address_limit;
 
     params
         .app
@@ -123,7 +121,7 @@ pub fn instantiate_contract(
         addresses,
         whitelist_code_id,
         minter_address,
-        per_address_limit: 1,
+        per_address_limit,
     };
     let _ = params
         .app

@@ -21,7 +21,7 @@ pub fn build_whitelist_instantiate_msg(
     let whitelist_instantiate_msg = WGInstantiateMsg {
         addresses: msg.addresses,
         mint_discount_bps: Some(0),
-        per_address_limit: 1,
+        per_address_limit: msg.per_address_limit,
     };
     let wasm_msg = WasmMsg::Instantiate {
         code_id: msg.whitelist_code_id,

@@ -8,5 +8,5 @@ pub struct InstantiateParams<'a> {
     pub minter_address: Addr,
     pub admin_account: Addr,
     pub app: &'a mut StargazeApp,
-    pub per_address_limit: u64,
+    pub per_address_limit: u32,
 }
