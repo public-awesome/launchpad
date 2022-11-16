@@ -39,6 +39,7 @@ sha2 = { version = "0.10.2", default-features = false }
 rand_core = { version = "0.6.4", default-features = false }
 vending-factory = { version = "0.21.1", path = "contracts/vending-factory" }
 vending-minter = { version = "0.21.1", path = "contracts/vending-minter" }
+whitelist-generic = { version = "0.21.1", path = "contracts/whitelist-generic" }
 sg-whitelist-basic = { version = "0.12.0" }
 
 [profile.release.package.sg721]
@@ -98,6 +99,10 @@ codegen-units = 1
 incremental = false
 
 [profile.release.package.sg-splits]
+codegen-units = 1
+incremental = false
+
+[profile.release.package.whitelist-generic]
 codegen-units = 1
 incremental = false
 

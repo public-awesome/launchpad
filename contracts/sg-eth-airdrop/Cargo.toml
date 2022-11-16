@@ -61,10 +61,8 @@ schemars = { workspace = true }
 serde = { workspace = true }
 sg-std = { workspace = true }
 thiserror = { workspace = true }
-whitelist-generic = { git = "https://github.com/public-awesome/names.git", rev = "91256f9ccfcec66fa8d4c2040acc9e10415c711a", features = [
-  "library",
-] }
 vending-minter = { workspace = true, features = ["library"] }
+whitelist-generic = { workspace = true, features = ["library"] }
 
 [dev-dependencies]
 async-std = "1.12.0"
