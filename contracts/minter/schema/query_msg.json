@@ -53,6 +53,18 @@
     {
       "type": "object",
       "required": [
+        "discount_price"
+      ],
+      "properties": {
+        "discount_price": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
         "mint_count"
       ],
       "properties": {
