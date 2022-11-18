@@ -11,6 +11,7 @@ pub struct Config {
     pub num_tokens: u32,
     pub sg721_code_id: u64,
     pub unit_price: Coin,
+    pub discount_price: Option<Coin>,
     pub whitelist: Option<Addr>,
     pub start_time: Timestamp,
     pub per_address_limit: u32,

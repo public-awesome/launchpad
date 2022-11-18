@@ -26,6 +26,7 @@ pub enum ExecuteMsg {
     MintTo { recipient: String },
     MintFor { token_id: u32, recipient: String },
     UpdateUnitPrice { price: u128 },
+    UpdateDiscountPrice { price: u128 },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -35,6 +36,7 @@ pub enum QueryMsg {
     MintableNumTokens {},
     StartTime {},
     MintPrice {},
+    DiscountPrice {},
     MintCount { address: String },
 }
 
