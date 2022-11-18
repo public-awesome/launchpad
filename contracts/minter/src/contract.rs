@@ -163,8 +163,9 @@ pub fn execute(
         ExecuteMsg::Mint {} => execute_mint_sender(deps, env, info),
         ExecuteMsg::UpdateUnitPrice { price } => execute_update_unit_price(deps, env, info, price),
         ExecuteMsg::UpdateDiscountPrice { price } => {
-            execute_update_unit_price(deps, env, info, price)
+            execute_update_discount_price(deps, env, info, price.u128())
         }
+        ExecuteMsg::RemoveDiscountPrice {} => execute_remove_discount_price(deps, info),
         ExecuteMsg::UpdateStartTime(time) => execute_update_start_time(deps, env, info, time),
         ExecuteMsg::UpdatePerAddressLimit { per_address_limit } => {
             execute_update_per_address_limit(deps, env, info, per_address_limit)
@@ -582,6 +583,24 @@ pub fn execute_update_discount_price(
         .add_attribute("discount_price", price.to_string()))
 }
 
+pub fn execute_remove_discount_price(
+    deps: DepsMut,
+    info: MessageInfo,
+) -> Result<Response, ContractError> {
+    nonpayable(&info)?;
+    let mut config = CONFIG.load(deps.storage)?;
+    if info.sender != config.admin {
+        return Err(ContractError::Unauthorized(
+            "Sender is not an admin".to_owned(),
+        ));
+    }
+    config.discount_price = None;
+    CONFIG.save(deps.storage, &config)?;
+
+    Ok(Response::new()
+        .add_attribute("action", "remove_discount_price")
+        .add_attribute("sender", info.sender))
+}
 // if admin_no_fee => no fee,
 // else if in whitelist => whitelist price
 // else => config unit price
@@ -625,7 +644,6 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::StartTime {} => to_binary(&query_start_time(deps)?),
         QueryMsg::MintableNumTokens {} => to_binary(&query_mintable_num_tokens(deps)?),
         QueryMsg::MintPrice {} => to_binary(&query_mint_price(deps)?),
-        QueryMsg::DiscountPrice {} => to_binary(&query_mint_price(deps)?),
         QueryMsg::MintCount { address } => to_binary(&query_mint_count(deps, address)?),
     }
 }
@@ -642,6 +660,7 @@ fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
         num_tokens: config.num_tokens,
         start_time: config.start_time,
         unit_price: config.unit_price,
+        discount_price: config.discount_price,
         per_address_limit: config.per_address_limit,
         whitelist: config.whitelist.map(|w| w.to_string()),
     })
@@ -672,6 +691,7 @@ fn query_mint_price(deps: Deps) -> StdResult<MintPriceResponse> {
     let config = CONFIG.load(deps.storage)?;
     let current_price = mint_price(deps, false)?;
     let public_price = config.unit_price;
+    let discount_price = config.discount_price;
     let whitelist_price: Option<Coin> = if let Some(whitelist) = config.whitelist {
         let wl_config: WhitelistConfigResponse = deps
             .querier
@@ -683,6 +703,7 @@ fn query_mint_price(deps: Deps) -> StdResult<MintPriceResponse> {
     Ok(MintPriceResponse {
         current_price,
         public_price,
+        discount_price,
         whitelist_price,
     })
 }

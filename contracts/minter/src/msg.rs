@@ -1,4 +1,4 @@
-use cosmwasm_std::{Coin, Timestamp};
+use cosmwasm_std::{Coin, Timestamp, Uint128};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -26,7 +26,8 @@ pub enum ExecuteMsg {
     MintTo { recipient: String },
     MintFor { token_id: u32, recipient: String },
     UpdateUnitPrice { price: u128 },
-    UpdateDiscountPrice { price: u128 },
+    UpdateDiscountPrice { price: Uint128 },
+    RemoveDiscountPrice {},
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -36,7 +37,6 @@ pub enum QueryMsg {
     MintableNumTokens {},
     StartTime {},
     MintPrice {},
-    DiscountPrice {},
     MintCount { address: String },
 }
 
@@ -50,6 +50,7 @@ pub struct ConfigResponse {
     pub sg721_code_id: u64,
     pub start_time: Timestamp,
     pub unit_price: Coin,
+    pub discount_price: Option<Coin>,
     pub whitelist: Option<String>,
 }
 
@@ -67,6 +68,7 @@ pub struct StartTimeResponse {
 pub struct MintPriceResponse {
     pub public_price: Coin,
     pub whitelist_price: Option<Coin>,
+    pub discount_price: Option<Coin>,
     pub current_price: Coin,
 }
 
