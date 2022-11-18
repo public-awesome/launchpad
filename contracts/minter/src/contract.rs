@@ -114,6 +114,7 @@ pub fn instantiate(
         per_address_limit: msg.per_address_limit,
         whitelist: whitelist_addr,
         start_time: msg.start_time,
+        discount_price: None,
     };
     CONFIG.save(deps.storage, &config)?;
     MINTABLE_NUM_TOKENS.save(deps.storage, &msg.num_tokens)?;
@@ -161,6 +162,9 @@ pub fn execute(
     match msg {
         ExecuteMsg::Mint {} => execute_mint_sender(deps, env, info),
         ExecuteMsg::UpdateUnitPrice { price } => execute_update_unit_price(deps, env, info, price),
+        ExecuteMsg::UpdateDiscountPrice { price } => {
+            execute_update_unit_price(deps, env, info, price)
+        }
         ExecuteMsg::UpdateStartTime(time) => execute_update_start_time(deps, env, info, time),
         ExecuteMsg::UpdatePerAddressLimit { per_address_limit } => {
             execute_update_per_address_limit(deps, env, info, per_address_limit)
@@ -537,6 +541,47 @@ pub fn execute_update_unit_price(
         .add_attribute("unit_price", price.to_string()))
 }
 
+pub fn execute_update_discount_price(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    price: u128,
+) -> Result<Response, ContractError> {
+    nonpayable(&info)?;
+    let mut config = CONFIG.load(deps.storage)?;
+    if info.sender != config.admin {
+        return Err(ContractError::Unauthorized(
+            "Sender is not an admin".to_owned(),
+        ));
+    }
+    if env.block.time < config.start_time {
+        return Err(ContractError::BeforeMintStartTime {});
+    }
+
+    // discount price can't be greater than unit price
+    if price > config.unit_price.amount.u128() {
+        return Err(ContractError::UpdatedUnitPriceTooHigh {
+            allowed: config.unit_price.amount.u128(),
+            updated: price,
+        });
+    }
+
+    // Check that the price is greater than the minimum
+    if MIN_MINT_PRICE > price {
+        return Err(ContractError::InsufficientMintPrice {
+            expected: MIN_MINT_PRICE,
+            got: price,
+        });
+    }
+    config.discount_price = Some(coin(price, config.unit_price.denom.clone()));
+    CONFIG.save(deps.storage, &config)?;
+
+    Ok(Response::new()
+        .add_attribute("action", "update_discount_price")
+        .add_attribute("sender", info.sender)
+        .add_attribute("discount_price", price.to_string()))
+}
+
 // if admin_no_fee => no fee,
 // else if in whitelist => whitelist price
 // else => config unit price
@@ -560,7 +605,8 @@ pub fn mint_price(deps: Deps, admin_no_fee: bool) -> Result<Coin, StdError> {
     if wl_config.is_active {
         Ok(wl_config.unit_price)
     } else {
-        Ok(config.unit_price)
+        let price = config.discount_price.unwrap_or(config.unit_price);
+        Ok(price)
     }
 }
 
@@ -579,6 +625,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::StartTime {} => to_binary(&query_start_time(deps)?),
         QueryMsg::MintableNumTokens {} => to_binary(&query_mintable_num_tokens(deps)?),
         QueryMsg::MintPrice {} => to_binary(&query_mint_price(deps)?),
+        QueryMsg::DiscountPrice {} => to_binary(&query_mint_price(deps)?),
         QueryMsg::MintCount { address } => to_binary(&query_mint_count(deps, address)?),
     }
 }
