@@ -19,6 +19,16 @@
     "base_token_uri": {
       "type": "string"
     },
+    "discount_price": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/Coin"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
     "num_tokens": {
       "type": "integer",
       "format": "uint32",
