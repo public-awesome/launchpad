@@ -1,7 +1,7 @@
 use cosmwasm_std::{DepsMut, MessageInfo, StdError, StdResult};
 
+use crate::ethereum::verify_ethereum_text;
 use crate::msg::VerifyResponse;
-use crate::signature_verify::verify_ethereum_text;
 use crate::state::Config;
 
 pub fn compute_valid_eth_sig(

@@ -1,17 +1,15 @@
 use cosmwasm_std::Addr;
 
 use crate::msg::QueryMsg;
-use crate::tests_folder::claim_constants::STARGAZE_WALLET_01;
-use crate::tests_folder::collection_constants::{AIRDROP_ADDR_STR, MINT_PRICE, WHITELIST_AMOUNT};
-use crate::tests_folder::collection_whitelist_helpers::{
-    execute_airdrop_claim, execute_mint_fail_not_on_whitelist, execute_mint_success,
-    send_funds_to_address, update_admin_for_whitelist,
+use crate::tests_folder::constants::{
+    AIRDROP_ADDR_STR, MINT_PRICE, STARGAZE_WALLET_01, WHITELIST_AMOUNT,
 };
-use crate::tests_folder::setup_contracts::instantiate_contract;
-use crate::tests_folder::setup_contracts::{custom_mock_app, execute_contract_with_msg};
-use crate::tests_folder::setup_minter::configure_minter_with_whitelist;
-use crate::tests_folder::setup_signatures::{get_msg_plaintext, get_wallet_and_sig};
-use crate::tests_folder::test_msgs::InstantiateParams;
+use crate::tests_folder::tests_setup::{
+    configure_minter_with_whitelist, custom_mock_app, execute_airdrop_claim,
+    execute_contract_with_msg, execute_mint_fail_not_on_whitelist, execute_mint_success,
+    get_msg_plaintext, get_wallet_and_sig, instantiate_contract, send_funds_to_address,
+    update_admin_for_whitelist, InstantiateParams,
+};
 extern crate whitelist_generic;
 
 #[test]

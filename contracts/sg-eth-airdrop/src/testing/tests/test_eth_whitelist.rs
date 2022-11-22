@@ -1,9 +1,11 @@
 use crate::msg::{ExecuteMsg, QueryMsg};
-use crate::tests_folder::claim_constants::{MOCK_AIRDROP_ADDR_STR, MOCK_MINTER_ADDR_STR, OWNER};
-use crate::tests_folder::collection_constants::WHITELIST_AMOUNT;
-use crate::tests_folder::setup_contracts::{custom_mock_app, instantiate_contract};
-use crate::tests_folder::setup_minter::configure_mock_minter_with_mock_whitelist;
-use crate::tests_folder::test_msgs::InstantiateParams;
+use crate::tests_folder::constants::{
+    MOCK_AIRDROP_ADDR_STR, MOCK_MINTER_ADDR_STR, OWNER, WHITELIST_AMOUNT,
+};
+use crate::tests_folder::tests_setup::{
+    configure_mock_minter_with_mock_whitelist, custom_mock_app, instantiate_contract,
+    InstantiateParams,
+};
 use cosmwasm_std::Addr;
 use cw_multi_test::Executor;
 

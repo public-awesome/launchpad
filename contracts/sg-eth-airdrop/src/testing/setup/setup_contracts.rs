@@ -6,13 +6,16 @@ use sg_multi_test::StargazeApp;
 use sg_std::{self, StargazeMsgWrapper};
 
 use crate::msg::{ExecuteMsg, InstantiateMsg};
-use crate::tests_folder::collection_constants::WHITELIST_AMOUNT;
+use crate::tests_folder::constants::WHITELIST_AMOUNT;
 use eyre::Result;
 
 extern crate whitelist_generic;
 use super::test_msgs::InstantiateParams;
-use crate::tests_folder::claim_constants::{CONTRACT_CONFIG_PLAINTEXT, NATIVE_DENOM, OWNER};
-use crate::tests_folder::{mock_minter, mock_whitelist};
+use crate::tests_folder::constants::{CONTRACT_CONFIG_PLAINTEXT, NATIVE_DENOM, OWNER};
+use crate::tests_folder::tests_setup::{
+    mock_minter_execute, mock_minter_instantiate, mock_minter_query, mock_whitelist_execute,
+    mock_whitelist_instantiate, mock_whitelist_query,
+};
 
 pub fn custom_mock_app() -> StargazeApp {
     StargazeApp::default()
@@ -20,18 +23,18 @@ pub fn custom_mock_app() -> StargazeApp {
 
 pub fn mock_minter() -> Box<dyn Contract<StargazeMsgWrapper>> {
     let contract = ContractWrapper::new(
-        mock_minter::execute,
-        mock_minter::instantiate,
-        mock_minter::query,
+        mock_minter_execute,
+        mock_minter_instantiate,
+        mock_minter_query,
     );
     Box::new(contract)
 }
 
 pub fn mock_whitelist() -> Box<dyn Contract<StargazeMsgWrapper>> {
     let contract = ContractWrapper::new(
-        mock_whitelist::execute,
-        mock_whitelist::instantiate,
-        mock_whitelist::query,
+        mock_whitelist_execute,
+        mock_whitelist_instantiate,
+        mock_whitelist_query,
     );
     Box::new(contract)
 }

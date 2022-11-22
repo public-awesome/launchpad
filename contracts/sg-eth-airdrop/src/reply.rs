@@ -2,7 +2,7 @@
 use crate::error::ContractError;
 use crate::state::CONFIG;
 
-use crate::constants::INIT_WHITELIST_REPLY_ID;
+use crate::helpers::INIT_WHITELIST_REPLY_ID;
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{DepsMut, Env, Reply};
 use cw_utils::{parse_reply_instantiate_data, MsgInstantiateContractResponse, ParseReplyError};

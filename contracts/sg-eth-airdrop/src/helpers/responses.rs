@@ -1,9 +1,8 @@
+use super::{build_add_eth_eligible_msg, build_process_eth_eligible_msg};
 use crate::error::ContractError;
 use crate::state::CONFIG;
 use cosmwasm_std::{DepsMut, MessageInfo};
 use sg_std::Response;
-
-use crate::build_msg::{build_add_eth_eligible_msg, build_process_eth_eligible_msg};
 
 pub fn get_add_eligible_eth_response(
     deps: DepsMut,

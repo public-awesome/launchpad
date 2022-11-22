@@ -1,4 +1,5 @@
 use cosmwasm_std::{Addr, StdError};
+use cw_utils::{self, PaymentError};
 use thiserror::Error;
 
 #[derive(Error, Debug, PartialEq)]
@@ -6,8 +7,20 @@ pub enum ContractError {
     #[error("{0}")]
     Std(#[from] StdError),
 
+    #[error("{0}")]
+    PaymentError(#[from] PaymentError),
+
     #[error("Contract has no funds")]
     NoFunds {},
+
+    #[error("Insufficient Funds for Instantiate")]
+    InsufficientFundsInstantiate {},
+
+    #[error("Airdrop Amount Too Small")]
+    AirdropTooSmall {},
+
+    #[error("Airdrop Amount Too Big")]
+    AirdropTooBig {},
 
     #[error("Invalid reply ID")]
     InvalidReplyID {},

@@ -1,21 +1,19 @@
 #[cfg(not(feature = "library"))]
 use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
-use crate::state::{Config, CONFIG};
+use crate::state::CONFIG;
 
 use cosmwasm_std::{entry_point, Addr};
 use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult};
 use cw2::set_contract_version;
 use sg_std::Response;
-use vending_minter::helpers::MinterContract;
 use whitelist_generic::helpers::WhitelistGenericContract;
 
-use crate::build_msg::{
-    build_messages_for_claim_and_whitelist_add, build_whitelist_instantiate_msg,
+use crate::helpers::{
+    build_config_msg, build_messages_for_claim_and_whitelist_add, build_whitelist_instantiate_msg,
+    check_funds_and_fair_burn, compute_valid_eth_sig, get_add_eligible_eth_response, CONTRACT_NAME,
+    CONTRACT_VERSION,
 };
-use crate::computation::compute_valid_eth_sig;
-use crate::constants::{CONTRACT_NAME, CONTRACT_VERSION};
-use crate::responses::get_add_eligible_eth_response;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -24,21 +22,12 @@ pub fn instantiate(
     info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
-    // TODO ADD MUST PAY + FAIRBURN
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-    let cfg = Config {
-        admin: info.sender.clone(),
-        // TODO validation for size
-        claim_msg_plaintext: msg.clone().claim_msg_plaintext,
-        // TODO validation for NATIVE_DENOM
-        airdrop_amount: msg.airdrop_amount,
-        whitelist_address: None,
-        minter_address: deps.api.addr_validate(msg.minter_address.as_ref())?,
-    };
+    let res = check_funds_and_fair_burn(info.clone())?;
+    let cfg = build_config_msg(deps.as_ref(), info.clone(), msg.clone())?;
     CONFIG.save(deps.storage, &cfg)?;
-
     let whitelist_instantiate_msg = build_whitelist_instantiate_msg(env, msg)?;
-    let res = Response::new();
+
     Ok(res
         .add_attribute("action", "instantiate")
         .add_attribute("contract_name", CONTRACT_NAME)
@@ -107,19 +96,6 @@ fn claim_airdrop(
         .add_attribute("minter_address", config.minter_address.to_string()))
 }
 
-pub fn get_collection_whitelist(deps: &DepsMut) -> Result<String, ContractError> {
-    let config = CONFIG.load(deps.storage)?;
-    let minter_addr = config.minter_address;
-    let config = MinterContract(minter_addr).config(&deps.querier);
-    match config {
-        Ok(result) => match result.whitelist {
-            Some(wl) => Ok(wl),
-            None => Err(ContractError::CollectionWhitelistMinterNotSet {}),
-        },
-        Err(_) => Err(ContractError::CollectionWhitelistMinterNotSet {}),
-    }
-}
-
 pub fn update_minter(
     deps: DepsMut,
     info: MessageInfo,
@@ -149,9 +125,7 @@ fn airdrop_check_eligible(deps: Deps, eth_address: String) -> StdResult<bool> {
     }
 }
 
-fn get_minter(deps: Deps) -> StdResult<Addr> {
+pub fn get_minter(deps: Deps) -> StdResult<Addr> {
     let config = CONFIG.load(deps.storage)?;
     Ok(config.minter_address)
 }
-
-// TODO withdraw remaining funds

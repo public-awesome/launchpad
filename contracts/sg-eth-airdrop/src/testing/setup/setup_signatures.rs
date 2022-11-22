@@ -1,4 +1,4 @@
-use crate::tests_folder::claim_constants::CONTRACT_CONFIG_PLAINTEXT;
+use crate::tests_folder::constants::CONTRACT_CONFIG_PLAINTEXT;
 use async_std::task;
 use ethers_core::{k256::ecdsa::SigningKey, rand::thread_rng, types::H160};
 use ethers_signers::{LocalWallet, Signer, Wallet, WalletError};
