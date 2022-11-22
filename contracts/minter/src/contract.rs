@@ -39,6 +39,13 @@ const MAX_PER_ADDRESS_LIMIT: u32 = 50;
 const MIN_MINT_PRICE: u128 = 50_000_000;
 const MINT_FEE_PERCENT: u32 = 10;
 
+// Disable instantiation for production build
+#[cfg(not(test))]
+const DISABLE_INSTANTIATE: bool = true;
+
+#[cfg(test)]
+const DISABLE_INSTANTIATE: bool = false;
+
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
@@ -46,6 +53,11 @@ pub fn instantiate(
     info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
+    if DISABLE_INSTANTIATE {
+        return Err(ContractError::Unauthorized(
+            "contract can not be instantiated".to_owned(),
+        ));
+    }
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
     // Check the number of tokens is more than zero and less than the max limit
@@ -612,7 +624,8 @@ pub fn mint_price(deps: Deps, admin_no_fee: bool) -> Result<Coin, StdError> {
     }
 
     if config.whitelist.is_none() {
-        return Ok(config.unit_price);
+        let price = config.discount_price.unwrap_or(config.unit_price);
+        return Ok(price);
     }
 
     let whitelist = config.whitelist.unwrap();
