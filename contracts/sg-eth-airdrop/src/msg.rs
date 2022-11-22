@@ -14,6 +14,11 @@ pub struct InstantiateMsg {
     pub per_address_limit: u32,
 }
 
+// impl InstantiateMsg {
+//     fn into_wasm_msg() {}
+
+// }
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct AirdropClaimResponse {
     result: bool,

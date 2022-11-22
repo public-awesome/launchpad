@@ -17,7 +17,7 @@ use whitelist_generic::msg::InstantiateMsg as WGInstantiateMsg;
 pub fn build_whitelist_instantiate_msg(
     env: Env,
     msg: InstantiateMsg,
-) -> cosmwasm_std::SubMsg<StargazeMsgWrapper> {
+) -> Result<cosmwasm_std::SubMsg<StargazeMsgWrapper>, ContractError> {
     let whitelist_instantiate_msg = WGInstantiateMsg {
         addresses: msg.addresses,
         mint_discount_bps: Some(0),
@@ -28,9 +28,9 @@ pub fn build_whitelist_instantiate_msg(
         admin: Some(env.contract.address.to_string()),
         funds: vec![],
         label: GENERIC_WHITELIST_LABEL.to_string(),
-        msg: to_binary(&whitelist_instantiate_msg).unwrap(),
+        msg: to_binary(&whitelist_instantiate_msg)?,
     };
-    SubMsg::reply_on_success(wasm_msg, INIT_WHITELIST_REPLY_ID)
+    Ok(SubMsg::reply_on_success(wasm_msg, INIT_WHITELIST_REPLY_ID))
 }
 
 pub fn build_bank_message(info: MessageInfo, airdrop_amount: u128) -> SubMsg {
@@ -76,10 +76,13 @@ pub fn build_messages_for_claim_and_whitelist_add(
     eth_address: String,
     airdrop_amount: u128,
 ) -> Result<Response, ContractError> {
-    let mut res = get_process_eligible_eth_response(&deps, eth_address).unwrap();
+    let mut res = get_process_eligible_eth_response(&deps, eth_address)?;
     res = res.add_submessage(build_bank_message(info.clone(), airdrop_amount));
     let collection_whitelist = get_collection_whitelist(&deps)?;
-    let res = res
-        .add_message(build_add_member_minter_msg(deps, info.sender, collection_whitelist).unwrap());
+    let res = res.add_message(build_add_member_minter_msg(
+        deps,
+        info.sender,
+        collection_whitelist,
+    )?);
     Ok(res)
 }

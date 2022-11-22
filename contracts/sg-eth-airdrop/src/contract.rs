@@ -24,17 +24,20 @@ pub fn instantiate(
     info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
+    // TODO ADD MUST PAY + FAIRBURN
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
     let cfg = Config {
         admin: info.sender.clone(),
+        // TODO validation for size
         claim_msg_plaintext: msg.clone().claim_msg_plaintext,
+        // TODO validation for NATIVE_DENOM
         airdrop_amount: msg.airdrop_amount,
         whitelist_address: None,
         minter_address: deps.api.addr_validate(msg.minter_address.as_ref())?,
     };
     CONFIG.save(deps.storage, &cfg)?;
 
-    let whitelist_instantiate_msg = build_whitelist_instantiate_msg(env, msg);
+    let whitelist_instantiate_msg = build_whitelist_instantiate_msg(env, msg)?;
     let res = Response::new();
     Ok(res
         .add_attribute("action", "instantiate")
@@ -83,9 +86,9 @@ fn claim_airdrop(
     eth_sig: String,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
-    let is_eligible = airdrop_check_eligible(deps.as_ref(), eth_address.clone()).unwrap();
+    let is_eligible = airdrop_check_eligible(deps.as_ref(), eth_address.clone())?;
     let valid_eth_signature =
-        compute_valid_eth_sig(&deps, info.clone(), &config, eth_sig, eth_address.clone());
+        compute_valid_eth_sig(&deps, info.clone(), &config, eth_sig, eth_address.clone())?;
 
     let (mut res, mut claimed_amount) = (Response::new(), 0);
     if is_eligible && valid_eth_signature.verifies {
@@ -109,10 +112,10 @@ pub fn get_collection_whitelist(deps: &DepsMut) -> Result<String, ContractError>
     let minter_addr = config.minter_address;
     let config = MinterContract(minter_addr).config(&deps.querier);
     match config {
-        Ok(result) => {
-            let whitelist = result.whitelist.unwrap();
-            Ok(whitelist)
-        }
+        Ok(result) => match result.whitelist {
+            Some(wl) => Ok(wl),
+            None => Err(ContractError::CollectionWhitelistMinterNotSet {}),
+        },
         Err(_) => Err(ContractError::CollectionWhitelistMinterNotSet {}),
     }
 }
@@ -150,3 +153,5 @@ fn get_minter(deps: Deps) -> StdResult<Addr> {
     let config = CONFIG.load(deps.storage)?;
     Ok(config.minter_address)
 }
+
+// TODO withdraw remaining funds

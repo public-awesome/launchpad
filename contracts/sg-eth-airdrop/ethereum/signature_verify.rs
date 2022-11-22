@@ -8,7 +8,8 @@ use crate::msg::VerifyResponse;
 #[allow(dead_code)]
 pub const VERSION: &str = "crypto-verify-v2";
 
-pub fn query_verify_ethereum_text(
+// TODO CHANGE TO VERIFY
+pub fn verify_ethereum_text(
     deps: Deps,
     message: &str,
     signature: &[u8],
