@@ -5,8 +5,8 @@ use crate::state::CONFIG;
 
 use crate::helpers::{
     build_config_msg, build_messages_for_claim_and_whitelist_add, build_whitelist_instantiate_msg,
-    check_funds_and_fair_burn, compute_valid_eth_sig, get_add_eligible_eth_response, CONTRACT_NAME,
-    CONTRACT_VERSION, NATIVE_DENOM,
+    check_funds_and_fair_burn, compute_valid_eth_sig, CONTRACT_NAME, CONTRACT_VERSION,
+    NATIVE_DENOM,
 };
 use crate::query::query_airdrop_is_eligible;
 use cosmwasm_std::{entry_point, Addr};
@@ -47,9 +47,6 @@ pub fn execute(
             eth_address,
             eth_sig,
         } => claim_airdrop(deps, info, _env, eth_address, eth_sig),
-        ExecuteMsg::AddEligibleEth { eth_addresses } => {
-            get_add_eligible_eth_response(deps, info, eth_addresses)
-        }
         ExecuteMsg::UpdateMinterAddress { minter_address } => {
             update_minter(deps, info, minter_address)
         }
@@ -110,6 +107,9 @@ pub fn update_minter(
         return Err(ContractError::Unauthorized {
             sender: info.sender,
         });
+    }
+    if !config.minter_address.to_string().is_empty() {
+        return Err(ContractError::MinterAlreadySet {});
     }
     let minter_address = deps.api.addr_validate(&minter_address)?;
     config.minter_address = minter_address.clone();

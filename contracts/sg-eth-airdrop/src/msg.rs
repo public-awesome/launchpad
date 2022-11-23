@@ -28,9 +28,6 @@ pub enum ExecuteMsg {
         eth_address: String,
         eth_sig: String,
     },
-    AddEligibleEth {
-        eth_addresses: Vec<String>,
-    },
     UpdateMinterAddress {
         minter_address: String,
     },

@@ -1984,7 +1984,7 @@ dependencies = [
  "thiserror",
  "vending-factory",
  "vending-minter",
- "whitelist-generic",
+ "whitelist-immutable",
 ]
 
 [[package]]
@@ -2717,7 +2717,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "whitelist-generic"
+name = "whitelist-immutable"
 version = "0.21.1"
 dependencies = [
  "cosmwasm-schema",

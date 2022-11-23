@@ -1,11 +1,11 @@
 [package]
-name = "whitelist-generic"
+name = "whitelist-immutable"
 authors = ["Michael S<m@publicawesome.com>"]
-version     = { workspace = true }
-edition     = { workspace = true }
-homepage    = { workspace = true }
-repository  = { workspace = true }
-license     = { workspace = true }
+version = { workspace = true }
+edition = { workspace = true }
+homepage = { workspace = true }
+repository = { workspace = true }
+license = { workspace = true }
 
 exclude = [
   # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
@@ -52,7 +52,7 @@ cw-utils = { workspace = true }
 schemars = { workspace = true }
 serde = { workspace = true }
 thiserror = { workspace = true }
-sg-whitelist-basic = { workspace= true }
+sg-whitelist-basic = { workspace = true }
 sg-std = { workspace = true }
 
 [dev-dependencies]

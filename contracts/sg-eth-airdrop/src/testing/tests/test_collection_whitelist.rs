@@ -10,7 +10,7 @@ use crate::tests_folder::tests_setup::{
     get_msg_plaintext, get_wallet_and_sig, instantiate_contract, send_funds_to_address,
     update_admin_for_whitelist, InstantiateParams,
 };
-extern crate whitelist_generic;
+extern crate whitelist_immutable;
 use crate::helpers::INSTANTIATION_FEE;
 
 #[test]

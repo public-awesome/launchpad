@@ -1,5 +1,5 @@
 {
-  "contract_name": "whitelist-generic",
+  "contract_name": "whitelist-immutable",
   "contract_version": "0.21.1",
   "idl_version": "1.0.0",
   "instantiate": {
@@ -36,135 +36,8 @@
   "execute": {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "title": "ExecuteMsg",
-    "oneOf": [
-      {
-        "type": "object",
-        "required": [
-          "update_admin"
-        ],
-        "properties": {
-          "update_admin": {
-            "type": "object",
-            "required": [
-              "new_admin"
-            ],
-            "properties": {
-              "new_admin": {
-                "type": "string"
-              }
-            },
-            "additionalProperties": false
-          }
-        },
-        "additionalProperties": false
-      },
-      {
-        "type": "object",
-        "required": [
-          "add_addresses"
-        ],
-        "properties": {
-          "add_addresses": {
-            "type": "object",
-            "required": [
-              "addresses"
-            ],
-            "properties": {
-              "addresses": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              }
-            },
-            "additionalProperties": false
-          }
-        },
-        "additionalProperties": false
-      },
-      {
-        "type": "object",
-        "required": [
-          "remove_addresses"
-        ],
-        "properties": {
-          "remove_addresses": {
-            "type": "object",
-            "required": [
-              "addresses"
-            ],
-            "properties": {
-              "addresses": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              }
-            },
-            "additionalProperties": false
-          }
-        },
-        "additionalProperties": false
-      },
-      {
-        "description": "Only callable by minter contract. Increment mint count on whitelist map.",
-        "type": "object",
-        "required": [
-          "process_address"
-        ],
-        "properties": {
-          "process_address": {
-            "type": "object",
-            "required": [
-              "address"
-            ],
-            "properties": {
-              "address": {
-                "type": "string"
-              }
-            },
-            "additionalProperties": false
-          }
-        },
-        "additionalProperties": false
-      },
-      {
-        "type": "object",
-        "required": [
-          "update_per_address_limit"
-        ],
-        "properties": {
-          "update_per_address_limit": {
-            "type": "object",
-            "required": [
-              "limit"
-            ],
-            "properties": {
-              "limit": {
-                "type": "integer",
-                "format": "uint32",
-                "minimum": 0.0
-              }
-            },
-            "additionalProperties": false
-          }
-        },
-        "additionalProperties": false
-      },
-      {
-        "type": "object",
-        "required": [
-          "purge"
-        ],
-        "properties": {
-          "purge": {
-            "type": "object",
-            "additionalProperties": false
-          }
-        },
-        "additionalProperties": false
-      }
-    ]
+    "type": "string",
+    "enum": []
   },
   "query": {
     "$schema": "http://json-schema.org/draft-07/schema#",
@@ -190,49 +63,6 @@
         ],
         "properties": {
           "includes_address": {
-            "type": "object",
-            "required": [
-              "address"
-            ],
-            "properties": {
-              "address": {
-                "type": "string"
-              }
-            },
-            "additionalProperties": false
-          }
-        },
-        "additionalProperties": false
-      },
-      {
-        "type": "object",
-        "required": [
-          "mint_count"
-        ],
-        "properties": {
-          "mint_count": {
-            "type": "object",
-            "required": [
-              "address"
-            ],
-            "properties": {
-              "address": {
-                "type": "string"
-              }
-            },
-            "additionalProperties": false
-          }
-        },
-        "additionalProperties": false
-      },
-      {
-        "description": "Avoid processing addresses that will fail. Includes address and under per address limit",
-        "type": "object",
-        "required": [
-          "is_processable"
-        ],
-        "properties": {
-          "is_processable": {
             "type": "object",
             "required": [
               "address"
@@ -300,18 +130,10 @@
     },
     "admin": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "AdminResponse",
-      "description": "Returned from Admin.query_admin()",
-      "type": "object",
-      "properties": {
-        "admin": {
-          "type": [
-            "string",
-            "null"
-          ]
-        }
-      },
-      "additionalProperties": false
+      "title": "uint64",
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
     },
     "config": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -363,27 +185,6 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Boolean",
       "type": "boolean"
-    },
-    "is_processable": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "IsProcessableResponse",
-      "type": "object",
-      "required": [
-        "processable"
-      ],
-      "properties": {
-        "processable": {
-          "type": "boolean"
-        }
-      },
-      "additionalProperties": false
-    },
-    "mint_count": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "uint64",
-      "type": "integer",
-      "format": "uint64",
-      "minimum": 0.0
     },
     "per_address_limit": {
       "$schema": "http://json-schema.org/draft-07/schema#",

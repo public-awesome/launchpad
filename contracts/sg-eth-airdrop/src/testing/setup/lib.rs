@@ -20,7 +20,7 @@ mod setup_contracts;
 pub use setup_contracts::{
     contract, contract_factory, contract_minter, contract_sg721, contract_whitelist,
     custom_mock_app, execute_contract_error_with_msg, execute_contract_with_msg,
-    instantiate_contract, mock_minter, mock_whitelist,
+    instantiate_contract, mock_minter, mock_whitelist, whitelist_immutable_contract,
 };
 
 mod setup_minter;

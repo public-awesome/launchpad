@@ -39,7 +39,7 @@ sha2 = { version = "0.10.2", default-features = false }
 rand_core = { version = "0.6.4", default-features = false }
 vending-factory = { version = "0.21.1", path = "contracts/vending-factory" }
 vending-minter = { version = "0.21.1", path = "contracts/vending-minter" }
-whitelist-generic = { version = "0.21.1", path = "contracts/whitelist-generic" }
+whitelist-immutable = { version = "0.21.1", path = "contracts/whitelist-immutable" }
 sg-whitelist-basic = { version = "0.12.0" }
 
 [profile.release.package.sg721]

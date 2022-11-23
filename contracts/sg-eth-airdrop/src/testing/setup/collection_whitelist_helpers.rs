@@ -6,7 +6,7 @@ use sg_multi_test::StargazeApp;
 
 use super::setup_contracts::execute_contract_with_msg;
 
-extern crate whitelist_generic;
+extern crate whitelist_immutable;
 
 pub fn update_admin_for_whitelist(
     app: &mut StargazeApp,

@@ -9,7 +9,7 @@ use crate::msg::{ExecuteMsg, InstantiateMsg};
 use crate::tests_folder::constants::WHITELIST_AMOUNT;
 use eyre::Result;
 
-extern crate whitelist_generic;
+extern crate whitelist_immutable;
 use super::test_msgs::InstantiateParams;
 use crate::tests_folder::constants::{CONTRACT_CONFIG_PLAINTEXT, NATIVE_DENOM, OWNER};
 use crate::tests_folder::tests_setup::{
@@ -86,11 +86,11 @@ pub fn contract() -> Box<dyn Contract<sg_std::StargazeMsgWrapper>> {
     Box::new(contract)
 }
 
-pub fn whitelist_generic_contract() -> Box<dyn Contract<StargazeMsgWrapper>> {
+pub fn whitelist_immutable_contract() -> Box<dyn Contract<StargazeMsgWrapper>> {
     let contract = ContractWrapper::new(
-        whitelist_generic::contract::execute,
-        whitelist_generic::contract::instantiate,
-        whitelist_generic::contract::query,
+        whitelist_immutable::contract::execute,
+        whitelist_immutable::contract::instantiate,
+        whitelist_immutable::contract::query,
     );
     Box::new(contract)
 }
@@ -114,7 +114,7 @@ pub fn instantiate_contract(params: InstantiateParams) {
         .ok();
 
     let sg_eth_id = params.app.store_code(contract());
-    let whitelist_code_id = params.app.store_code(whitelist_generic_contract());
+    let whitelist_code_id = params.app.store_code(whitelist_immutable_contract());
     assert_eq!(sg_eth_id, params.expected_airdrop_contract_id);
 
     let msg: InstantiateMsg = InstantiateMsg {

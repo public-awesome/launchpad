@@ -23,4 +23,6 @@ pub enum ContractError {
     AddressAlreadyExists { addr: String },
     // Add any other custom errors you like here.
     // Look at https://docs.rs/thiserror/1.0.21/thiserror/ for details.
+    #[error("Empty whitelist, must provide at least one address")]
+    EmptyWhitelist {},
 }
