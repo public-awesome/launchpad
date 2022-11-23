@@ -324,8 +324,8 @@ jobs:
             - /usr/local/cargo/registry
             - target
           key: cargocache-sg-utils-rust:1.64.0-{{ checksum "~/project/Cargo.lock" }}
-          
-  sg-eth-aridrop:
+
+  sg-eth-airdrop:
     docker:
       - image: rust:1.64.0
     working_directory: ~/project/contracts/sg-eth-airdrop
