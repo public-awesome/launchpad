@@ -97,9 +97,12 @@ mod tests {
         }
     }
 
-    pub fn custom_mock_create_minter(custom_params: CollectionParams) -> VendingMinterCreateMsg {
+    pub fn custom_mock_create_minter(
+        init_msg: VendingMinterInitMsgExtension,
+        custom_params: CollectionParams,
+    ) -> VendingMinterCreateMsg {
         VendingMinterCreateMsg {
-            init_msg: mock_init_extension(),
+            init_msg,
             collection_params: custom_params,
         }
     }
@@ -191,8 +194,11 @@ mod tests {
 
     mod init {
 
+        use cw721_base::MinterResponse;
+
         use super::*;
         use crate::msg::QueryMsg;
+        use vending_minter::msg::{ConfigResponse, QueryMsg as VendingMinterQueryMsg};
 
         #[test]
         fn create_sg721_base_collection() {
@@ -239,6 +245,31 @@ mod tests {
         fn check_ready_authorized() {
             let (_, _) = proper_instantiate();
         }
+
+        #[test]
+        fn sanitize_base_token_uri() {
+            let base_token_uri = " ipfs://somecidhere ".to_string();
+            let init_msg = VendingMinterInitMsgExtension {
+                base_token_uri: base_token_uri.clone(),
+                ..mock_init_extension()
+            };
+            let custom_create_minter_msg =
+                custom_mock_create_minter(init_msg, mock_collection_params());
+
+            let (app, contract) = custom_proper_instantiate(custom_create_minter_msg);
+
+            // query minter config to confirm base_token_uri got trimmed
+            let res: MinterResponse = app
+                .wrap()
+                .query_wasm_smart(contract, &QueryMsg::Minter {})
+                .unwrap();
+            let minter = res.minter;
+            let res: ConfigResponse = app
+                .wrap()
+                .query_wasm_smart(minter, &VendingMinterQueryMsg::Config {})
+                .unwrap();
+            assert_eq!(res.base_token_uri, base_token_uri.trim().to_string());
+        }
     }
 
     mod start_trading_time {
@@ -253,7 +284,8 @@ mod tests {
             // customize params so external_link is None
             let mut params = mock_collection_params();
             params.info.external_link = None;
-            let custom_create_minter_msg = custom_mock_create_minter(params.clone());
+            let custom_create_minter_msg =
+                custom_mock_create_minter(mock_init_extension(), params.clone());
             let (app, contract) = custom_proper_instantiate(custom_create_minter_msg.clone());
 
             // default trading start time is start time + default trading start time offset
