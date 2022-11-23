@@ -269,6 +269,29 @@ mod tests {
                 .query_wasm_smart(minter, &VendingMinterQueryMsg::Config {})
                 .unwrap();
             assert_eq!(res.base_token_uri, base_token_uri.trim().to_string());
+
+            // test sanitizing base token uri IPFS -> ipfs
+            let base_token_uri = " IPFS://somecidhereipfs ".to_string();
+            let init_msg = VendingMinterInitMsgExtension {
+                base_token_uri: base_token_uri.clone(),
+                ..mock_init_extension()
+            };
+            let custom_create_minter_msg =
+                custom_mock_create_minter(init_msg, mock_collection_params());
+
+            let (app, contract) = custom_proper_instantiate(custom_create_minter_msg);
+
+            // query minter config to confirm base_token_uri got trimmed and starts with ipfs
+            let res: MinterResponse = app
+                .wrap()
+                .query_wasm_smart(contract, &QueryMsg::Minter {})
+                .unwrap();
+            let minter = res.minter;
+            let res: ConfigResponse = app
+                .wrap()
+                .query_wasm_smart(minter, &VendingMinterQueryMsg::Config {})
+                .unwrap();
+            assert_eq!(res.base_token_uri, base_token_uri.trim().to_lowercase());
         }
     }
 

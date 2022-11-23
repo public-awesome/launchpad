@@ -83,9 +83,13 @@ pub fn instantiate(
     }
 
     // sanitize base token uri
-    let base_token_uri = msg.init_msg.base_token_uri.trim();
+    let base_token_uri = msg
+        .init_msg
+        .base_token_uri
+        .trim()
+        .replacen("IPFS", "ipfs", 1);
     // Check that base_token_uri is a valid IPFS uri
-    let parsed_token_uri = Url::parse(base_token_uri)?;
+    let parsed_token_uri = Url::parse(&base_token_uri)?;
     if parsed_token_uri.scheme() != "ipfs" {
         return Err(ContractError::InvalidBaseTokenURI {});
     }
@@ -148,7 +152,7 @@ pub fn instantiate(
                 .api
                 .addr_validate(&msg.collection_params.info.creator)?,
             payment_address: maybe_addr(deps.api, msg.init_msg.payment_address)?,
-            base_token_uri: base_token_uri.to_string(),
+            base_token_uri,
             num_tokens: msg.init_msg.num_tokens,
             per_address_limit: msg.init_msg.per_address_limit,
             whitelist: whitelist_addr,
