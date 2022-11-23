@@ -101,7 +101,7 @@ pub fn instantiate_contract(params: InstantiateParams) {
     let admin_account = params.admin_account;
     let funds_amount = params.funds_amount;
     let per_address_limit = params.per_address_limit;
-
+    println!("funds amount is {:?}", funds_amount);
     params
         .app
         .sudo(SudoMsg::Bank({
@@ -145,10 +145,8 @@ pub fn execute_contract_with_msg(
     user: Addr,
     target_address: Addr,
 ) -> Result<AppResponse, Error> {
-    let result = app
-        .execute_contract(user, target_address, &msg, &[])
-        .unwrap();
-    Ok(result)
+    let result = app.execute_contract(user, target_address, &msg, &[]);
+    Ok(result.unwrap())
 }
 
 pub fn execute_contract_error_with_msg(

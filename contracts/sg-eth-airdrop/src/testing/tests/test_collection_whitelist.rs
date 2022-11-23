@@ -11,6 +11,7 @@ use crate::tests_folder::tests_setup::{
     update_admin_for_whitelist, InstantiateParams,
 };
 extern crate whitelist_generic;
+use crate::helpers::INSTANTIATION_FEE;
 
 #[test]
 fn test_set_minter_contract() {
@@ -24,7 +25,7 @@ fn test_set_minter_contract() {
     let contract_admin = Addr::unchecked(config.admin);
     let params = InstantiateParams {
         addresses: vec![eth_addr_str],
-        funds_amount: WHITELIST_AMOUNT,
+        funds_amount: WHITELIST_AMOUNT + INSTANTIATION_FEE,
         expected_airdrop_contract_id: 5,
         minter_address: first_minter.clone(),
         admin_account: contract_admin.clone(),
@@ -67,7 +68,7 @@ fn test_claim_added_to_minter_whitelist() {
     let airdrop_contract = Addr::unchecked(AIRDROP_ADDR_STR);
     let params = InstantiateParams {
         addresses: vec![eth_addr_str.clone()],
-        funds_amount: WHITELIST_AMOUNT,
+        funds_amount: WHITELIST_AMOUNT + INSTANTIATION_FEE,
         expected_airdrop_contract_id: 5,
         minter_address: minter_addr.clone(),
         admin_account: creator.clone(),

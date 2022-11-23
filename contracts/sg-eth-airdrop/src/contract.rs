@@ -3,17 +3,16 @@ use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 use crate::state::CONFIG;
 
+use crate::helpers::{
+    build_config_msg, build_messages_for_claim_and_whitelist_add, build_whitelist_instantiate_msg,
+    check_funds_and_fair_burn, compute_valid_eth_sig, get_add_eligible_eth_response, CONTRACT_NAME,
+    CONTRACT_VERSION, NATIVE_DENOM,
+};
+use crate::query::query_airdrop_is_eligible;
 use cosmwasm_std::{entry_point, Addr};
 use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult};
 use cw2::set_contract_version;
 use sg_std::Response;
-use whitelist_generic::helpers::WhitelistGenericContract;
-
-use crate::helpers::{
-    build_config_msg, build_messages_for_claim_and_whitelist_add, build_whitelist_instantiate_msg,
-    check_funds_and_fair_burn, compute_valid_eth_sig, get_add_eligible_eth_response, CONTRACT_NAME,
-    CONTRACT_VERSION,
-};
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -61,7 +60,7 @@ pub fn execute(
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::AirdropEligible { eth_address } => {
-            to_binary(&airdrop_check_eligible(deps, eth_address)?)
+            to_binary(&query_airdrop_is_eligible(deps, eth_address)?)
         }
         QueryMsg::GetMinter {} => to_binary(&get_minter(deps)?),
     }
@@ -70,15 +69,20 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
 fn claim_airdrop(
     deps: DepsMut,
     info: MessageInfo,
-    _env: Env,
+    env: Env,
     eth_address: String,
     eth_sig: String,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
-    let is_eligible = airdrop_check_eligible(deps.as_ref(), eth_address.clone())?;
+    let is_eligible = query_airdrop_is_eligible(deps.as_ref(), eth_address.clone())?;
     let valid_eth_signature =
         compute_valid_eth_sig(&deps, info.clone(), &config, eth_sig, eth_address.clone())?;
 
+    println!(
+        "OWN BALANCE {:?}",
+        deps.querier
+            .query_balance(env.contract.address, NATIVE_DENOM)
+    );
     let (mut res, mut claimed_amount) = (Response::new(), 0);
     if is_eligible && valid_eth_signature.verifies {
         res = build_messages_for_claim_and_whitelist_add(
@@ -112,17 +116,6 @@ pub fn update_minter(
     let _ = CONFIG.save(deps.storage, &config);
     let res = Response::new();
     Ok(res.add_attribute("updated_minter_address", minter_address.to_string()))
-}
-
-fn airdrop_check_eligible(deps: Deps, eth_address: String) -> StdResult<bool> {
-    let config = CONFIG.load(deps.storage)?;
-    match config.whitelist_address {
-        Some(address) => WhitelistGenericContract(deps.api.addr_validate(&address)?)
-            .includes(&deps.querier, eth_address),
-        None => Err(cosmwasm_std::StdError::NotFound {
-            kind: "Whitelist Contract".to_string(),
-        }),
-    }
 }
 
 pub fn get_minter(deps: Deps) -> StdResult<Addr> {

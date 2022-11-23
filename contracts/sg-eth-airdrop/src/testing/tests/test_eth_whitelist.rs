@@ -1,3 +1,4 @@
+use crate::helpers::INSTANTIATION_FEE;
 use crate::msg::{ExecuteMsg, QueryMsg};
 use crate::tests_folder::constants::{
     MOCK_AIRDROP_ADDR_STR, MOCK_MINTER_ADDR_STR, OWNER, WHITELIST_AMOUNT,
@@ -24,7 +25,7 @@ fn test_instantiate_with_addresses() {
 
     let params = InstantiateParams {
         addresses,
-        funds_amount: WHITELIST_AMOUNT,
+        funds_amount: WHITELIST_AMOUNT + INSTANTIATION_FEE,
         expected_airdrop_contract_id: 4,
         minter_address: minter_addr,
         admin_account: Addr::unchecked(OWNER),
@@ -61,7 +62,7 @@ fn test_not_authorized_add_eth() {
 
     let params = InstantiateParams {
         addresses: vec![],
-        funds_amount: WHITELIST_AMOUNT,
+        funds_amount: WHITELIST_AMOUNT + INSTANTIATION_FEE,
         expected_airdrop_contract_id: 4,
         minter_address: minter_addr,
         admin_account: Addr::unchecked(OWNER),
@@ -90,7 +91,7 @@ fn test_authorized_add_eth() {
 
     let params = InstantiateParams {
         addresses: vec![],
-        funds_amount: WHITELIST_AMOUNT,
+        funds_amount: WHITELIST_AMOUNT + INSTANTIATION_FEE,
         expected_airdrop_contract_id: 4,
         minter_address: minter_addr,
         admin_account: Addr::unchecked(OWNER),
@@ -117,7 +118,7 @@ fn test_add_eth_and_verify() {
 
     let params = InstantiateParams {
         addresses: vec![],
-        funds_amount: WHITELIST_AMOUNT,
+        funds_amount: WHITELIST_AMOUNT + INSTANTIATION_FEE,
         expected_airdrop_contract_id: 4,
         minter_address: minter_addr,
         admin_account: Addr::unchecked(OWNER),
