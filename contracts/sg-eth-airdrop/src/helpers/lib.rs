@@ -13,9 +13,6 @@ pub use validation::{
 mod funds;
 pub use funds::check_funds_and_fair_burn;
 
-// mod responses;
-// pub use responses::{get_add_eligible_eth_response, get_process_eligible_eth_response};
-
 mod constants;
 pub use constants::{
     COLLECTION_WHITELIST, CONTRACT_NAME, CONTRACT_VERSION, GENERIC_WHITELIST_LABEL,

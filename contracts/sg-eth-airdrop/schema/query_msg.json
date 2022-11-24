@@ -17,7 +17,8 @@
             "eth_address": {
               "type": "string"
             }
-          }
+          },
+          "additionalProperties": false
         }
       },
       "additionalProperties": false
@@ -29,7 +30,8 @@
       ],
       "properties": {
         "get_minter": {
-          "type": "object"
+          "type": "object",
+          "additionalProperties": false
         }
       },
       "additionalProperties": false
