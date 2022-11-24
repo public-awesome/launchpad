@@ -175,7 +175,7 @@ mod tests {
         let mut app = custom_mock_app();
         let addrs = get_init_address_single_list();
         let per_address_limit = 30;
-        let wl_addr = instantiate_with_addresses(&mut app, addrs.clone(), per_address_limit);
+        let wl_addr = instantiate_with_addresses(&mut app, addrs, per_address_limit);
 
         let res: u32 = WhitelistImmutableContract(wl_addr)
             .per_address_limit(&app.wrap())
@@ -188,7 +188,7 @@ mod tests {
         let mut app = custom_mock_app();
         let addrs = get_init_address_single_list();
         let per_address_limit = 10;
-        let wl_addr = instantiate_with_addresses(&mut app, addrs.clone(), per_address_limit);
+        let wl_addr = instantiate_with_addresses(&mut app, addrs, per_address_limit);
 
         let res: u64 = WhitelistImmutableContract(wl_addr)
             .address_count(&app.wrap())
@@ -201,7 +201,7 @@ mod tests {
         let mut app = custom_mock_app();
         let addrs = get_init_address_single_list();
         let per_address_limit = 10;
-        let wl_addr = instantiate_with_addresses(&mut app, addrs.clone(), per_address_limit);
+        let wl_addr = instantiate_with_addresses(&mut app, addrs, per_address_limit);
 
         let res: Config = WhitelistImmutableContract(wl_addr)
             .config(&app.wrap())
@@ -219,16 +219,16 @@ mod tests {
         let mut app = custom_mock_app();
         let addrs = get_init_address_list_1();
         let per_address_limit = 10;
-        let wl_addr = instantiate_with_addresses(&mut app, addrs.clone(), per_address_limit);
+        let wl_addr = instantiate_with_addresses(&mut app, addrs, per_address_limit);
 
         let res: bool = WhitelistImmutableContract(wl_addr.clone())
             .includes(&app.wrap(), "addr0003".to_string())
             .unwrap();
-        assert_eq!(res, true);
+        assert!(res);
 
         let res: bool = WhitelistImmutableContract(wl_addr)
             .includes(&app.wrap(), "nonsense".to_string())
             .unwrap();
-        assert_eq!(res, false);
+        assert!(!res);
     }
 }
