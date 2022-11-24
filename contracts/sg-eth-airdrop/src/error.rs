@@ -37,6 +37,12 @@ pub enum ContractError {
     #[error("Minter already set")]
     MinterAlreadySet {},
 
+    #[error("Address {address} is not eligible")]
+    AddressNotEligible { address: String },
+
+    #[error("Address {address} has already claimed all available mints")]
+    MintCountReached { address: String },
+
     #[error("Collection Whitelist on Minter contract has not been set")]
     CollectionWhitelistMinterNotSet {},
 }

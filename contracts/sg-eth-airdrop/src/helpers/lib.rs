@@ -5,7 +5,10 @@ pub use build_msg::{
 };
 
 mod validation;
-pub use validation::{check_instantiate_funds, validate_airdrop_amount, validate_plaintext_msg};
+pub use validation::{
+    check_instantiate_funds, run_validations_for_claim, validate_airdrop_amount, validate_eth_sig,
+    validate_mints_remaining, validate_plaintext_msg,
+};
 
 mod funds;
 pub use funds::check_funds_and_fair_burn;

@@ -68,7 +68,6 @@ fn test_valid_eth_sig_claim() {
         airdrop_contract.clone(),
     )
     .unwrap();
-
     let expected_attributes = [
         Attribute {
             key: "_contract_addr".to_string(),
@@ -77,14 +76,6 @@ fn test_valid_eth_sig_claim() {
         Attribute {
             key: "claimed_amount".to_string(),
             value: WHITELIST_AMOUNT.to_string(),
-        },
-        Attribute {
-            key: "valid_eth_sig".to_string(),
-            value: "true".to_string(),
-        },
-        Attribute {
-            key: "eligible_at_request".to_string(),
-            value: "true".to_string(),
         },
         Attribute {
             key: "minter_address".to_string(),
@@ -109,7 +100,7 @@ fn test_invalid_eth_sig_claim() {
         addresses: vec![eth_addr_str.clone()],
         funds_amount: WHITELIST_AMOUNT + INSTANTIATION_FEE,
         expected_airdrop_contract_id: 4,
-        minter_address: minter_addr.clone(),
+        minter_address: minter_addr,
         admin_account: Addr::unchecked(OWNER),
         app: &mut app,
         per_address_limit: 1,
@@ -117,41 +108,17 @@ fn test_invalid_eth_sig_claim() {
     instantiate_contract(params);
 
     let claim_message = ExecuteMsg::ClaimAirdrop {
-        eth_address: eth_addr_str,
+        eth_address: eth_addr_str.clone(),
         eth_sig: eth_sig_str_2,
     };
     let stargaze_wallet_01 = Addr::unchecked(STARGAZE_WALLET_01);
-    let res = execute_contract_with_msg(
+    let res = execute_contract_error_with_msg(
         claim_message,
         &mut app,
         stargaze_wallet_01,
-        airdrop_contract.clone(),
-    )
-    .unwrap();
-
-    let expected_attributes = [
-        Attribute {
-            key: "_contract_addr".to_string(),
-            value: airdrop_contract.to_string(),
-        },
-        Attribute {
-            key: "claimed_amount".to_string(),
-            value: "0".to_string(),
-        },
-        Attribute {
-            key: "valid_eth_sig".to_string(),
-            value: "false".to_string(),
-        },
-        Attribute {
-            key: "eligible_at_request".to_string(),
-            value: "true".to_string(),
-        },
-        Attribute {
-            key: "minter_address".to_string(),
-            value: minter_addr.to_string(),
-        },
-    ];
-    assert_eq!(res.events[1].attributes, expected_attributes);
+        airdrop_contract,
+    );
+    assert_eq!(res, format!("Address {} is not eligible", eth_addr_str));
 }
 
 #[test]
@@ -176,7 +143,7 @@ fn test_can_not_claim_twice() {
     instantiate_contract(params);
 
     let claim_message = ExecuteMsg::ClaimAirdrop {
-        eth_address: eth_addr_str,
+        eth_address: eth_addr_str.clone(),
         eth_sig: eth_sig_str,
     };
     let stargaze_wallet_01 = Addr::unchecked(STARGAZE_WALLET_01);
@@ -198,14 +165,6 @@ fn test_can_not_claim_twice() {
             value: WHITELIST_AMOUNT.to_string(),
         },
         Attribute {
-            key: "valid_eth_sig".to_string(),
-            value: "true".to_string(),
-        },
-        Attribute {
-            key: "eligible_at_request".to_string(),
-            value: "true".to_string(),
-        },
-        Attribute {
             key: "minter_address".to_string(),
             value: minter_addr.to_string(),
         },
@@ -217,7 +176,11 @@ fn test_can_not_claim_twice() {
         stargaze_wallet_01,
         airdrop_contract,
     );
-    assert_eq!(res, "OverPerAddressLimit");
+    let expected_error = format!(
+        "Address {} has already claimed all available mints",
+        eth_addr_str
+    );
+    assert_eq!(res, expected_error);
 }
 
 #[test]
@@ -298,7 +261,7 @@ fn test_claim_twice_receive_funds_once() {
     assert_eq!(balances, []);
 
     let claim_message = ExecuteMsg::ClaimAirdrop {
-        eth_address: eth_addr_str,
+        eth_address: eth_addr_str.clone(),
         eth_sig: eth_sig_str,
     };
     let _ = execute_contract_with_msg(
@@ -324,8 +287,11 @@ fn test_claim_twice_receive_funds_once() {
         stargaze_wallet_01.clone(),
         airdrop_contract,
     );
-    assert_eq!(res, "OverPerAddressLimit");
-
+    let expected_error = format!(
+        "Address {} has already claimed all available mints",
+        eth_addr_str
+    );
+    assert_eq!(res, expected_error);
     let balances = app.wrap().query_all_balances(stargaze_wallet_01).unwrap();
     let expected_balance = [Coin {
         denom: NATIVE_DENOM.to_string(),
@@ -365,17 +331,17 @@ fn test_ineligible_does_not_receive_funds() {
     let (_, eth_sig_str_2, _, eth_addr_str_2) = get_wallet_and_sig(claim_plaintext_2.clone());
 
     let claim_message = ExecuteMsg::ClaimAirdrop {
-        eth_address: eth_addr_str_2,
+        eth_address: eth_addr_str_2.clone(),
         eth_sig: eth_sig_str_2,
     };
-    let _ = execute_contract_with_msg(
+    let res = execute_contract_error_with_msg(
         claim_message,
         &mut app,
         stargaze_wallet_02.clone(),
         airdrop_contract,
-    )
-    .unwrap();
-
+    );
+    let expected_error = format!("Address {} is not eligible", eth_addr_str_2);
+    assert_eq!(res, expected_error);
     let balances = app.wrap().query_all_balances(stargaze_wallet_02).unwrap();
     let expected_balance = [];
     assert_eq!(balances, expected_balance)
@@ -433,14 +399,6 @@ fn test_one_eth_claim_two_stargaze_addresses_invalid() {
             value: WHITELIST_AMOUNT.to_string(),
         },
         Attribute {
-            key: "valid_eth_sig".to_string(),
-            value: "true".to_string(),
-        },
-        Attribute {
-            key: "eligible_at_request".to_string(),
-            value: "true".to_string(),
-        },
-        Attribute {
             key: "minter_address".to_string(),
             value: minter_addr.to_string(),
         },
@@ -454,17 +412,20 @@ fn test_one_eth_claim_two_stargaze_addresses_invalid() {
 
     // claim with eth address 1, stargaze wallet 2
     let claim_message = ExecuteMsg::ClaimAirdrop {
-        eth_address: eth_addr_str_1,
+        eth_address: eth_addr_str_1.clone(),
         eth_sig: eth_sig_str_2,
     };
-
+    let expected_error = format!(
+        "Address {} has already claimed all available mints",
+        eth_addr_str_1
+    );
     let res_2 = execute_contract_error_with_msg(
         claim_message,
         &mut app,
         stargaze_wallet_02,
         airdrop_contract,
     );
-    assert_eq!(res_2, "OverPerAddressLimit")
+    assert_eq!(res_2, expected_error);
 }
 
 #[test]

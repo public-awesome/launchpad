@@ -13,4 +13,4 @@ pub struct Config {
 }
 
 pub const CONFIG: Item<Config> = Item::new("cfg");
-pub const ELIGIBLE_ETH_ADDRS: Map<&str, bool> = Map::new("eth_address");
+pub const ADDRS_TO_MINT_COUNT: Map<&str, u32> = Map::new("amc");

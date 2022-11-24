@@ -1,7 +1,6 @@
 use cosmwasm_std::{DepsMut, MessageInfo, StdError, StdResult};
 
 use crate::ethereum::verify_ethereum_text;
-use crate::msg::VerifyResponse;
 use crate::state::Config;
 
 pub fn compute_valid_eth_sig(
@@ -10,7 +9,7 @@ pub fn compute_valid_eth_sig(
     config: &Config,
     eth_sig: String,
     eth_address: String,
-) -> StdResult<VerifyResponse> {
+) -> StdResult<bool> {
     let plaintext_msg = compute_plaintext_msg(config, info);
     match hex::decode(eth_sig.clone()) {
         Ok(eth_sig_hex) => {

@@ -1,12 +1,11 @@
 #[cfg(not(feature = "library"))]
 use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
-use crate::state::CONFIG;
+use crate::state::{ADDRS_TO_MINT_COUNT, CONFIG};
 
 use crate::helpers::{
     build_config_msg, build_messages_for_claim_and_whitelist_add, build_whitelist_instantiate_msg,
-    check_funds_and_fair_burn, compute_valid_eth_sig, CONTRACT_NAME, CONTRACT_VERSION,
-    NATIVE_DENOM,
+    check_funds_and_fair_burn, run_validations_for_claim, CONTRACT_NAME, CONTRACT_VERSION,
 };
 use crate::query::query_airdrop_is_eligible;
 use cosmwasm_std::{entry_point, Addr};
@@ -25,14 +24,12 @@ pub fn instantiate(
     let res = check_funds_and_fair_burn(info.clone())?;
     let cfg = build_config_msg(deps.as_ref(), info.clone(), msg.clone())?;
     CONFIG.save(deps.storage, &cfg)?;
-    let whitelist_instantiate_msg = build_whitelist_instantiate_msg(env, msg)?;
-
     Ok(res
         .add_attribute("action", "instantiate")
         .add_attribute("contract_name", CONTRACT_NAME)
         .add_attribute("contract_version", CONTRACT_VERSION)
         .add_attribute("sender", info.sender)
-        .add_submessage(whitelist_instantiate_msg))
+        .add_submessage(build_whitelist_instantiate_msg(env, msg)?))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -47,9 +44,6 @@ pub fn execute(
             eth_address,
             eth_sig,
         } => claim_airdrop(deps, info, _env, eth_address, eth_sig),
-        ExecuteMsg::UpdateMinterAddress { minter_address } => {
-            update_minter(deps, info, minter_address)
-        }
     }
 }
 
@@ -66,59 +60,39 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
 fn claim_airdrop(
     deps: DepsMut,
     info: MessageInfo,
-    env: Env,
+    _env: Env,
     eth_address: String,
     eth_sig: String,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
-    let is_eligible = query_airdrop_is_eligible(deps.as_ref(), eth_address.clone())?;
-    let valid_eth_signature =
-        compute_valid_eth_sig(&deps, info.clone(), &config, eth_sig, eth_address.clone())?;
+    run_validations_for_claim(
+        &deps,
+        info.clone(),
+        eth_address.clone(),
+        eth_sig,
+        config.clone(),
+    )?;
+    let res = build_messages_for_claim_and_whitelist_add(&deps, info, config.airdrop_amount)?;
+    increment_local_mint_count_for_address(deps, eth_address)?;
 
-    println!(
-        "OWN BALANCE {:?}",
-        deps.querier
-            .query_balance(env.contract.address, NATIVE_DENOM)
-    );
-    let (mut res, mut claimed_amount) = (Response::new(), 0);
-    if is_eligible && valid_eth_signature.verifies {
-        res = build_messages_for_claim_and_whitelist_add(
-            deps,
-            info,
-            eth_address,
-            config.airdrop_amount,
-        )?;
-        claimed_amount = config.airdrop_amount;
-    }
     Ok(res
-        .add_attribute("claimed_amount", claimed_amount.to_string())
-        .add_attribute("valid_eth_sig", valid_eth_signature.verifies.to_string())
-        .add_attribute("eligible_at_request", is_eligible.to_string())
+        .add_attribute("claimed_amount", config.airdrop_amount.to_string())
         .add_attribute("minter_address", config.minter_address.to_string()))
-}
-
-pub fn update_minter(
-    deps: DepsMut,
-    info: MessageInfo,
-    minter_address: String,
-) -> Result<Response, ContractError> {
-    let mut config = CONFIG.load(deps.storage)?;
-    if info.sender != config.admin {
-        return Err(ContractError::Unauthorized {
-            sender: info.sender,
-        });
-    }
-    if !config.minter_address.to_string().is_empty() {
-        return Err(ContractError::MinterAlreadySet {});
-    }
-    let minter_address = deps.api.addr_validate(&minter_address)?;
-    config.minter_address = minter_address.clone();
-    let _ = CONFIG.save(deps.storage, &config);
-    let res = Response::new();
-    Ok(res.add_attribute("updated_minter_address", minter_address.to_string()))
 }
 
 pub fn get_minter(deps: Deps) -> StdResult<Addr> {
     let config = CONFIG.load(deps.storage)?;
     Ok(config.minter_address)
+}
+
+pub fn increment_local_mint_count_for_address(
+    deps: DepsMut,
+    eth_address: String,
+) -> Result<Response, ContractError> {
+    let mint_count_for_address = ADDRS_TO_MINT_COUNT
+        .load(deps.storage, &eth_address)
+        .unwrap_or(0);
+    ADDRS_TO_MINT_COUNT.save(deps.storage, &eth_address, &(mint_count_for_address + 1))?;
+
+    Ok(Response::new())
 }

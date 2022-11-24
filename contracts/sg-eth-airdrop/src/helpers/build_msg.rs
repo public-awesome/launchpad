@@ -10,8 +10,6 @@ use sg_std::{CosmosMsg, Response, StargazeMsgWrapper, SubMsg};
 use sg_whitelist::interface::CollectionWhitelistContract;
 use sg_whitelist::msg::AddMembersMsg;
 use sg_whitelist::msg::ExecuteMsg as CollectionWhitelistExecuteMsg;
-use whitelist_immutable::helpers::WhitelistImmutableContract;
-use whitelist_immutable::msg::ExecuteMsg as WGExecuteMsg;
 use whitelist_immutable::msg::InstantiateMsg as WGInstantiateMsg;
 
 pub fn build_whitelist_instantiate_msg(
@@ -40,26 +38,8 @@ pub fn build_bank_message(info: MessageInfo, airdrop_amount: u128) -> SubMsg {
     })
 }
 
-// pub fn build_add_eth_eligible_msg(
-//     deps: DepsMut,
-//     addresses: Vec<String>,
-//     whitelist_address: String,
-// ) -> StdResult<CosmosMsg> {
-//     let execute_msg = WGExecuteMsg::AddAddresses { addresses };
-//     WhitelistGenericContract(deps.api.addr_validate(&whitelist_address)?).call(execute_msg)
-// }
-
-// pub fn build_process_eth_eligible_msg(
-//     deps: &DepsMut,
-//     eth_address: String,
-//     whitelist_address: String,
-// ) -> StdResult<CosmosMsg> {
-//     WhitelistGenericContract(deps.api.addr_validate(&whitelist_address)?)
-//         .process_address(&eth_address)
-// }
-
 pub fn build_add_member_minter_msg(
-    deps: DepsMut,
+    deps: &DepsMut,
     wallet_address: Addr,
     collection_whitelist: String,
 ) -> StdResult<CosmosMsg> {
@@ -71,14 +51,14 @@ pub fn build_add_member_minter_msg(
 }
 
 pub fn build_messages_for_claim_and_whitelist_add(
-    deps: DepsMut,
+    deps: &DepsMut,
     info: MessageInfo,
-    eth_address: String,
     airdrop_amount: u128,
 ) -> Result<Response, ContractError> {
     let mut res = Response::new();
+
     res = res.add_submessage(build_bank_message(info.clone(), airdrop_amount));
-    let collection_whitelist = query_collection_whitelist(&deps)?;
+    let collection_whitelist = query_collection_whitelist(deps)?;
     let res = res.add_message(build_add_member_minter_msg(
         deps,
         info.sender,

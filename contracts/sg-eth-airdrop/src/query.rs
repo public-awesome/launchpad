@@ -26,3 +26,14 @@ pub fn query_airdrop_is_eligible(deps: Deps, eth_address: String) -> StdResult<b
         }),
     }
 }
+
+pub fn query_per_address_limit(deps: &Deps) -> StdResult<u32> {
+    let config = CONFIG.load(deps.storage)?;
+    match config.whitelist_address {
+        Some(address) => WhitelistImmutableContract(deps.api.addr_validate(&address)?)
+            .per_address_limit(&deps.querier),
+        None => Err(cosmwasm_std::StdError::NotFound {
+            kind: "Whitelist Contract".to_string(),
+        }),
+    }
+}

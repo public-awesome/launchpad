@@ -3,7 +3,6 @@ use sha2::Digest;
 use sha3::Keccak256;
 
 use crate::ethereum::{decode_address, ethereum_address_raw, get_recovery_param};
-use crate::msg::VerifyResponse;
 
 #[allow(dead_code)]
 pub const VERSION: &str = "crypto-verify-v2";
@@ -14,7 +13,7 @@ pub fn verify_ethereum_text(
     message: &str,
     signature: &[u8],
     signer_address: &str,
-) -> StdResult<VerifyResponse> {
+) -> StdResult<bool> {
     let signer_address = decode_address(signer_address)?;
 
     // Hashing
@@ -34,11 +33,11 @@ pub fn verify_ethereum_text(
     let calculated_pubkey = deps.api.secp256k1_recover_pubkey(&hash, rs, recovery)?;
     let calculated_address = ethereum_address_raw(&calculated_pubkey)?;
     if signer_address != calculated_address {
-        return Ok(VerifyResponse { verifies: false });
+        return Ok(false);
     }
     let result = deps.api.secp256k1_verify(&hash, rs, &calculated_pubkey);
     match result {
-        Ok(verifies) => Ok(VerifyResponse { verifies }),
+        Ok(verifies) => Ok(verifies),
         Err(err) => Err(err.into()),
     }
 }

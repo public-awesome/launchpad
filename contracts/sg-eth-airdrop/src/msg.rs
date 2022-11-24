@@ -1,4 +1,3 @@
-use cosmwasm_schema::cw_serde;
 use cosmwasm_std::Addr;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -28,9 +27,6 @@ pub enum ExecuteMsg {
         eth_address: String,
         eth_sig: String,
     },
-    UpdateMinterAddress {
-        minter_address: String,
-    },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
@@ -38,9 +34,4 @@ pub enum ExecuteMsg {
 pub enum QueryMsg {
     AirdropEligible { eth_address: String },
     GetMinter {},
-}
-
-#[cw_serde]
-pub struct VerifyResponse {
-    pub verifies: bool,
 }

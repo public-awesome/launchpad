@@ -8,6 +8,7 @@ pub use crate::error::ContractError;
 
 #[path = "./ethereum/lib.rs"]
 mod ethereum;
+
 #[path = "./helpers/lib.rs"]
 pub mod helpers;
 #[cfg(test)]
