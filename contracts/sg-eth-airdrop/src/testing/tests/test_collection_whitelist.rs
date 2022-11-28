@@ -11,7 +11,7 @@ use crate::tests_folder::tests_setup::{
     InstantiateParams,
 };
 extern crate whitelist_immutable;
-use crate::helpers::INSTANTIATION_FEE;
+use crate::contract::INSTANTIATION_FEE;
 
 #[test]
 fn test_set_minter_contract_success() {

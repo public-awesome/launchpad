@@ -1,17 +1,21 @@
+use crate::claim_airdrop::claim_airdrop;
 #[cfg(not(feature = "library"))]
 use crate::error::ContractError;
-use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
-use crate::state::{ADDRS_TO_MINT_COUNT, CONFIG};
+use crate::msg::{ExecuteMsg, InstantiateMsg};
+use crate::state::CONFIG;
 
-use crate::helpers::{
-    build_config_msg, build_messages_for_claim_and_whitelist_add, build_whitelist_instantiate_msg,
-    check_funds_and_fair_burn, run_validations_for_claim, CONTRACT_NAME, CONTRACT_VERSION,
-};
-use crate::query::query_airdrop_is_eligible;
-use cosmwasm_std::{entry_point, Addr};
-use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult};
+use cosmwasm_std::entry_point;
+use cosmwasm_std::{DepsMut, Env, MessageInfo};
 use cw2::set_contract_version;
+use sg1::fair_burn;
 use sg_std::Response;
+
+use build_message::{state_config, whitelist_instantiate};
+use validation::{validate_funds, validate_plaintext_msg};
+
+const CONTRACT_NAME: &str = "crates.io:sg-eth-airdrop";
+const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
+pub const INSTANTIATION_FEE: u128 = 100_000_000; // 100 STARS
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -21,15 +25,17 @@ pub fn instantiate(
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-    let res = check_funds_and_fair_burn(info.clone())?;
-    let cfg = build_config_msg(deps.as_ref(), info.clone(), msg.clone())?;
+    validate_plaintext_msg(msg.airdrop_amount)?;
+    let mut res = validate_funds(info.clone())?;
+    fair_burn(INSTANTIATION_FEE, None, &mut res);
+    let cfg = state_config(deps.as_ref(), info.clone(), msg.clone())?;
     CONFIG.save(deps.storage, &cfg)?;
     Ok(res
         .add_attribute("action", "instantiate")
         .add_attribute("contract_name", CONTRACT_NAME)
         .add_attribute("contract_version", CONTRACT_VERSION)
         .add_attribute("sender", info.sender)
-        .add_submessage(build_whitelist_instantiate_msg(env, msg)?))
+        .add_submessage(whitelist_instantiate(env, msg)?))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -47,52 +53,90 @@ pub fn execute(
     }
 }
 
-#[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
-    match msg {
-        QueryMsg::AirdropEligible { eth_address } => {
-            to_binary(&query_airdrop_is_eligible(deps, eth_address)?)
-        }
-        QueryMsg::GetMinter {} => to_binary(&get_minter(deps)?),
+mod build_message {
+    use super::*;
+    use crate::state::Config;
+    use cosmwasm_std::{to_binary, Deps, WasmMsg};
+    use sg_std::{StargazeMsgWrapper, SubMsg};
+    use validation::validate_airdrop_amount;
+    use whitelist_immutable::msg::InstantiateMsg as WGInstantiateMsg;
+
+    pub const GENERIC_WHITELIST_LABEL: &str = "Generic Whitelist for Airdrop";
+    pub const INIT_WHITELIST_REPLY_ID: u64 = 1;
+
+    pub fn whitelist_instantiate(
+        env: Env,
+        msg: InstantiateMsg,
+    ) -> Result<cosmwasm_std::SubMsg<StargazeMsgWrapper>, ContractError> {
+        let whitelist_instantiate_msg = WGInstantiateMsg {
+            addresses: msg.addresses,
+            mint_discount_bps: Some(0),
+            per_address_limit: msg.per_address_limit,
+        };
+        let wasm_msg = WasmMsg::Instantiate {
+            code_id: msg.whitelist_code_id,
+            admin: Some(env.contract.address.to_string()),
+            funds: vec![],
+            label: GENERIC_WHITELIST_LABEL.to_string(),
+            msg: to_binary(&whitelist_instantiate_msg)?,
+        };
+        Ok(SubMsg::reply_on_success(wasm_msg, INIT_WHITELIST_REPLY_ID))
+    }
+
+    pub fn state_config(
+        deps: Deps,
+        info: MessageInfo,
+        msg: InstantiateMsg,
+    ) -> Result<Config, ContractError> {
+        Ok(Config {
+            admin: info.sender,
+            claim_msg_plaintext: msg.clone().claim_msg_plaintext,
+            airdrop_amount: validate_airdrop_amount(msg.airdrop_amount)?,
+            whitelist_address: None,
+            minter_address: deps.api.addr_validate(msg.minter_address.as_ref())?,
+        })
     }
 }
 
-fn claim_airdrop(
-    deps: DepsMut,
-    info: MessageInfo,
-    _env: Env,
-    eth_address: String,
-    eth_sig: String,
-) -> Result<Response, ContractError> {
-    let config = CONFIG.load(deps.storage)?;
-    run_validations_for_claim(
-        &deps,
-        info.clone(),
-        eth_address.clone(),
-        eth_sig,
-        config.clone(),
-    )?;
-    let res = build_messages_for_claim_and_whitelist_add(&deps, info, config.airdrop_amount)?;
-    increment_local_mint_count_for_address(deps, eth_address)?;
+mod validation {
+    use super::*;
+    use cosmwasm_std::Uint128;
+    use cw_utils::must_pay;
+    use sg_std::NATIVE_DENOM;
 
-    Ok(res
-        .add_attribute("claimed_amount", config.airdrop_amount.to_string())
-        .add_attribute("minter_address", config.minter_address.to_string()))
-}
+    const MIN_AIRDROP: u128 = 10_000_000; // 10 STARS
+    const MAX_AIRDROP: u128 = 100_000_000_000_000; // 100 million STARS
 
-pub fn get_minter(deps: Deps) -> StdResult<Addr> {
-    let config = CONFIG.load(deps.storage)?;
-    Ok(config.minter_address)
-}
+    pub fn validate_funds(info: MessageInfo) -> Result<Response, ContractError> {
+        validate_instantiate_funds(info)?;
+        Ok(Response::new())
+    }
 
-pub fn increment_local_mint_count_for_address(
-    deps: DepsMut,
-    eth_address: String,
-) -> Result<Response, ContractError> {
-    let mint_count_for_address = ADDRS_TO_MINT_COUNT
-        .load(deps.storage, &eth_address)
-        .unwrap_or(0);
-    ADDRS_TO_MINT_COUNT.save(deps.storage, &eth_address, &(mint_count_for_address + 1))?;
+    pub fn validate_instantiate_funds(info: MessageInfo) -> Result<u128, ContractError> {
+        let amount = must_pay(&info, NATIVE_DENOM)?;
+        if amount < Uint128::from(INSTANTIATION_FEE) {
+            return Err(ContractError::InsufficientFundsInstantiate {});
+        };
+        Ok(amount.u128())
+    }
 
-    Ok(Response::new())
+    pub fn validate_airdrop_amount(airdrop_amount: u128) -> Result<u128, ContractError> {
+        if airdrop_amount < MIN_AIRDROP {
+            return Err(ContractError::AirdropTooSmall {});
+        };
+        if airdrop_amount > MAX_AIRDROP {
+            return Err(ContractError::AirdropTooBig {});
+        };
+        Ok(airdrop_amount)
+    }
+
+    pub fn validate_plaintext_msg(airdrop_amount: u128) -> Result<u128, ContractError> {
+        if airdrop_amount < MIN_AIRDROP {
+            return Err(ContractError::AirdropTooSmall {});
+        };
+        if airdrop_amount > MAX_AIRDROP {
+            return Err(ContractError::AirdropTooBig {});
+        };
+        Ok(airdrop_amount)
+    }
 }

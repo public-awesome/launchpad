@@ -1,7 +1,19 @@
-use crate::{state::CONFIG, ContractError};
+use crate::{msg::QueryMsg, state::CONFIG, ContractError};
+use cosmwasm_std::{entry_point, to_binary, Binary};
+use cosmwasm_std::{Addr, Env};
 use cosmwasm_std::{Deps, DepsMut, StdResult};
 use vending_minter::helpers::MinterContract;
 use whitelist_immutable::helpers::WhitelistImmutableContract;
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
+    match msg {
+        QueryMsg::AirdropEligible { eth_address } => {
+            to_binary(&query_airdrop_is_eligible(deps, eth_address)?)
+        }
+        QueryMsg::GetMinter {} => to_binary(&get_minter(deps)?),
+    }
+}
 
 pub fn query_collection_whitelist(deps: &DepsMut) -> Result<String, ContractError> {
     let config = CONFIG.load(deps.storage)?;
@@ -36,4 +48,9 @@ pub fn query_per_address_limit(deps: &Deps) -> StdResult<u32> {
             kind: "Whitelist Contract".to_string(),
         }),
     }
+}
+
+pub fn get_minter(deps: Deps) -> StdResult<Addr> {
+    let config = CONFIG.load(deps.storage)?;
+    Ok(config.minter_address)
 }

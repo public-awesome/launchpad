@@ -2,7 +2,7 @@ use cosmwasm_std::{Deps, StdError, StdResult};
 use sha2::Digest;
 use sha3::Keccak256;
 
-use crate::ethereum::{decode_address, ethereum_address_raw, get_recovery_param};
+use crate::{decode_address, ethereum_address_raw, get_recovery_param};
 
 #[allow(dead_code)]
 pub const VERSION: &str = "crypto-verify-v2";

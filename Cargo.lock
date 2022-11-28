@@ -1007,6 +1007,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "ethereum-verify"
+version = "0.21.1"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "hex",
+ "sha2 0.10.6",
+ "sha3",
+]
+
+[[package]]
 name = "ethers-core"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1965,6 +1976,7 @@ dependencies = [
  "cw-storage-plus",
  "cw-utils",
  "cw2",
+ "ethereum-verify",
  "ethers-core",
  "ethers-signers",
  "eyre",

@@ -6,7 +6,7 @@ use cosmwasm_std::{Addr, Attribute, Coin, Uint128};
 use ethers_core::rand::thread_rng;
 use ethers_signers::{LocalWallet, Signer};
 
-use crate::helpers::INSTANTIATION_FEE;
+use crate::contract::INSTANTIATION_FEE;
 use crate::tests_folder::constants::{
     MOCK_AIRDROP_ADDR_STR, MOCK_MINTER_ADDR_STR, NATIVE_DENOM, OWNER, STARGAZE_WALLET_01,
     STARGAZE_WALLET_02,

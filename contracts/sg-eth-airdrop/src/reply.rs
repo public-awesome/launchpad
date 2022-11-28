@@ -1,12 +1,12 @@
 #[cfg(not(feature = "library"))]
 use crate::error::ContractError;
 use crate::state::CONFIG;
-
-use crate::helpers::INIT_WHITELIST_REPLY_ID;
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{DepsMut, Env, Reply};
 use cw_utils::{parse_reply_instantiate_data, MsgInstantiateContractResponse, ParseReplyError};
 use sg_std::Response;
+
+const INIT_WHITELIST_REPLY_ID: u64 = 1;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {

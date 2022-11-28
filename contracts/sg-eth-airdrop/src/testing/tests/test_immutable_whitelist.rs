@@ -1,4 +1,4 @@
-use crate::helpers::INSTANTIATION_FEE;
+use crate::contract::INSTANTIATION_FEE;
 use crate::msg::QueryMsg;
 use crate::tests_folder::constants::{
     MOCK_AIRDROP_ADDR_STR, MOCK_MINTER_ADDR_STR, OWNER, WHITELIST_AMOUNT,

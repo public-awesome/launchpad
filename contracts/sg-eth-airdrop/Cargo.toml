@@ -63,6 +63,7 @@ sg-std = { workspace = true }
 thiserror = { workspace = true }
 vending-minter = { workspace = true, features = ["library"] }
 whitelist-immutable = { workspace = true, features = ["library"] }
+ethereum-verify = { workspace = true }
 
 [dev-dependencies]
 async-std = "1.12.0"

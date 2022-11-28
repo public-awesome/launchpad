@@ -41,6 +41,8 @@ vending-factory = { version = "0.21.1", path = "contracts/vending-factory" }
 vending-minter = { version = "0.21.1", path = "contracts/vending-minter" }
 whitelist-immutable = { version = "0.21.1", path = "contracts/whitelist-immutable" }
 sg-whitelist-basic = { version = "0.12.0" }
+ethereum-verify = { version = "0.21.1", path = "packages/ethereum-verify" }
+
 
 [profile.release.package.sg721]
 codegen-units = 1
@@ -103,6 +105,10 @@ codegen-units = 1
 incremental = false
 
 [profile.release.package.whitelist-generic]
+codegen-units = 1
+incremental = false
+
+[profile.release.package.ethereum-verify]
 codegen-units = 1
 incremental = false
 
