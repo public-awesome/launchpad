@@ -62,11 +62,15 @@ mod build_messages {
         });
         res = res.add_submessage(bank_msg);
         let collection_whitelist = query_collection_whitelist(deps)?;
-        let res = res.add_message(add_member_minter(deps, info.sender, collection_whitelist)?);
+        let res = res.add_message(add_member_to_collection_whitelist(
+            deps,
+            info.sender,
+            collection_whitelist,
+        )?);
         Ok(res)
     }
 
-    fn add_member_minter(
+    fn add_member_to_collection_whitelist(
         deps: &DepsMut,
         wallet_address: Addr,
         collection_whitelist: String,
