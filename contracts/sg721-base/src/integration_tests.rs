@@ -273,7 +273,7 @@ mod tests {
             // test sanitizing base token uri IPFS -> ipfs
             let base_token_uri = " IPFS://somecidhereipfs ".to_string();
             let init_msg = VendingMinterInitMsgExtension {
-                base_token_uri: base_token_uri.clone(),
+                base_token_uri,
                 ..mock_init_extension()
             };
             let custom_create_minter_msg =
@@ -296,7 +296,7 @@ mod tests {
             // test case sensitive ipfs IPFS://aBcDeF -> ipfs://aBcDeF
             let base_token_uri = "IPFS://aBcDeF".to_string();
             let init_msg = VendingMinterInitMsgExtension {
-                base_token_uri: base_token_uri.clone(),
+                base_token_uri,
                 ..mock_init_extension()
             };
             let custom_create_minter_msg =
