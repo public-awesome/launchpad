@@ -1,21 +1,31 @@
-use crate::msg::ExecuteMsg;
+use crate::msg::{ExecuteMsg, QueryMsg};
 use crate::tests_folder::constants::WHITELIST_AMOUNT;
 use async_std::task;
 use cosmwasm_std::{Addr, Attribute, Coin, Uint128};
 
 use ethers_core::rand::thread_rng;
 use ethers_signers::{LocalWallet, Signer};
+use sg_multi_test::StargazeApp;
 
 use crate::contract::INSTANTIATION_FEE;
 use crate::tests_folder::constants::{
-    MOCK_AIRDROP_ADDR_STR, MOCK_MINTER_ADDR_STR, NATIVE_DENOM, OWNER, STARGAZE_WALLET_01,
-    STARGAZE_WALLET_02,
+    CONFIG_PLAINTEXT, MOCK_AIRDROP_ADDR_STR, MOCK_MINTER_ADDR_STR, NATIVE_DENOM, OWNER,
+    STARGAZE_WALLET_01, STARGAZE_WALLET_02,
 };
 use crate::tests_folder::tests_setup::{
     configure_mock_minter_with_mock_whitelist, custom_mock_app, execute_contract_error_with_msg,
     execute_contract_with_msg, get_msg_plaintext, get_signature, get_wallet_and_sig,
     instantiate_contract, InstantiateParams,
 };
+
+fn query_minter_as_expected(app: &mut StargazeApp, airdrop_contract: Addr, minter_addr: Addr) {
+    let query_msg = QueryMsg::GetMinter {};
+    let result: Addr = app
+        .wrap()
+        .query_wasm_smart(airdrop_contract, &query_msg)
+        .unwrap();
+    assert_eq!(minter_addr, result);
+}
 
 #[test]
 fn test_instantiate() {
@@ -31,8 +41,57 @@ fn test_instantiate() {
         admin_account: Addr::unchecked(OWNER),
         app: &mut app,
         per_address_limit: 1,
+        claim_msg_plaintext: CONFIG_PLAINTEXT.to_string(),
     };
-    instantiate_contract(params);
+    instantiate_contract(params).unwrap();
+}
+
+#[test]
+fn test_instantiate_plaintext_too_long() {
+    let long_config_plaintext: String = String::from_utf8(vec![b'X'; 1001]).unwrap() + " {wallet}";
+    let mut app = custom_mock_app();
+    let minter_address = Addr::unchecked("contract1");
+    let claim_plaintext = &get_msg_plaintext(STARGAZE_WALLET_01.to_string());
+    let (_, _, _, eth_addr_str) = get_wallet_and_sig(claim_plaintext.clone());
+    let params = InstantiateParams {
+        addresses: vec![eth_addr_str],
+        funds_amount: WHITELIST_AMOUNT + INSTANTIATION_FEE,
+        expected_airdrop_contract_id: 1,
+        minter_address,
+        admin_account: Addr::unchecked(OWNER),
+        app: &mut app,
+        per_address_limit: 1,
+        claim_msg_plaintext: long_config_plaintext,
+    };
+    let res = instantiate_contract(params).unwrap_err();
+    assert_eq!(
+        res.root_cause().to_string(),
+        "Plaintext message is too long"
+    );
+}
+
+#[test]
+fn test_instantiate_plaintext_missing_wallet() {
+    let plaintext_config_no_wallet = "This message doesn't have wallet string".to_string();
+    let mut app = custom_mock_app();
+    let minter_address = Addr::unchecked("contract1");
+    let claim_plaintext = &get_msg_plaintext(STARGAZE_WALLET_01.to_string());
+    let (_, _, _, eth_addr_str) = get_wallet_and_sig(claim_plaintext.clone());
+    let params = InstantiateParams {
+        addresses: vec![eth_addr_str],
+        funds_amount: WHITELIST_AMOUNT + INSTANTIATION_FEE,
+        expected_airdrop_contract_id: 1,
+        minter_address,
+        admin_account: Addr::unchecked(OWNER),
+        app: &mut app,
+        per_address_limit: 1,
+        claim_msg_plaintext: plaintext_config_no_wallet,
+    };
+    let res = instantiate_contract(params).unwrap_err();
+    assert_eq!(
+        res.root_cause().to_string(),
+        "Plaintext message must contain `{wallet}` string"
+    );
 }
 
 #[test]
@@ -52,9 +111,10 @@ fn test_valid_eth_sig_claim() {
         admin_account: Addr::unchecked(OWNER),
         app: &mut app,
         per_address_limit: 1,
+        claim_msg_plaintext: CONFIG_PLAINTEXT.to_string(),
     };
-    instantiate_contract(params);
-
+    instantiate_contract(params).unwrap();
+    query_minter_as_expected(&mut app, airdrop_contract.clone(), minter_addr);
     let claim_message = ExecuteMsg::ClaimAirdrop {
         eth_address: eth_addr_str,
         eth_sig: eth_sig_str,
@@ -77,10 +137,6 @@ fn test_valid_eth_sig_claim() {
             key: "claimed_amount".to_string(),
             value: WHITELIST_AMOUNT.to_string(),
         },
-        Attribute {
-            key: "minter_address".to_string(),
-            value: minter_addr.to_string(),
-        },
     ];
     assert_eq!(res.events[1].attributes, expected_attributes);
 }
@@ -100,13 +156,14 @@ fn test_invalid_eth_sig_claim() {
         addresses: vec![eth_addr_str.clone()],
         funds_amount: WHITELIST_AMOUNT + INSTANTIATION_FEE,
         expected_airdrop_contract_id: 4,
-        minter_address: minter_addr,
+        minter_address: minter_addr.clone(),
         admin_account: Addr::unchecked(OWNER),
         app: &mut app,
         per_address_limit: 1,
+        claim_msg_plaintext: CONFIG_PLAINTEXT.to_string(),
     };
-    instantiate_contract(params);
-
+    instantiate_contract(params).unwrap();
+    query_minter_as_expected(&mut app, airdrop_contract.clone(), minter_addr);
     let claim_message = ExecuteMsg::ClaimAirdrop {
         eth_address: eth_addr_str.clone(),
         eth_sig: eth_sig_str_2,
@@ -139,9 +196,10 @@ fn test_can_not_claim_twice() {
         admin_account: Addr::unchecked(OWNER),
         app: &mut app,
         per_address_limit: 1,
+        claim_msg_plaintext: CONFIG_PLAINTEXT.to_string(),
     };
-    instantiate_contract(params);
-
+    instantiate_contract(params).unwrap();
+    query_minter_as_expected(&mut app, airdrop_contract.clone(), minter_addr);
     let claim_message = ExecuteMsg::ClaimAirdrop {
         eth_address: eth_addr_str.clone(),
         eth_sig: eth_sig_str,
@@ -163,10 +221,6 @@ fn test_can_not_claim_twice() {
         Attribute {
             key: "claimed_amount".to_string(),
             value: WHITELIST_AMOUNT.to_string(),
-        },
-        Attribute {
-            key: "minter_address".to_string(),
-            value: minter_addr.to_string(),
         },
     ];
     assert_eq!(res.events[1].attributes, expected_attributes);
@@ -199,13 +253,14 @@ fn test_claim_one_valid_airdrop() {
         addresses: vec![eth_addr_str.clone()],
         funds_amount: WHITELIST_AMOUNT + INSTANTIATION_FEE,
         expected_airdrop_contract_id: 4,
-        minter_address: minter_addr,
+        minter_address: minter_addr.clone(),
         admin_account: Addr::unchecked(OWNER),
         app: &mut app,
         per_address_limit: 1,
+        claim_msg_plaintext: CONFIG_PLAINTEXT.to_string(),
     };
-    instantiate_contract(params);
-
+    instantiate_contract(params).unwrap();
+    query_minter_as_expected(&mut app, airdrop_contract.clone(), minter_addr);
     let balances = app
         .wrap()
         .query_all_balances(stargaze_wallet_01.clone())
@@ -248,12 +303,14 @@ fn test_claim_twice_receive_funds_once() {
         addresses: vec![eth_addr_str.clone()],
         funds_amount: WHITELIST_AMOUNT + INSTANTIATION_FEE,
         expected_airdrop_contract_id: 4,
-        minter_address: minter_addr,
+        minter_address: minter_addr.clone(),
         admin_account: Addr::unchecked(OWNER),
         app: &mut app,
         per_address_limit: 1,
+        claim_msg_plaintext: CONFIG_PLAINTEXT.to_string(),
     };
-    instantiate_contract(params);
+    instantiate_contract(params).unwrap();
+    query_minter_as_expected(&mut app, airdrop_contract.clone(), minter_addr);
     let balances = app
         .wrap()
         .query_all_balances(stargaze_wallet_01.clone())
@@ -314,12 +371,14 @@ fn test_ineligible_does_not_receive_funds() {
         addresses: vec![eth_addr_str],
         funds_amount: WHITELIST_AMOUNT + INSTANTIATION_FEE,
         expected_airdrop_contract_id: 4,
-        minter_address: minter_addr,
+        minter_address: minter_addr.clone(),
         admin_account: Addr::unchecked(OWNER),
         app: &mut app,
         per_address_limit: 1,
+        claim_msg_plaintext: CONFIG_PLAINTEXT.to_string(),
     };
-    instantiate_contract(params);
+    instantiate_contract(params).unwrap();
+    query_minter_as_expected(&mut app, airdrop_contract.clone(), minter_addr);
     let stargaze_wallet_02 = Addr::unchecked(STARGAZE_WALLET_02);
     let balances = app
         .wrap()
@@ -369,12 +428,13 @@ fn test_one_eth_claim_two_stargaze_addresses_invalid() {
         addresses: vec![eth_addr_str_1.clone()],
         funds_amount: WHITELIST_AMOUNT + INSTANTIATION_FEE,
         expected_airdrop_contract_id: 4,
-        minter_address: minter_addr.clone(),
+        minter_address: minter_addr,
         admin_account: Addr::unchecked(OWNER),
         app: &mut app,
         per_address_limit: 1,
+        claim_msg_plaintext: CONFIG_PLAINTEXT.to_string(),
     };
-    instantiate_contract(params);
+    instantiate_contract(params).unwrap();
 
     // claim with eth address 1, stargaze wallet 1
     let claim_message = ExecuteMsg::ClaimAirdrop {
@@ -397,10 +457,6 @@ fn test_one_eth_claim_two_stargaze_addresses_invalid() {
         Attribute {
             key: "claimed_amount".to_string(),
             value: WHITELIST_AMOUNT.to_string(),
-        },
-        Attribute {
-            key: "minter_address".to_string(),
-            value: minter_addr.to_string(),
         },
     ];
     assert_eq!(res.events[1].attributes, expected_attributes);
@@ -448,8 +504,9 @@ fn test_two_claims_allowed_success() {
         admin_account: Addr::unchecked(OWNER),
         app: &mut app,
         per_address_limit: 2,
+        claim_msg_plaintext: CONFIG_PLAINTEXT.to_string(),
     };
-    instantiate_contract(params);
+    instantiate_contract(params).unwrap();
 
     let balances = app
         .wrap()

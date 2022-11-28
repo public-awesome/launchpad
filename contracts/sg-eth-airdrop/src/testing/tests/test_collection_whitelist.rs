@@ -2,7 +2,7 @@ use cosmwasm_std::Addr;
 
 use crate::msg::QueryMsg;
 use crate::tests_folder::constants::{
-    AIRDROP_ADDR_STR, MINT_PRICE, STARGAZE_WALLET_01, WHITELIST_AMOUNT,
+    AIRDROP_ADDR_STR, CONFIG_PLAINTEXT, MINT_PRICE, STARGAZE_WALLET_01, WHITELIST_AMOUNT,
 };
 use crate::tests_folder::tests_setup::{
     configure_minter_with_whitelist, custom_mock_app, execute_airdrop_claim,
@@ -30,8 +30,9 @@ fn test_set_minter_contract_success() {
         admin_account: contract_admin,
         app: &mut app,
         per_address_limit: 1,
+        claim_msg_plaintext: CONFIG_PLAINTEXT.to_string(),
     };
-    instantiate_contract(params);
+    instantiate_contract(params).unwrap();
     let airdrop_contract = Addr::unchecked(AIRDROP_ADDR_STR);
     let query_msg = QueryMsg::GetMinter {};
     let result: Addr = app
@@ -57,8 +58,9 @@ fn test_claim_added_to_minter_whitelist() {
         admin_account: creator.clone(),
         app: &mut app,
         per_address_limit: 1,
+        claim_msg_plaintext: CONFIG_PLAINTEXT.to_string(),
     };
-    instantiate_contract(params);
+    instantiate_contract(params).unwrap();
 
     let stargaze_wallet_01 = Addr::unchecked(STARGAZE_WALLET_01);
     update_admin_for_whitelist(&mut app, creator, airdrop_contract.clone(), whiltelist_addr);

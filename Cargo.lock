@@ -1969,6 +1969,7 @@ dependencies = [
 name = "sg-eth-airdrop"
 version = "0.21.1"
 dependencies = [
+ "anyhow",
  "async-std",
  "cosmwasm-schema",
  "cosmwasm-std",

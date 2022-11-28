@@ -11,7 +11,7 @@ use sg1::fair_burn;
 use sg_std::Response;
 
 use build_message::{state_config, whitelist_instantiate};
-use validation::{validate_funds, validate_plaintext_msg};
+use validation::validate_instantiation_params;
 
 const CONTRACT_NAME: &str = "crates.io:sg-eth-airdrop";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -25,8 +25,8 @@ pub fn instantiate(
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-    validate_plaintext_msg(msg.airdrop_amount)?;
-    let mut res = validate_funds(info.clone())?;
+    validate_instantiation_params(info.clone(), msg.clone())?;
+    let mut res = Response::new();
     fair_burn(INSTANTIATION_FEE, None, &mut res);
     let cfg = state_config(deps.as_ref(), info.clone(), msg.clone())?;
     CONFIG.save(deps.storage, &cfg)?;
@@ -107,17 +107,22 @@ mod validation {
     const MIN_AIRDROP: u128 = 10_000_000; // 10 STARS
     const MAX_AIRDROP: u128 = 100_000_000_000_000; // 100 million STARS
 
-    pub fn validate_funds(info: MessageInfo) -> Result<Response, ContractError> {
+    pub fn validate_instantiation_params(
+        info: MessageInfo,
+        msg: InstantiateMsg,
+    ) -> Result<(), ContractError> {
+        validate_airdrop_amount(msg.airdrop_amount)?;
+        validate_plaintext_msg(msg.claim_msg_plaintext)?;
         validate_instantiate_funds(info)?;
-        Ok(Response::new())
+        Ok(())
     }
 
-    pub fn validate_instantiate_funds(info: MessageInfo) -> Result<u128, ContractError> {
+    pub fn validate_instantiate_funds(info: MessageInfo) -> Result<(), ContractError> {
         let amount = must_pay(&info, NATIVE_DENOM)?;
         if amount < Uint128::from(INSTANTIATION_FEE) {
             return Err(ContractError::InsufficientFundsInstantiate {});
         };
-        Ok(amount.u128())
+        Ok(())
     }
 
     pub fn validate_airdrop_amount(airdrop_amount: u128) -> Result<u128, ContractError> {
@@ -130,13 +135,13 @@ mod validation {
         Ok(airdrop_amount)
     }
 
-    pub fn validate_plaintext_msg(airdrop_amount: u128) -> Result<u128, ContractError> {
-        if airdrop_amount < MIN_AIRDROP {
-            return Err(ContractError::AirdropTooSmall {});
-        };
-        if airdrop_amount > MAX_AIRDROP {
-            return Err(ContractError::AirdropTooBig {});
-        };
-        Ok(airdrop_amount)
+    pub fn validate_plaintext_msg(plaintext_msg: String) -> Result<(), ContractError> {
+        if !plaintext_msg.contains("{wallet}") {
+            return Err(ContractError::PlaintextMsgNoWallet {});
+        }
+        if plaintext_msg.len() > 1000 {
+            return Err(ContractError::PlaintextTooLong {});
+        }
+        Ok(())
     }
 }

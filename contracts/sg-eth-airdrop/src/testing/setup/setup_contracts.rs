@@ -7,11 +7,11 @@ use sg_std::{self, StargazeMsgWrapper};
 
 use crate::msg::{ExecuteMsg, InstantiateMsg};
 use crate::tests_folder::constants::WHITELIST_AMOUNT;
+use anyhow::Error as anyhow_error;
 use eyre::Result;
-
 extern crate whitelist_immutable;
 use super::test_msgs::InstantiateParams;
-use crate::tests_folder::constants::{CONTRACT_CONFIG_PLAINTEXT, NATIVE_DENOM, OWNER};
+use crate::tests_folder::constants::{NATIVE_DENOM, OWNER};
 use crate::tests_folder::tests_setup::{
     mock_minter_execute, mock_minter_instantiate, mock_minter_query, mock_whitelist_execute,
     mock_whitelist_instantiate, mock_whitelist_query,
@@ -95,12 +95,13 @@ pub fn whitelist_immutable_contract() -> Box<dyn Contract<StargazeMsgWrapper>> {
     Box::new(contract)
 }
 
-pub fn instantiate_contract(params: InstantiateParams) {
+pub fn instantiate_contract(params: InstantiateParams) -> Result<cosmwasm_std::Addr, anyhow_error> {
     let addresses = params.addresses;
     let minter_address = params.minter_address;
     let admin_account = params.admin_account;
     let funds_amount = params.funds_amount;
     let per_address_limit = params.per_address_limit;
+    let claim_msg_plaintext = params.claim_msg_plaintext;
     params
         .app
         .sudo(SudoMsg::Bank({
@@ -118,24 +119,21 @@ pub fn instantiate_contract(params: InstantiateParams) {
 
     let msg: InstantiateMsg = InstantiateMsg {
         admin: Addr::unchecked(OWNER),
-        claim_msg_plaintext: Addr::unchecked(CONTRACT_CONFIG_PLAINTEXT).into_string(),
+        claim_msg_plaintext,
         airdrop_amount: WHITELIST_AMOUNT,
         addresses,
         whitelist_code_id,
         minter_address,
         per_address_limit,
     };
-    let _ = params
-        .app
-        .instantiate_contract(
-            sg_eth_id,
-            Addr::unchecked(admin_account.clone()),
-            &msg,
-            &coins(funds_amount, NATIVE_DENOM),
-            "sg-eg-airdrop",
-            Some(Addr::unchecked(admin_account).to_string()),
-        )
-        .unwrap();
+    params.app.instantiate_contract(
+        sg_eth_id,
+        Addr::unchecked(admin_account.clone()),
+        &msg,
+        &coins(funds_amount, NATIVE_DENOM),
+        "sg-eg-airdrop",
+        Some(Addr::unchecked(admin_account).to_string()),
+    )
 }
 
 pub fn execute_contract_with_msg(
@@ -145,9 +143,7 @@ pub fn execute_contract_with_msg(
     target_address: Addr,
 ) -> Result<AppResponse, Error> {
     let result = app.execute_contract(user, target_address, &msg, &[]);
-    // println!("result is {:?}", result.unwrap_err().root_cause());
     Ok(result.unwrap())
-    // Ok(true)
 }
 
 pub fn execute_contract_error_with_msg(

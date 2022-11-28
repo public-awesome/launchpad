@@ -1,4 +1,4 @@
-use crate::tests_folder::constants::CONTRACT_CONFIG_PLAINTEXT;
+use crate::tests_folder::constants::CONFIG_PLAINTEXT;
 use async_std::task;
 use ethers_core::{k256::ecdsa::SigningKey, rand::thread_rng, types::H160};
 use ethers_signers::{LocalWallet, Signer, Wallet, WalletError};
@@ -28,5 +28,5 @@ pub fn get_wallet_and_sig(
 }
 
 pub fn get_msg_plaintext(wallet_address: String) -> String {
-    str::replace(CONTRACT_CONFIG_PLAINTEXT, "{wallet}", &wallet_address)
+    str::replace(CONFIG_PLAINTEXT, "{wallet}", &wallet_address)
 }

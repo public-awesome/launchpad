@@ -76,3 +76,4 @@ vending-factory = { workspace = true }
 sg721-base = { workspace = true }
 cw-multi-test = { workspace = true }
 sg-multi-test = { workspace = true }
+anyhow = "1.0.66"

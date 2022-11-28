@@ -45,4 +45,10 @@ pub enum ContractError {
 
     #[error("Collection Whitelist on Minter contract has not been set")]
     CollectionWhitelistMinterNotSet {},
+
+    #[error("Plaintext message must contain `{{wallet}}` string")]
+    PlaintextMsgNoWallet {},
+
+    #[error("Plaintext message is too long")]
+    PlaintextTooLong {},
 }

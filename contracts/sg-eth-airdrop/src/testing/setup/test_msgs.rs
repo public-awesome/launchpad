@@ -9,4 +9,5 @@ pub struct InstantiateParams<'a> {
     pub admin_account: Addr,
     pub app: &'a mut StargazeApp,
     pub per_address_limit: u32,
+    pub claim_msg_plaintext: String,
 }

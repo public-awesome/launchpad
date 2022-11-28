@@ -1,7 +1,7 @@
 use crate::contract::INSTANTIATION_FEE;
 use crate::msg::QueryMsg;
 use crate::tests_folder::constants::{
-    MOCK_AIRDROP_ADDR_STR, MOCK_MINTER_ADDR_STR, OWNER, WHITELIST_AMOUNT,
+    CONFIG_PLAINTEXT, MOCK_AIRDROP_ADDR_STR, MOCK_MINTER_ADDR_STR, OWNER, WHITELIST_AMOUNT,
 };
 use crate::tests_folder::tests_setup::{
     configure_mock_minter_with_mock_whitelist, custom_mock_app, instantiate_contract,
@@ -31,8 +31,9 @@ fn test_instantiate_with_addresses() {
         admin_account: Addr::unchecked(OWNER),
         app: &mut app,
         per_address_limit: 1,
+        claim_msg_plaintext: CONFIG_PLAINTEXT.to_string(),
     };
-    instantiate_contract(params);
+    instantiate_contract(params).unwrap();
 
     let query_msg = QueryMsg::AirdropEligible {
         eth_address: "addr1".to_string(),
@@ -73,8 +74,9 @@ fn test_whitelist_immutable_address_limit() {
         admin_account: Addr::unchecked(OWNER),
         app: &mut app,
         per_address_limit: 20,
+        claim_msg_plaintext: CONFIG_PLAINTEXT.to_string(),
     };
-    instantiate_contract(params);
+    instantiate_contract(params).unwrap();
     let whitelist_immutable = Addr::unchecked("contract4");
     let res: u32 = WhitelistImmutableContract(whitelist_immutable)
         .per_address_limit(&app.wrap())
@@ -102,8 +104,9 @@ fn test_whitelist_immutable_address_count() {
         admin_account: Addr::unchecked(OWNER),
         app: &mut app,
         per_address_limit: 20,
+        claim_msg_plaintext: CONFIG_PLAINTEXT.to_string(),
     };
-    instantiate_contract(params);
+    instantiate_contract(params).unwrap();
     let whitelist_immutable = Addr::unchecked("contract4");
     let res: u64 = WhitelistImmutableContract(whitelist_immutable)
         .address_count(&app.wrap())
@@ -131,8 +134,9 @@ fn test_whitelist_immutable_address_includes() {
         admin_account: Addr::unchecked(OWNER),
         app: &mut app,
         per_address_limit: 20,
+        claim_msg_plaintext: CONFIG_PLAINTEXT.to_string(),
     };
-    instantiate_contract(params);
+    instantiate_contract(params).unwrap();
     let whitelist_immutable = Addr::unchecked("contract4");
     let res: bool = WhitelistImmutableContract(whitelist_immutable.clone())
         .includes(&app.wrap(), "addr3".to_string())
@@ -165,8 +169,9 @@ fn test_whitelist_immutable_address_config() {
         admin_account: Addr::unchecked(OWNER),
         app: &mut app,
         per_address_limit: 20,
+        claim_msg_plaintext: CONFIG_PLAINTEXT.to_string(),
     };
-    instantiate_contract(params);
+    instantiate_contract(params).unwrap();
     let whitelist_immutable = Addr::unchecked("contract4");
     let res: whitelist_immutable::state::Config = WhitelistImmutableContract(whitelist_immutable)
         .config(&app.wrap())
