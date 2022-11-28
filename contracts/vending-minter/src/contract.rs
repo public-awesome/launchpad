@@ -82,11 +82,14 @@ pub fn instantiate(
         });
     }
 
+    // sanitize base token uri
+    let mut base_token_uri = msg.init_msg.base_token_uri.trim().to_string();
     // Check that base_token_uri is a valid IPFS uri
-    let parsed_token_uri = Url::parse(&msg.init_msg.base_token_uri)?;
+    let parsed_token_uri = Url::parse(&base_token_uri)?;
     if parsed_token_uri.scheme() != "ipfs" {
         return Err(ContractError::InvalidBaseTokenURI {});
     }
+    base_token_uri = parsed_token_uri.to_string();
 
     let genesis_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
     // If start time is before genesis time return error
@@ -146,7 +149,7 @@ pub fn instantiate(
                 .api
                 .addr_validate(&msg.collection_params.info.creator)?,
             payment_address: maybe_addr(deps.api, msg.init_msg.payment_address)?,
-            base_token_uri: msg.init_msg.base_token_uri,
+            base_token_uri,
             num_tokens: msg.init_msg.num_tokens,
             per_address_limit: msg.init_msg.per_address_limit,
             whitelist: whitelist_addr,
