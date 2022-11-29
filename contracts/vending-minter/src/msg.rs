@@ -33,6 +33,7 @@ pub enum ExecuteMsg {
     },
     Shuffle {},
     BurnRemaining {},
+    SetTokenUri { uri: String, num_tokens: u32 }
 }
 
 #[cw_serde]
@@ -43,6 +44,7 @@ pub enum QueryMsg {
     MintPrice {},
     MintCount { address: String },
     Status {},
+    InternalInfo {},
 }
 
 #[cw_serde]
@@ -81,4 +83,10 @@ pub struct MintPriceResponse {
 pub struct MintCountResponse {
     pub address: String,
     pub count: u32,
+}
+
+#[cw_serde]
+pub struct InternalInfoResponse {
+    pub base_token_id: u32,
+    pub minted_num_tokens: u32
 }

@@ -2,12 +2,12 @@ use std::convert::TryInto;
 
 use crate::error::ContractError;
 use crate::msg::{
-    ConfigResponse, ExecuteMsg, MintCountResponse, MintPriceResponse, MintableNumTokensResponse,
-    QueryMsg, StartTimeResponse,
+    ConfigResponse, ExecuteMsg, InternalInfoResponse, MintCountResponse, MintPriceResponse,
+    MintableNumTokensResponse, QueryMsg, StartTimeResponse,
 };
 use crate::state::{
-    Config, ConfigExtension, CONFIG, MINTABLE_NUM_TOKENS, MINTABLE_TOKEN_POSITIONS, MINTER_ADDRS,
-    SG721_ADDRESS, STATUS,
+    Config, ConfigExtension, BASE_TOKEN_ID, CONFIG, MINTABLE_NUM_TOKENS, MINTABLE_TOKEN_POSITIONS,
+    MINTED_NUM_TOKENS, MINTER_ADDRS, SG721_ADDRESS, STATUS,
 };
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
@@ -194,6 +194,9 @@ pub fn instantiate(
         reply_on: ReplyOn::Success,
     };
 
+    BASE_TOKEN_ID.save(deps.storage, &0)?;
+    MINTED_NUM_TOKENS.save(deps.storage, &0)?;
+
     Ok(Response::new()
         .add_attribute("action", "instantiate")
         .add_attribute("contract_name", CONTRACT_NAME)
@@ -230,6 +233,9 @@ pub fn execute(
         }
         ExecuteMsg::Shuffle {} => execute_shuffle(deps, env, info),
         ExecuteMsg::BurnRemaining {} => execute_burn_remaining(deps, env, info),
+        ExecuteMsg::SetTokenUri { uri, num_tokens } => {
+            execute_set_token_uri(deps, env,info, uri, num_tokens)
+        }
     }
 }
 
@@ -549,9 +555,10 @@ fn _execute_mint(
         None => random_mintable_token_mapping(deps.as_ref(), env, info.sender.clone())?,
     };
 
+    let base_token_id = BASE_TOKEN_ID.load(deps.storage)?;
     // Create mint msgs
     let mint_msg = Sg721ExecuteMsg::<Extension, Empty>::Mint(MintMsg::<Extension> {
-        token_id: mintable_token_mapping.token_id.to_string(),
+        token_id: (mintable_token_mapping.token_id + base_token_id).to_string(),
         owner: recipient_addr.to_string(),
         token_uri: Some(format!(
             "{}/{}",
@@ -597,6 +604,72 @@ fn _execute_mint(
         .add_attribute("network_fee", network_fee)
         .add_attribute("mint_price", mint_price.amount)
         .add_attribute("seller_amount", seller_amount))
+}
+
+pub fn execute_set_token_uri(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    uri: String,
+    num_tokens: u32,
+) -> Result<Response, ContractError> {
+    let mut config = CONFIG.load(deps.storage)?;
+
+    // Check only admin
+    if info.sender != config.extension.admin {
+        return Err(ContractError::Unauthorized(
+            "Sender is not an admin".to_owned(),
+        ));
+    }
+
+    let mut base_token_uri = uri.trim().to_string();
+    // Check that base_token_uri is a valid IPFS uri
+    let parsed_token_uri = Url::parse(&base_token_uri)?;
+    if parsed_token_uri.scheme() != "ipfs" {
+        return Err(ContractError::InvalidBaseTokenURI {});
+    }
+    base_token_uri = parsed_token_uri.to_string();
+
+    // Check that base_token_uri is a valid IPFS uri
+    let parsed_token_uri = Url::parse(&uri)?;
+    if parsed_token_uri.scheme() != "ipfs" {
+        return Err(ContractError::InvalidBaseTokenURI {});
+    }
+
+    let base_token_id = BASE_TOKEN_ID.load(deps.storage)?;
+    let minted_num_tokens = MINTED_NUM_TOKENS.load(deps.storage)?;
+    BASE_TOKEN_ID.save(deps.storage, &(base_token_id + config.extension.num_tokens - &minted_num_tokens))?;
+
+    let mintable_token_positions_result: StdResult<Vec<_>> = MINTABLE_TOKEN_POSITIONS
+        .keys(deps.storage, None, None, Order::Ascending)
+        .collect();
+    let mintable_token_positions = mintable_token_positions_result?;
+    for key in mintable_token_positions {
+        MINTABLE_TOKEN_POSITIONS.remove(deps.storage, key);
+    }
+    
+    let token_ids = random_token_list(
+        &env,
+         info.sender,
+        (1..=num_tokens).collect::<Vec<u32>>(),
+    )?;
+    let mut token_position = 1;
+    for token_id in token_ids {
+        MINTABLE_TOKEN_POSITIONS.save(deps.storage, token_position, &token_id)?;
+        token_position += 1;
+    }
+
+    let mintable_num_tokens = MINTABLE_NUM_TOKENS.load(deps.storage)?;
+    let minted_num_tokens = config.extension.num_tokens - mintable_num_tokens;
+
+    config.extension.base_token_uri = base_token_uri;
+    config.extension.num_tokens = minted_num_tokens + num_tokens;
+    CONFIG.save(deps.storage, &config)?;
+
+    MINTABLE_NUM_TOKENS.save(deps.storage, &num_tokens)?;
+    MINTED_NUM_TOKENS.save(deps.storage, &minted_num_tokens)?;
+
+    Ok(Response::default())
 }
 
 fn random_token_list(
@@ -972,6 +1045,12 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::MintableNumTokens {} => to_binary(&query_mintable_num_tokens(deps)?),
         QueryMsg::MintPrice {} => to_binary(&query_mint_price(deps)?),
         QueryMsg::MintCount { address } => to_binary(&query_mint_count(deps, address)?),
+        QueryMsg::InternalInfo {} => {
+            return to_binary(&InternalInfoResponse {
+                base_token_id: BASE_TOKEN_ID.load(deps.storage)?,
+                minted_num_tokens: MINTED_NUM_TOKENS.load(deps.storage)?,
+            });
+        }
     }
 }
 

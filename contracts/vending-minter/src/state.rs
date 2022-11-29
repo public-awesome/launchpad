@@ -24,3 +24,7 @@ pub const MINTER_ADDRS: Map<&Addr, u32> = Map::new("ma");
 
 /// Holds the status of the minter. Can be changed with on-chain governance proposals.
 pub const STATUS: Item<Status> = Item::new("status");
+
+/// Set New URI
+pub const BASE_TOKEN_ID: Item<u32> = Item::new("base_token_id");
+pub const MINTED_NUM_TOKENS: Item<u32> = Item::new("minted_num_tokens");

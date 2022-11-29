@@ -1,7 +1,7 @@
 use crate::contract::instantiate;
 use crate::msg::{
     ConfigResponse, ExecuteMsg, MintCountResponse, MintPriceResponse, MintableNumTokensResponse,
-    QueryMsg, StartTimeResponse,
+    QueryMsg, StartTimeResponse, InternalInfoResponse
 };
 use crate::ContractError;
 use cosmwasm_std::testing::{mock_dependencies_with_balance, mock_env, mock_info};
@@ -2034,4 +2034,108 @@ fn burn_remaining() {
         }),
     );
     assert!(res.is_err());
+}
+
+#[test]
+fn set_token_uri() {
+    let mut router = custom_mock_app();
+    let (creator, buyer) = setup_accounts(&mut router);
+    let num_tokens = 1000;
+    let (minter_addr, _config) = setup_minter_contract(&mut router, &creator, num_tokens, None);
+
+    // position block time before the start time
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 400, None);
+
+    for _i in 1..=2 {
+        let mint_msg = ExecuteMsg::Mint {};
+        let res = router.execute_contract(
+            buyer.clone(),
+            minter_addr.clone(),
+            &mint_msg,
+            &coins(MINT_PRICE, NATIVE_DENOM),
+        );
+        assert!(res.is_ok());
+    }
+    let set_token_uri_msg = ExecuteMsg::SetTokenUri {
+        uri: "ipfs://www1".to_string(),
+        num_tokens: 100,
+    };
+    let res = router.execute_contract(
+        creator.clone(),
+        minter_addr.clone(),
+        &set_token_uri_msg,
+        &[],
+    );
+    assert!(res.is_ok());
+
+    let mint_msg = ExecuteMsg::Mint {};
+    let res = router.execute_contract(
+        buyer.clone(),
+        minter_addr.clone(),
+        &mint_msg,
+        &coins(MINT_PRICE, NATIVE_DENOM),
+    );
+    assert!(res.is_ok());
+
+    let mint_for_msg = ExecuteMsg::MintFor {
+        token_id: 100,
+        recipient: buyer.clone().to_string(),
+    };
+    let res = router.execute_contract(
+        creator.clone(),
+        minter_addr.clone(),
+        &mint_for_msg,
+        &[],
+    );
+    assert!(res.is_ok());
+
+    let set_token_uri_msg_2 = ExecuteMsg::SetTokenUri {
+        uri: "ipfs://www2".to_string(),
+        num_tokens: 10,
+    };
+    let res = router.execute_contract(
+        creator.clone(),
+        minter_addr.clone(),
+        &set_token_uri_msg_2,
+        &[],
+    );
+    assert!(res.is_ok());
+
+    let mint_for_msg = ExecuteMsg::MintFor {
+        token_id: 10,
+        recipient: buyer.clone().to_string(),
+    };
+    let res = router.execute_contract(
+        creator.clone(),
+        minter_addr.clone(),
+        &mint_for_msg,
+        &[],
+    );
+    assert!(res.is_ok());
+
+    let set_token_uri_msg_3 = ExecuteMsg::SetTokenUri {
+        uri: "ipfs://www3".to_string(),
+        num_tokens: 70,
+    };
+    let res = router.execute_contract(
+        creator.clone(),
+        minter_addr.clone(),
+        &set_token_uri_msg_3,
+        &[],
+    );
+    assert!(res.is_ok());
+
+    let config: ConfigResponse = router
+        .wrap()
+        .query_wasm_smart(minter_addr.clone(), &QueryMsg::Config {})
+        .unwrap();
+
+    println!("{:?}", config);
+
+    let internal_info: InternalInfoResponse = router
+        .wrap()
+        .query_wasm_smart(minter_addr.clone(), &QueryMsg::InternalInfo {})
+        .unwrap();
+
+    println!("{:?}", internal_info);
 }
