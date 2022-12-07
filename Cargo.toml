@@ -39,7 +39,7 @@ vending-factory = { version = "0.21.1", path = "contracts/vending-factory" }
 
 [profile.release.package.sg721]
 codegen-units = 1
-incremental = false
+incremental = false 
 
 [profile.release.package.sg1]
 codegen-units = 1
