@@ -14,8 +14,11 @@ lint:
 optimize:
 	sh scripts/optimize.sh
 
-publish:
-	sh scripts/publish.sh
+publish-packages:
+	sh scripts/publish-packages.sh
+
+publish-contracts:
+	sh scripts/publish-contracts.sh
 
 schema:
 	sh scripts/schema.sh
