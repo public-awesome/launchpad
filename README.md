@@ -34,11 +34,12 @@ make e2etest
 ## Publishing new releases
 
 1. Update workspace version following SemVer rules in [top-level manifest](./Cargo.toml)
-2. `make publish`
+2. `make publish-packages`
 3. Update version numbers in [top-level manifest](./Cargo.toml)
-4. `make schema`
-5. `git tag -a v6.9.9 -m "Tag new version"`
-6. `git push --tags`
+4. `make publish-contracts`
+5. `make schema`
+6. `git tag -a v6.9.9 -m "Tag new version"`
+7. `git push --tags`
 
 # DISCLAIMER
 
