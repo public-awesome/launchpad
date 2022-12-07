@@ -1,7 +1,7 @@
 [package]
-name        = "vending-factory"
+name        = "ps-lab-factory"
 authors     = ["Shane Vitarana <s@noreply.publicawesome.com>"]
-description = "Stargaze vending minter factory contract"
+description = "Stargaze PS LAB minter factory contract"
 version     = { workspace = true }
 edition     = { workspace = true }
 homepage    = { workspace = true }

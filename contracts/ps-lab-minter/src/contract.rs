@@ -1,13 +1,12 @@
-use std::convert::TryInto;
-
 use crate::error::ContractError;
 use crate::msg::{
-    ConfigResponse, ExecuteMsg, InternalInfoResponse, MintCountResponse, MintPriceResponse,
-    MintableNumTokensResponse, QueryMsg, StartTimeResponse,
+    ConfigResponse, ExecuteMsg, MintCountResponse, MintPriceResponse, MintableNumTokensResponse,
+    QueryMsg, StartTimeResponse,
 };
 use crate::state::{
-    Config, ConfigExtension, BASE_TOKEN_ID, CONFIG, MINTABLE_NUM_TOKENS, MINTABLE_TOKEN_POSITIONS,
-    MINTED_NUM_TOKENS, MINTER_ADDRS, SG721_ADDRESS, STATUS,
+    Config, ConfigExtension, BASE_TOKEN_ID, CONFIG, MINTABLE_NUM_TOKENS, MINTABLE_TOKEN_IDS,
+    MINTED_NUM_TOKENS, MINTER_ADDRS, MINTING_PAUSED, SG721_ADDRESS,
+    STATUS,
 };
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
@@ -18,8 +17,6 @@ use cosmwasm_std::{
 use cw2::set_contract_version;
 use cw721_base::{Extension, MintMsg};
 use cw_utils::{may_pay, maybe_addr, nonpayable, parse_reply_instantiate_data};
-use rand_core::{RngCore, SeedableRng};
-use rand_xoshiro::Xoshiro128PlusPlus;
 use sg1::checked_fair_burn;
 use sg2::query::Sg2QueryMsg;
 use sg4::{Status, StatusResponse, SudoMsg};
@@ -29,19 +26,12 @@ use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME};
 use sg_whitelist::msg::{
     ConfigResponse as WhitelistConfigResponse, HasMemberResponse, QueryMsg as WhitelistQueryMsg,
 };
-use sha2::{Digest, Sha256};
-use shuffle::{fy::FisherYates, shuffler::Shuffler};
 use url::Url;
 
-use vending_factory::msg::{ParamsResponse, VendingMinterCreateMsg};
+use ps_lab_factory::msg::{ParamsResponse, VendingMinterCreateMsg};
 
 pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 pub type SubMsg = cosmwasm_std::SubMsg<StargazeMsgWrapper>;
-
-pub struct TokenPositionMapping {
-    pub position: u32,
-    pub token_id: u32,
-}
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sg-minter";
@@ -161,17 +151,9 @@ pub fn instantiate(
     CONFIG.save(deps.storage, &config)?;
     MINTABLE_NUM_TOKENS.save(deps.storage, &msg.init_msg.num_tokens)?;
 
-    let token_ids = random_token_list(
-        &env,
-        deps.api
-            .addr_validate(&msg.collection_params.info.creator)?,
-        (1..=msg.init_msg.num_tokens).collect::<Vec<u32>>(),
-    )?;
     // Save mintable token ids map
-    let mut token_position = 1;
-    for token_id in token_ids {
-        MINTABLE_TOKEN_POSITIONS.save(deps.storage, token_position, &token_id)?;
-        token_position += 1;
+    for token_id in 1..=msg.init_msg.num_tokens {
+        MINTABLE_TOKEN_IDS.save(deps.storage, token_id, &true)?;
     }
 
     // Submessage to instantiate sg721 contract
@@ -196,6 +178,7 @@ pub fn instantiate(
 
     BASE_TOKEN_ID.save(deps.storage, &0)?;
     MINTED_NUM_TOKENS.save(deps.storage, &0)?;
+    MINTING_PAUSED.save(deps.storage, &false)?;
 
     Ok(Response::new()
         .add_attribute("action", "instantiate")
@@ -231,11 +214,11 @@ pub fn execute(
         ExecuteMsg::SetWhitelist { whitelist } => {
             execute_set_whitelist(deps, env, info, &whitelist)
         }
-        ExecuteMsg::Shuffle {} => execute_shuffle(deps, env, info),
         ExecuteMsg::BurnRemaining {} => execute_burn_remaining(deps, env, info),
         ExecuteMsg::SetTokenUri { uri, num_tokens } => {
-            execute_set_token_uri(deps, env,info, uri, num_tokens)
+            execute_set_token_uri(deps, env, info, uri, num_tokens)
         }
+        ExecuteMsg::SetMintingPause { pause } => execute_set_minting_pause(deps, info, pause),
     }
 }
 
@@ -263,55 +246,6 @@ pub fn execute_purge(
     Ok(Response::new()
         .add_attribute("action", "purge")
         .add_attribute("contract", env.contract.address.to_string())
-        .add_attribute("sender", info.sender))
-}
-
-// Anyone can pay to shuffle at any time
-// Introduces another source of randomness to minting
-// There's a fee because this action is expensive.
-pub fn execute_shuffle(
-    deps: DepsMut,
-    env: Env,
-    info: MessageInfo,
-) -> Result<Response, ContractError> {
-    let mut res = Response::new();
-
-    let config = CONFIG.load(deps.storage)?;
-
-    let factory: ParamsResponse = deps
-        .querier
-        .query_wasm_smart(config.factory, &Sg2QueryMsg::Params {})?;
-    let factory_params = factory.params;
-
-    // Check exact shuffle fee payment included in message
-    checked_fair_burn(
-        &info,
-        factory_params.extension.shuffle_fee.amount.u128(),
-        None,
-        &mut res,
-    )?;
-
-    // Check not sold out
-    let mintable_num_tokens = MINTABLE_NUM_TOKENS.load(deps.storage)?;
-    if mintable_num_tokens == 0 {
-        return Err(ContractError::SoldOut {});
-    }
-
-    // get positions and token_ids, then randomize token_ids and reassign positions
-    let mut positions = vec![];
-    let mut token_ids = vec![];
-    for mapping in MINTABLE_TOKEN_POSITIONS.range(deps.storage, None, None, Order::Ascending) {
-        let (position, token_id) = mapping?;
-        positions.push(position);
-        token_ids.push(token_id);
-    }
-    let randomized_token_ids = random_token_list(&env, info.sender.clone(), token_ids.clone())?;
-    for (i, position) in positions.iter().enumerate() {
-        MINTABLE_TOKEN_POSITIONS.save(deps.storage, *position, &randomized_token_ids[i])?;
-    }
-
-    Ok(res
-        .add_attribute("action", "shuffle")
         .add_attribute("sender", info.sender))
 }
 
@@ -478,26 +412,25 @@ pub fn execute_mint_for(
 // mint_for(recipient: "friend2", token_id: 420) -> _execute_mint(recipient, token_id)
 fn _execute_mint(
     deps: DepsMut,
-    env: Env,
+    _env: Env,
     info: MessageInfo,
     action: &str,
     is_admin: bool,
     recipient: Option<Addr>,
     token_id: Option<u32>,
 ) -> Result<Response, ContractError> {
+    // Check mintable
+    let minting_paused = MINTING_PAUSED.load(deps.storage)?;
+    if minting_paused == true {
+        return Err(ContractError::MintingPaused {});
+    }
+
     let mintable_num_tokens = MINTABLE_NUM_TOKENS.load(deps.storage)?;
     if mintable_num_tokens == 0 {
         return Err(ContractError::SoldOut {});
     }
 
     let config = CONFIG.load(deps.storage)?;
-
-    if let Some(token_id) = token_id {
-        if token_id == 0 || token_id > config.extension.num_tokens {
-            return Err(ContractError::InvalidTokenId {});
-        }
-    }
-
     let sg721_address = SG721_ADDRESS.load(deps.storage)?;
 
     let recipient_addr = match recipient {
@@ -534,35 +467,39 @@ fn _execute_mint(
     let network_fee = mint_price.amount * mint_fee;
     checked_fair_burn(&info, network_fee.u128(), None, &mut res)?;
 
-    let mintable_token_mapping = match token_id {
+    let minted_num_tokens = MINTED_NUM_TOKENS.load(deps.storage)?;
+    let mintable_token_id = match token_id {
         Some(token_id) => {
-            // set position to invalid value, iterate to find matching token_id
-            // if token_id not found, token_id is already sold, position is unchanged and throw err
-            // otherwise return position and token_id
-            let mut position = 0;
-            for res in MINTABLE_TOKEN_POSITIONS.range(deps.storage, None, None, Order::Ascending) {
-                let (pos, id) = res?;
-                if id == token_id {
-                    position = pos;
-                    break;
-                }
+            if token_id == 0 || token_id > config.extension.num_tokens - minted_num_tokens {
+                return Err(ContractError::InvalidTokenId {});
             }
-            if position == 0 {
+            // If token_id not on mintable map, throw err
+            if !MINTABLE_TOKEN_IDS.has(deps.storage, token_id) {
                 return Err(ContractError::TokenIdAlreadySold { token_id });
             }
-            TokenPositionMapping { position, token_id }
+            token_id
         }
-        None => random_mintable_token_mapping(deps.as_ref(), env, info.sender.clone())?,
+        None => {
+            let mintable_tokens_result: StdResult<Vec<u32>> = MINTABLE_TOKEN_IDS
+                .keys(deps.storage, None, None, Order::Ascending)
+                .take(1)
+                .collect();
+            let mintable_tokens = mintable_tokens_result?;
+            if mintable_tokens.is_empty() {
+                return Err(ContractError::SoldOut {});
+            }
+            mintable_tokens[0]
+        }
     };
 
     let base_token_id = BASE_TOKEN_ID.load(deps.storage)?;
     // Create mint msgs
     let mint_msg = Sg721ExecuteMsg::<Extension, Empty>::Mint(MintMsg::<Extension> {
-        token_id: (mintable_token_mapping.token_id + base_token_id).to_string(),
+        token_id: (mintable_token_id + base_token_id).to_string(),
         owner: recipient_addr.to_string(),
         token_uri: Some(format!(
             "{}/{}",
-            config.extension.base_token_uri, mintable_token_mapping.token_id
+            config.extension.base_token_uri, mintable_token_id
         )),
         extension: None,
     });
@@ -573,8 +510,9 @@ fn _execute_mint(
     });
     res = res.add_message(msg);
 
-    // Remove mintable token position from map
-    MINTABLE_TOKEN_POSITIONS.remove(deps.storage, mintable_token_mapping.position);
+    // Remove mintable token id from map
+    MINTABLE_TOKEN_IDS.remove(deps.storage, mintable_token_id);
+
     let mintable_num_tokens = MINTABLE_NUM_TOKENS.load(deps.storage)?;
     // Decrement mintable num tokens
     MINTABLE_NUM_TOKENS.save(deps.storage, &(mintable_num_tokens - 1))?;
@@ -600,7 +538,7 @@ fn _execute_mint(
         .add_attribute("action", action)
         .add_attribute("sender", info.sender)
         .add_attribute("recipient", recipient_addr)
-        .add_attribute("token_id", mintable_token_mapping.token_id.to_string())
+        .add_attribute("token_id", (mintable_token_id + base_token_id).to_string())
         .add_attribute("network_fee", network_fee)
         .add_attribute("mint_price", mint_price.amount)
         .add_attribute("seller_amount", seller_amount))
@@ -608,7 +546,7 @@ fn _execute_mint(
 
 pub fn execute_set_token_uri(
     deps: DepsMut,
-    env: Env,
+    _env: Env,
     info: MessageInfo,
     uri: String,
     num_tokens: u32,
@@ -630,33 +568,24 @@ pub fn execute_set_token_uri(
     }
     base_token_uri = parsed_token_uri.to_string();
 
-    // Check that base_token_uri is a valid IPFS uri
-    let parsed_token_uri = Url::parse(&uri)?;
-    if parsed_token_uri.scheme() != "ipfs" {
-        return Err(ContractError::InvalidBaseTokenURI {});
-    }
-
     let base_token_id = BASE_TOKEN_ID.load(deps.storage)?;
     let minted_num_tokens = MINTED_NUM_TOKENS.load(deps.storage)?;
-    BASE_TOKEN_ID.save(deps.storage, &(base_token_id + config.extension.num_tokens - &minted_num_tokens))?;
-
-    let mintable_token_positions_result: StdResult<Vec<_>> = MINTABLE_TOKEN_POSITIONS
-        .keys(deps.storage, None, None, Order::Ascending)
-        .collect();
-    let mintable_token_positions = mintable_token_positions_result?;
-    for key in mintable_token_positions {
-        MINTABLE_TOKEN_POSITIONS.remove(deps.storage, key);
-    }
-    
-    let token_ids = random_token_list(
-        &env,
-         info.sender,
-        (1..=num_tokens).collect::<Vec<u32>>(),
+    BASE_TOKEN_ID.save(
+        deps.storage,
+        &(base_token_id + config.extension.num_tokens - minted_num_tokens),
     )?;
-    let mut token_position = 1;
-    for token_id in token_ids {
-        MINTABLE_TOKEN_POSITIONS.save(deps.storage, token_position, &token_id)?;
-        token_position += 1;
+
+    // Remove the old mintable tokens ids map
+    let keys = MINTABLE_TOKEN_IDS
+        .keys(deps.storage, None, None, Order::Ascending)
+        .collect::<Vec<_>>();
+    for key in keys {
+        MINTABLE_TOKEN_IDS.remove(deps.storage, key?);
+    }
+
+    // Save mintable token ids map
+    for token_id in 1..= num_tokens {
+        MINTABLE_TOKEN_IDS.save(deps.storage, token_id, &true)?;
     }
 
     let mintable_num_tokens = MINTABLE_NUM_TOKENS.load(deps.storage)?;
@@ -672,68 +601,20 @@ pub fn execute_set_token_uri(
     Ok(Response::default())
 }
 
-fn random_token_list(
-    env: &Env,
-    sender: Addr,
-    mut tokens: Vec<u32>,
-) -> Result<Vec<u32>, ContractError> {
-    let tx_index = if let Some(tx) = &env.transaction {
-        tx.index
-    } else {
-        0
-    };
-    let sha256 = Sha256::digest(
-        format!("{}{}{}{}", sender, env.block.height, tokens.len(), tx_index).into_bytes(),
-    );
-    // Cut first 16 bytes from 32 byte value
-    let randomness: [u8; 16] = sha256.to_vec()[0..16].try_into().unwrap();
-    let mut rng = Xoshiro128PlusPlus::from_seed(randomness);
-    let mut shuffler = FisherYates::default();
-    shuffler
-        .shuffle(&mut tokens, &mut rng)
-        .map_err(StdError::generic_err)?;
-    Ok(tokens)
-}
-
-// Does a baby shuffle, picking a token_id from the first or last 50 mintable positions.
-fn random_mintable_token_mapping(
-    deps: Deps,
-    env: Env,
-    sender: Addr,
-) -> Result<TokenPositionMapping, ContractError> {
-    let num_tokens = MINTABLE_NUM_TOKENS.load(deps.storage)?;
-    let tx_index = if let Some(tx) = &env.transaction {
-        tx.index
-    } else {
-        0
-    };
-    let sha256 = Sha256::digest(
-        format!("{}{}{}{}", sender, num_tokens, env.block.height, tx_index).into_bytes(),
-    );
-    // Cut first 16 bytes from 32 byte value
-    let randomness: [u8; 16] = sha256.to_vec()[0..16].try_into().unwrap();
-
-    let mut rng = Xoshiro128PlusPlus::from_seed(randomness);
-
-    let r = rng.next_u32();
-
-    let order = match r % 2 {
-        1 => Order::Descending,
-        _ => Order::Ascending,
-    };
-    let mut rem = 50;
-    if rem > num_tokens {
-        rem = num_tokens;
+pub fn execute_set_minting_pause(
+    deps: DepsMut,
+    info: MessageInfo,
+    pause: bool,
+) -> Result<Response, ContractError> {
+    let config = CONFIG.load(deps.storage)?;
+    // Check only admin
+    if info.sender != config.extension.admin {
+        return Err(ContractError::Unauthorized(
+            "Sender is not an admin".to_owned(),
+        ));
     }
-    let n = r % rem;
-    let position = MINTABLE_TOKEN_POSITIONS
-        .keys(deps.storage, None, None, order)
-        .skip(n as usize)
-        .take(1)
-        .collect::<StdResult<Vec<_>>>()?[0];
-
-    let token_id = MINTABLE_TOKEN_POSITIONS.load(deps.storage, position)?;
-    Ok(TokenPositionMapping { position, token_id })
+    MINTING_PAUSED.save(deps.storage, &pause)?;
+    Ok(Response::new().add_attribute("minting paused", pause.to_string()))
 }
 
 pub fn execute_update_mint_price(
@@ -939,13 +820,13 @@ pub fn execute_burn_remaining(
         return Err(ContractError::SoldOut {});
     }
 
-    let keys = MINTABLE_TOKEN_POSITIONS
+    let keys = MINTABLE_TOKEN_IDS
         .keys(deps.storage, None, None, Order::Ascending)
         .collect::<Vec<_>>();
     let mut total: u32 = 0;
     for key in keys {
         total += 1;
-        MINTABLE_TOKEN_POSITIONS.remove(deps.storage, key?);
+        MINTABLE_TOKEN_IDS.remove(deps.storage, key?);
     }
     // Decrement mintable num tokens
     MINTABLE_NUM_TOKENS.save(deps.storage, &(mintable_num_tokens - total))?;
@@ -1045,12 +926,6 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::MintableNumTokens {} => to_binary(&query_mintable_num_tokens(deps)?),
         QueryMsg::MintPrice {} => to_binary(&query_mint_price(deps)?),
         QueryMsg::MintCount { address } => to_binary(&query_mint_count(deps, address)?),
-        QueryMsg::InternalInfo {} => {
-            return to_binary(&InternalInfoResponse {
-                base_token_id: BASE_TOKEN_ID.load(deps.storage)?,
-                minted_num_tokens: MINTED_NUM_TOKENS.load(deps.storage)?,
-            });
-        }
     }
 }
 

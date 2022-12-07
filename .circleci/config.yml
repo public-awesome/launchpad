@@ -168,10 +168,10 @@ jobs:
             - target
           key: cargocache-base-minter-rust:1.64.0-{{ checksum "~/project/Cargo.lock" }}
 
-  contract_vending_factory:
+  contract_ps_lab_factory:
     docker:
       - image: rust:1.64.0
-    working_directory: ~/project/contracts/vending-factory
+    working_directory: ~/project/contracts/ps-lab-factory
     steps:
       - checkout:
           path: ~/project
@@ -180,7 +180,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-vending-factory-rust:1.64.0-{{ checksum "~/project/Cargo.lock" }}
+            - cargocache-ps-lab-factory-rust:1.64.0-{{ checksum "~/project/Cargo.lock" }}
       - run:
           name: Unit Tests
           environment:
@@ -202,12 +202,12 @@ jobs:
           paths:
             - /usr/local/cargo/registry
             - target
-          key: cargocache-vending-factory-rust:1.64.0-{{ checksum "~/project/Cargo.lock" }}
+          key: cargocache-ps-lab-factory-rust:1.64.0-{{ checksum "~/project/Cargo.lock" }}
 
-  contract_vending_minter:
+  contract_ps_lab_minter:
     docker:
       - image: rust:1.64.0
-    working_directory: ~/project/contracts/vending-minter
+    working_directory: ~/project/contracts/ps-lab-minter
     steps:
       - checkout:
           path: ~/project
@@ -216,7 +216,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-vending-minter-rust:1.64.0-{{ checksum "~/project/Cargo.lock" }}
+            - cargocache-ps-lab-minter-rust:1.64.0-{{ checksum "~/project/Cargo.lock" }}
       - run:
           name: Unit Tests
           environment:

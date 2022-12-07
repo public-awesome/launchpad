@@ -27,12 +27,12 @@ codegen({
       dir: "../contracts/splits/schema",
     },
     {
-      name: "VendingFactory",
-      dir: "../contracts/vending-factory/schema",
+      name: "PsLabFactory",
+      dir: "../contracts/ps-lab-factory/schema",
     },
     {
-      name: "VendingMinter",
-      dir: "../contracts/vending-minter/schema",
+      name: "PsLabMinter",
+      dir: "../contracts/ps-lab-minter/schema",
     },
   ],
   outPath: "./src/",

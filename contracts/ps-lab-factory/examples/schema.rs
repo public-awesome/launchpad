@@ -4,7 +4,7 @@ use std::fs::create_dir_all;
 use cosmwasm_schema::{export_schema, remove_schemas, schema_for};
 
 use sg2::query::Sg2QueryMsg;
-use vending_factory::msg::InstantiateMsg;
+use ps_lab_factory::msg::InstantiateMsg;
 
 fn main() {
     let mut out_dir = current_dir().unwrap();

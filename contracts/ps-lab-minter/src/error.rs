@@ -98,4 +98,7 @@ pub enum ContractError {
 
     #[error("NoEnvTransactionIndex")]
     NoEnvTransactionIndex {},
+
+    #[error("Minting Paused by owner")]
+    MintingPaused {},
 }

@@ -1,7 +1,7 @@
 use crate::contract::instantiate;
 use crate::msg::{
     ConfigResponse, ExecuteMsg, MintCountResponse, MintPriceResponse, MintableNumTokensResponse,
-    QueryMsg, StartTimeResponse, InternalInfoResponse
+    QueryMsg, StartTimeResponse,
 };
 use crate::ContractError;
 use cosmwasm_std::testing::{mock_dependencies_with_balance, mock_env, mock_info};
@@ -10,7 +10,11 @@ use cosmwasm_std::{Api, Coin};
 use cw4::Member;
 use cw721::{Cw721QueryMsg, OwnerOfResponse, TokensResponse};
 use cw721_base::ExecuteMsg as Cw721ExecuteMsg;
-use cw_multi_test::{next_block, BankSudo, Contract, ContractWrapper, Executor, SudoMsg};
+use cw_multi_test::{
+    next_block, AppResponse, BankSudo, Contract, ContractWrapper, Executor, SudoMsg,
+};
+use ps_lab_factory::msg::{VendingMinterCreateMsg, VendingMinterInitMsgExtension};
+use ps_lab_factory::state::{ParamsExtension, VendingMinterParams};
 use sg2::msg::Sg2ExecuteMsg;
 use sg2::tests::mock_collection_params;
 use sg721_base::msg::{CollectionInfoResponse, QueryMsg as Sg721QueryMsg};
@@ -22,8 +26,6 @@ use sg_whitelist::msg::{
     AddMembersMsg, ConfigResponse as WhitelistConfigResponse, ExecuteMsg as WhitelistExecuteMsg,
     QueryMsg as WhitelistQueryMsg,
 };
-use vending_factory::msg::{VendingMinterCreateMsg, VendingMinterInitMsgExtension};
-use vending_factory::state::{ParamsExtension, VendingMinterParams};
 
 const CREATION_FEE: u128 = 5_000_000_000;
 const INITIAL_BALANCE: u128 = 2_000_000_000;
@@ -48,9 +50,9 @@ fn custom_mock_app() -> StargazeApp {
 
 pub fn contract_factory() -> Box<dyn Contract<StargazeMsgWrapper>> {
     let contract = ContractWrapper::new(
-        vending_factory::contract::execute,
-        vending_factory::contract::instantiate,
-        vending_factory::contract::query,
+        ps_lab_factory::contract::execute,
+        ps_lab_factory::contract::instantiate,
+        ps_lab_factory::contract::query,
     );
     Box::new(contract)
 }
@@ -181,7 +183,7 @@ fn setup_minter_contract(
         .instantiate_contract(
             factory_code_id,
             creator.clone(),
-            &vending_factory::msg::InstantiateMsg { params },
+            &ps_lab_factory::msg::InstantiateMsg { params },
             &[],
             "factory",
             None,
@@ -233,7 +235,7 @@ fn setup_minter_contract_with_splits(
         .instantiate_contract(
             factory_code_id,
             creator.clone(),
-            &vending_factory::msg::InstantiateMsg { params },
+            &ps_lab_factory::msg::InstantiateMsg { params },
             &[],
             "factory",
             None,
@@ -507,9 +509,8 @@ fn happy_path() {
     assert_eq!(res.address, buyer.to_string());
 
     // Check NFT owned by buyer
-    // Random mint token_id 1
     let query_owner_msg = Cw721QueryMsg::OwnerOf {
-        token_id: String::from("2"),
+        token_id: String::from("1"),
         include_expired: None,
     };
 
@@ -638,7 +639,7 @@ fn invalid_whitelist_instantiate() {
         .instantiate_contract(
             factory_code_id,
             creator.clone(),
-            &vending_factory::msg::InstantiateMsg { params },
+            &ps_lab_factory::msg::InstantiateMsg { params },
             &[],
             "factory",
             None,
@@ -1296,7 +1297,7 @@ fn check_dynamic_per_address_limit() {
         .instantiate_contract(
             factory_code_id,
             creator.clone(),
-            &vending_factory::msg::InstantiateMsg { params },
+            &ps_lab_factory::msg::InstantiateMsg { params },
             &[],
             "factory",
             None,
@@ -1570,7 +1571,7 @@ fn test_invalid_start_time() {
         .instantiate_contract(
             factory_code_id,
             creator.clone(),
-            &vending_factory::msg::InstantiateMsg { params },
+            &ps_lab_factory::msg::InstantiateMsg { params },
             &[],
             "factory",
             None,
@@ -1658,7 +1659,7 @@ fn invalid_trading_time_during_init() {
         .instantiate_contract(
             factory_code_id,
             creator.clone(),
-            &vending_factory::msg::InstantiateMsg {
+            &ps_lab_factory::msg::InstantiateMsg {
                 params: params.clone(),
             },
             &[],
@@ -2036,28 +2037,55 @@ fn burn_remaining() {
     assert!(res.is_err());
 }
 
+fn get_token_id(res: &AppResponse) -> u32 {
+    res.events[1].attributes[4].value.parse::<u32>().unwrap()
+}
+
 #[test]
 fn set_token_uri() {
     let mut router = custom_mock_app();
     let (creator, buyer) = setup_accounts(&mut router);
-    let num_tokens = 1000;
-    let (minter_addr, _config) = setup_minter_contract(&mut router, &creator, num_tokens, None);
+
+    let num_tokens = 100;
+    let (minter_addr, config) = setup_minter_contract(&mut router, &creator, num_tokens, None);
 
     // position block time before the start time
     setup_block_time(&mut router, GENESIS_MINT_START_TIME + 400, None);
 
-    for _i in 1..=2 {
-        let mint_msg = ExecuteMsg::Mint {};
-        let res = router.execute_contract(
-            buyer.clone(),
-            minter_addr.clone(),
-            &mint_msg,
-            &coins(MINT_PRICE, NATIVE_DENOM),
-        );
-        assert!(res.is_ok());
-    }
+    // round1
+    //mint 5th nft for token id 5
+    let mint_msg = ExecuteMsg::MintFor {
+        token_id: 5,
+        recipient: buyer.clone().to_string(),
+    };
+    let res = router.execute_contract(creator.clone(), minter_addr.clone(), &mint_msg, &[]);
+    assert_eq!(5, get_token_id(&res.unwrap()));
+
+    //mint 100th nft for token id 100
+    let mint_msg = ExecuteMsg::MintFor {
+        token_id: 100,
+        recipient: buyer.clone().to_string(),
+    };
+    let res = router.execute_contract(creator.clone(), minter_addr.clone(), &mint_msg, &[]);
+    assert_eq!(100, get_token_id(&res.unwrap()));
+
+    // round2
+    // Set new token uri fail, invalid uri
     let set_token_uri_msg = ExecuteMsg::SetTokenUri {
-        uri: "ipfs://www1".to_string(),
+        uri: "test uri".to_string(),
+        num_tokens: 100,
+    };
+    let res = router.execute_contract(
+        creator.clone(),
+        minter_addr.clone(),
+        &set_token_uri_msg,
+        &[],
+    );
+    assert!(res.is_err());
+
+    // Set new token uri with uri, num_tokens: 100
+    let set_token_uri_msg = ExecuteMsg::SetTokenUri {
+        uri: "ipfs://www2".to_string(),
         num_tokens: 100,
     };
     let res = router.execute_contract(
@@ -2068,29 +2096,39 @@ fn set_token_uri() {
     );
     assert!(res.is_ok());
 
-    let mint_msg = ExecuteMsg::Mint {};
-    let res = router.execute_contract(
-        buyer.clone(),
-        minter_addr.clone(),
-        &mint_msg,
-        &coins(MINT_PRICE, NATIVE_DENOM),
-    );
-    assert!(res.is_ok());
-
+    // Mint 5th nft for token id 105
     let mint_for_msg = ExecuteMsg::MintFor {
+        token_id: 5,
+        recipient: buyer.clone().to_string(),
+    };
+    let res = router.execute_contract(creator.clone(), minter_addr.clone(), &mint_for_msg, &[]);
+    assert_eq!(105, get_token_id(&res.unwrap()));
+
+    //mint 100th nft for token id 200
+    let mint_msg = ExecuteMsg::MintFor {
         token_id: 100,
         recipient: buyer.clone().to_string(),
     };
-    let res = router.execute_contract(
-        creator.clone(),
-        minter_addr.clone(),
-        &mint_for_msg,
-        &[],
-    );
-    assert!(res.is_ok());
+    let res = router.execute_contract(creator.clone(), minter_addr.clone(), &mint_msg, &[]);
+    assert_eq!(200, get_token_id(&res.unwrap()));
 
+    // Mint 101th nft fail, invalid token_id
+    let mint_for_msg = ExecuteMsg::MintFor {
+        token_id: 101,
+        recipient: buyer.clone().to_string(),
+    };
+    let err = router
+        .execute_contract(creator.clone(), minter_addr.clone(), &mint_for_msg, &[])
+        .unwrap_err();
+    assert_eq!(
+        ContractError::InvalidTokenId {}.to_string(),
+        err.source().unwrap().to_string()
+    );
+
+    // round3
+    // Set new token uri with uri, num_tokens: 10
     let set_token_uri_msg_2 = ExecuteMsg::SetTokenUri {
-        uri: "ipfs://www2".to_string(),
+        uri: "ipfs://www3".to_string(),
         num_tokens: 10,
     };
     let res = router.execute_contract(
@@ -2101,41 +2139,83 @@ fn set_token_uri() {
     );
     assert!(res.is_ok());
 
+    // Mint 5th nft for token id 205
     let mint_for_msg = ExecuteMsg::MintFor {
-        token_id: 10,
+        token_id: 5,
         recipient: buyer.clone().to_string(),
     };
-    let res = router.execute_contract(
-        creator.clone(),
-        minter_addr.clone(),
-        &mint_for_msg,
-        &[],
-    );
-    assert!(res.is_ok());
+    let res = router.execute_contract(creator.clone(), minter_addr.clone(), &mint_for_msg, &[]);
+    assert_eq!(205, get_token_id(&res.unwrap()));
 
-    let set_token_uri_msg_3 = ExecuteMsg::SetTokenUri {
-        uri: "ipfs://www3".to_string(),
-        num_tokens: 70,
+    // Check tokens ids owned by buyer
+    let query_owner_msg = Cw721QueryMsg::Tokens {
+        owner: buyer.clone().to_string(),
+        start_after: None,
+        limit: None,
     };
+
+    let mut res: TokensResponse = router
+        .wrap()
+        .query_wasm_smart(config.sg721_address.clone(), &query_owner_msg)
+        .unwrap();
+    res.tokens.sort_by(|a, b| {
+        a.parse::<u32>()
+            .unwrap()
+            .partial_cmp(&(b.parse::<u32>().unwrap()))
+            .unwrap()
+    });
+    assert_eq!(vec!["5", "100", "105", "200", "205"], res.tokens);
+}
+
+#[test]
+fn set_pause() {
+    let mut router = custom_mock_app();
+    let (creator, buyer) = setup_accounts(&mut router);
+    let num_tokens = 1000;
+    let (minter_addr, _config) = setup_minter_contract(&mut router, &creator, num_tokens, None);
+
+    // position block time before the start time
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 400, None);
+
+    // Mintable Ok at init
+    let mint_msg = ExecuteMsg::Mint {};
     let res = router.execute_contract(
-        creator.clone(),
+        buyer.clone(),
         minter_addr.clone(),
-        &set_token_uri_msg_3,
-        &[],
+        &mint_msg,
+        &coins(MINT_PRICE, NATIVE_DENOM),
     );
     assert!(res.is_ok());
 
-    let config: ConfigResponse = router
-        .wrap()
-        .query_wasm_smart(minter_addr.clone(), &QueryMsg::Config {})
-        .unwrap();
+    // Check the unauthorize user
+    let set_mintable_msg = ExecuteMsg::SetMintingPause { pause: true };
+    let res = router.execute_contract(buyer.clone(), minter_addr.clone(), &set_mintable_msg, &[]);
+    assert!(res.is_err());
 
-    println!("{:?}", config);
+    // Set mintable off
+    let res = router.execute_contract(creator.clone(), minter_addr.clone(), &set_mintable_msg, &[]);
+    assert!(res.is_ok());
 
-    let internal_info: InternalInfoResponse = router
-        .wrap()
-        .query_wasm_smart(minter_addr.clone(), &QueryMsg::InternalInfo {})
-        .unwrap();
+    // Mintable is off, Can't mint
+    let res = router.execute_contract(
+        buyer.clone(),
+        minter_addr.clone(),
+        &mint_msg,
+        &coins(MINT_PRICE, NATIVE_DENOM),
+    );
+    assert!(res.is_err());
 
-    println!("{:?}", internal_info);
+    // Set mintable on
+    let set_mintable_msg = ExecuteMsg::SetMintingPause { pause: false };
+    let res = router.execute_contract(creator.clone(), minter_addr.clone(), &set_mintable_msg, &[]);
+    assert!(res.is_ok());
+
+    // Can mint
+    let res = router.execute_contract(
+        buyer.clone(),
+        minter_addr.clone(),
+        &mint_msg,
+        &coins(MINT_PRICE, NATIVE_DENOM),
+    );
+    assert!(res.is_ok());
 }

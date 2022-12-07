@@ -19,7 +19,7 @@ use crate::msg::{
 use crate::state::SUDO_PARAMS;
 
 // version info for migration info
-const CONTRACT_NAME: &str = "crates.io:vending-factory";
+const CONTRACT_NAME: &str = "crates.io:ps-lab-factory";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 /// Can only be called by governance

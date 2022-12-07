@@ -43,5 +43,5 @@ url             = { workspace = true }
 cw-multi-test   = { workspace = true }
 sg2             = { workspace = true }
 sg-multi-test   = { workspace = true }
-vending-factory = { path = "../vending-factory" }
-vending-minter  = { path = "../vending-minter" }
+ps-lab-factory = { path = "../ps-lab-factory" }
+ps-lab-minter  = { path = "../ps-lab-minter" }
