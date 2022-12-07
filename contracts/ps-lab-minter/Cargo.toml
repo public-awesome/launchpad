@@ -1,7 +1,8 @@
 [package]
 name        = "ps-lab-minter"
 authors     = [
-  "James Zook <jameszook0902@gmail.com>",
+  "Shane Vitarana <s@noreply.publicawesome.com>",
+  "James Zook <jameszook0902@gmail.com>"
 ]
 description = "Stargaze PS LAB minter contract"
 version     = { workspace = true }

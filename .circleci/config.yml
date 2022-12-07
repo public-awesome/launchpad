@@ -27,7 +27,7 @@ jobs:
   contract_sg721_base:
     docker:
       - image: rust:1.64.0
-    working_directory: ~/project/contracts/sg721-base
+    working_directory: ~/project/contracts/ps-lab-sg721-base
     steps:
       - checkout:
           path: ~/project

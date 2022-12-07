@@ -1,6 +1,9 @@
 [package]
 name        = "ps-lab-factory"
-authors     = ["James Zook <jameszook090@gmail.com>"]
+authors     = [
+  "Shane Vitarana <s@noreply.publicawesome.com>",
+  "James Zook <jameszook0902@gmail.com>"
+]
 description = "Stargaze PS LAB minter factory contract"
 version     = { workspace = true }
 edition     = { workspace = true }
