@@ -84,7 +84,6 @@ mod tests {
                 max_per_address_limit: MAX_PER_ADDRESS_LIMIT,
                 airdrop_mint_price: coin(AIRDROP_MINT_PRICE, NATIVE_DENOM),
                 airdrop_mint_fee_bps: AIRDROP_MINT_FEE_BPS,
-                shuffle_fee: coin(SHUFFLE_FEE, NATIVE_DENOM),
             },
             max_trading_offset_secs: 60 * 60 * 24 * 7,
         }

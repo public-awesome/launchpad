@@ -4,8 +4,8 @@ A minter that best works for generated art collections. It's designed for collec
 
 base_token_id, minted_num_tokens are the states of the previous round.
 
-base_token_id:  To avoid the conflicts of token_id, token id should be calculated based on the sum of the previous round’s num_tokens.
-minted_num_tokens:   number of the tokens that are minted on previous rounds.
+base_token_id:  To avoid the conflicts of token id, token id should be calculated based on the sum of the previous round’s num_tokens.
+minted_num_tokens:  number of the tokens that are minted on previous rounds.
 
 Ex.
 -round1(after initializing)
