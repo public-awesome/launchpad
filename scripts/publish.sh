@@ -1,7 +1,9 @@
-for d in packages/*; do
-  if [ -d "$d" ]; then
-    cd $d
-    cargo publish
-    cd ../..
-  fi
-done
+cd packages/sg721 && cargo publish && cd ../..
+cd packages/sg-metadata && cargo publish && cd ../..
+cd packages/sg4 && cargo publish && cd ../..
+cd packages/sg2 && cargo publish && cd ../..
+cd packages/sg-std && cargo publish && cd ../..
+cd packages/sg-multi-test && cargo publish && cd ../..
+cd packages/sg-utils && cargo publish && cd ../..
+cd packages/sg1 && cargo publish && cd ../..
+cd packages/controllers && cargo publish && cd ../..
