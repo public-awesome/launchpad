@@ -1,9 +1,9 @@
 use crate::contract::INSTANTIATION_FEE;
 use crate::msg::QueryMsg;
-use crate::tests_folder::constants::{
+use crate::testing::constants::{
     CONFIG_PLAINTEXT, MOCK_AIRDROP_ADDR_STR, MOCK_MINTER_ADDR_STR, OWNER, WHITELIST_AMOUNT,
 };
-use crate::tests_folder::tests_setup::{
+use crate::testing::setup::{
     configure_mock_minter_with_mock_whitelist, custom_mock_app, instantiate_contract,
     InstantiateParams,
 };

@@ -1,5 +1,4 @@
-use crate::tests_folder::constants::NATIVE_DENOM;
-use crate::tests_folder::constants::{CREATION_FEE, INITIAL_BALANCE};
+use crate::testing::constants::{CREATION_FEE, INITIAL_BALANCE, NATIVE_DENOM};
 use cosmwasm_std::{coins, Addr, Timestamp};
 use cw_multi_test::{BankSudo, SudoMsg};
 use sg_multi_test::StargazeApp;

@@ -1,5 +1,5 @@
-use crate::tests_folder::constants::{WHITELIST_AMOUNT, WL_PER_ADDRESS_LIMIT};
-use crate::tests_folder::tests_setup::{contract_whitelist, setup_block_time};
+use crate::testing::constants::{WHITELIST_AMOUNT, WL_PER_ADDRESS_LIMIT};
+use crate::testing::setup::{contract_whitelist, setup_block_time};
 use cosmwasm_std::{coin, Addr, Timestamp};
 use cw_multi_test::Executor;
 use sg_multi_test::StargazeApp;

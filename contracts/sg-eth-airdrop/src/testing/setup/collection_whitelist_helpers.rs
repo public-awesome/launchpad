@@ -1,5 +1,4 @@
-use crate::tests_folder::constants::{MINT_PRICE, WHITELIST_AMOUNT};
-use crate::tests_folder::constants::{NATIVE_DENOM, STARGAZE_WALLET_01};
+use crate::testing::constants::{MINT_PRICE, NATIVE_DENOM, STARGAZE_WALLET_01, WHITELIST_AMOUNT};
 use cosmwasm_std::{coins, Addr};
 use cw_multi_test::{BankSudo, Executor, SudoMsg};
 use sg_multi_test::StargazeApp;

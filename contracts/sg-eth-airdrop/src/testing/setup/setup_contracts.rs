@@ -6,13 +6,13 @@ use sg_multi_test::StargazeApp;
 use sg_std::{self, StargazeMsgWrapper};
 
 use crate::msg::{ExecuteMsg, InstantiateMsg};
-use crate::tests_folder::constants::WHITELIST_AMOUNT;
+use crate::testing::constants::WHITELIST_AMOUNT;
 use anyhow::Error as anyhow_error;
 use eyre::Result;
 extern crate whitelist_immutable;
 use super::test_msgs::InstantiateParams;
-use crate::tests_folder::constants::{NATIVE_DENOM, OWNER};
-use crate::tests_folder::tests_setup::{
+use crate::testing::constants::{NATIVE_DENOM, OWNER};
+use crate::testing::setup::{
     mock_minter_execute, mock_minter_instantiate, mock_minter_query, mock_whitelist_execute,
     mock_whitelist_instantiate, mock_whitelist_query,
 };

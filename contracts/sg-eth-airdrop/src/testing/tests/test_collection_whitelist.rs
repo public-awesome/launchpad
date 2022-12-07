@@ -1,10 +1,10 @@
 use cosmwasm_std::Addr;
 
 use crate::msg::QueryMsg;
-use crate::tests_folder::constants::{
+use crate::testing::constants::{
     AIRDROP_ADDR_STR, CONFIG_PLAINTEXT, MINT_PRICE, STARGAZE_WALLET_01, WHITELIST_AMOUNT,
 };
-use crate::tests_folder::tests_setup::{
+use crate::testing::setup::{
     configure_minter_with_whitelist, custom_mock_app, execute_airdrop_claim,
     execute_mint_fail_not_on_whitelist, execute_mint_success, get_msg_plaintext,
     get_wallet_and_sig, instantiate_contract, send_funds_to_address, update_admin_for_whitelist,

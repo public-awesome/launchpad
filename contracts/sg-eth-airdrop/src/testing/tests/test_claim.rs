@@ -1,5 +1,5 @@
 use crate::msg::{ExecuteMsg, QueryMsg};
-use crate::tests_folder::constants::WHITELIST_AMOUNT;
+use crate::testing::constants::WHITELIST_AMOUNT;
 use async_std::task;
 use cosmwasm_std::{Addr, Attribute, Coin, Uint128};
 
@@ -8,11 +8,11 @@ use ethers_signers::{LocalWallet, Signer};
 use sg_multi_test::StargazeApp;
 
 use crate::contract::INSTANTIATION_FEE;
-use crate::tests_folder::constants::{
+use crate::testing::constants::{
     CONFIG_PLAINTEXT, MOCK_AIRDROP_ADDR_STR, MOCK_MINTER_ADDR_STR, NATIVE_DENOM, OWNER,
     STARGAZE_WALLET_01, STARGAZE_WALLET_02,
 };
-use crate::tests_folder::tests_setup::{
+use crate::testing::setup::{
     configure_mock_minter_with_mock_whitelist, custom_mock_app, execute_contract_error_with_msg,
     execute_contract_with_msg, get_msg_plaintext, get_signature, get_wallet_and_sig,
     instantiate_contract, InstantiateParams,

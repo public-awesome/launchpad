@@ -1,4 +1,4 @@
-use crate::tests_folder::tests_setup::{
+use crate::testing::setup::{
     configure_collection_whitelist, mock_whitelist, setup_whitelist_contract,
 };
 use cosmwasm_std::{coin, coins, Addr, Timestamp};
@@ -11,14 +11,12 @@ use vending_factory::{
     state::{ParamsExtension, VendingMinterParams},
 };
 
-use crate::tests_folder::constants::{
+use crate::testing::constants::{
     AIRDROP_MINT_FEE_BPS, AIRDROP_MINT_PRICE, CREATION_FEE, MAX_PER_ADDRESS_LIMIT, MAX_TOKEN_LIMIT,
     MINT_FEE_BPS, MINT_PRICE, MIN_MINT_PRICE, SHUFFLE_FEE,
 };
-use crate::tests_folder::tests_setup::{
-    contract_factory, contract_minter, contract_sg721, mock_minter,
-};
-use crate::tests_folder::tests_setup::{setup_accounts, setup_block_time};
+use crate::testing::setup::{contract_factory, contract_minter, contract_sg721, mock_minter};
+use crate::testing::setup::{setup_accounts, setup_block_time};
 
 pub fn mock_init_extension(splits_addr: Option<String>) -> VendingMinterInitMsgExtension {
     vending_factory::msg::VendingMinterInitMsgExtension {

@@ -8,5 +8,4 @@ pub use crate::error::ContractError;
 mod claim_airdrop;
 
 #[cfg(test)]
-#[path = "./testing/lib.rs"]
-pub mod tests_folder;
+mod testing;
