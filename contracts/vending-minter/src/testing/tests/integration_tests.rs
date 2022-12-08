@@ -1,388 +1,39 @@
 use crate::contract::instantiate;
 use crate::msg::{
-    ConfigResponse, ExecuteMsg, MintCountResponse, MintPriceResponse, MintableNumTokensResponse,
-    QueryMsg, StartTimeResponse,
+    ExecuteMsg, MintCountResponse, MintPriceResponse, MintableNumTokensResponse, QueryMsg,
+    StartTimeResponse,
 };
 use crate::ContractError;
 use cosmwasm_std::testing::{mock_dependencies_with_balance, mock_env, mock_info};
 use cosmwasm_std::{coin, coins, Addr, Empty, Timestamp, Uint128};
 use cosmwasm_std::{Api, Coin};
-use cw4::Member;
 use cw721::{Cw721QueryMsg, OwnerOfResponse, TokensResponse};
 use cw721_base::ExecuteMsg as Cw721ExecuteMsg;
-use cw_multi_test::{next_block, BankSudo, Contract, ContractWrapper, Executor, SudoMsg};
+use cw_multi_test::Executor;
 use sg2::msg::Sg2ExecuteMsg;
-use sg2::tests::mock_collection_params;
 use sg721_base::msg::{CollectionInfoResponse, QueryMsg as Sg721QueryMsg};
-use sg_multi_test::StargazeApp;
-use sg_splits::msg::ExecuteMsg as SplitsExecuteMsg;
-use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
-use sg_whitelist::msg::InstantiateMsg as WhitelistInstantiateMsg;
+use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use sg_whitelist::msg::{
     AddMembersMsg, ConfigResponse as WhitelistConfigResponse, ExecuteMsg as WhitelistExecuteMsg,
     QueryMsg as WhitelistQueryMsg,
 };
-use vending_factory::msg::{VendingMinterCreateMsg, VendingMinterInitMsgExtension};
-use vending_factory::state::{ParamsExtension, VendingMinterParams};
 
+use crate::testing::setup::setup_contracts::{
+    contract_factory, contract_minter, contract_sg721, custom_mock_app, mock_create_minter,
+    mock_params, setup_minter_contract, setup_whitelist_contract,
+};
+
+use crate::testing::setup::setup_accounts_and_block::{
+    coins_for_msg, setup_accounts, setup_block_time,
+};
 const CREATION_FEE: u128 = 5_000_000_000;
 const INITIAL_BALANCE: u128 = 2_000_000_000;
 
 const MINT_PRICE: u128 = 100_000_000;
 const MINT_FEE: u128 = 10_000_000;
 const WHITELIST_AMOUNT: u128 = 66_000_000;
-const WL_PER_ADDRESS_LIMIT: u32 = 1;
 const ADMIN_MINT_PRICE: u128 = 0;
 const MAX_TOKEN_LIMIT: u32 = 10000;
-
-pub const MIN_MINT_PRICE: u128 = 50_000_000;
-pub const AIRDROP_MINT_PRICE: u128 = 0;
-pub const MINT_FEE_BPS: u64 = 1_000; // 10%
-pub const AIRDROP_MINT_FEE_BPS: u64 = 10_000; // 100%
-pub const SHUFFLE_FEE: u128 = 500_000_000;
-pub const MAX_PER_ADDRESS_LIMIT: u32 = 50;
-
-fn custom_mock_app() -> StargazeApp {
-    StargazeApp::default()
-}
-
-pub fn contract_factory() -> Box<dyn Contract<StargazeMsgWrapper>> {
-    let contract = ContractWrapper::new(
-        vending_factory::contract::execute,
-        vending_factory::contract::instantiate,
-        vending_factory::contract::query,
-    );
-    Box::new(contract)
-}
-
-pub fn contract_whitelist() -> Box<dyn Contract<StargazeMsgWrapper>> {
-    let contract = ContractWrapper::new(
-        sg_whitelist::contract::execute,
-        sg_whitelist::contract::instantiate,
-        sg_whitelist::contract::query,
-    );
-    Box::new(contract)
-}
-
-pub fn contract_minter() -> Box<dyn Contract<StargazeMsgWrapper>> {
-    let contract = ContractWrapper::new(
-        crate::contract::execute,
-        crate::contract::instantiate,
-        crate::contract::query,
-    )
-    .with_reply(crate::contract::reply);
-    Box::new(contract)
-}
-
-pub fn contract_sg721() -> Box<dyn Contract<StargazeMsgWrapper>> {
-    let contract = ContractWrapper::new(
-        sg721_base::entry::execute,
-        sg721_base::entry::instantiate,
-        sg721_base::entry::query,
-    );
-    Box::new(contract)
-}
-
-pub fn contract_splits() -> Box<dyn Contract<StargazeMsgWrapper>> {
-    let contract = ContractWrapper::new_with_empty(
-        sg_splits::contract::execute,
-        sg_splits::contract::instantiate,
-        sg_splits::contract::query,
-    );
-    Box::new(contract)
-}
-
-pub fn contract_group() -> Box<dyn Contract<StargazeMsgWrapper>> {
-    let contract = ContractWrapper::new_with_empty(
-        cw4_group::contract::execute,
-        cw4_group::contract::instantiate,
-        cw4_group::contract::query,
-    );
-    Box::new(contract)
-}
-
-fn setup_whitelist_contract(router: &mut StargazeApp, creator: &Addr) -> Addr {
-    let whitelist_code_id = router.store_code(contract_whitelist());
-
-    let msg = WhitelistInstantiateMsg {
-        members: vec![],
-        start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME + 100),
-        end_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10000000),
-        mint_price: coin(WHITELIST_AMOUNT, NATIVE_DENOM),
-        per_address_limit: WL_PER_ADDRESS_LIMIT,
-        member_limit: 1000,
-        admins: vec![creator.to_string()],
-        admins_mutable: true,
-    };
-    router
-        .instantiate_contract(
-            whitelist_code_id,
-            creator.clone(),
-            &msg,
-            &[coin(100_000_000, NATIVE_DENOM)],
-            "whitelist",
-            None,
-        )
-        .unwrap()
-}
-
-pub fn mock_params() -> VendingMinterParams {
-    VendingMinterParams {
-        code_id: 1,
-        creation_fee: coin(CREATION_FEE, NATIVE_DENOM),
-        min_mint_price: coin(MIN_MINT_PRICE, NATIVE_DENOM),
-        mint_fee_bps: MINT_FEE_BPS,
-        max_trading_offset_secs: 60 * 60 * 24 * 7,
-        extension: ParamsExtension {
-            max_token_limit: MAX_TOKEN_LIMIT,
-            max_per_address_limit: MAX_PER_ADDRESS_LIMIT,
-            airdrop_mint_price: coin(AIRDROP_MINT_PRICE, NATIVE_DENOM),
-            airdrop_mint_fee_bps: AIRDROP_MINT_FEE_BPS,
-            shuffle_fee: coin(SHUFFLE_FEE, NATIVE_DENOM),
-        },
-    }
-}
-
-pub fn mock_init_extension(splits_addr: Option<String>) -> VendingMinterInitMsgExtension {
-    VendingMinterInitMsgExtension {
-        base_token_uri: "ipfs://aldkfjads".to_string(),
-        payment_address: splits_addr,
-        start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
-        num_tokens: 100,
-        mint_price: coin(MIN_MINT_PRICE, NATIVE_DENOM),
-        per_address_limit: 5,
-        whitelist: None,
-    }
-}
-
-pub fn mock_create_minter(splits_addr: Option<String>) -> VendingMinterCreateMsg {
-    VendingMinterCreateMsg {
-        init_msg: mock_init_extension(splits_addr),
-        collection_params: mock_collection_params(),
-    }
-}
-
-// Upload contract code and instantiate minter contract
-fn setup_minter_contract(
-    router: &mut StargazeApp,
-    creator: &Addr,
-    num_tokens: u32,
-    splits_addr: Option<String>,
-) -> (Addr, ConfigResponse) {
-    let minter_code_id = router.store_code(contract_minter());
-    println!("minter_code_id: {}", minter_code_id);
-    let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
-
-    let factory_code_id = router.store_code(contract_factory());
-    println!("factory_code_id: {}", factory_code_id);
-
-    let mut params = mock_params();
-    params.code_id = minter_code_id;
-
-    let factory_addr = router
-        .instantiate_contract(
-            factory_code_id,
-            creator.clone(),
-            &vending_factory::msg::InstantiateMsg { params },
-            &[],
-            "factory",
-            None,
-        )
-        .unwrap();
-
-    let sg721_code_id = router.store_code(contract_sg721());
-    println!("sg721_code_id: {}", sg721_code_id);
-
-    let mut msg = mock_create_minter(splits_addr);
-    msg.init_msg.mint_price = coin(MINT_PRICE, NATIVE_DENOM);
-    msg.init_msg.num_tokens = num_tokens;
-    msg.collection_params.code_id = sg721_code_id;
-    msg.collection_params.info.creator = creator.to_string();
-
-    let msg = Sg2ExecuteMsg::CreateMinter(msg);
-
-    let res = router.execute_contract(creator.clone(), factory_addr, &msg, &creation_fee);
-    assert!(res.is_ok());
-
-    // could get the minter address from the response above, but we know its contract1
-    let minter_addr = Addr::unchecked("contract1");
-
-    let config: ConfigResponse = router
-        .wrap()
-        .query_wasm_smart(minter_addr.clone(), &QueryMsg::Config {})
-        .unwrap();
-
-    (minter_addr, config)
-}
-
-fn setup_minter_contract_with_splits(
-    router: &mut StargazeApp,
-    creator: &Addr,
-    num_tokens: u32,
-    splits_addr: Option<String>,
-) -> (Addr, ConfigResponse) {
-    let minter_code_id = router.store_code(contract_minter());
-    println!("minter_code_id: {}", minter_code_id);
-    let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
-
-    let factory_code_id = router.store_code(contract_factory());
-    println!("factory_code_id: {}", factory_code_id);
-
-    let mut params = mock_params();
-    params.code_id = minter_code_id;
-
-    let factory_addr = router
-        .instantiate_contract(
-            factory_code_id,
-            creator.clone(),
-            &vending_factory::msg::InstantiateMsg { params },
-            &[],
-            "factory",
-            None,
-        )
-        .unwrap();
-
-    let sg721_code_id = router.store_code(contract_sg721());
-    println!("sg721_code_id: {}", sg721_code_id);
-
-    let mut msg = mock_create_minter(splits_addr);
-    msg.init_msg.mint_price = coin(MINT_PRICE, NATIVE_DENOM);
-    msg.init_msg.num_tokens = num_tokens;
-    msg.collection_params.code_id = sg721_code_id;
-    msg.collection_params.info.creator = creator.to_string();
-
-    let msg = Sg2ExecuteMsg::CreateMinter(msg);
-
-    let res = router.execute_contract(creator.clone(), factory_addr, &msg, &creation_fee);
-    assert!(res.is_ok());
-
-    // 1 = group, 2 = splits, 3 = minter, 4 = factory, 5 = sg721
-    let minter_addr = Addr::unchecked("contract3");
-
-    let config: ConfigResponse = router
-        .wrap()
-        .query_wasm_smart(minter_addr.clone(), &QueryMsg::Config {})
-        .unwrap();
-
-    (minter_addr, config)
-}
-
-fn member<T: Into<String>>(addr: T, weight: u64) -> Member {
-    Member {
-        addr: addr.into(),
-        weight,
-    }
-}
-
-const OWNER: &str = "admin0001";
-const MEMBER1: &str = "member0001";
-const MEMBER2: &str = "member0002";
-const MEMBER3: &str = "member0003";
-
-// uploads code and returns address of group contract
-fn instantiate_group(app: &mut StargazeApp, members: Vec<Member>) -> Addr {
-    let group_id = app.store_code(contract_group());
-    println!("group_id: {}", group_id);
-    let msg = cw4_group::msg::InstantiateMsg {
-        admin: Some(OWNER.into()),
-        members,
-    };
-    app.instantiate_contract(group_id, Addr::unchecked(OWNER), &msg, &[], "group", None)
-        .unwrap()
-}
-
-#[track_caller]
-fn instantiate_splits(app: &mut StargazeApp, group: Addr) -> Addr {
-    let splits_id = app.store_code(contract_splits());
-    println!("splits_id: {}", splits_id);
-    let msg = sg_splits::msg::InstantiateMsg {
-        group_addr: group.to_string(),
-    };
-    app.instantiate_contract(splits_id, Addr::unchecked(OWNER), &msg, &[], "splits", None)
-        .unwrap()
-}
-
-#[track_caller]
-fn setup_splits_test_case(app: &mut StargazeApp, init_funds: Vec<Coin>) -> (Addr, Addr) {
-    // 1. Instantiate group contract with members (and OWNER as admin)
-    let members = vec![
-        member(OWNER, 50),
-        member(MEMBER1, 25),
-        member(MEMBER2, 20),
-        member(MEMBER3, 5),
-    ];
-    let group_addr = instantiate_group(app, members);
-    app.update_block(next_block);
-
-    // 2. Set up Splits backed by this group
-    let splits_addr = instantiate_splits(app, group_addr.clone());
-    app.update_block(next_block);
-
-    // Bonus: set some funds on the splits contract for future proposals
-    if !init_funds.is_empty() {
-        app.send_tokens(Addr::unchecked(OWNER), splits_addr.clone(), &init_funds)
-            .unwrap();
-    }
-    (splits_addr, group_addr)
-}
-
-// Add a creator account with initial balances
-fn setup_accounts(router: &mut StargazeApp) -> (Addr, Addr) {
-    let buyer = Addr::unchecked("buyer");
-    let creator = Addr::unchecked("creator");
-    // 3,000 tokens
-    let creator_funds = coins(INITIAL_BALANCE + CREATION_FEE, NATIVE_DENOM);
-    // 2,000 tokens
-    let buyer_funds = coins(INITIAL_BALANCE, NATIVE_DENOM);
-    router
-        .sudo(SudoMsg::Bank({
-            BankSudo::Mint {
-                to_address: creator.to_string(),
-                amount: creator_funds.clone(),
-            }
-        }))
-        .map_err(|err| println!("{:?}", err))
-        .ok();
-
-    router
-        .sudo(SudoMsg::Bank({
-            BankSudo::Mint {
-                to_address: buyer.to_string(),
-                amount: buyer_funds.clone(),
-            }
-        }))
-        .map_err(|err| println!("{:?}", err))
-        .ok();
-
-    // Check native balances
-    let creator_native_balances = router.wrap().query_all_balances(creator.clone()).unwrap();
-    assert_eq!(creator_native_balances, creator_funds);
-
-    // Check native balances
-    let buyer_native_balances = router.wrap().query_all_balances(buyer.clone()).unwrap();
-    assert_eq!(buyer_native_balances, buyer_funds);
-
-    (creator, buyer)
-}
-
-// Set blockchain time to after mint by default
-fn setup_block_time(router: &mut StargazeApp, nanos: u64, height: Option<u64>) {
-    let mut block = router.block_info();
-    block.time = Timestamp::from_nanos(nanos);
-    if let Some(h) = height {
-        block.height = h;
-    }
-    router.set_block(block);
-}
-
-// Deal with zero and non-zero coin amounts for msgs
-fn coins_for_msg(msg_coin: Coin) -> Vec<Coin> {
-    if msg_coin.amount > Uint128::zero() {
-        vec![msg_coin]
-    } else {
-        vec![]
-    }
-}
 
 #[test]
 fn initialization() {
@@ -1865,45 +1516,6 @@ fn update_mint_price() {
         &coins(MINT_PRICE - 2, NATIVE_DENOM),
     );
     assert!(res.is_ok());
-}
-
-#[test]
-fn mint_and_split() {
-    let mut app = custom_mock_app();
-
-    let (splits_addr, _) = setup_splits_test_case(&mut app, vec![]);
-
-    let (creator, buyer) = setup_accounts(&mut app);
-    let num_tokens = 2;
-    let (minter_addr, _) = setup_minter_contract_with_splits(
-        &mut app,
-        &creator,
-        num_tokens,
-        Some(splits_addr.to_string()),
-    );
-    setup_block_time(&mut app, GENESIS_MINT_START_TIME + 1, None);
-
-    let mint_msg = ExecuteMsg::Mint {};
-    let res = app.execute_contract(
-        buyer,
-        minter_addr,
-        &mint_msg,
-        &coins(MINT_PRICE, NATIVE_DENOM),
-    );
-    assert!(res.is_ok());
-
-    let dist_msg = SplitsExecuteMsg::Distribute {};
-    let res = app.execute_contract(Addr::unchecked(OWNER), splits_addr, &dist_msg, &[]);
-    assert!(res.is_ok());
-
-    let amount = app.wrap().query_balance(OWNER, NATIVE_DENOM).unwrap();
-    assert_eq!(amount.amount.u128(), 45000000);
-    let amount = app.wrap().query_balance(MEMBER1, NATIVE_DENOM).unwrap();
-    assert_eq!(amount.amount.u128(), 22500000);
-    let amount = app.wrap().query_balance(MEMBER2, NATIVE_DENOM).unwrap();
-    assert_eq!(amount.amount.u128(), 18000000);
-    let amount = app.wrap().query_balance(MEMBER3, NATIVE_DENOM).unwrap();
-    assert_eq!(amount.amount.u128(), 4500000);
 }
 
 #[test]
