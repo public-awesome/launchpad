@@ -2185,16 +2185,16 @@ fn set_pause() {
     );
     assert!(res.is_ok());
 
-    // Check the unauthorize user
+    // Unauthorized user can not change pause
     let set_mintable_msg = ExecuteMsg::SetMintingPause { pause: true };
     let res = router.execute_contract(buyer.clone(), minter_addr.clone(), &set_mintable_msg, &[]);
     assert!(res.is_err());
 
-    // Set mintable off
+    // Pause minting
     let res = router.execute_contract(creator.clone(), minter_addr.clone(), &set_mintable_msg, &[]);
     assert!(res.is_ok());
 
-    // Mintable is off, Can't mint
+    // When paused, Can't mint
     let res = router.execute_contract(
         buyer.clone(),
         minter_addr.clone(),
@@ -2203,7 +2203,7 @@ fn set_pause() {
     );
     assert!(res.is_err());
 
-    // Set mintable on
+    // Unpause minting
     let set_mintable_msg = ExecuteMsg::SetMintingPause { pause: false };
     let res = router.execute_contract(creator.clone(), minter_addr.clone(), &set_mintable_msg, &[]);
     assert!(res.is_ok());
