@@ -31,4 +31,3 @@ pub const MINTED_NUM_TOKENS: Item<u32> = Item::new("minted_num_tokens");
 
 /// Set Pause
 pub const MINTING_PAUSED: Item<bool> = Item::new("mintable on/off");
-
