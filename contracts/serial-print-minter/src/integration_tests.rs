@@ -13,8 +13,8 @@ use cw721_base::ExecuteMsg as Cw721ExecuteMsg;
 use cw_multi_test::{
     next_block, AppResponse, BankSudo, Contract, ContractWrapper, Executor, SudoMsg,
 };
-use ps_lab_factory::msg::{VendingMinterCreateMsg, VendingMinterInitMsgExtension};
-use ps_lab_factory::state::{ParamsExtension, VendingMinterParams};
+use serial_print_factory::msg::{VendingMinterCreateMsg, VendingMinterInitMsgExtension};
+use serial_print_factory::state::{ParamsExtension, VendingMinterParams};
 use sg2::msg::Sg2ExecuteMsg;
 use sg2::tests::mock_collection_params;
 use sg721_base::msg::{CollectionInfoResponse, QueryMsg as Sg721QueryMsg};
@@ -49,9 +49,9 @@ fn custom_mock_app() -> StargazeApp {
 
 pub fn contract_factory() -> Box<dyn Contract<StargazeMsgWrapper>> {
     let contract = ContractWrapper::new(
-        ps_lab_factory::contract::execute,
-        ps_lab_factory::contract::instantiate,
-        ps_lab_factory::contract::query,
+        serial_print_factory::contract::execute,
+        serial_print_factory::contract::instantiate,
+        serial_print_factory::contract::query,
     );
     Box::new(contract)
 }
@@ -181,7 +181,7 @@ fn setup_minter_contract(
         .instantiate_contract(
             factory_code_id,
             creator.clone(),
-            &ps_lab_factory::msg::InstantiateMsg { params },
+            &serial_print_factory::msg::InstantiateMsg { params },
             &[],
             "factory",
             None,
@@ -233,7 +233,7 @@ fn setup_minter_contract_with_splits(
         .instantiate_contract(
             factory_code_id,
             creator.clone(),
-            &ps_lab_factory::msg::InstantiateMsg { params },
+            &serial_print_factory::msg::InstantiateMsg { params },
             &[],
             "factory",
             None,
@@ -637,7 +637,7 @@ fn invalid_whitelist_instantiate() {
         .instantiate_contract(
             factory_code_id,
             creator.clone(),
-            &ps_lab_factory::msg::InstantiateMsg { params },
+            &serial_print_factory::msg::InstantiateMsg { params },
             &[],
             "factory",
             None,
@@ -1295,7 +1295,7 @@ fn check_dynamic_per_address_limit() {
         .instantiate_contract(
             factory_code_id,
             creator.clone(),
-            &ps_lab_factory::msg::InstantiateMsg { params },
+            &serial_print_factory::msg::InstantiateMsg { params },
             &[],
             "factory",
             None,
@@ -1569,7 +1569,7 @@ fn test_invalid_start_time() {
         .instantiate_contract(
             factory_code_id,
             creator.clone(),
-            &ps_lab_factory::msg::InstantiateMsg { params },
+            &serial_print_factory::msg::InstantiateMsg { params },
             &[],
             "factory",
             None,
@@ -1657,7 +1657,7 @@ fn invalid_trading_time_during_init() {
         .instantiate_contract(
             factory_code_id,
             creator.clone(),
-            &ps_lab_factory::msg::InstantiateMsg {
+            &serial_print_factory::msg::InstantiateMsg {
                 params: params.clone(),
             },
             &[],

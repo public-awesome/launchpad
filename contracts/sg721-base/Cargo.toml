@@ -45,5 +45,5 @@ url             = { workspace = true }
 cw-multi-test   = { workspace = true }
 sg2             = { workspace = true }
 sg-multi-test   = { workspace = true }
-# serial-print-factory = { path = "../serial-print-factory" }
-# serial-print-minter  = { path = "../serial-print-minter" }
+serial-print-factory = { path = "../serial-print-factory" }
+serial-print-minter  = { path = "../serial-print-minter" }

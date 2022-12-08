@@ -27,7 +27,7 @@ use sg_whitelist::msg::{
 };
 use url::Url;
 
-use ps_lab_factory::msg::{ParamsResponse, VendingMinterCreateMsg};
+use serial_print_factory::msg::{ParamsResponse, VendingMinterCreateMsg};
 
 pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 pub type SubMsg = cosmwasm_std::SubMsg<StargazeMsgWrapper>;

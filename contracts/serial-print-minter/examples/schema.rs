@@ -3,12 +3,12 @@ use std::fs::create_dir_all;
 
 use cosmwasm_schema::{export_schema, remove_schemas, schema_for};
 
-use sg4::StatusResponse;
-use ps_lab_minter::msg::{
+use serial_print_minter::msg::{
     ConfigResponse, ExecuteMsg, InstantiateMsg, MintCountResponse, MintPriceResponse,
     MintableNumTokensResponse, QueryMsg, StartTimeResponse,
 };
-use ps_lab_minter::state::Config;
+use serial_print_minter::state::Config;
+use sg4::StatusResponse;
 
 fn main() {
     let mut out_dir = current_dir().unwrap();

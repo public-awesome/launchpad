@@ -34,6 +34,7 @@ sg-std            = "0.21.1"
 sg-whitelist      = { version = "0.21.1", path = "contracts/whitelist" }
 thiserror         = "1.0.31"
 url               = "2.2.2"
+base-factory      = { version = "0.21.1", path = "contracts/base-factory" }
 serial-print-factory = { version = "0.21.1", path = "contracts/serial-print-factory" }
 
 [profile.release.package.sg721]
@@ -69,6 +70,14 @@ codegen-units = 1
 incremental = false
 
 [profile.release.package.sg-std]
+codegen-units = 1
+incremental = false
+
+[profile.release.package.base-factory]
+codegen-units = 1
+incremental = false
+
+[profile.release.package.base-minter]
 codegen-units = 1
 incremental = false
 

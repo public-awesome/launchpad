@@ -1,6 +1,6 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Coin, Timestamp};
-use ps_lab_factory::{msg::VendingMinterCreateMsg, state::VendingMinterParams};
+use serial_print_factory::{msg::VendingMinterCreateMsg, state::VendingMinterParams};
 
 #[cw_serde]
 pub struct InstantiateMsg {
@@ -32,8 +32,13 @@ pub enum ExecuteMsg {
         recipient: String,
     },
     BurnRemaining {},
-    SetTokenUri { uri: String, num_tokens: u32 },
-    SetMintingPause { pause: bool },
+    SetTokenUri {
+        uri: String,
+        num_tokens: u32,
+    },
+    SetMintingPause {
+        pause: bool,
+    },
 }
 
 #[cw_serde]

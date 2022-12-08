@@ -21,6 +21,52 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
 
 [[package]]
+name = "base-factory"
+version = "0.21.1"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-multi-test",
+ "cw-storage-plus",
+ "cw-utils",
+ "cw2",
+ "schemars",
+ "serde",
+ "sg-multi-test 0.21.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg-std 0.21.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg1 0.21.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg2 0.21.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "thiserror",
+]
+
+[[package]]
+name = "base-minter"
+version = "0.21.1"
+dependencies = [
+ "base-factory",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-multi-test",
+ "cw-storage-plus",
+ "cw-utils",
+ "cw2",
+ "cw721",
+ "cw721-base",
+ "schemars",
+ "serde",
+ "sg-multi-test 0.21.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg-std 0.21.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg1 0.21.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg2 0.21.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg4 0.21.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg721 0.21.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg721-base",
+ "sg721-nt",
+ "thiserror",
+ "url",
+]
+
+[[package]]
 name = "base16ct"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -786,6 +832,7 @@ dependencies = [
 name = "serial-print-factory"
 version = "0.21.1"
 dependencies = [
+ "base-factory",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-multi-test",
@@ -1081,6 +1128,8 @@ dependencies = [
  "cw721",
  "cw721-base",
  "serde",
+ "serial-print-factory",
+ "serial-print-minter",
  "sg-multi-test 0.21.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg-std 0.21.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg2 0.21.1 (registry+https://github.com/rust-lang/crates.io-index)",

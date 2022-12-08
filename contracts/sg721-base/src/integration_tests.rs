@@ -3,35 +3,37 @@ mod tests {
     use cosmwasm_std::{coin, Addr, Timestamp};
     use cw721::NumTokensResponse;
     use cw_multi_test::{BankSudo, Contract, ContractWrapper, Executor, SudoMsg};
+    use serial_print_factory::state::{ParamsExtension, VendingMinterParams};
+    use serial_print_factory::{
+        helpers::FactoryContract,
+        msg::{
+            ExecuteMsg, InstantiateMsg as FactoryInstantiateMsg, VendingMinterCreateMsg,
+            VendingMinterInitMsgExtension,
+        },
+    };
     use sg2::msg::{CollectionParams, CreateMinterMsg};
     use sg2::tests::mock_collection_params;
     use sg721::ExecuteMsg as Sg721ExecuteMsg;
     use sg721::{CollectionInfo, InstantiateMsg};
     use sg_multi_test::StargazeApp;
     use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME};
-    use ps_lab_factory::helpers::FactoryContract;
-    use ps_lab_factory::msg::{
-        ExecuteMsg, InstantiateMsg as FactoryInstantiateMsg, VendingMinterCreateMsg,
-        VendingMinterInitMsgExtension,
-    };
-    use ps_lab_factory::state::{ParamsExtension, VendingMinterParams};
 
     pub fn factory_contract() -> Box<dyn Contract<StargazeMsgWrapper>> {
         let contract = ContractWrapper::new(
-            ps_lab_factory::contract::execute,
-            ps_lab_factory::contract::instantiate,
-            ps_lab_factory::contract::query,
+            serial_print_factory::contract::execute,
+            serial_print_factory::contract::instantiate,
+            serial_print_factory::contract::query,
         );
         Box::new(contract)
     }
 
     pub fn minter_contract() -> Box<dyn Contract<StargazeMsgWrapper>> {
         let contract = ContractWrapper::new(
-            ps_lab_minter::contract::execute,
-            ps_lab_minter::contract::instantiate,
-            ps_lab_minter::contract::query,
+            serial_print_minter::contract::execute,
+            serial_print_minter::contract::instantiate,
+            serial_print_minter::contract::query,
         )
-        .with_reply(ps_lab_minter::contract::reply);
+        .with_reply(serial_print_minter::contract::reply);
         Box::new(contract)
     }
 
@@ -53,7 +55,6 @@ mod tests {
     pub const AIRDROP_MINT_PRICE: u128 = 15_000_000;
     pub const MINT_FEE_BPS: u64 = 1_000; // 10%
     pub const AIRDROP_MINT_FEE_BPS: u64 = 10_000; // 100%
-    pub const SHUFFLE_FEE: u128 = 500_000_000;
     pub const MAX_TOKEN_LIMIT: u32 = 10_000;
     pub const MAX_PER_ADDRESS_LIMIT: u32 = 50;
 
@@ -197,7 +198,7 @@ mod tests {
 
         use super::*;
         use crate::msg::QueryMsg;
-        use ps_lab_minter::msg::{ConfigResponse, QueryMsg as VendingMinterQueryMsg};
+        use serial_print_minter::msg::{ConfigResponse, QueryMsg as VendingMinterQueryMsg};
 
         #[test]
         fn create_sg721_base_collection() {
