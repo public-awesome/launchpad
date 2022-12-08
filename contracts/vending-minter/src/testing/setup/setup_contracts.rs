@@ -12,7 +12,6 @@ use vending_factory::{
 use crate::msg::ConfigResponse;
 
 const CREATION_FEE: u128 = 5_000_000_000;
-
 const MINT_PRICE: u128 = 100_000_000;
 const WHITELIST_AMOUNT: u128 = 66_000_000;
 const WL_PER_ADDRESS_LIMIT: u32 = 1;
