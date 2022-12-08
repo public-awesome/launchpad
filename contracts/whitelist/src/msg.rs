@@ -1,5 +1,5 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Coin, Timestamp};
+use cosmwasm_std::{Coin, CosmosMsg, Empty, Timestamp};
 
 #[cw_serde]
 pub struct InstantiateMsg {
@@ -9,6 +9,8 @@ pub struct InstantiateMsg {
     pub mint_price: Coin,
     pub per_address_limit: u32,
     pub member_limit: u32,
+    pub admins: Vec<String>,
+    pub admins_mutable: bool,
 }
 
 #[cw_serde]
@@ -19,6 +21,14 @@ pub enum ExecuteMsg {
     RemoveMembers(RemoveMembersMsg),
     UpdatePerAddressLimit(u32),
     IncreaseMemberLimit(u32),
+    UpdateAdmins { admins: Vec<String> },
+    Freeze {},
+}
+
+#[cw_serde]
+pub struct AdminListResponse {
+    pub admins: Vec<String>,
+    pub mutable: bool,
 }
 
 #[cw_serde]
@@ -44,6 +54,13 @@ pub enum QueryMsg {
         member: String,
     },
     Config {},
+
+    AdminList {},
+
+    CanExecute {
+        sender: String,
+        msg: CosmosMsg<Empty>,
+    },
 }
 
 #[cw_serde]
@@ -85,4 +102,17 @@ pub struct ConfigResponse {
     pub end_time: Timestamp,
     pub mint_price: Coin,
     pub is_active: bool,
+}
+
+#[cw_serde]
+pub enum SudoMsg {
+    /// Add a new operator
+    AddOperator { operator: String },
+    /// Remove operator
+    RemoveOperator { operator: String },
+}
+
+#[cw_serde]
+pub struct CanExecuteResponse {
+    pub can_execute: bool,
 }

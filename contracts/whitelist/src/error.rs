@@ -52,4 +52,7 @@ pub enum ContractError {
 
     #[error("{0}")]
     PaymentError(#[from] PaymentError),
+
+    #[error("UnauthorizedAdmin")]
+    UnauthorizedAdmin {},
 }
