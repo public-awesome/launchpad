@@ -1,5 +1,5 @@
 [package]
-name        = "ps-lab-factory"
+name        = "serial-print-factory"
 authors     = [
   "Shane Vitarana <s@noreply.publicawesome.com>",
   "James Zook <jameszook0902@gmail.com>"
@@ -29,7 +29,6 @@ backtraces = ["cosmwasm-std/backtraces"]
 library = []
 
 [dependencies]
-base-factory    = { workspace = true, features = ["library"] }
 cosmwasm-schema = { workspace = true }
 cosmwasm-std    = { workspace = true, features = ["staking"] }
 cw2             = { workspace = true }

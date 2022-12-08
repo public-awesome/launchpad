@@ -1,47 +1,39 @@
-import codegen from "@cosmwasm/ts-codegen";
+import codegen from '@cosmwasm/ts-codegen';
 
 codegen({
   contracts: [
     {
-      name: "BaseFactory",
-      dir: "../contracts/base-factory/schema",
+      name: 'Sg721Base',
+      dir: '../contracts/sg721-base/schema',
     },
     {
-      name: "BaseMinter",
-      dir: "../contracts/base-minter/schema",
+      name: 'Sg721MetadataOnchain',
+      dir: '../contracts/sg721-metadata-onchain/schema',
     },
     {
-      name: "Sg721Base",
-      dir: "../contracts/sg721-base/schema",
+      name: 'Sg721Nt',
+      dir: '../contracts/sg721-nt/schema',
     },
     {
-      name: "Sg721MetadataOnchain",
-      dir: "../contracts/sg721-metadata-onchain/schema",
+      name: 'Splits',
+      dir: '../contracts/splits/schema',
     },
     {
-      name: "Sg721Nt",
-      dir: "../contracts/sg721-nt/schema",
+      name: 'SerialPrintFactory',
+      dir: '../contracts/serial-print-factory/schema',
     },
     {
-      name: "Splits",
-      dir: "../contracts/splits/schema",
-    },
-    {
-      name: "PsLabFactory",
-      dir: "../contracts/ps-lab-factory/schema",
-    },
-    {
-      name: "PsLabMinter",
-      dir: "../contracts/ps-lab-minter/schema",
+      name: 'SerialPrintMinter',
+      dir: '../contracts/serial-print-minter/schema',
     },
   ],
-  outPath: "./src/",
+  outPath: './src/',
 
   // options are completely optional ;)
   options: {
     bundle: {
-      bundleFile: "index.ts",
-      scope: "contracts",
+      bundleFile: 'index.ts',
+      scope: 'contracts',
     },
     types: {
       enabled: true,
@@ -52,7 +44,7 @@ codegen({
     reactQuery: {
       enabled: false,
       optionalClient: true,
-      version: "v4",
+      version: 'v4',
       mutations: true,
       queryKeys: true,
     },
@@ -64,5 +56,5 @@ codegen({
     },
   },
 }).then(() => {
-  console.log("✨ all done!");
+  console.log('✨ all done!');
 });

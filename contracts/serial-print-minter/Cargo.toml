@@ -1,5 +1,5 @@
 [package]
-name        = "ps-lab-minter"
+name        = "serial-print-minter"
 authors     = [
   "Shane Vitarana <s@noreply.publicawesome.com>",
   "James Zook <jameszook0902@gmail.com>"
@@ -55,7 +55,7 @@ sg-std          = { workspace = true }
 sg-whitelist    = { workspace = true, features = ["library"] }
 thiserror       = { workspace = true }
 url             = { workspace = true }
-ps-lab-factory = { workspace = true, features = ["library"] }
+serial-print-factory = { workspace = true, features = ["library"] }
 
 [dev-dependencies]
 cw4           = { workspace = true }
