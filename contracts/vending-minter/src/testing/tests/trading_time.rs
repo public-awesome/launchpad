@@ -2,7 +2,7 @@ use crate::msg::{ExecuteMsg, QueryMsg, StartTimeResponse};
 use crate::testing::setup::msg::{MinterCollectionResponse, MinterInstantiateParams};
 use crate::testing::setup::setup_accounts_and_block::{setup_accounts, setup_block_time};
 use crate::testing::setup::setup_contracts::custom_mock_app;
-use crate::testing::setup::setup_minter::{build_minter_params, configure_minter};
+use crate::testing::setup::setup_minter::{configure_minter, minter_params_token};
 use crate::ContractError;
 use cosmwasm_std::{coins, Addr, Timestamp};
 use cw_multi_test::Executor;
@@ -19,7 +19,7 @@ fn before_start_time() {
     let num_tokens = 1;
     let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME - 10);
     let collection_params = mock_collection_params_1(Some(start_time));
-    let minter_params = build_minter_params(num_tokens, None, None, None);
+    let minter_params = minter_params_token(num_tokens);
     let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
         &mut router,
         creator,
@@ -81,7 +81,7 @@ fn test_update_start_time() {
     let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 100);
     // Public mint has started
     let collection_params = mock_collection_params_1(Some(start_time));
-    let minter_params = build_minter_params(num_tokens, None, None, None);
+    let minter_params = minter_params_token(num_tokens);
     let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
         &mut router,
         creator.clone(),
@@ -245,7 +245,7 @@ fn update_start_trading_time() {
     setup_block_time(&mut router, GENESIS_MINT_START_TIME - 1, None);
     let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
     let collection_params = mock_collection_params_1(Some(start_time));
-    let minter_params = build_minter_params(num_tokens, None, None, None);
+    let minter_params = minter_params_token(num_tokens);
     let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
         &mut router,
         creator.clone(),

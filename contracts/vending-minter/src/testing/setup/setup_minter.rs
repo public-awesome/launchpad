@@ -1,8 +1,10 @@
 use crate::testing::setup::msg::MinterCollectionResponse;
 use crate::testing::setup::msg::MinterSetupParams;
 use crate::testing::setup::setup_contracts::{contract_factory, contract_minter, contract_sg721};
+use anyhow::Error;
 use cosmwasm_std::{coin, coins, Addr, Timestamp};
 use cw_multi_test::{AppResponse, Executor};
+use sg2::msg::CreateMinterMsg;
 use sg2::msg::{CollectionParams, Sg2ExecuteMsg};
 use sg_multi_test::StargazeApp;
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
@@ -25,22 +27,6 @@ pub const MINT_FEE_FAIR_BURN: u64 = 1_000; // 10%
 pub const AIRDROP_MINT_FEE_FAIR_BURN: u64 = 10_000; // 100%
 pub const SHUFFLE_FEE: u128 = 500_000_000;
 pub const MAX_PER_ADDRESS_LIMIT: u32 = 50;
-
-// pub fn mock_init_extension_whitelist(
-//     splits_addr: Option<String>,
-//     start_time: Option<Timestamp>,
-//     whitelist: Option<String>,
-// ) -> VendingMinterInitMsgExtension {
-//     vending_factory::msg::VendingMinterInitMsgExtension {
-//         base_token_uri: "ipfs://aldkfjads".to_string(),
-//         payment_address: splits_addr,
-//         start_time: start_time.unwrap_or(Timestamp::from_nanos(GENESIS_MINT_START_TIME)),
-//         num_tokens: 100,
-//         mint_price: coin(MIN_MINT_PRICE, NATIVE_DENOM),
-//         per_address_limit: 5,
-//         whitelist,
-//     }
-// }
 
 pub fn mock_init_extension(
     splits_addr: Option<String>,
@@ -105,6 +91,44 @@ fn parse_factory_response(res: &AppResponse) -> (Addr, Addr) {
     let collection_addr = Addr::unchecked(contract_addrs[1].clone());
     (minter_addr, collection_addr)
 }
+
+fn build_init_msg(
+    init_msg: Option<VendingMinterInitMsgExtension>,
+    mut msg: CreateMinterMsg<VendingMinterInitMsgExtension>,
+    num_tokens: u32,
+) -> VendingMinterInitMsgExtension {
+    match init_msg {
+        Some(init_msg_from_params) => init_msg_from_params,
+        None => {
+            msg.init_msg.mint_price = coin(MINT_PRICE, NATIVE_DENOM);
+            msg.init_msg.num_tokens = num_tokens;
+            msg.init_msg
+        }
+    }
+}
+
+fn build_collection_response(
+    res: Result<AppResponse, Error>,
+    factory_addr: Addr,
+) -> MinterCollectionResponse {
+    match res.is_ok() {
+        true => {
+            let (minter_addr, collection_addr) = parse_factory_response(&res.unwrap());
+            MinterCollectionResponse {
+                minter: Some(minter_addr),
+                collection: Some(collection_addr),
+                factory: Some(factory_addr),
+                error: None,
+            }
+        }
+        false => MinterCollectionResponse {
+            minter: None,
+            collection: None,
+            factory: Some(factory_addr),
+            error: Some(res.unwrap_err()),
+        },
+    }
+}
 // Upload contract code and instantiate minter contract
 fn setup_minter_contract(setup_params: MinterSetupParams) -> MinterCollectionResponse {
     let minter_code_id = setup_params.minter_code_id;
@@ -132,40 +156,14 @@ fn setup_minter_contract(setup_params: MinterSetupParams) -> MinterCollectionRes
         )
         .unwrap();
     let mut msg = mock_create_minter(splits_addr, collection_params, start_time);
-    match init_msg {
-        Some(init_msg_from_params) => {
-            msg.init_msg = init_msg_from_params;
-        }
-        None => {
-            msg.init_msg.mint_price = coin(MINT_PRICE, NATIVE_DENOM);
-            msg.init_msg.num_tokens = num_tokens;
-        }
-    }
+    msg.init_msg = build_init_msg(init_msg, msg.clone(), num_tokens);
     msg.collection_params.code_id = sg721_code_id;
     msg.collection_params.info.creator = minter_admin.to_string();
     let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
-
     let msg = Sg2ExecuteMsg::CreateMinter(msg);
 
     let res = router.execute_contract(minter_admin, factory_addr.clone(), &msg, &creation_fee);
-    let collection_response: MinterCollectionResponse = match res.is_ok() {
-        true => {
-            let (minter_addr, collection_addr) = parse_factory_response(&res.unwrap());
-            MinterCollectionResponse {
-                minter: Some(minter_addr),
-                collection: Some(collection_addr),
-                factory: Some(factory_addr),
-                error: None,
-            }
-        }
-        false => MinterCollectionResponse {
-            minter: None,
-            collection: None,
-            factory: Some(factory_addr),
-            error: Some(res.unwrap_err()),
-        },
-    };
-    collection_response
+    build_collection_response(res, factory_addr)
 }
 
 pub fn get_code_ids(router: &mut StargazeApp) -> (u64, u64, u64) {
@@ -207,7 +205,7 @@ pub fn configure_minter(
     minter_collection_info
 }
 
-pub fn build_minter_params(
+pub fn minter_params_all(
     num_tokens: u32,
     splits_addr: Option<String>,
     start_time: Option<Timestamp>,
@@ -218,5 +216,14 @@ pub fn build_minter_params(
         splits_addr,
         start_time,
         init_msg,
+    }
+}
+
+pub fn minter_params_token(num_tokens: u32) -> MinterInstantiateParams {
+    MinterInstantiateParams {
+        num_tokens,
+        splits_addr: None,
+        start_time: None,
+        init_msg: None,
     }
 }

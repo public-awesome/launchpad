@@ -9,7 +9,9 @@ use crate::msg::{ExecuteMsg, MintCountResponse, MintPriceResponse, QueryMsg};
 use crate::testing::setup::msg::MinterCollectionResponse;
 use crate::testing::setup::setup_accounts_and_block::coins_for_msg;
 use crate::testing::setup::setup_collection_whitelist::setup_whitelist_contract;
-use crate::testing::setup::setup_minter::{build_minter_params, configure_minter};
+use crate::testing::setup::setup_minter::{
+    configure_minter, minter_params_all, minter_params_token,
+};
 use crate::testing::setup::{
     setup_accounts_and_block::{setup_accounts, setup_block_time},
     setup_contracts::custom_mock_app,
@@ -43,7 +45,7 @@ fn invalid_whitelist_instantiate() {
         whitelist: Some("invalid address".to_string()),
     };
 
-    let minter_params = build_minter_params(num_tokens, None, None, Some(init_msg));
+    let minter_params = minter_params_all(num_tokens, None, None, Some(init_msg));
     let minter_collection_response = configure_minter(
         &mut router,
         creator,
@@ -65,7 +67,7 @@ fn set_invalid_whitelist() {
     let num_tokens = 10;
     let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
     let collection_params = mock_collection_params_1(Some(start_time));
-    let minter_params = build_minter_params(num_tokens, None, None, None);
+    let minter_params = minter_params_token(num_tokens);
     let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
         &mut router,
         creator.clone(),
@@ -141,7 +143,7 @@ fn whitelist_mint_count_query() {
     let num_tokens = 10;
     let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
     let collection_params = mock_collection_params_1(Some(start_time));
-    let minter_params = build_minter_params(num_tokens, None, None, None);
+    let minter_params = minter_params_token(num_tokens);
     let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
         &mut router,
         creator.clone(),
@@ -348,7 +350,7 @@ fn whitelist_already_started() {
     let num_tokens = 1;
     let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
     let collection_params = mock_collection_params_1(Some(start_time));
-    let minter_params = build_minter_params(num_tokens, None, None, None);
+    let minter_params = minter_params_token(num_tokens);
     let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
         &mut router,
         creator.clone(),
@@ -381,7 +383,7 @@ fn whitelist_can_update_before_start() {
     let num_tokens = 1;
     let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
     let collection_params = mock_collection_params_1(Some(start_time));
-    let minter_params = build_minter_params(num_tokens, None, None, None);
+    let minter_params = minter_params_token(num_tokens);
     let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
         &mut router,
         creator.clone(),
@@ -419,7 +421,7 @@ fn whitelist_access_len_add_remove_expiration() {
     let num_tokens = 1;
     let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
     let collection_params = mock_collection_params_1(Some(start_time));
-    let minter_params = build_minter_params(num_tokens, None, None, None);
+    let minter_params = minter_params_token(num_tokens);
     let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
         &mut router,
         creator.clone(),

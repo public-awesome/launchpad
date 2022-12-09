@@ -14,7 +14,7 @@ use crate::{
         msg::MinterCollectionResponse,
         setup_accounts_and_block::coins_for_msg,
         setup_contracts::custom_mock_app,
-        setup_minter::{build_minter_params, configure_minter},
+        setup_minter::{configure_minter, minter_params_token},
     },
 };
 use crate::{
@@ -100,7 +100,7 @@ fn happy_path() {
     let num_tokens = 2;
     let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
     let collection_params = mock_collection_params_1(Some(start_time));
-    let minter_params = build_minter_params(num_tokens, None, None, None);
+    let minter_params = minter_params_token(num_tokens);
     let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
         &mut router,
         creator.clone(),
@@ -290,7 +290,7 @@ fn unhappy_path() {
     let num_tokens = 1;
     let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
     let collection_params = mock_collection_params_1(Some(start_time));
-    let minter_params = build_minter_params(num_tokens, None, None, None);
+    let minter_params = minter_params_token(num_tokens);
     let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
         &mut router,
         creator,

@@ -3,7 +3,7 @@ use crate::testing::setup::{
     msg::MinterCollectionResponse,
     setup_accounts_and_block::{instantiate_group, setup_accounts, setup_block_time},
     setup_contracts::{contract_splits, custom_mock_app},
-    setup_minter::{build_minter_params, configure_minter},
+    setup_minter::{configure_minter, minter_params_all},
 };
 use cosmwasm_std::{coins, Addr, Coin, Timestamp};
 use cw_multi_test::{next_block, Executor};
@@ -62,7 +62,7 @@ fn mint_and_split() {
     let (creator, buyer) = setup_accounts(&mut app);
     let num_tokens = 2;
     let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
-    let minter_params = build_minter_params(num_tokens, Some(splits_addr.to_string()), None, None);
+    let minter_params = minter_params_all(num_tokens, Some(splits_addr.to_string()), None, None);
     let collection_params = mock_collection_params_1(Some(start_time));
 
     let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
