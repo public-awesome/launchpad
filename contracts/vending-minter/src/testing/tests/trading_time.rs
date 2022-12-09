@@ -1,7 +1,7 @@
 use crate::msg::{ExecuteMsg, QueryMsg, StartTimeResponse};
+use crate::testing::setup::contract_boxes::custom_mock_app;
 use crate::testing::setup::msg::{MinterCollectionResponse, MinterInstantiateParams};
 use crate::testing::setup::setup_accounts_and_block::{setup_accounts, setup_block_time};
-use crate::testing::setup::setup_contracts::custom_mock_app;
 use crate::testing::setup::setup_minter::{configure_minter, minter_params_token};
 use crate::ContractError;
 use cosmwasm_std::{coins, Addr, Timestamp};

@@ -1,8 +1,8 @@
 use crate::testing::setup::{
+    contract_boxes::{contract_splits, custom_mock_app},
     helpers::member,
     msg::MinterCollectionResponse,
     setup_accounts_and_block::{instantiate_group, setup_accounts, setup_block_time},
-    setup_contracts::{contract_splits, custom_mock_app},
     setup_minter::{configure_minter, minter_params_all},
 };
 use cosmwasm_std::{coins, Addr, Coin, Timestamp};

@@ -4,7 +4,7 @@ use sg_multi_test::StargazeApp;
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use sg_whitelist::msg::InstantiateMsg as WhitelistInstantiateMsg;
 
-use crate::testing::setup::setup_contracts::contract_whitelist;
+use crate::testing::setup::contract_boxes::contract_whitelist;
 
 const WHITELIST_AMOUNT: u128 = 66_000_000;
 const WL_PER_ADDRESS_LIMIT: u32 = 1;

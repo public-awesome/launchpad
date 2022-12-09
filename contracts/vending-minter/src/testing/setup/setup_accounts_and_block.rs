@@ -4,7 +4,7 @@ use cw_multi_test::{BankSudo, Executor, SudoMsg};
 use sg_multi_test::StargazeApp;
 use sg_std::NATIVE_DENOM;
 
-use crate::testing::setup::setup_contracts::contract_group;
+use crate::testing::setup::contract_boxes::contract_group;
 
 const OWNER: &str = "admin0001";
 

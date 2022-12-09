@@ -1,6 +1,6 @@
 use crate::msg::{ExecuteMsg, MintCountResponse, QueryMsg, StartTimeResponse};
+use crate::testing::setup::contract_boxes::custom_mock_app;
 use crate::testing::setup::msg::MinterCollectionResponse;
-use crate::testing::setup::setup_contracts::custom_mock_app;
 use crate::testing::setup::setup_minter::{configure_minter, minter_params_token};
 use crate::ContractError;
 use cosmwasm_std::Coin;

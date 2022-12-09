@@ -1,6 +1,6 @@
+use crate::testing::setup::contract_boxes::{contract_factory, contract_minter, contract_sg721};
 use crate::testing::setup::msg::MinterCollectionResponse;
 use crate::testing::setup::msg::MinterSetupParams;
-use crate::testing::setup::setup_contracts::{contract_factory, contract_minter, contract_sg721};
 use anyhow::Error;
 use cosmwasm_std::{coin, coins, Addr, Timestamp};
 use cw_multi_test::{AppResponse, Executor};

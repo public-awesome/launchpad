@@ -1,9 +1,9 @@
 use crate::{
     msg::{ExecuteMsg, MintableNumTokensResponse, QueryMsg},
     testing::setup::{
+        contract_boxes::custom_mock_app,
         msg::MinterCollectionResponse,
         setup_accounts_and_block::{coins_for_msg, setup_accounts, setup_block_time},
-        setup_contracts::custom_mock_app,
         setup_minter::{configure_minter, minter_params_token},
     },
     ContractError,

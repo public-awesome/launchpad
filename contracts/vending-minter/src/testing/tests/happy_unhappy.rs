@@ -11,9 +11,9 @@ use crate::{
     contract::instantiate,
     msg::MintCountResponse,
     testing::setup::{
+        contract_boxes::custom_mock_app,
         msg::MinterCollectionResponse,
         setup_accounts_and_block::coins_for_msg,
-        setup_contracts::custom_mock_app,
         setup_minter::{configure_minter, minter_params_token},
     },
 };
