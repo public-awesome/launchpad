@@ -26,6 +26,22 @@ pub const AIRDROP_MINT_FEE_FAIR_BURN: u64 = 10_000; // 100%
 pub const SHUFFLE_FEE: u128 = 500_000_000;
 pub const MAX_PER_ADDRESS_LIMIT: u32 = 50;
 
+// pub fn mock_init_extension_whitelist(
+//     splits_addr: Option<String>,
+//     start_time: Option<Timestamp>,
+//     whitelist: Option<String>,
+// ) -> VendingMinterInitMsgExtension {
+//     vending_factory::msg::VendingMinterInitMsgExtension {
+//         base_token_uri: "ipfs://aldkfjads".to_string(),
+//         payment_address: splits_addr,
+//         start_time: start_time.unwrap_or(Timestamp::from_nanos(GENESIS_MINT_START_TIME)),
+//         num_tokens: 100,
+//         mint_price: coin(MIN_MINT_PRICE, NATIVE_DENOM),
+//         per_address_limit: 5,
+//         whitelist,
+//     }
+// }
+
 pub fn mock_init_extension(
     splits_addr: Option<String>,
     start_time: Option<Timestamp>,
@@ -100,6 +116,7 @@ fn setup_minter_contract(setup_params: MinterSetupParams) -> MinterCollectionRes
     let splits_addr = setup_params.splits_addr;
     let collection_params = setup_params.collection_params;
     let start_time = setup_params.start_time;
+    let init_msg = setup_params.init_msg;
 
     let mut params = mock_params();
     params.code_id = minter_code_id;
@@ -115,8 +132,15 @@ fn setup_minter_contract(setup_params: MinterSetupParams) -> MinterCollectionRes
         )
         .unwrap();
     let mut msg = mock_create_minter(splits_addr, collection_params, start_time);
-    msg.init_msg.mint_price = coin(MINT_PRICE, NATIVE_DENOM);
-    msg.init_msg.num_tokens = num_tokens;
+    match init_msg {
+        Some(init_msg_from_params) => {
+            msg.init_msg = init_msg_from_params;
+        }
+        None => {
+            msg.init_msg.mint_price = coin(MINT_PRICE, NATIVE_DENOM);
+            msg.init_msg.num_tokens = num_tokens;
+        }
+    }
     msg.collection_params.code_id = sg721_code_id;
     msg.collection_params.info.creator = minter_admin.to_string();
     let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
@@ -175,6 +199,7 @@ pub fn configure_minter(
             factory_code_id,
             sg721_code_id,
             start_time: minter_instantiate_params_vec[index].start_time,
+            init_msg: minter_instantiate_params_vec[index].init_msg.clone(),
         };
         let minter_collection_res = setup_minter_contract(setup_params);
         minter_collection_info.push(minter_collection_res);
@@ -186,40 +211,12 @@ pub fn build_minter_params(
     num_tokens: u32,
     splits_addr: Option<String>,
     start_time: Option<Timestamp>,
+    init_msg: Option<VendingMinterInitMsgExtension>,
 ) -> MinterInstantiateParams {
     MinterInstantiateParams {
         num_tokens,
         splits_addr,
         start_time,
+        init_msg,
     }
 }
-// pub fn configure_minter_with_splits(
-//     app: &mut StargazeApp,
-//     minter_admin: Addr,
-//     collection_params_vec: Vec<CollectionParams>,
-//     num_tokens: u32,
-//     splits_addrs: Option<Vec<String>>,
-// ) -> Vec<MinterCollectionResponse> {
-//     let mut minter_collection_info: Vec<MinterCollectionResponse> = vec![];
-//     let split_addrs_none = splits_addrs.is_none();
-//     let (minter_code_id, factory_code_id, sg721_code_id) = get_code_ids(app);
-//     for (index, collection_param) in collection_params_vec.iter().enumerate() {
-//         let mut split_addr: Option<String> = None;
-//         if !split_addrs_none {
-//             split_addr = Some(splits_addrs.clone().unwrap()[index].clone());
-//         }
-//         let setup_params: MinterSetupParams = MinterSetupParams {
-//             router: app,
-//             minter_admin: minter_admin.clone(),
-//             num_tokens,
-//             collection_params: collection_param.to_owned(),
-//             splits_addr: split_addr,
-//             minter_code_id,
-//             factory_code_id,
-//             sg721_code_id,
-//         };
-//         let minter_collection_res = setup_minter_contract(setup_params);
-//         minter_collection_info.push(minter_collection_res);
-//     }
-//     minter_collection_info
-// }

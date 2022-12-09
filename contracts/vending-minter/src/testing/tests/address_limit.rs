@@ -1,7 +1,7 @@
 use crate::{
     msg::{ExecuteMsg, MintableNumTokensResponse, QueryMsg},
     testing::setup::{
-        msg::{MinterCollectionResponse, MinterInstantiateParams},
+        msg::MinterCollectionResponse,
         setup_accounts_and_block::{coins_for_msg, setup_accounts, setup_block_time},
         setup_contracts::custom_mock_app,
         setup_minter::{build_minter_params, configure_minter},
@@ -24,7 +24,7 @@ fn check_per_address_limit() {
     let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
     let num_tokens = 2;
     let collection_params = mock_collection_params_1(Some(start_time));
-    let minter_params = build_minter_params(num_tokens, None, None);
+    let minter_params = build_minter_params(num_tokens, None, None, None);
     let minter_collection_response = configure_minter(
         &mut router,
         creator.clone(),
@@ -113,7 +113,7 @@ fn check_dynamic_per_address_limit() {
     let num_tokens = 400;
     let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
     let collection_params = mock_collection_params_1(Some(start_time));
-    let minter_params = build_minter_params(num_tokens, None, None);
+    let minter_params = build_minter_params(num_tokens, None, None, None);
     let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
         &mut router,
         creator.clone(),
@@ -134,11 +134,7 @@ fn check_dynamic_per_address_limit() {
 
     let num_tokens = 1000;
     let collection_params = mock_collection_params_1(Some(start_time));
-    let minter_params = MinterInstantiateParams {
-        num_tokens,
-        splits_addr: None,
-        start_time: None,
-    };
+    let minter_params = build_minter_params(num_tokens, None, None, None);
     let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
         &mut router,
         creator.clone(),
@@ -175,7 +171,7 @@ fn mint_for_token_id_addr() {
     let num_tokens = 4;
     let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
     let collection_params = mock_collection_params_1(Some(start_time));
-    let minter_params = build_minter_params(num_tokens, None, None);
+    let minter_params = build_minter_params(num_tokens, None, None, None);
     let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
         &mut router,
         creator.clone(),

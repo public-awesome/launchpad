@@ -62,7 +62,7 @@ fn mint_and_split() {
     let (creator, buyer) = setup_accounts(&mut app);
     let num_tokens = 2;
     let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
-    let minter_params = build_minter_params(num_tokens, Some(splits_addr.to_string()), None);
+    let minter_params = build_minter_params(num_tokens, Some(splits_addr.to_string()), None, None);
     let collection_params = mock_collection_params_1(Some(start_time));
 
     let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(

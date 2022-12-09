@@ -15,6 +15,15 @@ pub fn contract_factory() -> Box<dyn Contract<StargazeMsgWrapper>> {
     Box::new(contract)
 }
 
+pub fn contract_whitelist() -> Box<dyn Contract<StargazeMsgWrapper>> {
+    let contract = ContractWrapper::new(
+        sg_whitelist::contract::execute,
+        sg_whitelist::contract::instantiate,
+        sg_whitelist::contract::query,
+    );
+    Box::new(contract)
+}
+
 pub fn contract_minter() -> Box<dyn Contract<StargazeMsgWrapper>> {
     let contract = ContractWrapper::new(
         crate::contract::execute,

@@ -19,7 +19,7 @@ fn before_start_time() {
     let num_tokens = 1;
     let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME - 10);
     let collection_params = mock_collection_params_1(Some(start_time));
-    let minter_params = build_minter_params(num_tokens, None, None);
+    let minter_params = build_minter_params(num_tokens, None, None, None);
     let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
         &mut router,
         creator,
@@ -81,7 +81,7 @@ fn test_update_start_time() {
     let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 100);
     // Public mint has started
     let collection_params = mock_collection_params_1(Some(start_time));
-    let minter_params = build_minter_params(num_tokens, None, None);
+    let minter_params = build_minter_params(num_tokens, None, None, None);
     let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
         &mut router,
         creator.clone(),
@@ -115,6 +115,7 @@ fn test_invalid_start_time() {
         num_tokens,
         splits_addr: None,
         start_time: Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME - 100)),
+        init_msg: None,
     };
     let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
         &mut router,
@@ -139,6 +140,7 @@ fn test_invalid_start_time() {
         num_tokens,
         splits_addr: None,
         start_time: Some(minter_start_time),
+        init_msg: None,
     };
     let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
         &mut router,
@@ -163,6 +165,7 @@ fn test_invalid_start_time() {
         num_tokens,
         splits_addr: None,
         start_time: Some(minter_start_time),
+        init_msg: None,
     };
     let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
         &mut router,
@@ -216,6 +219,7 @@ fn invalid_trading_time_during_init() {
         num_tokens,
         splits_addr: None,
         start_time: None,
+        init_msg: None,
     };
     let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
         &mut router,
@@ -241,7 +245,7 @@ fn update_start_trading_time() {
     setup_block_time(&mut router, GENESIS_MINT_START_TIME - 1, None);
     let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
     let collection_params = mock_collection_params_1(Some(start_time));
-    let minter_params = build_minter_params(num_tokens, None, None);
+    let minter_params = build_minter_params(num_tokens, None, None, None);
     let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
         &mut router,
         creator.clone(),
