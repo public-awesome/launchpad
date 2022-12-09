@@ -4,10 +4,10 @@ use crate::testing::setup::setup_accounts_and_block::{setup_accounts, setup_bloc
 use crate::testing::setup::setup_contracts::custom_mock_app;
 use crate::testing::setup::setup_minter::{build_minter_params, configure_minter};
 use crate::ContractError;
-use cosmwasm_std::{coins, Addr, StdResult, Timestamp};
+use cosmwasm_std::{coins, Addr, Timestamp};
 use cw_multi_test::Executor;
 use sg2::tests::mock_collection_params_1;
-use sg721_base::msg::CollectionInfoResponse;
+use sg721_base::msg::{CollectionInfoResponse, QueryMsg as Sg721QueryMsg};
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
 const MINT_PRICE: u128 = 100_000_000;
@@ -219,8 +219,8 @@ fn invalid_trading_time_during_init() {
     };
     let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
         &mut router,
-        creator.clone(),
-        vec![collection_params.clone()],
+        creator,
+        vec![collection_params],
         vec![minter_params],
     );
     let err = minter_collection_response[0].error.as_deref();
@@ -249,7 +249,7 @@ fn update_start_trading_time() {
         vec![minter_params],
     );
     let minter_addr = minter_collection_response[0].minter.clone().unwrap();
-    let collection_addr = minter_collection_response[0].minter.clone().unwrap();
+    let collection_addr = minter_collection_response[0].collection.clone().unwrap();
     let max_trading_offset = 60 * 60 * 24 * 7;
 
     // unauthorized
@@ -293,18 +293,16 @@ fn update_start_trading_time() {
     assert!(res.is_ok());
 
     // confirm trading start time
+    let res: CollectionInfoResponse = router
+        .wrap()
+        .query_wasm_smart(
+            collection_addr.to_string(),
+            &Sg721QueryMsg::CollectionInfo {},
+        )
+        .unwrap();
 
-    // let res: CollectionInfoResponse = router
-    //     .wrap()
-    //     .query_wasm_smart(
-    //         &collection_addr,
-    //         &sg721_base::msg::QueryMsg::CollectionInfo {},
-    //     )
-    //     .unwrap();
-    // println!("res is {:?}", res);
-
-    // // assert_eq!(
-    // //     res.start_trading_time,
-    // //     Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME).plus_seconds(max_trading_offset))
-    // // );
+    assert_eq!(
+        res.start_trading_time,
+        Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME).plus_seconds(max_trading_offset))
+    );
 }

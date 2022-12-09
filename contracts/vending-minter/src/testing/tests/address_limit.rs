@@ -1,5 +1,3 @@
-use core::num;
-
 use crate::{
     msg::{ExecuteMsg, MintableNumTokensResponse, QueryMsg},
     testing::setup::{

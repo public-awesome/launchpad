@@ -8,7 +8,6 @@ use crate::testing::setup::{
 use cosmwasm_std::{coins, Addr, Coin, Timestamp};
 use cw_multi_test::{next_block, Executor};
 use sg2::tests::mock_collection_params_1;
-use sg721_base::msg::{CollectionInfoResponse, QueryMsg as Sg721QueryMsg};
 use sg_multi_test::StargazeApp;
 use sg_splits::msg::ExecuteMsg as SplitsExecuteMsg;
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
