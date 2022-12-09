@@ -66,3 +66,4 @@ sg-multi-test = { workspace = true }
 sg721-base = { workspace = true }
 cw4-group = { workspace = true }
 sg-splits = { workspace = true }
+anyhow = "1.0.66"

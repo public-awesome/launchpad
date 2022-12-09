@@ -1,10 +1,13 @@
 use crate::testing::setup::{
     helpers::member,
+    msg::MinterCollectionResponse,
     setup_accounts_and_block::{instantiate_group, setup_accounts, setup_block_time},
-    setup_contracts::{contract_splits, custom_mock_app, setup_minter_contract_with_splits},
+    setup_contracts::{contract_splits, custom_mock_app},
+    setup_minter::configure_minter_with_splits,
 };
-use cosmwasm_std::{coins, Addr, Coin};
+use cosmwasm_std::{coins, Addr, Coin, Timestamp};
 use cw_multi_test::{next_block, Executor};
+use sg2::tests::mock_collection_params_1;
 use sg_multi_test::StargazeApp;
 use sg_splits::msg::ExecuteMsg as SplitsExecuteMsg;
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
@@ -56,15 +59,19 @@ fn mint_and_split() {
     let mut app = custom_mock_app();
 
     let (splits_addr, _) = setup_splits_test_case(&mut app, vec![]);
-
     let (creator, buyer) = setup_accounts(&mut app);
+
+    let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
+    let collection_params = mock_collection_params_1(Some(start_time));
     let num_tokens = 2;
-    let (minter_addr, _) = setup_minter_contract_with_splits(
+    let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter_with_splits(
         &mut app,
-        &creator,
+        creator,
+        vec![collection_params],
         num_tokens,
-        Some(splits_addr.to_string()),
+        Some(vec![splits_addr.to_string()]),
     );
+    let minter_addr = minter_collection_response[0].minter.clone().unwrap();
     setup_block_time(&mut app, GENESIS_MINT_START_TIME + 1, None);
 
     let mint_msg = crate::msg::ExecuteMsg::Mint {};

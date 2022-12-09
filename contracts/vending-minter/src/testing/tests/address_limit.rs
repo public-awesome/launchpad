@@ -1,21 +1,19 @@
 use crate::{
     msg::{ExecuteMsg, MintableNumTokensResponse, QueryMsg},
     testing::setup::{
+        msg::MinterCollectionResponse,
         setup_accounts_and_block::{coins_for_msg, setup_accounts, setup_block_time},
-        setup_contracts::{
-            contract_factory, contract_minter, contract_sg721, custom_mock_app, mock_create_minter,
-            mock_params, setup_minter_contract,
-        },
+        setup_contracts::custom_mock_app,
+        setup_minter::configure_minter,
     },
     ContractError,
 };
-use cosmwasm_std::{coin, coins, Addr, Coin, Uint128};
+use cosmwasm_std::{coin, coins, Coin, Timestamp, Uint128};
 use cw721::{Cw721QueryMsg, OwnerOfResponse, TokensResponse};
 use cw_multi_test::Executor;
-use sg2::msg::Sg2ExecuteMsg;
+use sg2::tests::mock_collection_params_1;
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
-const CREATION_FEE: u128 = 5_000_000_000;
 const MINT_PRICE: u128 = 100_000_000;
 const ADMIN_MINT_PRICE: u128 = 0;
 
@@ -24,7 +22,16 @@ fn check_per_address_limit() {
     let mut router = custom_mock_app();
     let (creator, buyer) = setup_accounts(&mut router);
     let num_tokens = 2;
-    let (minter_addr, _config) = setup_minter_contract(&mut router, &creator, num_tokens, None);
+    let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
+    let collection_params = mock_collection_params_1(Some(start_time));
+    let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
+        &mut router,
+        creator.clone(),
+        vec![collection_params],
+        num_tokens,
+    );
+
+    let minter_addr = minter_collection_response[0].minter.clone().unwrap();
 
     // Set to genesis mint start time
     setup_block_time(&mut router, GENESIS_MINT_START_TIME, None);
@@ -69,12 +76,7 @@ fn check_per_address_limit() {
     let per_address_limit_msg = ExecuteMsg::UpdatePerAddressLimit {
         per_address_limit: 1,
     };
-    let res = router.execute_contract(
-        creator.clone(),
-        minter_addr.clone(),
-        &per_address_limit_msg,
-        &[],
-    );
+    let res = router.execute_contract(creator, minter_addr.clone(), &per_address_limit_msg, &[]);
     assert!(res.is_ok());
 
     // First mint succeeds
@@ -108,63 +110,38 @@ fn check_dynamic_per_address_limit() {
     // if per address limit > 1%, throw error when instantiating
     // num_tokens: 400, per_address_limit: 5
     let num_tokens = 400;
-    let minter_code_id = router.store_code(contract_minter());
-    let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
+    let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
+    let collection_params = mock_collection_params_1(Some(start_time));
+    let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
+        &mut router,
+        creator.clone(),
+        vec![collection_params],
+        num_tokens,
+    );
 
-    let factory_code_id = router.store_code(contract_factory());
-
-    let mut params = mock_params();
-    params.code_id = minter_code_id;
-
-    let factory_addr = router
-        .instantiate_contract(
-            factory_code_id,
-            creator.clone(),
-            &vending_factory::msg::InstantiateMsg { params },
-            &[],
-            "factory",
-            None,
-        )
-        .unwrap();
-
-    let sg721_code_id = router.store_code(contract_sg721());
-
-    let mut msg = mock_create_minter(None);
-    msg.init_msg.mint_price = coin(MINT_PRICE, NATIVE_DENOM);
-    msg.init_msg.num_tokens = num_tokens;
-    msg.collection_params.code_id = sg721_code_id;
-    msg.collection_params.info.creator = creator.to_string();
-
-    let msg = Sg2ExecuteMsg::CreateMinter(msg);
-
-    let err = router
-        .execute_contract(creator.clone(), factory_addr.clone(), &msg, &creation_fee)
-        .unwrap_err();
-
+    let err = minter_collection_response[0].error.as_ref();
     assert_eq!(
-        err.source().unwrap().source().unwrap().to_string(),
+        err.unwrap().source().unwrap().source().unwrap().to_string(),
         ContractError::InvalidPerAddressLimit {
             max: num_tokens / 100,
             min: 1,
-            got: mock_create_minter(None).init_msg.per_address_limit,
+            got: 5
         }
         .to_string()
     );
 
-    // should succeed with 1000 tokens and 5 per_address_limit
     let num_tokens = 1000;
-    let mut msg = mock_create_minter(None);
-    msg.init_msg.mint_price = coin(MINT_PRICE, NATIVE_DENOM);
-    msg.init_msg.num_tokens = num_tokens;
-    msg.collection_params.code_id = sg721_code_id;
-    msg.collection_params.info.creator = creator.to_string();
-    let msg = Sg2ExecuteMsg::CreateMinter(msg);
-    let res = router.execute_contract(creator.clone(), factory_addr, &msg, &creation_fee);
-    assert!(res.is_ok());
+    let collection_params = mock_collection_params_1(Some(start_time));
+    let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
+        &mut router,
+        creator.clone(),
+        vec![collection_params],
+        num_tokens,
+    );
+    let err = minter_collection_response[0].error.as_ref();
+    assert!(err.is_none());
 
-    let minter_addr = Addr::unchecked("contract1");
-
-    // if per address limit > 1%, throw error when updating per_address_limit
+    let minter_addr = minter_collection_response[0].minter.clone().unwrap();
     let update_msg = ExecuteMsg::UpdatePerAddressLimit {
         per_address_limit: 11,
     };
@@ -185,13 +162,20 @@ fn check_dynamic_per_address_limit() {
 #[test]
 fn mint_for_token_id_addr() {
     let mut router = custom_mock_app();
-    let (creator, buyer) = setup_accounts(&mut router);
-    let num_tokens = 4;
-    let (minter_addr, config) = setup_minter_contract(&mut router, &creator, num_tokens, None);
-
-    // Set to genesis mint start time
     setup_block_time(&mut router, GENESIS_MINT_START_TIME, None);
+    let (creator, buyer) = setup_accounts(&mut router);
 
+    let num_tokens = 4;
+    let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
+    let collection_params = mock_collection_params_1(Some(start_time));
+    let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
+        &mut router,
+        creator.clone(),
+        vec![collection_params],
+        num_tokens,
+    );
+    let minter_addr = minter_collection_response[0].minter.clone().unwrap();
+    let collection_addr = minter_collection_response[0].collection.clone().unwrap();
     // Try mint_for, test unauthorized
     let mint_for_msg = ExecuteMsg::MintFor {
         token_id: 1,
@@ -233,7 +217,7 @@ fn mint_for_token_id_addr() {
     };
     let res: TokensResponse = router
         .wrap()
-        .query_wasm_smart(config.sg721_address.clone(), &tokens_msg)
+        .query_wasm_smart(collection_addr.clone(), &tokens_msg)
         .unwrap();
     let sold_token_id: u32 = res.tokens[0].parse::<u32>().unwrap();
 
@@ -324,7 +308,7 @@ fn mint_for_token_id_addr() {
         recipient: buyer.to_string(),
     };
     let res = router.execute_contract(
-        creator.clone(),
+        creator,
         minter_addr.clone(),
         &mint_for_msg,
         &coins_for_msg(Coin {
@@ -337,7 +321,7 @@ fn mint_for_token_id_addr() {
     let res: OwnerOfResponse = router
         .wrap()
         .query_wasm_smart(
-            config.sg721_address,
+            collection_addr,
             &Cw721QueryMsg::OwnerOf {
                 token_id: 2.to_string(),
                 include_expired: None,

@@ -4,18 +4,22 @@ use cosmwasm_std::{
     Api, Coin, Timestamp, Uint128,
 };
 use cw_multi_test::Executor;
+use sg2::tests::mock_collection_params_1;
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
 use crate::{
     contract::instantiate,
     msg::MintCountResponse,
-    testing::setup::{setup_accounts_and_block::coins_for_msg, setup_contracts::custom_mock_app},
+    testing::setup::{
+        msg::MinterCollectionResponse, setup_accounts_and_block::coins_for_msg,
+        setup_contracts::custom_mock_app, setup_minter::configure_minter,
+    },
 };
 use crate::{
     msg::{ExecuteMsg, QueryMsg, StartTimeResponse},
     testing::setup::{
         setup_accounts_and_block::{setup_accounts, setup_block_time},
-        setup_contracts::{mock_create_minter, setup_minter_contract},
+        setup_minter::mock_create_minter,
     },
 };
 use cw721::{Cw721QueryMsg, OwnerOfResponse};
@@ -38,7 +42,10 @@ fn initialization() {
     // 0 per address limit returns error
     let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
     // let mut msg = minter_init();
-    let mut msg = mock_create_minter(None);
+
+    let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
+    let collection_params = mock_collection_params_1(Some(start_time));
+    let mut msg = mock_create_minter(None, collection_params.clone());
     msg.init_msg.num_tokens = 100;
     msg.collection_params.code_id = 1;
     msg.collection_params.info.creator = info.sender.to_string();
@@ -53,7 +60,7 @@ fn initialization() {
     let wrong_denom = "uosmo";
     let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
     // let mut msg = minter_init();
-    let mut msg = mock_create_minter(None);
+    let mut msg = mock_create_minter(None, collection_params.clone());
     // msg.init_msg.mint_price = 100;
     msg.init_msg.mint_price = coin(MINT_PRICE, wrong_denom);
 
@@ -61,7 +68,7 @@ fn initialization() {
 
     // Insufficient mint price returns error
     let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
-    let mut msg = mock_create_minter(None);
+    let mut msg = mock_create_minter(None, collection_params.clone());
     msg.init_msg.mint_price = coin(1, NATIVE_DENOM);
 
     instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
@@ -69,7 +76,7 @@ fn initialization() {
     // Over max token limit
     let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
     // let mut msg = minter_init();
-    let mut msg = mock_create_minter(None);
+    let mut msg = mock_create_minter(None, collection_params.clone());
     msg.init_msg.mint_price = coin(MINT_PRICE, NATIVE_DENOM);
     msg.init_msg.num_tokens = MAX_TOKEN_LIMIT + 1;
 
@@ -78,7 +85,7 @@ fn initialization() {
     // Under min token limit
     let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
     // let mut msg = minter_init();
-    let mut msg = mock_create_minter(None);
+    let mut msg = mock_create_minter(None, collection_params);
     msg.init_msg.num_tokens = 0;
 
     instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
@@ -87,10 +94,19 @@ fn initialization() {
 #[test]
 fn happy_path() {
     let mut router = custom_mock_app();
-    setup_block_time(&mut router, GENESIS_MINT_START_TIME - 1, None);
     let (creator, buyer) = setup_accounts(&mut router);
     let num_tokens = 2;
-    let (minter_addr, config) = setup_minter_contract(&mut router, &creator, num_tokens, None);
+    let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
+    let collection_params = mock_collection_params_1(Some(start_time));
+    let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
+        &mut router,
+        creator.clone(),
+        vec![collection_params],
+        num_tokens,
+    );
+
+    let minter_addr = minter_collection_response[0].minter.clone().unwrap();
+    let collection_addr = minter_collection_response[0].collection.clone().unwrap();
 
     // Default start time genesis mint time
     let res: StartTimeResponse = router
@@ -159,7 +175,7 @@ fn happy_path() {
 
     let res: OwnerOfResponse = router
         .wrap()
-        .query_wasm_smart(config.sg721_address.clone(), &query_owner_msg)
+        .query_wasm_smart(collection_addr.clone(), &query_owner_msg)
         .unwrap();
     assert_eq!(res.owner, buyer.to_string());
 
@@ -217,7 +233,7 @@ fn happy_path() {
     };
     let res: OwnerOfResponse = router
         .wrap()
-        .query_wasm_smart(config.sg721_address, &query_owner_msg)
+        .query_wasm_smart(collection_addr, &query_owner_msg)
         .unwrap();
     assert_eq!(res.owner, buyer.to_string());
 
@@ -269,7 +285,12 @@ fn unhappy_path() {
     let mut router = custom_mock_app();
     let (creator, buyer) = setup_accounts(&mut router);
     let num_tokens = 1;
-    let (minter_addr, _config) = setup_minter_contract(&mut router, &creator, num_tokens, None);
+    let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
+    let collection_params = mock_collection_params_1(Some(start_time));
+    let minter_collection_response: Vec<MinterCollectionResponse> =
+        configure_minter(&mut router, creator, vec![collection_params], num_tokens);
+
+    let minter_addr = minter_collection_response[0].minter.clone().unwrap();
 
     // Fails if too little funds are sent
     let mint_msg = ExecuteMsg::Mint {};

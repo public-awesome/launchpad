@@ -1,9 +1,12 @@
 use crate::msg::{ExecuteMsg, MintCountResponse, QueryMsg, StartTimeResponse};
-use crate::testing::setup::setup_contracts::{custom_mock_app, setup_minter_contract};
+use crate::testing::setup::msg::MinterCollectionResponse;
+use crate::testing::setup::setup_contracts::custom_mock_app;
+use crate::testing::setup::setup_minter::configure_minter;
 use crate::ContractError;
 use cosmwasm_std::Coin;
 use cosmwasm_std::{coins, Timestamp, Uint128};
 use cw_multi_test::Executor;
+use sg2::tests::mock_collection_params_1;
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
 use crate::testing::setup::setup_accounts_and_block::{
@@ -19,10 +22,16 @@ fn update_mint_price() {
     let mut router = custom_mock_app();
     let (creator, buyer) = setup_accounts(&mut router);
     let num_tokens = 1;
-    let (minter_addr, _) = setup_minter_contract(&mut router, &creator, num_tokens, None);
+    let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
+    let collection_params = mock_collection_params_1(Some(start_time));
+    let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
+        &mut router,
+        creator.clone(),
+        vec![collection_params],
+        num_tokens,
+    );
 
-    // Set to before genesis mint start time
-    setup_block_time(&mut router, GENESIS_MINT_START_TIME - 10, None);
+    let minter_addr = minter_collection_response[0].minter.clone().unwrap();
 
     // Update mint price higher
     let update_msg = ExecuteMsg::UpdateMintPrice {
@@ -71,7 +80,7 @@ fn update_mint_price() {
     let update_msg = ExecuteMsg::UpdateMintPrice {
         price: MINT_PRICE - 2,
     };
-    let res = router.execute_contract(creator.clone(), minter_addr.clone(), &update_msg, &[]);
+    let res = router.execute_contract(creator, minter_addr.clone(), &update_msg, &[]);
     assert!(res.is_ok());
 
     // Mint succeeds
@@ -88,10 +97,18 @@ fn update_mint_price() {
 #[test]
 fn burn_remaining() {
     let mut router = custom_mock_app();
-    setup_block_time(&mut router, GENESIS_MINT_START_TIME - 1, None);
     let (creator, buyer) = setup_accounts(&mut router);
     let num_tokens = 5000;
-    let (minter_addr, _) = setup_minter_contract(&mut router, &creator, num_tokens, None);
+    let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
+    let collection_params = mock_collection_params_1(Some(start_time));
+    let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
+        &mut router,
+        creator.clone(),
+        vec![collection_params],
+        num_tokens,
+    );
+
+    let minter_addr = minter_collection_response[0].minter.clone().unwrap();
 
     // Default start time genesis mint time
     let res: StartTimeResponse = router
