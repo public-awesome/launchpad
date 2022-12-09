@@ -5,13 +5,6 @@ use sg2::msg::CollectionParams;
 use sg_multi_test::StargazeApp;
 use vending_factory::msg::VendingMinterInitMsgExtension;
 
-// pub struct SetupContractsParams<'a> {
-//     pub minter_admin: Addr,
-//     pub collection_params_vec: Vec<CollectionParams>,
-//     pub num_tokens: u32,
-//     pub router: &'a mut StargazeApp,
-// }
-
 pub struct MinterSetupParams<'a> {
     pub router: &'a mut StargazeApp,
     pub minter_admin: Addr,

@@ -1,11 +1,11 @@
 use crate::testing::setup::{
     contract_boxes::{contract_splits, custom_mock_app},
-    helpers::member,
     msg::MinterCollectionResponse,
     setup_accounts_and_block::{instantiate_group, setup_accounts, setup_block_time},
     setup_minter::{configure_minter, minter_params_all},
 };
 use cosmwasm_std::{coins, Addr, Coin, Timestamp};
+use cw4::Member;
 use cw_multi_test::{next_block, Executor};
 use sg2::tests::mock_collection_params_1;
 use sg_multi_test::StargazeApp;
@@ -18,6 +18,13 @@ const MEMBER2: &str = "member0002";
 const MEMBER3: &str = "member0003";
 
 const MINT_PRICE: u128 = 100_000_000;
+
+pub fn member<T: Into<String>>(addr: T, weight: u64) -> Member {
+    Member {
+        addr: addr.into(),
+        weight,
+    }
+}
 
 #[track_caller]
 fn instantiate_splits(app: &mut StargazeApp, group: Addr) -> Addr {
