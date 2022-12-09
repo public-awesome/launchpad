@@ -1,10 +1,12 @@
+use core::num;
+
 use crate::{
     msg::{ExecuteMsg, MintableNumTokensResponse, QueryMsg},
     testing::setup::{
-        msg::MinterCollectionResponse,
+        msg::{MinterCollectionResponse, MinterInstantiateParams},
         setup_accounts_and_block::{coins_for_msg, setup_accounts, setup_block_time},
         setup_contracts::custom_mock_app,
-        setup_minter::configure_minter,
+        setup_minter::{build_minter_params, configure_minter},
     },
     ContractError,
 };
@@ -21,14 +23,15 @@ const ADMIN_MINT_PRICE: u128 = 0;
 fn check_per_address_limit() {
     let mut router = custom_mock_app();
     let (creator, buyer) = setup_accounts(&mut router);
-    let num_tokens = 2;
     let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
+    let num_tokens = 2;
     let collection_params = mock_collection_params_1(Some(start_time));
-    let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
+    let minter_params = build_minter_params(num_tokens, None, None);
+    let minter_collection_response = configure_minter(
         &mut router,
         creator.clone(),
         vec![collection_params],
-        num_tokens,
+        vec![minter_params],
     );
 
     let minter_addr = minter_collection_response[0].minter.clone().unwrap();
@@ -112,11 +115,12 @@ fn check_dynamic_per_address_limit() {
     let num_tokens = 400;
     let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
     let collection_params = mock_collection_params_1(Some(start_time));
+    let minter_params = build_minter_params(num_tokens, None, None);
     let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
         &mut router,
         creator.clone(),
         vec![collection_params],
-        num_tokens,
+        vec![minter_params],
     );
 
     let err = minter_collection_response[0].error.as_ref();
@@ -132,11 +136,16 @@ fn check_dynamic_per_address_limit() {
 
     let num_tokens = 1000;
     let collection_params = mock_collection_params_1(Some(start_time));
+    let minter_params = MinterInstantiateParams {
+        num_tokens,
+        splits_addr: None,
+        start_time: None,
+    };
     let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
         &mut router,
         creator.clone(),
         vec![collection_params],
-        num_tokens,
+        vec![minter_params],
     );
     let err = minter_collection_response[0].error.as_ref();
     assert!(err.is_none());
@@ -168,11 +177,12 @@ fn mint_for_token_id_addr() {
     let num_tokens = 4;
     let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
     let collection_params = mock_collection_params_1(Some(start_time));
+    let minter_params = build_minter_params(num_tokens, None, None);
     let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
         &mut router,
         creator.clone(),
         vec![collection_params],
-        num_tokens,
+        vec![minter_params],
     );
     let minter_addr = minter_collection_response[0].minter.clone().unwrap();
     let collection_addr = minter_collection_response[0].collection.clone().unwrap();

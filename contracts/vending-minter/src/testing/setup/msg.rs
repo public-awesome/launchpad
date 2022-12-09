@@ -1,5 +1,5 @@
 use anyhow::Error;
-use cosmwasm_std::Addr;
+use cosmwasm_std::{Addr, Timestamp};
 
 use sg2::msg::CollectionParams;
 use sg_multi_test::StargazeApp;
@@ -17,6 +17,7 @@ pub struct MinterSetupParams<'a> {
     pub num_tokens: u32,
     pub collection_params: CollectionParams,
     pub splits_addr: Option<String>,
+    pub start_time: Option<Timestamp>,
     pub minter_code_id: u64,
     pub factory_code_id: u64,
     pub sg721_code_id: u64,
@@ -26,4 +27,10 @@ pub struct MinterCollectionResponse {
     pub collection: Option<Addr>,
     pub factory: Option<Addr>,
     pub error: Option<Error>,
+}
+
+pub struct MinterInstantiateParams {
+    pub num_tokens: u32,
+    pub start_time: Option<Timestamp>,
+    pub splits_addr: Option<String>,
 }

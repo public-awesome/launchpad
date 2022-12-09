@@ -1,17 +1,14 @@
 use crate::msg::{ExecuteMsg, QueryMsg, StartTimeResponse};
-use crate::testing::setup::msg::MinterCollectionResponse;
-use crate::testing::setup::setup_minter::configure_minter;
-use crate::ContractError;
-use cosmwasm_std::{coins, Timestamp};
-use cw_multi_test::Executor;
-
-use sg2::tests::mock_collection_params_1;
-
-use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
-
-use crate::testing::setup::setup_contracts::custom_mock_app;
-
+use crate::testing::setup::msg::{MinterCollectionResponse, MinterInstantiateParams};
 use crate::testing::setup::setup_accounts_and_block::{setup_accounts, setup_block_time};
+use crate::testing::setup::setup_contracts::custom_mock_app;
+use crate::testing::setup::setup_minter::{build_minter_params, configure_minter};
+use crate::ContractError;
+use cosmwasm_std::{coins, Addr, StdResult, Timestamp};
+use cw_multi_test::Executor;
+use sg2::tests::mock_collection_params_1;
+use sg721_base::msg::CollectionInfoResponse;
+use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
 const MINT_PRICE: u128 = 100_000_000;
 
@@ -20,10 +17,15 @@ fn before_start_time() {
     let mut router = custom_mock_app();
     let (creator, buyer) = setup_accounts(&mut router);
     let num_tokens = 1;
-    let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 1);
+    let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME - 10);
     let collection_params = mock_collection_params_1(Some(start_time));
-    let minter_collection_response: Vec<MinterCollectionResponse> =
-        configure_minter(&mut router, creator, vec![collection_params], num_tokens);
+    let minter_params = build_minter_params(num_tokens, None, None);
+    let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
+        &mut router,
+        creator,
+        vec![collection_params],
+        vec![minter_params],
+    );
 
     let minter_addr = minter_collection_response[0].minter.clone().unwrap();
 
@@ -53,7 +55,7 @@ fn before_start_time() {
         .query_wasm_smart(minter_addr.clone(), &QueryMsg::StartTime {})
         .unwrap();
     assert_eq!(
-        Timestamp::from_nanos(GENESIS_MINT_START_TIME + 1).to_string(),
+        Timestamp::from_nanos(GENESIS_MINT_START_TIME).to_string(),
         start_time_response.start_time
     );
 
@@ -79,11 +81,12 @@ fn test_update_start_time() {
     let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 100);
     // Public mint has started
     let collection_params = mock_collection_params_1(Some(start_time));
+    let minter_params = build_minter_params(num_tokens, None, None);
     let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
         &mut router,
         creator.clone(),
         vec![collection_params],
-        num_tokens,
+        vec![minter_params],
     );
 
     let minter_addr = minter_collection_response[0].minter.clone().unwrap();
@@ -106,15 +109,18 @@ fn test_invalid_start_time() {
     let (creator, _) = setup_accounts(&mut router);
     let num_tokens = 10;
     setup_block_time(&mut router, GENESIS_MINT_START_TIME - 1000, None);
-    let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME - 100);
-    // Public mint has started
-
-    let collection_params = mock_collection_params_1(Some(start_time));
+    let collection_start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
+    let collection_params = mock_collection_params_1(Some(collection_start_time));
+    let minter_params = MinterInstantiateParams {
+        num_tokens,
+        splits_addr: None,
+        start_time: Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME - 100)),
+    };
     let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
         &mut router,
         creator.clone(),
-        vec![collection_params],
-        num_tokens,
+        vec![collection_params.clone()],
+        vec![minter_params],
     );
 
     let err = minter_collection_response[0]
@@ -126,16 +132,19 @@ fn test_invalid_start_time() {
     assert_eq!(err.to_string(), expected_error.to_string());
     // set time before the start_time above
 
-    //     // move date after genesis mint
+    // move date after genesis mint
     setup_block_time(&mut router, GENESIS_MINT_START_TIME + 1000, None);
-
-    let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 500);
-    let collection_params = mock_collection_params_1(Some(start_time));
+    let minter_start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 500);
+    let minter_params = MinterInstantiateParams {
+        num_tokens,
+        splits_addr: None,
+        start_time: Some(minter_start_time),
+    };
     let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
         &mut router,
         creator.clone(),
-        vec![collection_params],
-        num_tokens,
+        vec![collection_params.clone()],
+        vec![minter_params],
     );
 
     let err = minter_collection_response[0]
@@ -143,22 +152,25 @@ fn test_invalid_start_time() {
         .as_ref()
         .unwrap()
         .root_cause();
-    let expected_error = ContractError::InvalidStartTime(start_time, router.block_info().time);
+    let expected_error =
+        ContractError::InvalidStartTime(minter_start_time, router.block_info().time);
     assert_eq!(err.to_string(), expected_error.to_string());
 
     // position block time before the start time
     setup_block_time(&mut router, GENESIS_MINT_START_TIME + 400, None);
-
-    let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 500);
-    let collection_params = mock_collection_params_1(Some(start_time));
+    let minter_start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 500);
+    let minter_params = MinterInstantiateParams {
+        num_tokens,
+        splits_addr: None,
+        start_time: Some(minter_start_time),
+    };
     let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
         &mut router,
         creator.clone(),
         vec![collection_params],
-        num_tokens,
+        vec![minter_params],
     );
     let minter_addr = minter_collection_response[0].minter.clone().unwrap();
-    println!("minter addr is {:?}", minter_addr);
     assert_eq!(minter_addr.to_string(), "contract3");
 
     // Update to a start time in the past
@@ -187,125 +199,112 @@ fn test_invalid_start_time() {
     assert_eq!(err.source().unwrap().to_string(), "AlreadyStarted");
 }
 
-// #[test]
-// fn invalid_trading_time_during_init() {
-//     let num_tokens = 10;
-//     let mut router = custom_mock_app();
-//     let (creator, _) = setup_accounts(&mut router);
+#[test]
+fn invalid_trading_time_during_init() {
+    let num_tokens = 10;
+    let mut router = custom_mock_app();
+    let (creator, _) = setup_accounts(&mut router);
 
-//     let minter_code_id = router.store_code(contract_minter());
-//     println!("minter_code_id: {}", minter_code_id);
-//     let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
+    // let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME, None);
+    let genesis_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
+    let max_trading_offset = 60 * 60 * 24 * 7;
+    let collection_params =
+        mock_collection_params_1(Some(genesis_time.plus_seconds(max_trading_offset + 1)));
 
-//     let factory_code_id = router.store_code(contract_factory());
-//     println!("factory_code_id: {}", factory_code_id);
+    let minter_params = MinterInstantiateParams {
+        num_tokens,
+        splits_addr: None,
+        start_time: None,
+    };
+    let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
+        &mut router,
+        creator.clone(),
+        vec![collection_params.clone()],
+        vec![minter_params],
+    );
+    let err = minter_collection_response[0].error.as_deref();
+    let expected_error = ContractError::InvalidStartTradingTime(
+        genesis_time.plus_seconds(max_trading_offset + 1),
+        genesis_time.plus_seconds(max_trading_offset),
+    );
+    assert_eq!(
+        err.unwrap().source().unwrap().source().unwrap().to_string(),
+        expected_error.to_string()
+    );
+}
+#[test]
+fn update_start_trading_time() {
+    let mut router = custom_mock_app();
+    let (creator, buyer) = setup_accounts(&mut router);
+    let num_tokens = 2;
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME - 1, None);
+    let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
+    let collection_params = mock_collection_params_1(Some(start_time));
+    let minter_params = build_minter_params(num_tokens, None, None);
+    let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
+        &mut router,
+        creator.clone(),
+        vec![collection_params],
+        vec![minter_params],
+    );
+    let minter_addr = minter_collection_response[0].minter.clone().unwrap();
+    let collection_addr = minter_collection_response[0].minter.clone().unwrap();
+    let max_trading_offset = 60 * 60 * 24 * 7;
 
-//     // set up minter contract
-//     let mut params = mock_params();
-//     params.code_id = minter_code_id;
-//     let factory_addr = router
-//         .instantiate_contract(
-//             factory_code_id,
-//             creator.clone(),
-//             &vending_factory::msg::InstantiateMsg {
-//                 params: params.clone(),
-//             },
-//             &[],
-//             "factory",
-//             None,
-//         )
-//         .unwrap();
+    // unauthorized
+    let res = router.execute_contract(
+        Addr::unchecked(buyer),
+        Addr::unchecked(minter_addr.clone()),
+        &ExecuteMsg::UpdateStartTradingTime(Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME))),
+        &[],
+    );
+    assert!(res.is_err());
 
-//     let sg721_code_id = router.store_code(contract_sg721());
-//     println!("sg721_code_id: {}", sg721_code_id);
+    // invalid start trading time
+    let res = router.execute_contract(
+        Addr::unchecked(creator.clone()),
+        Addr::unchecked(minter_addr.clone()),
+        &ExecuteMsg::UpdateStartTradingTime(Some(Timestamp::from_nanos(0))),
+        &[],
+    );
+    assert!(res.is_err());
 
-//     let mut msg = mock_create_minter(None);
-//     msg.init_msg.mint_price = coin(MINT_PRICE, NATIVE_DENOM);
-//     msg.init_msg.num_tokens = num_tokens;
-//     msg.collection_params.code_id = sg721_code_id;
-//     msg.collection_params.info.creator = creator.to_string();
-//     // make trading time beyond factory max trading start time offset
-//     msg.collection_params.info.start_trading_time = Some(
-//         msg.init_msg
-//             .start_time
-//             .plus_seconds(params.max_trading_offset_secs + 1),
-//     );
+    // invalid start trading time, over offset
+    let res = router.execute_contract(
+        creator.clone(),
+        minter_addr.clone(),
+        &ExecuteMsg::UpdateStartTradingTime(Some(
+            Timestamp::from_nanos(GENESIS_MINT_START_TIME).plus_seconds(max_trading_offset + 100),
+        )),
+        &[],
+    );
+    assert!(res.is_err());
 
-//     let msg = Sg2ExecuteMsg::CreateMinter(msg);
+    // succeeds
+    let res = router.execute_contract(
+        creator,
+        minter_addr,
+        &ExecuteMsg::UpdateStartTradingTime(Some(
+            Timestamp::from_nanos(GENESIS_MINT_START_TIME).plus_seconds(max_trading_offset),
+        )),
+        &[],
+    );
+    assert!(res.is_ok());
 
-//     let err = router
-//         .execute_contract(creator, factory_addr, &msg, &creation_fee)
-//         .unwrap_err();
-//     assert!(err
-//         .source()
-//         .unwrap()
-//         .source()
-//         .unwrap()
-//         .to_string()
-//         .contains("InvalidStartTradingTime"));
-// }
+    // confirm trading start time
 
-// #[test]
-// fn update_start_trading_time() {
-//     let mut router = custom_mock_app();
-//     let (creator, buyer) = setup_accounts(&mut router);
-//     let num_tokens = 2;
-//     setup_block_time(&mut router, GENESIS_MINT_START_TIME - 1, None);
-//     let (minter_addr, config) = setup_minter_contract(&mut router, &creator, num_tokens, None);
+    // let res: CollectionInfoResponse = router
+    //     .wrap()
+    //     .query_wasm_smart(
+    //         &collection_addr,
+    //         &sg721_base::msg::QueryMsg::CollectionInfo {},
+    //     )
+    //     .unwrap();
+    // println!("res is {:?}", res);
 
-//     // unauthorized
-//     let res = router.execute_contract(
-//         Addr::unchecked(buyer),
-//         Addr::unchecked(minter_addr.clone()),
-//         &ExecuteMsg::UpdateStartTradingTime(Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME))),
-//         &[],
-//     );
-//     assert!(res.is_err());
-
-//     // invalid start trading time
-//     let res = router.execute_contract(
-//         Addr::unchecked(creator.clone()),
-//         Addr::unchecked(minter_addr.clone()),
-//         &ExecuteMsg::UpdateStartTradingTime(Some(Timestamp::from_nanos(0))),
-//         &[],
-//     );
-//     assert!(res.is_err());
-
-//     // invalid start trading time, over offset
-//     let params = mock_params();
-//     let res = router.execute_contract(
-//         Addr::unchecked(creator.clone()),
-//         Addr::unchecked(minter_addr.clone()),
-//         &ExecuteMsg::UpdateStartTradingTime(Some(
-//             Timestamp::from_nanos(GENESIS_MINT_START_TIME)
-//                 .plus_seconds(params.max_trading_offset_secs + 100),
-//         )),
-//         &[],
-//     );
-//     assert!(res.is_err());
-
-//     // succeeds
-//     let res = router.execute_contract(
-//         Addr::unchecked(creator.clone()),
-//         Addr::unchecked(minter_addr),
-//         &ExecuteMsg::UpdateStartTradingTime(Some(
-//             Timestamp::from_nanos(GENESIS_MINT_START_TIME)
-//                 .plus_seconds(params.max_trading_offset_secs),
-//         )),
-//         &[],
-//     );
-//     assert!(res.is_ok());
-
-//     // confirm trading start time
-//     let res: CollectionInfoResponse = router
-//         .wrap()
-//         .query_wasm_smart(config.sg721_address, &Sg721QueryMsg::CollectionInfo {})
-//         .unwrap();
-//     assert_eq!(
-//         res.start_trading_time,
-//         Some(
-//             Timestamp::from_nanos(GENESIS_MINT_START_TIME)
-//                 .plus_seconds(params.max_trading_offset_secs)
-//         )
-//     );
-// }
+    // // assert_eq!(
+    // //     res.start_trading_time,
+    // //     Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME).plus_seconds(max_trading_offset))
+    // // );
+}
