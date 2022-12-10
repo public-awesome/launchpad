@@ -1,4 +1,4 @@
-.PHONY: ci-sign deploy-local e2etest e2etest-dev lint optimize publish-packages publish-contracts schema
+.PHONY: ci-sign deploy-local e2etest e2etest-full lint optimize publish-packages publish-contracts schema
 
 TEST_ADDRS ?= $(shell jq -r '.[].address' ./e2e/configs/test_accounts.json | tr '\n' ' ')
 
@@ -20,10 +20,10 @@ deploy-local:
 		--mount type=volume,source=stargaze_data,target=/root \
 		publicawesome/stargaze:7.5.0 /data/entry-point.sh $(TEST_ADDRS)
 
-e2etest-dev:
+e2etest:
 	RUST_LOG=info CONFIG=configs/cosm-orc.yaml cargo integration-test $(test_name)
 
-e2etest: deploy-local optimize e2etest-dev
+e2etest-full: deploy-local optimize e2etest-dev
 
 lint:
 	cargo clippy --all-targets -- -D warnings

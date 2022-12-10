@@ -1,9 +1,12 @@
 use cosm_orc::orchestrator::{CosmosgRPC, Key, SigningKey};
 use cosm_orc::{config::cfg::Config, orchestrator::cosm_orc::CosmOrc};
 use once_cell::sync::OnceCell;
+use rand::Rng;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use std::env;
 use std::fs;
+use std::path::Path;
 use std::time::Duration;
 use test_context::TestContext;
 
@@ -48,7 +51,8 @@ impl TestContext for Chain {
     }
 
     fn teardown(self) {
-        // TODO: Save gas profiling
+        let cfg = CONFIG.get().unwrap();
+        save_gas_report(&self.orc, &cfg.gas_report_dir);
     }
 }
 
@@ -74,7 +78,7 @@ fn global_setup() -> Cfg {
         orc.store_contracts("../artifacts", &accounts[0].key, None)
             .unwrap();
 
-        // TODO: Save gas profiling
+        save_gas_report(&orc, &gas_report_dir);
 
         // persist stored code_ids in CONFIG, so we can reuse for all tests
         cfg.contract_deploy_info = orc.contract_map.deploy_info().clone();
@@ -101,4 +105,21 @@ fn test_accounts() -> Vec<SigningAccount> {
             },
         })
         .collect()
+}
+
+fn save_gas_report(orc: &CosmOrc<CosmosgRPC>, gas_report_dir: &str) {
+    let report = orc
+        .gas_profiler_report()
+        .expect("error fetching profile reports");
+
+    let j: Value = serde_json::to_value(report).unwrap();
+
+    let p = Path::new(gas_report_dir);
+    if !p.exists() {
+        fs::create_dir(p).unwrap();
+    }
+
+    let mut rng = rand::thread_rng();
+    let file_name = format!("test-{}.json", rng.gen::<u32>());
+    fs::write(p.join(file_name), j.to_string()).unwrap();
 }

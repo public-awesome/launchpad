@@ -1170,6 +1170,7 @@ dependencies = [
  "cosmwasm-std",
  "env_logger",
  "once_cell",
+ "rand",
  "serde",
  "serde_json",
  "sg2 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",

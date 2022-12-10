@@ -4,13 +4,13 @@ Gas profiled integration tests hitting a real, local Stargaze chain.
 
 ## Running Tests 
 
-Use `make e2etest` to run the tests or `ENABLE_MAX_COLLECTION=true make e2etest` to run the all tests, including the exhaustive minting tests.
+Use `make e2etest-full` to run the tests or `ENABLE_MAX_COLLECTION=true make e2etest-full` to run the all tests, including the exhaustive minting tests.
 
 ### Dev Loop
 
-It takes a long time to compile / optimize the contracts, so when developing the integration tests, its best to just `make e2etest-dev`.
+It takes a long time to compile / optimize the contracts, so when developing the integration tests, its best to just `make e2etest`.
 
-Or if you only want to run one test: `make e2etest-dev test_name=test_invalid_start_trading_time`.
+Or if you only want to run one test: `make e2etest test_name=test_invalid_start_trading_time`.
 
 ## Adding New Integration Tests
 
