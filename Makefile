@@ -29,6 +29,8 @@ lint:
 	cargo clippy --all-targets -- -D warnings
 
 optimize:
+	# NOTE: On a cache miss, the dockerized workspace-optimize container is creating these dirs with permissions we cannot use in CI:
+	mkdir -p artifacts target
 	sh scripts/optimize.sh
 
 publish-packages:
