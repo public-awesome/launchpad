@@ -1,6 +1,5 @@
-# TODO: Rename this to `e2e`
 [package]
-name = "e2e_rust"
+name = "e2e"
 version = "0.1.0"
 edition = "2021"
 
