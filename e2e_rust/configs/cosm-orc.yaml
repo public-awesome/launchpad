@@ -1,0 +1,7 @@
+chain_cfg: 
+  denom: "ustars"
+  prefix: "stars"
+  chain_id: "testing"
+  grpc_endpoint: "http://localhost:9090/"
+  gas_prices: 0.1
+  gas_adjustment: 1.5

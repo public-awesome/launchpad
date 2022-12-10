@@ -1,5 +1,5 @@
 [workspace]
-members = ["packages/*", "contracts/*", "test-suite/"]
+members = ["packages/*", "contracts/*", "test-suite/", "e2e_rust"]
 resolver = "2"
 
 [workspace.package]
