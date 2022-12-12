@@ -4,18 +4,17 @@ use cosm_orc::orchestrator::error::CosmwasmError::TxError;
 use cosm_orc::orchestrator::error::ProcessError;
 use cosm_orc::orchestrator::Coin as OrcCoin;
 use cosm_orc::orchestrator::ExecReq;
-use cosmwasm_std::Timestamp;
 use sg2::msg::Sg2ExecuteMsg;
 use std::collections::HashMap;
-use std::time::{Duration, SystemTime};
+use std::time::Duration;
 use std::{env, thread};
 use test_context::test_context;
 
 use crate::helpers::{
     chain::Chain,
     helper::{
-        create_minter_msg, gen_users, instantiate_factory, CREATION_FEE, FACTORY_NAME, MAX_TOKENS,
-        MINT_PRICE,
+        create_minter_msg, gen_users, instantiate_factory, latest_block_time, CREATION_FEE,
+        FACTORY_NAME, MAX_TOKENS, MINT_PRICE,
     },
 };
 
@@ -41,11 +40,7 @@ fn test_create_minter(chain: &mut Chain) {
 
     instantiate_factory(chain, user_addr.to_string(), &user.key).unwrap();
 
-    let timestamp_nanos = SystemTime::now()
-        .duration_since(SystemTime::UNIX_EPOCH)
-        .unwrap()
-        .as_nanos() as u64;
-    let start_time = Timestamp::from_nanos(timestamp_nanos).plus_seconds(2);
+    let start_time = latest_block_time(chain).plus_seconds(60);
 
     let minter_msg = Sg2ExecuteMsg::CreateMinter(create_minter_msg(
         chain,
@@ -87,6 +82,17 @@ fn test_create_minter(chain: &mut Chain) {
     assert_matches!(err, ProcessError::CosmwasmError(TxError(..)));
     assert!(err.to_string().contains("Insufficient fee"));
 
+    let start_time = latest_block_time(chain).plus_seconds(2);
+
+    let minter_msg = Sg2ExecuteMsg::CreateMinter(create_minter_msg(
+        chain,
+        user_addr.to_string(),
+        MAX_TOKENS,
+        50,
+        start_time,
+        None,
+    ));
+
     let res = chain
         .orc
         .execute(
@@ -122,7 +128,7 @@ fn test_create_minter(chain: &mut Chain) {
     .balance;
 
     // Sleep to ensure we can start minting
-    thread::sleep(Duration::from_secs(2));
+    thread::sleep(Duration::from_secs(3));
 
     let mut total_mints = 0;
     let mut mints: HashMap<String, bool> = HashMap::new();
@@ -219,11 +225,7 @@ fn test_start_trading_time(chain: &mut Chain) {
 
     instantiate_factory(chain, user_addr.to_string(), &user.key).unwrap();
 
-    let timestamp_nanos = SystemTime::now()
-        .duration_since(SystemTime::UNIX_EPOCH)
-        .unwrap()
-        .as_nanos() as u64;
-    let start_time = Timestamp::from_nanos(timestamp_nanos).plus_seconds(2);
+    let start_time = latest_block_time(chain).plus_seconds(2);
 
     let minter_msg = Sg2ExecuteMsg::CreateMinter(create_minter_msg(
         chain,
@@ -269,7 +271,7 @@ fn test_start_trading_time(chain: &mut Chain) {
         .unwrap();
 
     // Sleep to ensure we can start minting
-    thread::sleep(Duration::from_secs(2));
+    thread::sleep(Duration::from_secs(3));
 
     let init_balance = tokio_block(
         chain
@@ -350,11 +352,7 @@ fn test_invalid_start_trading_time(chain: &mut Chain) {
 
     instantiate_factory(chain, user_addr.to_string(), &user.key).unwrap();
 
-    let timestamp_nanos = SystemTime::now()
-        .duration_since(SystemTime::UNIX_EPOCH)
-        .unwrap()
-        .as_nanos();
-    let start_time = Timestamp::from_nanos(timestamp_nanos as u64).plus_seconds(10);
+    let start_time = latest_block_time(chain).plus_seconds(100_000);
 
     let minter_msg = Sg2ExecuteMsg::CreateMinter(create_minter_msg(
         chain,

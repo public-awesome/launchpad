@@ -143,3 +143,15 @@ pub fn gen_users(chain: &mut Chain, num_users: u32, init_balance: u128) -> Vec<S
 
     users
 }
+
+pub fn latest_block_time(chain: &Chain) -> Timestamp {
+    let now = tokio_block(chain.orc.client.tendermint_query_latest_block())
+        .unwrap()
+        .block
+        .header
+        .unwrap()
+        .time
+        .unwrap();
+
+    Timestamp::from_seconds(now.seconds.try_into().unwrap())
+}
