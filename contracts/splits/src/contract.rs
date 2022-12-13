@@ -65,16 +65,13 @@ pub fn execute_distribute(
 
     config.authorize(&deps.querier, &info.sender)?;
 
-    // // only a member can distribute funds
-    // let weight = config
-    //     .group_addr
-    //     .is_member(&deps.querier, &info.sender, None)?
-    //     .ok_or(ContractError::Unauthorized {})?;
-    // if weight == 0 {
-    //     return Err(ContractError::InvalidWeight { weight });
-    // }
-
     let total_weight = config.group_addr.total_weight(&deps.querier)?;
+    if total_weight == 0 {
+        return Err(ContractError::InvalidWeight {
+            weight: total_weight,
+        });
+    }
+
     let members = config.group_addr.list_members(&deps.querier, None, None)?;
 
     let funds = deps
