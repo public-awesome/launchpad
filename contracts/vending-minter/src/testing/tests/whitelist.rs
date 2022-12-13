@@ -8,7 +8,9 @@ use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use crate::msg::{ExecuteMsg, MintCountResponse, MintPriceResponse, QueryMsg};
 use crate::testing::setup::msg::MinterCollectionResponse;
 use crate::testing::setup::setup_accounts_and_block::coins_for_msg;
-use crate::testing::setup::setup_collection_whitelist::setup_whitelist_contract;
+use crate::testing::setup::setup_collection_whitelist::{
+    configure_collection_whitelist, setup_whitelist_contract,
+};
 use crate::testing::setup::setup_minter::{
     configure_minter, minter_params_all, minter_params_token,
 };
@@ -430,38 +432,13 @@ fn whitelist_access_len_add_remove_expiration() {
     );
     let minter_addr = minter_collection_response[0].minter.clone().unwrap();
     let sg721_addr = minter_collection_response[0].collection.clone().unwrap();
-    let whitelist_addr = setup_whitelist_contract(&mut router, &creator);
-    const AFTER_GENESIS_TIME: Timestamp = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 100);
 
-    // Set to just before genesis mint start time
-    setup_block_time(&mut router, GENESIS_MINT_START_TIME - 10, None);
-
-    // Update whitelist_expiration fails if not admin
-    let wl_msg = WhitelistExecuteMsg::UpdateEndTime(AFTER_GENESIS_TIME);
-    router
-        .execute_contract(buyer.clone(), whitelist_addr.clone(), &wl_msg, &[])
-        .unwrap_err();
-
-    // Update whitelist_expiration succeeds when from admin
-    let wl_msg = WhitelistExecuteMsg::UpdateEndTime(AFTER_GENESIS_TIME);
-    let res = router.execute_contract(creator.clone(), whitelist_addr.clone(), &wl_msg, &[]);
-    assert!(res.is_ok());
-
-    let wl_msg = WhitelistExecuteMsg::UpdateStartTime(Timestamp::from_nanos(0));
-    let res = router.execute_contract(creator.clone(), whitelist_addr.clone(), &wl_msg, &[]);
-    assert!(res.is_ok());
-
-    // Set whitelist in minter contract
-    let set_whitelist_msg = ExecuteMsg::SetWhitelist {
-        whitelist: whitelist_addr.to_string(),
-    };
-    let res = router.execute_contract(
+    let whitelist_addr = configure_collection_whitelist(
+        &mut router,
         creator.clone(),
+        buyer.clone(),
         minter_addr.clone(),
-        &set_whitelist_msg,
-        &[],
     );
-    assert!(res.is_ok());
 
     // Mint fails, buyer is not on whitelist
     let mint_msg = ExecuteMsg::Mint {};
