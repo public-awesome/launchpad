@@ -261,6 +261,13 @@ fn test_start_trading_time(chain: &mut Chain) {
     let mut total_mints = 0;
     let mut total_fairburn_fees = 0;
 
+    let fair_burn_fees = res
+        .res
+        .find_event_tags("fund_fairburn_pool".to_string(), "amount".to_string());
+
+    let amount = fair_burn_fees[0].value.split(&denom).collect::<Vec<&str>>()[0];
+    total_fairburn_fees += amount.parse::<u128>().unwrap();
+
     let users = gen_users(chain, 20, MINT_PRICE * 12);
     let num_users = users.len() as u32;
 
@@ -326,16 +333,15 @@ fn test_start_trading_time(chain: &mut Chain) {
     assert_eq!(balance.amount, init_balance.amount + 9_000_000_000);
 
     // fairburn fees
-    // half of the 10% fees should be sent to fairburn pool:
-    // total fees = 10_000_000_000 - 9_000_000_000 = 100_000_0000 total fees
-    // fairburn = 100_000_0000 / 2 = 500_000_000
-    assert_eq!(total_fairburn_fees, 500_000_000);
+    // half of the 10% fees should be sent to fairburn pool
+    // 500STARS + 500STARS initially sent for collection creation fee
+    assert_eq!(total_fairburn_fees, 1_000_000_000);
 
     let total_supply = tokio_block(chain.orc.client.bank_query_supply(denom.parse().unwrap()))
         .unwrap()
         .balance;
 
-    // the other half burned + collection creation burning (500STARS + 500STARS)
+    // the other half burned
     assert_eq!(
         initial_total_supply.amount - 1_000_000_000,
         total_supply.amount

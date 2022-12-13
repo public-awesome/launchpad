@@ -4,7 +4,7 @@ Gas profiled integration tests hitting a real, local Stargaze chain.
 
 ## Running Tests 
 
-Use `make e2etest-full` to run the tests or `ENABLE_MAX_COLLECTION=true make e2etest-full` to run the all tests, including the exhaustive minting tests.
+Use `make e2etest-full` to run the tests or `ENABLE_MAX_COLLECTION=true make e2etest-full` to run all the tests, including the exhaustive minting tests.
 
 ### Dev Loop
 
