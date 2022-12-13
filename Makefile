@@ -1,11 +1,7 @@
-.PHONY: ci-sign deploy-local e2etest e2etest-full lint optimize publish-packages publish-contracts schema
+.PHONY: deploy-local e2etest e2etest-full lint optimize publish-packages publish-contracts schema
 
 TEST_ADDRS ?= $(shell jq -r '.[].address' ./e2e/configs/test_accounts.json | tr '\n' ' ')
-
-
-# TODO: Can we delete `ci-sign` command?
-ci-sign:
-	drone sign public-awesome/launchpad --save
+GAS_LIMIT ?= "75000000"
 
 deploy-local:
 	docker kill stargaze || true
@@ -13,23 +9,25 @@ deploy-local:
 	docker run --rm -d --name stargaze \
 		-e DENOM=ustars \
 		-e CHAINID=testing \
+		-e GAS_LIMIT=$(GAS_LIMIT) \
 		-p 1317:1317 \
 		-p 26656:26656 \
 		-p 26657:26657 \
 		-p 9090:9090 \
 		--mount type=volume,source=stargaze_data,target=/root \
-		publicawesome/stargaze:7.5.0 /data/entry-point.sh $(TEST_ADDRS)
+		publicawesome/stargaze:8.0.0 /data/entry-point.sh $(TEST_ADDRS)
 
 e2etest:
-	RUST_LOG=info CONFIG=configs/cosm-orc.yaml cargo integration-test $(test_name)
+	RUST_LOG=info CONFIG=configs/cosm-orc.yaml cargo integration-test $(TEST_NAME)
 
-e2etest-full: deploy-local optimize e2etest-dev
+e2etest-full: deploy-local optimize e2etest
 
 lint:
 	cargo clippy --all-targets -- -D warnings
 
 optimize:
-	# NOTE: On a cache miss, the dockerized workspace-optimize container is creating these dirs with permissions we cannot use in CI:
+	# NOTE: On a cache miss, the dockerized workspace-optimize container
+	#       is creating these dirs with permissions we cannot use in CI:
 	mkdir -p artifacts target
 	sh scripts/optimize.sh
 
