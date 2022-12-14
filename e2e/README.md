@@ -10,7 +10,7 @@ Use `make e2etest-full` to run the tests or `ENABLE_MAX_COLLECTION=true make e2e
 
 It takes a long time to compile / optimize the contracts, so when developing the integration tests, its best to just `make e2etest`.
 
-Or if you only want to run one test: `make e2etest test_name=test_invalid_start_trading_time`.
+Or if you only want to run one test: `make e2etest TEST_NAME=test_invalid_start_trading_time`.
 
 ## Adding New Integration Tests
 

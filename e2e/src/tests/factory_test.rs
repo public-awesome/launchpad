@@ -6,8 +6,8 @@ use cosm_orc::orchestrator::Coin as OrcCoin;
 use cosm_orc::orchestrator::ExecReq;
 use sg2::msg::Sg2ExecuteMsg;
 use std::collections::HashMap;
+use std::env;
 use std::time::Duration;
-use std::{env, thread};
 use test_context::test_context;
 
 use crate::helpers::{
@@ -82,7 +82,7 @@ fn test_create_minter(chain: &mut Chain) {
     assert_matches!(err, ProcessError::CosmwasmError(TxError(..)));
     assert!(err.to_string().contains("Insufficient fee"));
 
-    let start_time = latest_block_time(chain).plus_seconds(2);
+    let start_time = latest_block_time(chain).plus_seconds(5);
 
     let minter_msg = Sg2ExecuteMsg::CreateMinter(create_minter_msg(
         chain,
@@ -128,7 +128,10 @@ fn test_create_minter(chain: &mut Chain) {
     .balance;
 
     // Sleep to ensure we can start minting
-    thread::sleep(Duration::from_secs(3));
+    chain
+        .orc
+        .poll_for_n_secs(6, Duration::from_millis(20_000))
+        .unwrap();
 
     let mut total_mints = 0;
     let mut mints: HashMap<String, bool> = HashMap::new();
@@ -225,7 +228,7 @@ fn test_start_trading_time(chain: &mut Chain) {
 
     instantiate_factory(chain, user_addr.to_string(), &user.key).unwrap();
 
-    let start_time = latest_block_time(chain).plus_seconds(2);
+    let start_time = latest_block_time(chain).plus_seconds(5);
 
     let minter_msg = Sg2ExecuteMsg::CreateMinter(create_minter_msg(
         chain,
@@ -278,7 +281,10 @@ fn test_start_trading_time(chain: &mut Chain) {
         .unwrap();
 
     // Sleep to ensure we can start minting
-    thread::sleep(Duration::from_secs(3));
+    chain
+        .orc
+        .poll_for_n_secs(6, Duration::from_millis(20_000))
+        .unwrap();
 
     let init_balance = tokio_block(
         chain
