@@ -13,7 +13,7 @@ jobs:
     env:
       GAS_OUT_DIR: gas_reports
       ENABLE_MAX_COLLECTION: true
-      GAS_LIMIT: 10000000
+      GAS_LIMIT: 75000000
     steps:
       - name: Checkout sources
         uses: actions/checkout@v3
