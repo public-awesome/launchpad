@@ -13,17 +13,16 @@ jobs:
     env:
       GAS_OUT_DIR: gas_reports
       ENABLE_MAX_COLLECTION: true
+      GAS_LIMIT: 10000000
     steps:
       - name: Checkout sources
         uses: actions/checkout@v3
 
       - name: Install latest nightly toolchain
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
-          profile: minimal
           toolchain: nightly
-          target: wasm32-unknown-unknown
-          override: true
+          targets: wasm32-unknown-unknown
 
       - name: Rust Dependencies Cache
         uses: actions/cache@v3
@@ -35,6 +34,15 @@ jobs:
             target/
             artifacts/
           key: ${{ runner.os }}-cargo-with-artifacts-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Get mainnet GAS_LIMIT
+        run: echo "MAINNET_GAS_LIMIT=$(curl -s https://rpc.stargaze-apis.com/consensus_params | jq -r '.result.consensus_params.block.max_gas')" >> $GITHUB_ENV
+
+      - name: Mainnet block GAS_LIMIT changed
+        if: ${{ env.MAINNET_GAS_LIMIT != env.GAS_LIMIT }}
+        uses: actions/github-script@v6
+        with:
+          script: core.setFailed(`Integration tests must update GAS_LIMIT from ${process.env.GAS_LIMIT} to ${process.env.MAINNET_GAS_LIMIT}`)
 
       - name: Deploy local Stargaze node
         run: make deploy-local
@@ -79,7 +87,7 @@ jobs:
 
       - name: Post gas diff to PR
         if: ${{ github.ref != 'refs/heads/main' && steps.download_gas.outputs.found_artifact == 'true' }}
-        uses: de-husk/cosm-orc-gas-diff-action@v0.6.2
+        uses: de-husk/cosm-orc-gas-diff-action@v0.6.3
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           current_json: e2e/gas_report.json
