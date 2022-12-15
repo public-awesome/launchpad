@@ -1,14 +1,11 @@
 use cosmwasm_std::{Addr, Timestamp};
-use cw_multi_test::Executor;
 use sg2::tests::mock_collection_params_1;
 use sg_std::GENESIS_MINT_START_TIME;
 
 use crate::common_setup::contract_boxes::custom_mock_app;
 use crate::common_setup::msg::MinterCollectionResponse;
 use crate::common_setup::setup_accounts_and_block::{setup_accounts, setup_block_time};
-use crate::common_setup::setup_collection_whitelist::{
-    configure_collection_whitelist, setup_whitelist_contract,
-};
+use crate::common_setup::setup_collection_whitelist::configure_collection_whitelist;
 use crate::common_setup::setup_minter::{configure_minter, minter_params_token};
 use crate::sg_eth_airdrop::constants::claim_constants::{CONFIG_PLAINTEXT, STARGAZE_WALLET_01};
 use crate::sg_eth_airdrop::constants::collection_constants::{
@@ -78,12 +75,8 @@ fn test_claim_added_to_minter_whitelist() {
         vec![minter_params],
     );
     let minter_addr = minter_collection_response[0].minter.clone().unwrap();
-    let whitelist_addr = configure_collection_whitelist(
-        &mut app,
-        creator.clone(),
-        buyer.clone(),
-        minter_addr.clone(),
-    );
+    let whitelist_addr =
+        configure_collection_whitelist(&mut app, creator.clone(), buyer, minter_addr.clone());
     setup_block_time(&mut app, GENESIS_MINT_START_TIME, None);
     let claim_plaintext = &get_msg_plaintext(STARGAZE_WALLET_01.to_string());
     let (_, eth_sig_str, _, eth_addr_str) = get_wallet_and_sig(claim_plaintext.clone());
