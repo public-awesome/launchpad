@@ -1,10 +1,9 @@
 [package]
-name = "testing-suite"
+name = "testsuite"
 authors = [
-  "Jake Hartnell <jake@stargaze.zone>",
-  "Shane Vitarana <s@noreply.publicawesome.com>",
+  "Michael Scotto <m@publicawesome.com>",
 ]
-description = "Stargaze vending minter contract"
+description = "Stargaze testing-suite for launchpad"
 version = { workspace = true }
 edition = { workspace = true }
 homepage = { workspace = true }

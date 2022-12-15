@@ -41,9 +41,8 @@ vending-minter = { version = "0.21.5", path = "contracts/vending-minter" }
 whitelist-immutable = { version = "0.21.5", path = "contracts/whitelist-immutable" }
 sg-whitelist-basic = { version = "0.12.0" }
 ethereum-verify = { version = "0.21.5", path = "packages/ethereum-verify" }
-testing-suite = { version = "0.21.5", path = "contracts/testing-suite" }
 sg-eth-airdrop = {version = "0.21.5", path = "contracts/sg-eth-airdrop" }
-
+testsuite = { version = "0.21.5", path = "contracts/testsuite" }
 
 [profile.release.package.sg721]
 codegen-units = 1
@@ -105,7 +104,7 @@ incremental = false
 codegen-units = 1
 incremental = false
 
-[profile.release.package.whitelist-generic]
+[profile.release.package.whitelist-immutable]
 codegen-units = 1
 incremental = false
 
