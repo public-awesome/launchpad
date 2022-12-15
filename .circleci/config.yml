@@ -11,7 +11,7 @@ workflows:
       # - contract_vending_minter
       # - contract_whitelist
       # - sg-eth-airdrop
-      - test-suite
+      # - test-suite
       # - package_sg_std
       # - package_sg_utils
       # - lint
