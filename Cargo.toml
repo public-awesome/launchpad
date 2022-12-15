@@ -42,7 +42,7 @@ whitelist-immutable = { version = "0.21.5", path = "contracts/whitelist-immutabl
 sg-whitelist-basic = { version = "0.12.0" }
 ethereum-verify = { version = "0.21.5", path = "packages/ethereum-verify" }
 sg-eth-airdrop = {version = "0.21.5", path = "contracts/sg-eth-airdrop" }
-testsuite = { version = "0.21.5", path = "contracts/testsuite" }
+test-suite = { version = "0.21.5", path = "contracts/testsuite" }
 
 [profile.release.package.sg721]
 codegen-units = 1
