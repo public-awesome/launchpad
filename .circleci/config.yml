@@ -15,6 +15,7 @@ workflows:
       - package_sg_utils
       - lint
       - wasm-build
+      - test-suite
   deploy:
     jobs:
       - build_and_upload_contracts:
@@ -276,6 +277,30 @@ jobs:
             - /usr/local/cargo/registry
             - target
           key: cargocache-whitelist-rust:1.64.0-{{ checksum "~/project/Cargo.lock" }}
+
+    test-suite:
+      docker:
+        - image: rust:1.64.0
+      working_directory: ~/project/contracts/test-suite
+      steps:
+        - checkout:
+            path: ~/project
+        - run:
+            name: Version information
+            command: rustc --version; cargo --version; rustup --version
+        - restore_cache:
+            keys:
+              - cargocache-test-suite-rust:1.64.0-{{ checksum "~/project/Cargo.lock" }}
+        - run:
+            name: Unit Tests
+            environment:
+              RUST_BACKTRACE: 1
+            command: cargo unit-test --locked
+        - save_cache:
+            paths:
+              - /usr/local/cargo/registry
+              - target
+            key: cargocache-test-suite-rust:1.64.0-{{ checksum "~/project/Cargo.lock" }}
 
   package_sg_std:
     docker:
