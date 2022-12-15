@@ -430,9 +430,9 @@ jobs:
       - run:
           name: Version information
           command: rustc --version; cargo --version; rustup --version
-      - restore_cache:
-          keys:
-            - cargocache-wasm-rust:1.64.0-{{ checksum "~/project/Cargo.lock" }}
+      # - restore_cache:
+      #     keys:
+      #       - cargocache-wasm-rust:1.64.0-{{ checksum "~/project/Cargo.lock" }}
       - run:
           name: Add wasm32 target
           command: rustup target add wasm32-unknown-unknown
@@ -448,11 +448,11 @@ jobs:
           name: Install check_contract
           # Uses --debug for compilation speed
           command: cargo install --debug --version 1.0.0 --features iterator --example check_contract -- cosmwasm-vm
-      - save_cache:
-          paths:
-            - /usr/local/cargo/registry
-            - target
-          key: cargocache-wasm-rust:1.64.0-{{ checksum "~/project/Cargo.lock" }}
+      # - save_cache:
+      #     paths:
+      #       - /usr/local/cargo/registry
+      #       - target
+      #     key: cargocache-wasm-rust:1.64.0-{{ checksum "~/project/Cargo.lock" }}
       - run:
           name: Check wasm contracts
           command: |
