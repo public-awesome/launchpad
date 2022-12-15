@@ -281,7 +281,7 @@ jobs:
   test-suite:
     docker:
       - image: rust:1.64.0
-    working_directory: ~/project/contracts/test-suite
+    working_directory: ~/project/test-suite
     steps:
       - checkout:
           path: ~/project
