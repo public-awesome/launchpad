@@ -205,21 +205,6 @@ pub fn configure_minter(
     minter_collection_info
 }
 
-// pub fn configure_minter_with_whitelist(
-//     app: &mut StargazeApp,
-//     creator: Addr,
-//     buyer: Addr,
-// ) -> (Addr, Addr, Addr, Addr, vending_minter::msg::ConfigResponse) {
-//     let num_tokens = 1;
-//     let (minter_addr, config) = setup_minter_contract(app, &creator, num_tokens, None);
-
-//     let whitelist_addr =
-//         configure_collection_whitelist(app, creator.clone(), buyer.clone(), minter_addr.clone());
-
-//     // setup_block_time(app, GENESIS_MINT_START_TIME, None);
-//     (minter_addr, whitelist_addr, creator, buyer, config)
-// }
-
 pub fn minter_params_all(
     num_tokens: u32,
     splits_addr: Option<String>,
