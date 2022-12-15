@@ -128,7 +128,7 @@ mod tests {
         // Zero weight fails
         let instantiate_msg = InstantiateMsg {
             group_addr: group_addr.to_string(),
-            executor: None,
+            executor: Some(Executor::Only(Addr::unchecked(OWNER))),
         };
         let err = app
             .instantiate_contract(

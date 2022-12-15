@@ -10,7 +10,7 @@ use sg_std::NATIVE_DENOM;
 
 use crate::error::ContractError;
 use crate::msg::{ConfigResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
-use crate::state::{Config, CONFIG};
+use crate::state::{Config, Executor, CONFIG};
 
 // version info for migration info
 pub const CONTRACT_NAME: &str = "crates.io:sg-splits";
@@ -34,6 +34,10 @@ pub fn instantiate(
     }
 
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+
+    if let Some(Executor::Only(ref addr)) = msg.executor {
+        deps.api.addr_validate(addr.as_ref())?;
+    }
 
     let cfg = Config {
         group_addr,
