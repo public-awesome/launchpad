@@ -1,9 +1,10 @@
-use crate::testing::constants::{MINT_PRICE, NATIVE_DENOM, STARGAZE_WALLET_01, WHITELIST_AMOUNT};
+use crate::sg_eth_airdrop::constants::claim_constants::{NATIVE_DENOM, STARGAZE_WALLET_01};
+use crate::sg_eth_airdrop::constants::collection_constants::{MINT_PRICE, WHITELIST_AMOUNT};
+
+use crate::sg_eth_airdrop::setup::execute_msg::execute_contract_with_msg;
 use cosmwasm_std::{coins, Addr};
 use cw_multi_test::{BankSudo, Executor, SudoMsg};
 use sg_multi_test::StargazeApp;
-
-use super::setup_contracts::execute_contract_with_msg;
 
 extern crate whitelist_immutable;
 
@@ -53,7 +54,7 @@ pub fn execute_airdrop_claim(
     target_wallet: Addr,
     airdrop_contract: Addr,
 ) {
-    let claim_message = crate::msg::ExecuteMsg::ClaimAirdrop {
+    let claim_message = sg_eth_airdrop::msg::ExecuteMsg::ClaimAirdrop {
         eth_address: eth_addr_str,
         eth_sig: eth_sig_str,
     };

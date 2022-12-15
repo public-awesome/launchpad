@@ -1,13 +1,15 @@
-use crate::contract::INSTANTIATION_FEE;
-use crate::msg::QueryMsg;
-use crate::testing::constants::{
-    CONFIG_PLAINTEXT, MOCK_AIRDROP_ADDR_STR, MOCK_MINTER_ADDR_STR, OWNER, WHITELIST_AMOUNT,
+use crate::common_setup::contract_boxes::custom_mock_app;
+use crate::sg_eth_airdrop::constants::claim_constants::{
+    CONFIG_PLAINTEXT, MOCK_AIRDROP_ADDR_STR, MOCK_MINTER_ADDR_STR, OWNER,
 };
-use crate::testing::setup::{
-    configure_mock_minter_with_mock_whitelist, custom_mock_app, instantiate_contract,
-    InstantiateParams,
-};
+use crate::sg_eth_airdrop::constants::collection_constants::WHITELIST_AMOUNT;
+use crate::sg_eth_airdrop::setup::configure_mock_minter::configure_mock_minter_with_mock_whitelist;
+use crate::sg_eth_airdrop::setup::execute_msg::instantiate_contract;
+use crate::sg_eth_airdrop::setup::test_msgs::InstantiateParams;
+
 use cosmwasm_std::Addr;
+use sg_eth_airdrop::contract::INSTANTIATION_FEE;
+use sg_eth_airdrop::msg::QueryMsg;
 use whitelist_immutable::helpers::WhitelistImmutableContract;
 
 #[test]

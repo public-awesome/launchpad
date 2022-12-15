@@ -1,9 +1,10 @@
-use crate::error::ContractError;
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     to_binary, Binary, Coin, Deps, DepsMut, Env, MessageInfo, StdResult, Timestamp,
 };
-use sg_std::Response;
+use cw_multi_test::{Contract, ContractWrapper};
+use sg_eth_airdrop::error::ContractError;
+use sg_std::{Response, StargazeMsgWrapper};
 use vending_factory::msg::VendingMinterCreateMsg;
 use vending_minter::msg::{ExecuteMsg, QueryMsg};
 
@@ -63,4 +64,9 @@ fn query_config() -> ConfigResponse {
         mint_price: Coin::new(1000, "ustars"),
         factory: "some_factory".to_string(),
     }
+}
+
+pub fn mock_minter() -> Box<dyn Contract<StargazeMsgWrapper>> {
+    let contract = ContractWrapper::new(execute, instantiate, query);
+    Box::new(contract)
 }

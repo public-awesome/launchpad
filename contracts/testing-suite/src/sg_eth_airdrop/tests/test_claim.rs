@@ -1,22 +1,28 @@
-use crate::msg::{ExecuteMsg, QueryMsg};
-use crate::testing::constants::WHITELIST_AMOUNT;
+use crate::common_setup::contract_boxes::custom_mock_app;
+use crate::sg_eth_airdrop::constants::collection_constants::WHITELIST_AMOUNT;
+use crate::sg_eth_airdrop::setup::configure_mock_minter::configure_mock_minter_with_mock_whitelist;
+use crate::sg_eth_airdrop::setup::setup_signatures::{
+    get_msg_plaintext, get_signature, get_wallet_and_sig,
+};
+use crate::sg_eth_airdrop::setup::test_msgs::InstantiateParams;
 use async_std::task;
 use cosmwasm_std::{Addr, Attribute, Coin, Uint128};
+use sg_eth_airdrop::msg::{ExecuteMsg, QueryMsg};
 
 use ethers_core::rand::thread_rng;
 use ethers_signers::{LocalWallet, Signer};
 use sg_multi_test::StargazeApp;
 
-use crate::contract::INSTANTIATION_FEE;
-use crate::testing::constants::{
+use crate::sg_eth_airdrop::constants::claim_constants::{
     CONFIG_PLAINTEXT, MOCK_AIRDROP_ADDR_STR, MOCK_MINTER_ADDR_STR, NATIVE_DENOM, OWNER,
     STARGAZE_WALLET_01, STARGAZE_WALLET_02,
 };
-use crate::testing::setup::{
-    configure_mock_minter_with_mock_whitelist, custom_mock_app, execute_contract_error_with_msg,
-    execute_contract_with_msg, get_msg_plaintext, get_signature, get_wallet_and_sig,
-    instantiate_contract, InstantiateParams,
+
+use crate::sg_eth_airdrop::setup::execute_msg::{
+    execute_contract_error_with_msg, execute_contract_with_msg, instantiate_contract,
 };
+
+use sg_eth_airdrop::contract::INSTANTIATION_FEE;
 
 fn query_minter_as_expected(app: &mut StargazeApp, airdrop_contract: Addr, minter_addr: Addr) {
     let query_msg = QueryMsg::GetMinter {};

@@ -2576,6 +2576,49 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "55937e1799185b12863d447f42597ed69d9928686b8d88a1df17376a097d8369"
 
 [[package]]
+name = "testing-suite"
+version = "0.21.5"
+dependencies = [
+ "anyhow",
+ "async-std",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-multi-test",
+ "cw-storage-plus",
+ "cw-utils",
+ "cw2",
+ "cw4",
+ "cw4-group",
+ "cw721",
+ "cw721-base",
+ "ethers-core",
+ "ethers-signers",
+ "eyre",
+ "rand_core 0.6.4",
+ "rand_xoshiro",
+ "rlp",
+ "schemars",
+ "serde",
+ "sg-eth-airdrop",
+ "sg-multi-test 0.21.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg-splits",
+ "sg-std 0.21.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg-whitelist",
+ "sg1 0.21.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg2 0.21.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg4 0.21.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg721 0.21.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg721-base",
+ "sha2 0.10.6",
+ "shuffle",
+ "thiserror",
+ "url",
+ "vending-factory",
+ "vending-minter",
+ "whitelist-immutable",
+]
+
+[[package]]
 name = "thiserror"
 version = "1.0.37"
 source = "registry+https://github.com/rust-lang/crates.io-index"

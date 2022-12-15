@@ -1,7 +1,8 @@
-use crate::error::ContractError;
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult};
-use sg_std::Response;
+use cw_multi_test::{Contract, ContractWrapper};
+use sg_eth_airdrop::error::ContractError;
+use sg_std::{Response, StargazeMsgWrapper};
 use sg_whitelist::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -36,4 +37,9 @@ pub fn query(_deps: Deps, _env: Env, _msg: QueryMsg) -> StdResult<Binary> {
 fn execute_add_members() -> Result<Response, ContractError> {
     let res = Response::new();
     Ok(res)
+}
+
+pub fn mock_whitelist() -> Box<dyn Contract<StargazeMsgWrapper>> {
+    let contract = ContractWrapper::new(execute, instantiate, query);
+    Box::new(contract)
 }
