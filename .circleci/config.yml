@@ -3,18 +3,18 @@ workflows:
   version: 2
   test:
     jobs:
-      - contract_sg721_base
-      - contract_sg721_nt
-      - contract_base_factory
-      - contract_base_minter
-      - contract_vending_factory
-      - contract_vending_minter
-      - contract_whitelist
-      - sg-eth-airdrop
+      # - contract_sg721_base
+      # - contract_sg721_nt
+      # - contract_base_factory
+      # - contract_base_minter
+      # - contract_vending_factory
+      # - contract_vending_minter
+      # - contract_whitelist
+      # - sg-eth-airdrop
       - test-suite
-      - package_sg_std
-      - package_sg_utils
-      - lint
+      # - package_sg_std
+      # - package_sg_utils
+      # - lint
       - wasm-build
 
   deploy:
