@@ -1,5 +1,5 @@
 [workspace]
-members = ["packages/*", "contracts/*", "test-suite"]
+members = ["packages/*", "contracts/*", "test-suite/"]
 resolver = "2"
 
 [workspace.package]
@@ -42,7 +42,7 @@ whitelist-immutable = { version = "0.21.5", path = "contracts/whitelist-immutabl
 sg-whitelist-basic = { version = "0.12.0" }
 ethereum-verify = { version = "0.21.5", path = "packages/ethereum-verify" }
 sg-eth-airdrop = {version = "0.21.5", path = "contracts/sg-eth-airdrop" }
-test-suite = { version = "0.21.5", path = "testsuite" }
+test-suite = { version = "0.21.5", path = "test-suite" }
 
 [profile.release.package.sg721]
 codegen-units = 1
