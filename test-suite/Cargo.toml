@@ -34,32 +34,14 @@ optimize = """docker run --rm -v "$(pwd)":/code \
   cosmwasm/rust-optimizer:0.12.9
 """
 
-[dependencies]
-cosmwasm-schema = { workspace = true }
-cosmwasm-std = { workspace = true }
-cw2 = { workspace = true }
-cw721 = { workspace = true }
-cw721-base = { workspace = true, features = ["library"] }
-cw-storage-plus = { workspace = true }
-cw-utils = { workspace = true }
-rand_core = { version = "0.6.4", default-features = false }
-rand_xoshiro = { version = "0.6.0", default-features = false }
-schemars = { workspace = true }
-serde = { workspace = true }
-sha2 = { workspace = true }
-shuffle = { git = "https://github.com/webmaster128/shuffle", branch = "rm-getrandom", version = "0.1.7" }
-sg1 = { workspace = true }
-sg2 = { workspace = true }
-sg4 = { workspace = true }
-sg721 = { workspace = true }
-sg-std = { workspace = true }
-sg-whitelist = { workspace = true, features = ["library"] }
-thiserror = { workspace = true }
-url = { workspace = true }
-vending-factory = { workspace = true, features = ["library"] }
 
 [dev-dependencies]
-vending-minter = { workspace = true, features = ["library"] }
+serde = { workspace = true }
+cosmwasm-schema = { workspace = true }
+sg-std = { workspace = true }
+cosmwasm-std = { workspace = true }
+thiserror = { workspace = true }
+
 cw4 = { workspace = true }
 cw-multi-test = { workspace = true }
 sg-multi-test = { workspace = true }
@@ -68,11 +50,28 @@ cw4-group = { workspace = true }
 sg-splits = { workspace = true }
 anyhow = "1.0.66"
 sg-eth-airdrop = {workspace = true}
-
 async-std = "1.12.0"
 ethers-signers = "1.0.0"
 ethers-core = "1.0.0"
 eyre = "0.6"
 rlp = "0.5"
-sg2 = { workspace = true }
 whitelist-immutable = { workspace = true, features = ["library"] }
+
+cw2 = { workspace = true }
+cw721 = { workspace = true }
+cw721-base = { workspace = true, features = ["library"] }
+cw-storage-plus = { workspace = true }
+cw-utils = { workspace = true }
+rand_core = { version = "0.6.4", default-features = false }
+rand_xoshiro = { version = "0.6.0", default-features = false }
+schemars = { workspace = true }
+sha2 = { workspace = true }
+shuffle = { git = "https://github.com/webmaster128/shuffle", branch = "rm-getrandom", version = "0.1.7" }
+sg1 = { workspace = true }
+sg2 = { workspace = true }
+sg4 = { workspace = true }
+sg721 = { workspace = true }
+sg-whitelist = { workspace = true, features = ["library"] }
+url = { workspace = true }
+vending-factory = { workspace = true, features = ["library"] }
+vending-minter = { workspace = true, features = ["library"] }

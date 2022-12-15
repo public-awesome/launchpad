@@ -458,6 +458,9 @@ jobs:
           command: |
             for W in ./target/wasm32-unknown-unknown/release/*.wasm
             do
+              if [[ $W == *"test_suite"* ]];then
+    			      continue
+  			      fi 
               echo -n "Checking `basename $W`... "
               check_contract --supported-features iterator,staking,stargate,stargaze $W
             done
