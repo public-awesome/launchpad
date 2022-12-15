@@ -451,7 +451,6 @@ jobs:
       - save_cache:
           paths:
             - /usr/local/cargo/registry
-            - target
           key: cargocache-wasm-rust:1.64.0-{{ checksum "~/project/Cargo.lock" }}
       - run:
           name: Check wasm contracts
