@@ -10,7 +10,7 @@ use sg_std::NATIVE_DENOM;
 
 use crate::error::ContractError;
 use crate::msg::{ConfigResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
-use crate::state::{Config, CONFIG};
+use crate::state::{Config, Executor, CONFIG};
 
 // version info for migration info
 pub const CONTRACT_NAME: &str = "crates.io:sg-splits";
@@ -35,7 +35,14 @@ pub fn instantiate(
 
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
-    let cfg = Config { group_addr };
+    if let Some(Executor::Only(ref addr)) = msg.executor {
+        deps.api.addr_validate(addr.as_ref())?;
+    }
+
+    let cfg = Config {
+        group_addr,
+        executor: msg.executor,
+    };
     CONFIG.save(deps.storage, &cfg)?;
 
     Ok(Response::default())
@@ -60,16 +67,15 @@ pub fn execute_distribute(
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
 
-    // only a member can distribute funds
-    let weight = config
-        .group_addr
-        .is_member(&deps.querier, &info.sender, None)?
-        .ok_or(ContractError::Unauthorized {})?;
-    if weight == 0 {
-        return Err(ContractError::InvalidWeight { weight });
-    }
+    config.authorize(&deps.querier, &info.sender)?;
 
     let total_weight = config.group_addr.total_weight(&deps.querier)?;
+    if total_weight == 0 {
+        return Err(ContractError::InvalidWeight {
+            weight: total_weight,
+        });
+    }
+
     let members = config.group_addr.list_members(&deps.querier, None, None)?;
 
     let funds = deps

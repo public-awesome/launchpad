@@ -2,12 +2,15 @@
 mod tests {
     use crate::{
         msg::{InstantiateMsg, QueryMsg},
+        state::Executor,
         ContractError,
     };
     use cosmwasm_std::{Addr, Coin, Empty};
     use cw2::{query_contract_info, ContractVersion};
     use cw4::{Cw4ExecuteMsg, Member, MemberListResponse};
-    use cw_multi_test::{next_block, App, AppBuilder, Contract, ContractWrapper, Executor};
+    use cw_multi_test::{
+        next_block, App, AppBuilder, Contract, ContractWrapper, Executor as TestExecutor,
+    };
 
     fn member<T: Into<String>>(addr: T, weight: u64) -> Member {
         Member {
@@ -60,10 +63,11 @@ mod tests {
     }
 
     #[track_caller]
-    fn instantiate_splits(app: &mut App, group: Addr) -> Addr {
+    fn instantiate_splits(app: &mut App, group: Addr, executor: Option<Executor>) -> Addr {
         let flex_id = app.store_code(contract_splits());
         let msg = crate::msg::InstantiateMsg {
             group_addr: group.to_string(),
+            executor,
         };
         app.instantiate_contract(flex_id, Addr::unchecked(OWNER), &msg, &[], "splits", None)
             .unwrap()
@@ -74,6 +78,7 @@ mod tests {
         app: &mut App,
         init_funds: Vec<Coin>,
         multisig_as_group_admin: bool,
+        executor: Option<Executor>,
     ) -> (Addr, Addr) {
         // 1. Instantiate group contract with members (and OWNER as admin)
         let members = vec![
@@ -86,7 +91,7 @@ mod tests {
         app.update_block(next_block);
 
         // 2. Set up Splits backed by this group
-        let splits_addr = instantiate_splits(app, group_addr.clone());
+        let splits_addr = instantiate_splits(app, group_addr.clone(), executor);
         app.update_block(next_block);
 
         // 3. (Optional) Set the multisig as the group owner
@@ -123,6 +128,7 @@ mod tests {
         // Zero weight fails
         let instantiate_msg = InstantiateMsg {
             group_addr: group_addr.to_string(),
+            executor: Some(Executor::Only(Addr::unchecked(OWNER))),
         };
         let err = app
             .instantiate_contract(
@@ -144,6 +150,7 @@ mod tests {
 
         let instantiate_msg = InstantiateMsg {
             group_addr: group_addr.to_string(),
+            executor: None,
         };
         let splits_addr = app
             .instantiate_contract(
@@ -196,7 +203,7 @@ mod tests {
         fn distribute_zero_funds() {
             let mut app = mock_app(&[]);
 
-            let (splits_addr, _) = setup_test_case(&mut app, vec![], false);
+            let (splits_addr, _) = setup_test_case(&mut app, vec![], false, None);
 
             let msg = ExecuteMsg::Distribute {};
 
@@ -212,7 +219,8 @@ mod tests {
             let init_funds = coins(100, DENOM);
             let mut app = mock_app(&init_funds);
 
-            let (splits_addr, _) = setup_test_case(&mut app, init_funds, false);
+            let (splits_addr, _) =
+                setup_test_case(&mut app, init_funds, false, Some(Executor::Member));
 
             let msg = ExecuteMsg::Distribute {};
 
@@ -231,7 +239,7 @@ mod tests {
             let init_funds = coins(100, DENOM);
             let mut app = mock_app(&init_funds);
 
-            let (splits_addr, _) = setup_test_case(&mut app, init_funds, false);
+            let (splits_addr, _) = setup_test_case(&mut app, init_funds, false, None);
 
             let msg = ExecuteMsg::Distribute {};
 

@@ -1,11 +1,14 @@
 use cosmwasm_schema::cw_serde;
 
-use crate::state::Config;
+use crate::state::{Config, Executor};
 
 #[cw_serde]
 pub struct InstantiateMsg {
     // this is the group contract that contains the member list
     pub group_addr: String,
+    // Who is able to call distribute
+    // None means that anyone can call distribute
+    pub executor: Option<Executor>,
 }
 
 #[cw_serde]
