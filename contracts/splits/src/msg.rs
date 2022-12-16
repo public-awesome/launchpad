@@ -14,6 +14,12 @@ pub struct InstantiateMsg {
 #[cw_serde]
 pub enum ExecuteMsg {
     Distribute {},
+    UpdateExecutor { executor: Option<Executor> },
+}
+
+#[cw_serde]
+pub enum SudoMsg {
+    UpdateExecutor { executor: Option<Executor> },
 }
 
 #[cw_serde]

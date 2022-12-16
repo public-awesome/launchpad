@@ -9,7 +9,7 @@ use cw4::{Cw4Contract, Member, MemberListResponse, MemberResponse};
 use sg_std::NATIVE_DENOM;
 
 use crate::error::ContractError;
-use crate::msg::{ConfigResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
+use crate::msg::{ConfigResponse, ExecuteMsg, InstantiateMsg, QueryMsg, SudoMsg};
 use crate::state::{Config, Executor, CONFIG};
 
 // version info for migration info
@@ -57,7 +57,30 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::Distribute {} => execute_distribute(deps, env, info),
+        ExecuteMsg::UpdateExecutor { executor } => execute_update_executor(deps, info, executor),
     }
+}
+
+pub fn execute_update_executor(
+    deps: DepsMut,
+    info: MessageInfo,
+    executor: Option<Executor>,
+) -> Result<Response, ContractError> {
+    if let Some(Executor::Only(ref addr)) = executor {
+        if addr != &info.sender {
+            return Err(ContractError::Unauthorized {});
+        }
+
+        deps.api.addr_validate(addr.as_ref())?;
+
+        let mut cfg = CONFIG.load(deps.storage)?;
+        cfg.executor = executor;
+        CONFIG.save(deps.storage, &cfg)?;
+    } else {
+        return Err(ContractError::Unauthorized {});
+    }
+
+    Ok(Response::default())
 }
 
 pub fn execute_distribute(
@@ -100,6 +123,23 @@ pub fn execute_distribute(
     Ok(Response::new()
         .add_attribute("action", "distribute")
         .add_messages(msgs))
+}
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn sudo(deps: DepsMut, _env: Env, msg: SudoMsg) -> Result<Response, ContractError> {
+    match msg {
+        SudoMsg::UpdateExecutor { executor } => {
+            if let Some(Executor::Only(ref addr)) = executor {
+                deps.api.addr_validate(addr.as_ref())?;
+            }
+
+            let mut cfg = CONFIG.load(deps.storage)?;
+            cfg.executor = executor;
+            CONFIG.save(deps.storage, &cfg)?;
+        }
+    }
+
+    Ok(Response::default())
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
