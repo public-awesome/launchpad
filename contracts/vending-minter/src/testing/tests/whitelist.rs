@@ -546,7 +546,7 @@ fn whitelist_access_len_add_remove_expiration() {
     // Remove buyer from whitelist
     let inner_msg = AddMembersMsg { to_add: vec![] };
     let wasm_msg = WhitelistExecuteMsg::AddMembers(inner_msg);
-    let res = router.execute_contract(creator.clone(), whitelist_addr, &wasm_msg, &[]);
+    let res = router.execute_contract(creator, whitelist_addr, &wasm_msg, &[]);
     assert!(res.is_ok());
 
     // Mint fails
