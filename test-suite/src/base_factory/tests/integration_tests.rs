@@ -1,21 +1,11 @@
 #[cfg(test)]
 mod tests {
-    use crate::msg::InstantiateMsg;
-    use crate::{helpers::FactoryContract, state::BaseMinterParams};
+    use crate::common_setup::contract_boxes::{contract_base_factory, custom_mock_app};
+    use base_factory::msg::InstantiateMsg;
+    use base_factory::{helpers::FactoryContract, state::BaseMinterParams};
     use cosmwasm_std::{coin, Addr};
-    use cw_multi_test::{Contract, ContractWrapper, Executor};
+    use cw_multi_test::Executor;
     use sg_multi_test::StargazeApp;
-    use sg_std::StargazeMsgWrapper;
-
-    pub fn factory_contract() -> Box<dyn Contract<StargazeMsgWrapper>> {
-        let contract = ContractWrapper::new(
-            crate::contract::execute,
-            crate::contract::instantiate,
-            crate::contract::query,
-        )
-        .with_sudo(crate::contract::sudo);
-        Box::new(contract)
-    }
 
     const GOVERNANCE: &str = "governance";
     const NATIVE_DENOM: &str = "ustars";
@@ -23,10 +13,6 @@ mod tests {
     pub const CREATION_FEE: u128 = 5_000_000_000;
     pub const MIN_MINT_PRICE: u128 = 50_000_000;
     pub const MINT_FEE_BPS: u64 = 1_000; // 10%
-
-    fn custom_mock_app() -> StargazeApp {
-        StargazeApp::default()
-    }
 
     pub fn mock_params() -> BaseMinterParams {
         BaseMinterParams {
@@ -41,7 +27,7 @@ mod tests {
 
     fn proper_instantiate() -> (StargazeApp, FactoryContract) {
         let mut app = custom_mock_app();
-        let factory_id = app.store_code(factory_contract());
+        let factory_id = app.store_code(contract_base_factory());
         let minter_id = 2;
 
         let mut params = mock_params();

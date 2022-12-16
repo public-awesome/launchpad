@@ -13,7 +13,7 @@ use vending_factory::{
     state::{ParamsExtension, VendingMinterParams},
 };
 
-use super::msg::MinterInstantiateParams;
+use super::msg::{CodeIds, MinterInstantiateParams};
 
 // pub const LISTING_FEE: u128 = 0;
 pub const CREATION_FEE: u128 = 5_000_000_000;
@@ -129,8 +129,9 @@ fn build_collection_response(
         },
     }
 }
+
 // Upload contract code and instantiate minter contract
-fn setup_minter_contract(setup_params: MinterSetupParams) -> MinterCollectionResponse {
+pub fn setup_minter_contract(setup_params: MinterSetupParams) -> MinterCollectionResponse {
     let minter_code_id = setup_params.minter_code_id;
     let router = setup_params.router;
     let factory_code_id = setup_params.factory_code_id;
@@ -166,7 +167,7 @@ fn setup_minter_contract(setup_params: MinterSetupParams) -> MinterCollectionRes
     build_collection_response(res, factory_addr)
 }
 
-pub fn get_code_ids(router: &mut StargazeApp) -> (u64, u64, u64) {
+pub fn vending_minter_code_ids(router: &mut StargazeApp) -> CodeIds {
     let minter_code_id = router.store_code(contract_minter());
     println!("minter_code_id: {}", minter_code_id);
 
@@ -175,7 +176,11 @@ pub fn get_code_ids(router: &mut StargazeApp) -> (u64, u64, u64) {
 
     let sg721_code_id = router.store_code(contract_sg721());
     println!("sg721_code_id: {}", sg721_code_id);
-    (minter_code_id, factory_code_id, sg721_code_id)
+    CodeIds {
+        minter_code_id,
+        factory_code_id,
+        sg721_code_id,
+    }
 }
 
 pub fn configure_minter(
@@ -183,9 +188,9 @@ pub fn configure_minter(
     minter_admin: Addr,
     collection_params_vec: Vec<CollectionParams>,
     minter_instantiate_params_vec: Vec<MinterInstantiateParams>,
+    code_ids: CodeIds,
 ) -> Vec<MinterCollectionResponse> {
     let mut minter_collection_info: Vec<MinterCollectionResponse> = vec![];
-    let (minter_code_id, factory_code_id, sg721_code_id) = get_code_ids(app);
     for (index, collection_param) in collection_params_vec.iter().enumerate() {
         let setup_params: MinterSetupParams = MinterSetupParams {
             router: app,
@@ -193,9 +198,9 @@ pub fn configure_minter(
             num_tokens: minter_instantiate_params_vec[index].num_tokens,
             collection_params: collection_param.to_owned(),
             splits_addr: minter_instantiate_params_vec[index].splits_addr.clone(),
-            minter_code_id,
-            factory_code_id,
-            sg721_code_id,
+            minter_code_id: code_ids.minter_code_id,
+            factory_code_id: code_ids.factory_code_id,
+            sg721_code_id: code_ids.sg721_code_id,
             start_time: minter_instantiate_params_vec[index].start_time,
             init_msg: minter_instantiate_params_vec[index].init_msg.clone(),
         };

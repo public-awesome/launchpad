@@ -15,6 +15,35 @@ pub fn contract_factory() -> Box<dyn Contract<StargazeMsgWrapper>> {
     Box::new(contract)
 }
 
+pub fn contract_base_factory() -> Box<dyn Contract<StargazeMsgWrapper>> {
+    let contract = ContractWrapper::new(
+        base_factory::contract::execute,
+        base_factory::contract::instantiate,
+        base_factory::contract::query,
+    )
+    .with_sudo(vending_factory::contract::sudo);
+    Box::new(contract)
+}
+
+// pub fn contract_base_minter() -> Box<dyn Contract<StargazeMsgWrapper>> {
+//     let contract = ContractWrapper::new(
+//         base_minter::contract::execute,
+//         base_minter::contract::instantiate,
+//         base_minter::contract::query,
+//     )
+//     .with_reply(base_minter::contract::reply);
+//     Box::new(contract)
+// }
+
+// pub fn contract_nt_collection() -> Box<dyn Contract<StargazeMsgWrapper>> {
+//     let contract = ContractWrapper::new(
+//         sg721_nt::entry::execute,
+//         sg721_nt::entry::instantiate,
+//         sg721_nt::entry::query,
+//     );
+//     Box::new(contract)
+// }
+
 pub fn contract_whitelist() -> Box<dyn Contract<StargazeMsgWrapper>> {
     let contract = ContractWrapper::new(
         sg_whitelist::contract::execute,

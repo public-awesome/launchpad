@@ -2581,6 +2581,8 @@ version = "0.21.5"
 dependencies = [
  "anyhow",
  "async-std",
+ "base-factory",
+ "base-minter",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-multi-test",
@@ -2609,6 +2611,7 @@ dependencies = [
  "sg4 0.21.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg721 0.21.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg721-base",
+ "sg721-nt",
  "sha2 0.10.6",
  "shuffle",
  "thiserror",

@@ -30,3 +30,18 @@ pub struct MinterInstantiateParams {
     pub splits_addr: Option<String>,
     pub init_msg: Option<VendingMinterInitMsgExtension>,
 }
+
+use cosmwasm_schema::cw_serde;
+#[cw_serde]
+pub struct CodeIds {
+    pub minter_code_id: u64,
+    pub factory_code_id: u64,
+    pub sg721_code_id: u64,
+}
+
+pub struct VendingTemplateResponse {
+    pub collection_response_vec: Vec<MinterCollectionResponse>,
+    pub router: StargazeApp,
+    pub creator: Addr,
+    pub buyer: Addr,
+}
