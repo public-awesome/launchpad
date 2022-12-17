@@ -1,12 +1,14 @@
 use cosmwasm_std::{coin, coins, Addr, Timestamp};
-use cw_multi_test::{BankSudo, Contract, ContractWrapper, Executor, SudoMsg as CWSudoMsg};
+use cw_multi_test::{BankSudo, Executor, SudoMsg as CWSudoMsg};
 use sg_multi_test::StargazeApp;
-use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
+use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
-use crate::{
+use sg_whitelist::{
     msg::{AddMembersMsg, ExecuteMsg, InstantiateMsg, MembersResponse, QueryMsg, RemoveMembersMsg},
     state::AdminList,
 };
+
+use crate::common_setup::contract_boxes::{contract_collection_whitelist, custom_mock_app};
 
 const COLLECTION_WHITELIST_ADDR: &str = "contract0";
 const ADMIN: &str = "admin";
@@ -15,19 +17,6 @@ const UNIT_AMOUNT: u128 = 100_000_000;
 
 const GENESIS_START_TIME: Timestamp = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
 const END_TIME: Timestamp = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 1000);
-
-pub fn custom_mock_app() -> StargazeApp {
-    StargazeApp::default()
-}
-
-pub fn collection_whitelist() -> Box<dyn Contract<StargazeMsgWrapper>> {
-    let contract = ContractWrapper::new(
-        crate::contract::execute,
-        crate::contract::instantiate,
-        crate::contract::query,
-    );
-    Box::new(contract)
-}
 
 fn instantiate_contract(admin_account: &str, app: &mut StargazeApp) {
     let admin = Addr::unchecked(admin_account);
@@ -53,7 +42,7 @@ fn instantiate_contract(admin_account: &str, app: &mut StargazeApp) {
     .map_err(|err| println!("{:?}", err))
     .ok();
 
-    let collection_id = app.store_code(collection_whitelist());
+    let collection_id = app.store_code(contract_collection_whitelist());
     let _ = app.instantiate_contract(
         collection_id,
         admin,

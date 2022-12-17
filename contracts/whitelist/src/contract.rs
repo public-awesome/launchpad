@@ -2,13 +2,13 @@ use crate::admin::{
     can_execute, execute_freeze, execute_update_admins, query_admin_list, query_can_execute,
 };
 use crate::error::ContractError;
+use crate::helpers::validators::map_validate;
 use crate::msg::{
     AddMembersMsg, ConfigResponse, ExecuteMsg, HasEndedResponse, HasMemberResponse,
     HasStartedResponse, InstantiateMsg, IsActiveResponse, MembersResponse, QueryMsg,
     RemoveMembersMsg,
 };
 use crate::state::{AdminList, Config, ADMIN_LIST, CONFIG, WHITELIST};
-use crate::validators::map_validate;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult};

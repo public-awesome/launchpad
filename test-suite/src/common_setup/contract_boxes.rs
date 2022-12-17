@@ -100,7 +100,7 @@ pub fn contract_eth_airdrop() -> Box<dyn Contract<StargazeMsgWrapper>> {
     Box::new(contract)
 }
 
-pub fn whitelist_immutable_contract() -> Box<dyn Contract<StargazeMsgWrapper>> {
+pub fn contract_whitelist_immutable() -> Box<dyn Contract<StargazeMsgWrapper>> {
     let contract = ContractWrapper::new(
         whitelist_immutable::contract::execute,
         whitelist_immutable::contract::instantiate,

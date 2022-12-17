@@ -1,26 +1,14 @@
 #[cfg(test)]
 mod tests {
-    use crate::msg::*;
-    use crate::{helpers::WhitelistImmutableContract, state::Config};
     use cosmwasm_std::Addr;
-    use cw_multi_test::{Contract, ContractWrapper, Executor};
+    use cw_multi_test::Executor;
     use sg_multi_test::StargazeApp;
-    use sg_std::StargazeMsgWrapper;
+    use whitelist_immutable::msg::*;
+    use whitelist_immutable::{helpers::WhitelistImmutableContract, state::Config};
+
+    use crate::common_setup::contract_boxes::{contract_whitelist_immutable, custom_mock_app};
 
     const CREATOR: &str = "creator";
-
-    fn custom_mock_app() -> StargazeApp {
-        StargazeApp::default()
-    }
-
-    pub fn wl_contract() -> Box<dyn Contract<StargazeMsgWrapper>> {
-        let contract = ContractWrapper::new(
-            crate::contract::execute,
-            crate::contract::instantiate,
-            crate::contract::query,
-        );
-        Box::new(contract)
-    }
 
     fn get_init_address_list_1() -> Vec<String> {
         vec![
@@ -56,7 +44,7 @@ mod tests {
             addresses: addrs,
             mint_discount_bps: None,
         };
-        let wl_id = app.store_code(wl_contract());
+        let wl_id = app.store_code(contract_whitelist_immutable());
         app.instantiate_contract(
             wl_id,
             Addr::unchecked(CREATOR),
@@ -155,7 +143,7 @@ mod tests {
             addresses: addrs,
             mint_discount_bps: None,
         };
-        let wl_id = app.store_code(wl_contract());
+        let wl_id = app.store_code(contract_whitelist_immutable());
         let res = app
             .instantiate_contract(
                 wl_id,

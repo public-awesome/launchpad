@@ -2,9 +2,9 @@ use cosmwasm_std::{Addr, Deps, DepsMut, Env, MessageInfo, StdResult};
 use sg_std::Response;
 
 use crate::{
+    helpers::validators::map_validate,
     msg::{AdminListResponse, CanExecuteResponse},
     state::ADMIN_LIST,
-    validators::map_validate,
     ContractError,
 };
 

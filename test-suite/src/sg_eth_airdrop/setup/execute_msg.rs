@@ -1,7 +1,7 @@
 use crate::sg_eth_airdrop::constants::claim_constants::OWNER;
 use crate::sg_eth_airdrop::constants::collection_constants::WHITELIST_AMOUNT;
 use crate::{
-    common_setup::contract_boxes::{contract_eth_airdrop, whitelist_immutable_contract},
+    common_setup::contract_boxes::{contract_eth_airdrop, contract_whitelist_immutable},
     sg_eth_airdrop::setup::test_msgs::InstantiateParams,
 };
 use anyhow::Error as anyhow_error;
@@ -32,7 +32,7 @@ pub fn instantiate_contract(params: InstantiateParams) -> Result<cosmwasm_std::A
         .ok();
 
     let sg_eth_id = params.app.store_code(contract_eth_airdrop());
-    let whitelist_code_id = params.app.store_code(whitelist_immutable_contract());
+    let whitelist_code_id = params.app.store_code(contract_whitelist_immutable());
     assert_eq!(sg_eth_id, params.expected_airdrop_contract_id);
 
     let msg: InstantiateMsg = InstantiateMsg {

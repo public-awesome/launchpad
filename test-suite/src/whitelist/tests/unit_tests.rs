@@ -1,11 +1,13 @@
-use crate::contract::{
-    execute, instantiate, query_config, query_members, MAX_MEMBERS, MAX_PER_ADDRESS_LIMIT,
-};
-use crate::error::ContractError;
-use crate::msg::{AddMembersMsg, ConfigResponse, ExecuteMsg, InstantiateMsg, RemoveMembersMsg};
 use cosmwasm_std::DepsMut;
 use cosmwasm_std::Timestamp;
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
+use sg_whitelist::contract::{
+    execute, instantiate, query_config, query_members, MAX_MEMBERS, MAX_PER_ADDRESS_LIMIT,
+};
+use sg_whitelist::error::ContractError;
+use sg_whitelist::msg::{
+    AddMembersMsg, ConfigResponse, ExecuteMsg, InstantiateMsg, RemoveMembersMsg,
+};
 
 use cosmwasm_std::{
     coin,
