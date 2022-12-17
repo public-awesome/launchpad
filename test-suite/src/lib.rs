@@ -9,4 +9,6 @@ mod sg721_base;
 #[cfg(test)]
 mod sg_eth_airdrop;
 #[cfg(test)]
+mod splits;
+#[cfg(test)]
 mod vending_minter;

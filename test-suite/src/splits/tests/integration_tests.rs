@@ -1,52 +1,23 @@
 #[cfg(test)]
 mod tests {
-    use crate::{
+    use cosmwasm_std::{Addr, Coin};
+    use cw2::{query_contract_info, ContractVersion};
+    use cw4::{Cw4ExecuteMsg, Member, MemberListResponse};
+    use cw_multi_test::{next_block, App, Executor};
+    use sg_splits::{
         msg::{InstantiateMsg, QueryMsg},
         ContractError,
     };
-    use cosmwasm_std::{Addr, Coin, Empty};
-    use cw2::{query_contract_info, ContractVersion};
-    use cw4::{Cw4ExecuteMsg, Member, MemberListResponse};
-    use cw_multi_test::{next_block, App, AppBuilder, Contract, ContractWrapper, Executor};
 
-    fn member<T: Into<String>>(addr: T, weight: u64) -> Member {
-        Member {
-            addr: addr.into(),
-            weight,
-        }
-    }
-
-    pub fn contract_splits() -> Box<dyn Contract<Empty>> {
-        let contract = ContractWrapper::new(
-            crate::contract::execute,
-            crate::contract::instantiate,
-            crate::contract::query,
-        );
-        Box::new(contract)
-    }
-
-    pub fn contract_group() -> Box<dyn Contract<Empty>> {
-        let contract = ContractWrapper::new(
-            cw4_group::contract::execute,
-            cw4_group::contract::instantiate,
-            cw4_group::contract::query,
-        );
-        Box::new(contract)
-    }
+    use crate::common_setup::{contract_boxes_empty::contract_group, helpers::member};
+    use crate::common_setup::{
+        contract_boxes_empty::contract_splits, helpers::mock_app_builder_init_funds,
+    };
 
     const OWNER: &str = "admin0001";
     const MEMBER1: &str = "member0001";
     const MEMBER2: &str = "member0002";
     const MEMBER3: &str = "member0003";
-
-    fn mock_app(init_funds: &[Coin]) -> App {
-        AppBuilder::new().build(|router, _, storage| {
-            router
-                .bank
-                .init_balance(storage, &Addr::unchecked(OWNER), init_funds.to_vec())
-                .unwrap();
-        })
-    }
 
     // uploads code and returns address of group contract
     fn instantiate_group(app: &mut App, members: Vec<Member>) -> Addr {
@@ -62,7 +33,7 @@ mod tests {
     #[track_caller]
     fn instantiate_splits(app: &mut App, group: Addr) -> Addr {
         let flex_id = app.store_code(contract_splits());
-        let msg = crate::msg::InstantiateMsg {
+        let msg = sg_splits::msg::InstantiateMsg {
             group_addr: group.to_string(),
         };
         app.instantiate_contract(flex_id, Addr::unchecked(OWNER), &msg, &[], "splits", None)
@@ -114,7 +85,7 @@ mod tests {
 
     #[test]
     fn test_instantiate_works() {
-        let mut app = mock_app(&[]);
+        let mut app = mock_app_builder_init_funds(&[]);
         let splits_id = app.store_code(contract_splits());
 
         // make a simple group
@@ -190,11 +161,11 @@ mod tests {
         use cosmwasm_std::{coins, Uint128};
 
         use super::*;
-        use crate::msg::{ExecuteMsg, QueryMsg};
+        use sg_splits::msg::{ExecuteMsg, QueryMsg};
 
         #[test]
         fn distribute_zero_funds() {
-            let mut app = mock_app(&[]);
+            let mut app = mock_app_builder_init_funds(&[]);
 
             let (splits_addr, _) = setup_test_case(&mut app, vec![], false);
 
@@ -210,7 +181,7 @@ mod tests {
         fn distribute_non_member() {
             const DENOM: &str = "ustars";
             let init_funds = coins(100, DENOM);
-            let mut app = mock_app(&init_funds);
+            let mut app = mock_app_builder_init_funds(&init_funds);
 
             let (splits_addr, _) = setup_test_case(&mut app, init_funds, false);
 
@@ -229,7 +200,7 @@ mod tests {
         fn distribute() {
             const DENOM: &str = "ustars";
             let init_funds = coins(100, DENOM);
-            let mut app = mock_app(&init_funds);
+            let mut app = mock_app_builder_init_funds(&init_funds);
 
             let (splits_addr, _) = setup_test_case(&mut app, init_funds, false);
 
