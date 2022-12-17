@@ -1,7 +1,9 @@
 use crate::common_setup::contract_boxes::custom_mock_app;
 use crate::common_setup::msg::{MinterCollectionResponse, MinterInstantiateParams};
 use crate::common_setup::setup_accounts_and_block::{setup_accounts, setup_block_time};
-use crate::common_setup::setup_minter::{configure_minter, vending_minter_code_ids};
+use crate::common_setup::setup_minter::vending_minter::setup::{
+    configure_minter, vending_minter_code_ids,
+};
 use crate::common_setup::templates::{vending_minter_with_app, vending_minter_with_start_time};
 use cosmwasm_std::{coins, Addr, Timestamp};
 use cw_multi_test::Executor;

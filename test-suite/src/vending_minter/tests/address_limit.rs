@@ -1,7 +1,10 @@
 use crate::common_setup::{
     msg::MinterCollectionResponse,
+    setup_minter::common::minter_params::minter_params_token,
+    setup_minter::vending_minter::setup::{configure_minter, vending_minter_code_ids},
+};
+use crate::common_setup::{
     setup_accounts_and_block::{coins_for_msg, setup_block_time},
-    setup_minter::{configure_minter, minter_params_token, vending_minter_code_ids},
     templates::vending_minter_template,
 };
 use cosmwasm_std::{coin, coins, Coin, Timestamp, Uint128};

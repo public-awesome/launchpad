@@ -10,8 +10,11 @@ use crate::common_setup::setup_accounts_and_block::coins_for_msg;
 use crate::common_setup::setup_collection_whitelist::{
     configure_collection_whitelist, setup_whitelist_contract,
 };
-use crate::common_setup::setup_minter::{
-    configure_minter, minter_params_all, minter_params_token, vending_minter_code_ids,
+use crate::common_setup::setup_minter::common::minter_params::{
+    minter_params_all, minter_params_token,
+};
+use crate::common_setup::setup_minter::vending_minter::setup::{
+    configure_minter, vending_minter_code_ids,
 };
 use crate::common_setup::templates::vending_minter_template;
 use crate::common_setup::{

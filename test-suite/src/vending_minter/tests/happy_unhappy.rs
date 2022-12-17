@@ -1,17 +1,17 @@
+use crate::common_setup::setup_minter::vending_minter::mock_params::mock_create_minter;
+use crate::common_setup::templates::vending_minter_template;
+use crate::common_setup::{
+    setup_accounts_and_block::coins_for_msg, setup_accounts_and_block::setup_block_time,
+};
 use cosmwasm_std::{
     coin, coins,
     testing::{mock_dependencies_with_balance, mock_env, mock_info},
     Api, Coin, Timestamp, Uint128,
 };
+use cw721::{Cw721QueryMsg, OwnerOfResponse};
 use cw_multi_test::Executor;
 use sg2::tests::mock_collection_params_1;
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
-
-use crate::common_setup::{
-    setup_accounts_and_block::coins_for_msg, setup_accounts_and_block::setup_block_time,
-    setup_minter::mock_create_minter, templates::vending_minter_template,
-};
-use cw721::{Cw721QueryMsg, OwnerOfResponse};
 use vending_minter::msg::{ExecuteMsg, QueryMsg, StartTimeResponse};
 use vending_minter::{contract::instantiate, msg::MintCountResponse};
 

@@ -2,7 +2,10 @@ use crate::common_setup::{
     contract_boxes::{contract_splits, custom_mock_app},
     msg::MinterCollectionResponse,
     setup_accounts_and_block::{instantiate_group, setup_accounts, setup_block_time},
-    setup_minter::{configure_minter, minter_params_all, vending_minter_code_ids},
+    setup_minter::{
+        common::minter_params::minter_params_all,
+        vending_minter::setup::{configure_minter, vending_minter_code_ids},
+    },
 };
 use cosmwasm_std::{coins, Addr, Coin, Timestamp};
 use cw4::Member;

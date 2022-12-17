@@ -7,7 +7,7 @@
 //     },
 //     msg::MinterSetupParams,
 //     setup_accounts_and_block::setup_accounts,
-//     setup_minter::{self, configure_minter, minter_params_token, setup_minter_contract},
+//     setup_minter::minter_params_token,
 // };
 // use base_factory::msg::BaseMinterCreateMsg;
 // use base_factory::state::BaseMinterParams;
@@ -44,7 +44,7 @@
 //     }
 // }
 
-// // Upload contract code and instantiate minter contract
+// Upload contract code and instantiate minter contract
 // fn setup_minter_contract(
 //     router: &mut StargazeApp,
 //     creator: &Addr,
@@ -132,7 +132,7 @@
 //         start_time: Some(start_time),
 //         init_msg: None,
 //     };
-
+// }
 //     let minter_collection_response = setup_minter_contract(minter_setup_params);
 //     let minter_addr = minter_collection_response.minter.unwrap();
 //     let collection_addr = minter_collection_response.collection.unwrap();
