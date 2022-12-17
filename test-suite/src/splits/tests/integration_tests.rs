@@ -1,5 +1,9 @@
 #[cfg(test)]
 mod tests {
+    use crate::common_setup::{contract_boxes_empty::contract_group, helpers::member};
+    use crate::common_setup::{
+        contract_boxes_empty::contract_splits, helpers::mock_app_builder_init_funds,
+    };
     use cosmwasm_std::{Addr, Coin};
     use cw2::{query_contract_info, ContractVersion};
     use cw4::{Cw4ExecuteMsg, Member, MemberListResponse};
@@ -8,11 +12,6 @@ mod tests {
         msg::{InstantiateMsg, QueryMsg},
         state::Executor,
         ContractError,
-    };
-
-    use crate::common_setup::{contract_boxes_empty::contract_group, helpers::member};
-    use crate::common_setup::{
-        contract_boxes_empty::contract_splits, helpers::mock_app_builder_init_funds,
     };
 
     const OWNER: &str = "admin0001";
