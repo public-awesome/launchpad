@@ -32,6 +32,7 @@ fn instantiate_splits(app: &mut StargazeApp, group: Addr) -> Addr {
     println!("splits_id: {}", splits_id);
     let msg = sg_splits::msg::InstantiateMsg {
         group_addr: group.to_string(),
+        executor: None,
     };
     app.instantiate_contract(splits_id, Addr::unchecked(OWNER), &msg, &[], "splits", None)
         .unwrap()
