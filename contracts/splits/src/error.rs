@@ -17,4 +17,7 @@ pub enum ContractError {
 
     #[error("Group contract invalid total weight '{weight}'")]
     InvalidWeight { weight: u64 },
+
+    #[error("Invalid executor '{addr}'")]
+    InvalidExecutor { addr: String },
 }
