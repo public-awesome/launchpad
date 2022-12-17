@@ -1,6 +1,5 @@
 use crate::common_setup::setup_accounts_and_block::setup_accounts;
 use crate::common_setup::setup_collection_whitelist::setup_whitelist_contract;
-// use crate::common_setup::setup_minter::mock_create_minter;
 
 use crate::common_setup::contract_boxes::contract_factory;
 use crate::common_setup::setup_minter::vending_minter::mock_params::{
