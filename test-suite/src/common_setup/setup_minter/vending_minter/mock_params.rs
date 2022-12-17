@@ -37,6 +37,16 @@ pub fn mock_create_minter(
     }
 }
 
+pub fn mock_create_minter_init_msg(
+    collection_params: CollectionParams,
+    init_msg: VendingMinterInitMsgExtension,
+) -> VendingMinterCreateMsg {
+    VendingMinterCreateMsg {
+        init_msg,
+        collection_params,
+    }
+}
+
 pub fn mock_params() -> VendingMinterParams {
     VendingMinterParams {
         code_id: 1,

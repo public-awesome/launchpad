@@ -1,7 +1,7 @@
 use crate::common_setup::contract_boxes::contract_base_factory;
 use crate::common_setup::contract_boxes::contract_base_minter;
 use crate::common_setup::contract_boxes::contract_nt_collection;
-use crate::common_setup::contract_boxes::contract_sg721;
+use crate::common_setup::contract_boxes::contract_sg721_base;
 use crate::common_setup::msg::MinterCollectionResponse;
 use crate::common_setup::msg::MinterSetupParams;
 use crate::common_setup::setup_minter::common::parse_response::build_collection_response;
@@ -40,7 +40,7 @@ pub fn base_minter_sg721_collection_code_ids(router: &mut StargazeApp) -> CodeId
     let factory_code_id = router.store_code(contract_base_factory());
     println!("base_factory_code_id: {}", factory_code_id);
 
-    let sg721_code_id = router.store_code(contract_sg721());
+    let sg721_code_id = router.store_code(contract_sg721_base());
     println!("sg721_code_id: {}", sg721_code_id);
     CodeIds {
         minter_code_id,

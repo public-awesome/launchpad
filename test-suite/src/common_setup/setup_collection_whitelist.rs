@@ -5,7 +5,7 @@ use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use sg_whitelist::msg::InstantiateMsg as WhitelistInstantiateMsg;
 
 use crate::common_setup::{
-    contract_boxes::contract_whitelist, setup_accounts_and_block::setup_block_time,
+    contract_boxes::contract_collection_whitelist, setup_accounts_and_block::setup_block_time,
 };
 
 const WHITELIST_AMOUNT: u128 = 66_000_000;
@@ -18,7 +18,7 @@ pub fn setup_whitelist_contract(
 ) -> Addr {
     let whitelist_code_id = match whitelist_code_id {
         Some(value) => value,
-        None => router.store_code(contract_whitelist()),
+        None => router.store_code(contract_collection_whitelist()),
     };
 
     let msg = WhitelistInstantiateMsg {

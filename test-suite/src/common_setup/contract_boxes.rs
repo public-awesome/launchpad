@@ -6,7 +6,7 @@ pub fn custom_mock_app() -> StargazeApp {
     StargazeApp::default()
 }
 
-pub fn contract_factory() -> Box<dyn Contract<StargazeMsgWrapper>> {
+pub fn contract_vending_factory() -> Box<dyn Contract<StargazeMsgWrapper>> {
     let contract = ContractWrapper::new(
         vending_factory::contract::execute,
         vending_factory::contract::instantiate,
@@ -44,7 +44,7 @@ pub fn contract_nt_collection() -> Box<dyn Contract<StargazeMsgWrapper>> {
     Box::new(contract)
 }
 
-pub fn contract_whitelist() -> Box<dyn Contract<StargazeMsgWrapper>> {
+pub fn contract_collection_whitelist() -> Box<dyn Contract<StargazeMsgWrapper>> {
     let contract = ContractWrapper::new(
         sg_whitelist::contract::execute,
         sg_whitelist::contract::instantiate,
@@ -53,7 +53,7 @@ pub fn contract_whitelist() -> Box<dyn Contract<StargazeMsgWrapper>> {
     Box::new(contract)
 }
 
-pub fn contract_minter() -> Box<dyn Contract<StargazeMsgWrapper>> {
+pub fn contract_vending_minter() -> Box<dyn Contract<StargazeMsgWrapper>> {
     let contract = ContractWrapper::new(
         vending_minter::contract::execute,
         vending_minter::contract::instantiate,
@@ -63,7 +63,7 @@ pub fn contract_minter() -> Box<dyn Contract<StargazeMsgWrapper>> {
     Box::new(contract)
 }
 
-pub fn contract_sg721() -> Box<dyn Contract<StargazeMsgWrapper>> {
+pub fn contract_sg721_base() -> Box<dyn Contract<StargazeMsgWrapper>> {
     let contract = ContractWrapper::new(
         sg721_base::entry::execute,
         sg721_base::entry::instantiate,
