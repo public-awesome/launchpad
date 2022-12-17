@@ -11,4 +11,6 @@ mod sg_eth_airdrop;
 #[cfg(test)]
 mod splits;
 #[cfg(test)]
+mod vending_factory;
+#[cfg(test)]
 mod vending_minter;
