@@ -4,19 +4,23 @@
 * and run the @cosmwasm/ts-codegen generate command to regenerate this file.
 */
 
-export type Cw4Contract = Addr;
+export type Executor = "member" | {
+  only: Addr;
+};
 export type Addr = string;
+export type Cw4Contract = Addr;
 export interface ConfigResponse {
   config: Config;
 }
 export interface Config {
+  executor?: Executor | null;
   group_addr: Cw4Contract;
-  [k: string]: unknown;
 }
 export type ExecuteMsg = {
   distribute: {};
 };
 export interface InstantiateMsg {
+  executor?: Executor | null;
   group_addr: string;
 }
 export interface ListMembersResponse {

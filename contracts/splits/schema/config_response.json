@@ -22,16 +22,51 @@
         "group_addr"
       ],
       "properties": {
+        "executor": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Executor"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "group_addr": {
           "$ref": "#/definitions/Cw4Contract"
         }
-      }
+      },
+      "additionalProperties": false
     },
     "Cw4Contract": {
       "description": "Cw4Contract is a wrapper around Addr that provides a lot of helpers for working with cw4 contracts\n\nIf you wish to persist this, convert to Cw4CanonicalContract via .canonical()",
       "allOf": [
         {
           "$ref": "#/definitions/Addr"
+        }
+      ]
+    },
+    "Executor": {
+      "oneOf": [
+        {
+          "description": "Any member of the voting group, even with 0 points",
+          "type": "string",
+          "enum": [
+            "member"
+          ]
+        },
+        {
+          "description": "Only the given address",
+          "type": "object",
+          "required": [
+            "only"
+          ],
+          "properties": {
+            "only": {
+              "$ref": "#/definitions/Addr"
+            }
+          },
+          "additionalProperties": false
         }
       ]
     }
