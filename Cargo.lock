@@ -2735,6 +2735,7 @@ dependencies = [
 name = "vending-minter"
 version = "0.21.5"
 dependencies = [
+ "anyhow",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-multi-test",

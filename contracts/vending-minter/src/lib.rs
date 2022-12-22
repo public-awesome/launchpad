@@ -1,6 +1,6 @@
 pub mod contract;
 #[cfg(test)]
-mod integration_tests;
+mod testing;
 
 mod error;
 pub mod msg;
