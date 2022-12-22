@@ -1,8 +1,11 @@
 use crate::common_setup::{
-    contract_boxes::custom_mock_app,
     msg::MinterCollectionResponse,
-    setup_accounts_and_block::{coins_for_msg, setup_accounts, setup_block_time},
-    setup_minter::{configure_minter, minter_params_token},
+    setup_minter::common::minter_params::minter_params_token,
+    setup_minter::vending_minter::setup::{configure_minter, vending_minter_code_ids},
+};
+use crate::common_setup::{
+    setup_accounts_and_block::{coins_for_msg, setup_block_time},
+    templates::vending_minter_template,
 };
 use cosmwasm_std::{coin, coins, Coin, Timestamp, Uint128};
 use cw721::{Cw721QueryMsg, OwnerOfResponse, TokensResponse};
@@ -18,21 +21,9 @@ const ADMIN_MINT_PRICE: u128 = 0;
 
 #[test]
 fn check_per_address_limit() {
-    let mut router = custom_mock_app();
-    let (creator, buyer) = setup_accounts(&mut router);
-    let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
-    let num_tokens = 2;
-    let collection_params = mock_collection_params_1(Some(start_time));
-    let minter_params = minter_params_token(num_tokens);
-    let minter_collection_response = configure_minter(
-        &mut router,
-        creator.clone(),
-        vec![collection_params],
-        vec![minter_params],
-    );
-
-    let minter_addr = minter_collection_response[0].minter.clone().unwrap();
-
+    let vt = vending_minter_template(2);
+    let (mut router, creator, buyer) = (vt.router, vt.creator, vt.buyer);
+    let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
     // Set to genesis mint start time
     setup_block_time(&mut router, GENESIS_MINT_START_TIME, None);
 
@@ -103,24 +94,14 @@ fn check_per_address_limit() {
 
 #[test]
 fn check_dynamic_per_address_limit() {
-    let mut router = custom_mock_app();
-    setup_block_time(&mut router, GENESIS_MINT_START_TIME - 1, None);
-    let (creator, _) = setup_accounts(&mut router);
-
-    // if per address limit > 1%, throw error when instantiating
-    // num_tokens: 400, per_address_limit: 5
+    // let mut router = custom_mock_app();
     let num_tokens = 400;
-    let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
-    let collection_params = mock_collection_params_1(Some(start_time));
-    let minter_params = minter_params_token(num_tokens);
-    let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
-        &mut router,
-        creator.clone(),
-        vec![collection_params],
-        vec![minter_params],
-    );
+    let vt = vending_minter_template(num_tokens);
+    let (mut router, creator) = (vt.router, vt.creator);
+    let err = vt.collection_response_vec[0].error.as_ref();
 
-    let err = minter_collection_response[0].error.as_ref();
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME - 1, None);
+
     assert_eq!(
         err.unwrap().source().unwrap().source().unwrap().to_string(),
         ContractError::InvalidPerAddressLimit {
@@ -132,13 +113,16 @@ fn check_dynamic_per_address_limit() {
     );
 
     let num_tokens = 1000;
+    let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
     let collection_params = mock_collection_params_1(Some(start_time));
     let minter_params = minter_params_token(num_tokens);
+    let code_ids = vending_minter_code_ids(&mut router);
     let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
         &mut router,
         creator.clone(),
         vec![collection_params],
         vec![minter_params],
+        code_ids,
     );
     let err = minter_collection_response[0].error.as_ref();
     assert!(err.is_none());
@@ -163,22 +147,11 @@ fn check_dynamic_per_address_limit() {
 
 #[test]
 fn mint_for_token_id_addr() {
-    let mut router = custom_mock_app();
+    let vt = vending_minter_template(4);
+    let (mut router, creator, buyer) = (vt.router, vt.creator, vt.buyer);
+    let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
+    let collection_addr = vt.collection_response_vec[0].collection.clone().unwrap();
     setup_block_time(&mut router, GENESIS_MINT_START_TIME, None);
-    let (creator, buyer) = setup_accounts(&mut router);
-
-    let num_tokens = 4;
-    let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
-    let collection_params = mock_collection_params_1(Some(start_time));
-    let minter_params = minter_params_token(num_tokens);
-    let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
-        &mut router,
-        creator.clone(),
-        vec![collection_params],
-        vec![minter_params],
-    );
-    let minter_addr = minter_collection_response[0].minter.clone().unwrap();
-    let collection_addr = minter_collection_response[0].collection.clone().unwrap();
     // Try mint_for, test unauthorized
     let mint_for_msg = ExecuteMsg::MintFor {
         token_id: 1,

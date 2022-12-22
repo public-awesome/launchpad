@@ -8,7 +8,7 @@ use cosmwasm_std::{Env, MessageInfo};
 use sg_std::Response;
 use sg_std::{CosmosMsg, SubMsg};
 use sg_whitelist::msg::ExecuteMsg as CollectionWhitelistExecuteMsg;
-use sg_whitelist::{interface::CollectionWhitelistContract, msg::AddMembersMsg};
+use sg_whitelist::{helpers::interface::CollectionWhitelistContract, msg::AddMembersMsg};
 use validation::validate_claim;
 
 pub fn claim_airdrop(

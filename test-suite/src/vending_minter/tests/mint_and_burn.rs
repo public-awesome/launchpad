@@ -1,17 +1,12 @@
-use crate::common_setup::contract_boxes::custom_mock_app;
-use crate::common_setup::msg::MinterCollectionResponse;
-use crate::common_setup::setup_minter::{configure_minter, minter_params_token};
+use crate::common_setup::templates::{vending_minter_template, vending_minter_with_start_time};
 use cosmwasm_std::Coin;
 use cosmwasm_std::{coins, Timestamp, Uint128};
 use cw_multi_test::Executor;
-use sg2::tests::mock_collection_params_1;
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use vending_minter::msg::{ExecuteMsg, MintCountResponse, QueryMsg, StartTimeResponse};
 use vending_minter::ContractError;
 
-use crate::common_setup::setup_accounts_and_block::{
-    coins_for_msg, setup_accounts, setup_block_time,
-};
+use crate::common_setup::setup_accounts_and_block::{coins_for_msg, setup_block_time};
 const INITIAL_BALANCE: u128 = 2_000_000_000;
 
 const MINT_PRICE: u128 = 100_000_000;
@@ -19,20 +14,9 @@ const MINT_FEE: u128 = 10_000_000;
 const ADMIN_MINT_PRICE: u128 = 0;
 #[test]
 fn update_mint_price() {
-    let mut router = custom_mock_app();
-    let (creator, buyer) = setup_accounts(&mut router);
-    let num_tokens = 1;
-    let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
-    let collection_params = mock_collection_params_1(Some(start_time));
-    let minter_params = minter_params_token(num_tokens);
-    let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
-        &mut router,
-        creator.clone(),
-        vec![collection_params],
-        vec![minter_params],
-    );
-
-    let minter_addr = minter_collection_response[0].minter.clone().unwrap();
+    let vt = vending_minter_template(10);
+    let (mut router, creator, buyer) = (vt.router, vt.creator, vt.buyer);
+    let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
     setup_block_time(&mut router, GENESIS_MINT_START_TIME - 10, None);
 
     // Update mint price higher
@@ -97,21 +81,10 @@ fn update_mint_price() {
 
 #[test]
 fn burn_remaining() {
-    let mut router = custom_mock_app();
-    let (creator, buyer) = setup_accounts(&mut router);
-    let num_tokens = 5000;
-    let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME - 1);
-    let collection_params = mock_collection_params_1(Some(start_time));
-    let minter_params = minter_params_token(num_tokens);
-    let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
-        &mut router,
-        creator.clone(),
-        vec![collection_params],
-        vec![minter_params],
-    );
-
-    let minter_addr = minter_collection_response[0].minter.clone().unwrap();
-
+    let vt =
+        vending_minter_with_start_time(5000, Timestamp::from_nanos(GENESIS_MINT_START_TIME - 1));
+    let (mut router, creator, buyer) = (vt.router, vt.creator, vt.buyer);
+    let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
     // Default start time genesis mint time
     let res: StartTimeResponse = router
         .wrap()

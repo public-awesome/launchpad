@@ -1,7 +1,10 @@
 use crate::common_setup::contract_boxes::custom_mock_app;
 use crate::common_setup::msg::{MinterCollectionResponse, MinterInstantiateParams};
 use crate::common_setup::setup_accounts_and_block::{setup_accounts, setup_block_time};
-use crate::common_setup::setup_minter::{configure_minter, minter_params_token};
+use crate::common_setup::setup_minter::vending_minter::setup::{
+    configure_minter, vending_minter_code_ids,
+};
+use crate::common_setup::templates::{vending_minter_with_app, vending_minter_with_start_time};
 use cosmwasm_std::{coins, Addr, Timestamp};
 use cw_multi_test::Executor;
 use sg2::tests::mock_collection_params_1;
@@ -14,20 +17,9 @@ const MINT_PRICE: u128 = 100_000_000;
 
 #[test]
 fn before_start_time() {
-    let mut router = custom_mock_app();
-    let (creator, buyer) = setup_accounts(&mut router);
-    let num_tokens = 1;
-    let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME - 10);
-    let collection_params = mock_collection_params_1(Some(start_time));
-    let minter_params = minter_params_token(num_tokens);
-    let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
-        &mut router,
-        creator,
-        vec![collection_params],
-        vec![minter_params],
-    );
-
-    let minter_addr = minter_collection_response[0].minter.clone().unwrap();
+    let vt = vending_minter_with_start_time(1, Timestamp::from_nanos(GENESIS_MINT_START_TIME - 10));
+    let (mut router, _, buyer) = (vt.router, vt.creator, vt.buyer);
+    let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
 
     // Set start_time fails if not admin
     let start_time_msg = ExecuteMsg::UpdateStartTime(Timestamp::from_nanos(0));
@@ -75,21 +67,11 @@ fn before_start_time() {
 
 #[test]
 fn test_update_start_time() {
-    let mut router = custom_mock_app();
-    let (creator, _) = setup_accounts(&mut router);
-    let num_tokens = 1;
     let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 100);
-    // Public mint has started
-    let collection_params = mock_collection_params_1(Some(start_time));
-    let minter_params = minter_params_token(num_tokens);
-    let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
-        &mut router,
-        creator.clone(),
-        vec![collection_params],
-        vec![minter_params],
-    );
+    let vt = vending_minter_with_start_time(1, start_time);
+    let (mut router, creator) = (vt.router, vt.creator);
+    let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
 
-    let minter_addr = minter_collection_response[0].minter.clone().unwrap();
     setup_block_time(&mut router, start_time.nanos(), None);
 
     // Update to a start time in the past
@@ -117,11 +99,13 @@ fn test_invalid_start_time() {
         start_time: Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME - 100)),
         init_msg: None,
     };
+    let code_ids = vending_minter_code_ids(&mut router);
     let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
         &mut router,
         creator.clone(),
         vec![collection_params.clone()],
         vec![minter_params],
+        code_ids,
     );
 
     let err = minter_collection_response[0]
@@ -142,11 +126,13 @@ fn test_invalid_start_time() {
         start_time: Some(minter_start_time),
         init_msg: None,
     };
+    let code_ids = vending_minter_code_ids(&mut router);
     let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
         &mut router,
         creator.clone(),
         vec![collection_params.clone()],
         vec![minter_params],
+        code_ids.clone(),
     );
 
     let err = minter_collection_response[0]
@@ -172,6 +158,7 @@ fn test_invalid_start_time() {
         creator.clone(),
         vec![collection_params],
         vec![minter_params],
+        code_ids,
     );
     let minter_addr = minter_collection_response[0].minter.clone().unwrap();
     assert_eq!(minter_addr.to_string(), "contract3");
@@ -221,11 +208,13 @@ fn invalid_trading_time_during_init() {
         start_time: None,
         init_msg: None,
     };
+    let code_ids = vending_minter_code_ids(&mut router);
     let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
         &mut router,
         creator,
         vec![collection_params],
         vec![minter_params],
+        code_ids,
     );
     let err = minter_collection_response[0].error.as_deref();
     let expected_error = ContractError::InvalidStartTradingTime(
@@ -240,22 +229,13 @@ fn invalid_trading_time_during_init() {
 #[test]
 fn update_start_trading_time() {
     let mut router = custom_mock_app();
-    let (creator, buyer) = setup_accounts(&mut router);
-    let num_tokens = 2;
     setup_block_time(&mut router, GENESIS_MINT_START_TIME - 1, None);
-    let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
-    let collection_params = mock_collection_params_1(Some(start_time));
-    let minter_params = minter_params_token(num_tokens);
-    let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
-        &mut router,
-        creator.clone(),
-        vec![collection_params],
-        vec![minter_params],
-    );
-    let minter_addr = minter_collection_response[0].minter.clone().unwrap();
-    let collection_addr = minter_collection_response[0].collection.clone().unwrap();
-    let max_trading_offset = 60 * 60 * 24 * 7;
+    let vt = vending_minter_with_app(1, router);
+    let (mut router, creator, buyer) = (vt.router, vt.creator, vt.buyer);
+    let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
+    let collection_addr = vt.collection_response_vec[0].collection.clone().unwrap();
 
+    let max_trading_offset = 60 * 60 * 24 * 7;
     // unauthorized
     let res = router.execute_contract(
         Addr::unchecked(buyer),

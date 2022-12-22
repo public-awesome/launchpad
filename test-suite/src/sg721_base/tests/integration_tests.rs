@@ -1,116 +1,34 @@
 #[cfg(test)]
 mod tests {
-    use cosmwasm_std::{coin, Addr, Timestamp};
+    use cosmwasm_std::{coin, Addr};
     use cw721::NumTokensResponse;
-    use cw_multi_test::{BankSudo, Contract, ContractWrapper, Executor, SudoMsg};
-    use sg2::msg::{CollectionParams, CreateMinterMsg};
+    use cw_multi_test::{BankSudo, Executor, SudoMsg};
+    use sg2::msg::CreateMinterMsg;
     use sg2::tests::mock_collection_params;
     use sg721::ExecuteMsg as Sg721ExecuteMsg;
     use sg721::{CollectionInfo, InstantiateMsg};
     use sg_multi_test::StargazeApp;
-    use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME};
     use vending_factory::helpers::FactoryContract;
     use vending_factory::msg::{
-        ExecuteMsg, InstantiateMsg as FactoryInstantiateMsg, VendingMinterCreateMsg,
-        VendingMinterInitMsgExtension,
+        ExecuteMsg, InstantiateMsg as FactoryInstantiateMsg, VendingMinterInitMsgExtension,
     };
-    use vending_factory::state::{ParamsExtension, VendingMinterParams};
 
-    pub fn factory_contract() -> Box<dyn Contract<StargazeMsgWrapper>> {
-        let contract = ContractWrapper::new(
-            vending_factory::contract::execute,
-            vending_factory::contract::instantiate,
-            vending_factory::contract::query,
-        );
-        Box::new(contract)
-    }
-
-    pub fn minter_contract() -> Box<dyn Contract<StargazeMsgWrapper>> {
-        let contract = ContractWrapper::new(
-            vending_minter::contract::execute,
-            vending_minter::contract::instantiate,
-            vending_minter::contract::query,
-        )
-        .with_reply(vending_minter::contract::reply);
-        Box::new(contract)
-    }
-
-    pub fn sg721_base_contract() -> Box<dyn Contract<StargazeMsgWrapper>> {
-        let contract = ContractWrapper::new(
-            crate::entry::execute,
-            crate::entry::instantiate,
-            crate::entry::query,
-        );
-        Box::new(contract)
-    }
+    use crate::common_setup::contract_boxes::{
+        contract_sg721_base, contract_vending_factory, contract_vending_minter, custom_mock_app,
+    };
+    use crate::common_setup::setup_minter::common::constants::CREATION_FEE;
+    use crate::common_setup::setup_minter::vending_minter::mock_params::{
+        mock_create_minter, mock_init_extension, mock_params,
+    };
 
     const GOVERNANCE: &str = "governance";
     const ADMIN: &str = "admin";
     const NATIVE_DENOM: &str = "ustars";
 
-    pub const CREATION_FEE: u128 = 5_000_000_000;
-    pub const MIN_MINT_PRICE: u128 = 50_000_000;
-    pub const AIRDROP_MINT_PRICE: u128 = 15_000_000;
-    pub const MINT_FEE_BPS: u64 = 1_000; // 10%
-    pub const AIRDROP_MINT_FEE_BPS: u64 = 10_000; // 100%
-    pub const SHUFFLE_FEE: u128 = 500_000_000;
-    pub const MAX_TOKEN_LIMIT: u32 = 10_000;
-    pub const MAX_PER_ADDRESS_LIMIT: u32 = 50;
-
-    fn custom_mock_app() -> StargazeApp {
-        StargazeApp::default()
-    }
-
-    pub fn mock_init_extension() -> VendingMinterInitMsgExtension {
-        VendingMinterInitMsgExtension {
-            base_token_uri: "ipfs://aldkfjads".to_string(),
-            payment_address: None,
-            start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
-            num_tokens: 100,
-            mint_price: coin(MIN_MINT_PRICE, NATIVE_DENOM),
-            per_address_limit: 5,
-            whitelist: None,
-        }
-    }
-
-    pub fn mock_params() -> VendingMinterParams {
-        VendingMinterParams {
-            code_id: 1,
-            creation_fee: coin(CREATION_FEE, NATIVE_DENOM),
-            min_mint_price: coin(MIN_MINT_PRICE, NATIVE_DENOM),
-            mint_fee_bps: MINT_FEE_BPS,
-            extension: ParamsExtension {
-                max_token_limit: MAX_TOKEN_LIMIT,
-                max_per_address_limit: MAX_PER_ADDRESS_LIMIT,
-                airdrop_mint_price: coin(AIRDROP_MINT_PRICE, NATIVE_DENOM),
-                airdrop_mint_fee_bps: AIRDROP_MINT_FEE_BPS,
-                shuffle_fee: coin(SHUFFLE_FEE, NATIVE_DENOM),
-            },
-            max_trading_offset_secs: 60 * 60 * 24 * 7,
-        }
-    }
-
-    pub fn mock_create_minter() -> VendingMinterCreateMsg {
-        VendingMinterCreateMsg {
-            init_msg: mock_init_extension(),
-            collection_params: mock_collection_params(),
-        }
-    }
-
-    pub fn custom_mock_create_minter(
-        init_msg: VendingMinterInitMsgExtension,
-        custom_params: CollectionParams,
-    ) -> VendingMinterCreateMsg {
-        VendingMinterCreateMsg {
-            init_msg,
-            collection_params: custom_params,
-        }
-    }
-
     fn proper_instantiate_factory() -> (StargazeApp, FactoryContract) {
         let mut app = custom_mock_app();
-        let factory_id = app.store_code(factory_contract());
-        let minter_id = app.store_code(minter_contract());
+        let factory_id = app.store_code(contract_vending_factory());
+        let minter_id = app.store_code(contract_vending_minter());
 
         let mut params = mock_params();
         params.code_id = minter_id;
@@ -134,9 +52,10 @@ mod tests {
 
     fn proper_instantiate() -> (StargazeApp, Addr) {
         let (mut app, factory_contract) = proper_instantiate_factory();
-        let sg721_id = app.store_code(sg721_base_contract());
+        let sg721_id = app.store_code(contract_sg721_base());
 
-        let mut m = mock_create_minter();
+        let collection_params = mock_collection_params();
+        let mut m = mock_create_minter(None, collection_params, None);
         m.collection_params.code_id = sg721_id;
         let msg = ExecuteMsg::CreateMinter(m);
 
@@ -165,7 +84,7 @@ mod tests {
         custom_create_minter_msg: CreateMinterMsg<VendingMinterInitMsgExtension>,
     ) -> (StargazeApp, Addr) {
         let (mut app, factory_contract) = proper_instantiate_factory();
-        let sg721_id = app.store_code(sg721_base_contract());
+        let sg721_id = app.store_code(contract_sg721_base());
 
         let mut m = custom_create_minter_msg;
         m.collection_params.code_id = sg721_id;
@@ -196,8 +115,10 @@ mod tests {
 
         use cw721_base::MinterResponse;
 
+        use crate::common_setup::setup_minter::vending_minter::mock_params::mock_create_minter_init_msg;
+
         use super::*;
-        use crate::msg::QueryMsg;
+        use sg721_base::msg::QueryMsg;
         use vending_minter::msg::{ConfigResponse, QueryMsg as VendingMinterQueryMsg};
 
         #[test]
@@ -214,7 +135,7 @@ mod tests {
         #[test]
         fn check_ready_unauthorized() {
             let mut app = custom_mock_app();
-            let sg721_id = app.store_code(sg721_base_contract());
+            let sg721_id = app.store_code(contract_sg721_base());
             let msg = InstantiateMsg {
                 name: "sg721".to_string(),
                 symbol: "STARGAZE".to_string(),
@@ -251,11 +172,10 @@ mod tests {
             let base_token_uri = " ipfs://somecidhere ".to_string();
             let init_msg = VendingMinterInitMsgExtension {
                 base_token_uri: base_token_uri.clone(),
-                ..mock_init_extension()
+                ..mock_init_extension(None, None)
             };
             let custom_create_minter_msg =
-                custom_mock_create_minter(init_msg, mock_collection_params());
-
+                mock_create_minter_init_msg(mock_collection_params(), init_msg);
             let (app, contract) = custom_proper_instantiate(custom_create_minter_msg);
 
             // query minter config to confirm base_token_uri got trimmed
@@ -274,10 +194,13 @@ mod tests {
             let base_token_uri = " IPFS://somecidhereipfs ".to_string();
             let init_msg = VendingMinterInitMsgExtension {
                 base_token_uri,
-                ..mock_init_extension()
+                ..mock_init_extension(None, None)
             };
             let custom_create_minter_msg =
-                custom_mock_create_minter(init_msg, mock_collection_params());
+                mock_create_minter_init_msg(mock_collection_params(), init_msg);
+            // let custom_create_minter_msg = mock_create_minter(None, mock_collection_params(), None);
+            // let custom_create_minter_msg =
+            //     custom_mock_create_minter(init_msg, mock_collection_params());
 
             let (app, contract) = custom_proper_instantiate(custom_create_minter_msg);
 
@@ -297,10 +220,10 @@ mod tests {
             let base_token_uri = "IPFS://aBcDeF".to_string();
             let init_msg = VendingMinterInitMsgExtension {
                 base_token_uri,
-                ..mock_init_extension()
+                ..mock_init_extension(None, None)
             };
             let custom_create_minter_msg =
-                custom_mock_create_minter(init_msg, mock_collection_params());
+                mock_create_minter_init_msg(mock_collection_params(), init_msg);
 
             let (app, contract) = custom_proper_instantiate(custom_create_minter_msg);
             let res: MinterResponse = app
@@ -320,8 +243,10 @@ mod tests {
         use cosmwasm_std::{Decimal, Empty};
         use sg721::{RoyaltyInfoResponse, UpdateCollectionInfoMsg};
 
+        use crate::common_setup::setup_minter::vending_minter::mock_params::mock_create_minter_init_msg;
+
         use super::*;
-        use crate::msg::{CollectionInfoResponse, QueryMsg};
+        use sg721_base::msg::{CollectionInfoResponse, QueryMsg};
 
         #[test]
         fn update_collection_info() {
@@ -329,7 +254,7 @@ mod tests {
             let mut params = mock_collection_params();
             params.info.external_link = None;
             let custom_create_minter_msg =
-                custom_mock_create_minter(mock_init_extension(), params.clone());
+                mock_create_minter_init_msg(params.clone(), mock_init_extension(None, None));
             let (app, contract) = custom_proper_instantiate(custom_create_minter_msg.clone());
 
             // default trading start time is start time + default trading start time offset
@@ -337,7 +262,7 @@ mod tests {
                 .wrap()
                 .query_wasm_smart(contract, &QueryMsg::CollectionInfo {})
                 .unwrap();
-            let default_start_time = mock_init_extension()
+            let default_start_time = mock_init_extension(None, None)
                 .start_time
                 .plus_seconds(mock_params().max_trading_offset_secs);
             assert_eq!(res.start_trading_time, Some(default_start_time));

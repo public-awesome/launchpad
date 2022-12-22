@@ -2,7 +2,10 @@ use crate::common_setup::{
     contract_boxes::{contract_splits, custom_mock_app},
     msg::MinterCollectionResponse,
     setup_accounts_and_block::{instantiate_group, setup_accounts, setup_block_time},
-    setup_minter::{configure_minter, minter_params_all},
+    setup_minter::{
+        common::minter_params::minter_params_all,
+        vending_minter::setup::{configure_minter, vending_minter_code_ids},
+    },
 };
 use cosmwasm_std::{coins, Addr, Coin, Timestamp};
 use cw4::Member;
@@ -72,12 +75,13 @@ fn mint_and_split() {
     let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
     let minter_params = minter_params_all(num_tokens, Some(splits_addr.to_string()), None, None);
     let collection_params = mock_collection_params_1(Some(start_time));
-
+    let code_ids = vending_minter_code_ids(&mut app);
     let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
         &mut app,
         creator,
         vec![collection_params],
         vec![minter_params],
+        code_ids,
     );
     let minter_addr = minter_collection_response[0].minter.clone().unwrap();
     setup_block_time(&mut app, GENESIS_MINT_START_TIME + 1, None);

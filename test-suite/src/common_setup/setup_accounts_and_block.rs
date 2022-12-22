@@ -8,8 +8,8 @@ use crate::common_setup::contract_boxes::contract_group;
 
 const OWNER: &str = "admin0001";
 
-const CREATION_FEE: u128 = 5_000_000_000;
-const INITIAL_BALANCE: u128 = 2_000_000_000;
+pub const CREATION_FEE: u128 = 5_000_000_000;
+pub const INITIAL_BALANCE: u128 = 2_000_000_000;
 
 // uploads code and returns address of group contract
 pub fn instantiate_group(app: &mut StargazeApp, members: Vec<Member>) -> Addr {

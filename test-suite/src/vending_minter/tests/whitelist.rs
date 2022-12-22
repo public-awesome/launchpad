@@ -10,7 +10,13 @@ use crate::common_setup::setup_accounts_and_block::coins_for_msg;
 use crate::common_setup::setup_collection_whitelist::{
     configure_collection_whitelist, setup_whitelist_contract,
 };
-use crate::common_setup::setup_minter::{configure_minter, minter_params_all, minter_params_token};
+use crate::common_setup::setup_minter::common::minter_params::{
+    minter_params_all, minter_params_token,
+};
+use crate::common_setup::setup_minter::vending_minter::setup::{
+    configure_minter, vending_minter_code_ids,
+};
+use crate::common_setup::templates::vending_minter_template;
 use crate::common_setup::{
     contract_boxes::custom_mock_app,
     setup_accounts_and_block::{setup_accounts, setup_block_time},
@@ -46,11 +52,13 @@ fn invalid_whitelist_instantiate() {
     };
 
     let minter_params = minter_params_all(num_tokens, None, None, Some(init_msg));
+    let code_ids = vending_minter_code_ids(&mut router);
     let minter_collection_response = configure_minter(
         &mut router,
         creator,
         vec![collection_params],
         vec![minter_params],
+        code_ids,
     );
     let err = minter_collection_response[0].error.as_ref();
 
@@ -62,19 +70,9 @@ fn invalid_whitelist_instantiate() {
 
 #[test]
 fn set_invalid_whitelist() {
-    let mut router = custom_mock_app();
-    let (creator, _) = setup_accounts(&mut router);
-    let num_tokens = 10;
-    let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
-    let collection_params = mock_collection_params_1(Some(start_time));
-    let minter_params = minter_params_token(num_tokens);
-    let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
-        &mut router,
-        creator.clone(),
-        vec![collection_params],
-        vec![minter_params],
-    );
-    let minter_addr = minter_collection_response[0].minter.clone().unwrap();
+    let vt = vending_minter_template(10);
+    let (mut router, creator, _) = (vt.router, vt.creator, vt.buyer);
+    let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
     let whitelist_addr = setup_whitelist_contract(&mut router, &creator, None);
     const EXPIRATION_TIME: Timestamp = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000);
 
@@ -144,11 +142,13 @@ fn whitelist_mint_count_query() {
     let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
     let collection_params = mock_collection_params_1(Some(start_time));
     let minter_params = minter_params_token(num_tokens);
+    let code_ids = vending_minter_code_ids(&mut router);
     let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
         &mut router,
         creator.clone(),
         vec![collection_params],
         vec![minter_params],
+        code_ids,
     );
     let minter_addr = minter_collection_response[0].minter.clone().unwrap();
     let collection_addr = minter_collection_response[0].collection.clone().unwrap();
@@ -351,11 +351,13 @@ fn whitelist_already_started() {
     let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
     let collection_params = mock_collection_params_1(Some(start_time));
     let minter_params = minter_params_token(num_tokens);
+    let code_ids = vending_minter_code_ids(&mut router);
     let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
         &mut router,
         creator.clone(),
         vec![collection_params],
         vec![minter_params],
+        code_ids,
     );
     let minter_addr = minter_collection_response[0].minter.clone().unwrap();
     let whitelist_addr = setup_whitelist_contract(&mut router, &creator, None);
@@ -384,11 +386,13 @@ fn whitelist_can_update_before_start() {
     let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
     let collection_params = mock_collection_params_1(Some(start_time));
     let minter_params = minter_params_token(num_tokens);
+    let code_ids = vending_minter_code_ids(&mut router);
     let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
         &mut router,
         creator.clone(),
         vec![collection_params],
         vec![minter_params],
+        code_ids,
     );
     let minter_addr = minter_collection_response[0].minter.clone().unwrap();
     let whitelist_addr = setup_whitelist_contract(&mut router, &creator, None);
@@ -422,11 +426,13 @@ fn whitelist_access_len_add_remove_expiration() {
     let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
     let collection_params = mock_collection_params_1(Some(start_time));
     let minter_params = minter_params_token(num_tokens);
+    let code_ids = vending_minter_code_ids(&mut router);
     let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
         &mut router,
         creator.clone(),
         vec![collection_params],
         vec![minter_params],
+        code_ids,
     );
     let minter_addr = minter_collection_response[0].minter.clone().unwrap();
     let sg721_addr = minter_collection_response[0].collection.clone().unwrap();
