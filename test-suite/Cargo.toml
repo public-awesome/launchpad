@@ -76,5 +76,5 @@ url = { workspace = true }
 vending-factory = { workspace = true, features = ["library"] }
 vending-minter = { workspace = true, features = ["library"] }
 base-factory = { workspace = true }
-base-minter = { path = "../contracts/base-minter" }
-sg721-nt = {path = "../contracts/sg721-nt"}
+base-minter = { worksspace = true }
+sg721-nt = { workspace = true }
