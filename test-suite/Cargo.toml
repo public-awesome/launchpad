@@ -55,7 +55,7 @@ sg-whitelist = { workspace = true, features = ["library"] }
 vending-factory = { workspace = true, features = ["library"] }
 vending-minter = { workspace = true, features = ["library"] }
 base-factory = { workspace = true }
-base-minter = { worksspace = true }
+base-minter = { workspace = true }
 sg721-nt = { workspace = true }
 
 [dev-dependencies]

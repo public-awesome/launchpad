@@ -55,4 +55,4 @@ url             = { workspace = true }
 [dev-dependencies]
 cw-multi-test = { workspace = true }
 sg-multi-test = { workspace = true }
-sg721-nt      = { path = "../sg721-nt" }
+sg721-nt      = { workspace = true }
