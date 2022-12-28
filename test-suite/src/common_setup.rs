@@ -1,5 +1,4 @@
 pub mod contract_boxes;
-pub use contract_boxes::contract_base_factory;
 pub mod contract_boxes_empty;
 pub mod helpers;
 pub mod msg;

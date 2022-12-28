@@ -1,9 +1,9 @@
+pub mod common_setup;
+
 #[cfg(test)]
-pub mod base_factory;
+mod base_factory;
 #[cfg(test)]
 mod base_minter;
-#[cfg(test)]
-pub mod common_setup;
 #[cfg(test)]
 mod sg721_base;
 #[cfg(test)]
