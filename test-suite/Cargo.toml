@@ -5,7 +5,7 @@ authors = [
 ]
 description = "Stargaze test-suite for launchpad"
 version = { workspace = true }
-edition = { workspace = true }
+edition = "2018"
 homepage = { workspace = true }
 repository = { workspace = true }
 license = { workspace = true }
