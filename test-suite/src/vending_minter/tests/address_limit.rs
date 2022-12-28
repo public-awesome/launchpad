@@ -22,7 +22,7 @@ const ADMIN_MINT_PRICE: u128 = 0;
 #[test]
 fn check_per_address_limit() {
     let vt = vending_minter_template(2);
-    let (mut router, creator, buyer) = (vt.router, vt.creator, vt.buyer);
+    let (mut router, creator, buyer) = (vt.router, vt.accts.creator, vt.accts.buyer);
     let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
     // Set to genesis mint start time
     setup_block_time(&mut router, GENESIS_MINT_START_TIME, None);
@@ -97,7 +97,7 @@ fn check_dynamic_per_address_limit() {
     // let mut router = custom_mock_app();
     let num_tokens = 400;
     let vt = vending_minter_template(num_tokens);
-    let (mut router, creator) = (vt.router, vt.creator);
+    let (mut router, creator) = (vt.router, vt.accts.creator);
     let err = vt.collection_response_vec[0].error.as_ref();
 
     setup_block_time(&mut router, GENESIS_MINT_START_TIME - 1, None);
@@ -148,7 +148,7 @@ fn check_dynamic_per_address_limit() {
 #[test]
 fn mint_for_token_id_addr() {
     let vt = vending_minter_template(4);
-    let (mut router, creator, buyer) = (vt.router, vt.creator, vt.buyer);
+    let (mut router, creator, buyer) = (vt.router, vt.accts.creator, vt.accts.buyer);
     let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
     let collection_addr = vt.collection_response_vec[0].collection.clone().unwrap();
     setup_block_time(&mut router, GENESIS_MINT_START_TIME, None);

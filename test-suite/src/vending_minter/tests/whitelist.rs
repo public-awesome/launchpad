@@ -71,7 +71,7 @@ fn invalid_whitelist_instantiate() {
 #[test]
 fn set_invalid_whitelist() {
     let vt = vending_minter_template(10);
-    let (mut router, creator, _) = (vt.router, vt.creator, vt.buyer);
+    let (mut router, creator, _) = (vt.router, vt.accts.creator, vt.accts.buyer);
     let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
     let whitelist_addr = setup_whitelist_contract(&mut router, &creator, None);
     const EXPIRATION_TIME: Timestamp = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000);
