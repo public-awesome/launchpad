@@ -15,7 +15,7 @@ const ADMIN_MINT_PRICE: u128 = 0;
 #[test]
 fn update_mint_price() {
     let vt = vending_minter_template(10);
-    let (mut router, creator, buyer) = (vt.router, vt.creator, vt.buyer);
+    let (mut router, creator, buyer) = (vt.router, vt.accts.creator, vt.accts.buyer);
     let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
     setup_block_time(&mut router, GENESIS_MINT_START_TIME - 10, None);
 
@@ -83,7 +83,7 @@ fn update_mint_price() {
 fn burn_remaining() {
     let vt =
         vending_minter_with_start_time(5000, Timestamp::from_nanos(GENESIS_MINT_START_TIME - 1));
-    let (mut router, creator, buyer) = (vt.router, vt.creator, vt.buyer);
+    let (mut router, creator, buyer) = (vt.router, vt.accts.creator, vt.accts.buyer);
     let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
     // Default start time genesis mint time
     let res: StartTimeResponse = router

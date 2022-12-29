@@ -85,7 +85,7 @@ fn initialization() {
 #[test]
 fn happy_path() {
     let vt = vending_minter_template(2);
-    let (mut router, creator, buyer) = (vt.router, vt.creator, vt.buyer);
+    let (mut router, creator, buyer) = (vt.router, vt.accts.creator, vt.accts.buyer);
     let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
     let collection_addr = vt.collection_response_vec[0].collection.clone().unwrap();
 
@@ -264,7 +264,7 @@ fn happy_path() {
 #[test]
 fn unhappy_path() {
     let vt = vending_minter_template(2);
-    let (mut router, _, buyer) = (vt.router, vt.creator, vt.buyer);
+    let (mut router, _, buyer) = (vt.router, vt.accts.creator, vt.accts.buyer);
     let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
     // Fails if too little funds are sent
     let mint_msg = ExecuteMsg::Mint {};

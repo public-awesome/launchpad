@@ -13,7 +13,7 @@ use sg_std::NATIVE_DENOM;
 #[test]
 fn check_mint() {
     let bmt = base_minter_with_sg721nt(1);
-    let (mut router, creator, buyer) = (bmt.router, bmt.creator, bmt.buyer);
+    let (mut router, creator, buyer) = (bmt.router, bmt.accts.creator, bmt.accts.buyer);
     let minter_addr = bmt.collection_response_vec[0].minter.clone().unwrap();
     let collection_addr = bmt.collection_response_vec[0].collection.clone().unwrap();
 
@@ -105,7 +105,7 @@ fn check_mint() {
 #[test]
 fn update_start_trading_time() {
     let bmt = base_minter_with_sg721(1);
-    let (mut router, creator, buyer) = (bmt.router, bmt.creator, bmt.buyer);
+    let (mut router, creator, buyer) = (bmt.router, bmt.accts.creator, bmt.accts.buyer);
     let minter_addr = bmt.collection_response_vec[0].minter.clone().unwrap();
     let collection_addr = bmt.collection_response_vec[0].collection.clone().unwrap();
     let current_block_time = router.block_info().time;

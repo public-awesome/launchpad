@@ -20,12 +20,9 @@ use sg_eth_airdrop::contract::INSTANTIATION_FEE;
 
 #[test]
 fn test_set_minter_contract_success() {
-    let vending_template = vending_minter_template(1);
-    let (mut app, creator) = (vending_template.router, vending_template.creator);
-    let minter_addr = vending_template.collection_response_vec[0]
-        .minter
-        .clone()
-        .unwrap();
+    let vt = vending_minter_template(1);
+    let (mut app, creator) = (vt.router, vt.accts.creator);
+    let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
 
     let claim_plaintext = &get_msg_plaintext(STARGAZE_WALLET_01.to_string());
     let (_, _, _, eth_addr_str) = get_wallet_and_sig(claim_plaintext.clone());
@@ -54,7 +51,7 @@ fn test_set_minter_contract_success() {
 #[test]
 fn test_claim_added_to_minter_whitelist() {
     let vt = vending_minter_template(1);
-    let (mut app, creator, buyer) = (vt.router, vt.creator, vt.buyer);
+    let (mut app, creator, buyer) = (vt.router, vt.accts.creator, vt.accts.buyer);
     let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
     let whitelist_addr =
         configure_collection_whitelist(&mut app, creator.clone(), buyer, minter_addr.clone());

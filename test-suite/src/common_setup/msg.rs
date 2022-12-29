@@ -39,9 +39,13 @@ pub struct CodeIds {
     pub sg721_code_id: u64,
 }
 
-pub struct VendingTemplateResponse {
+pub struct VendingTemplateResponse<T> {
     pub collection_response_vec: Vec<MinterCollectionResponse>,
     pub router: StargazeApp,
+    pub accts: T,
+}
+
+pub struct VendingAccounts {
     pub creator: Addr,
     pub buyer: Addr,
 }

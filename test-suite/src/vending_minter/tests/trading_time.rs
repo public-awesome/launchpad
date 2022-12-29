@@ -18,7 +18,7 @@ const MINT_PRICE: u128 = 100_000_000;
 #[test]
 fn before_start_time() {
     let vt = vending_minter_with_start_time(1, Timestamp::from_nanos(GENESIS_MINT_START_TIME - 10));
-    let (mut router, _, buyer) = (vt.router, vt.creator, vt.buyer);
+    let (mut router, _, buyer) = (vt.router, vt.accts.creator, vt.accts.buyer);
     let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
 
     // Set start_time fails if not admin
@@ -69,7 +69,7 @@ fn before_start_time() {
 fn test_update_start_time() {
     let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 100);
     let vt = vending_minter_with_start_time(1, start_time);
-    let (mut router, creator) = (vt.router, vt.creator);
+    let (mut router, creator) = (vt.router, vt.accts.creator);
     let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
 
     setup_block_time(&mut router, start_time.nanos(), None);
@@ -231,7 +231,7 @@ fn update_start_trading_time() {
     let mut router = custom_mock_app();
     setup_block_time(&mut router, GENESIS_MINT_START_TIME - 1, None);
     let vt = vending_minter_with_app(1, router);
-    let (mut router, creator, buyer) = (vt.router, vt.creator, vt.buyer);
+    let (mut router, creator, buyer) = (vt.router, vt.accts.creator, vt.accts.buyer);
     let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
     let collection_addr = vt.collection_response_vec[0].collection.clone().unwrap();
 
