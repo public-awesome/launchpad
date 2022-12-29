@@ -4,11 +4,11 @@ authors = [
   "Michael Scotto <m@publicawesome.com>",
 ]
 description = "Stargaze test-suite for launchpad"
-version = { workspace = true }
-edition = "2018"
-homepage = { workspace = true }
-repository = { workspace = true }
-license = { workspace = true }
+version = "0.21.8"
+edition = "2021"
+homepage = "https://stargaze.zone"
+repository = "https://github.com/public-awesome/launchpad"
+license = "Apache-2.0"
 
 exclude = [
   # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
