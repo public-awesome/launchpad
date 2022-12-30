@@ -1,6 +1,7 @@
 [package]
 name = "whitelist-immutable"
 authors = ["Michael S<m@publicawesome.com>"]
+description = "Store-once whitelist for read only use cases"
 version = { workspace = true }
 edition = { workspace = true }
 homepage = { workspace = true }
