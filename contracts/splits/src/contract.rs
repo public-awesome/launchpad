@@ -1,51 +1,56 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coins, to_binary, BankMsg, Binary, Decimal, Deps, DepsMut, Env, MessageInfo, Response,
-    StdResult,
+    coins, to_binary, Addr, BankMsg, Binary, Decimal, Deps, DepsMut, Env, MessageInfo, StdResult,
 };
 use cw2::set_contract_version;
 use cw4::{Cw4Contract, Member, MemberListResponse, MemberResponse};
-use sg_std::NATIVE_DENOM;
+use sg_std::{Response, SubMsg, NATIVE_DENOM};
 
 use crate::error::ContractError;
-use crate::msg::{ConfigResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
-use crate::state::{Config, Executor, CONFIG};
+use crate::msg::{ExecuteMsg, Group, InstantiateMsg, QueryMsg};
+use crate::state::GROUP;
 
 // version info for migration info
 pub const CONTRACT_NAME: &str = "crates.io:sg-splits";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
+const INIT_GROUP_REPLY_ID: u64 = 1;
+
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     _info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
-    let group_addr = Cw4Contract(deps.api.addr_validate(&msg.group_addr).map_err(|_| {
-        ContractError::InvalidGroup {
-            addr: msg.group_addr.clone(),
-        }
-    })?);
-    let weight = group_addr.total_weight(&deps.querier)?;
-    if weight == 0 {
-        return Err(ContractError::InvalidWeight { weight });
-    }
-
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
-    if let Some(Executor::Only(ref addr)) = msg.executor {
-        deps.api.addr_validate(addr.as_ref())?;
+    let self_addr = env.contract.address;
+
+    match msg.group {
+        Group::Cw4Instantiate(init) => Ok(Response::default().add_submessage(
+            SubMsg::reply_on_success(init.into_wasm_msg(self_addr), INIT_GROUP_REPLY_ID),
+        )),
+        Group::Cw4Address(addr) => {
+            let group_addr = deps.api.addr_validate(&addr)?;
+            let total_group_weight = Cw4Contract(group_addr.clone()).total_weight(&deps.querier)?;
+
+            let group = Cw4Contract(
+                deps.api
+                    .addr_validate(&addr)
+                    .map_err(|_| ContractError::InvalidGroup { addr })?,
+            );
+
+            let weight = group.total_weight(&deps.querier)?;
+            if weight == 0 {
+                return Err(ContractError::InvalidWeight { weight });
+            }
+
+            GROUP.save(deps.storage, &group)?;
+            Ok(Response::default())
+        }
     }
-
-    let cfg = Config {
-        group_addr,
-        executor: msg.executor,
-    };
-    CONFIG.save(deps.storage, &cfg)?;
-
-    Ok(Response::default())
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -65,18 +70,22 @@ pub fn execute_distribute(
     env: Env,
     info: MessageInfo,
 ) -> Result<Response, ContractError> {
-    let config = CONFIG.load(deps.storage)?;
+    let group = GROUP.load(deps.storage)?;
 
-    config.authorize(&deps.querier, &info.sender)?;
+    // only a member can distribute funds
+    let weight = group
+        .is_member(&deps.querier, &info.sender, None)?
+        .ok_or(ContractError::Unauthorized {})?;
+    if weight == 0 {
+        return Err(ContractError::InvalidWeight { weight });
+    }
 
-    let total_weight = config.group_addr.total_weight(&deps.querier)?;
+    let total_weight = group.total_weight(&deps.querier)?;
     if total_weight == 0 {
         return Err(ContractError::InvalidWeight {
             weight: total_weight,
         });
     }
-
-    let members = config.group_addr.list_members(&deps.querier, None, None)?;
 
     let funds = deps
         .querier
@@ -85,7 +94,8 @@ pub fn execute_distribute(
         return Err(ContractError::NoFunds {});
     }
 
-    let msgs = members
+    let msgs = group
+        .list_members(&deps.querier, None, None)?
         .iter()
         .map(|member| {
             let ratio = Decimal::from_ratio(member.weight, total_weight);
@@ -105,7 +115,7 @@ pub fn execute_distribute(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::Config {} => to_binary(&query_config(deps)?),
+        QueryMsg::Group {} => to_binary(&query_group(deps)?),
         QueryMsg::ListMembers { start_after, limit } => {
             to_binary(&list_members(deps, start_after, limit)?)
         }
@@ -113,16 +123,14 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     }
 }
 
-fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
-    let config = CONFIG.load(deps.storage)?;
-
-    Ok(ConfigResponse { config })
+fn query_group(deps: Deps) -> StdResult<Addr> {
+    Ok(GROUP.load(deps.storage)?.addr())
 }
 
 fn query_member(deps: Deps, member: String) -> StdResult<MemberResponse> {
-    let cfg = CONFIG.load(deps.storage)?;
+    let group = GROUP.load(deps.storage)?;
     let voter_addr = deps.api.addr_validate(&member)?;
-    let weight = cfg.group_addr.is_member(&deps.querier, &voter_addr, None)?;
+    let weight = group.is_member(&deps.querier, &voter_addr, None)?;
 
     Ok(MemberResponse { weight })
 }
@@ -132,9 +140,8 @@ fn list_members(
     start_after: Option<String>,
     limit: Option<u32>,
 ) -> StdResult<MemberListResponse> {
-    let cfg = CONFIG.load(deps.storage)?;
-    let members = cfg
-        .group_addr
+    let group = GROUP.load(deps.storage)?;
+    let members = group
         .list_members(&deps.querier, start_after, limit)?
         .into_iter()
         .map(|member| Member {
