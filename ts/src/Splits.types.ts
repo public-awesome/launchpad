@@ -18,6 +18,7 @@ export type Admin = {
 };
 export type Binary = string;
 export interface InstantiateMsg {
+  admin?: string | null;
   group: Group;
 }
 export interface ContractInstantiateMsg {
@@ -27,9 +28,15 @@ export interface ContractInstantiateMsg {
   msg: Binary;
 }
 export type ExecuteMsg = {
+  update_admin: {
+    admin?: string | null;
+  };
+} | {
   distribute: {};
 };
 export type QueryMsg = {
+  admin: {};
+} | {
   group: {};
 } | {
   member: {
@@ -41,6 +48,9 @@ export type QueryMsg = {
     start_after?: string | null;
   };
 };
+export interface AdminResponse {
+  admin?: string | null;
+}
 export type Addr = string;
 export interface MemberListResponse {
   members: Member[];
