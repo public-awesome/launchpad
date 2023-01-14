@@ -1,4 +1,5 @@
-use cosmwasm_schema::cw_serde;
+use cosmwasm_schema::{cw_serde, QueryResponses};
+use cosmwasm_std::Addr;
 use sg_controllers::ContractInstantiateMsg;
 
 #[cw_serde]
@@ -18,12 +19,15 @@ pub enum ExecuteMsg {
 }
 
 #[cw_serde]
+#[derive(QueryResponses)]
 pub enum QueryMsg {
-    /// Returns the config
+    #[returns(Addr)]
     Group {},
-    /// Returns Member
+
+    #[returns(cw4::MemberResponse)]
     Member { address: String },
-    /// Returns MemberListResponse
+
+    #[returns(cw4::MemberListResponse)]
     ListMembers {
         start_after: Option<String>,
         limit: Option<u32>,

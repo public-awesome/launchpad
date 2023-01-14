@@ -6,10 +6,10 @@
 
 import { CosmWasmClient, SigningCosmWasmClient, ExecuteResult } from "@cosmjs/cosmwasm-stargate";
 import { Coin, StdFee } from "@cosmjs/amino";
-import { Executor, Addr, Cw4Contract, ConfigResponse, Config, ExecuteMsg, InstantiateMsg, ListMembersResponse, Member, MemberResponse, QueryMsg } from "./Splits.types";
+import { Group, Admin, Binary, InstantiateMsg, ContractInstantiateMsg, ExecuteMsg, QueryMsg, Addr, MemberListResponse, Member, MemberResponse } from "./Splits.types";
 export interface SplitsReadOnlyInterface {
   contractAddress: string;
-  config: () => Promise<ConfigResponse>;
+  group: () => Promise<Addr>;
   member: ({
     address
   }: {
@@ -21,7 +21,7 @@ export interface SplitsReadOnlyInterface {
   }: {
     limit?: number;
     startAfter?: string;
-  }) => Promise<ListMembersResponse>;
+  }) => Promise<MemberListResponse>;
 }
 export class SplitsQueryClient implements SplitsReadOnlyInterface {
   client: CosmWasmClient;
@@ -30,14 +30,14 @@ export class SplitsQueryClient implements SplitsReadOnlyInterface {
   constructor(client: CosmWasmClient, contractAddress: string) {
     this.client = client;
     this.contractAddress = contractAddress;
-    this.config = this.config.bind(this);
+    this.group = this.group.bind(this);
     this.member = this.member.bind(this);
     this.listMembers = this.listMembers.bind(this);
   }
 
-  config = async (): Promise<ConfigResponse> => {
+  group = async (): Promise<Addr> => {
     return this.client.queryContractSmart(this.contractAddress, {
-      config: {}
+      group: {}
     });
   };
   member = async ({
@@ -57,7 +57,7 @@ export class SplitsQueryClient implements SplitsReadOnlyInterface {
   }: {
     limit?: number;
     startAfter?: string;
-  }): Promise<ListMembersResponse> => {
+  }): Promise<MemberListResponse> => {
     return this.client.queryContractSmart(this.contractAddress, {
       list_members: {
         limit,

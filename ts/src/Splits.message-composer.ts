@@ -8,7 +8,7 @@ import { Coin } from "@cosmjs/amino";
 import { MsgExecuteContractEncodeObject } from "cosmwasm";
 import { MsgExecuteContract } from "cosmjs-types/cosmwasm/wasm/v1/tx";
 import { toUtf8 } from "@cosmjs/encoding";
-import { Executor, Addr, Cw4Contract, ConfigResponse, Config, ExecuteMsg, InstantiateMsg, ListMembersResponse, Member, MemberResponse, QueryMsg } from "./Splits.types";
+import { Group, Admin, Binary, InstantiateMsg, ContractInstantiateMsg, ExecuteMsg, QueryMsg, Addr, MemberListResponse, Member, MemberResponse } from "./Splits.types";
 export interface SplitsMessage {
   contractAddress: string;
   sender: string;
