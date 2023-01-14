@@ -28,6 +28,7 @@ library = []
 [dependencies]
 cosmwasm-schema = { workspace = true }
 cosmwasm-std    = { workspace = true }
+cw-controllers  = { workspace = true }
 cw2             = { workspace = true }
 cw4             = { workspace = true }
 cw-storage-plus = { workspace = true }

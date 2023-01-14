@@ -14,6 +14,7 @@ base-factory        = { version = "0.21.8", path = "contracts/base-factory" }
 base-minter         = { version = "0.21.8", path = "contracts/base-minter" }
 cosmwasm-schema     = "1.1.5"
 cosmwasm-std        = "1.1.5"
+cw-controllers      = "0.16.0"
 cw2                 = "0.16.0"
 cw4                 = "0.16.0"
 cw4-group           = "0.16.0"
