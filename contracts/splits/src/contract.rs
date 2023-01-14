@@ -6,12 +6,12 @@ use cosmwasm_std::{
 };
 use cw2::set_contract_version;
 use cw4::{Cw4Contract, Member, MemberListResponse, MemberResponse};
-use cw_utils::parse_reply_instantiate_data;
+use cw_utils::{maybe_addr, parse_reply_instantiate_data};
 use sg_std::NATIVE_DENOM;
 
 use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, Group, InstantiateMsg, QueryMsg};
-use crate::state::GROUP;
+use crate::state::{ADMIN, GROUP};
 
 // version info for migration info
 pub const CONTRACT_NAME: &str = "crates.io:sg-splits";
@@ -21,7 +21,7 @@ const INIT_GROUP_REPLY_ID: u64 = 1;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
-    deps: DepsMut,
+    mut deps: DepsMut,
     env: Env,
     _info: MessageInfo,
     msg: InstantiateMsg,
@@ -29,6 +29,9 @@ pub fn instantiate(
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
     let self_addr = env.contract.address;
+
+    let admin_addr = maybe_addr(deps.api, msg.admin)?;
+    ADMIN.set(deps.branch(), admin_addr)?;
 
     match msg.group {
         Group::Cw4Instantiate(init) => Ok(Response::default().add_submessage(
@@ -59,7 +62,12 @@ pub fn execute(
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
+    let api = deps.api;
+
     match msg {
+        ExecuteMsg::UpdateAdmin { admin } => {
+            Ok(ADMIN.execute_update_admin(deps, info, maybe_addr(api, admin)?)?)
+        }
         ExecuteMsg::Distribute {} => execute_distribute(deps, env, info),
     }
 }
@@ -114,6 +122,7 @@ pub fn execute_distribute(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
+        QueryMsg::Admin {} => to_binary(&ADMIN.query_admin(deps)?),
         QueryMsg::Group {} => to_binary(&query_group(deps)?),
         QueryMsg::ListMembers { start_after, limit } => {
             to_binary(&list_members(deps, start_after, limit)?)
