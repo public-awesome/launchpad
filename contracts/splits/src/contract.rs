@@ -68,24 +68,20 @@ pub fn execute(
         ExecuteMsg::UpdateAdmin { admin } => {
             Ok(ADMIN.execute_update_admin(deps, info, maybe_addr(api, admin)?)?)
         }
-        ExecuteMsg::Distribute {} => execute_distribute(deps, env, info),
+        ExecuteMsg::Distribute {} => execute_distribute(deps.as_ref(), env, info),
     }
 }
 
 pub fn execute_distribute(
-    deps: DepsMut,
+    deps: Deps,
     env: Env,
     info: MessageInfo,
 ) -> Result<Response, ContractError> {
-    let group = GROUP.load(deps.storage)?;
-
-    // only a member can distribute funds
-    let weight = group
-        .is_member(&deps.querier, &info.sender, None)?
-        .ok_or(ContractError::Unauthorized {})?;
-    if weight == 0 {
-        return Err(ContractError::InvalidWeight { weight });
+    if !can_distribute(deps, info)? {
+        return Err(ContractError::Unauthorized {});
     }
+
+    let group = GROUP.load(deps.storage)?;
 
     let total_weight = group.total_weight(&deps.querier)?;
     if total_weight == 0 {
@@ -117,6 +113,17 @@ pub fn execute_distribute(
     Ok(Response::new()
         .add_attribute("action", "distribute")
         .add_messages(msgs))
+}
+
+/// Checks if the sender is an admin or a member of a group.
+fn can_distribute(deps: Deps, info: MessageInfo) -> StdResult<bool> {
+    match ADMIN.get(deps)? {
+        Some(admin) => Ok(admin == info.sender),
+        None => Ok(GROUP
+            .load(deps.storage)?
+            .is_member(&deps.querier, &info.sender, None)?
+            .is_some()),
+    }
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]

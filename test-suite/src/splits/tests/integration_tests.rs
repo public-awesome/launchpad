@@ -36,6 +36,7 @@ mod tests {
         let flex_id = app.store_code(contract_splits());
         let msg = sg_splits::msg::InstantiateMsg {
             group: Group::Cw4Address(group_addr.to_string()),
+            admin: None,
         };
         app.instantiate_contract(flex_id, Addr::unchecked(OWNER), &msg, &[], "splits", None)
             .unwrap()
@@ -140,6 +141,7 @@ mod tests {
         // Zero weight fails
         let instantiate_msg = InstantiateMsg {
             group: Group::Cw4Address(group_addr.to_string()),
+            admin: None,
         };
         let err = app
             .instantiate_contract(
@@ -161,6 +163,7 @@ mod tests {
 
         let instantiate_msg = InstantiateMsg {
             group: Group::Cw4Address(group_addr.to_string()),
+            admin: None,
         };
         let splits_addr = app
             .instantiate_contract(
