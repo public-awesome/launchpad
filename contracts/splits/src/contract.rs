@@ -1,11 +1,12 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coins, to_binary, Addr, BankMsg, Binary, Decimal, Deps, DepsMut, Env, MessageInfo, StdResult,
+    coins, to_binary, Addr, BankMsg, Binary, Decimal, Deps, DepsMut, Env, MessageInfo, Response,
+    StdResult, SubMsg,
 };
 use cw2::set_contract_version;
 use cw4::{Cw4Contract, Member, MemberListResponse, MemberResponse};
-use sg_std::{Response, SubMsg, NATIVE_DENOM};
+use sg_std::NATIVE_DENOM;
 
 use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, Group, InstantiateMsg, QueryMsg};
@@ -33,9 +34,6 @@ pub fn instantiate(
             SubMsg::reply_on_success(init.into_wasm_msg(self_addr), INIT_GROUP_REPLY_ID),
         )),
         Group::Cw4Address(addr) => {
-            let group_addr = deps.api.addr_validate(&addr)?;
-            let total_group_weight = Cw4Contract(group_addr.clone()).total_weight(&deps.querier)?;
-
             let group = Cw4Contract(
                 deps.api
                     .addr_validate(&addr)
