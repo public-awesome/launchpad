@@ -15,6 +15,7 @@ pub fn contract_splits() -> Box<dyn Contract<Empty>> {
         sg_splits::contract::execute,
         sg_splits::contract::instantiate,
         sg_splits::contract::query,
-    );
+    )
+    .with_reply(sg_splits::contract::reply);
     Box::new(contract)
 }

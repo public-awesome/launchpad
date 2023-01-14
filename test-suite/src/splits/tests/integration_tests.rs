@@ -4,10 +4,11 @@ mod tests {
     use crate::common_setup::{
         contract_boxes_empty::contract_splits, helpers::mock_app_builder_init_funds,
     };
-    use cosmwasm_std::{Addr, Coin};
+    use cosmwasm_std::{to_binary, Addr, Coin};
     use cw2::{query_contract_info, ContractVersion};
     use cw4::{Cw4ExecuteMsg, Member, MemberListResponse};
     use cw_multi_test::{next_block, App, Executor as TestExecutor};
+    use sg_controllers::ContractInstantiateMsg;
     use sg_splits::msg::Group;
     use sg_splits::{
         msg::{InstantiateMsg, QueryMsg},
@@ -31,10 +32,35 @@ mod tests {
     }
 
     #[track_caller]
-    fn instantiate_splits(app: &mut App, group_addr: Addr) -> Addr {
+    fn instantiate_splits_with_group(app: &mut App, group_addr: Addr) -> Addr {
         let flex_id = app.store_code(contract_splits());
         let msg = sg_splits::msg::InstantiateMsg {
             group: Group::Cw4Address(group_addr.to_string()),
+        };
+        app.instantiate_contract(flex_id, Addr::unchecked(OWNER), &msg, &[], "splits", None)
+            .unwrap()
+    }
+
+    #[track_caller]
+    fn instantiate_splits(app: &mut App) -> Addr {
+        let flex_id = app.store_code(contract_splits());
+        let group_msg = cw4_group::msg::InstantiateMsg {
+            admin: Some(OWNER.into()),
+            members: vec![
+                member(OWNER, 50),
+                member(MEMBER1, 25),
+                member(MEMBER2, 20),
+                member(MEMBER3, 5),
+            ],
+        };
+
+        let msg = sg_splits::msg::InstantiateMsg {
+            group: Group::Cw4Instantiate(ContractInstantiateMsg {
+                code_id: app.store_code(contract_group()),
+                msg: to_binary(&group_msg).unwrap(),
+                admin: None,
+                label: "cw4-group".to_string(),
+            }),
         };
         app.instantiate_contract(flex_id, Addr::unchecked(OWNER), &msg, &[], "splits", None)
             .unwrap()
@@ -57,7 +83,7 @@ mod tests {
         app.update_block(next_block);
 
         // 2. Set up Splits backed by this group
-        let splits_addr = instantiate_splits(app, group_addr.clone());
+        let splits_addr = instantiate_splits_with_group(app, group_addr.clone());
         app.update_block(next_block);
 
         // 3. (Optional) Set the multisig as the group owner
@@ -80,6 +106,26 @@ mod tests {
             app.send_tokens(Addr::unchecked(OWNER), splits_addr.clone(), &init_funds)
                 .unwrap();
         }
+        (splits_addr, group_addr)
+    }
+
+    #[track_caller]
+    fn setup_test_case_with_internal_group(app: &mut App, init_funds: Vec<Coin>) -> (Addr, Addr) {
+        // Set up Splits with internal group
+        let splits_addr = instantiate_splits(app);
+        app.update_block(next_block);
+
+        // Bonus: set some funds on the splits contract for future proposals
+        if !init_funds.is_empty() {
+            app.send_tokens(Addr::unchecked(OWNER), splits_addr.clone(), &init_funds)
+                .unwrap();
+        }
+
+        let group_addr: Addr = app
+            .wrap()
+            .query_wasm_smart(&splits_addr, &QueryMsg::Group {})
+            .unwrap();
+
         (splits_addr, group_addr)
     }
 
@@ -202,7 +248,7 @@ mod tests {
             let init_funds = coins(100, DENOM);
             let mut app = mock_app_builder_init_funds(&init_funds);
 
-            let (splits_addr, _) = setup_test_case(&mut app, init_funds, false);
+            let (splits_addr, _) = setup_test_case_with_internal_group(&mut app, init_funds);
 
             let msg = ExecuteMsg::Distribute {};
 

@@ -2603,6 +2603,7 @@ dependencies = [
  "rlp",
  "schemars",
  "serde",
+ "sg-controllers",
  "sg-eth-airdrop",
  "sg-multi-test 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg-splits",
