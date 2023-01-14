@@ -62,6 +62,7 @@ mod tests {
                 admin: None,
                 label: "cw4-group".to_string(),
             }),
+            admin: Some(OWNER.into()),
         };
         app.instantiate_contract(flex_id, Addr::unchecked(OWNER), &msg, &[], "splits", None)
             .unwrap()
