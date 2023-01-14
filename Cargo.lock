@@ -2193,6 +2193,7 @@ dependencies = [
  "cosmwasm-std",
  "cw-multi-test",
  "cw-storage-plus",
+ "cw-utils",
  "cw2",
  "cw4",
  "cw4-group",

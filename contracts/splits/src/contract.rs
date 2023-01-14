@@ -1,11 +1,12 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coins, to_binary, Addr, BankMsg, Binary, Decimal, Deps, DepsMut, Env, MessageInfo, Response,
-    StdResult, SubMsg,
+    coins, to_binary, Addr, BankMsg, Binary, Decimal, Deps, DepsMut, Env, MessageInfo, Reply,
+    Response, StdResult, SubMsg,
 };
 use cw2::set_contract_version;
 use cw4::{Cw4Contract, Member, MemberListResponse, MemberResponse};
+use cw_utils::parse_reply_instantiate_data;
 use sg_std::NATIVE_DENOM;
 
 use crate::error::ContractError;
@@ -148,4 +149,28 @@ fn list_members(
         })
         .collect();
     Ok(MemberListResponse { members })
+}
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
+    if msg.id != INIT_GROUP_REPLY_ID {
+        return Err(ContractError::InvalidReplyID {});
+    }
+
+    let reply = parse_reply_instantiate_data(msg);
+    match reply {
+        Ok(res) => {
+            let group =
+                Cw4Contract(deps.api.addr_validate(&res.contract_address).map_err(|_| {
+                    ContractError::InvalidGroup {
+                        addr: res.contract_address.clone(),
+                    }
+                })?);
+
+            GROUP.save(deps.storage, &group)?;
+
+            Ok(Response::default().add_attribute("action", "reply_on_success"))
+        }
+        Err(_) => Err(ContractError::ReplyOnSuccess {}),
+    }
 }
