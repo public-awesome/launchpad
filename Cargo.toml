@@ -30,6 +30,7 @@ sg4                 = "0.21.8"
 sg721               = "0.21.8"
 sg721-base          = { version = "0.21.8", path = "contracts/sg721-base" }
 sg721-nt            = { version = "0.21.8", path = "contracts/sg721-nt" }
+sg-controllers      = { version = "0.21.8", path = "packages/controllers" }
 sg-metadata         = "0.21.8"
 sg-multi-test       = "0.21.8"
 sg-splits           = { version = "0.21.8", path = "contracts/splits" }
