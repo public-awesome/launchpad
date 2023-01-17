@@ -1,14 +1,16 @@
-use cosmwasm_schema::cw_serde;
+use cosmwasm_schema::{cw_serde, QueryResponses};
+use cosmwasm_std::Addr;
+use sg_controllers::ContractInstantiateMsg;
 
-use crate::state::{Config, Executor};
+#[cw_serde]
+pub enum Group {
+    Cw4Instantiate(ContractInstantiateMsg),
+    Cw4Address(String),
+}
 
 #[cw_serde]
 pub struct InstantiateMsg {
-    // this is the group contract that contains the member list
-    pub group_addr: String,
-    // Who is able to call distribute
-    // None means that anyone can call distribute
-    pub executor: Option<Executor>,
+    pub group: Group,
 }
 
 #[cw_serde]
@@ -17,19 +19,17 @@ pub enum ExecuteMsg {
 }
 
 #[cw_serde]
+#[derive(QueryResponses)]
 pub enum QueryMsg {
-    /// Returns the config
-    Config {},
-    /// Returns Member
+    #[returns(Addr)]
+    Group {},
+
+    #[returns(cw4::MemberResponse)]
     Member { address: String },
-    /// Returns MemberListResponse
+
+    #[returns(cw4::MemberListResponse)]
     ListMembers {
         start_after: Option<String>,
         limit: Option<u32>,
     },
-}
-
-#[cw_serde]
-pub struct ConfigResponse {
-    pub config: Config,
 }

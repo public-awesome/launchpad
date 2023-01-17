@@ -59,7 +59,7 @@ mod tests {
     pub fn query_address_count(app: &mut StargazeApp, addrs: Vec<String>, wl_addr: Addr) {
         let count: u64 = app
             .wrap()
-            .query_wasm_smart(&wl_addr, &QueryMsg::AddressCount {})
+            .query_wasm_smart(wl_addr, &QueryMsg::AddressCount {})
             .unwrap();
         assert_eq!(count, addrs.len() as u64);
     }
@@ -67,7 +67,7 @@ mod tests {
     pub fn query_admin(app: &mut StargazeApp, wl_addr: Addr) {
         let admin: String = app
             .wrap()
-            .query_wasm_smart(&wl_addr, &QueryMsg::Admin {})
+            .query_wasm_smart(wl_addr, &QueryMsg::Admin {})
             .unwrap();
         assert_eq!(admin, CREATOR.to_string());
     }
@@ -76,7 +76,7 @@ mod tests {
         let includes: bool = app
             .wrap()
             .query_wasm_smart(
-                &wl_addr,
+                wl_addr,
                 &QueryMsg::IncludesAddress {
                     address: addr_to_check,
                 },
@@ -88,7 +88,7 @@ mod tests {
     pub fn query_per_address_limit(app: &mut StargazeApp, wl_addr: Addr, per_address_limit: u32) {
         let limit: u32 = app
             .wrap()
-            .query_wasm_smart(&wl_addr, &QueryMsg::PerAddressLimit {})
+            .query_wasm_smart(wl_addr, &QueryMsg::PerAddressLimit {})
             .unwrap();
         assert_eq!(limit, per_address_limit);
     }

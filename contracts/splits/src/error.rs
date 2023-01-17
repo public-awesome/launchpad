@@ -20,4 +20,10 @@ pub enum ContractError {
 
     #[error("Invalid executor '{addr}'")]
     InvalidExecutor { addr: String },
+
+    #[error("Invalid reply ID")]
+    InvalidReplyID {},
+
+    #[error("Reply error")]
+    ReplyOnSuccess {},
 }

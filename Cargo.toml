@@ -1,127 +1,128 @@
 [workspace]
-members = ["packages/*", "contracts/*", "test-suite/"]
+members  = ["packages/*", "contracts/*", "test-suite/"]
 resolver = "2"
 
 [workspace.package]
-version = "0.21.8"
-edition = "2021"
-homepage = "https://stargaze.zone"
+version    = "0.21.8"
+edition    = "2021"
+homepage   = "https://stargaze.zone"
 repository = "https://github.com/public-awesome/launchpad"
-license = "Apache-2.0"
+license    = "Apache-2.0"
 
 [workspace.dependencies]
-base-factory = { version = "0.21.8", path = "contracts/base-factory" }
-base-minter = { version = "0.21.8", path = "contracts/base-minter" }
-cosmwasm-schema = "1.1.5"
-cosmwasm-std = "1.1.5"
-cw2 = "0.16.0"
-cw4 = "0.16.0"
-cw4-group = "0.16.0"
-cw721 = "0.16.0"
-cw721-base = "0.16.0"
-cw-multi-test = "0.16.0"
-cw-storage-plus = "0.16.0"
-cw-utils = "0.16.0"
-schemars = "0.8.11"
-serde = { version = "1.0.145", default-features = false, features = ["derive"] }
-sg1 = "0.21.8"
-sg2 = "0.21.8"
-sg4 = "0.21.8"
-sg721 = "0.21.8"
-sg721-base = { version = "0.21.8", path = "contracts/sg721-base" }
-sg721-nt = { version = "0.21.8", path = "contracts/sg721-nt" }
-sg-metadata = "0.21.8"
-sg-multi-test = "0.21.8"
-sg-splits = { version = "0.21.8", path = "contracts/splits" }
-sg-std = "0.21.8"
-sg-whitelist = { version = "0.21.8", path = "contracts/whitelist" }
-thiserror = "1.0.31"
-url = "2.2.2"
-sha2 = { version = "0.10.2", default-features = false }
-vending-factory = { version = "0.21.8", path = "contracts/vending-factory" }
-vending-minter = { version = "0.21.8", path = "contracts/vending-minter" }
+base-factory        = { version = "0.21.8", path = "contracts/base-factory" }
+base-minter         = { version = "0.21.8", path = "contracts/base-minter" }
+cosmwasm-schema     = "1.1.5"
+cosmwasm-std        = "1.1.5"
+cw2                 = "0.16.0"
+cw4                 = "0.16.0"
+cw4-group           = "0.16.0"
+cw721               = "0.16.0"
+cw721-base          = "0.16.0"
+cw-multi-test       = "0.16.0"
+cw-storage-plus     = "0.16.0"
+cw-utils            = "0.16.0"
+schemars            = "0.8.11"
+serde               = { version = "1.0.145", default-features = false, features = ["derive"] }
+sg1                 = "0.21.8"
+sg2                 = "0.21.8"
+sg4                 = "0.21.8"
+sg721               = "0.21.8"
+sg721-base          = { version = "0.21.8", path = "contracts/sg721-base" }
+sg721-nt            = { version = "0.21.8", path = "contracts/sg721-nt" }
+sg-controllers      = { version = "0.21.8", path = "packages/controllers" }
+sg-metadata         = "0.21.8"
+sg-multi-test       = "0.21.8"
+sg-splits           = { version = "0.21.8", path = "contracts/splits" }
+sg-std              = "0.21.8"
+sg-whitelist        = { version = "0.21.8", path = "contracts/whitelist" }
+thiserror           = "1.0.31"
+url                 = "2.2.2"
+sha2                = { version = "0.10.2", default-features = false }
+vending-factory     = { version = "0.21.8", path = "contracts/vending-factory" }
+vending-minter      = { version = "0.21.8", path = "contracts/vending-minter" }
 whitelist-immutable = { version = "0.21.8", path = "contracts/whitelist-immutable" }
-sg-whitelist-basic = { version = "0.12.0" }
-ethereum-verify = { version = "0.21.8", path = "packages/ethereum-verify" }
-sg-eth-airdrop = {version = "0.21.8", path = "contracts/sg-eth-airdrop" }
-test-suite = { version = "0.21.8", path = "test-suite" }
+sg-whitelist-basic  = { version = "0.12.0" }
+ethereum-verify     = { version = "0.21.8", path = "packages/ethereum-verify" }
+sg-eth-airdrop      = { version = "0.21.8", path = "contracts/sg-eth-airdrop" }
+test-suite          = { version = "0.21.8", path = "test-suite" }
 
 [profile.release.package.sg721]
 codegen-units = 1
-incremental = false
+incremental   = false
 
 [profile.release.package.sg1]
 codegen-units = 1
-incremental = false
+incremental   = false
 
 [profile.release.package.sg2]
 codegen-units = 1
-incremental = false
+incremental   = false
 
 [profile.release.package.sg4]
 codegen-units = 1
-incremental = false
+incremental   = false
 
 [profile.release.package.sg721-base]
 codegen-units = 1
-incremental = false
+incremental   = false
 
 [profile.release.package.sg721-nt]
 codegen-units = 1
-incremental = false
+incremental   = false
 
 [profile.release.package.sg-whitelist]
 codegen-units = 1
-incremental = false
+incremental   = false
 
 [profile.release.package.sg-utils]
 codegen-units = 1
-incremental = false
+incremental   = false
 
 [profile.release.package.sg-std]
 codegen-units = 1
-incremental = false
+incremental   = false
 
 [profile.release.package.base-factory]
 codegen-units = 1
-incremental = false
+incremental   = false
 
 [profile.release.package.base-minter]
 codegen-units = 1
-incremental = false
+incremental   = false
 
 [profile.release.package.sg-eth-airdrop]
 codegen-units = 1
-incremental = false
+incremental   = false
 
 [profile.release.package.vending-factory]
 codegen-units = 1
-incremental = false
+incremental   = false
 
 [profile.release.package.vending-minter]
 codegen-units = 1
-incremental = false
+incremental   = false
 
 [profile.release.package.sg-splits]
 codegen-units = 1
-incremental = false
+incremental   = false
 
 [profile.release.package.whitelist-immutable]
 codegen-units = 1
-incremental = false
+incremental   = false
 
 [profile.release.package.ethereum-verify]
 codegen-units = 1
-incremental = false
+incremental   = false
 
 [profile.release.package.test-suite]
 codegen-units = 1
-incremental = false
+incremental   = false
 
 [profile.release]
-rpath = false
-lto = true
-overflow-checks = true
-opt-level = 3
-debug = false
+rpath            = false
+lto              = true
+overflow-checks  = true
+opt-level        = 3
+debug            = false
 debug-assertions = false

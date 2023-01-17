@@ -26,15 +26,17 @@ backtraces = ["cosmwasm-std/backtraces"]
 library = []
 
 [dependencies]
-cosmwasm-schema   = { workspace = true }
-cosmwasm-std      = { workspace = true }
-cw2               = { workspace = true }
-cw4               = { workspace = true }
-cw-storage-plus   = { workspace = true }
-schemars          = { workspace = true }
-serde             = { workspace = true }
-sg-std            = { workspace = true }
-thiserror         = { workspace = true }
+cosmwasm-schema = { workspace = true }
+cosmwasm-std    = { workspace = true }
+cw2             = { workspace = true }
+cw4             = { workspace = true }
+cw-storage-plus = { workspace = true }
+cw-utils        = { workspace = true }
+schemars        = { workspace = true }
+serde           = { workspace = true }
+sg-controllers  = { workspace = true }
+sg-std          = { workspace = true }
+thiserror       = { workspace = true }
 
 [dev-dependencies]
 cosmwasm-schema = { workspace = true }
