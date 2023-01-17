@@ -44,10 +44,7 @@ pub fn instantiate(
                     .map_err(|_| ContractError::InvalidGroup { addr })?,
             );
 
-            let weight = group.total_weight(&deps.querier)?;
-            if weight == 0 {
-                return Err(ContractError::InvalidWeight { weight });
-            }
+            checked_total_weight(&group, deps.as_ref())?;
 
             GROUP.save(deps.storage, &group)?;
             Ok(Response::default())
@@ -83,12 +80,7 @@ pub fn execute_distribute(
 
     let group = GROUP.load(deps.storage)?;
 
-    let total_weight = group.total_weight(&deps.querier)?;
-    if total_weight == 0 {
-        return Err(ContractError::InvalidWeight {
-            weight: total_weight,
-        });
-    }
+    let total_weight = checked_total_weight(&group, deps)?;
 
     let funds = deps
         .querier
@@ -113,6 +105,15 @@ pub fn execute_distribute(
     Ok(Response::new()
         .add_attribute("action", "distribute")
         .add_messages(msgs))
+}
+
+fn checked_total_weight(group: &Cw4Contract, deps: Deps) -> Result<u64, ContractError> {
+    let weight = group.total_weight(&deps.querier)?;
+    if weight == 0 {
+        return Err(ContractError::InvalidWeight { weight });
+    }
+
+    Ok(weight)
 }
 
 /// Checks if the sender is an admin or a member of a group.
