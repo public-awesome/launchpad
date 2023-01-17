@@ -13,11 +13,14 @@ use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, Group, InstantiateMsg, QueryMsg};
 use crate::state::{ADMIN, GROUP};
 
-// version info for migration info
+// Version info for migration info
 pub const CONTRACT_NAME: &str = "crates.io:sg-splits";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 const INIT_GROUP_REPLY_ID: u64 = 1;
+
+// This is the same hardcoded value as in cw4-group
+const MAX_GROUP_SIZE: u32 = 30;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -90,7 +93,7 @@ pub fn execute_distribute(
     }
 
     let msgs = group
-        .list_members(&deps.querier, None, None)?
+        .list_members(&deps.querier, None, Some(MAX_GROUP_SIZE))?
         .iter()
         .map(|member| {
             let ratio = Decimal::from_ratio(member.weight, total_weight);
