@@ -69,6 +69,33 @@ mod tests {
     }
 
     #[track_caller]
+    fn instantiate_splits_with_overlow_group(app: &mut App) -> Addr {
+        let flex_id = app.store_code(contract_splits());
+
+        let members: Vec<Member> = (1..100)
+            .map(|i| member(format!("member{:04}", i), 1))
+            .collect();
+        // members.push(member(OWNER, 1));
+
+        let group_msg = cw4_group::msg::InstantiateMsg {
+            admin: Some(OWNER.into()),
+            members,
+        };
+
+        let msg = sg_splits::msg::InstantiateMsg {
+            group: Group::Cw4Instantiate(ContractInstantiateMsg {
+                code_id: app.store_code(contract_group()),
+                msg: to_binary(&group_msg).unwrap(),
+                admin: None,
+                label: "cw4-group".to_string(),
+            }),
+            admin: Some(OWNER.into()),
+        };
+        app.instantiate_contract(flex_id, Addr::unchecked(OWNER), &msg, &[], "splits", None)
+            .unwrap()
+    }
+
+    #[track_caller]
     fn setup_test_case(
         app: &mut App,
         init_funds: Vec<Coin>,
@@ -115,6 +142,26 @@ mod tests {
     fn setup_test_case_with_internal_group(app: &mut App, init_funds: Vec<Coin>) -> (Addr, Addr) {
         // Set up Splits with internal group
         let splits_addr = instantiate_splits(app);
+        app.update_block(next_block);
+
+        // Bonus: set some funds on the splits contract for future proposals
+        if !init_funds.is_empty() {
+            app.send_tokens(Addr::unchecked(OWNER), splits_addr.clone(), &init_funds)
+                .unwrap();
+        }
+
+        let group_addr: Addr = app
+            .wrap()
+            .query_wasm_smart(&splits_addr, &QueryMsg::Group {})
+            .unwrap();
+
+        (splits_addr, group_addr)
+    }
+
+    #[track_caller]
+    fn setup_test_case_with_overflow_group(app: &mut App, init_funds: Vec<Coin>) -> (Addr, Addr) {
+        // Set up Splits with internal group
+        let splits_addr = instantiate_splits_with_overlow_group(app);
         app.update_block(next_block);
 
         // Bonus: set some funds on the splits contract for future proposals
@@ -282,6 +329,37 @@ mod tests {
                     .unwrap();
                 assert_eq!(bal.amount, expected_balances.pop().unwrap())
             }
+        }
+
+        #[test]
+        fn distribute_with_overflow() {
+            const DENOM: &str = "ustars";
+            let init_funds = coins(100, DENOM);
+            let mut app = mock_app_builder_init_funds(&init_funds);
+
+            let (splits_addr, _) = setup_test_case_with_overflow_group(&mut app, init_funds);
+
+            let msg = ExecuteMsg::Distribute {};
+
+            app.execute_contract(Addr::unchecked(OWNER), splits_addr.clone(), &msg, &[])
+                .unwrap();
+
+            // make sure the contract has a balance
+            let bal = app.wrap().query_all_balances(splits_addr.clone()).unwrap();
+            assert_eq!(bal.len(), 1);
+
+            let first_member_bal = app
+                .wrap()
+                .query_balance("member0001".to_string(), DENOM)
+                .unwrap();
+            assert_eq!(first_member_bal.amount, Uint128::new(1));
+
+            // funds weren't distributed to the last member
+            let last_member_bal = app
+                .wrap()
+                .query_balance("member0100".to_string(), DENOM)
+                .unwrap();
+            assert_eq!(last_member_bal.amount, Uint128::new(0));
         }
     }
 }
