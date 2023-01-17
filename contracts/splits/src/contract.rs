@@ -6,12 +6,12 @@ use cosmwasm_std::{
 };
 use cw2::set_contract_version;
 use cw4::{Cw4Contract, Member, MemberListResponse, MemberResponse};
-use cw_utils::parse_reply_instantiate_data;
+use cw_utils::{maybe_addr, parse_reply_instantiate_data};
 use sg_std::NATIVE_DENOM;
 
 use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, Group, InstantiateMsg, QueryMsg};
-use crate::state::GROUP;
+use crate::state::{ADMIN, GROUP};
 
 // version info for migration info
 pub const CONTRACT_NAME: &str = "crates.io:sg-splits";
@@ -21,7 +21,7 @@ const INIT_GROUP_REPLY_ID: u64 = 1;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
-    deps: DepsMut,
+    mut deps: DepsMut,
     env: Env,
     _info: MessageInfo,
     msg: InstantiateMsg,
@@ -29,6 +29,9 @@ pub fn instantiate(
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
     let self_addr = env.contract.address;
+
+    let admin_addr = maybe_addr(deps.api, msg.admin)?;
+    ADMIN.set(deps.branch(), admin_addr)?;
 
     match msg.group {
         Group::Cw4Instantiate(init) => Ok(Response::default().add_submessage(
@@ -56,27 +59,28 @@ pub fn execute(
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
+    let api = deps.api;
+
     match msg {
-        ExecuteMsg::Distribute {} => execute_distribute(deps, env, info),
+        ExecuteMsg::UpdateAdmin { admin } => {
+            Ok(ADMIN.execute_update_admin(deps, info, maybe_addr(api, admin)?)?)
+        }
+        ExecuteMsg::Distribute {} => execute_distribute(deps.as_ref(), env, info),
     }
 }
 
 pub fn execute_distribute(
-    deps: DepsMut,
+    deps: Deps,
     env: Env,
     info: MessageInfo,
 ) -> Result<Response, ContractError> {
-    let group = GROUP.load(deps.storage)?;
-
-    // only a member can distribute funds
-    let weight = group
-        .is_member(&deps.querier, &info.sender, None)?
-        .ok_or(ContractError::Unauthorized {})?;
-    if weight == 0 {
-        return Err(ContractError::InvalidWeight { weight });
+    if !can_distribute(deps, info)? {
+        return Err(ContractError::Unauthorized {});
     }
 
-    let total_weight = checked_total_weight(&group, deps.as_ref())?;
+    let group = GROUP.load(deps.storage)?;
+
+    let total_weight = checked_total_weight(&group, deps)?;
 
     let funds = deps
         .querier
@@ -112,9 +116,21 @@ fn checked_total_weight(group: &Cw4Contract, deps: Deps) -> Result<u64, Contract
     Ok(weight)
 }
 
+/// Checks if the sender is an admin or a member of a group.
+fn can_distribute(deps: Deps, info: MessageInfo) -> StdResult<bool> {
+    match ADMIN.get(deps)? {
+        Some(admin) => Ok(admin == info.sender),
+        None => Ok(GROUP
+            .load(deps.storage)?
+            .is_member(&deps.querier, &info.sender, None)?
+            .is_some()),
+    }
+}
+
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
+        QueryMsg::Admin {} => to_binary(&ADMIN.query_admin(deps)?),
         QueryMsg::Group {} => to_binary(&query_group(deps)?),
         QueryMsg::ListMembers { start_after, limit } => {
             to_binary(&list_members(deps, start_after, limit)?)
