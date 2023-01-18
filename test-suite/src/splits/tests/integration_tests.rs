@@ -256,6 +256,7 @@ mod tests {
 
     mod distribute {
         use cosmwasm_std::{coins, Uint128};
+        use cw4::Cw4Contract;
 
         use super::*;
         use sg_splits::msg::{ExecuteMsg, QueryMsg};
@@ -332,40 +333,63 @@ mod tests {
         }
 
         #[test]
-        fn distribute_non_whole_amounts() {
+        fn distribute_under_weight() {
             const DENOM: &str = "ustars";
             let init_funds = coins(79, DENOM);
             let mut app = mock_app_builder_init_funds(&init_funds);
 
-            let (splits_addr, _) = setup_test_case_with_internal_group(&mut app, init_funds);
+            let (splits_addr, group_addr) =
+                setup_test_case_with_internal_group(&mut app, init_funds);
+            let total_weight = Cw4Contract(group_addr).total_weight(&app.wrap()).unwrap();
 
             let msg = ExecuteMsg::Distribute {};
 
-            app.execute_contract(Addr::unchecked(OWNER), splits_addr.clone(), &msg, &[])
+            let err = app
+                .execute_contract(Addr::unchecked(OWNER), splits_addr.clone(), &msg, &[])
+                .unwrap_err();
+
+            assert_eq!(
+                err.source().unwrap().to_string(),
+                ContractError::NotEnoughFunds { min: total_weight }.to_string()
+            );
+        }
+
+        #[test]
+        fn distribute_amount_with_remaining_balance() {
+            // distribute
+            const DENOM: &str = "ustars";
+            let init_funds = coins(479, DENOM);
+            let mut app = mock_app_builder_init_funds(&init_funds);
+
+            let (splits_addr, group_addr) =
+                setup_test_case_with_internal_group(&mut app, init_funds.clone());
+            let total_weight = Cw4Contract(group_addr).total_weight(&app.wrap()).unwrap();
+            let multiplier = init_funds[0].amount / Uint128::from(total_weight);
+            let contract_balance = init_funds[0].amount - multiplier * Uint128::from(total_weight);
+
+            let msg = ExecuteMsg::Distribute {};
+
+            let _ = app
+                .execute_contract(Addr::unchecked(OWNER), splits_addr.clone(), &msg, &[])
                 .unwrap();
 
             // contract has a balance
             let bal = app.wrap().query_all_balances(splits_addr.clone()).unwrap();
-            assert_eq!(bal, coins(3u128, DENOM));
+            assert_eq!(bal, coins(contract_balance.u128(), DENOM));
 
             // verify amounts for each member
             let msg = QueryMsg::ListMembers {
                 start_after: None,
                 limit: None,
             };
+
             let list: MemberListResponse = app.wrap().query_wasm_smart(splits_addr, &msg).unwrap();
-            let mut expected_balances = vec![
-                Uint128::new(3),
-                Uint128::new(15),
-                Uint128::new(19),
-                Uint128::new(39),
-            ];
             for member in list.members.iter() {
                 let bal = app
                     .wrap()
                     .query_balance(member.addr.to_string(), DENOM)
                     .unwrap();
-                assert_eq!(bal.amount, expected_balances.pop().unwrap())
+                assert_eq!(bal.amount, Uint128::from(member.weight) * multiplier)
             }
         }
 

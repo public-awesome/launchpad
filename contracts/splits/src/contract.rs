@@ -1,8 +1,8 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coins, to_binary, Addr, BankMsg, Binary, Decimal, Deps, DepsMut, Env, MessageInfo, Reply,
-    Response, StdResult, SubMsg,
+    coins, to_binary, Addr, BankMsg, Binary, Deps, DepsMut, Env, MessageInfo, Reply, Response,
+    StdResult, SubMsg, Uint128,
 };
 use cw2::set_contract_version;
 use cw4::{Cw4Contract, Member, MemberListResponse, MemberResponse};
@@ -92,12 +92,17 @@ pub fn execute_distribute(
         return Err(ContractError::NoFunds {});
     }
 
+    // To avoid rounding errors, distribute funds modulo the total weight.
+    // Keep remaining balance in the contract.
+    let multiplier = funds.amount / Uint128::from(total_weight);
+    if multiplier.is_zero() {
+        return Err(ContractError::NotEnoughFunds { min: total_weight });
+    }
     let msgs = group
         .list_members(&deps.querier, None, Some(MAX_GROUP_SIZE))?
         .iter()
         .map(|member| {
-            let ratio = Decimal::from_ratio(member.weight, total_weight);
-            let amount = funds.amount * ratio;
+            let amount = multiplier * Uint128::from(member.weight);
             BankMsg::Send {
                 to_address: member.addr.clone(),
                 amount: coins(amount.u128(), funds.denom.clone()),
