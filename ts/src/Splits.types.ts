@@ -4,37 +4,40 @@
 * and run the @cosmwasm/ts-codegen generate command to regenerate this file.
 */
 
-export type Executor = "member" | {
-  only: Addr;
+export type Group = {
+  cw4_instantiate: ContractInstantiateMsg;
+} | {
+  cw4_address: string;
 };
-export type Addr = string;
-export type Cw4Contract = Addr;
-export interface ConfigResponse {
-  config: Config;
+export type Admin = {
+  address: {
+    addr: string;
+  };
+} | {
+  creator: {};
+};
+export type Binary = string;
+export interface InstantiateMsg {
+  admin?: string | null;
+  group: Group;
 }
-export interface Config {
-  executor?: Executor | null;
-  group_addr: Cw4Contract;
+export interface ContractInstantiateMsg {
+  admin?: Admin | null;
+  code_id: number;
+  label: string;
+  msg: Binary;
 }
 export type ExecuteMsg = {
+  update_admin: {
+    admin?: string | null;
+  };
+} | {
   distribute: {};
 };
-export interface InstantiateMsg {
-  executor?: Executor | null;
-  group_addr: string;
-}
-export interface ListMembersResponse {
-  members: Member[];
-}
-export interface Member {
-  addr: string;
-  weight: number;
-}
-export interface MemberResponse {
-  weight?: number | null;
-}
 export type QueryMsg = {
-  config: {};
+  admin: {};
+} | {
+  group: {};
 } | {
   member: {
     address: string;
@@ -45,3 +48,17 @@ export type QueryMsg = {
     start_after?: string | null;
   };
 };
+export interface AdminResponse {
+  admin?: string | null;
+}
+export type Addr = string;
+export interface MemberListResponse {
+  members: Member[];
+}
+export interface Member {
+  addr: string;
+  weight: number;
+}
+export interface MemberResponse {
+  weight?: number | null;
+}

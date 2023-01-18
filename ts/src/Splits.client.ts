@@ -6,10 +6,11 @@
 
 import { CosmWasmClient, SigningCosmWasmClient, ExecuteResult } from "@cosmjs/cosmwasm-stargate";
 import { Coin, StdFee } from "@cosmjs/amino";
-import { Executor, Addr, Cw4Contract, ConfigResponse, Config, ExecuteMsg, InstantiateMsg, ListMembersResponse, Member, MemberResponse, QueryMsg } from "./Splits.types";
+import { Group, Admin, Binary, InstantiateMsg, ContractInstantiateMsg, ExecuteMsg, QueryMsg, AdminResponse, Addr, MemberListResponse, Member, MemberResponse } from "./Splits.types";
 export interface SplitsReadOnlyInterface {
   contractAddress: string;
-  config: () => Promise<ConfigResponse>;
+  admin: () => Promise<AdminResponse>;
+  group: () => Promise<Addr>;
   member: ({
     address
   }: {
@@ -21,7 +22,7 @@ export interface SplitsReadOnlyInterface {
   }: {
     limit?: number;
     startAfter?: string;
-  }) => Promise<ListMembersResponse>;
+  }) => Promise<MemberListResponse>;
 }
 export class SplitsQueryClient implements SplitsReadOnlyInterface {
   client: CosmWasmClient;
@@ -30,14 +31,20 @@ export class SplitsQueryClient implements SplitsReadOnlyInterface {
   constructor(client: CosmWasmClient, contractAddress: string) {
     this.client = client;
     this.contractAddress = contractAddress;
-    this.config = this.config.bind(this);
+    this.admin = this.admin.bind(this);
+    this.group = this.group.bind(this);
     this.member = this.member.bind(this);
     this.listMembers = this.listMembers.bind(this);
   }
 
-  config = async (): Promise<ConfigResponse> => {
+  admin = async (): Promise<AdminResponse> => {
     return this.client.queryContractSmart(this.contractAddress, {
-      config: {}
+      admin: {}
+    });
+  };
+  group = async (): Promise<Addr> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      group: {}
     });
   };
   member = async ({
@@ -57,7 +64,7 @@ export class SplitsQueryClient implements SplitsReadOnlyInterface {
   }: {
     limit?: number;
     startAfter?: string;
-  }): Promise<ListMembersResponse> => {
+  }): Promise<MemberListResponse> => {
     return this.client.queryContractSmart(this.contractAddress, {
       list_members: {
         limit,
@@ -69,6 +76,11 @@ export class SplitsQueryClient implements SplitsReadOnlyInterface {
 export interface SplitsInterface extends SplitsReadOnlyInterface {
   contractAddress: string;
   sender: string;
+  updateAdmin: ({
+    admin
+  }: {
+    admin?: string;
+  }, fee?: number | StdFee | "auto", memo?: string, funds?: Coin[]) => Promise<ExecuteResult>;
   distribute: (fee?: number | StdFee | "auto", memo?: string, funds?: Coin[]) => Promise<ExecuteResult>;
 }
 export class SplitsClient extends SplitsQueryClient implements SplitsInterface {
@@ -81,9 +93,21 @@ export class SplitsClient extends SplitsQueryClient implements SplitsInterface {
     this.client = client;
     this.sender = sender;
     this.contractAddress = contractAddress;
+    this.updateAdmin = this.updateAdmin.bind(this);
     this.distribute = this.distribute.bind(this);
   }
 
+  updateAdmin = async ({
+    admin
+  }: {
+    admin?: string;
+  }, fee: number | StdFee | "auto" = "auto", memo?: string, funds?: Coin[]): Promise<ExecuteResult> => {
+    return await this.client.execute(this.sender, this.contractAddress, {
+      update_admin: {
+        admin
+      }
+    }, fee, memo, funds);
+  };
   distribute = async (fee: number | StdFee | "auto" = "auto", memo?: string, funds?: Coin[]): Promise<ExecuteResult> => {
     return await this.client.execute(this.sender, this.contractAddress, {
       distribute: {}

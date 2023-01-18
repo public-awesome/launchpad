@@ -12,7 +12,7 @@ use cw4::Member;
 use cw_multi_test::{next_block, Executor};
 use sg2::tests::mock_collection_params_1;
 use sg_multi_test::StargazeApp;
-use sg_splits::msg::ExecuteMsg as SplitsExecuteMsg;
+use sg_splits::msg::{ExecuteMsg as SplitsExecuteMsg, Group};
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
 const OWNER: &str = "admin0001";
@@ -30,12 +30,12 @@ pub fn member<T: Into<String>>(addr: T, weight: u64) -> Member {
 }
 
 #[track_caller]
-fn instantiate_splits(app: &mut StargazeApp, group: Addr) -> Addr {
+fn instantiate_splits(app: &mut StargazeApp, group_addr: Addr) -> Addr {
     let splits_id = app.store_code(contract_splits());
     println!("splits_id: {}", splits_id);
     let msg = sg_splits::msg::InstantiateMsg {
-        group_addr: group.to_string(),
-        executor: None,
+        group: Group::Cw4Address(group_addr.to_string()),
+        admin: None,
     };
     app.instantiate_contract(splits_id, Addr::unchecked(OWNER), &msg, &[], "splits", None)
         .unwrap()
