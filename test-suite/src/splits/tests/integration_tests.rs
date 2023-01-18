@@ -332,6 +332,44 @@ mod tests {
         }
 
         #[test]
+        fn distribute_non_whole_amounts() {
+            const DENOM: &str = "ustars";
+            let init_funds = coins(79, DENOM);
+            let mut app = mock_app_builder_init_funds(&init_funds);
+
+            let (splits_addr, _) = setup_test_case_with_internal_group(&mut app, init_funds);
+
+            let msg = ExecuteMsg::Distribute {};
+
+            app.execute_contract(Addr::unchecked(OWNER), splits_addr.clone(), &msg, &[])
+                .unwrap();
+
+            // contract has a balance
+            let bal = app.wrap().query_all_balances(splits_addr.clone()).unwrap();
+            assert_eq!(bal, coins(3u128, DENOM));
+
+            // verify amounts for each member
+            let msg = QueryMsg::ListMembers {
+                start_after: None,
+                limit: None,
+            };
+            let list: MemberListResponse = app.wrap().query_wasm_smart(splits_addr, &msg).unwrap();
+            let mut expected_balances = vec![
+                Uint128::new(3),
+                Uint128::new(15),
+                Uint128::new(19),
+                Uint128::new(39),
+            ];
+            for member in list.members.iter() {
+                let bal = app
+                    .wrap()
+                    .query_balance(member.addr.to_string(), DENOM)
+                    .unwrap();
+                assert_eq!(bal.amount, expected_balances.pop().unwrap())
+            }
+        }
+
+        #[test]
         fn distribute_with_overflow() {
             const DENOM: &str = "ustars";
             let init_funds = coins(100, DENOM);
