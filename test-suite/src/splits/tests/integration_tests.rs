@@ -69,7 +69,7 @@ mod tests {
     }
 
     #[track_caller]
-    fn instantiate_splits_with_overlow_group(app: &mut App) -> Addr {
+    fn instantiate_splits_with_overflow_group(app: &mut App) -> Addr {
         let flex_id = app.store_code(contract_splits());
 
         let members: Vec<Member> = (1..100)
@@ -161,7 +161,7 @@ mod tests {
     #[track_caller]
     fn setup_test_case_with_overflow_group(app: &mut App, init_funds: Vec<Coin>) -> (Addr, Addr) {
         // Set up Splits with internal group
-        let splits_addr = instantiate_splits_with_overlow_group(app);
+        let splits_addr = instantiate_splits_with_overflow_group(app);
         app.update_block(next_block);
 
         // Bonus: set some funds on the splits contract for future proposals
