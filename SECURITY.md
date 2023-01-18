@@ -6,7 +6,7 @@ Thanks for improving the security of Stargaze. We appreciate your efforts. Follo
 
 Please report security vulnerabilities to <security@stargaze.zone>. _Please avoid opening a public Github issue or posting on social media or Discord_.
 
-The Stargaze team will respond with the next steps following the email. The team will keep you informed on the remediation process and may ask for additional guidance/information.
+The Stargaze team will respond with the next steps following the email within the next 2 working days. The team will keep you informed on the remediation process and may ask for additional guidance/information.
 
 Please include the following in your report:
 
