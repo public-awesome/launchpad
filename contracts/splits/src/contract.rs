@@ -15,12 +15,12 @@ use crate::state::{ADMIN, GROUP};
 
 // Version info for migration info
 pub const CONTRACT_NAME: &str = "crates.io:sg-splits";
-const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
+pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 const INIT_GROUP_REPLY_ID: u64 = 1;
 
 // This is the same hardcoded value as in cw4-group
-const MAX_GROUP_SIZE: u32 = 30;
+pub const MAX_GROUP_SIZE: u32 = 30;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
