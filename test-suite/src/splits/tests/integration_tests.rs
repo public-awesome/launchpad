@@ -9,6 +9,7 @@ mod tests {
     use cw4::{Cw4ExecuteMsg, Member, MemberListResponse};
     use cw_multi_test::{next_block, App, Executor as TestExecutor};
     use sg_controllers::ContractInstantiateMsg;
+    use sg_splits::contract::MAX_GROUP_SIZE;
     use sg_splits::msg::Group;
     use sg_splits::{
         msg::{InstantiateMsg, QueryMsg},
@@ -356,7 +357,6 @@ mod tests {
 
         #[test]
         fn distribute_amount_with_remaining_balance() {
-            // distribute
             const DENOM: &str = "ustars";
             let init_funds = coins(479, DENOM);
             let mut app = mock_app_builder_init_funds(&init_funds);
@@ -395,11 +395,19 @@ mod tests {
 
         #[test]
         fn distribute_with_overflow() {
+            // Overflow group is 100 members, each with weight 1,
+            // but there's a max group size of 30 for distribution.
+            // the first 30 get distributions, the rest get nothing.
             const DENOM: &str = "ustars";
-            let init_funds = coins(100, DENOM);
+            let init_funds = coins(255, DENOM);
             let mut app = mock_app_builder_init_funds(&init_funds);
 
-            let (splits_addr, _) = setup_test_case_with_overflow_group(&mut app, init_funds);
+            let (splits_addr, group_addr) =
+                setup_test_case_with_overflow_group(&mut app, init_funds.clone());
+            let total_weight = Cw4Contract(group_addr).total_weight(&app.wrap()).unwrap();
+            let multiplier = init_funds[0].amount / Uint128::from(total_weight);
+            let contract_balance =
+                init_funds[0].amount - multiplier * Uint128::from(MAX_GROUP_SIZE);
 
             let msg = ExecuteMsg::Distribute {};
 
@@ -408,20 +416,39 @@ mod tests {
 
             // make sure the contract has a balance
             let bal = app.wrap().query_all_balances(splits_addr.clone()).unwrap();
-            assert_eq!(bal.len(), 1);
+            assert_eq!(bal, coins(contract_balance.u128(), DENOM));
 
-            let first_member_bal = app
-                .wrap()
-                .query_balance("member0001".to_string(), DENOM)
-                .unwrap();
-            assert_eq!(first_member_bal.amount, Uint128::new(1));
+            // verify amounts for each member
+            let msg = QueryMsg::ListMembers {
+                start_after: None,
+                limit: None,
+            };
+            let list: MemberListResponse = app.wrap().query_wasm_smart(splits_addr, &msg).unwrap();
+            for member in list.members.iter() {
+                let bal = app
+                    .wrap()
+                    .query_balance(member.addr.to_string(), DENOM)
+                    .unwrap();
+                assert_eq!(bal.amount, Uint128::from(member.weight) * multiplier)
+            }
 
-            // funds weren't distributed to the last member
             let last_member_bal = app
                 .wrap()
                 .query_balance("member0100".to_string(), DENOM)
                 .unwrap();
             assert_eq!(last_member_bal.amount, Uint128::new(0));
+
+            // cycle through members that did not receive distributions
+            let members: Vec<Member> = (MAX_GROUP_SIZE + 1..100)
+                .map(|i| member(format!("member{:04}", i), 1))
+                .collect();
+            for member in members.iter() {
+                let bal = app
+                    .wrap()
+                    .query_balance(member.addr.to_string(), DENOM)
+                    .unwrap();
+                assert_eq!(bal.amount, Uint128::new(0))
+            }
         }
     }
 }
