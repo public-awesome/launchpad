@@ -134,9 +134,7 @@ fn checked_total_members(group: &Cw4Contract, deps: Deps) -> Result<u64, Contrac
     let members = group
         .list_members(&deps.querier, None, Some(PAGINATION_LIMIT))?
         .len();
-    if members == 0 {
-        return Err(ContractError::InvalidMemberCount { count: members });
-    } else if members > MAX_GROUP_SIZE as usize {
+    if members == 0 || members > MAX_GROUP_SIZE as usize {
         return Err(ContractError::InvalidMemberCount { count: members });
     }
 

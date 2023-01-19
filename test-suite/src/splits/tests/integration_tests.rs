@@ -348,7 +348,7 @@ mod tests {
             let msg = ExecuteMsg::Distribute {};
 
             let err = app
-                .execute_contract(Addr::unchecked(OWNER), splits_addr.clone(), &msg, &[])
+                .execute_contract(Addr::unchecked(OWNER), splits_addr, &msg, &[])
                 .unwrap_err();
 
             assert_eq!(
@@ -401,12 +401,11 @@ mod tests {
             let init_funds = coins(255, DENOM);
             let mut app = mock_app_builder_init_funds(&init_funds);
 
-            let (splits_addr, _) =
-                setup_test_case_with_overflow_group(&mut app, init_funds.clone());
+            let (splits_addr, _) = setup_test_case_with_overflow_group(&mut app, init_funds);
 
             let msg = ExecuteMsg::Distribute {};
             let err = app
-                .execute_contract(Addr::unchecked(OWNER), splits_addr.clone(), &msg, &[])
+                .execute_contract(Addr::unchecked(OWNER), splits_addr, &msg, &[])
                 .unwrap_err();
             assert_eq!(
                 err.source().unwrap().to_string(),
@@ -431,12 +430,12 @@ mod tests {
                 add: vec![member("member0100", 0), member("member0101", 0)],
             };
             let _ = app
-                .execute_contract(Addr::unchecked(OWNER), group_addr.clone(), &msg, &[])
+                .execute_contract(Addr::unchecked(OWNER), group_addr, &msg, &[])
                 .unwrap();
 
             let msg = ExecuteMsg::Distribute {};
             let _ = app
-                .execute_contract(Addr::unchecked(OWNER), splits_addr.clone(), &msg, &[])
+                .execute_contract(Addr::unchecked(OWNER), splits_addr, &msg, &[])
                 .unwrap();
 
             // confirm zero weight members have no balance
@@ -541,9 +540,7 @@ mod tests {
                 .unwrap();
 
             // contract has a balance
-            let new_total_weight = Cw4Contract(group_addr.clone())
-                .total_weight(&app.wrap())
-                .unwrap();
+            let new_total_weight = Cw4Contract(group_addr).total_weight(&app.wrap()).unwrap();
             let new_multiplier =
                 (contract_balance + more_funds[0].amount) / Uint128::from(new_total_weight);
             let new_contract_balance = (contract_balance + more_funds[0].amount)
@@ -556,10 +553,7 @@ mod tests {
                 start_after: None,
                 limit: None,
             };
-            let list: MemberListResponse = app
-                .wrap()
-                .query_wasm_smart(splits_addr.clone(), &msg)
-                .unwrap();
+            let list: MemberListResponse = app.wrap().query_wasm_smart(splits_addr, &msg).unwrap();
             for (i, member) in list.members.iter().enumerate() {
                 let bal = app
                     .wrap()
