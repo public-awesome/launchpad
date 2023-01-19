@@ -20,7 +20,9 @@ pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 const INIT_GROUP_REPLY_ID: u64 = 1;
 
 // This is the same hardcoded value as in cw4-group
-pub const MAX_GROUP_SIZE: u32 = 30;
+pub const PAGINATION_LIMIT: u32 = 30;
+// We hardcode a smaller number to effectively check group size
+pub const MAX_GROUP_SIZE: u32 = 25;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -48,6 +50,7 @@ pub fn instantiate(
             );
 
             checked_total_weight(&group, deps.as_ref())?;
+            checked_total_members(&group, deps.as_ref())?;
 
             GROUP.save(deps.storage, &group)?;
             Ok(Response::default())
@@ -84,6 +87,7 @@ pub fn execute_distribute(
     let group = GROUP.load(deps.storage)?;
 
     let total_weight = checked_total_weight(&group, deps)?;
+    checked_total_members(&group, deps)?;
 
     let funds = deps
         .querier
@@ -98,9 +102,11 @@ pub fn execute_distribute(
     if multiplier.is_zero() {
         return Err(ContractError::NotEnoughFunds { min: total_weight });
     }
+
     let msgs = group
-        .list_members(&deps.querier, None, Some(MAX_GROUP_SIZE))?
+        .list_members(&deps.querier, None, Some(PAGINATION_LIMIT))?
         .iter()
+        .filter(|m| m.weight > 0)
         .map(|member| {
             let amount = multiplier * Uint128::from(member.weight);
             BankMsg::Send {
@@ -122,6 +128,19 @@ fn checked_total_weight(group: &Cw4Contract, deps: Deps) -> Result<u64, Contract
     }
 
     Ok(weight)
+}
+
+fn checked_total_members(group: &Cw4Contract, deps: Deps) -> Result<u64, ContractError> {
+    let members = group
+        .list_members(&deps.querier, None, Some(PAGINATION_LIMIT))?
+        .len();
+    if members == 0 {
+        return Err(ContractError::InvalidMemberCount { count: members });
+    } else if members > MAX_GROUP_SIZE as usize {
+        return Err(ContractError::InvalidMemberCount { count: members });
+    }
+
+    Ok(members as u64)
 }
 
 /// Checks if the sender is an admin or a member of a group.

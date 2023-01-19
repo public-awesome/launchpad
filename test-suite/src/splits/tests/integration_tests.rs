@@ -74,7 +74,7 @@ mod tests {
     fn instantiate_splits_with_overflow_group(app: &mut App) -> Addr {
         let flex_id = app.store_code(contract_splits());
 
-        let members: Vec<Member> = (1..100)
+        let members: Vec<Member> = (1..=MAX_GROUP_SIZE + 2)
             .map(|i| member(format!("member{:04}", i), 1))
             .collect();
         // members.push(member(OWNER, 1));
@@ -336,7 +336,7 @@ mod tests {
         }
 
         #[test]
-        fn distribute_under_weight() {
+        fn distribute_under_funded() {
             const DENOM: &str = "ustars";
             let init_funds = coins(79, DENOM);
             let mut app = mock_app_builder_init_funds(&init_funds);
@@ -396,61 +396,60 @@ mod tests {
         }
 
         #[test]
-        fn distribute_with_overflow() {
-            // Overflow group is 100 members, each with weight 1,
-            // but there's a max group size of 30 for distribution.
-            // the first 30 get distributions, the rest get nothing.
+        fn distribute_with_too_many_members() {
+            const DENOM: &str = "ustars";
+            let init_funds = coins(255, DENOM);
+            let mut app = mock_app_builder_init_funds(&init_funds);
+
+            let (splits_addr, _) =
+                setup_test_case_with_overflow_group(&mut app, init_funds.clone());
+
+            let msg = ExecuteMsg::Distribute {};
+            let err = app
+                .execute_contract(Addr::unchecked(OWNER), splits_addr.clone(), &msg, &[])
+                .unwrap_err();
+            assert_eq!(
+                err.source().unwrap().to_string(),
+                ContractError::InvalidMemberCount {
+                    count: (MAX_GROUP_SIZE + 1) as usize
+                }
+                .to_string()
+            );
+        }
+
+        #[test]
+        fn distribute_with_zero_weight_members() {
             const DENOM: &str = "ustars";
             let init_funds = coins(255, DENOM);
             let mut app = mock_app_builder_init_funds(&init_funds);
 
             let (splits_addr, group_addr) =
-                setup_test_case_with_overflow_group(&mut app, init_funds.clone());
-            let total_weight = Cw4Contract(group_addr).total_weight(&app.wrap()).unwrap();
-            let multiplier = init_funds[0].amount / Uint128::from(total_weight);
-            let contract_balance =
-                init_funds[0].amount - multiplier * Uint128::from(MAX_GROUP_SIZE);
+                setup_test_case_with_internal_group(&mut app, init_funds);
+
+            let msg = Cw4GroupExecuteMsg::UpdateMembers {
+                remove: vec![],
+                add: vec![member("member0100", 0), member("member0101", 0)],
+            };
+            let _ = app
+                .execute_contract(Addr::unchecked(OWNER), group_addr.clone(), &msg, &[])
+                .unwrap();
 
             let msg = ExecuteMsg::Distribute {};
-
-            app.execute_contract(Addr::unchecked(OWNER), splits_addr.clone(), &msg, &[])
+            let _ = app
+                .execute_contract(Addr::unchecked(OWNER), splits_addr.clone(), &msg, &[])
                 .unwrap();
 
-            // make sure the contract has a balance
-            let bal = app.wrap().query_all_balances(splits_addr.clone()).unwrap();
-            assert_eq!(bal, coins(contract_balance.u128(), DENOM));
-
-            // verify amounts for each member
-            let msg = QueryMsg::ListMembers {
-                start_after: None,
-                limit: None,
-            };
-            let list: MemberListResponse = app.wrap().query_wasm_smart(splits_addr, &msg).unwrap();
-            for member in list.members.iter() {
-                let bal = app
-                    .wrap()
-                    .query_balance(member.addr.to_string(), DENOM)
-                    .unwrap();
-                assert_eq!(bal.amount, Uint128::from(member.weight) * multiplier)
-            }
-
-            let last_member_bal = app
+            // confirm zero weight members have no balance
+            let bal = app
                 .wrap()
-                .query_balance("member0100".to_string(), DENOM)
+                .query_balance("memeber0100".to_string(), DENOM)
                 .unwrap();
-            assert_eq!(last_member_bal.amount, Uint128::new(0));
-
-            // cycle through members that did not receive distributions
-            let members: Vec<Member> = (MAX_GROUP_SIZE + 1..100)
-                .map(|i| member(format!("member{:04}", i), 1))
-                .collect();
-            for member in members.iter() {
-                let bal = app
-                    .wrap()
-                    .query_balance(member.addr.to_string(), DENOM)
-                    .unwrap();
-                assert_eq!(bal.amount, Uint128::new(0))
-            }
+            assert_eq!(bal.amount, Uint128::zero());
+            let bal = app
+                .wrap()
+                .query_balance("memeber0101".to_string(), DENOM)
+                .unwrap();
+            assert_eq!(bal.amount, Uint128::zero());
         }
 
         #[test]
