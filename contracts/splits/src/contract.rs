@@ -87,7 +87,13 @@ pub fn execute_distribute(
     let group = GROUP.load(deps.storage)?;
 
     let total_weight = checked_total_weight(&group, deps)?;
-    checked_total_members(&group, deps)?;
+    let members = group.list_members(&deps.querier, None, Some(PAGINATION_LIMIT))?;
+    let members_count = members.len();
+    if members_count == 0 || members_count > MAX_GROUP_SIZE as usize {
+        return Err(ContractError::InvalidMemberCount {
+            count: members_count,
+        });
+    }
 
     let funds = deps
         .querier
@@ -103,8 +109,7 @@ pub fn execute_distribute(
         return Err(ContractError::NotEnoughFunds { min: total_weight });
     }
 
-    let msgs = group
-        .list_members(&deps.querier, None, Some(PAGINATION_LIMIT))?
+    let msgs = members
         .iter()
         .filter(|m| m.weight > 0)
         .map(|member| {
