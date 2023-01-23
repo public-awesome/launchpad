@@ -31,7 +31,6 @@ cosmwasm-std    = { workspace = true }
 cw721-base      = { workspace = true, features = ["library"] }
 cw-utils        = { workspace = true }
 serde           = { workspace = true }
-sg-std          = { workspace = true }
 thiserror       = { workspace = true }
 
 [dev-dependencies]

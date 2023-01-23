@@ -1,8 +1,11 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Binary, Empty, Timestamp};
+use cosmwasm_std::{
+    coin, Addr, BankMsg, Binary, Empty, Event, StdError, StdResult, Timestamp, Uint128,
+};
 use cw721_base::msg::{MintMsg, QueryMsg as Cw721QueryMsg};
 use cw_utils::Expiration;
 use sg721::RoyaltyInfoResponse;
+use sg_std::{Response, SubMsg, NATIVE_DENOM};
 
 #[cw_serde]
 pub enum ExecuteMsg<T, E> {
@@ -160,4 +163,36 @@ pub struct CollectionInfoResponse {
     pub explicit_content: Option<bool>,
     pub start_trading_time: Option<Timestamp>,
     pub royalty_info: Option<RoyaltyInfoResponse>,
+}
+
+impl CollectionInfoResponse {
+    pub fn royalty_payout(
+        &self,
+        collection: Addr,
+        payment: Uint128,
+        protocol_fee: Uint128,
+        finders_fee: Option<Uint128>,
+        res: &mut Response,
+    ) -> StdResult<Uint128> {
+        if let Some(royalty_info) = self.royalty_info.as_ref() {
+            let amount = coin((payment * royalty_info.share).u128(), NATIVE_DENOM);
+            if payment < (protocol_fee + finders_fee.unwrap_or(Uint128::zero()) + amount.amount) {
+                return Err(StdError::generic_err("Fees exceed payment"));
+            }
+            res.messages.push(SubMsg::new(BankMsg::Send {
+                to_address: royalty_info.payment_address.to_string(),
+                amount: vec![amount.clone()],
+            }));
+
+            let event = Event::new("royalty-payout")
+                .add_attribute("collection", collection.to_string())
+                .add_attribute("amount", amount.to_string())
+                .add_attribute("recipient", royalty_info.payment_address.to_string());
+            res.events.push(event);
+
+            Ok(amount.amount)
+        } else {
+            Ok(Uint128::zero())
+        }
+    }
 }
