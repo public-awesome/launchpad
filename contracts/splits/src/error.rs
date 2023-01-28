@@ -16,11 +16,17 @@ pub enum ContractError {
     #[error("Contract has no funds")]
     NoFunds {},
 
+    #[error("Contract has not enough funds. Minimum required: `{min}`")]
+    NotEnoughFunds { min: u64 },
+
     #[error("Group contract invalid address `{addr}`")]
     InvalidGroup { addr: String },
 
     #[error("Group contract invalid total weight `{weight}`")]
     InvalidWeight { weight: u64 },
+
+    #[error("Group contract invalid member count `{count}`")]
+    InvalidMemberCount { count: usize },
 
     #[error("Invalid executor `{addr}`")]
     InvalidExecutor { addr: String },

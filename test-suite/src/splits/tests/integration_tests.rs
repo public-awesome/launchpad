@@ -7,8 +7,10 @@ mod tests {
     use cosmwasm_std::{to_binary, Addr, Coin};
     use cw2::{query_contract_info, ContractVersion};
     use cw4::{Cw4ExecuteMsg, Member, MemberListResponse};
+    use cw4_group::msg::ExecuteMsg as Cw4GroupExecuteMsg;
     use cw_multi_test::{next_block, App, Executor as TestExecutor};
     use sg_controllers::ContractInstantiateMsg;
+    use sg_splits::contract::MAX_GROUP_SIZE;
     use sg_splits::msg::Group;
     use sg_splits::{
         msg::{InstantiateMsg, QueryMsg},
@@ -69,10 +71,10 @@ mod tests {
     }
 
     #[track_caller]
-    fn instantiate_splits_with_overlow_group(app: &mut App) -> Addr {
+    fn instantiate_splits_with_overflow_group(app: &mut App) -> Addr {
         let flex_id = app.store_code(contract_splits());
 
-        let members: Vec<Member> = (1..100)
+        let members: Vec<Member> = (1..=MAX_GROUP_SIZE + 1)
             .map(|i| member(format!("member{:04}", i), 1))
             .collect();
         // members.push(member(OWNER, 1));
@@ -161,7 +163,7 @@ mod tests {
     #[track_caller]
     fn setup_test_case_with_overflow_group(app: &mut App, init_funds: Vec<Coin>) -> (Addr, Addr) {
         // Set up Splits with internal group
-        let splits_addr = instantiate_splits_with_overlow_group(app);
+        let splits_addr = instantiate_splits_with_overflow_group(app);
         app.update_block(next_block);
 
         // Bonus: set some funds on the splits contract for future proposals
@@ -256,6 +258,8 @@ mod tests {
 
     mod distribute {
         use cosmwasm_std::{coins, Uint128};
+        use cw4::Cw4Contract;
+        use cw_multi_test::{BankSudo, SudoMsg};
 
         use super::*;
         use sg_splits::msg::{ExecuteMsg, QueryMsg};
@@ -332,34 +336,234 @@ mod tests {
         }
 
         #[test]
-        fn distribute_with_overflow() {
+        fn distribute_under_funded() {
             const DENOM: &str = "ustars";
-            let init_funds = coins(100, DENOM);
+            let init_funds = coins(79, DENOM);
+            let mut app = mock_app_builder_init_funds(&init_funds);
+
+            let (splits_addr, group_addr) =
+                setup_test_case_with_internal_group(&mut app, init_funds);
+            let total_weight = Cw4Contract(group_addr).total_weight(&app.wrap()).unwrap();
+
+            let msg = ExecuteMsg::Distribute {};
+
+            let err = app
+                .execute_contract(Addr::unchecked(OWNER), splits_addr, &msg, &[])
+                .unwrap_err();
+
+            assert_eq!(
+                err.source().unwrap().to_string(),
+                ContractError::NotEnoughFunds { min: total_weight }.to_string()
+            );
+        }
+
+        #[test]
+        fn distribute_amount_with_remaining_balance() {
+            const DENOM: &str = "ustars";
+            let init_funds = coins(479, DENOM);
+            let mut app = mock_app_builder_init_funds(&init_funds);
+
+            let (splits_addr, group_addr) =
+                setup_test_case_with_internal_group(&mut app, init_funds.clone());
+            let total_weight = Cw4Contract(group_addr).total_weight(&app.wrap()).unwrap();
+            let multiplier = init_funds[0].amount / Uint128::from(total_weight);
+            let contract_balance = init_funds[0].amount - multiplier * Uint128::from(total_weight);
+
+            let msg = ExecuteMsg::Distribute {};
+
+            let _ = app
+                .execute_contract(Addr::unchecked(OWNER), splits_addr.clone(), &msg, &[])
+                .unwrap();
+
+            // contract has a balance
+            let bal = app.wrap().query_all_balances(splits_addr.clone()).unwrap();
+            assert_eq!(bal, coins(contract_balance.u128(), DENOM));
+
+            // verify amounts for each member
+            let msg = QueryMsg::ListMembers {
+                start_after: None,
+                limit: None,
+            };
+
+            let list: MemberListResponse = app.wrap().query_wasm_smart(splits_addr, &msg).unwrap();
+            for member in list.members.iter() {
+                let bal = app
+                    .wrap()
+                    .query_balance(member.addr.to_string(), DENOM)
+                    .unwrap();
+                assert_eq!(bal.amount, Uint128::from(member.weight) * multiplier)
+            }
+        }
+
+        #[test]
+        fn distribute_with_too_many_members() {
+            const DENOM: &str = "ustars";
+            let init_funds = coins(255, DENOM);
             let mut app = mock_app_builder_init_funds(&init_funds);
 
             let (splits_addr, _) = setup_test_case_with_overflow_group(&mut app, init_funds);
 
             let msg = ExecuteMsg::Distribute {};
+            let err = app
+                .execute_contract(Addr::unchecked(OWNER), splits_addr, &msg, &[])
+                .unwrap_err();
+            assert_eq!(
+                err.source().unwrap().to_string(),
+                ContractError::InvalidMemberCount {
+                    count: (MAX_GROUP_SIZE + 1) as usize
+                }
+                .to_string()
+            );
+        }
 
-            app.execute_contract(Addr::unchecked(OWNER), splits_addr.clone(), &msg, &[])
+        #[test]
+        fn distribute_with_zero_weight_members() {
+            const DENOM: &str = "ustars";
+            let init_funds = coins(255, DENOM);
+            let mut app = mock_app_builder_init_funds(&init_funds);
+
+            let (splits_addr, group_addr) =
+                setup_test_case_with_internal_group(&mut app, init_funds);
+
+            let msg = Cw4GroupExecuteMsg::UpdateMembers {
+                remove: vec![],
+                add: vec![member("member0100", 0), member("member0101", 0)],
+            };
+            let _ = app
+                .execute_contract(Addr::unchecked(OWNER), group_addr, &msg, &[])
                 .unwrap();
 
-            // make sure the contract has a balance
+            let msg = ExecuteMsg::Distribute {};
+            let _ = app
+                .execute_contract(Addr::unchecked(OWNER), splits_addr, &msg, &[])
+                .unwrap();
+
+            // confirm zero weight members have no balance
+            let bal = app
+                .wrap()
+                .query_balance("memeber0100".to_string(), DENOM)
+                .unwrap();
+            assert_eq!(bal.amount, Uint128::zero());
+            let bal = app
+                .wrap()
+                .query_balance("memeber0101".to_string(), DENOM)
+                .unwrap();
+            assert_eq!(bal.amount, Uint128::zero());
+        }
+
+        #[test]
+        fn distribute_with_group_changes() {
+            const DENOM: &str = "ustars";
+            let init_funds = coins(199, DENOM);
+            let mut app = mock_app_builder_init_funds(&init_funds);
+
+            let (splits_addr, group_addr) = setup_test_case(&mut app, init_funds.clone(), false);
+            let total_weight = Cw4Contract(group_addr.clone())
+                .total_weight(&app.wrap())
+                .unwrap();
+            let multiplier = init_funds[0].amount / Uint128::from(total_weight);
+            let contract_balance = init_funds[0].amount - multiplier * Uint128::from(total_weight);
+            let mut payouts = vec![];
+
+            let msg = ExecuteMsg::Distribute {};
+
+            let _ = app
+                .execute_contract(Addr::unchecked(OWNER), splits_addr.clone(), &msg, &[])
+                .unwrap();
+
+            // contract has a balance
             let bal = app.wrap().query_all_balances(splits_addr.clone()).unwrap();
-            assert_eq!(bal.len(), 1);
+            assert_eq!(bal, coins(contract_balance.u128(), DENOM));
 
-            let first_member_bal = app
-                .wrap()
-                .query_balance("member0001".to_string(), DENOM)
-                .unwrap();
-            assert_eq!(first_member_bal.amount, Uint128::new(1));
+            // verify amounts for each member
+            let msg = QueryMsg::ListMembers {
+                start_after: None,
+                limit: None,
+            };
 
-            // funds weren't distributed to the last member
-            let last_member_bal = app
+            let list: MemberListResponse = app
                 .wrap()
-                .query_balance("member0100".to_string(), DENOM)
+                .query_wasm_smart(splits_addr.clone(), &msg)
                 .unwrap();
-            assert_eq!(last_member_bal.amount, Uint128::new(0));
+            for member in list.members.iter() {
+                let bal = app
+                    .wrap()
+                    .query_balance(member.addr.to_string(), DENOM)
+                    .unwrap();
+                payouts.push(bal.amount);
+                assert_eq!(bal.amount, Uint128::from(member.weight) * multiplier)
+            }
+
+            // add members to group
+            let msg = Cw4GroupExecuteMsg::UpdateMembers {
+                remove: vec![],
+                add: vec![member("member0100", 2), member("member0101", 23)],
+            };
+            let _ = app
+                .execute_contract(Addr::unchecked(OWNER), group_addr.clone(), &msg, &[])
+                .unwrap();
+            payouts.push(Uint128::zero());
+            payouts.push(Uint128::zero());
+
+            // confirm members were added
+            let member = Cw4Contract(group_addr.clone())
+                .is_member(&app.wrap(), &Addr::unchecked("member0100"), None)
+                .unwrap();
+            assert!(member.is_some());
+            let member = Cw4Contract(group_addr.clone())
+                .is_member(&app.wrap(), &Addr::unchecked("member0101"), None)
+                .unwrap();
+            assert!(member.is_some());
+
+            // add more funds from bank module to contract
+            let more_funds = coins(12345u128, DENOM);
+            app.sudo(SudoMsg::Bank({
+                BankSudo::Mint {
+                    to_address: splits_addr.to_string(),
+                    amount: more_funds.clone(),
+                }
+            }))
+            .map_err(|err| println!("{:?}", err))
+            .ok();
+
+            // confirm new balance matches
+            let bal = app.wrap().query_all_balances(splits_addr.clone()).unwrap();
+            assert_eq!(
+                bal,
+                coins(contract_balance.u128() + more_funds[0].amount.u128(), DENOM)
+            );
+
+            // distribute again and check accounting
+            let msg = ExecuteMsg::Distribute {};
+            let _ = app
+                .execute_contract(Addr::unchecked(OWNER), splits_addr.clone(), &msg, &[])
+                .unwrap();
+
+            // contract has a balance
+            let new_total_weight = Cw4Contract(group_addr).total_weight(&app.wrap()).unwrap();
+            let new_multiplier =
+                (contract_balance + more_funds[0].amount) / Uint128::from(new_total_weight);
+            let new_contract_balance = (contract_balance + more_funds[0].amount)
+                - new_multiplier * Uint128::from(new_total_weight);
+            let bal = app.wrap().query_all_balances(splits_addr.clone()).unwrap();
+            assert_eq!(bal, coins(new_contract_balance.u128(), DENOM));
+
+            // confirm member balances
+            let msg = QueryMsg::ListMembers {
+                start_after: None,
+                limit: None,
+            };
+            let list: MemberListResponse = app.wrap().query_wasm_smart(splits_addr, &msg).unwrap();
+            for (i, member) in list.members.iter().enumerate() {
+                let bal = app
+                    .wrap()
+                    .query_balance(member.addr.to_string(), DENOM)
+                    .unwrap();
+                assert_eq!(
+                    bal.amount,
+                    payouts[i] + Uint128::from(member.weight) * new_multiplier
+                )
+            }
         }
     }
 }

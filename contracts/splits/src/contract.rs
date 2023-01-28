@@ -1,8 +1,8 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coins, to_binary, Addr, BankMsg, Binary, Decimal, Deps, DepsMut, Env, MessageInfo, Reply,
-    Response, StdResult, SubMsg,
+    coins, to_binary, Addr, BankMsg, Binary, Deps, DepsMut, Env, MessageInfo, Reply, Response,
+    StdResult, SubMsg, Uint128,
 };
 use cw2::set_contract_version;
 use cw4::{Cw4Contract, Member, MemberListResponse, MemberResponse};
@@ -15,12 +15,14 @@ use crate::state::{ADMIN, GROUP};
 
 // Version info for migration info
 pub const CONTRACT_NAME: &str = "crates.io:sg-splits";
-const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
+pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 const INIT_GROUP_REPLY_ID: u64 = 1;
 
 // This is the same hardcoded value as in cw4-group
-const MAX_GROUP_SIZE: u32 = 30;
+pub const PAGINATION_LIMIT: u32 = 30;
+// We hardcode a smaller number to effectively check group size
+pub const MAX_GROUP_SIZE: u32 = 25;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -48,6 +50,7 @@ pub fn instantiate(
             );
 
             checked_total_weight(&group, deps.as_ref())?;
+            checked_total_members(&group, deps.as_ref())?;
 
             GROUP.save(deps.storage, &group)?;
             Ok(Response::default())
@@ -84,6 +87,13 @@ pub fn execute_distribute(
     let group = GROUP.load(deps.storage)?;
 
     let total_weight = checked_total_weight(&group, deps)?;
+    let members = group.list_members(&deps.querier, None, Some(PAGINATION_LIMIT))?;
+    let members_count = members.len();
+    if members_count == 0 || members_count > MAX_GROUP_SIZE as usize {
+        return Err(ContractError::InvalidMemberCount {
+            count: members_count,
+        });
+    }
 
     let funds = deps
         .querier
@@ -92,12 +102,18 @@ pub fn execute_distribute(
         return Err(ContractError::NoFunds {});
     }
 
-    let msgs = group
-        .list_members(&deps.querier, None, Some(MAX_GROUP_SIZE))?
+    // To avoid rounding errors, distribute funds modulo the total weight.
+    // Keep remaining balance in the contract.
+    let multiplier = funds.amount / Uint128::from(total_weight);
+    if multiplier.is_zero() {
+        return Err(ContractError::NotEnoughFunds { min: total_weight });
+    }
+
+    let msgs = members
         .iter()
+        .filter(|m| m.weight > 0)
         .map(|member| {
-            let ratio = Decimal::from_ratio(member.weight, total_weight);
-            let amount = funds.amount * ratio;
+            let amount = multiplier * Uint128::from(member.weight);
             BankMsg::Send {
                 to_address: member.addr.clone(),
                 amount: coins(amount.u128(), funds.denom.clone()),
@@ -117,6 +133,17 @@ fn checked_total_weight(group: &Cw4Contract, deps: Deps) -> Result<u64, Contract
     }
 
     Ok(weight)
+}
+
+fn checked_total_members(group: &Cw4Contract, deps: Deps) -> Result<u64, ContractError> {
+    let members = group
+        .list_members(&deps.querier, None, Some(PAGINATION_LIMIT))?
+        .len();
+    if members == 0 || members > MAX_GROUP_SIZE as usize {
+        return Err(ContractError::InvalidMemberCount { count: members });
+    }
+
+    Ok(members as u64)
 }
 
 /// Checks if the sender is an admin or a member of a group.
