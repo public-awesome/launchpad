@@ -44,9 +44,9 @@ vending-factory     = { version = "0.21.8" }
 vending-minter      = { version = "0.21.8" }
 whitelist-immutable = { version = "0.21.8" }
 sg-whitelist-basic  = { version = "0.12.0" }
-ethereum-verify     = { version = "0.21.8", path = "packages/ethereum-verify" }
-sg-eth-airdrop      = { version = "0.21.8", path = "contracts/sg-eth-airdrop" }
-test-suite          = { version = "0.21.8", path = "test-suite" }
+ethereum-verify     = { version = "0.21.8" }
+sg-eth-airdrop      = { version = "0.21.8" }
+test-suite          = { version = "0.21.8" }
 
 [profile.release.package.sg721]
 codegen-units = 1

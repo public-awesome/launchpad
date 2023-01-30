@@ -1405,6 +1405,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "ethereum-verify"
+version = "0.21.12"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2aab516ba562ade88aa8b42e33f36431fd2add4109b3bac3da17067909c2c34a"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "hex",
+ "sha2 0.10.6",
+ "sha3",
+]
+
+[[package]]
 name = "ethers-core"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3107,7 +3120,7 @@ dependencies = [
  "cw-storage-plus",
  "cw-utils",
  "cw2",
- "ethereum-verify",
+ "ethereum-verify 0.21.12",
  "ethers-core",
  "ethers-signers",
  "eyre",
@@ -3126,6 +3139,32 @@ dependencies = [
  "sha3",
  "thiserror",
  "vending-factory 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vending-minter 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "whitelist-immutable 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "sg-eth-airdrop"
+version = "0.21.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f2b52d88a144e79813ce3b12fc1606a3992f5b242fd4856f62b933497fc6ac27"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus",
+ "cw-utils",
+ "cw2",
+ "ethereum-verify 0.21.12",
+ "hex",
+ "rust_decimal",
+ "schemars",
+ "serde",
+ "sg-std 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg-whitelist 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg1 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sha2 0.10.6",
+ "sha3",
+ "thiserror",
  "vending-minter 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "whitelist-immutable 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -3852,7 +3891,7 @@ dependencies = [
  "schemars",
  "serde",
  "sg-controllers 0.21.12",
- "sg-eth-airdrop",
+ "sg-eth-airdrop 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg-multi-test 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg-splits 0.21.8",
  "sg-std 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
