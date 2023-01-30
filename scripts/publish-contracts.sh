@@ -1,7 +1,7 @@
-# cd contracts/base-factory && cargo publish && cd ../..
-# sleep 10
-# cd contracts/sg721-base && cargo publish && cd ../..
-# sleep 10
+cd contracts/base-factory && cargo publish && cd ../..
+sleep 10
+cd contracts/sg721-base && cargo publish && cd ../..
+sleep 10
 cd contracts/sg721-metadata-onchain && cargo publish && cd ../..
 sleep 10
 cd contracts/sg721-nt && cargo publish && cd ../..
