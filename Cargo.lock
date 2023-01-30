@@ -3152,18 +3152,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "sg-whitelist-basic"
-version = "0.12.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bf0670b0de4489224faa3c18ceb28af7251441118473f454110739a69df587b9"
-dependencies = [
- "cosmwasm-schema",
- "cosmwasm-std",
- "schemars",
- "serde",
-]
-
-[[package]]
 name = "sg1"
 version = "0.22.1"
 dependencies = [
@@ -4225,7 +4213,7 @@ dependencies = [
  "serde",
  "sg-multi-test",
  "sg-std",
- "sg-whitelist-basic",
+ "sg-whitelist",
  "thiserror",
 ]
 

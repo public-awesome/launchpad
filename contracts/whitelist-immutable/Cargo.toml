@@ -1,12 +1,12 @@
 [package]
-name = "whitelist-immutable"
-authors = ["Michael S<m@publicawesome.com>"]
+name        = "whitelist-immutable"
+authors     = ["Michael S<m@publicawesome.com>"]
 description = "Store-once whitelist for read only use cases"
-version = { workspace = true }
-edition = { workspace = true }
-homepage = { workspace = true }
-repository = { workspace = true }
-license = { workspace = true }
+version     = { workspace = true }
+edition     = { workspace = true }
+homepage    = { workspace = true }
+repository  = { workspace = true }
+license     = { workspace = true }
 
 exclude = [
   # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
@@ -34,16 +34,16 @@ optimize = """docker run --rm -v "$(pwd)":/code \
 
 [dependencies]
 cosmwasm-schema = { workspace = true }
-cosmwasm-std = { workspace = true }
+cosmwasm-std    = { workspace = true }
 cw-storage-plus = { workspace = true }
-cw-controllers = "0.16.0"
-cw2 = { workspace = true }
-cw-utils = { workspace = true }
-schemars = { workspace = true }
-serde = { workspace = true }
-thiserror = { workspace = true }
-sg-whitelist-basic = { workspace = true }
-sg-std = { workspace = true }
+cw-controllers  = "0.16.0"
+cw2             = { workspace = true }
+cw-utils        = { workspace = true }
+schemars        = { workspace = true }
+serde           = { workspace = true }
+thiserror       = { workspace = true }
+sg-whitelist    = { workspace = true }
+sg-std          = { workspace = true }
 
 [dev-dependencies]
 cw-multi-test = { workspace = true }
