@@ -286,10 +286,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "base-factory"
+version = "0.21.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5aa5d025eed703dfeb4f53b2d4fcfb8cd4b34ffeb142be4bc8620839c658e7e6"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus",
+ "cw-utils",
+ "cw2",
+ "schemars",
+ "serde",
+ "sg-std 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg1 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg2 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "thiserror",
+]
+
+[[package]]
 name = "base-minter"
 version = "0.21.8"
 dependencies = [
- "base-factory",
+ "base-factory 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-multi-test",
@@ -306,8 +325,34 @@ dependencies = [
  "sg2 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg4 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg721 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
- "sg721-base",
- "sg721-nt",
+ "sg721-base 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg721-nt 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "thiserror",
+ "url",
+]
+
+[[package]]
+name = "base-minter"
+version = "0.21.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ff9ef4b5c9642938c07558d9dd97c12d910857f70b0e3b1ceb1e90244723deed"
+dependencies = [
+ "base-factory 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus",
+ "cw-utils",
+ "cw2",
+ "cw721",
+ "cw721-base",
+ "schemars",
+ "serde",
+ "sg-std 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg1 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg2 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg4 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg721 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg721-base 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "thiserror",
  "url",
 ]
@@ -1176,10 +1221,10 @@ dependencies = [
  "serde_json",
  "sg2 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg721 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
- "sg721-base",
+ "sg721-base 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "test-context",
- "vending-factory",
- "vending-minter",
+ "vending-factory 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vending-minter 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -3035,6 +3080,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "sg-controllers"
+version = "0.21.12"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8fd75617dd7e8fc1951178ec2a882d9017ff00d988a5a1342bf0a375a034b197"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus",
+ "cw-utils",
+ "schemars",
+ "serde",
+ "sg-std 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "thiserror",
+]
+
+[[package]]
 name = "sg-eth-airdrop"
 version = "0.21.8"
 dependencies = [
@@ -3057,16 +3118,16 @@ dependencies = [
  "serde",
  "sg-multi-test 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg-std 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
- "sg-whitelist",
+ "sg-whitelist 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg1 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg2 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
- "sg721-base",
+ "sg721-base 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "sha2 0.10.6",
  "sha3",
  "thiserror",
- "vending-factory",
- "vending-minter",
- "whitelist-immutable",
+ "vending-factory 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vending-minter 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "whitelist-immutable 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -3130,8 +3191,25 @@ dependencies = [
  "cw4-group",
  "schemars",
  "serde",
- "sg-controllers",
+ "sg-controllers 0.21.12",
  "sg-multi-test 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg-std 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "thiserror",
+]
+
+[[package]]
+name = "sg-splits"
+version = "0.21.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e84efe5761fe52954f1c486955cfcbaffc3f64c4e6a56655f5355686991aa593"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus",
+ "cw2",
+ "cw4",
+ "schemars",
+ "serde",
  "sg-std 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "thiserror",
 ]
@@ -3186,6 +3264,25 @@ dependencies = [
  "schemars",
  "serde",
  "sg-multi-test 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg-std 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg1 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "thiserror",
+]
+
+[[package]]
+name = "sg-whitelist"
+version = "0.21.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9bc32960eae66459066135240cbc65591364a209e215087b6807e461bafba43d"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus",
+ "cw-utils",
+ "cw2",
+ "rust_decimal",
+ "schemars",
+ "serde",
  "sg-std 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg1 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "thiserror",
@@ -3325,8 +3422,28 @@ dependencies = [
  "sg721 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "thiserror",
  "url",
- "vending-factory",
- "vending-minter",
+ "vending-factory 0.21.8",
+ "vending-minter 0.21.8",
+]
+
+[[package]]
+name = "sg721-base"
+version = "0.21.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "14ce5de6ce05e4b5a019cadf7c15e2b53236b07ff5b254a56de5e6153dfa8034"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus",
+ "cw-utils",
+ "cw2",
+ "cw721",
+ "cw721-base",
+ "serde",
+ "sg-std 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg721 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "thiserror",
+ "url",
 ]
 
 [[package]]
@@ -3343,7 +3460,7 @@ dependencies = [
  "sg-metadata 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg-std 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg721 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
- "sg721-base",
+ "sg721-base 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -3360,7 +3477,26 @@ dependencies = [
  "serde",
  "sg-std 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg721 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
- "sg721-base",
+ "sg721-base 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "sg721-nt"
+version = "0.21.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4a93b0a550d9008e999a490d301fe0057b9faad2ac176ce19bf075c575f33307"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-utils",
+ "cw2",
+ "cw721",
+ "cw721-base",
+ "schemars",
+ "serde",
+ "sg-std 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg721 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg721-base 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -3418,6 +3554,16 @@ checksum = "bdf0c33fae925bdc080598b84bc15c55e7b9a4a43b3c704da051f977469691c9"
 dependencies = [
  "digest 0.10.6",
  "keccak",
+]
+
+[[package]]
+name = "shuffle"
+version = "0.1.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2fecbe806be0726e22a6192ce0ec2f90e0798946ae0cbc2c10c7a3c68cae4eb2"
+dependencies = [
+ "bitvec 0.17.4",
+ "rand",
 ]
 
 [[package]]
@@ -3685,8 +3831,8 @@ version = "0.21.8"
 dependencies = [
  "anyhow",
  "async-std",
- "base-factory",
- "base-minter",
+ "base-factory 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "base-minter 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-multi-test",
@@ -3705,25 +3851,25 @@ dependencies = [
  "rlp",
  "schemars",
  "serde",
- "sg-controllers",
+ "sg-controllers 0.21.12",
  "sg-eth-airdrop",
  "sg-multi-test 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
- "sg-splits",
+ "sg-splits 0.21.8",
  "sg-std 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
- "sg-whitelist",
+ "sg-whitelist 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg1 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg2 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg4 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg721 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
- "sg721-base",
- "sg721-nt",
+ "sg721-base 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg721-nt 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "sha2 0.10.6",
- "shuffle",
+ "shuffle 0.1.7 (git+https://github.com/webmaster128/shuffle?branch=rm-getrandom)",
  "thiserror",
  "url",
- "vending-factory",
- "vending-minter",
- "whitelist-immutable",
+ "vending-factory 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vending-minter 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "whitelist-immutable 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -4110,7 +4256,7 @@ dependencies = [
 name = "vending-factory"
 version = "0.21.8"
 dependencies = [
- "base-factory",
+ "base-factory 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-multi-test",
@@ -4120,6 +4266,27 @@ dependencies = [
  "schemars",
  "serde",
  "sg-multi-test 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg-std 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg1 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg2 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg721 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "thiserror",
+]
+
+[[package]]
+name = "vending-factory"
+version = "0.21.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c0ddb16dcf1c9eedd17a933a0b2fc24a8049d2008f844de6a375ffa5e1045f82"
+dependencies = [
+ "base-factory 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus",
+ "cw-utils",
+ "cw2",
+ "schemars",
+ "serde",
  "sg-std 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg1 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg2 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -4147,19 +4314,49 @@ dependencies = [
  "schemars",
  "serde",
  "sg-multi-test 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
- "sg-splits",
+ "sg-splits 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg-std 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
- "sg-whitelist",
+ "sg-whitelist 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg1 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg2 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg4 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg721 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
- "sg721-base",
+ "sg721-base 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "sha2 0.10.6",
- "shuffle",
+ "shuffle 0.1.7 (git+https://github.com/webmaster128/shuffle?branch=rm-getrandom)",
  "thiserror",
  "url",
- "vending-factory",
+ "vending-factory 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "vending-minter"
+version = "0.21.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0a6ce87aa4c8abffdecd5012d86f3f57f4d6d8ee3d0a582a71ac5ad57cca68ba"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus",
+ "cw-utils",
+ "cw2",
+ "cw721",
+ "cw721-base",
+ "rand_core 0.6.4",
+ "rand_xoshiro",
+ "schemars",
+ "serde",
+ "sg-std 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg-whitelist 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg1 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg2 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg4 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg721 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sha2 0.10.6",
+ "shuffle 0.1.7 (registry+https://github.com/rust-lang/crates.io-index)",
+ "thiserror",
+ "url",
+ "vending-factory 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -4319,6 +4516,25 @@ dependencies = [
  "schemars",
  "serde",
  "sg-multi-test 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg-std 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg-whitelist-basic",
+ "thiserror",
+]
+
+[[package]]
+name = "whitelist-immutable"
+version = "0.21.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "273542ecb18d443a60b792600f4c6227a61b9cbc5fa63c22803615c1af4fe512"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-controllers",
+ "cw-storage-plus",
+ "cw-utils",
+ "cw2",
+ "schemars",
+ "serde",
  "sg-std 0.21.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg-whitelist-basic",
  "thiserror",
