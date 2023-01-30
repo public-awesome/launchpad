@@ -1,5 +1,5 @@
 [workspace]
-members = ["packages/*", "contracts/*", "test-suite/", "e2e"]
+members  = ["packages/*", "contracts/*", "test-suite/", "e2e"]
 resolver = "2"
 
 [workspace.package]
@@ -12,8 +12,8 @@ license    = "Apache-2.0"
 [workspace.dependencies]
 base-factory        = { version = "0.21.8", path = "contracts/base-factory" }
 base-minter         = { version = "0.21.8", path = "contracts/base-minter" }
-cosmwasm-schema     = "1.1.5"
-cosmwasm-std        = "1.1.5"
+cosmwasm-schema     = "1.2.1"
+cosmwasm-std        = "1.2.1"
 cw-controllers      = "0.16.0"
 cw2                 = "0.16.0"
 cw4                 = "0.16.0"
