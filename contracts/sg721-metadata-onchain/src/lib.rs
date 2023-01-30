@@ -101,7 +101,9 @@ mod tests {
         pub fn handle_query(&self, request: &QueryRequest<Empty>) -> QuerierResult {
             match &request {
                 QueryRequest::Wasm(WasmQuery::ContractInfo { contract_addr: _ }) => {
-                    let response = ContractInfoResponse::new(1, CREATOR);
+                    let mut response = ContractInfoResponse::default();
+                    response.code_id = 1;
+                    response.creator = CREATOR.to_string();
                     SystemResult::Ok(ContractResult::Ok(to_binary(&response).unwrap()))
                 }
                 _ => self.base.handle_query(request),
