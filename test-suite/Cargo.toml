@@ -41,7 +41,7 @@ cw-multi-test       = { workspace = true }
 sg-multi-test       = { workspace = true }
 sg721-base          = { workspace = true }
 cw4-group           = { workspace = true }
-sg-splits           = { path = "../contracts/splits" }
+sg-splits           = { workspace = true }
 anyhow              = "1.0.57"
 sg-eth-airdrop      = { workspace = true }
 whitelist-immutable = { workspace = true, features = ["library"] }
