@@ -17,3 +17,5 @@ sleep 10
 cd packages/controllers && cargo publish && cd ../..
 sleep 10
 cd packages/ethereum-verify && cargo publish && cd ../..
+sleep 10
+cd test-suite && cargo publish && cd ../..

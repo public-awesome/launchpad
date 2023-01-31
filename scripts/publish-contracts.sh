@@ -17,3 +17,5 @@ sleep 10
 cd contracts/vending-minter && cargo publish && cd ../..
 sleep 10
 cd contracts/whitelist-immutable && cargo publish && cd ../..
+sleep 10
+cd contracts/sg-eth-airdrop && cargo publish && cd ../..
