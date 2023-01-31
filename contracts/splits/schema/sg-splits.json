@@ -1,6 +1,6 @@
 {
   "contract_name": "sg-splits",
-  "contract_version": "0.22.3",
+  "contract_version": "0.22.4",
   "idl_version": "1.0.0",
   "instantiate": {
     "$schema": "http://json-schema.org/draft-07/schema#",
