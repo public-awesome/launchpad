@@ -83,8 +83,8 @@ pub fn create_minter_msg(
         init_msg: VendingMinterInitMsgExtension {
             base_token_uri: "ipfs://...".to_string(),
             payment_address: Some(creator_addr.clone()),
-            start_time: start_time,
-            num_tokens: num_tokens,
+            start_time,
+            num_tokens,
             mint_price: Coin {
                 amount: Uint128::new(MINT_PRICE),
                 denom: denom.to_string(),
@@ -100,7 +100,7 @@ pub fn create_minter_msg(
                 creator: creator_addr,
                 description: "Description".to_string(),
                 image: "https://example.com/image.png".to_string(),
-                start_trading_time: start_trading_time,
+                start_trading_time,
                 external_link: None,
                 explicit_content: None,
                 royalty_info: None,
