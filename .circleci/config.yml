@@ -488,6 +488,7 @@ jobs:
             docker cp ./contracts with_code:/code
             docker cp ./packages with_code:/code
             docker cp ./test-suite with_code:/code
+            docker cp ./e2e with_code:/code
       - run:
           name: Build development contracts
           command: |
