@@ -35,7 +35,7 @@ optimize = """docker run --rm -v "$(pwd)":/code \
 [dependencies]
 base-factory    = { workspace = true }
 cosmwasm-schema = { workspace = true }
-cosmwasm-std    = { workspace = true, features = ["staking"] }
+cosmwasm-std    = { workspace = true }
 cw2             = { workspace = true }
 cw721           = { workspace = true }
 cw721-base      = { workspace = true, features = ["library"] }

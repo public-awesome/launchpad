@@ -1,15 +1,15 @@
 [package]
-name        = "sg721-nt"
-authors     = [
+name = "sg721-nt"
+authors = [
   "Shane Vitarana <s@noreply.publicawesome.com>",
   "John Y <j@noreply.publicawesome.com>",
 ]
 description = "Stargaze Non-transferrable NFT collection contract"
-version     = { workspace = true }
-edition     = { workspace = true }
-homepage    = { workspace = true }
-repository  = { workspace = true }
-license     = { workspace = true }
+version = { workspace = true }
+edition = { workspace = true }
+homepage = { workspace = true }
+repository = { workspace = true }
+license = { workspace = true }
 
 exclude = [
   # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
@@ -30,7 +30,7 @@ library = []
 
 [dependencies]
 cosmwasm-schema = { workspace = true }
-cosmwasm-std    = { workspace = true, features = ["staking"] }
+cosmwasm-std    = { workspace = true }
 cw2             = { workspace = true }
 cw721           = { workspace = true }
 cw721-base      = { workspace = true, features = ["library"] }
