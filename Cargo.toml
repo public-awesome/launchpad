@@ -3,7 +3,7 @@ members  = ["packages/*", "contracts/*", "test-suite/", "e2e"]
 resolver = "2"
 
 [workspace.package]
-version    = "0.22.5"
+version    = "0.22.6"
 edition    = "2021"
 homepage   = "https://stargaze.zone"
 repository = "https://github.com/public-awesome/launchpad"
