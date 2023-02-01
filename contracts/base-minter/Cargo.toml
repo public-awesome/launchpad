@@ -51,8 +51,3 @@ sg721-base      = { workspace = true, features = ["library"] }
 sg-std          = { workspace = true }
 thiserror       = { workspace = true }
 url             = { workspace = true }
-
-[dev-dependencies]
-cw-multi-test = { workspace = true }
-sg-multi-test = { workspace = true }
-sg721-nt      = { workspace = true }

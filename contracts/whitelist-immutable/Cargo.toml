@@ -44,7 +44,3 @@ serde           = { workspace = true }
 thiserror       = { workspace = true }
 sg-whitelist    = { workspace = true }
 sg-std          = { workspace = true }
-
-[dev-dependencies]
-cw-multi-test = { workspace = true }
-sg-multi-test = { workspace = true }

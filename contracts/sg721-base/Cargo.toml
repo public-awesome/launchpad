@@ -38,10 +38,3 @@ sg721           = { workspace = true }
 sg-std          = { workspace = true }
 thiserror       = { workspace = true }
 url             = { workspace = true }
-
-[dev-dependencies]
-cw-multi-test   = { workspace = true }
-sg2             = { workspace = true }
-sg-multi-test   = { workspace = true }
-vending-factory = { path = "../vending-factory" }
-vending-minter  = { path = "../vending-minter" }

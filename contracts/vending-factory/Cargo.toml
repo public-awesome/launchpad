@@ -39,7 +39,3 @@ sg2             = { workspace = true }
 sg721           = { workspace = true }
 sg-std          = { workspace = true }
 thiserror       = { workspace = true }
-
-[dev-dependencies]
-cw-multi-test = { workspace = true }
-sg-multi-test = { workspace = true }

@@ -1,15 +1,15 @@
 [package]
-name        = "sg721-metadata-onchain"
-authors     = [
+name = "sg721-metadata-onchain"
+authors = [
   "Shane Vitarana <s@noreply.publicawesome.com>",
   "Larry Engineer <gm@larry.engineer>",
 ]
 description = "Example extending SG721 NFT to store metadata on chain"
-version     = { workspace = true }
-edition     = { workspace = true }
-homepage    = { workspace = true }
-repository  = { workspace = true }
-license     = { workspace = true }
+version = { workspace = true }
+edition = { workspace = true }
+homepage = { workspace = true }
+repository = { workspace = true }
+license = { workspace = true }
 
 exclude = [
   # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
