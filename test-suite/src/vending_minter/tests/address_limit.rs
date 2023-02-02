@@ -143,6 +143,55 @@ fn check_per_address_limit_3_percent() {
 }
 
 #[test]
+fn check_3_percent_round_up() {
+    let vt = vending_minter_template(215);
+    let (mut router, creator, buyer) = (vt.router, vt.accts.creator, vt.accts.buyer);
+    let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
+    // Set to genesis mint start time
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME, None);
+
+    // 3% of 215 is 6.45, we should round up to 7 allowed, 8 too many
+    let per_address_limit_msg = ExecuteMsg::UpdatePerAddressLimit {
+        per_address_limit: 8,
+    };
+    let res = router.execute_contract(
+        creator.clone(),
+        minter_addr.clone(),
+        &per_address_limit_msg,
+        &[],
+    );
+    assert!(res.is_err());
+
+    // can set to 3% which is 7
+    let per_address_limit_msg = ExecuteMsg::UpdatePerAddressLimit {
+        per_address_limit: 7,
+    };
+    let res = router.execute_contract(creator, minter_addr.clone(), &per_address_limit_msg, &[]);
+    assert!(res.is_ok());
+
+    for _ in 0..7 {
+        let mint_msg = ExecuteMsg::Mint {};
+        let res = router.execute_contract(
+            buyer.clone(),
+            minter_addr.clone(),
+            &mint_msg,
+            &coins(MINT_PRICE, NATIVE_DENOM),
+        );
+        assert!(res.is_ok());
+    }
+
+    // Second mint fails from exceeding per address limit
+    let mint_msg = ExecuteMsg::Mint {};
+    let res = router.execute_contract(
+        buyer,
+        minter_addr,
+        &mint_msg,
+        &coins(MINT_PRICE, NATIVE_DENOM),
+    );
+    assert!(res.is_err());
+}
+
+#[test]
 fn check_per_address_limit_above_50() {
     let vt = vending_minter_template(5000);
     let (mut router, creator, _) = (vt.router, vt.accts.creator, vt.accts.buyer);
