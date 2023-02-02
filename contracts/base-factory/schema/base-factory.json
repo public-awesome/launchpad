@@ -1,6 +1,6 @@
 {
   "contract_name": "base-factory",
-  "contract_version": "0.22.7",
+  "contract_version": "0.22.9",
   "idl_version": "1.0.0",
   "instantiate": {
     "$schema": "http://json-schema.org/draft-07/schema#",
