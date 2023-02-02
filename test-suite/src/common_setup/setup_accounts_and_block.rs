@@ -72,7 +72,6 @@ pub fn setup_block_time(router: &mut StargazeApp, nanos: u64, height: Option<u64
     router.set_block(block);
 }
 
-
 // Deal with zero and non-zero coin amounts for msgs
 pub fn coins_for_msg(msg_coin: Coin) -> Vec<Coin> {
     if msg_coin.amount > Uint128::zero() {
