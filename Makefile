@@ -42,4 +42,4 @@ schema:
 	sh scripts/schema.sh
 
 release:
-	sh scripts/release.sh
+	sh scripts/release.sh $(VERSION)
