@@ -9,6 +9,7 @@ use crate::state::{
     Config, ConfigExtension, CONFIG, MINTABLE_NUM_TOKENS, MINTABLE_TOKEN_POSITIONS, MINTER_ADDRS,
     SG721_ADDRESS, STATUS,
 };
+use crate::validation::{check_dynamic_per_address_limit, get_max_mintable_tokens};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
@@ -17,6 +18,7 @@ use cosmwasm_std::{
 };
 use cw2::set_contract_version;
 use cw721_base::{Extension, MintMsg};
+
 use cw_utils::{may_pay, maybe_addr, nonpayable, parse_reply_instantiate_data};
 use rand_core::{RngCore, SeedableRng};
 use rand_xoshiro::Xoshiro128PlusPlus;
@@ -74,9 +76,13 @@ pub fn instantiate(
         msg.init_msg.per_address_limit,
         msg.init_msg.num_tokens,
         factory_params.extension.max_per_address_limit,
-    ) {
+    )? {
         return Err(ContractError::InvalidPerAddressLimit {
-            max: msg.init_msg.num_tokens / 100,
+            max: get_max_mintable_tokens(
+                msg.init_msg.per_address_limit,
+                msg.init_msg.num_tokens,
+                factory_params.extension.max_per_address_limit,
+            )?,
             min: 1,
             got: msg.init_msg.per_address_limit,
         });
@@ -830,9 +836,13 @@ pub fn execute_update_per_address_limit(
         per_address_limit,
         config.extension.num_tokens,
         factory_params.extension.max_per_address_limit,
-    ) {
+    )? {
         return Err(ContractError::InvalidPerAddressLimit {
-            max: config.extension.num_tokens / 100,
+            max: get_max_mintable_tokens(
+                per_address_limit,
+                config.extension.num_tokens,
+                factory_params.extension.max_per_address_limit,
+            )?,
             min: 1,
             got: per_address_limit,
         });
@@ -922,18 +932,6 @@ pub fn mint_price(deps: Deps, is_admin: bool) -> Result<Coin, StdError> {
 fn mint_count(deps: Deps, info: &MessageInfo) -> Result<u32, StdError> {
     let mint_count = (MINTER_ADDRS.key(&info.sender).may_load(deps.storage)?).unwrap_or(0);
     Ok(mint_count)
-}
-
-// Check per address limit to make sure it's <= 1% num tokens
-fn check_dynamic_per_address_limit(
-    per_address_limit: u32,
-    num_tokens: u32,
-    max_per_address_limit: u32,
-) -> bool {
-    // If collection is small or large, no need to check per address limit
-    // ex: per_address_limit 50, no need to check if num_tokens > 5000
-    !((num_tokens > 100 && num_tokens < 100 * max_per_address_limit)
-        && per_address_limit > (num_tokens / 100))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]

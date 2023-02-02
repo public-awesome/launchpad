@@ -2,6 +2,7 @@ use crate::common_setup::{
     msg::MinterCollectionResponse,
     setup_minter::common::minter_params::minter_params_token,
     setup_minter::vending_minter::setup::{configure_minter, vending_minter_code_ids},
+    templates::vending_minter_per_address_limit,
 };
 use crate::common_setup::{
     setup_accounts_and_block::{coins_for_msg, setup_block_time},
@@ -93,26 +94,104 @@ fn check_per_address_limit() {
 }
 
 #[test]
+fn check_per_address_limit_3_percent() {
+    let vt = vending_minter_template(100);
+    let (mut router, creator, buyer) = (vt.router, vt.accts.creator, vt.accts.buyer);
+    let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
+    // Set to genesis mint start time
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME, None);
+
+    // 3% of 100 is 3, cant have 4 per address limit
+    let per_address_limit_msg = ExecuteMsg::UpdatePerAddressLimit {
+        per_address_limit: 4,
+    };
+    let res = router.execute_contract(
+        creator.clone(),
+        minter_addr.clone(),
+        &per_address_limit_msg,
+        &[],
+    );
+    assert!(res.is_err());
+
+    // can set to 3% which is 3
+    let per_address_limit_msg = ExecuteMsg::UpdatePerAddressLimit {
+        per_address_limit: 3,
+    };
+    let res = router.execute_contract(creator, minter_addr.clone(), &per_address_limit_msg, &[]);
+    assert!(res.is_ok());
+
+    for _ in 0..3 {
+        let mint_msg = ExecuteMsg::Mint {};
+        let res = router.execute_contract(
+            buyer.clone(),
+            minter_addr.clone(),
+            &mint_msg,
+            &coins(MINT_PRICE, NATIVE_DENOM),
+        );
+        assert!(res.is_ok());
+    }
+
+    // Second mint fails from exceeding per address limit
+    let mint_msg = ExecuteMsg::Mint {};
+    let res = router.execute_contract(
+        buyer,
+        minter_addr,
+        &mint_msg,
+        &coins(MINT_PRICE, NATIVE_DENOM),
+    );
+    assert!(res.is_err());
+}
+
+#[test]
+fn check_per_address_limit_above_50() {
+    let vt = vending_minter_template(5000);
+    let (mut router, creator, _) = (vt.router, vt.accts.creator, vt.accts.buyer);
+    let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
+    // Set to genesis mint start time
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME, None);
+
+    // 3% of 5000 is 150, but we will get blocked by the max per address limit flag
+    let per_address_limit_msg = ExecuteMsg::UpdatePerAddressLimit {
+        per_address_limit: 51,
+    };
+    let res = router.execute_contract(
+        creator.clone(),
+        minter_addr.clone(),
+        &per_address_limit_msg,
+        &[],
+    );
+    assert!(res.is_err());
+
+    // can set to 50
+    let per_address_limit_msg = ExecuteMsg::UpdatePerAddressLimit {
+        per_address_limit: 50,
+    };
+    let res = router.execute_contract(creator, minter_addr, &per_address_limit_msg, &[]);
+    assert!(res.is_ok());
+}
+
+#[test]
 fn check_dynamic_per_address_limit() {
     // let mut router = custom_mock_app();
     let num_tokens = 400;
-    let vt = vending_minter_template(num_tokens);
+    let per_address_limit = 30;
+    let max_per_address_limit = 50;
+    let vt = vending_minter_per_address_limit(num_tokens, per_address_limit);
     let (mut router, creator) = (vt.router, vt.accts.creator);
     let err = vt.collection_response_vec[0].error.as_ref();
 
     setup_block_time(&mut router, GENESIS_MINT_START_TIME - 1, None);
-
     assert_eq!(
         err.unwrap().source().unwrap().source().unwrap().to_string(),
         ContractError::InvalidPerAddressLimit {
-            max: num_tokens / 100,
+            max: 12,
             min: 1,
-            got: 5
+            got: 30
         }
         .to_string()
     );
 
-    let num_tokens = 1000;
+    let num_tokens = 300;
     let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
     let collection_params = mock_collection_params_1(Some(start_time));
     let minter_params = minter_params_token(num_tokens);
@@ -129,7 +208,7 @@ fn check_dynamic_per_address_limit() {
 
     let minter_addr = minter_collection_response[0].minter.clone().unwrap();
     let update_msg = ExecuteMsg::UpdatePerAddressLimit {
-        per_address_limit: 11,
+        per_address_limit: 110,
     };
     let err = router
         .execute_contract(creator, minter_addr, &update_msg, &[])
@@ -137,9 +216,9 @@ fn check_dynamic_per_address_limit() {
     assert_eq!(
         err.source().unwrap().to_string(),
         ContractError::InvalidPerAddressLimit {
-            max: num_tokens / 100,
+            max: max_per_address_limit,
             min: 1,
-            got: 11,
+            got: 110,
         }
         .to_string()
     );
