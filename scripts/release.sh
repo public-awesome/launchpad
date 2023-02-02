@@ -21,5 +21,6 @@ make schema
 # hack to fix schema generation
 rm -rf contracts/base-factory/schema/raw contracts/base-minter/schema/raw/ contracts/sg-eth-airdrop/schema/raw/ contracts/splits/schema/raw/ contracts/whitelist-immutable/schema/raw/
 
+echo "Push tag to Github"
 git tag -a v$1 -m "Release $1"
 git push origin v$1
