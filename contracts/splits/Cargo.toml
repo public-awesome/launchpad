@@ -38,9 +38,3 @@ serde           = { workspace = true }
 sg-controllers  = { workspace = true }
 sg-std          = { workspace = true }
 thiserror       = { workspace = true }
-
-[dev-dependencies]
-cosmwasm-schema = { workspace = true }
-cw4-group       = { workspace = true }
-cw-multi-test   = { workspace = true }
-sg-multi-test   = { workspace = true }

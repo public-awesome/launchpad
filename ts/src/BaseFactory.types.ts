@@ -24,6 +24,32 @@ export interface Coin {
 export interface Empty {
   [k: string]: unknown;
 }
-export type Sg2QueryMsg = {
-  params: {};
+export type ExecuteMsg = {
+  create_minter: CreateMinterMsgForNullable_Empty;
 };
+export type Decimal = string;
+export type Timestamp = Uint64;
+export type Uint64 = string;
+export interface CreateMinterMsgForNullable_Empty {
+  collection_params: CollectionParams;
+  init_msg?: Empty | null;
+}
+export interface CollectionParams {
+  code_id: number;
+  info: CollectionInfoForRoyaltyInfoResponse;
+  name: string;
+  symbol: string;
+}
+export interface CollectionInfoForRoyaltyInfoResponse {
+  creator: string;
+  description: string;
+  explicit_content?: boolean | null;
+  external_link?: string | null;
+  image: string;
+  royalty_info?: RoyaltyInfoResponse | null;
+  start_trading_time?: Timestamp | null;
+}
+export interface RoyaltyInfoResponse {
+  payment_address: string;
+  share: Decimal;
+}

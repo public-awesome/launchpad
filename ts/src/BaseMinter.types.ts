@@ -4,36 +4,10 @@
 * and run the @cosmwasm/ts-codegen generate command to regenerate this file.
 */
 
-export type Addr = string;
-export type Uint128 = string;
-export interface ConfigResponse {
-  collection_address: string;
-  config: MinterConfigForEmpty;
-}
-export interface MinterConfigForEmpty {
-  collection_code_id: number;
-  extension: Empty;
-  factory: Addr;
-  mint_price: Coin;
-}
-export interface Empty {
-  [k: string]: unknown;
-}
-export interface Coin {
-  amount: Uint128;
-  denom: string;
-  [k: string]: unknown;
-}
-export type ExecuteMsg = {
-  mint: {
-    token_uri: string;
-  };
-} | {
-  update_start_trading_time: Timestamp | null;
-};
+export type Decimal = string;
 export type Timestamp = Uint64;
 export type Uint64 = string;
-export type Decimal = string;
+export type Uint128 = string;
 export interface InstantiateMsg {
   create_msg: CreateMinterMsgForNullable_Empty;
   params: MinterParamsForNullable_Empty;
@@ -61,6 +35,9 @@ export interface RoyaltyInfoResponse {
   payment_address: string;
   share: Decimal;
 }
+export interface Empty {
+  [k: string]: unknown;
+}
 export interface MinterParamsForNullable_Empty {
   code_id: number;
   creation_fee: Coin;
@@ -69,16 +46,15 @@ export interface MinterParamsForNullable_Empty {
   min_mint_price: Coin;
   mint_fee_bps: number;
 }
-export type QueryMsg = {
-  config: {};
+export interface Coin {
+  amount: Uint128;
+  denom: string;
+  [k: string]: unknown;
+}
+export type ExecuteMsg = {
+  mint: {
+    token_uri: string;
+  };
 } | {
-  status: {};
+  update_start_trading_time: Timestamp | null;
 };
-export interface StatusResponse {
-  status: Status;
-}
-export interface Status {
-  is_blocked: boolean;
-  is_explicit: boolean;
-  is_verified: boolean;
-}

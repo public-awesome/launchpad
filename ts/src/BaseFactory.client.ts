@@ -4,4 +4,44 @@
 * and run the @cosmwasm/ts-codegen generate command to regenerate this file.
 */
 
-import { Uint128, InstantiateMsg, MinterParamsForNullable_Empty, Coin, Empty, Sg2QueryMsg } from "./BaseFactory.types";
+import { SigningCosmWasmClient, ExecuteResult } from "@cosmjs/cosmwasm-stargate";
+import { StdFee } from "@cosmjs/amino";
+import { Uint128, InstantiateMsg, MinterParamsForNullable_Empty, Coin, Empty, ExecuteMsg, Decimal, Timestamp, Uint64, CreateMinterMsgForNullable_Empty, CollectionParams, CollectionInfoForRoyaltyInfoResponse, RoyaltyInfoResponse } from "./BaseFactory.types";
+export interface BaseFactoryInterface {
+  contractAddress: string;
+  sender: string;
+  createMinter: ({
+    collectionParams,
+    initMsg
+  }: {
+    collectionParams: CollectionParams;
+    initMsg?: Empty;
+  }, fee?: number | StdFee | "auto", memo?: string, funds?: Coin[]) => Promise<ExecuteResult>;
+}
+export class BaseFactoryClient implements BaseFactoryInterface {
+  client: SigningCosmWasmClient;
+  sender: string;
+  contractAddress: string;
+
+  constructor(client: SigningCosmWasmClient, sender: string, contractAddress: string) {
+    this.client = client;
+    this.sender = sender;
+    this.contractAddress = contractAddress;
+    this.createMinter = this.createMinter.bind(this);
+  }
+
+  createMinter = async ({
+    collectionParams,
+    initMsg
+  }: {
+    collectionParams: CollectionParams;
+    initMsg?: Empty;
+  }, fee: number | StdFee | "auto" = "auto", memo?: string, funds?: Coin[]): Promise<ExecuteResult> => {
+    return await this.client.execute(this.sender, this.contractAddress, {
+      create_minter: {
+        collection_params: collectionParams,
+        init_msg: initMsg
+      }
+    }, fee, memo, funds);
+  };
+}

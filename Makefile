@@ -1,4 +1,4 @@
-.PHONY: deploy-local e2etest e2etest-full lint optimize publish-packages publish-contracts schema
+.PHONY: deploy-local e2etest e2etest-full lint optimize publish-packages publish-contracts schema release
 
 TEST_ADDRS ?= $(shell jq -r '.[].address' ./e2e/configs/test_accounts.json | tr '\n' ' ')
 GAS_LIMIT ?= "75000000"
@@ -40,3 +40,6 @@ publish-contracts:
 
 schema:
 	sh scripts/schema.sh
+
+release:
+	sh scripts/release.sh $(VERSION)

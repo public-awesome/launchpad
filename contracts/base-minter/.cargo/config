@@ -1,5 +1,9 @@
 [alias]
+<<<<<<< HEAD
 wasm = "build --release --target wasm32-unknown-unknown --lib"
+=======
+wasm = "build --release --lib --target wasm32-unknown-unknown"
+>>>>>>> 317c6383815d77e2b26b32e997a7e75772d45102
 wasm-debug = "build --lib --target wasm32-unknown-unknown"
 unit-test = "test --lib"
 schema = "run --bin schema"

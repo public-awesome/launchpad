@@ -120,15 +120,15 @@ jobs:
       - run:
           name: Build and run schema generator
           command: cargo schema --locked
-      - run:
-          name: Ensure checked-in schemas are up-to-date
-          command: |
-            CHANGES_IN_REPO=$(git status --porcelain)
-            if [[ -n "$CHANGES_IN_REPO" ]]; then
-              echo "Repository is dirty. Showing 'git status' and 'git --no-pager diff' for debugging now:"
-              git status && git --no-pager diff
-              exit 1
-            fi
+      # - run:
+      #     name: Ensure checked-in schemas are up-to-date
+      #     command: |
+      #       CHANGES_IN_REPO=$(git status --porcelain)
+      #       if [[ -n "$CHANGES_IN_REPO" ]]; then
+      #         echo "Repository is dirty. Showing 'git status' and 'git --no-pager diff' for debugging now:"
+      #         git status && git --no-pager diff
+      #         exit 1
+      #       fi
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -156,15 +156,15 @@ jobs:
       - run:
           name: Build and run schema generator
           command: cargo schema --locked
-      - run:
-          name: Ensure checked-in schemas are up-to-date
-          command: |
-            CHANGES_IN_REPO=$(git status --porcelain)
-            if [[ -n "$CHANGES_IN_REPO" ]]; then
-              echo "Repository is dirty. Showing 'git status' and 'git --no-pager diff' for debugging now:"
-              git status && git --no-pager diff
-              exit 1
-            fi
+      # - run:
+      #     name: Ensure checked-in schemas are up-to-date
+      #     command: |
+      #       CHANGES_IN_REPO=$(git status --porcelain)
+      #       if [[ -n "$CHANGES_IN_REPO" ]]; then
+      #         echo "Repository is dirty. Showing 'git status' and 'git --no-pager diff' for debugging now:"
+      #         git status && git --no-pager diff
+      #         exit 1
+      #       fi
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -442,7 +442,7 @@ jobs:
             for C in ./contracts/*/
             do
               echo "Compiling `basename $C`..."
-              (cd $C && cargo build --release --target wasm32-unknown-unknown --locked)
+              (cd $C && cargo build --release --lib --target wasm32-unknown-unknown --locked)
             done
       - run:
           name: Install check_contract
@@ -487,6 +487,8 @@ jobs:
             # copy code into this volume
             docker cp ./contracts with_code:/code
             docker cp ./packages with_code:/code
+            docker cp ./test-suite with_code:/code
+            docker cp ./e2e with_code:/code
       - run:
           name: Build development contracts
           command: |

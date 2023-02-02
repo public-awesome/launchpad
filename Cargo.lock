@@ -268,17 +268,15 @@ dependencies = [
 
 [[package]]
 name = "base-factory"
-version = "0.22.4"
+version = "0.22.9"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
- "cw-multi-test",
  "cw-storage-plus 0.16.0",
  "cw-utils 0.16.0",
  "cw2 0.16.0",
  "schemars",
  "serde",
- "sg-multi-test",
  "sg-std",
  "sg1",
  "sg2",
@@ -287,12 +285,11 @@ dependencies = [
 
 [[package]]
 name = "base-minter"
-version = "0.22.4"
+version = "0.22.9"
 dependencies = [
  "base-factory",
  "cosmwasm-schema",
  "cosmwasm-std",
- "cw-multi-test",
  "cw-storage-plus 0.16.0",
  "cw-utils 0.16.0",
  "cw2 0.16.0",
@@ -300,14 +297,12 @@ dependencies = [
  "cw721-base",
  "schemars",
  "serde",
- "sg-multi-test",
  "sg-std",
  "sg1",
  "sg2",
  "sg4",
  "sg721",
  "sg721-base",
- "sg721-nt",
  "thiserror",
  "url",
 ]
@@ -1202,7 +1197,7 @@ checksum = "c9b0705efd4599c15a38151f4721f7bc388306f61084d3bfd50bd07fbca5cb60"
 
 [[package]]
 name = "e2e"
-version = "0.1.0"
+version = "0.22.9"
 dependencies = [
  "assert_matches",
  "cosm-orc",
@@ -1389,7 +1384,7 @@ dependencies = [
 
 [[package]]
 name = "ethereum-verify"
-version = "0.22.4"
+version = "0.22.9"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -3077,7 +3072,7 @@ dependencies = [
 
 [[package]]
 name = "sg-controllers"
-version = "0.22.4"
+version = "0.22.9"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -3091,7 +3086,7 @@ dependencies = [
 
 [[package]]
 name = "sg-eth-airdrop"
-version = "0.22.4"
+version = "0.22.9"
 dependencies = [
  "anyhow",
  "async-std",
@@ -3126,7 +3121,7 @@ dependencies = [
 
 [[package]]
 name = "sg-metadata"
-version = "0.22.4"
+version = "0.22.9"
 dependencies = [
  "cosmwasm-schema",
  "schemars",
@@ -3135,7 +3130,7 @@ dependencies = [
 
 [[package]]
 name = "sg-multi-test"
-version = "0.22.4"
+version = "0.22.9"
 dependencies = [
  "anyhow",
  "cosmwasm-std",
@@ -3147,28 +3142,25 @@ dependencies = [
 
 [[package]]
 name = "sg-splits"
-version = "0.22.4"
+version = "0.22.9"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-controllers",
- "cw-multi-test",
  "cw-storage-plus 0.16.0",
  "cw-utils 0.16.0",
  "cw2 0.16.0",
  "cw4",
- "cw4-group",
  "schemars",
  "serde",
  "sg-controllers",
- "sg-multi-test",
  "sg-std",
  "thiserror",
 ]
 
 [[package]]
 name = "sg-std"
-version = "0.22.4"
+version = "0.22.9"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -3181,7 +3173,7 @@ dependencies = [
 
 [[package]]
 name = "sg-utils"
-version = "0.22.4"
+version = "0.22.9"
 dependencies = [
  "bech32 0.8.1",
  "cosmwasm-std",
@@ -3189,18 +3181,16 @@ dependencies = [
 
 [[package]]
 name = "sg-whitelist"
-version = "0.22.4"
+version = "0.22.9"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
- "cw-multi-test",
  "cw-storage-plus 0.16.0",
  "cw-utils 0.16.0",
  "cw2 0.16.0",
  "rust_decimal",
  "schemars",
  "serde",
- "sg-multi-test",
  "sg-std",
  "sg1",
  "thiserror",
@@ -3208,7 +3198,7 @@ dependencies = [
 
 [[package]]
 name = "sg1"
-version = "0.22.4"
+version = "0.22.9"
 dependencies = [
  "cosmwasm-std",
  "cw-utils 0.16.0",
@@ -3219,7 +3209,7 @@ dependencies = [
 
 [[package]]
 name = "sg2"
-version = "0.22.4"
+version = "0.22.9"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -3232,7 +3222,7 @@ dependencies = [
 
 [[package]]
 name = "sg4"
-version = "0.22.4"
+version = "0.22.9"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -3243,7 +3233,7 @@ dependencies = [
 
 [[package]]
 name = "sg721"
-version = "0.22.4"
+version = "0.22.9"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -3256,30 +3246,25 @@ dependencies = [
 
 [[package]]
 name = "sg721-base"
-version = "0.22.4"
+version = "0.22.9"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
- "cw-multi-test",
  "cw-storage-plus 0.16.0",
  "cw-utils 0.16.0",
  "cw2 0.16.0",
  "cw721",
  "cw721-base",
  "serde",
- "sg-multi-test",
  "sg-std",
- "sg2",
  "sg721",
  "thiserror",
  "url",
- "vending-factory",
- "vending-minter",
 ]
 
 [[package]]
 name = "sg721-metadata-onchain"
-version = "0.22.4"
+version = "0.22.9"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -3296,7 +3281,7 @@ dependencies = [
 
 [[package]]
 name = "sg721-nt"
-version = "0.22.4"
+version = "0.22.9"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -3629,7 +3614,7 @@ dependencies = [
 
 [[package]]
 name = "test-suite"
-version = "0.22.4"
+version = "0.22.9"
 dependencies = [
  "anyhow",
  "async-std",
@@ -4073,18 +4058,16 @@ dependencies = [
 
 [[package]]
 name = "vending-factory"
-version = "0.22.4"
+version = "0.22.9"
 dependencies = [
  "base-factory",
  "cosmwasm-schema",
  "cosmwasm-std",
- "cw-multi-test",
  "cw-storage-plus 0.16.0",
  "cw-utils 0.16.0",
  "cw2 0.16.0",
  "schemars",
  "serde",
- "sg-multi-test",
  "sg-std",
  "sg1",
  "sg2",
@@ -4094,32 +4077,25 @@ dependencies = [
 
 [[package]]
 name = "vending-minter"
-version = "0.22.4"
+version = "0.22.9"
 dependencies = [
- "anyhow",
  "cosmwasm-schema",
  "cosmwasm-std",
- "cw-multi-test",
  "cw-storage-plus 0.16.0",
  "cw-utils 0.16.0",
  "cw2 0.16.0",
- "cw4",
- "cw4-group",
  "cw721",
  "cw721-base",
  "rand_core 0.6.4",
  "rand_xoshiro",
  "schemars",
  "serde",
- "sg-multi-test",
- "sg-splits",
  "sg-std",
  "sg-whitelist",
  "sg1",
  "sg2",
  "sg4",
  "sg721",
- "sg721-base",
  "sha2 0.10.6",
  "shuffle",
  "thiserror",
@@ -4272,18 +4248,16 @@ dependencies = [
 
 [[package]]
 name = "whitelist-immutable"
-version = "0.22.4"
+version = "0.22.9"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-controllers",
- "cw-multi-test",
  "cw-storage-plus 0.16.0",
  "cw-utils 0.16.0",
  "cw2 0.16.0",
  "schemars",
  "serde",
- "sg-multi-test",
  "sg-std",
  "sg-whitelist",
  "thiserror",
