@@ -7,7 +7,7 @@ echo "Replacing workspace version with $1 in manifest"
 sed -i '' "s/version    = .*/version    = \""$1"\"/g" ./Cargo.toml
 
 echo "Publishing packages"
-# . ./scripts/publish-packages.sh
+. ./scripts/publish-packages.sh
 
 echo "Replacing $version with $1 in manifest"
 sed -i '' "s/$version/$1/g" ./Cargo.toml
