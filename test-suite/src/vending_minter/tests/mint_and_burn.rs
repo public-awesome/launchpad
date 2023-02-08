@@ -188,11 +188,34 @@ fn update_discount_mint_price() {
     let mint_msg = ExecuteMsg::Mint {};
     let res = router.execute_contract(
         buyer,
-        minter_addr,
+        minter_addr.clone(),
         &mint_msg,
         &coins(MINT_PRICE - 5, NATIVE_DENOM),
     );
     assert!(res.is_ok());
+
+    // update discount price to MINT_PRICE - 5
+    let remove_discount_msg = ExecuteMsg::RemoveDiscountPrice {};
+    let res = router.execute_contract(
+        creator.clone(),
+        minter_addr.clone(),
+        &remove_discount_msg,
+        &[],
+    );
+    assert!(res.is_ok());
+
+    // check price after remove discount price, should be mint price + 1
+    let res: vending_minter::msg::MintPriceResponse = router
+        .wrap()
+        .query_wasm_smart(minter_addr.clone(), &QueryMsg::MintPrice {})
+        .unwrap();
+    assert_eq!(
+        res.current_price,
+        Coin {
+            denom: "ustars".to_string(),
+            amount: Uint128::new(MINT_PRICE + 1)
+        }
+    );
 }
 
 #[test]
