@@ -207,7 +207,7 @@ fn update_discount_mint_price() {
     // check price after remove discount price, should be mint price + 1
     let res: vending_minter::msg::MintPriceResponse = router
         .wrap()
-        .query_wasm_smart(minter_addr.clone(), &QueryMsg::MintPrice {})
+        .query_wasm_smart(minter_addr, &QueryMsg::MintPrice {})
         .unwrap();
     assert_eq!(
         res.current_price,
