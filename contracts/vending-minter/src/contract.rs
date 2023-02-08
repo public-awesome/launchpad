@@ -276,13 +276,6 @@ pub fn execute_update_discount_price(
         });
     }
 
-    // // Check that the price is greater than the minimum
-    // if MIN_MINT_PRICE > price {
-    //     return Err(ContractError::InsufficientMintPrice {
-    //         expected: MIN_MINT_PRICE,
-    //         got: price,
-    //     });
-    // }
     config.extension.discount_price = Some(coin(price, config.mint_price.denom.clone()));
     CONFIG.save(deps.storage, &config)?;
 
@@ -981,7 +974,6 @@ pub fn mint_price(deps: Deps, is_admin: bool) -> Result<Coin, StdError> {
     }
 
     if config.extension.whitelist.is_none() {
-        println!("we are config extension whitelist none price");
         return Ok(config.mint_price);
     }
 
@@ -992,10 +984,8 @@ pub fn mint_price(deps: Deps, is_admin: bool) -> Result<Coin, StdError> {
         .query_wasm_smart(whitelist, &WhitelistQueryMsg::Config {})?;
 
     if wl_config.is_active {
-        println!("we are in whitelist price");
         Ok(wl_config.mint_price)
     } else {
-        println!("we are in the price branch");
         let price = config.extension.discount_price.unwrap_or(config.mint_price);
         Ok(price)
     }
