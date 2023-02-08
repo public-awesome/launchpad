@@ -1,3 +1,4 @@
+use crate::common_setup::setup_collection_whitelist::setup_whitelist_contract;
 use crate::common_setup::templates::{vending_minter_template, vending_minter_with_start_time};
 use cosmwasm_std::Coin;
 use cosmwasm_std::{coins, Timestamp, Uint128};
@@ -75,6 +76,121 @@ fn update_mint_price() {
         minter_addr,
         &mint_msg,
         &coins(MINT_PRICE - 2, NATIVE_DENOM),
+    );
+    assert!(res.is_ok());
+}
+
+#[test]
+fn update_discount_mint_price() {
+    let vt = vending_minter_template(10);
+    let (mut router, creator, buyer) = (vt.router, vt.accts.creator, vt.accts.buyer);
+    let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
+    let whitelist_addr = setup_whitelist_contract(&mut router, &creator, None);
+
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME - 10, None);
+    let set_whitelist_msg = ExecuteMsg::SetWhitelist {
+        whitelist: whitelist_addr.to_string(),
+    };
+    let _ = router.execute_contract(
+        creator.clone(),
+        minter_addr.clone(),
+        &set_whitelist_msg,
+        &[],
+    );
+
+    // Update mint price higher
+    let update_msg = ExecuteMsg::UpdateMintPrice {
+        price: MINT_PRICE + 1,
+    };
+    let res = router.execute_contract(creator.clone(), minter_addr.clone(), &update_msg, &[]);
+    assert!(res.is_ok());
+
+    // can't update discount price before minting starts
+    let update_discount_msg = ExecuteMsg::UpdateDiscountPrice {
+        price: MINT_PRICE - 5,
+    };
+    let res = router.execute_contract(
+        creator.clone(),
+        minter_addr.clone(),
+        &update_discount_msg,
+        &[],
+    );
+    assert!(res.is_err());
+
+    // Set block forward, after start time. mint succeeds
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 10_000_000, None);
+
+    // check mint price is updated
+    let res: vending_minter::msg::MintPriceResponse = router
+        .wrap()
+        .query_wasm_smart(minter_addr.clone(), &QueryMsg::MintPrice {})
+        .unwrap();
+    assert_eq!(
+        res.current_price,
+        Coin {
+            denom: "ustars".to_string(),
+            amount: Uint128::new(MINT_PRICE + 1)
+        }
+    );
+    // no discount price yet
+    assert_eq!(res.discount_price, None);
+
+    // can't update discount below min price
+    let update_discount_msg = ExecuteMsg::UpdateDiscountPrice { price: 1 };
+    let res = router.execute_contract(
+        creator.clone(),
+        minter_addr.clone(),
+        &update_discount_msg,
+        &[],
+    );
+    assert!(res.is_err());
+
+    // update discount price to MINT_PRICE - 5
+    let update_discount_msg = ExecuteMsg::UpdateDiscountPrice {
+        price: MINT_PRICE - 5,
+    };
+    let res = router.execute_contract(
+        creator.clone(),
+        minter_addr.clone(),
+        &update_discount_msg,
+        &[],
+    );
+    assert!(res.is_ok());
+
+    // check public price, mint price and discount price
+    let res: vending_minter::msg::MintPriceResponse = router
+        .wrap()
+        .query_wasm_smart(minter_addr.clone(), &QueryMsg::MintPrice {})
+        .unwrap();
+    assert_eq!(
+        res.public_price,
+        Coin {
+            denom: "ustars".to_string(),
+            amount: Uint128::new(MINT_PRICE + 1)
+        }
+    );
+    assert_eq!(
+        res.current_price,
+        Coin {
+            denom: "ustars".to_string(),
+            amount: Uint128::new(MINT_PRICE - 5)
+        }
+    );
+    assert_eq!(
+        res.discount_price,
+        Some(Coin {
+            denom: "ustars".to_string(),
+            amount: Uint128::new(MINT_PRICE - 5)
+        })
+    );
+
+    // Mint succeeds at discount price
+    let mint_msg = ExecuteMsg::Mint {};
+    let res = router.execute_contract(
+        buyer,
+        minter_addr,
+        &mint_msg,
+        &coins(MINT_PRICE - 5, NATIVE_DENOM),
     );
     assert!(res.is_ok());
 }

@@ -154,6 +154,7 @@ pub fn instantiate(
             per_address_limit: msg.init_msg.per_address_limit,
             whitelist: whitelist_addr,
             start_time: msg.init_msg.start_time,
+            discount_price: None,
         },
         mint_price: msg.init_msg.mint_price,
     };
@@ -230,7 +231,84 @@ pub fn execute(
         }
         ExecuteMsg::Shuffle {} => execute_shuffle(deps, env, info),
         ExecuteMsg::BurnRemaining {} => execute_burn_remaining(deps, env, info),
+        ExecuteMsg::UpdateDiscountPrice { price } => {
+            execute_update_discount_price(deps, env, info, price)
+        }
+        ExecuteMsg::RemoveDiscountPrice {} => execute_remove_discount_price(deps, info),
     }
+}
+
+pub fn execute_update_discount_price(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    price: u128,
+) -> Result<Response, ContractError> {
+    nonpayable(&info)?;
+    let mut config = CONFIG.load(deps.storage)?;
+    if info.sender != config.extension.admin {
+        return Err(ContractError::Unauthorized(
+            "Sender is not an admin".to_owned(),
+        ));
+    }
+    if env.block.time < config.extension.start_time {
+        return Err(ContractError::BeforeMintStartTime {});
+    }
+
+    // discount price can't be greater than unit price
+    if price > config.mint_price.amount.u128() {
+        return Err(ContractError::UpdatedMintPriceTooHigh {
+            allowed: config.mint_price.amount.u128(),
+            updated: price,
+        });
+    }
+
+    let factory: ParamsResponse = deps
+        .querier
+        .query_wasm_smart(config.clone().factory, &Sg2QueryMsg::Params {})?;
+    let factory_params = factory.params;
+
+    // Check that the price is greater than the minimum
+    if factory_params.min_mint_price.amount.u128() > price {
+        return Err(ContractError::InsufficientMintPrice {
+            expected: factory_params.min_mint_price.amount.u128(),
+            got: price,
+        });
+    }
+
+    // // Check that the price is greater than the minimum
+    // if MIN_MINT_PRICE > price {
+    //     return Err(ContractError::InsufficientMintPrice {
+    //         expected: MIN_MINT_PRICE,
+    //         got: price,
+    //     });
+    // }
+    config.extension.discount_price = Some(coin(price, config.mint_price.denom.clone()));
+    CONFIG.save(deps.storage, &config)?;
+
+    Ok(Response::new()
+        .add_attribute("action", "update_discount_price")
+        .add_attribute("sender", info.sender)
+        .add_attribute("discount_price", price.to_string()))
+}
+
+pub fn execute_remove_discount_price(
+    deps: DepsMut,
+    info: MessageInfo,
+) -> Result<Response, ContractError> {
+    nonpayable(&info)?;
+    let mut config = CONFIG.load(deps.storage)?;
+    if info.sender != config.extension.admin {
+        return Err(ContractError::Unauthorized(
+            "Sender is not an admin".to_owned(),
+        ));
+    }
+    config.extension.discount_price = None;
+    CONFIG.save(deps.storage, &config)?;
+
+    Ok(Response::new()
+        .add_attribute("action", "remove_discount_price")
+        .add_attribute("sender", info.sender))
 }
 
 // Purge frees data after a mint is sold out
@@ -903,6 +981,7 @@ pub fn mint_price(deps: Deps, is_admin: bool) -> Result<Coin, StdError> {
     }
 
     if config.extension.whitelist.is_none() {
+        println!("we are config extension whitelist none price");
         return Ok(config.mint_price);
     }
 
@@ -913,9 +992,12 @@ pub fn mint_price(deps: Deps, is_admin: bool) -> Result<Coin, StdError> {
         .query_wasm_smart(whitelist, &WhitelistQueryMsg::Config {})?;
 
     if wl_config.is_active {
+        println!("we are in whitelist price");
         Ok(wl_config.mint_price)
     } else {
-        Ok(config.mint_price)
+        println!("we are in the price branch");
+        let price = config.extension.discount_price.unwrap_or(config.mint_price);
+        Ok(price)
     }
 }
 
@@ -990,6 +1072,7 @@ fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
         per_address_limit: config.extension.per_address_limit,
         whitelist: config.extension.whitelist.map(|w| w.to_string()),
         factory: config.factory.to_string(),
+        discount_price: config.extension.discount_price,
     })
 }
 
@@ -1043,11 +1126,13 @@ fn query_mint_price(deps: Deps) -> StdResult<MintPriceResponse> {
         factory_params.extension.airdrop_mint_price.amount.u128(),
         config.mint_price.denom,
     );
+    let discount_price = config.extension.discount_price;
     Ok(MintPriceResponse {
         public_price,
         airdrop_price,
         whitelist_price,
         current_price,
+        discount_price,
     })
 }
 

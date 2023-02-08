@@ -14,6 +14,16 @@
     "current_price": {
       "$ref": "#/definitions/Coin"
     },
+    "discount_price": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/Coin"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
     "public_price": {
       "$ref": "#/definitions/Coin"
     },
