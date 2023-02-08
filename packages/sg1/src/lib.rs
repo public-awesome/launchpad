@@ -5,7 +5,7 @@ use thiserror::Error;
 
 // governance parameters
 const FEE_BURN_PERCENT: u64 = 50;
-const DEV_INCENTIVE_PERCENT: u64 = 10;
+const DEV_INCENTIVE_PERCENT: u64 = 50;
 
 /// Burn and distribute fees and return an error if the fee is not enough
 pub fn checked_fair_burn(
@@ -79,7 +79,7 @@ pub enum FeeError {
 #[cfg(test)]
 mod tests {
     use cosmwasm_std::{coins, Addr, BankMsg};
-    use sg_std::Response;
+    use sg_std::{create_fund_fairburn_pool_msg, Response, NATIVE_DENOM};
 
     use crate::{fair_burn, SubMsg};
 
@@ -91,8 +91,10 @@ mod tests {
         let burn_msg = SubMsg::new(BankMsg::Burn {
             amount: coins(500, "ustars".to_string()),
         });
+        let dist_msg = SubMsg::new(create_fund_fairburn_pool_msg(coins(500, NATIVE_DENOM)));
         assert_eq!(res.messages.len(), 2);
         assert_eq!(res.messages[0], burn_msg);
+        assert_eq!(res.messages[1], dist_msg);
     }
 
     #[test]
@@ -102,13 +104,15 @@ mod tests {
         fair_burn(1000u128, Some(Addr::unchecked("geordi")), &mut res);
         let bank_msg = SubMsg::new(BankMsg::Send {
             to_address: "geordi".to_string(),
-            amount: coins(100, "ustars".to_string()),
+            amount: coins(500, NATIVE_DENOM),
         });
         let burn_msg = SubMsg::new(BankMsg::Burn {
-            amount: coins(400, "ustars".to_string()),
+            amount: coins(0, NATIVE_DENOM),
         });
+        let dist_msg = SubMsg::new(create_fund_fairburn_pool_msg(coins(500, NATIVE_DENOM)));
         assert_eq!(res.messages.len(), 3);
         assert_eq!(res.messages[0], bank_msg);
         assert_eq!(res.messages[1], burn_msg);
+        assert_eq!(res.messages[2], dist_msg);
     }
 }
