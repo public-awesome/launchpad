@@ -396,4 +396,162 @@ mod tests {
             assert!(res.is_err());
         }
     }
+
+    mod royalty_payout {
+        use super::*;
+
+        use crate::common_setup::setup_minter::vending_minter::mock_params::mock_create_minter_init_msg;
+        use cosmwasm_std::{Decimal, Response, Uint128};
+        use sg2::msg::CollectionParams;
+        use sg721::RoyaltyInfoResponse;
+        use sg721_base::msg::{CollectionInfoResponse, QueryMsg};
+
+        #[test]
+        fn standard_payout() {
+            let (app, contract) = proper_instantiate();
+
+            let res: CollectionInfoResponse = app
+                .wrap()
+                .query_wasm_smart(contract.clone(), &QueryMsg::CollectionInfo {})
+                .unwrap();
+
+            // payout 100stars, royalty share 10%, royalty payout 10stars
+            let payment = Uint128::from(100000000u128);
+            let royalty_share = res.clone().royalty_info.unwrap().share;
+            let royalty_payout = res
+                .royalty_payout(
+                    contract,
+                    payment,
+                    Uint128::from(10000000u128),
+                    None,
+                    &mut Response::default(),
+                )
+                .unwrap();
+            assert_eq!(royalty_payout, payment * royalty_share);
+        }
+
+        #[test]
+        fn payout_0_royalties() {
+            let init_msg = mock_init_extension(None, None);
+            let custom_collection_params = CollectionParams {
+                info: CollectionInfo {
+                    creator: "creator".to_string(),
+                    description: String::from("Stargaze Monkeys"),
+                    image: "https://example.com/image.png".to_string(),
+                    external_link: Some("https://example.com/external.html".to_string()),
+                    start_trading_time: None,
+                    explicit_content: Some(false),
+                    royalty_info: Some(RoyaltyInfoResponse {
+                        payment_address: "creator".to_string(),
+                        share: Decimal::percent(0),
+                    }),
+                },
+                ..mock_collection_params()
+            };
+            let custom_create_minter_msg =
+                mock_create_minter_init_msg(custom_collection_params, init_msg);
+            let (app, contract) = custom_proper_instantiate(custom_create_minter_msg);
+
+            let res: CollectionInfoResponse = app
+                .wrap()
+                .query_wasm_smart(contract.clone(), &QueryMsg::CollectionInfo {})
+                .unwrap();
+
+            // payout 100stars, royalty share 0%, royalty payout 0stars
+            let payment = Uint128::from(100000000u128);
+            let royalty_payout = res
+                .royalty_payout(
+                    contract,
+                    payment,
+                    Uint128::from(10000000u128),
+                    None,
+                    &mut Response::default(),
+                )
+                .unwrap();
+            assert_eq!(royalty_payout, Uint128::zero());
+        }
+
+        #[test]
+        fn payout_too_much_royalties() {
+            let init_msg = mock_init_extension(None, None);
+            let custom_collection_params = CollectionParams {
+                info: CollectionInfo {
+                    creator: "creator".to_string(),
+                    description: String::from("Stargaze Monkeys"),
+                    image: "https://example.com/image.png".to_string(),
+                    external_link: Some("https://example.com/external.html".to_string()),
+                    start_trading_time: None,
+                    explicit_content: Some(false),
+                    royalty_info: Some(RoyaltyInfoResponse {
+                        payment_address: "creator".to_string(),
+                        share: Decimal::percent(91),
+                    }),
+                },
+                ..mock_collection_params()
+            };
+            let custom_create_minter_msg =
+                mock_create_minter_init_msg(custom_collection_params, init_msg);
+            let (app, contract) = custom_proper_instantiate(custom_create_minter_msg);
+
+            let res: CollectionInfoResponse = app
+                .wrap()
+                .query_wasm_smart(contract.clone(), &QueryMsg::CollectionInfo {})
+                .unwrap();
+
+            // payout 100stars, royalty share 91%, royalty payout fails
+            // fees exceed payment
+            let payment = Uint128::from(100000000u128);
+            let res = res.royalty_payout(
+                contract,
+                payment,
+                Uint128::from(10000000u128),
+                None,
+                &mut Response::default(),
+            );
+            assert!(res.is_err());
+        }
+
+        #[test]
+        fn payout_odd_royalties() {
+            // uint * decimal::percent
+            let init_msg = mock_init_extension(None, None);
+            let custom_collection_params = CollectionParams {
+                info: CollectionInfo {
+                    creator: "creator".to_string(),
+                    description: String::from("Stargaze Monkeys"),
+                    image: "https://example.com/image.png".to_string(),
+                    external_link: Some("https://example.com/external.html".to_string()),
+                    start_trading_time: None,
+                    explicit_content: Some(false),
+                    royalty_info: Some(RoyaltyInfoResponse {
+                        payment_address: "creator".to_string(),
+                        share: Decimal::percent(3),
+                    }),
+                },
+                ..mock_collection_params()
+            };
+            let custom_create_minter_msg =
+                mock_create_minter_init_msg(custom_collection_params, init_msg);
+            let (app, contract) = custom_proper_instantiate(custom_create_minter_msg);
+
+            let res: CollectionInfoResponse = app
+                .wrap()
+                .query_wasm_smart(contract.clone(), &QueryMsg::CollectionInfo {})
+                .unwrap();
+
+            // payout 100stars, royalty share 1%, royalty payout 10stars
+            let payment = Uint128::from(1111111111121111111u128);
+            let royalty_share = res.clone().royalty_info.unwrap().share;
+            let royalty_payout = res
+                .royalty_payout(
+                    contract,
+                    payment,
+                    Uint128::from(10000000u128),
+                    None,
+                    &mut Response::default(),
+                )
+                .unwrap();
+            assert_eq!(royalty_payout, payment * royalty_share);
+        }
+    }
 }
