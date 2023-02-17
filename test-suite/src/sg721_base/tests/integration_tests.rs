@@ -553,5 +553,43 @@ mod tests {
                 .unwrap();
             assert_eq!(royalty_payout, payment * royalty_share);
         }
+
+        #[test]
+        fn payout_royalties_none() {
+            let init_msg = mock_init_extension(None, None);
+            let custom_collection_params = CollectionParams {
+                info: CollectionInfo {
+                    creator: "creator".to_string(),
+                    description: String::from("Stargaze Monkeys"),
+                    image: "https://example.com/image.png".to_string(),
+                    external_link: Some("https://example.com/external.html".to_string()),
+                    start_trading_time: None,
+                    explicit_content: Some(false),
+                    royalty_info: None,
+                },
+                ..mock_collection_params()
+            };
+            let custom_create_minter_msg =
+                mock_create_minter_init_msg(custom_collection_params, init_msg);
+            let (app, contract) = custom_proper_instantiate(custom_create_minter_msg);
+
+            let res: CollectionInfoResponse = app
+                .wrap()
+                .query_wasm_smart(contract.clone(), &QueryMsg::CollectionInfo {})
+                .unwrap();
+
+            // payout 100stars, royalty share none, royalty payout 0stars
+            let payment = Uint128::from(100000000u128);
+            let royalty_payout = res
+                .royalty_payout(
+                    contract,
+                    payment,
+                    Uint128::from(10000000u128),
+                    None,
+                    &mut Response::default(),
+                )
+                .unwrap();
+            assert_eq!(royalty_payout, Uint128::zero());
+        }
     }
 }
