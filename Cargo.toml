@@ -35,7 +35,7 @@ sg-controllers      = { version = "0.22.9", path = "packages/controllers" }
 sg-metadata         = { version = "0.22.9", path = "packages/sg-metadata" }
 sg-multi-test       = { version = "0.22.9", path = "packages/sg-multi-test" }
 sg-splits           = { version = "0.22.9", path = "contracts/splits" }
-sg-std              = { version = "0.22.9", path = "packages/sg-std" }
+sg-std              = { version = "0.22.9" }
 sg-whitelist        = { version = "0.22.9", path = "contracts/whitelist" }
 thiserror           = "1.0.31"
 url                 = "2.2.2"
