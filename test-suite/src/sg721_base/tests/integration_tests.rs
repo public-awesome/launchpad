@@ -252,8 +252,8 @@ mod tests {
             params.info.external_link = None;
             params.info.royalty_info = None;
             let custom_create_minter_msg =
-                mock_create_minter_init_msg(params.clone(), mock_init_extension(None, None));
-            let (mut app, contract) = custom_proper_instantiate(custom_create_minter_msg.clone());
+                mock_create_minter_init_msg(params, mock_init_extension(None, None));
+            let (mut app, contract) = custom_proper_instantiate(custom_create_minter_msg);
             let creator = Addr::unchecked("creator".to_string());
 
             let royalty_info: Option<RoyaltyInfoResponse> = Some(RoyaltyInfoResponse {
@@ -261,8 +261,8 @@ mod tests {
                 share: Decimal::percent(11),
             });
             let res = app.execute_contract(
-                creator.clone(),
-                contract.clone(),
+                creator,
+                contract,
                 &Sg721ExecuteMsg::<Empty, Empty>::UpdateCollectionInfo {
                     collection_info: UpdateCollectionInfoMsg {
                         description: None,
