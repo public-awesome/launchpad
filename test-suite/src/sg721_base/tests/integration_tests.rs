@@ -74,7 +74,6 @@ mod tests {
         let cosmos_msg = factory_contract.call_with_funds(msg, creation_fee).unwrap();
 
         let res = app.execute(Addr::unchecked(ADMIN), cosmos_msg);
-        dbg!("{:?}", &res);
         assert!(res.is_ok());
 
         (app, Addr::unchecked("contract2"))
@@ -105,7 +104,6 @@ mod tests {
         let cosmos_msg = factory_contract.call_with_funds(msg, creation_fee).unwrap();
 
         let res = app.execute(Addr::unchecked(ADMIN), cosmos_msg);
-        dbg!("{:?}", &res);
         assert!(res.is_ok());
 
         (app, Addr::unchecked("contract2"))
@@ -248,6 +246,36 @@ mod tests {
         use super::*;
         use sg721_base::msg::{CollectionInfoResponse, QueryMsg};
 
+        #[test]
+        fn royalty_updates() {
+            let mut params = mock_collection_params();
+            params.info.external_link = None;
+            params.info.royalty_info = None;
+            let custom_create_minter_msg =
+                mock_create_minter_init_msg(params.clone(), mock_init_extension(None, None));
+            let (mut app, contract) = custom_proper_instantiate(custom_create_minter_msg.clone());
+            let creator = Addr::unchecked("creator".to_string());
+
+            let royalty_info: Option<RoyaltyInfoResponse> = Some(RoyaltyInfoResponse {
+                payment_address: creator.to_string(),
+                share: Decimal::percent(11),
+            });
+            let res = app.execute_contract(
+                creator.clone(),
+                contract.clone(),
+                &Sg721ExecuteMsg::<Empty, Empty>::UpdateCollectionInfo {
+                    collection_info: UpdateCollectionInfoMsg {
+                        description: None,
+                        image: None,
+                        external_link: None,
+                        explicit_content: None,
+                        royalty_info: Some(royalty_info),
+                    },
+                },
+                &[],
+            );
+            assert!(res.is_err());
+        }
         #[test]
         fn update_collection_info() {
             // customize params so external_link is None

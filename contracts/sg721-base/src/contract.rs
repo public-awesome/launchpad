@@ -197,22 +197,24 @@ where
 
         // convert collection royalty info to response for comparison
         // convert from response to royalty info for storage
-        let royalty_info_res = collection
+        let current_royalty_info = collection
             .royalty_info
             .as_ref()
             .map(|royalty_info| royalty_info.to_response());
 
-        let response = collection_msg
+        let new_royalty_info = collection_msg
             .royalty_info
-            .unwrap_or_else(|| royalty_info_res.clone());
+            .unwrap_or_else(|| current_royalty_info.clone());
 
         // reminder: collection_msg.royalty_info is Option<Option<RoyaltyInfoResponse>>
-        collection.royalty_info = if let Some(royalty_info) = response {
+        collection.royalty_info = if let Some(royalty_info) = new_royalty_info {
             // update royalty info to equal or less, else throw error
-            if let Some(royalty_info_res) = royalty_info_res {
+            if let Some(royalty_info_res) = current_royalty_info {
                 if royalty_info.share > royalty_info_res.share {
                     return Err(ContractError::RoyaltyShareIncreased {});
                 }
+            } else {
+                return Err(ContractError::RoyaltyShareIncreased {});
             }
 
             Some(RoyaltyInfo {
