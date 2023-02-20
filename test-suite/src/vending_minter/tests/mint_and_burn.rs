@@ -194,7 +194,7 @@ fn update_discount_mint_price() {
     );
     assert!(res.is_ok());
 
-    // update discount price to MINT_PRICE - 5
+    // remove discount price
     let remove_discount_msg = ExecuteMsg::RemoveDiscountPrice {};
     let res = router.execute_contract(
         creator.clone(),
