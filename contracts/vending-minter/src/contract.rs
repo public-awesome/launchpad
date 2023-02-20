@@ -974,7 +974,8 @@ pub fn mint_price(deps: Deps, is_admin: bool) -> Result<Coin, StdError> {
     }
 
     if config.extension.whitelist.is_none() {
-        return Ok(config.mint_price);
+        let price = config.extension.discount_price.unwrap_or(config.mint_price);
+        return Ok(price);
     }
 
     let whitelist = config.extension.whitelist.unwrap();
