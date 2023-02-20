@@ -1,5 +1,5 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Addr, Timestamp};
+use cosmwasm_std::{Addr, Coin, Timestamp};
 use cw_storage_plus::{Item, Map};
 use sg4::{MinterConfig, Status};
 
@@ -12,6 +12,7 @@ pub struct ConfigExtension {
     pub whitelist: Option<Addr>,
     pub start_time: Timestamp,
     pub per_address_limit: u32,
+    pub discount_price: Option<Coin>,
 }
 pub type Config = MinterConfig<ConfigExtension>;
 

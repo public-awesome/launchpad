@@ -33,6 +33,10 @@ pub enum ExecuteMsg {
     },
     Shuffle {},
     BurnRemaining {},
+    UpdateDiscountPrice {
+        price: u128,
+    },
+    RemoveDiscountPrice {},
 }
 
 #[cw_serde]
@@ -57,6 +61,7 @@ pub struct ConfigResponse {
     pub mint_price: Coin,
     pub whitelist: Option<String>,
     pub factory: String,
+    pub discount_price: Option<Coin>,
 }
 
 #[cw_serde]
@@ -75,6 +80,7 @@ pub struct MintPriceResponse {
     pub airdrop_price: Coin,
     pub whitelist_price: Option<Coin>,
     pub current_price: Coin,
+    pub discount_price: Option<Coin>,
 }
 
 #[cw_serde]
