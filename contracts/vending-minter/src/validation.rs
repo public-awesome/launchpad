@@ -9,20 +9,7 @@ pub fn get_three_percent_of_tokens(num_tokens: u32) -> Result<Uint128, ContractE
         .map_err(|_| CheckedMultiplyFractionError {})?;
     Ok(three_percent_tokens)
 }
-pub fn get_max_mintable_tokens(
-    per_address_limit: u32,
-    num_tokens: u32,
-    max_per_address_limit: u32,
-) -> Result<u32, ContractError> {
-    if per_address_limit > max_per_address_limit {
-        return Ok(max_per_address_limit);
-    }
-    if num_tokens < 100 {
-        return Ok(3_u32);
-    }
-    let three_percent = get_three_percent_of_tokens(num_tokens)?.u128();
-    Ok(three_percent as u32)
-}
+
 // Check per address limit to make sure it's <= 1% num tokens
 pub fn check_dynamic_per_address_limit(
     per_address_limit: u32,

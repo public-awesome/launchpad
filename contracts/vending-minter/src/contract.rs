@@ -9,7 +9,7 @@ use crate::state::{
     Config, ConfigExtension, CONFIG, MINTABLE_NUM_TOKENS, MINTABLE_TOKEN_POSITIONS, MINTER_ADDRS,
     SG721_ADDRESS, STATUS,
 };
-use crate::validation::{check_dynamic_per_address_limit, get_max_mintable_tokens};
+use crate::validation::{check_dynamic_per_address_limit, get_three_percent_of_tokens};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
@@ -78,7 +78,7 @@ pub fn instantiate(
         factory_params.extension.max_per_address_limit,
     )? {
         return Err(ContractError::InvalidPerAddressLimit {
-            max: get_max_mintable_tokens(
+            max: display_max_mintable_tokens(
                 msg.init_msg.per_address_limit,
                 msg.init_msg.num_tokens,
                 factory_params.extension.max_per_address_limit,
@@ -838,7 +838,7 @@ pub fn execute_update_per_address_limit(
         factory_params.extension.max_per_address_limit,
     )? {
         return Err(ContractError::InvalidPerAddressLimit {
-            max: get_max_mintable_tokens(
+            max: display_max_mintable_tokens(
                 per_address_limit,
                 config.extension.num_tokens,
                 factory_params.extension.max_per_address_limit,
@@ -932,6 +932,21 @@ pub fn mint_price(deps: Deps, is_admin: bool) -> Result<Coin, StdError> {
 fn mint_count(deps: Deps, info: &MessageInfo) -> Result<u32, StdError> {
     let mint_count = (MINTER_ADDRS.key(&info.sender).may_load(deps.storage)?).unwrap_or(0);
     Ok(mint_count)
+}
+
+pub fn display_max_mintable_tokens(
+    per_address_limit: u32,
+    num_tokens: u32,
+    max_per_address_limit: u32,
+) -> Result<u32, ContractError> {
+    if per_address_limit > max_per_address_limit {
+        return Ok(max_per_address_limit);
+    }
+    if num_tokens < 100 {
+        return Ok(3_u32);
+    }
+    let three_percent = get_three_percent_of_tokens(num_tokens)?.u128();
+    Ok(three_percent as u32)
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
