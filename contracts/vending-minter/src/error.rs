@@ -3,7 +3,6 @@ use cw_utils::PaymentError;
 use sg1::FeeError;
 use thiserror::Error;
 use url::ParseError;
-
 #[derive(Error, Debug, PartialEq)]
 pub enum ContractError {
     #[error("{0}")]
@@ -98,4 +97,7 @@ pub enum ContractError {
 
     #[error("NoEnvTransactionIndex")]
     NoEnvTransactionIndex {},
+
+    #[error("Multiply Fraction Error")]
+    CheckedMultiplyFractionError {},
 }

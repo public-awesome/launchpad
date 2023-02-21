@@ -47,7 +47,7 @@ fn invalid_whitelist_instantiate() {
         start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
         num_tokens: 100,
         mint_price: coin(MIN_MINT_PRICE, NATIVE_DENOM),
-        per_address_limit: 5,
+        per_address_limit: 3,
         whitelist: Some("invalid address".to_string()),
     };
 

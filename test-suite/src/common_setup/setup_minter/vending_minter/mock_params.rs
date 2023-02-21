@@ -21,7 +21,7 @@ pub fn mock_init_extension(
         start_time: start_time.unwrap_or(Timestamp::from_nanos(GENESIS_MINT_START_TIME)),
         num_tokens: 100,
         mint_price: coin(MIN_MINT_PRICE, NATIVE_DENOM),
-        per_address_limit: 5,
+        per_address_limit: 3,
         whitelist: None,
     }
 }
