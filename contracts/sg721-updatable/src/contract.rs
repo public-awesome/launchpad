@@ -28,9 +28,7 @@ pub fn _instantiate(
 
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
     let res = Sg721UpdatableContract::default().instantiate(deps, env, info, msg)?;
-    Ok(res
-        .add_attribute("contract_name", CONTRACT_NAME)
-        .add_attribute("contract_version", CONTRACT_VERSION))
+    Ok(res)
 }
 
 pub fn execute_freeze_token_metadata(
