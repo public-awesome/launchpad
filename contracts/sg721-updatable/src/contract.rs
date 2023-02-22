@@ -62,7 +62,7 @@ pub fn execute_update_token_metadata(
 ) -> Result<Response, ContractError> {
     nonpayable(&info)?;
     // Check if sender is creator
-    let owner = deps.api.addr_validate(&info.sender.to_string())?;
+    let owner = deps.api.addr_validate(info.sender.as_ref())?;
     let collection_info: CollectionInfoResponse =
         Sg721UpdatableContract::default().query_collection_info(deps.as_ref())?;
     if owner != collection_info.creator {
@@ -90,7 +90,7 @@ pub fn execute_update_token_metadata(
 
     let event = Event::new("update_update_token_metadata")
         .add_attribute("sender", info.sender)
-        .add_attribute("token_id", token_id.to_string())
+        .add_attribute("token_id", token_id)
         .add_attribute("token_uri", token_uri.unwrap_or_default());
     Ok(Response::new().add_event(event))
 }
@@ -107,7 +107,8 @@ mod tests {
         QuerierResult, QueryRequest, SystemError, SystemResult, WasmQuery,
     };
     use cw721::Cw721Query;
-    use sg721::{CollectionInfo, InstantiateMsg, MintMsg};
+    use cw721_base::MintMsg;
+    use sg721::{CollectionInfo, InstantiateMsg};
     use std::marker::PhantomData;
 
     const CREATOR: &str = "creator";
@@ -146,7 +147,9 @@ mod tests {
         pub fn handle_query(&self, request: &QueryRequest<Empty>) -> QuerierResult {
             match &request {
                 QueryRequest::Wasm(WasmQuery::ContractInfo { contract_addr: _ }) => {
-                    let response = ContractInfoResponse::new(1, CREATOR);
+                    let mut response = ContractInfoResponse::default();
+                    response.code_id = 1;
+                    response.creator = CREATOR.to_string();
                     SystemResult::Ok(ContractResult::Ok(to_binary(&response).unwrap()))
                 }
                 _ => self.base.handle_query(request),
@@ -174,8 +177,8 @@ mod tests {
                 description: "this is a test".to_string(),
                 image: "https://larry.engineer".to_string(),
                 external_link: None,
-                explicit_content: false,
-                trading_start_time: None,
+                explicit_content: None,
+                start_trading_time: None,
                 royalty_info: None,
             },
         };
@@ -227,7 +230,7 @@ mod tests {
         assert_eq!(res.token_uri, updated_token_uri);
 
         // Update token metadata with None token_uri
-        let update_msg = ExecuteMsg::<Extension>::UpdateTokenMetadata {
+        let update_msg = ExecuteMsg::<Extension, Empty>::UpdateTokenMetadata {
             token_id: token_id.to_string(),
             token_uri: None,
         };

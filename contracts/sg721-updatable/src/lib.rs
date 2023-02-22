@@ -17,7 +17,7 @@ pub mod entry {
         },
         msg::ExecuteMsg,
     };
-    use cosmwasm_std::entry_point;
+    use cosmwasm_std::{entry_point, Empty};
     use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, StdResult};
     use cw721_base::Extension;
     use sg_std::Response;
@@ -37,7 +37,7 @@ pub mod entry {
         deps: DepsMut,
         env: Env,
         info: MessageInfo,
-        msg: ExecuteMsg<Extension>,
+        msg: ExecuteMsg<Extension, Empty>,
     ) -> Result<Response, ContractError> {
         match msg {
             ExecuteMsg::FreezeTokenMetadata {} => execute_freeze_token_metadata(deps, env, info),

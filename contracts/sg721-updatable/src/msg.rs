@@ -1,13 +1,13 @@
+use cosmwasm_schema::cw_serde;
 use cosmwasm_std::Binary;
 use cosmwasm_std::Timestamp;
+use cw721_base::msg::MintMsg;
 use cw_utils::Expiration;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
-use sg721::{ExecuteMsg as Sg721ExecuteMsg, MintMsg, RoyaltyInfoResponse, UpdateCollectionInfoMsg};
+use sg721::{RoyaltyInfoResponse, UpdateCollectionInfoMsg};
+use sg721_base::ExecuteMsg as Sg721ExecuteMsg;
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
-pub enum ExecuteMsg<T> {
+#[cw_serde]
+pub enum ExecuteMsg<T, E> {
     /// Freeze token metadata so creator can no longer update token uris
     FreezeTokenMetadata {},
     /// Creator calls can update token uris
@@ -50,10 +50,17 @@ pub enum ExecuteMsg<T> {
     UpdateTradingStartTime(Option<Timestamp>),
     FreezeCollectionInfo {},
     Mint(MintMsg<T>),
+    Extension {
+        msg: E,
+    },
 }
 
-impl<T> From<ExecuteMsg<T>> for Sg721ExecuteMsg<T> {
-    fn from(msg: ExecuteMsg<T>) -> Sg721ExecuteMsg<T> {
+impl<T, E> From<ExecuteMsg<T, E>> for Sg721ExecuteMsg
+where
+    T: Clone + PartialEq + Into<Option<cosmwasm_std::Empty>>,
+    Option<cosmwasm_std::Empty>: From<T>,
+{
+    fn from(msg: ExecuteMsg<T, E>) -> Sg721ExecuteMsg {
         match msg {
             ExecuteMsg::TransferNft {
                 recipient,
@@ -91,9 +98,6 @@ impl<T> From<ExecuteMsg<T>> for Sg721ExecuteMsg<T> {
             ExecuteMsg::UpdateCollectionInfo { collection_info } => {
                 Sg721ExecuteMsg::UpdateCollectionInfo { collection_info }
             }
-            ExecuteMsg::UpdateTradingStartTime(start_time) => {
-                Sg721ExecuteMsg::UpdateTradingStartTime(start_time)
-            }
             ExecuteMsg::FreezeCollectionInfo {} => Sg721ExecuteMsg::FreezeCollectionInfo {},
             ExecuteMsg::Mint(MintMsg {
                 token_id,
@@ -104,7 +108,7 @@ impl<T> From<ExecuteMsg<T>> for Sg721ExecuteMsg<T> {
                 token_id,
                 owner,
                 token_uri,
-                extension,
+                extension: extension.into(),
             }),
             _ => unreachable!("Invalid ExecuteMsg"),
         }
