@@ -1,9 +1,10 @@
 use cw721_base::state::TokenInfo;
+use cw721_base::MintMsg;
 use url::Url;
 
 use cosmwasm_std::{
-    to_binary, Binary, ContractInfoResponse, Decimal, Deps, DepsMut, Env, Event, MessageInfo,
-    StdResult, Timestamp, WasmQuery,
+    to_binary, Binary, ContractInfoResponse, Decimal, Deps, DepsMut, Empty, Env, Event,
+    MessageInfo, StdResult, Timestamp, WasmQuery,
 };
 
 use cw721::{ContractInfoResponse as CW721ContractInfoResponse, Cw721Execute};
@@ -11,7 +12,7 @@ use cw_utils::nonpayable;
 use serde::{de::DeserializeOwned, Serialize};
 
 use sg721::{
-    CollectionInfo, ExecuteMsg, InstantiateMsg, MintMsg, RoyaltyInfo, RoyaltyInfoResponse,
+    CollectionInfo, ExecuteMsg, InstantiateMsg, RoyaltyInfo, RoyaltyInfoResponse,
     UpdateCollectionInfoMsg,
 };
 use sg_std::Response;
@@ -82,7 +83,7 @@ where
             image: msg.collection_info.image,
             external_link: msg.collection_info.external_link,
             explicit_content: msg.collection_info.explicit_content,
-            trading_start_time: msg.collection_info.trading_start_time,
+            start_trading_time: msg.collection_info.start_trading_time,
             royalty_info,
         };
 
@@ -101,7 +102,7 @@ where
         deps: DepsMut,
         env: Env,
         info: MessageInfo,
-        msg: ExecuteMsg<T>,
+        msg: ExecuteMsg<T, Empty>,
     ) -> Result<Response, ContractError> {
         match msg {
             ExecuteMsg::TransferNft {
@@ -146,11 +147,12 @@ where
             ExecuteMsg::UpdateCollectionInfo { collection_info } => {
                 self.update_collection_info(deps, env, info, collection_info)
             }
-            ExecuteMsg::UpdateTradingStartTime(start_time) => {
-                self.update_trading_start_time(deps, env, info, start_time)
+            ExecuteMsg::UpdateStartTradingTime(start_time) => {
+                self.update_start_trading_time(deps, env, info, start_time)
             }
             ExecuteMsg::FreezeCollectionInfo {} => self.freeze_collection_info(deps, env, info),
             ExecuteMsg::Mint(msg) => self.mint(deps, env, info, msg),
+            ExecuteMsg::Extension { msg: _ } => todo!(),
         }
     }
 
@@ -187,30 +189,32 @@ where
         collection.external_link = collection_msg
             .external_link
             .unwrap_or_else(|| collection.external_link.as_ref().map(|s| s.to_string()));
-        Url::parse(collection.external_link.as_ref().unwrap())?;
+        if collection.external_link.as_ref().is_some() {
+            Url::parse(collection.external_link.as_ref().unwrap())?;
+        }
 
-        collection.explicit_content = collection_msg
-            .explicit_content
-            .unwrap_or(collection.explicit_content);
+        collection.explicit_content = collection_msg.explicit_content;
 
         // convert collection royalty info to response for comparison
         // convert from response to royalty info for storage
-        let royalty_info_res = collection
+        let current_royalty_info = collection
             .royalty_info
             .as_ref()
             .map(|royalty_info| royalty_info.to_response());
 
-        let response = collection_msg
+        let new_royalty_info = collection_msg
             .royalty_info
-            .unwrap_or_else(|| royalty_info_res.clone());
+            .unwrap_or_else(|| current_royalty_info.clone());
 
         // reminder: collection_msg.royalty_info is Option<Option<RoyaltyInfoResponse>>
-        collection.royalty_info = if let Some(royalty_info) = response {
+        collection.royalty_info = if let Some(royalty_info) = new_royalty_info {
             // update royalty info to equal or less, else throw error
-            if let Some(royalty_info_res) = royalty_info_res {
+            if let Some(royalty_info_res) = current_royalty_info {
                 if royalty_info.share > royalty_info_res.share {
                     return Err(ContractError::RoyaltyShareIncreased {});
                 }
+            } else {
+                return Err(ContractError::RoyaltyShareIncreased {});
             }
 
             Some(RoyaltyInfo {
@@ -229,7 +233,7 @@ where
 
     /// Called by the minter reply handler after custom validations on trading start time.
     /// Minter has start_time, default offset, makes sense to execute from minter.
-    pub fn update_trading_start_time(
+    pub fn update_start_trading_time(
         &self,
         deps: DepsMut,
         _env: Env,
@@ -242,10 +246,10 @@ where
         }
 
         let mut collection_info = self.collection_info.load(deps.storage)?;
-        collection_info.trading_start_time = start_time;
+        collection_info.start_trading_time = start_time;
         self.collection_info.save(deps.storage, &collection_info)?;
 
-        let event = Event::new("update_trading_start_time").add_attribute("sender", info.sender);
+        let event = Event::new("update_start_trading_time").add_attribute("sender", info.sender);
         Ok(Response::new().add_event(event))
     }
 
@@ -326,7 +330,7 @@ where
             image: info.image,
             external_link: info.external_link,
             explicit_content: info.explicit_content,
-            trading_start_time: info.trading_start_time,
+            start_trading_time: info.start_trading_time,
             royalty_info: royalty_info_res,
         })
     }

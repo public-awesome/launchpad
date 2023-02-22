@@ -9,6 +9,7 @@ use crate::state::{
     Config, ConfigExtension, CONFIG, MINTABLE_NUM_TOKENS, MINTABLE_TOKEN_POSITIONS, MINTER_ADDRS,
     SG721_ADDRESS, STATUS,
 };
+use crate::validation::{check_dynamic_per_address_limit, get_three_percent_of_tokens};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
@@ -16,7 +17,8 @@ use cosmwasm_std::{
     MessageInfo, Order, Reply, ReplyOn, StdError, StdResult, Timestamp, Uint128, WasmMsg,
 };
 use cw2::set_contract_version;
-use cw721_base::{msg::ExecuteMsg as Cw721ExecuteMsg, MintMsg};
+use cw721_base::{Extension, MintMsg};
+
 use cw_utils::{may_pay, maybe_addr, nonpayable, parse_reply_instantiate_data};
 use rand_core::{RngCore, SeedableRng};
 use rand_xoshiro::Xoshiro128PlusPlus;
@@ -74,19 +76,26 @@ pub fn instantiate(
         msg.init_msg.per_address_limit,
         msg.init_msg.num_tokens,
         factory_params.extension.max_per_address_limit,
-    ) {
+    )? {
         return Err(ContractError::InvalidPerAddressLimit {
-            max: msg.init_msg.num_tokens / 100,
+            max: display_max_mintable_tokens(
+                msg.init_msg.per_address_limit,
+                msg.init_msg.num_tokens,
+                factory_params.extension.max_per_address_limit,
+            )?,
             min: 1,
             got: msg.init_msg.per_address_limit,
         });
     }
 
+    // sanitize base token uri
+    let mut base_token_uri = msg.init_msg.base_token_uri.trim().to_string();
     // Check that base_token_uri is a valid IPFS uri
-    let parsed_token_uri = Url::parse(&msg.init_msg.base_token_uri)?;
+    let parsed_token_uri = Url::parse(&base_token_uri)?;
     if parsed_token_uri.scheme() != "ipfs" {
         return Err(ContractError::InvalidBaseTokenURI {});
     }
+    base_token_uri = parsed_token_uri.to_string();
 
     let genesis_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
     // If start time is before genesis time return error
@@ -108,16 +117,35 @@ pub fn instantiate(
         .whitelist
         .and_then(|w| deps.api.addr_validate(w.as_str()).ok());
 
+    if let Some(wl) = whitelist_addr.clone() {
+        // check the whitelist exists
+        let res: WhitelistConfigResponse = deps
+            .querier
+            .query_wasm_smart(wl, &WhitelistQueryMsg::Config {})?;
+        if res.is_active {
+            return Err(ContractError::WhitelistAlreadyStarted {});
+        }
+    }
+
     // Use default start trading time if not provided
     let mut collection_info = msg.collection_params.info.clone();
     let offset = factory_params.max_trading_offset_secs;
-    let start_time = msg.init_msg.start_time;
-    let trading_start_time = msg
+    let default_start_time_with_offset = msg.init_msg.start_time.plus_seconds(offset);
+    if let Some(start_trading_time) = msg.collection_params.info.start_trading_time {
+        // If trading start time > start_time + offset, return error
+        if start_trading_time > default_start_time_with_offset {
+            return Err(ContractError::InvalidStartTradingTime(
+                start_trading_time,
+                default_start_time_with_offset,
+            ));
+        }
+    }
+    let start_trading_time = msg
         .collection_params
         .info
-        .trading_start_time
-        .or_else(|| Some(start_time.plus_seconds(offset)));
-    collection_info.trading_start_time = trading_start_time;
+        .start_trading_time
+        .or(Some(default_start_time_with_offset));
+    collection_info.start_trading_time = start_trading_time;
 
     let config = Config {
         factory: factory.clone(),
@@ -127,11 +155,12 @@ pub fn instantiate(
                 .api
                 .addr_validate(&msg.collection_params.info.creator)?,
             payment_address: maybe_addr(deps.api, msg.init_msg.payment_address)?,
-            base_token_uri: msg.init_msg.base_token_uri,
+            base_token_uri,
             num_tokens: msg.init_msg.num_tokens,
             per_address_limit: msg.init_msg.per_address_limit,
             whitelist: whitelist_addr,
             start_time: msg.init_msg.start_time,
+            discount_price: None,
         },
         mint_price: msg.init_msg.mint_price,
     };
@@ -164,11 +193,7 @@ pub fn instantiate(
             })?,
             funds: info.funds,
             admin: Some(config.extension.admin.to_string()),
-            label: format!(
-                "SG721-{}-{}",
-                msg.collection_params.code_id,
-                msg.collection_params.name.trim()
-            ),
+            label: format!("SG721-{}", msg.collection_params.name.trim()),
         }
         .into(),
         id: INSTANTIATE_SG721_REPLY_ID,
@@ -196,8 +221,8 @@ pub fn execute(
         ExecuteMsg::Purge {} => execute_purge(deps, env, info),
         ExecuteMsg::UpdateMintPrice { price } => execute_update_mint_price(deps, env, info, price),
         ExecuteMsg::UpdateStartTime(time) => execute_update_start_time(deps, env, info, time),
-        ExecuteMsg::UpdateTradingStartTime(time) => {
-            execute_update_trading_start_time(deps, env, info, time)
+        ExecuteMsg::UpdateStartTradingTime(time) => {
+            execute_update_start_trading_time(deps, env, info, time)
         }
         ExecuteMsg::UpdatePerAddressLimit { per_address_limit } => {
             execute_update_per_address_limit(deps, env, info, per_address_limit)
@@ -212,7 +237,77 @@ pub fn execute(
         }
         ExecuteMsg::Shuffle {} => execute_shuffle(deps, env, info),
         ExecuteMsg::BurnRemaining {} => execute_burn_remaining(deps, env, info),
+        ExecuteMsg::UpdateDiscountPrice { price } => {
+            execute_update_discount_price(deps, env, info, price)
+        }
+        ExecuteMsg::RemoveDiscountPrice {} => execute_remove_discount_price(deps, info),
     }
+}
+
+pub fn execute_update_discount_price(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    price: u128,
+) -> Result<Response, ContractError> {
+    nonpayable(&info)?;
+    let mut config = CONFIG.load(deps.storage)?;
+    if info.sender != config.extension.admin {
+        return Err(ContractError::Unauthorized(
+            "Sender is not an admin".to_owned(),
+        ));
+    }
+    if env.block.time < config.extension.start_time {
+        return Err(ContractError::BeforeMintStartTime {});
+    }
+
+    // discount price can't be greater than unit price
+    if price > config.mint_price.amount.u128() {
+        return Err(ContractError::UpdatedMintPriceTooHigh {
+            allowed: config.mint_price.amount.u128(),
+            updated: price,
+        });
+    }
+
+    let factory: ParamsResponse = deps
+        .querier
+        .query_wasm_smart(config.clone().factory, &Sg2QueryMsg::Params {})?;
+    let factory_params = factory.params;
+
+    // Check that the price is greater than the minimum
+    if factory_params.min_mint_price.amount.u128() > price {
+        return Err(ContractError::InsufficientMintPrice {
+            expected: factory_params.min_mint_price.amount.u128(),
+            got: price,
+        });
+    }
+
+    config.extension.discount_price = Some(coin(price, config.mint_price.denom.clone()));
+    CONFIG.save(deps.storage, &config)?;
+
+    Ok(Response::new()
+        .add_attribute("action", "update_discount_price")
+        .add_attribute("sender", info.sender)
+        .add_attribute("discount_price", price.to_string()))
+}
+
+pub fn execute_remove_discount_price(
+    deps: DepsMut,
+    info: MessageInfo,
+) -> Result<Response, ContractError> {
+    nonpayable(&info)?;
+    let mut config = CONFIG.load(deps.storage)?;
+    if info.sender != config.extension.admin {
+        return Err(ContractError::Unauthorized(
+            "Sender is not an admin".to_owned(),
+        ));
+    }
+    config.extension.discount_price = None;
+    CONFIG.save(deps.storage, &config)?;
+
+    Ok(Response::new()
+        .add_attribute("action", "remove_discount_price")
+        .add_attribute("sender", info.sender))
 }
 
 // Purge frees data after a mint is sold out
@@ -318,8 +413,16 @@ pub fn execute_set_whitelist(
             return Err(ContractError::WhitelistAlreadyStarted {});
         }
     }
+    let new_wl = deps.api.addr_validate(whitelist)?;
+    config.extension.whitelist = Some(new_wl.clone());
+    // check that the new whitelist exists
+    let res: WhitelistConfigResponse = deps
+        .querier
+        .query_wasm_smart(new_wl, &WhitelistQueryMsg::Config {})?;
 
-    config.extension.whitelist = Some(deps.api.addr_validate(whitelist)?);
+    if res.is_active {
+        return Err(ContractError::WhitelistAlreadyStarted {});
+    }
     CONFIG.save(deps.storage, &config)?;
 
     Ok(Response::default()
@@ -524,14 +627,14 @@ fn _execute_mint(
     };
 
     // Create mint msgs
-    let mint_msg = Cw721ExecuteMsg::Mint(MintMsg::<Empty> {
+    let mint_msg = Sg721ExecuteMsg::<Extension, Empty>::Mint(MintMsg::<Extension> {
         token_id: mintable_token_mapping.token_id.to_string(),
         owner: recipient_addr.to_string(),
         token_uri: Some(format!(
             "{}/{}",
             config.extension.base_token_uri, mintable_token_mapping.token_id
         )),
-        extension: Empty {},
+        extension: None,
     });
     let msg = CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: sg721_address.to_string(),
@@ -578,8 +681,14 @@ fn random_token_list(
     sender: Addr,
     mut tokens: Vec<u32>,
 ) -> Result<Vec<u32>, ContractError> {
-    let sha256 =
-        Sha256::digest(format!("{}{}{}", sender, env.block.height, tokens.len()).into_bytes());
+    let tx_index = if let Some(tx) = &env.transaction {
+        tx.index
+    } else {
+        0
+    };
+    let sha256 = Sha256::digest(
+        format!("{}{}{}{}", sender, env.block.height, tokens.len(), tx_index).into_bytes(),
+    );
     // Cut first 16 bytes from 32 byte value
     let randomness: [u8; 16] = sha256.to_vec()[0..16].try_into().unwrap();
     let mut rng = Xoshiro128PlusPlus::from_seed(randomness);
@@ -597,8 +706,14 @@ fn random_mintable_token_mapping(
     sender: Addr,
 ) -> Result<TokenPositionMapping, ContractError> {
     let num_tokens = MINTABLE_NUM_TOKENS.load(deps.storage)?;
-    let sha256 =
-        Sha256::digest(format!("{}{}{}", sender, num_tokens, env.block.height).into_bytes());
+    let tx_index = if let Some(tx) = &env.transaction {
+        tx.index
+    } else {
+        0
+    };
+    let sha256 = Sha256::digest(
+        format!("{}{}{}{}", sender, num_tokens, env.block.height, tx_index).into_bytes(),
+    );
     // Cut first 16 bytes from 32 byte value
     let randomness: [u8; 16] = sha256.to_vec()[0..16].try_into().unwrap();
 
@@ -643,6 +758,19 @@ pub fn execute_update_mint_price(
         return Err(ContractError::UpdatedMintPriceTooHigh {
             allowed: config.mint_price.amount.u128(),
             updated: price,
+        });
+    }
+
+    let factory: ParamsResponse = deps
+        .querier
+        .query_wasm_smart(config.clone().factory, &Sg2QueryMsg::Params {})?;
+    let factory_params = factory.params;
+
+    // Check that the price is greater than the minimum
+    if factory_params.min_mint_price.amount.u128() > price {
+        return Err(ContractError::InsufficientMintPrice {
+            expected: factory_params.min_mint_price.amount.u128(),
+            got: price,
         });
     }
 
@@ -691,7 +819,7 @@ pub fn execute_update_start_time(
         .add_attribute("start_time", start_time.to_string()))
 }
 
-pub fn execute_update_trading_start_time(
+pub fn execute_update_start_trading_time(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
@@ -716,18 +844,18 @@ pub fn execute_update_trading_start_time(
         .start_time
         .plus_seconds(factory_params.params.max_trading_offset_secs);
 
-    if let Some(start_time) = start_time {
-        if env.block.time > start_time {
-            return Err(ContractError::InvalidTradingStartTime(
+    if let Some(start_trading_time) = start_time {
+        if env.block.time > start_trading_time {
+            return Err(ContractError::InvalidStartTradingTime(
                 env.block.time,
-                start_time,
+                start_trading_time,
             ));
         }
-        // If old start time + offset > new start_time, return error
-        if default_start_time_with_offset > start_time {
-            return Err(ContractError::InvalidTradingStartTime(
+        // If new start_trading_time > old start time + offset , return error
+        if start_trading_time > default_start_time_with_offset {
+            return Err(ContractError::InvalidStartTradingTime(
+                start_trading_time,
                 default_start_time_with_offset,
-                start_time,
             ));
         }
     }
@@ -735,14 +863,14 @@ pub fn execute_update_trading_start_time(
     // execute sg721 contract
     let msg = WasmMsg::Execute {
         contract_addr: sg721_contract_addr.to_string(),
-        msg: to_binary(&Sg721ExecuteMsg::<Empty>::UpdateTradingStartTime(
+        msg: to_binary(&Sg721ExecuteMsg::<Empty, Empty>::UpdateStartTradingTime(
             start_time,
         ))?,
         funds: vec![],
     };
 
     Ok(Response::new()
-        .add_attribute("action", "update_start_time")
+        .add_attribute("action", "update_start_trading_time")
         .add_attribute("sender", info.sender)
         .add_message(msg))
 }
@@ -779,9 +907,13 @@ pub fn execute_update_per_address_limit(
         per_address_limit,
         config.extension.num_tokens,
         factory_params.extension.max_per_address_limit,
-    ) {
+    )? {
         return Err(ContractError::InvalidPerAddressLimit {
-            max: config.extension.num_tokens / 100,
+            max: display_max_mintable_tokens(
+                per_address_limit,
+                config.extension.num_tokens,
+                factory_params.extension.max_per_address_limit,
+            )?,
             min: 1,
             got: per_address_limit,
         });
@@ -852,7 +984,8 @@ pub fn mint_price(deps: Deps, is_admin: bool) -> Result<Coin, StdError> {
     }
 
     if config.extension.whitelist.is_none() {
-        return Ok(config.mint_price);
+        let price = config.extension.discount_price.unwrap_or(config.mint_price);
+        return Ok(price);
     }
 
     let whitelist = config.extension.whitelist.unwrap();
@@ -864,7 +997,8 @@ pub fn mint_price(deps: Deps, is_admin: bool) -> Result<Coin, StdError> {
     if wl_config.is_active {
         Ok(wl_config.mint_price)
     } else {
-        Ok(config.mint_price)
+        let price = config.extension.discount_price.unwrap_or(config.mint_price);
+        Ok(price)
     }
 }
 
@@ -873,16 +1007,19 @@ fn mint_count(deps: Deps, info: &MessageInfo) -> Result<u32, StdError> {
     Ok(mint_count)
 }
 
-// Check per address limit to make sure it's <= 1% num tokens
-fn check_dynamic_per_address_limit(
+pub fn display_max_mintable_tokens(
     per_address_limit: u32,
     num_tokens: u32,
     max_per_address_limit: u32,
-) -> bool {
-    // If collection is small or large, no need to check per address limit
-    // ex: per_address_limit 50, no need to check if num_tokens > 5000
-    !((num_tokens > 100 && num_tokens < 100 * max_per_address_limit)
-        && per_address_limit > (num_tokens / 100))
+) -> Result<u32, ContractError> {
+    if per_address_limit > max_per_address_limit {
+        return Ok(max_per_address_limit);
+    }
+    if num_tokens < 100 {
+        return Ok(3_u32);
+    }
+    let three_percent = get_three_percent_of_tokens(num_tokens)?.u128();
+    Ok(three_percent as u32)
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -939,6 +1076,7 @@ fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
         per_address_limit: config.extension.per_address_limit,
         whitelist: config.extension.whitelist.map(|w| w.to_string()),
         factory: config.factory.to_string(),
+        discount_price: config.extension.discount_price,
     })
 }
 
@@ -992,11 +1130,13 @@ fn query_mint_price(deps: Deps) -> StdResult<MintPriceResponse> {
         factory_params.extension.airdrop_mint_price.amount.u128(),
         config.mint_price.denom,
     );
+    let discount_price = config.extension.discount_price;
     Ok(MintPriceResponse {
         public_price,
         airdrop_price,
         whitelist_price,
         current_price,
+        discount_price,
     })
 }
 
@@ -1011,10 +1151,10 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractE
     match reply {
         Ok(res) => {
             let sg721_address = res.contract_address;
-
-            SG721_ADDRESS.save(deps.storage, &Addr::unchecked(sg721_address))?;
-
-            Ok(Response::default().add_attribute("action", "instantiate_sg721_reply"))
+            SG721_ADDRESS.save(deps.storage, &Addr::unchecked(sg721_address.clone()))?;
+            Ok(Response::default()
+                .add_attribute("action", "instantiate_sg721_reply")
+                .add_attribute("sg721_address", sg721_address))
         }
         Err(_) => Err(ContractError::InstantiateSg721Error {}),
     }

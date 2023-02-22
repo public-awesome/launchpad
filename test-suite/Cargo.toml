@@ -1,0 +1,78 @@
+[package]
+name        = "test-suite"
+authors     = ["Michael Scotto <m@publicawesome.com>"]
+description = "Stargaze Test Suite for Launchpad"
+version     = { workspace = true }
+edition     = { workspace = true }
+homepage    = { workspace = true }
+repository  = { workspace = true }
+license     = { workspace = true }
+
+exclude = [
+  # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
+  "contract.wasm",
+  "hash.txt",
+]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+# for more explicit tests, cargo test --features=backtraces
+backtraces = ["cosmwasm-std/backtraces"]
+# use library feature to disable all instantiate/execute/query exports
+library = []
+
+[package.metadata.scripts]
+optimize = """docker run --rm -v "$(pwd)":/code \
+  --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
+  --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
+  cosmwasm/rust-optimizer:0.12.9
+"""
+
+[dependencies]
+cosmwasm-schema     = { workspace = true }
+sg-std              = { workspace = true }
+cosmwasm-std        = { workspace = true }
+cw4                 = { workspace = true }
+cw-multi-test       = { workspace = true }
+sg-multi-test       = { workspace = true }
+sg721-base          = { workspace = true }
+cw4-group           = { workspace = true }
+sg-splits           = { workspace = true }
+anyhow              = "1.0.57"
+sg-eth-airdrop      = { workspace = true }
+whitelist-immutable = { workspace = true, features = ["library"] }
+cw721               = { workspace = true }
+cw721-base          = { workspace = true, features = ["library"] }
+sg2                 = { workspace = true }
+sg721               = { workspace = true }
+sg-whitelist        = { workspace = true, features = ["library"] }
+vending-factory     = { workspace = true, features = ["library"] }
+vending-minter      = { workspace = true, features = ["library"] }
+base-factory        = { workspace = true }
+base-minter         = { workspace = true }
+sg721-nt            = { workspace = true }
+sg-controllers      = { workspace = true }
+
+[dev-dependencies]
+serde           = { workspace = true }
+thiserror       = { workspace = true }
+async-std       = "1.12.0"
+ethers-signers  = "1.0.0"
+ethers-core     = "1.0.0"
+eyre            = "0.6"
+rlp             = "0.5"
+cw2             = { workspace = true }
+cw-storage-plus = { workspace = true }
+cw-utils        = { workspace = true }
+rand_core       = { version = "0.6.4", default-features = false }
+rand_xoshiro    = { version = "0.6.0", default-features = false }
+schemars        = { workspace = true }
+sha2            = { workspace = true }
+shuffle         = { git = "https://github.com/webmaster128/shuffle", branch = "rm-getrandom", version = "0.1.7" }
+sg1             = { workspace = true }
+sg4             = { workspace = true }
+url             = { workspace = true }

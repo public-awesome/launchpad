@@ -1,6 +1,7 @@
+use cw721_base::MintMsg;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use sg721::{MintMsg, RoyaltyInfoResponse, UpdateCollectionInfoMsg};
+use sg721::{RoyaltyInfoResponse, UpdateCollectionInfoMsg};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]

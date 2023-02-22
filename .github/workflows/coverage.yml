@@ -8,7 +8,7 @@ jobs:
     name: coverage
     runs-on: ubuntu-latest
     container:
-      image: xd009642/tarpaulin:0.20.1
+      image: xd009642/tarpaulin:0.22.0
       options: --security-opt seccomp=unconfined
     steps:
       - name: Checkout repository
@@ -16,9 +16,9 @@ jobs:
 
       - name: Generate code coverage
         run: |
-          cargo tarpaulin --verbose --workspace --timeout 120 --out Xml
+          cargo tarpaulin --verbose --workspace --timeout 120 --out Xml --avoid-cfg-tarpaulin
       - name: Upload to codecov.io
         uses: codecov/codecov-action@v2
         with:
-          # token: ${{secrets.CODECOV_TOKEN}}
+          token: ${{secrets.CODECOV_TOKEN}}
           fail_ci_if_error: true

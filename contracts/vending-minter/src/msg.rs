@@ -1,16 +1,14 @@
+use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Coin, Timestamp};
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 use vending_factory::{msg::VendingMinterCreateMsg, state::VendingMinterParams};
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct InstantiateMsg {
     pub create_msg: VendingMinterCreateMsg,
     pub params: VendingMinterParams,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
 pub enum ExecuteMsg {
     Mint {},
     SetWhitelist {
@@ -22,7 +20,7 @@ pub enum ExecuteMsg {
     },
     UpdateStartTime(Timestamp),
     /// Runs custom checks against TradingStartTime on VendingMinter, then updates by calling sg721-base
-    UpdateTradingStartTime(Option<Timestamp>),
+    UpdateStartTradingTime(Option<Timestamp>),
     UpdatePerAddressLimit {
         per_address_limit: u32,
     },
@@ -35,10 +33,13 @@ pub enum ExecuteMsg {
     },
     Shuffle {},
     BurnRemaining {},
+    UpdateDiscountPrice {
+        price: u128,
+    },
+    RemoveDiscountPrice {},
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
 pub enum QueryMsg {
     Config {},
     MintableNumTokens {},
@@ -48,7 +49,7 @@ pub enum QueryMsg {
     Status {},
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct ConfigResponse {
     pub admin: String,
     pub base_token_uri: String,
@@ -60,27 +61,29 @@ pub struct ConfigResponse {
     pub mint_price: Coin,
     pub whitelist: Option<String>,
     pub factory: String,
+    pub discount_price: Option<Coin>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct MintableNumTokensResponse {
     pub count: u32,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct StartTimeResponse {
     pub start_time: String,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct MintPriceResponse {
     pub public_price: Coin,
     pub airdrop_price: Coin,
     pub whitelist_price: Option<Coin>,
     pub current_price: Coin,
+    pub discount_price: Option<Coin>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct MintCountResponse {
     pub address: String,
     pub count: u32,

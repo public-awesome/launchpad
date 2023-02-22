@@ -1,17 +1,18 @@
 [package]
-name = "sg2"
-version = "0.2.0"
-edition = "2021"
-authors = ["Shane Vitarana <s@noreply.publicawesome.com>"]
+name        = "sg2"
+authors     = ["Shane Vitarana <s@noreply.publicawesome.com>"]
 description = "Definition and types for the SG2 interface"
-license = "Apache-2.0"
-repository = "https://github.com/public-awesome/launchpad"
-homepage = "https://stargaze.zone"
+version     = { workspace = true }
+edition     = { workspace = true }
+homepage    = { workspace = true }
+repository  = { workspace = true }
+license     = { workspace = true }
 
 [dependencies]
-cosmwasm-std = { version = "1.0.0" }
-cw-utils = "0.13.4"
-serde = { version = "1.0.133", default-features = false, features = ["derive"] }
-thiserror = "1.0.30"
-schemars = "0.8.8"
-sg721 = { path = "../sg721" }
+cosmwasm-schema = { workspace = true }
+cosmwasm-std    = { workspace = true }
+cw-utils        = { workspace = true }
+schemars        = { workspace = true }
+serde           = { workspace = true }
+sg721           = { workspace = true }
+thiserror       = { workspace = true }

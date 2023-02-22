@@ -1,25 +1,10 @@
+use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, Binary, Decimal, Timestamp};
+use cw721_base::MintMsg;
 use cw_utils::Expiration;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct MintMsg<T> {
-    /// Unique ID of the NFT
-    pub token_id: String,
-    /// The owner of the newly minter NFT
-    pub owner: String,
-    /// Universal resource identifier for this NFT
-    /// Should point to a JSON file that conforms to the ERC721
-    /// Metadata JSON Schema
-    pub token_uri: Option<String>,
-    /// Any custom extension used by this contract
-    pub extension: T,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
-pub enum ExecuteMsg<T> {
+#[cw_serde]
+pub enum ExecuteMsg<T, E> {
     /// Transfer is a base message to move a token to another account without triggering actions
     TransferNft {
         recipient: String,
@@ -60,28 +45,32 @@ pub enum ExecuteMsg<T> {
     Burn {
         token_id: String,
     },
+    /// Extension msg
+    Extension {
+        msg: E,
+    },
     /// Update specific collection info fields
     UpdateCollectionInfo {
         collection_info: UpdateCollectionInfoMsg<RoyaltyInfoResponse>,
     },
     /// Called by the minter to update trading start time
-    UpdateTradingStartTime(Option<Timestamp>),
+    UpdateStartTradingTime(Option<Timestamp>),
     // Freeze collection info from further updates
     FreezeCollectionInfo,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct CollectionInfo<T> {
     pub creator: String,
     pub description: String,
     pub image: String,
     pub external_link: Option<String>,
-    pub explicit_content: bool,
-    pub trading_start_time: Option<Timestamp>,
+    pub explicit_content: Option<bool>,
+    pub start_trading_time: Option<Timestamp>,
     pub royalty_info: Option<T>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct UpdateCollectionInfoMsg<T> {
     pub description: Option<String>,
     pub image: Option<String>,
@@ -90,7 +79,7 @@ pub struct UpdateCollectionInfoMsg<T> {
     pub royalty_info: Option<Option<T>>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct RoyaltyInfo {
     pub payment_address: Addr,
     pub share: Decimal,
@@ -106,13 +95,13 @@ impl RoyaltyInfo {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, Default)]
+#[cw_serde]
 pub struct RoyaltyInfoResponse {
     pub payment_address: String,
     pub share: Decimal,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct InstantiateMsg {
     pub name: String,
     pub symbol: String,

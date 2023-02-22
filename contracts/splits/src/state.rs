@@ -1,14 +1,8 @@
 use cw4::Cw4Contract;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
+use cw_controllers::Admin;
 use cw_storage_plus::Item;
 
-#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
-pub struct Config {
-    // Total weight and members are queried from this contract
-    pub group_addr: Cw4Contract,
-}
+pub const GROUP: Item<Cw4Contract> = Item::new("group");
 
-// unique items
-pub const CONFIG: Item<Config> = Item::new("config");
+pub const ADMIN: Admin = Admin::new("admin");

@@ -1,9 +1,8 @@
+use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, Coin};
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
 /// Saved in every minter
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct MinterConfig<T> {
     pub factory: Addr,
     pub collection_code_id: u64,
@@ -11,26 +10,26 @@ pub struct MinterConfig<T> {
     pub extension: T,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct MinterConfigResponse<T> {
     pub config: MinterConfig<T>,
     pub collection_address: String,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, Default)]
+#[cw_serde]
+#[derive(Default)]
 pub struct Status {
     pub is_verified: bool,
     pub is_blocked: bool,
     pub is_explicit: bool,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct StatusResponse {
     pub status: Status,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
 pub enum QueryMsg {
     /// Returns `MinterConfigResponse<T>`
     Config {},
@@ -38,8 +37,7 @@ pub enum QueryMsg {
     Status {},
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
 pub enum SudoMsg {
     UpdateStatus {
         is_verified: bool,

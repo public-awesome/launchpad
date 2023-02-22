@@ -1,9 +1,8 @@
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use cosmwasm_schema::cw_serde;
 
 /// An attribute of the token as defined by the
 /// [OpenSea metadata standard](https://docs.opensea.io/docs/metadata-standards#attributes).
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct Trait {
     pub display_type: Option<String>,
     pub trait_type: String,
@@ -12,7 +11,8 @@ pub struct Trait {
 
 /// OpenSea metadata standard, used by Stargaze marketplace.
 /// See [this link](https://docs.opensea.io/docs/metadata-standards) for details.
-#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
+#[derive(Default)]
 pub struct Metadata {
     /// This is the URL to the image of the item. Can be just about any type of image (including
     /// SVGs, which will be cached into PNGs by OpenSea), and can be

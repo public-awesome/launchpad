@@ -9,5 +9,6 @@
     "has_ended": {
       "type": "boolean"
     }
-  }
+  },
+  "additionalProperties": false
 }

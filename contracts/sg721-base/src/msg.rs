@@ -1,11 +1,52 @@
-use cosmwasm_std::Timestamp;
-use cw721_base::msg::QueryMsg as Cw721QueryMsg;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use cosmwasm_schema::cw_serde;
+use cosmwasm_std::{
+    coin, Addr, BankMsg, Binary, Empty, Event, StdError, StdResult, Timestamp, Uint128,
+};
+use cw721_base::msg::{MintMsg, QueryMsg as Cw721QueryMsg};
+use cw_utils::Expiration;
 use sg721::RoyaltyInfoResponse;
+use sg_std::{Response, SubMsg, NATIVE_DENOM};
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
+pub enum ExecuteMsg<T, E> {
+    /// Transfer is a base message to move a token to another account without triggering actions
+    TransferNft { recipient: String, token_id: String },
+    /// Send is a base message to transfer a token to a contract and trigger an action
+    /// on the receiving contract.
+    SendNft {
+        contract: String,
+        token_id: String,
+        msg: Binary,
+    },
+    /// Allows operator to transfer / send the token from the owner's account.
+    /// If expiration is set, then this allowance has a time/height limit
+    Approve {
+        spender: String,
+        token_id: String,
+        expires: Option<Expiration>,
+    },
+    /// Remove previously granted Approval
+    Revoke { spender: String, token_id: String },
+    /// Allows operator to transfer / send any token from the owner's account.
+    /// If expiration is set, then this allowance has a time/height limit
+    ApproveAll {
+        operator: String,
+        expires: Option<Expiration>,
+    },
+    /// Remove previously granted ApproveAll permission
+    RevokeAll { operator: String },
+
+    /// Mint a new NFT, can only be called by the contract minter
+    Mint(MintMsg<T>),
+
+    /// Burn an NFT the sender has access to
+    Burn { token_id: String },
+
+    /// Extension msg
+    Extension { msg: E },
+}
+
+#[cw_serde]
 pub enum QueryMsg {
     OwnerOf {
         token_id: String,
@@ -48,8 +89,8 @@ pub enum QueryMsg {
     CollectionInfo {},
 }
 
-impl From<QueryMsg> for Cw721QueryMsg {
-    fn from(msg: QueryMsg) -> Cw721QueryMsg {
+impl From<QueryMsg> for Cw721QueryMsg<Empty> {
+    fn from(msg: QueryMsg) -> Cw721QueryMsg<Empty> {
         match msg {
             QueryMsg::OwnerOf {
                 token_id,
@@ -113,13 +154,48 @@ impl From<QueryMsg> for Cw721QueryMsg {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct CollectionInfoResponse {
     pub creator: String,
     pub description: String,
     pub image: String,
     pub external_link: Option<String>,
-    pub explicit_content: bool,
-    pub trading_start_time: Option<Timestamp>,
+    pub explicit_content: Option<bool>,
+    pub start_trading_time: Option<Timestamp>,
     pub royalty_info: Option<RoyaltyInfoResponse>,
+}
+
+impl CollectionInfoResponse {
+    pub fn royalty_payout(
+        &self,
+        collection: Addr,
+        payment: Uint128,
+        protocol_fee: Uint128,
+        finders_fee: Option<Uint128>,
+        res: &mut Response,
+    ) -> StdResult<Uint128> {
+        if let Some(royalty_info) = self.royalty_info.as_ref() {
+            if royalty_info.share.is_zero() {
+                return Ok(Uint128::zero());
+            }
+            let royalty = coin((payment * royalty_info.share).u128(), NATIVE_DENOM);
+            if payment < (protocol_fee + finders_fee.unwrap_or(Uint128::zero()) + royalty.amount) {
+                return Err(StdError::generic_err("Fees exceed payment"));
+            }
+            res.messages.push(SubMsg::new(BankMsg::Send {
+                to_address: royalty_info.payment_address.to_string(),
+                amount: vec![royalty.clone()],
+            }));
+
+            let event = Event::new("royalty-payout")
+                .add_attribute("collection", collection.to_string())
+                .add_attribute("amount", royalty.to_string())
+                .add_attribute("recipient", royalty_info.payment_address.to_string());
+            res.events.push(event);
+
+            Ok(royalty.amount)
+        } else {
+            Ok(Uint128::zero())
+        }
+    }
 }

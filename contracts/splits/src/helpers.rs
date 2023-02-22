@@ -1,6 +1,5 @@
+use cosmwasm_schema::cw_serde;
 use cw4::MemberListResponse;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
 use cosmwasm_std::{
     to_binary, Addr, CosmosMsg, CustomQuery, Querier, QuerierWrapper, StdResult, WasmMsg, WasmQuery,
@@ -10,7 +9,7 @@ use crate::msg::{ExecuteMsg, QueryMsg};
 
 /// CwTemplateContract is a wrapper around Addr that provides a lot of helpers
 /// for working with this.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct SplitsContract(pub Addr);
 
 impl SplitsContract {

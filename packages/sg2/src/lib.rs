@@ -1,13 +1,12 @@
+use cosmwasm_schema::cw_serde;
 use cosmwasm_std::Coin;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
 pub mod msg;
 pub mod query;
 pub mod tests;
 
 /// Common params for all minters used for storage
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct MinterParams<T> {
     /// The minter code id
     pub code_id: u64,
