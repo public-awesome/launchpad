@@ -3312,6 +3312,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "sg721-updatable"
+version = "0.1.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-multi-test",
+ "cw-storage-plus 0.16.0",
+ "cw-utils 0.16.0",
+ "cw2 0.16.0",
+ "cw721",
+ "cw721-base",
+ "schemars",
+ "serde",
+ "sg-std 0.22.9 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg721",
+ "sg721-base",
+ "thiserror",
+]
+
+[[package]]
 name = "sha1"
 version = "0.10.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"

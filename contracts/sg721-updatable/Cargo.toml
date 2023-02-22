@@ -40,20 +40,19 @@ optimize = """docker run --rm -v "$(pwd)":/code \
 """
 
 [dependencies]
-cosmwasm-std = "1.0.0"
-cosmwasm-storage = "1.1.1"
-cw-utils = "0.13.4"
-cw-storage-plus = "0.15.0"
-cw2 = "0.15.0"
-schemars = "0.8.10"
-serde = { version = "1.0.144", default-features = false, features = ["derive"] }
-thiserror = { version = "1.0.31" }
-cw721-base = { version = "0.13.4", features = ["library"] }
-sg721 = { path = "../../packages/sg721" }
-sg721-base = { path = "../sg721-base", features = ["library"] }
-sg-std = { path = "../../packages/sg-std" }
+cosmwasm-std = { workspace = true }
+cw-storage-plus = { workspace = true }
+cw-utils = { workspace = true }
+cw2 = { workspace = true }
+schemars = { workspace = true }
+serde = { workspace = true }
+thiserror = { workspace = true }
+cw721-base = { workspace = true }
+sg721 = { workspace = true }
+sg721-base = { workspace = true }
+sg-std = { workspace = true }
 
 [dev-dependencies]
-cosmwasm-schema = "1.1.1"
-cw-multi-test = "0.15.0"
-cw721 = "0.13.4"
+cosmwasm-schema = { workspace = true }
+cw-multi-test = { workspace = true }
+cw721 = { workspace = true }
