@@ -1,5 +1,6 @@
 KEY=$(starsd keys show $USER | jq -r .name)
-
+FACTORY=stars1csq2m3gpca9syyq386v6rsfq5r3cp8llee9eyx5uj4wcmxcmg98sqx5xzg
+SG721_CODE_ID=1653
 # init msg
 # VendingMinterInitMsgExtension {
 #     pub base_token_uri: String,
@@ -10,7 +11,6 @@ KEY=$(starsd keys show $USER | jq -r .name)
 #     pub per_address_limit: u32,
 #     pub whitelist: Option<String>,
 # }
-
 # collection params
 # CollectionParams {
 #     /// The collection code id
@@ -19,41 +19,72 @@ KEY=$(starsd keys show $USER | jq -r .name)
 #     pub symbol: String,
 #     pub info: CollectionInfo<RoyaltyInfoResponse>,
 # }
+# CollectionInfo {
+    # pub creator: String,
+    # pub description: String,
+    # pub image: String,
+    # pub external_link: Option<String>,
+    # pub explicit_content: Option<bool>,
+    # pub start_trading_time: Option<Timestamp>,
+    # pub royalty_info: Option<T>,
+# }
 
 MSG=$(cat <<EOF
 {
-    "code_id": $MINTER_CODE_ID,
-    "creation_fee": "5000000000ustars",
-    "min_mint_price": "50000000ustars",
-    "mint_fee_bps": "1000",
-    "max_trading_offset_secs": 604800,
-    extension: ParamsExtension {
-        max_token_limit: 10000,
-        max_per_address_limit: 50,
-        airdrop_mint_price: 0ustars,
-        airdrop_mint_fee_bps: 10000,
-        shuffle_fee: 500000000ustars,
-    },
+    "create_minter": {
+        "init_msg": {
+            "base_token_uri": "ipfs://bafybeiey2heysue3px2tgc523cmjbfjlox5zfzzan5syzdooikdvimtxwq",
+            "start_time": "1678169000000000000",
+            "num_tokens": 1000,
+            "mint_price": { "amount": "50000000", "denom": "ustars" },
+            "per_address_limit": 30
+        },
+        "collection_params": {
+            "code_id": $SG721_CODE_ID,
+            "name": "Test Collection yubo",
+            "symbol": "YUBO",
+            "info": {
+                "creator": "$ADMIN",
+                "description": "Test Collection yubo",
+                "image": "ipfs://bafybeiavall5udkxkdtdm4djezoxrmfc6o5fn2ug3ymrlvibvwmwydgrkm/1.jpg"
+            }
+        }
+    }
 }
 EOF
 )
 
+echo $MSG
 
-if [ "$ADMIN_MULTISIG" = true ] ; then
-  echo 'Using multisig'
-  starsd tx wasm instantiate $MINTER_CODE_ID "$MSG" --label "Minter-Updatable" \
-    --admin $ADMIN \
-    --gas-prices 0.025ustars --gas 50000000 --gas-adjustment 1.9 \
-    --from $ADMIN \
-    --generate-only > unsignedTx.json
 
-  starsd tx sign unsignedTx.json \
-    --multisig=$ADMIN --from $USER --output-document=$KEY.json \
-    --chain-id $CHAIN_ID
-else
-  echo 'Using single signer'
-  starsd tx wasm instantiate $MINTER_CODE_ID "$MSG" --label "Minter-Updatable" \
-    --admin $ADMIN \
-    --gas-prices 0.025ustars --gas auto --gas-adjustment 1.9 \
-    --from $ADMIN -y -b block -o json | jq .
-fi
+# starsd tx wasm execute $FACTORY "$MSG" --amount 5000000000ustars \
+# --gas-prices 0.025ustars --gas auto --gas-adjustment 1.9 \
+# --from stars-dev -y -b block -o json | jq .
+
+
+starsd tx wasm execute stars1csq2m3gpca9syyq386v6rsfq5r3cp8llee9eyx5uj4wcmxcmg98sqx5xzg "{
+	\"create_minter\": {
+		\"init_msg\": {
+			\"base_token_uri\": \"ipfs://bafybeiey2heysue3px2tgc523cmjbfjlox5zfzzan5syzdooikdvimtxwq\",
+			\"start_time\": \"1678169000000000000\",
+			\"num_tokens\": 1000,
+			\"mint_price\": {
+				\"amount\": \"50000000\",
+				\"denom\": \"ustars\"
+			},
+			\"per_address_limit\": 30
+		},
+		\"collection_params\": {
+			\"code_id\": 1653,
+			\"name\": \"Test Collection yubo\",
+			\"symbol\": \"YUBO\",
+			\"info\": {
+				\"creator\": \"stars10w5eulj60qp3cfqa0hkmke78qdy2feq6x9xdmd\",
+				\"description\": \"Test Collection yubo\",
+				\"image\": \"ipfs://bafybeiavall5udkxkdtdm4djezoxrmfc6o5fn2ug3ymrlvibvwmwydgrkm/1.jpg\"
+			}
+		}
+	}
+}" --amount 5000000000ustars \
+--gas-prices 0.025ustars --gas auto --gas-adjustment 1.9 \
+--from stars-dev -y -b block -o json | jq .
