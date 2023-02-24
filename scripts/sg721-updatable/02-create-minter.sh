@@ -1,6 +1,6 @@
 KEY=$(starsd keys show $USER | jq -r .name)
 FACTORY=stars1csq2m3gpca9syyq386v6rsfq5r3cp8llee9eyx5uj4wcmxcmg98sqx5xzg
-SG721_CODE_ID=1653
+SG721_CODE_ID=1652
 # init msg
 # VendingMinterInitMsgExtension {
 #     pub base_token_uri: String,
@@ -56,35 +56,6 @@ EOF
 
 echo $MSG
 
-
-# starsd tx wasm execute $FACTORY "$MSG" --amount 5000000000ustars \
-# --gas-prices 0.025ustars --gas auto --gas-adjustment 1.9 \
-# --from stars-dev -y -b block -o json | jq .
-
-
-starsd tx wasm execute stars1csq2m3gpca9syyq386v6rsfq5r3cp8llee9eyx5uj4wcmxcmg98sqx5xzg "{
-	\"create_minter\": {
-		\"init_msg\": {
-			\"base_token_uri\": \"ipfs://bafybeiey2heysue3px2tgc523cmjbfjlox5zfzzan5syzdooikdvimtxwq\",
-			\"start_time\": \"1678169000000000000\",
-			\"num_tokens\": 1000,
-			\"mint_price\": {
-				\"amount\": \"50000000\",
-				\"denom\": \"ustars\"
-			},
-			\"per_address_limit\": 30
-		},
-		\"collection_params\": {
-			\"code_id\": 1653,
-			\"name\": \"Test Collection yubo\",
-			\"symbol\": \"YUBO\",
-			\"info\": {
-				\"creator\": \"stars10w5eulj60qp3cfqa0hkmke78qdy2feq6x9xdmd\",
-				\"description\": \"Test Collection yubo\",
-				\"image\": \"ipfs://bafybeiavall5udkxkdtdm4djezoxrmfc6o5fn2ug3ymrlvibvwmwydgrkm/1.jpg\"
-			}
-		}
-	}
-}" --amount 5000000000ustars \
+starsd tx wasm execute $FACTORY "$MSG" --amount 5000000000ustars \
 --gas-prices 0.025ustars --gas auto --gas-adjustment 1.9 \
 --from stars-dev -y -b block -o json | jq .
