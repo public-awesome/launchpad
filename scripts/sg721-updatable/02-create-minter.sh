@@ -1,6 +1,5 @@
 KEY=$(starsd keys show $USER | jq -r .name)
-FACTORY=stars1csq2m3gpca9syyq386v6rsfq5r3cp8llee9eyx5uj4wcmxcmg98sqx5xzg
-SG721_CODE_ID=1652
+
 # init msg
 # VendingMinterInitMsgExtension {
 #     pub base_token_uri: String,
@@ -29,12 +28,15 @@ SG721_CODE_ID=1652
     # pub royalty_info: Option<T>,
 # }
 
+# add a few minutes buffer to start time
+TIME=$(date -v+30S +%s)
+
 MSG=$(cat <<EOF
 {
     "create_minter": {
         "init_msg": {
             "base_token_uri": "ipfs://bafybeiey2heysue3px2tgc523cmjbfjlox5zfzzan5syzdooikdvimtxwq",
-            "start_time": "1678169000000000000",
+            "start_time": "$(echo $TIME)000000000",
             "num_tokens": 1000,
             "mint_price": { "amount": "50000000", "denom": "ustars" },
             "per_address_limit": 30
