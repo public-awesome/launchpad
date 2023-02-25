@@ -13,6 +13,9 @@ target/
 *.iml
 .env
 
+# User-gen
+metadata.csv
+
 # Auto-gen
 .cargo-ok
 

@@ -1,4 +1,4 @@
-KEY=$(starsd keys show $USER | jq -r .name)
+KEY=$(starsd keys show $ADMIN | jq -r .name)
 
 # init msg
 # VendingMinterInitMsgExtension {
@@ -60,4 +60,4 @@ echo $MSG
 
 starsd tx wasm execute $FACTORY "$MSG" --amount 5000000000ustars \
 --gas-prices 0.025ustars --gas auto --gas-adjustment 1.9 \
---from stars-dev -y -b block -o json | jq .
+--from $KEY -y -b block -o json | jq .

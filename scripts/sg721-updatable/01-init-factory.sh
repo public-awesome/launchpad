@@ -1,5 +1,9 @@
-FACTORY_CODE_ID=1653
-MINTER_CODE_ID=1654
+starsd config node $NODE
+starsd config chain-id $CHAIN_ID
+starsd config output json
+
+KEY=$(starsd keys show $ADMIN | jq -r .name)
+
 MSG=$(cat <<EOF
 {
   "params": {
