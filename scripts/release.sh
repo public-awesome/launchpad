@@ -12,7 +12,7 @@ echo "Publishing packages"
 . ./scripts/publish-packages.sh
 
 echo "Replacing $version with $1 in manifest"
-sed -i '' "s/$version/$1/g" Cargo.toml
+sed -i '' "s/$version/$1/g" ./Cargo.toml
 
 echo "Publishing contracts"
 . ./scripts/publish-contracts.sh
