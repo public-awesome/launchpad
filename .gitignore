@@ -12,6 +12,9 @@ target/
 .idea/
 *.iml
 
+# ENV
+.env
+
 # Auto-gen
 .cargo-ok
 
