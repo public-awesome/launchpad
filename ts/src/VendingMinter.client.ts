@@ -108,6 +108,12 @@ export interface VendingMinterInterface extends VendingMinterReadOnlyInterface {
   }, fee?: number | StdFee | "auto", memo?: string, funds?: Coin[]) => Promise<ExecuteResult>;
   shuffle: (fee?: number | StdFee | "auto", memo?: string, funds?: Coin[]) => Promise<ExecuteResult>;
   burnRemaining: (fee?: number | StdFee | "auto", memo?: string, funds?: Coin[]) => Promise<ExecuteResult>;
+  updateDiscountPrice: ({
+    price
+  }: {
+    price: number;
+  }, fee?: number | StdFee | "auto", memo?: string, funds?: Coin[]) => Promise<ExecuteResult>;
+  removeDiscountPrice: (fee?: number | StdFee | "auto", memo?: string, funds?: Coin[]) => Promise<ExecuteResult>;
 }
 export class VendingMinterClient extends VendingMinterQueryClient implements VendingMinterInterface {
   client: SigningCosmWasmClient;
@@ -130,6 +136,8 @@ export class VendingMinterClient extends VendingMinterQueryClient implements Ven
     this.mintFor = this.mintFor.bind(this);
     this.shuffle = this.shuffle.bind(this);
     this.burnRemaining = this.burnRemaining.bind(this);
+    this.updateDiscountPrice = this.updateDiscountPrice.bind(this);
+    this.removeDiscountPrice = this.removeDiscountPrice.bind(this);
   }
 
   mint = async (fee: number | StdFee | "auto" = "auto", memo?: string, funds?: Coin[]): Promise<ExecuteResult> => {
@@ -218,6 +226,22 @@ export class VendingMinterClient extends VendingMinterQueryClient implements Ven
   burnRemaining = async (fee: number | StdFee | "auto" = "auto", memo?: string, funds?: Coin[]): Promise<ExecuteResult> => {
     return await this.client.execute(this.sender, this.contractAddress, {
       burn_remaining: {}
+    }, fee, memo, funds);
+  };
+  updateDiscountPrice = async ({
+    price
+  }: {
+    price: number;
+  }, fee: number | StdFee | "auto" = "auto", memo?: string, funds?: Coin[]): Promise<ExecuteResult> => {
+    return await this.client.execute(this.sender, this.contractAddress, {
+      update_discount_price: {
+        price
+      }
+    }, fee, memo, funds);
+  };
+  removeDiscountPrice = async (fee: number | StdFee | "auto" = "auto", memo?: string, funds?: Coin[]): Promise<ExecuteResult> => {
+    return await this.client.execute(this.sender, this.contractAddress, {
+      remove_discount_price: {}
     }, fee, memo, funds);
   };
 }
