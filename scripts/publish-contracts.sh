@@ -19,3 +19,5 @@ sleep 10
 cd contracts/whitelist-immutable && cargo publish && cd ../..
 sleep 15
 cd contracts/sg-eth-airdrop && cargo publish && cd ../..
+sleep 15
+cd test-suite && cargo publish && cd ..
