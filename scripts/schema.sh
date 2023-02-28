@@ -6,4 +6,4 @@ for d in contracts/*; do
   fi
 done
 
-cd ts && yarn codegen
+cd ts && yarn install && yarn codegen
