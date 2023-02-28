@@ -38,6 +38,7 @@ pub fn instantiate_factory(
         &InstantiateMsg {
             params: MinterParams {
                 code_id: chain.orc.contract_map.code_id(MINTER_NAME).unwrap(),
+                allowed_sg721_code_ids: vec![chain.orc.contract_map.code_id(SG721_NAME).unwrap()],
                 creation_fee: Coin {
                     amount: Uint128::new(CREATION_FEE),
                     denom: denom.to_string(),
