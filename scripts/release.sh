@@ -1,7 +1,7 @@
 #!/bin/bash
 set -eux
 git checkout -b release-$1
-
+PROJECT_PATH=$(pwd)
 version=$(grep "version" ./Cargo.toml | head -1 | cut -d '"' -f 2)
 echo "Current version: $version"
 
@@ -12,11 +12,13 @@ echo "Publishing packages"
 . ./scripts/publish-packages.sh
 
 echo "Replacing $version with $1 in manifest"
+cd $PROJECT_PATH
 sed -i '' "s/$version/$1/g" ./Cargo.toml
 
 echo "Publishing contracts"
 . ./scripts/publish-contracts.sh
 
+cd $PROJECT_PATH
 echo "Generating schema"
 make schema
 
