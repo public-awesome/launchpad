@@ -10,6 +10,7 @@ export type Uint64 = string;
 export interface ConfigResponse {
   admin: string;
   base_token_uri: string;
+  discount_price?: Coin | null;
   factory: string;
   mint_price: Coin;
   num_tokens: number;
@@ -57,6 +58,12 @@ export type ExecuteMsg = {
   shuffle: {};
 } | {
   burn_remaining: {};
+} | {
+  update_discount_price: {
+    price: number;
+  };
+} | {
+  remove_discount_price: {};
 };
 export type Decimal = string;
 export interface InstantiateMsg {
@@ -117,6 +124,7 @@ export interface MintCountResponse {
 export interface MintPriceResponse {
   airdrop_price: Coin;
   current_price: Coin;
+  discount_price?: Coin | null;
   public_price: Coin;
   whitelist_price?: Coin | null;
 }
@@ -133,6 +141,7 @@ export interface MinterConfigForConfigExtension {
 export interface ConfigExtension {
   admin: Addr;
   base_token_uri: string;
+  discount_price?: Coin | null;
   num_tokens: number;
   payment_address?: Addr | null;
   per_address_limit: number;
