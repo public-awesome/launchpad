@@ -1,4 +1,5 @@
 #!/bin/bash
+set -eux
 git checkout -b release-$1
 
 version=$(grep "version" ./Cargo.toml | head -1 | cut -d '"' -f 2)
