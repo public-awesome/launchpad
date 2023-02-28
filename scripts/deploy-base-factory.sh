@@ -6,7 +6,7 @@ MSG=$(cat <<EOF
     "code_id": $MINTER_CODE_ID,
     "creation_fee": { "amount": "250000000", "denom": "ustars" },
     "min_mint_price": { "amount": "5000000", "denom": "ustars" },
-    "mint_fee_bps": 500,
+    "mint_fee_bps": 10000,
     "max_trading_offset_secs": 0,
     "extension": {}
   }

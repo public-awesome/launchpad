@@ -16,6 +16,9 @@ target/
 # User-gen
 metadata.csv
 
+# ENV
+.env
+
 # Auto-gen
 .cargo-ok
 
