@@ -11,7 +11,8 @@ pub fn contract_vending_factory() -> Box<dyn Contract<StargazeMsgWrapper>> {
         vending_factory::contract::execute,
         vending_factory::contract::instantiate,
         vending_factory::contract::query,
-    );
+    )
+    .with_sudo(vending_factory::contract::sudo);
     Box::new(contract)
 }
 
@@ -21,7 +22,7 @@ pub fn contract_base_factory() -> Box<dyn Contract<StargazeMsgWrapper>> {
         base_factory::contract::instantiate,
         base_factory::contract::query,
     )
-    .with_sudo(vending_factory::contract::sudo);
+    .with_sudo(base_factory::contract::sudo);
     Box::new(contract)
 }
 
