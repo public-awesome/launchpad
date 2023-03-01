@@ -161,3 +161,28 @@ pub fn base_minter_with_sg721(num_tokens: u32) -> VendingTemplateResponse<Vendin
         accts: VendingAccounts { creator, buyer },
     }
 }
+
+pub fn base_minter_with_specified_sg721(
+    num_tokens: u32,
+    sg721_code_id: u64,
+) -> VendingTemplateResponse<VendingAccounts> {
+    let mut router = custom_mock_app();
+    let (creator, buyer) = setup_accounts(&mut router);
+    let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
+    let collection_params = mock_collection_params_1(Some(start_time));
+    let minter_params = minter_params_token(num_tokens);
+    let mut code_ids = base_minter_sg721_collection_code_ids(&mut router);
+    code_ids.sg721_code_id = sg721_code_id;
+    let minter_collection_response = configure_base_minter(
+        &mut router,
+        creator.clone(),
+        vec![collection_params],
+        vec![minter_params],
+        code_ids,
+    );
+    VendingTemplateResponse {
+        router,
+        collection_response_vec: minter_collection_response,
+        accts: VendingAccounts { creator, buyer },
+    }
+}

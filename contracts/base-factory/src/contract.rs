@@ -82,7 +82,7 @@ pub fn execute_create_minter(
 
 pub fn must_be_allowed_code_id(deps: Deps, code_id: u64) -> Result<(), ContractError> {
     let res = query_allowed_code_id(deps, code_id)?;
-    if res.allowed == false {
+    if !res.allowed {
         return Err(ContractError::NotAllowedCodeId { code_id });
     }
     Ok(())
@@ -133,6 +133,19 @@ pub fn update_params<T, C>(
             ContractError::InvalidDenom {}
         );
         params.min_mint_price = min_mint_price;
+    }
+
+    // add new code ids, then rm code ids
+    if let Some(add_sg721_code_ids) = param_msg.add_sg721_code_ids {
+        for code_id in add_sg721_code_ids {
+            params.allowed_sg721_code_ids.push(code_id);
+        }
+    }
+    params.allowed_sg721_code_ids.dedup();
+    if let Some(rm_sg721_code_ids) = param_msg.rm_sg721_code_ids {
+        for code_id in rm_sg721_code_ids {
+            params.allowed_sg721_code_ids.retain(|&x| x != code_id);
+        }
     }
 
     params.mint_fee_bps = param_msg.mint_fee_bps.unwrap_or(params.mint_fee_bps);

@@ -1,7 +1,9 @@
 use crate::common_setup::setup_accounts_and_block::{CREATION_FEE, INITIAL_BALANCE};
 use crate::common_setup::setup_minter::base_minter::mock_params::mock_params;
 use crate::common_setup::setup_minter::common::constants::MIN_MINT_PRICE;
-use crate::common_setup::templates::{base_minter_with_sg721, base_minter_with_sg721nt};
+use crate::common_setup::templates::{
+    base_minter_with_sg721, base_minter_with_sg721nt, base_minter_with_specified_sg721,
+};
 use base_minter::msg::{ConfigResponse, ExecuteMsg};
 use cosmwasm_std::{coin, coins, Addr, Timestamp};
 use cw721::{Cw721ExecuteMsg, Cw721QueryMsg, OwnerOfResponse};
@@ -15,6 +17,18 @@ fn init() {
     let bmt = base_minter_with_sg721nt(1);
     bmt.collection_response_vec[0].minter.clone().unwrap();
     bmt.collection_response_vec[0].collection.clone().unwrap();
+}
+
+#[test]
+fn update_code_id() {
+    let sg721_code_id = 10u64;
+    let bmt = base_minter_with_specified_sg721(1, sg721_code_id);
+
+    let res = bmt.collection_response_vec[0].minter.clone();
+
+    // sg721 code id 10, allowed code id 3
+    // fails when sg721 code id not allowed
+    assert!(res.is_none());
 }
 
 #[test]
