@@ -51,3 +51,4 @@ sg-whitelist    = { workspace = true, features = ["library"] }
 thiserror       = { workspace = true }
 url             = { workspace = true }
 vending-factory = { workspace = true, features = ["library"] }
+semver           = {workspace = true  }
