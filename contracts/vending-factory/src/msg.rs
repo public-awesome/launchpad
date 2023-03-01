@@ -28,7 +28,7 @@ pub enum SudoMsg {
     UpdateParams(Box<VendingUpdateParamsMsg>),
 }
 
-/// Message for params so they can be updated invidiually by governance
+/// Message for params so they can be updated individually by governance
 #[cw_serde]
 pub struct VendingUpdateParamsExtension {
     pub max_token_limit: Option<u32>,
