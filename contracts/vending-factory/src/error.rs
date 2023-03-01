@@ -29,4 +29,7 @@ pub enum ContractError {
 
     #[error("{0}")]
     BaseError(#[from] BaseContractError),
+
+    #[error("NotAllowedCodeId {code_id}")]
+    NotAllowedCodeId { code_id: u64 },
 }
