@@ -11,6 +11,13 @@ use sg721_base::msg::{CollectionInfoResponse, QueryMsg as Sg721QueryMsg};
 use sg_std::NATIVE_DENOM;
 
 #[test]
+fn init() {
+    let bmt = base_minter_with_sg721nt(1);
+    bmt.collection_response_vec[0].minter.clone().unwrap();
+    bmt.collection_response_vec[0].collection.clone().unwrap();
+}
+
+#[test]
 fn check_mint() {
     let bmt = base_minter_with_sg721nt(1);
     let (mut router, creator, buyer) = (bmt.router, bmt.accts.creator, bmt.accts.buyer);

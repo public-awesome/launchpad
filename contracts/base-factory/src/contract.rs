@@ -56,6 +56,7 @@ pub fn execute_create_minter(
     msg: BaseMinterCreateMsg,
 ) -> Result<Response, ContractError> {
     must_pay(&info, NATIVE_DENOM)?;
+    must_be_allowed_code_id(deps.as_ref(), msg.collection_params.code_id)?;
 
     let params = SUDO_PARAMS.load(deps.storage)?;
 
@@ -77,6 +78,14 @@ pub fn execute_create_minter(
     Ok(res
         .add_attribute("action", "create_minter")
         .add_message(msg))
+}
+
+pub fn must_be_allowed_code_id(deps: Deps, code_id: u64) -> Result<(), ContractError> {
+    let res = query_allowed_code_id(deps, code_id)?;
+    if res.allowed == false {
+        return Err(ContractError::NotAllowedCodeId { code_id });
+    }
+    Ok(())
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
