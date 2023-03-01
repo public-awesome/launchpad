@@ -101,6 +101,46 @@ fn test_instantiate_plaintext_missing_wallet() {
 }
 
 #[test]
+fn test_airdrop_eligible_query() {
+    let claim_plaintext = &get_msg_plaintext(STARGAZE_WALLET_01.to_string());
+    let (_, _, _, eth_addr_str) = get_wallet_and_sig(claim_plaintext.clone());
+    let mut app = custom_mock_app();
+    configure_mock_minter_with_mock_whitelist(&mut app);
+    let minter_addr = Addr::unchecked(MOCK_MINTER_ADDR_STR);
+    let airdrop_contract = Addr::unchecked(MOCK_AIRDROP_ADDR_STR);
+
+    let params = InstantiateParams {
+        addresses: vec![eth_addr_str.clone()],
+        funds_amount: WHITELIST_AMOUNT + INSTANTIATION_FEE,
+        expected_airdrop_contract_id: 4,
+        minter_address: minter_addr.clone(),
+        admin_account: Addr::unchecked(OWNER),
+        app: &mut app,
+        per_address_limit: 1,
+        claim_msg_plaintext: CONFIG_PLAINTEXT.to_string(),
+    };
+    instantiate_contract(params).unwrap();
+    query_minter_as_expected(&mut app, airdrop_contract.clone(), minter_addr);
+    let query_msg = QueryMsg::AirdropEligible {
+        eth_address: eth_addr_str,
+    };
+    let result: bool = app
+        .wrap()
+        .query_wasm_smart(airdrop_contract.clone(), &query_msg)
+        .unwrap();
+    assert!(result);
+
+    let query_msg = QueryMsg::AirdropEligible {
+        eth_address: "0x-some-fake-address".to_string(),
+    };
+    let result: bool = app
+        .wrap()
+        .query_wasm_smart(airdrop_contract, &query_msg)
+        .unwrap();
+    assert!(!result);
+}
+
+#[test]
 fn test_valid_eth_sig_claim() {
     let claim_plaintext = &get_msg_plaintext(STARGAZE_WALLET_01.to_string());
     let (_, eth_sig_str, _, eth_addr_str) = get_wallet_and_sig(claim_plaintext.clone());
