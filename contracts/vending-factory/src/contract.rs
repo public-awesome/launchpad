@@ -8,7 +8,7 @@ use cosmwasm_std::{
 use cw2::set_contract_version;
 use cw_utils::must_pay;
 use sg1::checked_fair_burn;
-use sg2::query::{Sg2QueryMsg, Sg721CodeIdsResponse};
+use sg2::query::{AllowedCodeIdResponse, AllowedCodeIdsResponse, Sg2QueryMsg};
 use sg_std::{Response, NATIVE_DENOM};
 
 use crate::error::ContractError;
@@ -164,7 +164,8 @@ pub fn sudo_update_params(
 pub fn query(deps: Deps, _env: Env, msg: Sg2QueryMsg) -> StdResult<Binary> {
     match msg {
         Sg2QueryMsg::Params {} => to_binary(&query_params(deps)?),
-        Sg2QueryMsg::AllowedSg721CodeIds {} => to_binary(&query_allowed_sg721_code_ids(deps)?),
+        Sg2QueryMsg::AllowedCodeIds {} => to_binary(&query_allowed_code_ids(deps)?),
+        Sg2QueryMsg::AllowedCodeId(code_id) => to_binary(&query_allowed_code_id(deps, code_id)?),
     }
 }
 
@@ -173,8 +174,15 @@ fn query_params(deps: Deps) -> StdResult<ParamsResponse> {
     Ok(ParamsResponse { params })
 }
 
-fn query_allowed_sg721_code_ids(deps: Deps) -> StdResult<Sg721CodeIdsResponse> {
+fn query_allowed_code_ids(deps: Deps) -> StdResult<AllowedCodeIdsResponse> {
     let params = SUDO_PARAMS.load(deps.storage)?;
     let code_ids = params.allowed_sg721_code_ids;
-    Ok(Sg721CodeIdsResponse { code_ids })
+    Ok(AllowedCodeIdsResponse { code_ids })
+}
+
+fn query_allowed_code_id(deps: Deps, code_id: u64) -> StdResult<AllowedCodeIdResponse> {
+    let params = SUDO_PARAMS.load(deps.storage)?;
+    let code_ids = params.allowed_sg721_code_ids;
+    let allowed = code_ids.contains(&code_id);
+    Ok(AllowedCodeIdResponse { allowed })
 }
