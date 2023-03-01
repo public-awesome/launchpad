@@ -13,8 +13,7 @@ use sg_std::{Response, NATIVE_DENOM};
 
 use crate::error::ContractError;
 use crate::msg::{
-    BaseMinterCreateMsg, BaseSudoMsg, BaseUpdateParamsMsg, ExecuteMsg, InstantiateMsg,
-    ParamsResponse, SudoMsg,
+    BaseMinterCreateMsg, BaseUpdateParamsMsg, ExecuteMsg, InstantiateMsg, ParamsResponse, SudoMsg,
 };
 use crate::state::SUDO_PARAMS;
 
@@ -89,7 +88,7 @@ pub fn must_be_allowed_code_id(deps: Deps, code_id: u64) -> Result<(), ContractE
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn sudo(deps: DepsMut, env: Env, msg: BaseSudoMsg) -> Result<Response, ContractError> {
+pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> Result<Response, ContractError> {
     match msg {
         SudoMsg::UpdateParams(params_msg) => sudo_update_params(deps, env, *params_msg),
     }
@@ -102,6 +101,7 @@ pub fn sudo_update_params(
     param_msg: BaseUpdateParamsMsg,
 ) -> Result<Response, ContractError> {
     let mut params = SUDO_PARAMS.load(deps.storage)?;
+    dbg!(params.clone());
 
     update_params(&mut params, param_msg)?;
 

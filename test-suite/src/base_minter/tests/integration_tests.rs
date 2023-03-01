@@ -4,10 +4,12 @@ use crate::common_setup::setup_minter::common::constants::MIN_MINT_PRICE;
 use crate::common_setup::templates::{
     base_minter_with_sg721, base_minter_with_sg721nt, base_minter_with_specified_sg721,
 };
+use base_factory::msg::{BaseUpdateParamsMsg, SudoMsg};
 use base_minter::msg::{ConfigResponse, ExecuteMsg};
 use cosmwasm_std::{coin, coins, Addr, Timestamp};
 use cw721::{Cw721ExecuteMsg, Cw721QueryMsg, OwnerOfResponse};
 use cw_multi_test::Executor;
+use sg2::query::{AllowedCodeIdsResponse, Sg2QueryMsg};
 use sg4::QueryMsg;
 use sg721_base::msg::{CollectionInfoResponse, QueryMsg as Sg721QueryMsg};
 use sg_std::NATIVE_DENOM;
@@ -23,11 +25,12 @@ fn init() {
 fn update_code_id() {
     let sg721_code_id = 10u64;
     let bmt = base_minter_with_specified_sg721(1, sg721_code_id);
-
-    let res = bmt.collection_response_vec[0].minter.clone();
+    let (mut router, _, _) = (bmt.router, bmt.accts.creator, bmt.accts.buyer);
+    let factory = bmt.collection_response_vec[0].factory.clone().unwrap();
 
     // sg721 code id 10, allowed code id 3
     // fails when sg721 code id not allowed
+    let res = bmt.collection_response_vec[0].minter.clone();
     assert!(res.is_none());
 }
 

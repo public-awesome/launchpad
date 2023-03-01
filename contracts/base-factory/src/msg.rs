@@ -18,10 +18,9 @@ pub type ExecuteMsg = Sg2ExecuteMsg<Extension>;
 pub type BaseUpdateParamsMsg = UpdateMinterParamsMsg<Extension>;
 
 #[cw_serde]
-pub enum SudoMsg<T> {
-    UpdateParams(Box<T>),
+pub enum SudoMsg {
+    UpdateParams(Box<BaseUpdateParamsMsg>),
 }
-pub type BaseSudoMsg = SudoMsg<BaseUpdateParamsMsg>;
 
 #[cw_serde]
 pub struct ParamsResponse {
