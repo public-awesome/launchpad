@@ -101,7 +101,6 @@ pub fn sudo_update_params(
     param_msg: BaseUpdateParamsMsg,
 ) -> Result<Response, ContractError> {
     let mut params = SUDO_PARAMS.load(deps.storage)?;
-    dbg!(params.clone());
 
     update_params(&mut params, param_msg)?;
 
