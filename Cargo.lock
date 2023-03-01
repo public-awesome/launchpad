@@ -4104,6 +4104,7 @@ dependencies = [
  "rand_core 0.6.4",
  "rand_xoshiro",
  "schemars",
+ "semver",
  "serde",
  "sg-std 0.24.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg-whitelist",
