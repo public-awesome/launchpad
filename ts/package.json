@@ -16,7 +16,7 @@
     "@cosmjs/proto-signing": "^0.29.5",
     "@cosmjs/stargate": "^0.29.5",
     "@cosmjs/tendermint-rpc": "^0.29.5",
-    "@cosmwasm/ts-codegen": "^0.24.0",
+    "@cosmwasm/ts-codegen": "^0.25.2",
     "cosmjs-types": "^0.6.1",
     "cosmwasm": "^1.1.1",
     "ts-node": "^10.9.1",
