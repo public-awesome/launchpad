@@ -112,7 +112,7 @@ fn test_valid_eth_sig_claim() {
     let params = InstantiateParams {
         addresses: vec![eth_addr_str.clone()],
         funds_amount: WHITELIST_AMOUNT + INSTANTIATION_FEE,
-        expected_airdrop_contract_id: 5,
+        expected_airdrop_contract_id: 4,
         minter_address: minter_addr.clone(),
         admin_account: Addr::unchecked(OWNER),
         app: &mut app,
@@ -161,7 +161,7 @@ fn test_invalid_eth_sig_claim() {
     let params = InstantiateParams {
         addresses: vec![eth_addr_str.clone()],
         funds_amount: WHITELIST_AMOUNT + INSTANTIATION_FEE,
-        expected_airdrop_contract_id: 5,
+        expected_airdrop_contract_id: 4,
         minter_address: minter_addr.clone(),
         admin_account: Addr::unchecked(OWNER),
         app: &mut app,
@@ -197,7 +197,7 @@ fn test_can_not_claim_twice() {
     let params = InstantiateParams {
         addresses: vec![eth_addr_str.clone()],
         funds_amount: WHITELIST_AMOUNT + INSTANTIATION_FEE,
-        expected_airdrop_contract_id: 5,
+        expected_airdrop_contract_id: 4,
         minter_address: minter_addr.clone(),
         admin_account: Addr::unchecked(OWNER),
         app: &mut app,
@@ -258,7 +258,7 @@ fn test_claim_one_valid_airdrop() {
     let params = InstantiateParams {
         addresses: vec![eth_addr_str.clone()],
         funds_amount: WHITELIST_AMOUNT + INSTANTIATION_FEE,
-        expected_airdrop_contract_id: 5,
+        expected_airdrop_contract_id: 4,
         minter_address: minter_addr.clone(),
         admin_account: Addr::unchecked(OWNER),
         app: &mut app,
@@ -308,7 +308,7 @@ fn test_claim_twice_receive_funds_once() {
     let params = InstantiateParams {
         addresses: vec![eth_addr_str.clone()],
         funds_amount: WHITELIST_AMOUNT + INSTANTIATION_FEE,
-        expected_airdrop_contract_id: 5,
+        expected_airdrop_contract_id: 4,
         minter_address: minter_addr.clone(),
         admin_account: Addr::unchecked(OWNER),
         app: &mut app,
@@ -376,7 +376,7 @@ fn test_ineligible_does_not_receive_funds() {
     let params = InstantiateParams {
         addresses: vec![eth_addr_str],
         funds_amount: WHITELIST_AMOUNT + INSTANTIATION_FEE,
-        expected_airdrop_contract_id: 5,
+        expected_airdrop_contract_id: 4,
         minter_address: minter_addr.clone(),
         admin_account: Addr::unchecked(OWNER),
         app: &mut app,
@@ -433,7 +433,7 @@ fn test_one_eth_claim_two_stargaze_addresses_invalid() {
     let params = InstantiateParams {
         addresses: vec![eth_addr_str_1.clone()],
         funds_amount: WHITELIST_AMOUNT + INSTANTIATION_FEE,
-        expected_airdrop_contract_id: 5,
+        expected_airdrop_contract_id: 4,
         minter_address: minter_addr,
         admin_account: Addr::unchecked(OWNER),
         app: &mut app,
@@ -505,7 +505,7 @@ fn test_two_claims_allowed_success() {
     let params = InstantiateParams {
         addresses: vec![eth_addr_str.clone()],
         funds_amount: WHITELIST_AMOUNT * 2 + INSTANTIATION_FEE,
-        expected_airdrop_contract_id: 5,
+        expected_airdrop_contract_id: 4,
         minter_address: minter_addr,
         admin_account: Addr::unchecked(OWNER),
         app: &mut app,

@@ -28,7 +28,7 @@ fn test_instantiate_with_addresses() {
     let params = InstantiateParams {
         addresses,
         funds_amount: WHITELIST_AMOUNT + INSTANTIATION_FEE,
-        expected_airdrop_contract_id: 5,
+        expected_airdrop_contract_id: 4,
         minter_address: minter_addr,
         admin_account: Addr::unchecked(OWNER),
         app: &mut app,
@@ -71,7 +71,7 @@ fn test_whitelist_immutable_address_limit() {
     let params = InstantiateParams {
         addresses,
         funds_amount: WHITELIST_AMOUNT + INSTANTIATION_FEE,
-        expected_airdrop_contract_id: 5,
+        expected_airdrop_contract_id: 4,
         minter_address: minter_addr,
         admin_account: Addr::unchecked(OWNER),
         app: &mut app,
@@ -101,7 +101,7 @@ fn test_whitelist_immutable_address_count() {
     let params = InstantiateParams {
         addresses,
         funds_amount: WHITELIST_AMOUNT + INSTANTIATION_FEE,
-        expected_airdrop_contract_id: 5,
+        expected_airdrop_contract_id: 4,
         minter_address: minter_addr,
         admin_account: Addr::unchecked(OWNER),
         app: &mut app,
@@ -131,7 +131,7 @@ fn test_whitelist_immutable_address_includes() {
     let params = InstantiateParams {
         addresses,
         funds_amount: WHITELIST_AMOUNT + INSTANTIATION_FEE,
-        expected_airdrop_contract_id: 5,
+        expected_airdrop_contract_id: 4,
         minter_address: minter_addr,
         admin_account: Addr::unchecked(OWNER),
         app: &mut app,
@@ -166,7 +166,7 @@ fn test_whitelist_immutable_address_config() {
     let params = InstantiateParams {
         addresses,
         funds_amount: WHITELIST_AMOUNT + INSTANTIATION_FEE,
-        expected_airdrop_contract_id: 5,
+        expected_airdrop_contract_id: 4,
         minter_address: minter_addr,
         admin_account: Addr::unchecked(OWNER),
         app: &mut app,
