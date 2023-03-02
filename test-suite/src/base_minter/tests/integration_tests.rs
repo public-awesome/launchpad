@@ -27,17 +27,16 @@ fn init() {
 
 #[test]
 fn update_code_id() {
-    let sg721_code_id = 6u64;
+    let sg721_code_id = 7u64;
     let bmt = base_minter_with_specified_sg721(1, sg721_code_id);
     let (mut router, creator, _) = (bmt.router, bmt.accts.creator, bmt.accts.buyer);
     let factory = bmt.collection_response_vec[0].factory.clone().unwrap();
 
-    // sg721 code id 6, allowed code id 3
-    // fails when sg721 code id not allowed
+    // sg721 code id not in allowed code ids
     let res = bmt.collection_response_vec[0].minter.clone();
     assert!(res.is_none());
 
-    // add code id 6 to allowed code ids
+    // add sg721_code_id to allowed code ids
     let update_msg = BaseUpdateParamsMsg {
         add_sg721_code_ids: Some(vec![sg721_code_id]),
         rm_sg721_code_ids: None,
@@ -59,12 +58,12 @@ fn update_code_id() {
         .unwrap();
     assert!(res.code_ids.contains(&sg721_code_id));
 
-    // store sg721_base 4-6 code ids
-    for _ in 0..3 {
+    // store sg721_base 4-7 code ids
+    for _ in 0..(sg721_code_id - 3) {
         router.store_code(contract_sg721_base());
     }
 
-    // create minter with sg721 code id 6
+    // create minter with sg721_code_id
     let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
     let mut collection_params = mock_collection_params_1(Some(start_time));
     collection_params.code_id = sg721_code_id;
