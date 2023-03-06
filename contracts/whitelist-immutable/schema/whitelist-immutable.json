@@ -1,6 +1,6 @@
 {
   "contract_name": "whitelist-immutable",
-  "contract_version": "0.24.0",
+  "contract_version": "0.24.1",
   "idl_version": "1.0.0",
   "instantiate": {
     "$schema": "http://json-schema.org/draft-07/schema#",
