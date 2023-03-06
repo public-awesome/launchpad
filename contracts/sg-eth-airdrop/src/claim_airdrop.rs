@@ -150,7 +150,6 @@ mod validation {
         eth_address: String,
     ) -> StdResult<bool> {
         let plaintext_msg = compute_plaintext_msg(config, &eth_address);
-        println!("plaintext msg is {}", plaintext_msg);
         match hex::decode(eth_sig.clone()) {
             Ok(eth_sig_hex) => {
                 verify_ethereum_text(deps.as_ref(), &plaintext_msg, &eth_sig_hex, &eth_address)
