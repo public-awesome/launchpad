@@ -287,7 +287,7 @@ where
         let token = TokenInfo {
             owner: deps.api.addr_validate(&msg.owner)?,
             approvals: vec![],
-            token_uri: msg.token_uri,
+            token_uri: msg.token_uri.clone(),
             extension: msg.extension,
         };
         self.parent
@@ -303,7 +303,8 @@ where
             .add_attribute("action", "mint")
             .add_attribute("minter", info.sender)
             .add_attribute("owner", msg.owner)
-            .add_attribute("token_id", msg.token_id))
+            .add_attribute("token_id", msg.token_id)
+            .add_attribute("token_uri", msg.token_uri.unwrap_or_default()))
     }
 
     pub fn query(&self, deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
