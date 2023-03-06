@@ -9,7 +9,7 @@ use crate::sg_eth_airdrop::setup::collection_whitelist_helpers::{
     send_funds_to_address, update_admin_for_whitelist,
 };
 use crate::sg_eth_airdrop::setup::execute_msg::instantiate_contract;
-use crate::sg_eth_airdrop::setup::setup_signatures::{get_msg_plaintext, get_wallet_and_sig};
+use crate::sg_eth_airdrop::setup::setup_signatures::get_wallet_and_sig;
 use crate::sg_eth_airdrop::setup::test_msgs::InstantiateParams;
 use cosmwasm_std::Addr;
 use sg_eth_airdrop::msg::QueryMsg;
@@ -24,8 +24,7 @@ fn test_set_minter_contract_success() {
     let (mut app, creator) = (vt.router, vt.accts.creator);
     let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
 
-    let claim_plaintext = &get_msg_plaintext(STARGAZE_WALLET_01.to_string());
-    let (_, _, _, eth_addr_str) = get_wallet_and_sig(claim_plaintext.clone());
+    let (_, _, _, eth_addr_str) = get_wallet_and_sig();
 
     let contract_admin = Addr::unchecked(creator);
     let params = InstantiateParams {
@@ -56,8 +55,7 @@ fn test_claim_added_to_minter_whitelist() {
     let whitelist_addr =
         configure_collection_whitelist(&mut app, creator.clone(), buyer, minter_addr.clone());
     setup_block_time(&mut app, GENESIS_MINT_START_TIME, None);
-    let claim_plaintext = &get_msg_plaintext(STARGAZE_WALLET_01.to_string());
-    let (_, eth_sig_str, _, eth_addr_str) = get_wallet_and_sig(claim_plaintext.clone());
+    let (_, eth_sig_str, _, eth_addr_str) = get_wallet_and_sig();
 
     let airdrop_contract = Addr::unchecked(AIRDROP_ADDR_STR);
     let params = InstantiateParams {

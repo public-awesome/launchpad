@@ -19,13 +19,7 @@ pub fn claim_airdrop(
     eth_sig: String,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
-    validate_claim(
-        &deps,
-        info.clone(),
-        eth_address.clone(),
-        eth_sig,
-        config.clone(),
-    )?;
+    validate_claim(&deps, eth_address.clone(), eth_sig, config.clone())?;
     let res = claim_and_whitelist_add(&deps, info, config.airdrop_amount)?;
     increment_local_mint_count_for_address(deps, eth_address)?;
 
@@ -92,23 +86,18 @@ mod validation {
         state::Config,
     };
 
-    pub fn compute_plaintext_msg(config: &Config, info: MessageInfo) -> String {
-        str::replace(
-            &config.claim_msg_plaintext,
-            "{wallet}",
-            info.sender.as_ref(),
-        )
+    pub fn compute_plaintext_msg(config: &Config, eth_address: &str) -> String {
+        str::replace(&config.claim_msg_plaintext, "{wallet}", eth_address)
     }
 
     pub fn validate_claim(
         deps: &DepsMut,
-        info: MessageInfo,
         eth_address: String,
         eth_sig: String,
         config: Config,
     ) -> Result<(), ContractError> {
         validate_is_eligible(deps, eth_address.clone())?;
-        validate_eth_sig(deps, info, eth_address.clone(), eth_sig, config)?;
+        validate_eth_sig(deps, eth_address.clone(), eth_sig, config)?;
         validate_mints_remaining(deps, &eth_address)?;
         Ok(())
     }
@@ -125,13 +114,11 @@ mod validation {
 
     fn validate_eth_sig(
         deps: &DepsMut,
-        info: MessageInfo,
         eth_address: String,
         eth_sig: String,
         config: Config,
     ) -> Result<(), ContractError> {
-        let valid_eth_sig =
-            validate_ethereum_text(deps, info, &config, eth_sig, eth_address.clone())?;
+        let valid_eth_sig = validate_ethereum_text(deps, &config, eth_sig, eth_address.clone())?;
         match valid_eth_sig {
             true => Ok(()),
             false => Err(ContractError::AddressNotEligible {
@@ -158,12 +145,12 @@ mod validation {
 
     pub fn validate_ethereum_text(
         deps: &DepsMut,
-        info: MessageInfo,
         config: &Config,
         eth_sig: String,
         eth_address: String,
     ) -> StdResult<bool> {
-        let plaintext_msg = compute_plaintext_msg(config, info);
+        let plaintext_msg = compute_plaintext_msg(config, &eth_address);
+        println!("plaintext msg is {}", plaintext_msg);
         match hex::decode(eth_sig.clone()) {
             Ok(eth_sig_hex) => {
                 verify_ethereum_text(deps.as_ref(), &plaintext_msg, &eth_sig_hex, &eth_address)
