@@ -158,7 +158,7 @@ pub fn execute_mint_sender(
     let mint_msg = Sg721ExecuteMsg::<Extension, Empty>::Mint(MintMsg::<Extension> {
         token_id: increment_token_index(deps.storage)?.to_string(),
         owner: info.sender.to_string(),
-        token_uri: Some(token_uri),
+        token_uri: Some(token_uri.clone()),
         extension: None,
     });
     let msg = CosmosMsg::Wasm(WasmMsg::Execute {
@@ -171,6 +171,7 @@ pub fn execute_mint_sender(
     Ok(res
         .add_attribute("action", "mint")
         .add_attribute("sender", info.sender)
+        .add_attribute("token-uri", token_uri)
         .add_attribute("network_fee", network_fee.to_string()))
 }
 
