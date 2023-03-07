@@ -171,7 +171,7 @@ pub fn execute_mint_sender(
     Ok(res
         .add_attribute("action", "mint")
         .add_attribute("sender", info.sender)
-        .add_attribute("token-uri", token_uri)
+        .add_attribute("token_uri", token_uri)
         .add_attribute("network_fee", network_fee.to_string()))
 }
 
