@@ -71,6 +71,45 @@ pub fn setup_minter_contract(setup_params: MinterSetupParams) -> MinterCollectio
     build_collection_response(res, factory_addr)
 }
 
+pub fn setup_minter_contract_zero_mint_price(
+    setup_params: MinterSetupParams,
+) -> MinterCollectionResponse {
+    let minter_code_id = setup_params.minter_code_id;
+    let router = setup_params.router;
+    let factory_code_id = setup_params.factory_code_id;
+    let sg721_code_id = setup_params.sg721_code_id;
+    let minter_admin = setup_params.minter_admin;
+    let num_tokens = setup_params.num_tokens;
+    let splits_addr = setup_params.splits_addr;
+    let collection_params = setup_params.collection_params;
+    let start_time = setup_params.start_time;
+    let init_msg = setup_params.init_msg;
+
+    let mut params = mock_params();
+    params.code_id = minter_code_id;
+    params.min_mint_price = coin(0, NATIVE_DENOM);
+
+    let factory_addr = router
+        .instantiate_contract(
+            factory_code_id,
+            minter_admin.clone(),
+            &vending_factory::msg::InstantiateMsg { params },
+            &[],
+            "factory",
+            None,
+        )
+        .unwrap();
+    let mut msg = mock_create_minter(splits_addr, collection_params, start_time);
+    msg.init_msg = build_init_msg(init_msg, msg.clone(), num_tokens);
+    msg.collection_params.code_id = sg721_code_id;
+    msg.collection_params.info.creator = minter_admin.to_string();
+    let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
+    let msg = Sg2ExecuteMsg::CreateMinter(msg);
+
+    let res = router.execute_contract(minter_admin, factory_addr.clone(), &msg, &creation_fee);
+    build_collection_response(res, factory_addr)
+}
+
 pub fn vending_minter_code_ids(router: &mut StargazeApp) -> CodeIds {
     let minter_code_id = router.store_code(contract_vending_minter());
     println!("minter_code_id: {}", minter_code_id);
@@ -109,6 +148,33 @@ pub fn configure_minter(
             init_msg: minter_instantiate_params_vec[index].init_msg.clone(),
         };
         let minter_collection_res = setup_minter_contract(setup_params);
+        minter_collection_info.push(minter_collection_res);
+    }
+    minter_collection_info
+}
+
+pub fn configure_minter_zero_mint_price(
+    app: &mut StargazeApp,
+    minter_admin: Addr,
+    collection_params_vec: Vec<CollectionParams>,
+    minter_instantiate_params_vec: Vec<MinterInstantiateParams>,
+    code_ids: CodeIds,
+) -> Vec<MinterCollectionResponse> {
+    let mut minter_collection_info: Vec<MinterCollectionResponse> = vec![];
+    for (index, collection_param) in collection_params_vec.iter().enumerate() {
+        let setup_params: MinterSetupParams = MinterSetupParams {
+            router: app,
+            minter_admin: minter_admin.clone(),
+            num_tokens: minter_instantiate_params_vec[index].num_tokens,
+            collection_params: collection_param.to_owned(),
+            splits_addr: minter_instantiate_params_vec[index].splits_addr.clone(),
+            minter_code_id: code_ids.minter_code_id,
+            factory_code_id: code_ids.factory_code_id,
+            sg721_code_id: code_ids.sg721_code_id,
+            start_time: minter_instantiate_params_vec[index].start_time,
+            init_msg: minter_instantiate_params_vec[index].init_msg.clone(),
+        };
+        let minter_collection_res = setup_minter_contract_zero_mint_price(setup_params);
         minter_collection_info.push(minter_collection_res);
     }
     minter_collection_info

@@ -18,6 +18,7 @@ use super::msg::VendingAccounts;
 use super::setup_minter::base_minter::setup::base_minter_sg721_collection_code_ids;
 use super::setup_minter::common::constants::MIN_MINT_PRICE;
 use super::setup_minter::common::minter_params::minter_params_all;
+use super::setup_minter::vending_minter::setup::configure_minter_zero_mint_price;
 
 pub fn vending_minter_template(num_tokens: u32) -> VendingTemplateResponse<VendingAccounts> {
     let mut app = custom_mock_app();
@@ -33,6 +34,38 @@ pub fn vending_minter_template(num_tokens: u32) -> VendingTemplateResponse<Vendi
         vec![minter_params],
         code_ids,
     );
+    VendingTemplateResponse {
+        router: app,
+        collection_response_vec: minter_collection_response,
+        accts: VendingAccounts { creator, buyer },
+    }
+}
+
+pub fn vending_minter_zero_mint_price(num_tokens: u32) -> VendingTemplateResponse<VendingAccounts> {
+    let mut app = custom_mock_app();
+    let (creator, buyer) = setup_accounts(&mut app);
+    let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
+    let collection_params = mock_collection_params_1(Some(start_time));
+    let init_msg = vending_factory::msg::VendingMinterInitMsgExtension {
+        base_token_uri: "ipfs://aldkfjads".to_string(),
+        payment_address: None,
+        start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
+        num_tokens,
+        mint_price: coin(0u128, NATIVE_DENOM),
+        per_address_limit: 1,
+        whitelist: Some("invalid address".to_string()),
+    };
+
+    let minter_params = minter_params_all(num_tokens, None, None, Some(init_msg));
+    let code_ids = vending_minter_code_ids(&mut app);
+    let minter_collection_response: Vec<MinterCollectionResponse> =
+        configure_minter_zero_mint_price(
+            &mut app,
+            creator.clone(),
+            vec![collection_params],
+            vec![minter_params],
+            code_ids,
+        );
     VendingTemplateResponse {
         router: app,
         collection_response_vec: minter_collection_response,
