@@ -169,6 +169,42 @@ fn update_end_time() {
 }
 
 #[test]
+fn update_end_time_after() {
+    let mut deps = mock_dependencies();
+    setup_contract(deps.as_mut());
+
+    let msg = ExecuteMsg::UpdateEndTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 100));
+    let info = mock_info(ADMIN, &[]);
+    let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
+    assert_eq!(res.attributes.len(), 3);
+
+    let mut env = mock_env();
+    env.block.time = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 1);
+
+    // after time started should not let increase it
+    let msg = ExecuteMsg::UpdateEndTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 500));
+    let info = mock_info(ADMIN, &[]);
+    assert_eq!(
+        execute(deps.as_mut(), env.clone(), info, msg)
+            .unwrap_err()
+            .to_string(),
+        "AlreadyStarted"
+    );
+
+    // after time started should let decrease the end time
+    let msg = ExecuteMsg::UpdateEndTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 50));
+    let info = mock_info(ADMIN, &[]);
+
+    assert!(execute(deps.as_mut(), env.clone(), info, msg).is_ok());
+
+    // after time started should not let decrease before start_time
+    let msg = ExecuteMsg::UpdateEndTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME - 50));
+    let info = mock_info(ADMIN, &[]);
+
+    assert!(execute(deps.as_mut(), env, info, msg).is_err());
+}
+
+#[test]
 fn update_members() {
     let mut deps = mock_dependencies();
     setup_contract(deps.as_mut());
