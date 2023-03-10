@@ -219,8 +219,9 @@ pub fn execute_update_end_time(
     let mut config = CONFIG.load(deps.storage)?;
     can_execute(&deps, info.sender.clone())?;
 
-    // don't allow updating end time if whitelist is active
-    if env.block.time >= config.start_time {
+    // if whitelist already started don't allow updating end_time unless
+    // it is to reduce it
+    if env.block.time >= config.start_time && end_time > config.end_time {
         return Err(ContractError::AlreadyStarted {});
     }
 

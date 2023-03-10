@@ -195,7 +195,13 @@ fn update_end_time_after() {
     let msg = ExecuteMsg::UpdateEndTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 50));
     let info = mock_info(ADMIN, &[]);
 
-    assert!(execute(deps.as_mut(), env, info, msg).is_ok());
+    assert!(execute(deps.as_mut(), env.clone(), info, msg).is_ok());
+
+    // after time started should not let decrease before start_time
+    let msg = ExecuteMsg::UpdateEndTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME - 50));
+    let info = mock_info(ADMIN, &[]);
+
+    assert!(execute(deps.as_mut(), env, info, msg).is_err());
 }
 
 #[test]
