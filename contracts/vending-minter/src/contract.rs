@@ -656,11 +656,14 @@ fn _execute_mint(
         let amount = mint_price.amount - network_fee;
         let payment_address = config.extension.payment_address;
         let seller = config.extension.admin;
-        let msg = BankMsg::Send {
-            to_address: payment_address.unwrap_or(seller).to_string(),
-            amount: vec![coin(amount.u128(), mint_price.denom)],
-        };
-        res = res.add_message(msg);
+        // Sending 0 coins fails, so only send if amount is non-zero
+        if !amount.is_zero() {
+            let msg = BankMsg::Send {
+                to_address: payment_address.unwrap_or(seller).to_string(),
+                amount: vec![coin(amount.u128(), mint_price.denom)],
+            };
+            res = res.add_message(msg);
+        }
         amount
     } else {
         Uint128::zero()
