@@ -58,6 +58,6 @@ impl MinterContract {
     pub fn config(&self, querier: &QuerierWrapper) -> StdResult<ConfigResponse> {
         let res: ConfigResponse =
             querier.query_wasm_smart(self.addr(), &QueryMsg::Config {})?;
-        Ok(res_test)
+        Ok(res)
     }
 }
