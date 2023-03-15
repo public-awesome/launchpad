@@ -7,8 +7,4 @@ for d in contracts/*; do
   fi
 done
 
-<<<<<<< HEAD
-cd ts && yarn codegen
-=======
 cd ts && yarn install && yarn codegen
->>>>>>> main
