@@ -12,7 +12,7 @@ use cosmwasm_std::{coin, coins, Addr, Timestamp};
 use cw721::{Cw721ExecuteMsg, Cw721QueryMsg, OwnerOfResponse};
 use cw_multi_test::Executor;
 use sg2::msg::Sg2ExecuteMsg;
-use sg2::query::{AllowedCodeIdsResponse, Sg2QueryMsg};
+use sg2::query::{AllowedCollectionCodeIdsResponse, Sg2QueryMsg};
 use sg2::tests::mock_collection_params_1;
 use sg4::QueryMsg;
 use sg721_base::msg::{CollectionInfoResponse, QueryMsg as Sg721QueryMsg};
@@ -51,8 +51,8 @@ fn update_code_id() {
     let res = router.wasm_sudo(factory.clone(), &sudo_msg);
     assert!(res.is_ok());
 
-    let msg = Sg2QueryMsg::AllowedCodeIds {};
-    let res: AllowedCodeIdsResponse = router
+    let msg = Sg2QueryMsg::AllowedCollectionCodeIds {};
+    let res: AllowedCollectionCodeIdsResponse = router
         .wrap()
         .query_wasm_smart(factory.clone(), &msg)
         .unwrap();

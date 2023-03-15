@@ -8,7 +8,7 @@ use cosmwasm_std::{coins, Timestamp};
 use cw_multi_test::Executor;
 use sg2::{
     msg::Sg2ExecuteMsg,
-    query::{AllowedCodeIdsResponse, Sg2QueryMsg},
+    query::{AllowedCollectionCodeIdsResponse, Sg2QueryMsg},
     tests::mock_collection_params_1,
 };
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
@@ -57,8 +57,8 @@ fn update_code_id() {
     let res = router.wasm_sudo(factory.clone(), &sudo_msg);
     assert!(res.is_ok());
 
-    let msg = Sg2QueryMsg::AllowedCodeIds {};
-    let res: AllowedCodeIdsResponse = router
+    let msg = Sg2QueryMsg::AllowedCollectionCodeIds {};
+    let res: AllowedCollectionCodeIdsResponse = router
         .wrap()
         .query_wasm_smart(factory.clone(), &msg)
         .unwrap();

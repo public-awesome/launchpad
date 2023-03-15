@@ -7,13 +7,14 @@ use cw2::set_contract_version;
 use cw_utils::must_pay;
 use sg1::checked_fair_burn;
 use sg2::msg::UpdateMinterParamsMsg;
-use sg2::query::{AllowedCodeIdResponse, AllowedCodeIdsResponse, Sg2QueryMsg};
+use sg2::query::{AllowedCollectionCodeIdResponse, AllowedCollectionCodeIdsResponse, Sg2QueryMsg};
 use sg2::MinterParams;
 use sg_std::{Response, NATIVE_DENOM};
 
 use crate::error::ContractError;
 use crate::msg::{
-    BaseMinterCreateMsg, BaseUpdateParamsMsg, ExecuteMsg, InstantiateMsg, ParamsResponse, SudoMsg,
+    BaseMinterCreateMsg, BaseSudoMsg, BaseUpdateParamsMsg, ExecuteMsg, InstantiateMsg,
+    ParamsResponse, SudoMsg,
 };
 use crate::state::SUDO_PARAMS;
 
@@ -55,7 +56,7 @@ pub fn execute_create_minter(
     msg: BaseMinterCreateMsg,
 ) -> Result<Response, ContractError> {
     must_pay(&info, NATIVE_DENOM)?;
-    must_be_allowed_code_id(deps.as_ref(), msg.collection_params.code_id)?;
+    must_be_allowed_collection(deps.as_ref(), msg.collection_params.code_id)?;
 
     let params = SUDO_PARAMS.load(deps.storage)?;
 
@@ -79,16 +80,16 @@ pub fn execute_create_minter(
         .add_message(msg))
 }
 
-pub fn must_be_allowed_code_id(deps: Deps, code_id: u64) -> Result<(), ContractError> {
-    let res = query_allowed_code_id(deps, code_id)?;
+pub fn must_be_allowed_collection(deps: Deps, code_id: u64) -> Result<(), ContractError> {
+    let res = query_allowed_collection_code_id(deps, code_id)?;
     if !res.allowed {
-        return Err(ContractError::NotAllowedCodeId { code_id });
+        return Err(ContractError::InvalidCollectionCodeId { code_id });
     }
     Ok(())
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> Result<Response, ContractError> {
+pub fn sudo(deps: DepsMut, env: Env, msg: BaseSudoMsg) -> Result<Response, ContractError> {
     match msg {
         SudoMsg::UpdateParams(params_msg) => sudo_update_params(deps, env, *params_msg),
     }
@@ -160,8 +161,12 @@ pub fn update_params<T, C>(
 pub fn query(deps: Deps, _env: Env, msg: Sg2QueryMsg) -> StdResult<Binary> {
     match msg {
         Sg2QueryMsg::Params {} => to_binary(&query_params(deps)?),
-        Sg2QueryMsg::AllowedCodeIds {} => to_binary(&query_allowed_code_ids(deps)?),
-        Sg2QueryMsg::AllowedCodeId(code_id) => to_binary(&query_allowed_code_id(deps, code_id)?),
+        Sg2QueryMsg::AllowedCollectionCodeIds {} => {
+            to_binary(&query_allowed_collection_code_ids(deps)?)
+        }
+        Sg2QueryMsg::AllowedCollectionCodeId(code_id) => {
+            to_binary(&query_allowed_collection_code_id(deps, code_id)?)
+        }
     }
 }
 
@@ -170,15 +175,18 @@ fn query_params(deps: Deps) -> StdResult<ParamsResponse> {
     Ok(ParamsResponse { params })
 }
 
-fn query_allowed_code_ids(deps: Deps) -> StdResult<AllowedCodeIdsResponse> {
+fn query_allowed_collection_code_ids(deps: Deps) -> StdResult<AllowedCollectionCodeIdsResponse> {
     let params = SUDO_PARAMS.load(deps.storage)?;
     let code_ids = params.allowed_sg721_code_ids;
-    Ok(AllowedCodeIdsResponse { code_ids })
+    Ok(AllowedCollectionCodeIdsResponse { code_ids })
 }
 
-fn query_allowed_code_id(deps: Deps, code_id: u64) -> StdResult<AllowedCodeIdResponse> {
+fn query_allowed_collection_code_id(
+    deps: Deps,
+    code_id: u64,
+) -> StdResult<AllowedCollectionCodeIdResponse> {
     let params = SUDO_PARAMS.load(deps.storage)?;
     let code_ids = params.allowed_sg721_code_ids;
     let allowed = code_ids.contains(&code_id);
-    Ok(AllowedCodeIdResponse { allowed })
+    Ok(AllowedCollectionCodeIdResponse { allowed })
 }

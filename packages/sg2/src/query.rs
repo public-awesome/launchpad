@@ -7,8 +7,8 @@ use crate::MinterParams;
 pub enum Sg2QueryMsg {
     /// Returns `ParamsResponse`
     Params {},
-    AllowedCodeIds {},
-    AllowedCodeId(CodeId),
+    AllowedCollectionCodeIds {},
+    AllowedCollectionCodeId(CodeId),
 }
 
 #[cw_serde]
@@ -17,11 +17,11 @@ pub struct ParamsResponse<T> {
 }
 
 #[cw_serde]
-pub struct AllowedCodeIdsResponse {
+pub struct AllowedCollectionCodeIdsResponse {
     pub code_ids: Vec<CodeId>,
 }
 
 #[cw_serde]
-pub struct AllowedCodeIdResponse {
+pub struct AllowedCollectionCodeIdResponse {
     pub allowed: bool,
 }
