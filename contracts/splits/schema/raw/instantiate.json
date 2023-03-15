@@ -1,0 +1,124 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "InstantiateMsg",
+  "type": "object",
+  "required": [
+    "group"
+  ],
+  "properties": {
+    "admin": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "group": {
+      "$ref": "#/definitions/Group"
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "Admin": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "address"
+          ],
+          "properties": {
+            "address": {
+              "type": "object",
+              "required": [
+                "addr"
+              ],
+              "properties": {
+                "addr": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "creator"
+          ],
+          "properties": {
+            "creator": {
+              "type": "object",
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "Binary": {
+      "description": "Binary is a wrapper around Vec<u8> to add base64 de/serialization with serde. It also adds some helper methods to help encode inline.\n\nThis is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>. See also <https://github.com/CosmWasm/cosmwasm/blob/main/docs/MESSAGE_TYPES.md>.",
+      "type": "string"
+    },
+    "ContractInstantiateMsg": {
+      "type": "object",
+      "required": [
+        "code_id",
+        "label",
+        "msg"
+      ],
+      "properties": {
+        "admin": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Admin"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "code_id": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "label": {
+          "type": "string"
+        },
+        "msg": {
+          "$ref": "#/definitions/Binary"
+        }
+      },
+      "additionalProperties": false
+    },
+    "Group": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "cw4_instantiate"
+          ],
+          "properties": {
+            "cw4_instantiate": {
+              "$ref": "#/definitions/ContractInstantiateMsg"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "cw4_address"
+          ],
+          "properties": {
+            "cw4_address": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    }
+  }
+}

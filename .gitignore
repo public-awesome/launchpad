@@ -11,6 +11,13 @@ target/
 .vscode/
 .idea/
 *.iml
+.env
+
+# User-gen
+metadata.csv
+
+# ENV
+.env
 
 # Auto-gen
 .cargo-ok

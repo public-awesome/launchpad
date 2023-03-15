@@ -43,3 +43,6 @@ schema:
 
 release:
 	sh scripts/release.sh $(VERSION)
+
+upload:
+	sh scripts/upload.sh
