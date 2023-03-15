@@ -1,16 +1,20 @@
 [package]
-name        = "sg2"
-authors     = ["Shane Vitarana <s@noreply.publicawesome.com>"]
+name = "sg2"
+authors = [
+    "Shane Vitarana <s@noreply.publicawesome.com>",
+    "John Y <j@noreply.publicawesome.com>",
+]
 description = "Definition and types for the SG2 interface"
-version     = { workspace = true }
-edition     = { workspace = true }
-homepage    = { workspace = true }
-repository  = { workspace = true }
-license     = { workspace = true }
+version = { workspace = true }
+edition = { workspace = true }
+homepage = { workspace = true }
+repository = { workspace = true }
+license = { workspace = true }
 
 [dependencies]
 cosmwasm-schema = { workspace = true }
 cosmwasm-std    = { workspace = true }
+cw-storage-plus = { workspace = true }
 cw-utils        = { workspace = true }
 schemars        = { workspace = true }
 serde           = { workspace = true }

@@ -1,5 +1,5 @@
+use crate::state::Extension;
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::Empty;
 use sg2::msg::{CreateMinterMsg, Sg2ExecuteMsg, UpdateMinterParamsMsg};
 
 use crate::state::BaseMinterParams;
@@ -8,8 +8,6 @@ use crate::state::BaseMinterParams;
 pub struct InstantiateMsg {
     pub params: BaseMinterParams,
 }
-
-pub type Extension = Option<Empty>;
 
 pub type BaseMinterCreateMsg = CreateMinterMsg<Extension>;
 

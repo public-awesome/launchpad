@@ -9,6 +9,7 @@ export interface InstantiateMsg {
   params: MinterParamsForParamsExtension;
 }
 export interface MinterParamsForParamsExtension {
+  allowed_sg721_code_ids: number[];
   code_id: number;
   creation_fee: Coin;
   extension: ParamsExtension;
@@ -30,4 +31,8 @@ export interface ParamsExtension {
 }
 export type Sg2QueryMsg = {
   params: {};
+} | {
+  allowed_collection_code_ids: {};
+} | {
+  allowed_collection_code_id: number;
 };

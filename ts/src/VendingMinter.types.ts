@@ -103,6 +103,7 @@ export interface VendingMinterInitMsgExtension {
   whitelist?: string | null;
 }
 export interface MinterParamsForParamsExtension {
+  allowed_sg721_code_ids: number[];
   code_id: number;
   creation_fee: Coin;
   extension: ParamsExtension;

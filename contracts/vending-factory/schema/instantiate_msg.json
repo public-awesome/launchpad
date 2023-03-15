@@ -31,6 +31,7 @@
       "description": "Common params for all minters used for storage",
       "type": "object",
       "required": [
+        "allowed_sg721_code_ids",
         "code_id",
         "creation_fee",
         "extension",
@@ -39,6 +40,14 @@
         "mint_fee_bps"
       ],
       "properties": {
+        "allowed_sg721_code_ids": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          }
+        },
         "code_id": {
           "description": "The minter code id",
           "type": "integer",

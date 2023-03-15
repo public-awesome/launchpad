@@ -17,11 +17,13 @@ pub struct CollectionParams {
     pub info: CollectionInfo<RoyaltyInfoResponse>,
 }
 
-/// Message for params so they can be updated invidiually by governance
+/// Message for params so they can be updated individually by governance
 #[cw_serde]
 pub struct UpdateMinterParamsMsg<T> {
     /// The minter code id
     pub code_id: Option<u64>,
+    pub add_sg721_code_ids: Option<Vec<u64>>,
+    pub rm_sg721_code_ids: Option<Vec<u64>>,
     pub creation_fee: Option<Coin>,
     pub min_mint_price: Option<Coin>,
     pub mint_fee_bps: Option<u64>,

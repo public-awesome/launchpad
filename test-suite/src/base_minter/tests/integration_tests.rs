@@ -1,14 +1,90 @@
+use crate::common_setup::contract_boxes::contract_sg721_base;
 use crate::common_setup::setup_accounts_and_block::{CREATION_FEE, INITIAL_BALANCE};
 use crate::common_setup::setup_minter::base_minter::mock_params::mock_params;
 use crate::common_setup::setup_minter::common::constants::MIN_MINT_PRICE;
-use crate::common_setup::templates::{base_minter_with_sg721, base_minter_with_sg721nt};
+use crate::common_setup::templates::{
+    base_minter_with_sg721, base_minter_with_sg721nt, base_minter_with_specified_sg721,
+};
+use base_factory::msg::{BaseMinterCreateMsg, BaseUpdateParamsMsg, SudoMsg};
+
 use base_minter::msg::{ConfigResponse, ExecuteMsg};
 use cosmwasm_std::{coin, coins, Addr, Timestamp};
 use cw721::{Cw721ExecuteMsg, Cw721QueryMsg, OwnerOfResponse};
 use cw_multi_test::Executor;
+use sg2::msg::Sg2ExecuteMsg;
+use sg2::query::{AllowedCollectionCodeIdsResponse, Sg2QueryMsg};
+use sg2::tests::mock_collection_params_1;
 use sg4::QueryMsg;
 use sg721_base::msg::{CollectionInfoResponse, QueryMsg as Sg721QueryMsg};
-use sg_std::NATIVE_DENOM;
+use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
+
+#[test]
+fn init() {
+    let bmt = base_minter_with_sg721nt(1);
+    bmt.collection_response_vec[0].minter.clone().unwrap();
+    bmt.collection_response_vec[0].collection.clone().unwrap();
+}
+
+#[test]
+fn update_code_id() {
+    let sg721_code_id = 7u64;
+    let bmt = base_minter_with_specified_sg721(1, sg721_code_id);
+    let (mut router, creator, _) = (bmt.router, bmt.accts.creator, bmt.accts.buyer);
+    let factory = bmt.collection_response_vec[0].factory.clone().unwrap();
+
+    // sg721 code id not in allowed code ids
+    let res = bmt.collection_response_vec[0].minter.clone();
+    assert!(res.is_none());
+
+    // add sg721_code_id to allowed code ids
+    let update_msg = BaseUpdateParamsMsg {
+        add_sg721_code_ids: Some(vec![sg721_code_id]),
+        rm_sg721_code_ids: None,
+        code_id: None,
+        creation_fee: None,
+        min_mint_price: None,
+        mint_fee_bps: None,
+        max_trading_offset_secs: None,
+        extension: None,
+    };
+    let sudo_msg = SudoMsg::UpdateParams(Box::new(update_msg));
+    let res = router.wasm_sudo(factory.clone(), &sudo_msg);
+    assert!(res.is_ok());
+
+    let msg = Sg2QueryMsg::AllowedCollectionCodeIds {};
+    let res: AllowedCollectionCodeIdsResponse = router
+        .wrap()
+        .query_wasm_smart(factory.clone(), &msg)
+        .unwrap();
+    assert!(res.code_ids.contains(&sg721_code_id));
+
+    // store sg721_base 4-7 code ids
+    for _ in 0..(sg721_code_id - 3) {
+        router.store_code(contract_sg721_base());
+    }
+
+    // create minter with sg721_code_id
+    let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
+    let mut collection_params = mock_collection_params_1(Some(start_time));
+    collection_params.code_id = sg721_code_id;
+
+    let mut msg = BaseMinterCreateMsg {
+        init_msg: None,
+        collection_params,
+    };
+    msg.collection_params.info.creator = creator.to_string();
+    let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
+    let msg = Sg2ExecuteMsg::CreateMinter(msg);
+    let res = router.execute_contract(creator, factory, &msg, &creation_fee);
+    assert!(res.is_ok());
+
+    // confirm new sg721 code id == sg721_code_id
+    let res = router
+        .wrap()
+        .query_wasm_contract_info("contract2".to_string())
+        .unwrap();
+    assert!(res.code_id == sg721_code_id);
+}
 
 #[test]
 fn check_mint() {

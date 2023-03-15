@@ -19,4 +19,7 @@ pub enum ContractError {
 
     #[error("InvalidDenom")]
     InvalidDenom {},
+
+    #[error("InvalidCollectionCodeId {code_id}")]
+    InvalidCollectionCodeId { code_id: u64 },
 }

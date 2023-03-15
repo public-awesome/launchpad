@@ -7,7 +7,7 @@ use cw2::set_contract_version;
 use cw_utils::must_pay;
 use sg1::checked_fair_burn;
 use sg2::msg::UpdateMinterParamsMsg;
-use sg2::query::Sg2QueryMsg;
+use sg2::query::{AllowedCollectionCodeIdResponse, AllowedCollectionCodeIdsResponse, Sg2QueryMsg};
 use sg2::MinterParams;
 use sg_std::{Response, NATIVE_DENOM};
 
@@ -56,6 +56,7 @@ pub fn execute_create_minter(
     msg: BaseMinterCreateMsg,
 ) -> Result<Response, ContractError> {
     must_pay(&info, NATIVE_DENOM)?;
+    must_be_allowed_collection(deps.as_ref(), msg.collection_params.code_id)?;
 
     let params = SUDO_PARAMS.load(deps.storage)?;
 
@@ -77,6 +78,14 @@ pub fn execute_create_minter(
     Ok(res
         .add_attribute("action", "create_minter")
         .add_message(msg))
+}
+
+pub fn must_be_allowed_collection(deps: Deps, code_id: u64) -> Result<(), ContractError> {
+    let res = query_allowed_collection_code_id(deps, code_id)?;
+    if !res.allowed {
+        return Err(ContractError::InvalidCollectionCodeId { code_id });
+    }
+    Ok(())
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -126,6 +135,19 @@ pub fn update_params<T, C>(
         params.min_mint_price = min_mint_price;
     }
 
+    // add new code ids, then rm code ids
+    if let Some(add_sg721_code_ids) = param_msg.add_sg721_code_ids {
+        for code_id in add_sg721_code_ids {
+            params.allowed_sg721_code_ids.push(code_id);
+        }
+    }
+    params.allowed_sg721_code_ids.dedup();
+    if let Some(rm_sg721_code_ids) = param_msg.rm_sg721_code_ids {
+        for code_id in rm_sg721_code_ids {
+            params.allowed_sg721_code_ids.retain(|&x| x != code_id);
+        }
+    }
+
     params.mint_fee_bps = param_msg.mint_fee_bps.unwrap_or(params.mint_fee_bps);
 
     params.max_trading_offset_secs = param_msg
@@ -139,10 +161,32 @@ pub fn update_params<T, C>(
 pub fn query(deps: Deps, _env: Env, msg: Sg2QueryMsg) -> StdResult<Binary> {
     match msg {
         Sg2QueryMsg::Params {} => to_binary(&query_params(deps)?),
+        Sg2QueryMsg::AllowedCollectionCodeIds {} => {
+            to_binary(&query_allowed_collection_code_ids(deps)?)
+        }
+        Sg2QueryMsg::AllowedCollectionCodeId(code_id) => {
+            to_binary(&query_allowed_collection_code_id(deps, code_id)?)
+        }
     }
 }
 
 fn query_params(deps: Deps) -> StdResult<ParamsResponse> {
     let params = SUDO_PARAMS.load(deps.storage)?;
     Ok(ParamsResponse { params })
+}
+
+fn query_allowed_collection_code_ids(deps: Deps) -> StdResult<AllowedCollectionCodeIdsResponse> {
+    let params = SUDO_PARAMS.load(deps.storage)?;
+    let code_ids = params.allowed_sg721_code_ids;
+    Ok(AllowedCollectionCodeIdsResponse { code_ids })
+}
+
+fn query_allowed_collection_code_id(
+    deps: Deps,
+    code_id: u64,
+) -> StdResult<AllowedCollectionCodeIdResponse> {
+    let params = SUDO_PARAMS.load(deps.storage)?;
+    let code_ids = params.allowed_sg721_code_ids;
+    let allowed = code_ids.contains(&code_id);
+    Ok(AllowedCollectionCodeIdResponse { allowed })
 }

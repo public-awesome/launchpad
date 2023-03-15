@@ -15,6 +15,33 @@
         }
       },
       "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "allowed_collection_code_ids"
+      ],
+      "properties": {
+        "allowed_collection_code_ids": {
+          "type": "object",
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "allowed_collection_code_id"
+      ],
+      "properties": {
+        "allowed_collection_code_id": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        }
+      },
+      "additionalProperties": false
     }
   ]
 }

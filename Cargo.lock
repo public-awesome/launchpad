@@ -3228,6 +3228,7 @@ version = "0.24.1"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
+ "cw-storage-plus 0.16.0",
  "cw-utils 0.16.0",
  "schemars",
  "serde",

@@ -2,8 +2,9 @@ use crate::error::ContractError;
 use crate::msg::{ConfigResponse, ExecuteMsg};
 use crate::state::{increment_token_index, Config, COLLECTION_ADDRESS, CONFIG, STATUS};
 
-use base_factory::msg::{BaseMinterCreateMsg, Extension, ParamsResponse};
+use base_factory::msg::{BaseMinterCreateMsg, ParamsResponse};
 
+use base_factory::state::Extension;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{

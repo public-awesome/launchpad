@@ -39,6 +39,7 @@ export interface Empty {
   [k: string]: unknown;
 }
 export interface MinterParamsForNullable_Empty {
+  allowed_sg721_code_ids: number[];
   code_id: number;
   creation_fee: Coin;
   extension?: Empty | null;
