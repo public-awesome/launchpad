@@ -3325,7 +3325,7 @@ dependencies = [
  "cw721-base",
  "schemars",
  "serde",
- "sg-std 0.22.9 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg-std 0.24.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg721",
  "sg721-base",
  "thiserror",
