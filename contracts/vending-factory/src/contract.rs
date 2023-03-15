@@ -1,4 +1,7 @@
-use base_factory::contract::{must_be_allowed_collection, update_params};
+use base_factory::contract::{
+    must_be_allowed_collection, query_allowed_collection_code_id,
+    query_allowed_collection_code_ids, query_params, update_params,
+};
 use base_factory::ContractError as BaseContractError;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
@@ -172,25 +175,4 @@ pub fn query(deps: Deps, _env: Env, msg: Sg2QueryMsg) -> StdResult<Binary> {
             to_binary(&query_allowed_collection_code_id(deps, code_id)?)
         }
     }
-}
-
-fn query_params(deps: Deps) -> StdResult<ParamsResponse> {
-    let params = SUDO_PARAMS.load(deps.storage)?;
-    Ok(ParamsResponse { params })
-}
-
-fn query_allowed_collection_code_ids(deps: Deps) -> StdResult<AllowedCollectionCodeIdsResponse> {
-    let params = SUDO_PARAMS.load(deps.storage)?;
-    let code_ids = params.allowed_sg721_code_ids;
-    Ok(AllowedCollectionCodeIdsResponse { code_ids })
-}
-
-fn query_allowed_collection_code_id(
-    deps: Deps,
-    code_id: u64,
-) -> StdResult<AllowedCollectionCodeIdResponse> {
-    let params = SUDO_PARAMS.load(deps.storage)?;
-    let code_ids = params.allowed_sg721_code_ids;
-    let allowed = code_ids.contains(&code_id);
-    Ok(AllowedCollectionCodeIdResponse { allowed })
 }

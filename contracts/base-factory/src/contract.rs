@@ -170,18 +170,20 @@ pub fn query(deps: Deps, _env: Env, msg: Sg2QueryMsg) -> StdResult<Binary> {
     }
 }
 
-fn query_params(deps: Deps) -> StdResult<ParamsResponse> {
+pub fn query_params(deps: Deps) -> StdResult<ParamsResponse> {
     let params = SUDO_PARAMS.load(deps.storage)?;
     Ok(ParamsResponse { params })
 }
 
-fn query_allowed_collection_code_ids(deps: Deps) -> StdResult<AllowedCollectionCodeIdsResponse> {
+pub fn query_allowed_collection_code_ids(
+    deps: Deps,
+) -> StdResult<AllowedCollectionCodeIdsResponse> {
     let params = SUDO_PARAMS.load(deps.storage)?;
     let code_ids = params.allowed_sg721_code_ids;
     Ok(AllowedCollectionCodeIdsResponse { code_ids })
 }
 
-fn query_allowed_collection_code_id(
+pub fn query_allowed_collection_code_id(
     deps: Deps,
     code_id: u64,
 ) -> StdResult<AllowedCollectionCodeIdResponse> {
