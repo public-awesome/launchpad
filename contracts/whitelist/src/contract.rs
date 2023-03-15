@@ -52,16 +52,16 @@ pub fn instantiate(
         });
     }
 
-    if msg.mint_price.denom != NATIVE_DENOM {
-        return Err(ContractError::InvalidDenom(msg.mint_price.denom));
-    }
+    // if msg.mint_price.denom != NATIVE_DENOM {
+    //     return Err(ContractError::InvalidDenom(msg.mint_price.denom));
+    // }
 
-    if msg.mint_price.amount.u128() < MIN_MINT_PRICE {
-        return Err(ContractError::InvalidUnitPrice(
-            msg.mint_price.amount.u128(),
-            MIN_MINT_PRICE,
-        ));
-    }
+    // if msg.mint_price.amount.u128() < MIN_MINT_PRICE {
+    //     return Err(ContractError::InvalidUnitPrice(
+    //         msg.mint_price.amount.u128(),
+    //         MIN_MINT_PRICE,
+    //     ));
+    // }
 
     // Check per address limit is valid
     if msg.per_address_limit > MAX_PER_ADDRESS_LIMIT {
@@ -98,7 +98,7 @@ pub fn instantiate(
         start_time: msg.start_time,
         end_time: msg.end_time,
         num_members: msg.members.len() as u32,
-        mint_price: msg.mint_price,
+        // mint_price: msg.mint_price,
         per_address_limit: msg.per_address_limit,
         member_limit: msg.member_limit,
     };
@@ -438,7 +438,7 @@ pub fn query_config(deps: Deps, env: Env) -> StdResult<ConfigResponse> {
         member_limit: config.member_limit,
         start_time: config.start_time,
         end_time: config.end_time,
-        mint_price: config.mint_price,
+        // mint_price: config.mint_price,
         is_active: (env.block.time >= config.start_time) && (env.block.time < config.end_time),
     })
 }

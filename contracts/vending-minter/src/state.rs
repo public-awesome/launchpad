@@ -10,6 +10,7 @@ pub struct ConfigExtension {
     pub base_token_uri: String,
     pub num_tokens: u32,
     pub whitelist: Option<Addr>,
+    pub whitelist_price: Option<Coin>,
     pub start_time: Timestamp,
     pub per_address_limit: u32,
     pub discount_price: Option<Coin>,

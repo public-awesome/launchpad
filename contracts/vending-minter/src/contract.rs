@@ -159,6 +159,7 @@ pub fn instantiate(
             num_tokens: msg.init_msg.num_tokens,
             per_address_limit: msg.init_msg.per_address_limit,
             whitelist: whitelist_addr,
+            whitelist_price: msg.init_msg.whitelist_price,
             start_time: msg.init_msg.start_time,
             discount_price: None,
         },
@@ -998,7 +999,10 @@ pub fn mint_price(deps: Deps, is_admin: bool) -> Result<Coin, StdError> {
         .query_wasm_smart(whitelist, &WhitelistQueryMsg::Config {})?;
 
     if wl_config.is_active {
-        Ok(wl_config.mint_price)
+        Ok(config
+            .extension
+            .whitelist_price
+            .unwrap_or(config.mint_price))
     } else {
         let price = config.extension.discount_price.unwrap_or(config.mint_price);
         Ok(price)
@@ -1121,25 +1125,16 @@ fn query_mint_price(deps: Deps) -> StdResult<MintPriceResponse> {
 
     let current_price = mint_price(deps, false)?;
     let public_price = config.mint_price.clone();
-    let whitelist_price: Option<Coin> = if let Some(whitelist) = config.extension.whitelist {
-        let wl_config: WhitelistConfigResponse = deps
-            .querier
-            .query_wasm_smart(whitelist, &WhitelistQueryMsg::Config {})?;
-        Some(wl_config.mint_price)
-    } else {
-        None
-    };
     let airdrop_price = coin(
         factory_params.extension.airdrop_mint_price.amount.u128(),
         config.mint_price.denom,
     );
-    let discount_price = config.extension.discount_price;
     Ok(MintPriceResponse {
         public_price,
         airdrop_price,
-        whitelist_price,
+        whitelist_price: config.extension.whitelist_price,
         current_price,
-        discount_price,
+        discount_price: config.extension.discount_price,
     })
 }
 
