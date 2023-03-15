@@ -18,10 +18,10 @@ use cosmwasm_std::{
 };
 use cw2::set_contract_version;
 use cw721_base::{Extension, MintMsg};
-
 use cw_utils::{may_pay, maybe_addr, nonpayable, parse_reply_instantiate_data};
 use rand_core::{RngCore, SeedableRng};
 use rand_xoshiro::Xoshiro128PlusPlus;
+use semver::Version;
 use sg1::checked_fair_burn;
 use sg2::query::Sg2QueryMsg;
 use sg4::{Status, StatusResponse, SudoMsg};
@@ -656,11 +656,14 @@ fn _execute_mint(
         let amount = mint_price.amount - network_fee;
         let payment_address = config.extension.payment_address;
         let seller = config.extension.admin;
-        let msg = BankMsg::Send {
-            to_address: payment_address.unwrap_or(seller).to_string(),
-            amount: vec![coin(amount.u128(), mint_price.denom)],
-        };
-        res = res.add_message(msg);
+        // Sending 0 coins fails, so only send if amount is non-zero
+        if !amount.is_zero() {
+            let msg = BankMsg::Send {
+                to_address: payment_address.unwrap_or(seller).to_string(),
+                amount: vec![coin(amount.u128(), mint_price.denom)],
+            };
+            res = res.add_message(msg);
+        }
         amount
     } else {
         Uint128::zero()
@@ -1158,4 +1161,31 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractE
         }
         Err(_) => Err(ContractError::InstantiateSg721Error {}),
     }
+}
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
+    let current_version = cw2::get_contract_version(deps.storage)?;
+    if current_version.contract != CONTRACT_NAME {
+        return Err(StdError::generic_err("Cannot upgrade to a different contract").into());
+    }
+    let version: Version = current_version
+        .version
+        .parse()
+        .map_err(|_| StdError::generic_err("Invalid contract version"))?;
+    let new_version: Version = CONTRACT_VERSION
+        .parse()
+        .map_err(|_| StdError::generic_err("Invalid contract version"))?;
+
+    if version > new_version {
+        return Err(StdError::generic_err("Cannot upgrade to a previous contract version").into());
+    }
+    // if same version return
+    if version == new_version {
+        return Ok(Response::new());
+    }
+
+    // set new contract version
+    set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+    Ok(Response::new())
 }
