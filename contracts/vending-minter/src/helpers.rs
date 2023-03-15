@@ -1,7 +1,7 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
-    to_binary, Addr, Coin, ContractInfoResponse, CustomQuery, Querier, QuerierWrapper,
-    QueryRequest, StdResult, WasmMsg, WasmQuery,
+    to_binary, Addr, Coin, ContractInfoResponse, CustomQuery, Querier, QuerierWrapper, StdResult,
+    WasmMsg, WasmQuery,
 };
 use sg_std::CosmosMsg;
 
@@ -56,11 +56,8 @@ impl MinterContract {
     }
 
     pub fn config(&self, querier: &QuerierWrapper) -> StdResult<ConfigResponse> {
-        let res: ConfigResponse = querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
-            contract_addr: self.addr().into(),
-            msg: to_binary(&QueryMsg::Config {})?,
-        }))?;
-
+        let res: ConfigResponse =
+            querier.query_wasm_smart(self.addr(), &QueryMsg::Config {})?;
         Ok(res)
     }
 }

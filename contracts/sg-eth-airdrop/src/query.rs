@@ -34,13 +34,10 @@ pub fn query_airdrop_is_eligible(deps: Deps, eth_address: String) -> StdResult<b
 pub fn query_collection_whitelist(deps: &DepsMut) -> Result<String, ContractError> {
     let config = CONFIG.load(deps.storage)?;
     let minter_addr = config.minter_address;
-    let config = MinterContract(minter_addr).config(&deps.querier);
-    match config {
-        Ok(result) => match result.whitelist {
-            Some(wl) => Ok(wl),
-            None => Err(ContractError::CollectionWhitelistMinterNotSet {}),
-        },
-        Err(_) => Err(ContractError::CollectionWhitelistMinterNotSet {}),
+    let config = MinterContract(minter_addr).config(&deps.querier)?;
+    match config.whitelist {
+        Some(whitelist) => Ok(whitelist),
+        None => Err(ContractError::CollectionWhitelistMinterNotSet {}),
     }
 }
 
