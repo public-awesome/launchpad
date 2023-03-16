@@ -6,8 +6,8 @@ use crate::msg::{
     QueryMsg, StartTimeResponse,
 };
 use crate::state::{
-    Config, ConfigExtension, CONFIG, MINTABLE_NUM_TOKENS, MINTABLE_TOKEN_POSITIONS, MINTER_ADDRS,
-    SG721_ADDRESS, STATUS,
+    Config, ConfigExtension, WhitelistConfig, CONFIG, MINTABLE_NUM_TOKENS,
+    MINTABLE_TOKEN_POSITIONS, MINTER_ADDRS, SG721_ADDRESS, STATUS,
 };
 use crate::validation::{check_dynamic_per_address_limit, get_three_percent_of_tokens};
 #[cfg(not(feature = "library"))]
@@ -114,8 +114,8 @@ pub fn instantiate(
     // Validate address for the optional whitelist contract
     let whitelist_addr = msg
         .init_msg
-        .whitelist
-        .and_then(|w| deps.api.addr_validate(w.as_str()).ok());
+        .whitelist_config
+        .and_then(|w| deps.api.addr_validate(w.address.as_str()).ok());
 
     if let Some(wl) = whitelist_addr.clone() {
         // check the whitelist exists
@@ -158,10 +158,9 @@ pub fn instantiate(
             base_token_uri,
             num_tokens: msg.init_msg.num_tokens,
             per_address_limit: msg.init_msg.per_address_limit,
-            whitelist: whitelist_addr,
-            whitelist_price: msg.init_msg.whitelist_price,
             start_time: msg.init_msg.start_time,
             discount_price: None,
+            whitelist_config: msg.init_msg.whitelist_config,
         },
         mint_price: msg.init_msg.mint_price,
     };

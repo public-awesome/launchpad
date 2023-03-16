@@ -4,13 +4,18 @@ use cw_storage_plus::{Item, Map};
 use sg4::{MinterConfig, Status};
 
 #[cw_serde]
+pub struct WhitelistConfig {
+    pub address: Addr,
+    pub price: Coin,
+}
+
+#[cw_serde]
 pub struct ConfigExtension {
     pub admin: Addr,
     pub payment_address: Option<Addr>,
     pub base_token_uri: String,
     pub num_tokens: u32,
-    pub whitelist: Option<Addr>,
-    pub whitelist_price: Option<Coin>,
+    pub whitelist_config: Option<WhitelistConfig>,
     pub start_time: Timestamp,
     pub per_address_limit: u32,
     pub discount_price: Option<Coin>,

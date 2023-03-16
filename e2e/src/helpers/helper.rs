@@ -91,7 +91,7 @@ pub fn create_minter_msg(
                 denom: denom.to_string(),
             },
             per_address_limit: limit,
-            whitelist: None,
+            whitelist_config: None,
         },
         collection_params: CollectionParams {
             code_id: chain.orc.contract_map.code_id(SG721_NAME).unwrap(),

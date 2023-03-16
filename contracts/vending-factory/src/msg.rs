@@ -10,6 +10,20 @@ pub struct InstantiateMsg {
 }
 
 #[cw_serde]
+pub struct WhitelistConfig {
+    pub address: String,
+    pub price: Coin,
+}
+
+// pub fn addr(&self) -> Addr {
+//     self.0.clone()
+// }
+
+impl WhitelistConfig {
+    pub fn validate(&self) -> crate::state::WhitelistConfig {}
+}
+
+#[cw_serde]
 pub struct VendingMinterInitMsgExtension {
     pub base_token_uri: String,
     pub payment_address: Option<String>,
@@ -17,8 +31,7 @@ pub struct VendingMinterInitMsgExtension {
     pub num_tokens: u32,
     pub mint_price: Coin,
     pub per_address_limit: u32,
-    pub whitelist: Option<String>,
-    pub whitelist_price: Option<Coin>,
+    pub whitelist_config: Option<WhitelistConfig>,
 }
 pub type VendingMinterCreateMsg = CreateMinterMsg<VendingMinterInitMsgExtension>;
 
