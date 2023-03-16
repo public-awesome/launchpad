@@ -4,6 +4,64 @@
 * and run the @cosmwasm/ts-codegen generate command to regenerate this file.
 */
 
+export type ExecuteMsgForNullable_EmptyAndEmpty = {
+  freeze_token_metadata: {};
+} | {
+  update_token_metadata: {
+    token_id: string;
+    token_uri?: string | null;
+  };
+} | {
+  transfer_nft: {
+    recipient: string;
+    token_id: string;
+  };
+} | {
+  send_nft: {
+    contract: string;
+    msg: Binary;
+    token_id: string;
+  };
+} | {
+  approve: {
+    expires?: Expiration | null;
+    spender: string;
+    token_id: string;
+  };
+} | {
+  revoke: {
+    spender: string;
+    token_id: string;
+  };
+} | {
+  approve_all: {
+    expires?: Expiration | null;
+    operator: string;
+  };
+} | {
+  revoke_all: {
+    operator: string;
+  };
+} | {
+  burn: {
+    token_id: string;
+  };
+} | {
+  update_collection_info: {
+    collection_info: UpdateCollectionInfoMsgForRoyaltyInfoResponse;
+  };
+} | {
+  update_trading_start_time: Timestamp | null;
+} | {
+  freeze_collection_info: {};
+} | {
+  mint: MintMsgForNullable_Empty;
+} | {
+  extension: {
+    msg: Empty;
+  };
+};
+export type Binary = string;
 export type Expiration = {
   at_height: number;
 } | {
@@ -13,67 +71,26 @@ export type Expiration = {
 };
 export type Timestamp = Uint64;
 export type Uint64 = string;
-export interface AllNftInfoResponse {
-  access: OwnerOfResponse;
-  info: NftInfoResponseForMetadata;
-}
-export interface OwnerOfResponse {
-  approvals: Approval[];
-  owner: string;
-}
-export interface Approval {
-  expires: Expiration;
-  spender: string;
-}
-export interface NftInfoResponseForMetadata {
-  extension: Metadata;
-  token_uri?: string | null;
-}
-export interface Metadata {
-  animation_url?: string | null;
-  attributes?: Trait[] | null;
-  background_color?: string | null;
-  description?: string | null;
-  external_url?: string | null;
-  image?: string | null;
-  image_data?: string | null;
-  name?: string | null;
-  youtube_url?: string | null;
-}
-export interface Trait {
-  display_type?: string | null;
-  trait_type: string;
-  value: string;
-}
-export interface AllOperatorsResponse {
-  operators: Approval[];
-}
-export interface AllTokensResponse {
-  tokens: string[];
-}
-export interface ApprovalResponse {
-  approval: Approval;
-}
-export interface ApprovalsResponse {
-  approvals: Approval[];
-}
 export type Decimal = string;
-export interface CollectionInfoResponse {
-  creator: string;
-  description: string;
+export interface UpdateCollectionInfoMsgForRoyaltyInfoResponse {
+  description?: string | null;
   explicit_content?: boolean | null;
   external_link?: string | null;
-  image: string;
-  royalty_info?: RoyaltyInfoResponse | null;
-  start_trading_time?: Timestamp | null;
+  image?: string | null;
+  royalty_info?: (RoyaltyInfoResponse | null) | null;
 }
 export interface RoyaltyInfoResponse {
   payment_address: string;
   share: Decimal;
 }
-export interface ContractInfoResponse {
-  name: string;
-  symbol: string;
+export interface MintMsgForNullable_Empty {
+  extension?: Empty | null;
+  owner: string;
+  token_id: string;
+  token_uri?: string | null;
+}
+export interface Empty {
+  [k: string]: unknown;
 }
 export interface InstantiateMsg {
   collection_info: CollectionInfoForRoyaltyInfoResponse;
@@ -89,19 +106,6 @@ export interface CollectionInfoForRoyaltyInfoResponse {
   image: string;
   royalty_info?: RoyaltyInfoResponse | null;
   start_trading_time?: Timestamp | null;
-}
-export interface MinterResponse {
-  minter: string;
-}
-export interface NftInfoResponse {
-  extension: Metadata;
-  token_uri?: string | null;
-}
-export interface NumTokensResponse {
-  count: number;
-}
-export interface OperatorsResponse {
-  operators: Approval[];
 }
 export type QueryMsg = {
   owner_of: {
@@ -155,6 +159,3 @@ export type QueryMsg = {
 } | {
   collection_info: {};
 };
-export interface TokensResponse {
-  tokens: string[];
-}

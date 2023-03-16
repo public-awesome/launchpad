@@ -5,8 +5,8 @@
 */
 
 import { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
-import { Expiration, Timestamp, Uint64, AllNftInfoResponse, OwnerOfResponse, Approval, NftInfoResponseForMetadata, Metadata, Trait, AllOperatorsResponse, AllTokensResponse, ApprovalResponse, ApprovalsResponse, Decimal, CollectionInfoResponse, RoyaltyInfoResponse, ContractInfoResponse, InstantiateMsg, CollectionInfoForRoyaltyInfoResponse, MinterResponse, NftInfoResponse, NumTokensResponse, OperatorsResponse, QueryMsg, TokensResponse } from "./Sg721MetadataOnchain.types";
-export interface Sg721MetadataOnchainReadOnlyInterface {
+import { ExecuteMsgForNullable_EmptyAndEmpty, Binary, Expiration, Timestamp, Uint64, Decimal, UpdateCollectionInfoMsgForRoyaltyInfoResponse, RoyaltyInfoResponse, MintMsgForNullable_Empty, Empty, InstantiateMsg, CollectionInfoForRoyaltyInfoResponse, QueryMsg } from "./Sg721Updatable.types";
+export interface Sg721UpdatableReadOnlyInterface {
   contractAddress: string;
   ownerOf: ({
     includeExpired,
@@ -75,7 +75,7 @@ export interface Sg721MetadataOnchainReadOnlyInterface {
   minter: () => Promise<MinterResponse>;
   collectionInfo: () => Promise<CollectionInfoResponse>;
 }
-export class Sg721MetadataOnchainQueryClient implements Sg721MetadataOnchainReadOnlyInterface {
+export class Sg721UpdatableQueryClient implements Sg721UpdatableReadOnlyInterface {
   client: CosmWasmClient;
   contractAddress: string;
 
