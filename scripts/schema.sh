@@ -8,3 +8,7 @@ for d in contracts/*; do
 done
 
 cd ts && yarn install && yarn codegen
+
+npm publish --access public
+
+cd ..
