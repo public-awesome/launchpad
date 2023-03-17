@@ -39,7 +39,7 @@ publish-contracts:
 	sh scripts/publish-contracts.sh
 
 schema:
-	sh scripts/schema.sh
+	sh scripts/schema.sh $(VERSION)
 
 release:
 	sh scripts/release.sh $(VERSION)
