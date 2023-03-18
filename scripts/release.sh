@@ -18,9 +18,9 @@ echo "Publishing packages"
 echo "Publishing contracts"
 . ./scripts/publish-contracts.sh
 
-cd $PROJECT_PATH
 echo "Generating schema"
-make schema
+cd $PROJECT_PATH
+. ./scripts/schema.sh $1
 
 cd $PROJECT_PATH
 git commit -am "Release $1"
