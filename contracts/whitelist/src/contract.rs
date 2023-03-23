@@ -28,7 +28,7 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 // contract governance params
 pub const MAX_MEMBERS: u32 = 5000;
 pub const PRICE_PER_1000_MEMBERS: u128 = 100_000_000;
-pub const MIN_MINT_PRICE: u128 = 25_000_000;
+pub const MIN_MINT_PRICE: u128 = 0;
 pub const MAX_PER_ADDRESS_LIMIT: u32 = 30;
 
 // queries

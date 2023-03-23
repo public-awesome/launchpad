@@ -9,6 +9,7 @@ use crate::common_setup::{
 };
 
 const WHITELIST_AMOUNT: u128 = 66_000_000;
+const ZERO_FEE_WHITELIST: u128 = 0;
 const WL_PER_ADDRESS_LIMIT: u32 = 1;
 
 pub fn setup_whitelist_contract(
@@ -26,6 +27,38 @@ pub fn setup_whitelist_contract(
         start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME + 100),
         end_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10000000),
         mint_price: coin(WHITELIST_AMOUNT, NATIVE_DENOM),
+        per_address_limit: WL_PER_ADDRESS_LIMIT,
+        member_limit: 1000,
+        admins: vec![creator.to_string()],
+        admins_mutable: true,
+    };
+    router
+        .instantiate_contract(
+            whitelist_code_id,
+            creator.clone(),
+            &msg,
+            &[coin(100_000_000, NATIVE_DENOM)],
+            "whitelist",
+            None,
+        )
+        .unwrap()
+}
+
+pub fn setup_zero_fee_whitelist_contract(
+    router: &mut StargazeApp,
+    creator: &Addr,
+    whitelist_code_id: Option<u64>,
+) -> Addr {
+    let whitelist_code_id = match whitelist_code_id {
+        Some(value) => value,
+        None => router.store_code(contract_collection_whitelist()),
+    };
+
+    let msg = WhitelistInstantiateMsg {
+        members: vec![],
+        start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME + 100),
+        end_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10000000),
+        mint_price: coin(ZERO_FEE_WHITELIST, NATIVE_DENOM),
         per_address_limit: WL_PER_ADDRESS_LIMIT,
         member_limit: 1000,
         admins: vec![creator.to_string()],
