@@ -56,13 +56,6 @@ pub fn instantiate(
         return Err(ContractError::InvalidDenom(msg.mint_price.denom));
     }
 
-    if msg.mint_price.amount.u128() < MIN_MINT_PRICE {
-        return Err(ContractError::InvalidUnitPrice(
-            msg.mint_price.amount.u128(),
-            MIN_MINT_PRICE,
-        ));
-    }
-
     // Check per address limit is valid
     if msg.per_address_limit > MAX_PER_ADDRESS_LIMIT {
         return Err(ContractError::InvalidPerAddressLimit {
