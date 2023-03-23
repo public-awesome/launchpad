@@ -257,10 +257,3 @@ fn test_freeze_admins() {
     );
     assert_eq!(res.unwrap_err().root_cause().to_string(), "Unauthorized");
 }
-
-#[test]
-fn test_zero_wl_with_factory_mint_price() {
-    // factory min mint param is 50_000_000
-    // wl mint price 0
-    // throw error when setting whitelist
-}
