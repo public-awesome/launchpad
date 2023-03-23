@@ -202,7 +202,7 @@ fn zero_wl_mint_price() {
 
     // mint succeeds
     let mint_msg = ExecuteMsg::Mint {};
-    let res = router.execute_contract(buyer.clone(), minter_addr, &mint_msg, &[]);
+    let res = router.execute_contract(buyer, minter_addr, &mint_msg, &[]);
     assert!(res.is_ok());
 }
 
@@ -286,6 +286,6 @@ fn zero_wl_mint_errs_with_min_mint_factory() {
     let msg = ExecuteMsg::SetWhitelist {
         whitelist: whitelist_addr.to_string(),
     };
-    let res = router.execute_contract(creator.clone(), minter_addr.clone(), &msg, &[]);
+    let res = router.execute_contract(creator.clone(), minter_addr, &msg, &[]);
     assert!(res.is_err());
 }
