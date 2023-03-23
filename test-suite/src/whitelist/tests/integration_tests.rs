@@ -13,7 +13,7 @@ use crate::common_setup::contract_boxes::{contract_collection_whitelist, custom_
 const COLLECTION_WHITELIST_ADDR: &str = "contract0";
 const ADMIN: &str = "admin";
 const SECOND_ADMIN: &str = "second_admin";
-const UNIT_AMOUNT: u128 = 100_000_000;
+const UNIT_AMOUNT: u128 = 0;
 
 const GENESIS_START_TIME: Timestamp = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
 const END_TIME: Timestamp = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 1000);
@@ -256,4 +256,11 @@ fn test_freeze_admins() {
         &[],
     );
     assert_eq!(res.unwrap_err().root_cause().to_string(), "Unauthorized");
+}
+
+#[test]
+fn test_zero_wl_with_factory_mint_price() {
+    // factory min mint param is 50_000_000
+    // wl mint price 0
+    // throw error when setting whitelist
 }
