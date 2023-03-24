@@ -46,6 +46,7 @@ fn update_code_id() {
     let update_msg = VendingUpdateParamsMsg {
         add_sg721_code_ids: Some(vec![sg721_code_id]),
         rm_sg721_code_ids: None,
+        frozen: None,
         code_id: None,
         creation_fee: None,
         min_mint_price: None,
