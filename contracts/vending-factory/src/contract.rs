@@ -3,7 +3,7 @@ use base_factory::ContractError as BaseContractError;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    ensure_eq, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult, WasmMsg,
+    ensure, ensure_eq, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult, WasmMsg,
 };
 use cw2::set_contract_version;
 use cw_utils::must_pay;
@@ -59,6 +59,7 @@ pub fn execute_create_minter(
     must_be_allowed_collection(deps.as_ref(), msg.collection_params.code_id)?;
 
     let params = SUDO_PARAMS.load(deps.storage)?;
+    ensure!(params.frozen != true, ContractError::Frozen {});
 
     let mut res = Response::new();
     checked_fair_burn(&info, params.creation_fee.amount.u128(), None, &mut res)?;

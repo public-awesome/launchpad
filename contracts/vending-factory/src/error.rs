@@ -18,6 +18,9 @@ pub enum ContractError {
     #[error("Unauthorized")]
     Unauthorized {},
 
+    #[error("Factory frozen. Cannot make new minters.")]
+    Frozen {},
+
     #[error("InvalidNumTokens {max}, min: 1")]
     InvalidNumTokens { max: u32, min: u32 },
 

@@ -24,6 +24,7 @@ pub struct UpdateMinterParamsMsg<T> {
     pub code_id: Option<u64>,
     pub add_sg721_code_ids: Option<Vec<u64>>,
     pub rm_sg721_code_ids: Option<Vec<u64>>,
+    pub frozen: Option<bool>,
     pub creation_fee: Option<Coin>,
     pub min_mint_price: Option<Coin>,
     pub mint_fee_bps: Option<u64>,
