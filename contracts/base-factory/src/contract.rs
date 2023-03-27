@@ -141,6 +141,10 @@ pub fn update_params<T, C>(
         params.min_mint_price = min_mint_price;
     }
 
+    if let Some(frozen) = param_msg.frozen {
+        params.frozen = frozen;
+    }
+
     // add new code ids, then rm code ids
     if let Some(add_sg721_code_ids) = param_msg.add_sg721_code_ids {
         for code_id in add_sg721_code_ids {
