@@ -82,7 +82,7 @@ pub fn execute_create_minter(
 }
 
 pub fn must_not_be_frozen<T>(params: &MinterParams<T>) -> Result<(), ContractError> {
-    ensure!(params.frozen != true, ContractError::Frozen {});
+    ensure!(!params.frozen, ContractError::Frozen {});
     Ok(())
 }
 
