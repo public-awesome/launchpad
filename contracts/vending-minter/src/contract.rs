@@ -425,7 +425,7 @@ pub fn execute_set_whitelist(
         return Err(ContractError::WhitelistAlreadyStarted {});
     }
 
-    // Check that the price is greater than the factory minimum
+    // Check that the price is >= the factory minimum
     // Added because whitelist could be free, while factory minimum is not
     let factory: ParamsResponse = deps
         .querier
