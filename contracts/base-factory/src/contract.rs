@@ -123,6 +123,10 @@ pub fn update_params<T, C>(
 ) -> Result<(), ContractError> {
     params.code_id = param_msg.code_id.unwrap_or(params.code_id);
 
+    if let Some(frozen) = param_msg.frozen {
+        params.frozen = frozen;
+    }
+
     if let Some(creation_fee) = param_msg.creation_fee {
         ensure_eq!(
             &creation_fee.denom,
@@ -139,10 +143,6 @@ pub fn update_params<T, C>(
             ContractError::InvalidDenom {}
         );
         params.min_mint_price = min_mint_price;
-    }
-
-    if let Some(frozen) = param_msg.frozen {
-        params.frozen = frozen;
     }
 
     // add new code ids, then rm code ids
