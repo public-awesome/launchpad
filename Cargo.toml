@@ -1,5 +1,13 @@
 [workspace]
-members  = ["packages/*", "contracts/*", "test-suite/", "e2e"]
+members = [
+    "packages/*",
+    "contracts/collections/*",
+    "contracts/factories/*",
+    "contracts/minters/*",
+    "contracts/whitelists/*",
+    "test-suite/",
+    "e2e",
+]
 resolver = "2"
 
 [workspace.package]
@@ -10,8 +18,8 @@ repository = "https://github.com/public-awesome/launchpad"
 license    = "Apache-2.0"
 
 [workspace.dependencies]
-base-factory        = { version = "0.25.0", path = "contracts/base-factory" }
-base-minter         = { version = "0.25.0", path = "contracts/base-minter" }
+base-factory        = { version = "0.25.0", path = "contracts/factories/base-factory" }
+base-minter         = { version = "0.25.0", path = "contracts/minters/base-minter" }
 cosmwasm-schema     = "1.2.1"
 cosmwasm-std        = "1.2.1"
 cw-controllers      = "0.16.0"
@@ -29,20 +37,20 @@ sg1                 = { version = "0.25.0", path = "packages/sg1" }
 sg2                 = { version = "0.25.0", path = "packages/sg2" }
 sg4                 = { version = "0.25.0", path = "packages/sg4" }
 sg721               = { version = "0.25.0", path = "packages/sg721" }
-sg721-base          = { version = "0.25.0", path = "contracts/sg721-base" }
-sg721-nt            = { version = "0.25.0", path = "contracts/sg721-nt" }
+sg721-base          = { version = "0.25.0", path = "contracts/collections/sg721-base" }
+sg721-nt            = { version = "0.25.0", path = "contracts/collections/sg721-nt" }
 sg-controllers      = { version = "0.25.0", path = "packages/controllers" }
 sg-metadata         = { version = "0.25.0", path = "packages/sg-metadata" }
 sg-multi-test       = { version = "0.25.0", path = "packages/sg-multi-test" }
 sg-splits           = { version = "0.25.0", path = "contracts/splits" }
 sg-std              = { version = "0.25.0" }
-sg-whitelist        = { version = "0.25.0", path = "contracts/whitelist" }
+sg-whitelist        = { version = "0.25.0", path = "contracts/whitelists/whitelist" }
 thiserror           = "1.0.31"
 url                 = "2.2.2"
 sha2                = { version = "0.10.2", default-features = false }
-vending-factory     = { version = "0.25.0", path = "contracts/vending-factory" }
-vending-minter      = { version = "0.25.0", path = "contracts/vending-minter" }
-whitelist-immutable = { version = "0.25.0", path = "contracts/whitelist-immutable" }
+vending-factory     = { version = "0.25.0", path = "contracts/factories/vending-factory" }
+vending-minter      = { version = "0.25.0", path = "contracts/minters/vending-minter" }
+whitelist-immutable = { version = "0.25.0", path = "contracts/whitelists/whitelist-immutable" }
 ethereum-verify     = { version = "0.25.0", path = "packages/ethereum-verify" }
 sg-eth-airdrop      = { version = "0.25.0", path = "contracts/sg-eth-airdrop" }
 test-suite          = { version = "0.25.0", path = "test-suite" }
@@ -74,7 +82,7 @@ incremental   = false
 
 [profile.release.package.sg721-updatable]
 codegen-units = 1
-incremental = false
+incremental   = false
 
 [profile.release.package.sg-whitelist]
 codegen-units = 1
