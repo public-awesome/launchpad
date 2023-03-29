@@ -62,7 +62,6 @@ mod tests {
         QuerierResult, QueryRequest, SystemError, SystemResult, WasmQuery,
     };
     use cw721::Cw721Query;
-    use cw721_base::MintMsg;
     use sg721::{CollectionInfo, ExecuteMsg, InstantiateMsg};
     use std::marker::PhantomData;
 
@@ -142,19 +141,20 @@ mod tests {
 
         // mint token
         let token_id = "Enterprise";
-        let mint_msg = MintMsg {
+        let extension = Metadata {
+            description: Some("Spaceship with Warp Drive".into()),
+            name: Some("Starship USS Enterprise".to_string()),
+            ..Metadata::default()
+        };
+        let mint_msg = ExecuteMsg::Mint {
             token_id: token_id.to_string(),
             owner: "john".to_string(),
             token_uri: Some("https://starships.example.com/Starship/Enterprise.json".into()),
-            extension: Metadata {
-                description: Some("Spaceship with Warp Drive".into()),
-                name: Some("Starship USS Enterprise".to_string()),
-                ..Metadata::default()
-            },
+            extension: extension.clone(),
         };
-        let exec_msg = ExecuteMsg::Mint(mint_msg.clone());
+
         contract
-            .execute(deps.as_mut(), mock_env(), info, exec_msg)
+            .execute(deps.as_mut(), mock_env(), info, mint_msg)
             .unwrap();
 
         // check token contains correct metadata
@@ -162,7 +162,10 @@ mod tests {
             .parent
             .nft_info(deps.as_ref(), token_id.into())
             .unwrap();
-        assert_eq!(res.token_uri, mint_msg.token_uri);
-        assert_eq!(res.extension, mint_msg.extension);
+        assert_eq!(
+            res.token_uri,
+            Some("https://starships.example.com/Starship/Enterprise.json".into())
+        );
+        assert_eq!(res.extension, extension);
     }
 }

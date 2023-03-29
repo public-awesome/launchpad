@@ -111,6 +111,9 @@ mod tests {
 
     mod init {
 
+        use std::error::Error;
+
+        use cosmwasm_std::{StdError, StdResult};
         use cw721_base::MinterResponse;
 
         use crate::common_setup::setup_minter::vending_minter::mock_params::mock_create_minter_init_msg;
@@ -175,6 +178,7 @@ mod tests {
             let custom_create_minter_msg =
                 mock_create_minter_init_msg(mock_collection_params(), init_msg);
             let (app, contract) = custom_proper_instantiate(custom_create_minter_msg);
+            println!("contract is {:?}", contract);
 
             // query minter config to confirm base_token_uri got trimmed
             let res: MinterResponse = app
@@ -182,6 +186,8 @@ mod tests {
                 .query_wasm_smart(contract, &QueryMsg::Minter {})
                 .unwrap();
             let minter = res.minter;
+            println!("minter is {:?}", minter);
+            let minter = minter.unwrap();
             let res: ConfigResponse = app
                 .wrap()
                 .query_wasm_smart(minter, &VendingMinterQueryMsg::Config {})
@@ -207,7 +213,7 @@ mod tests {
                 .wrap()
                 .query_wasm_smart(contract, &QueryMsg::Minter {})
                 .unwrap();
-            let minter = res.minter;
+            let minter = res.minter.unwrap();
             let res: ConfigResponse = app
                 .wrap()
                 .query_wasm_smart(minter, &VendingMinterQueryMsg::Config {})
@@ -228,7 +234,7 @@ mod tests {
                 .wrap()
                 .query_wasm_smart(contract, &QueryMsg::Minter {})
                 .unwrap();
-            let minter = res.minter;
+            let minter = res.minter.unwrap();
             let res: ConfigResponse = app
                 .wrap()
                 .query_wasm_smart(minter, &VendingMinterQueryMsg::Config {})

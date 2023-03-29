@@ -1,11 +1,10 @@
+use crate::error::ContractError;
+use crate::state::FROZEN_TOKEN_METADATA;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::{DepsMut, Env, Event, MessageInfo};
 use cw2::set_contract_version;
-use sg721_base::msg::CollectionInfoResponse;
-
-use crate::error::ContractError;
-use crate::state::FROZEN_TOKEN_METADATA;
 use sg721::InstantiateMsg;
+use sg721_base::msg::CollectionInfoResponse;
 
 use cw721_base::Extension;
 use cw_utils::nonpayable;
@@ -105,7 +104,6 @@ mod tests {
         QuerierResult, QueryRequest, SystemError, SystemResult, WasmQuery,
     };
     use cw721::Cw721Query;
-    use cw721_base::MintMsg;
     use sg721::{CollectionInfo, InstantiateMsg};
     use std::marker::PhantomData;
 
@@ -184,13 +182,12 @@ mod tests {
 
         // Mint token
         let token_id = "Enterprise";
-        let mint_msg = MintMsg {
+        let exec_msg = ExecuteMsg::Mint {
             token_id: token_id.to_string(),
             owner: "john".to_string(),
             token_uri: Some("https://starships.example.com/Starship/Enterprise.json".into()),
             extension: None,
         };
-        let exec_msg = ExecuteMsg::Mint(mint_msg);
         execute(deps.as_mut(), mock_env(), info.clone(), exec_msg).unwrap();
 
         // Update token metadata fails because token id is not found

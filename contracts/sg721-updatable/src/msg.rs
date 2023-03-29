@@ -1,7 +1,6 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::Binary;
 use cosmwasm_std::Timestamp;
-use cw721_base::msg::MintMsg;
 use cw_utils::Expiration;
 use sg721::{RoyaltyInfoResponse, UpdateCollectionInfoMsg};
 use sg721_base::ExecuteMsg as Sg721ExecuteMsg;
@@ -49,7 +48,18 @@ pub enum ExecuteMsg<T, E> {
     },
     UpdateTradingStartTime(Option<Timestamp>),
     FreezeCollectionInfo {},
-    Mint(MintMsg<T>),
+    Mint {
+        /// Unique ID of the NFT
+        token_id: String,
+        /// The owner of the newly minter NFT
+        owner: String,
+        /// Universal resource identifier for this NFT
+        /// Should point to a JSON file that conforms to the ERC721
+        /// Metadata JSON Schema
+        token_uri: Option<String>,
+        /// Any custom extension used by this contract
+        extension: T,
+    },
     Extension {
         msg: E,
     },
@@ -99,17 +109,17 @@ where
                 Sg721ExecuteMsg::UpdateCollectionInfo { collection_info }
             }
             ExecuteMsg::FreezeCollectionInfo {} => Sg721ExecuteMsg::FreezeCollectionInfo {},
-            ExecuteMsg::Mint(MintMsg {
+            ExecuteMsg::Mint {
                 token_id,
                 owner,
                 token_uri,
                 extension,
-            }) => Sg721ExecuteMsg::Mint(MintMsg {
+            } => Sg721ExecuteMsg::Mint {
                 token_id,
                 owner,
                 token_uri,
                 extension: extension.into(),
-            }),
+            },
             _ => unreachable!("Invalid ExecuteMsg"),
         }
     }

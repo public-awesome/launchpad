@@ -46,4 +46,7 @@ pub enum ContractError {
 
     #[error("RoyaltyShareIncreased")]
     RoyaltyShareIncreased {},
+
+    #[error("MinterNotFound")]
+    MinterNotFound {},
 }

@@ -50,9 +50,13 @@ pub mod entry {
                 .parent
                 .burn(deps, env, info, token_id)
                 .map_err(|e| e.into()),
-            ExecuteMsg::Mint(msg) => {
-                Sg721NonTransferableContract::default().mint(deps, env, info, msg)
-            }
+            ExecuteMsg::Mint {
+                token_id,
+                token_uri,
+                owner,
+                extension,
+            } => Sg721NonTransferableContract::default()
+                .mint(deps, env, info, token_id, owner, token_uri, extension),
             ExecuteMsg::UpdateCollectionInfo {
                 new_collection_info,
             } => Sg721NonTransferableContract::default().update_collection_info(

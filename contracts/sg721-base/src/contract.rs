@@ -1,5 +1,4 @@
 use cw721_base::state::TokenInfo;
-use cw721_base::MintMsg;
 use url::Url;
 
 use cosmwasm_std::{
@@ -15,7 +14,7 @@ use sg721::{
     CollectionInfo, ExecuteMsg, InstantiateMsg, RoyaltyInfo, RoyaltyInfoResponse,
     UpdateCollectionInfoMsg,
 };
-use sg_std::Response;
+use sg_std::{Response, StargazeMsgWrapper};
 
 use crate::msg::{CollectionInfoResponse, QueryMsg};
 use crate::{ContractError, Sg721Contract};
@@ -54,8 +53,31 @@ where
         self.parent.contract_info.save(deps.storage, &info)?;
 
         let minter = deps.api.addr_validate(&msg.minter)?;
-        // self.parent.minter(deps)
-        // self.parent.minter.save(deps.storage, &minter)?;
+        self.minter.save(deps.storage, &minter)?;
+        use cw_ownable;
+        cw_ownable::initialize_owner(deps.storage, deps.api, Some(&msg.minter))?;
+        // self.parent.update_ownership();
+        // deps: DepsMut,
+        // env: Env,
+        // info: MessageInfo,
+        // action: cw_ownable::Action,
+        use cw721_base::Ownership;
+        // cw721_base::Cw721Contract::<
+        //     'a,
+        //     T,
+        //     StargazeMsgWrapper,
+        //     cosmwasm_std::Empty,
+        //     cosmwasm_std::Empty,
+        // >::initialize_owner();
+        // self.parent.initialize_owner();
+
+        // update_ownership(
+        //     deps.as_ref(),
+        //     _env,
+        //     info,
+        //     cw721_base::Action::TransferOwnership { new_owner: (), expiry: () }
+        //     msg.collection_info.creator,
+        // );
 
         // sg721 instantiation
         if msg.collection_info.description.len() > MAX_DESCRIPTION_LENGTH as usize {
@@ -152,7 +174,12 @@ where
                 self.update_start_trading_time(deps, env, info, start_time)
             }
             ExecuteMsg::FreezeCollectionInfo {} => self.freeze_collection_info(deps, env, info),
-            ExecuteMsg::Mint(msg) => self.mint(deps, env, info, msg),
+            ExecuteMsg::Mint {
+                token_id,
+                token_uri,
+                owner,
+                extension,
+            } => self.mint(deps, env, info, token_id, owner, token_uri, extension),
             ExecuteMsg::Extension { msg: _ } => todo!(),
         }
     }
@@ -241,7 +268,7 @@ where
         info: MessageInfo,
         start_time: Option<Timestamp>,
     ) -> Result<Response, ContractError> {
-        let minter = self.parent.minter.load(deps.storage)?;
+        let minter = self.minter.load(deps.storage)?;
         if minter != info.sender {
             return Err(ContractError::Unauthorized {});
         }
@@ -276,9 +303,12 @@ where
         deps: DepsMut,
         _env: Env,
         info: MessageInfo,
-        msg: MintMsg<T>,
+        token_id: String,
+        owner: String,
+        token_uri: Option<String>,
+        extension: T,
     ) -> Result<Response, ContractError> {
-        let minter = self.parent.minter.load(deps.storage)?;
+        let minter = self.minter.load(deps.storage)?;
 
         if info.sender != minter {
             return Err(ContractError::Unauthorized {});
@@ -286,14 +316,14 @@ where
 
         // create the token
         let token = TokenInfo {
-            owner: deps.api.addr_validate(&msg.owner)?,
+            owner: deps.api.addr_validate(&owner)?,
             approvals: vec![],
-            token_uri: msg.token_uri.clone(),
-            extension: msg.extension,
+            token_uri: token_uri.clone(),
+            extension,
         };
         self.parent
             .tokens
-            .update(deps.storage, &msg.token_id, |old| match old {
+            .update(deps.storage, &token_id, |old| match old {
                 Some(_) => Err(ContractError::Claimed {}),
                 None => Ok(token),
             })?;
@@ -303,9 +333,9 @@ where
         Ok(Response::new()
             .add_attribute("action", "mint")
             .add_attribute("minter", info.sender)
-            .add_attribute("owner", msg.owner)
-            .add_attribute("token_id", msg.token_id)
-            .add_attribute("token_uri", msg.token_uri.unwrap_or_default()))
+            .add_attribute("owner", owner)
+            .add_attribute("token_id", token_id)
+            .add_attribute("token_uri", token_uri.unwrap_or_default()))
     }
 
     pub fn query(&self, deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {

@@ -13,7 +13,6 @@ use cosmwasm_std::{
 };
 
 use cw2::set_contract_version;
-use cw721_base::MintMsg;
 use cw_utils::{must_pay, nonpayable, parse_reply_instantiate_data};
 
 use sg1::checked_fair_burn;
@@ -156,12 +155,12 @@ pub fn execute_mint_sender(
     checked_fair_burn(&info, network_fee.u128(), None, &mut res)?;
 
     // Create mint msgs
-    let mint_msg = Sg721ExecuteMsg::<Extension, Empty>::Mint(MintMsg::<Extension> {
+    let mint_msg = Sg721ExecuteMsg::<Extension, Empty>::Mint {
         token_id: increment_token_index(deps.storage)?.to_string(),
         owner: info.sender.to_string(),
         token_uri: Some(token_uri.clone()),
         extension: None,
-    });
+    };
     let msg = CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: collection_address.to_string(),
         msg: to_binary(&mint_msg)?,
