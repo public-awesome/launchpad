@@ -19,7 +19,7 @@ use crate::common_setup::setup_minter::vending_minter::mock_params::{
 
 use crate::common_setup::setup_minter::common::constants::{CREATION_FEE, MINT_PRICE};
 
-fn build_init_msg(
+pub fn build_init_msg(
     init_msg: Option<VendingMinterInitMsgExtension>,
     mut msg: CreateMinterMsg<VendingMinterInitMsgExtension>,
     num_tokens: u32,

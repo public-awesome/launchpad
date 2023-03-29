@@ -1,4 +1,4 @@
-use base_factory::contract::{must_be_allowed_collection, update_params};
+use base_factory::contract::{must_be_allowed_collection, must_not_be_frozen, update_params};
 use base_factory::ContractError as BaseContractError;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
@@ -59,6 +59,7 @@ pub fn execute_create_minter(
     must_be_allowed_collection(deps.as_ref(), msg.collection_params.code_id)?;
 
     let params = SUDO_PARAMS.load(deps.storage)?;
+    must_not_be_frozen(&params)?;
 
     let mut res = Response::new();
     checked_fair_burn(&info, params.creation_fee.amount.u128(), None, &mut res)?;

@@ -13,6 +13,7 @@ pub struct MinterParams<T> {
     /// The minter code id
     pub code_id: u64,
     pub allowed_sg721_code_ids: Vec<CodeId>,
+    pub frozen: bool,
     pub creation_fee: Coin,
     pub min_mint_price: Coin,
     pub mint_fee_bps: u64,
