@@ -87,7 +87,6 @@ pub fn execute_create_minter(
         return Err(ContractError::BaseError(BaseContractError::InvalidDenom {}));
     }
 
-    // Check that the price is greater than the minimum
     if params.min_mint_price.amount > msg.init_msg.mint_price.amount {
         return Err(ContractError::InsufficientMintPrice {
             expected: params.min_mint_price.amount.u128(),

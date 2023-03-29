@@ -274,7 +274,6 @@ pub fn execute_update_discount_price(
         .query_wasm_smart(config.clone().factory, &Sg2QueryMsg::Params {})?;
     let factory_params = factory.params;
 
-    // Check that the price is greater than the minimum
     if factory_params.min_mint_price.amount.u128() > price {
         return Err(ContractError::InsufficientMintPrice {
             expected: factory_params.min_mint_price.amount.u128(),
@@ -413,16 +412,33 @@ pub fn execute_set_whitelist(
             return Err(ContractError::WhitelistAlreadyStarted {});
         }
     }
+
     let new_wl = deps.api.addr_validate(whitelist)?;
     config.extension.whitelist = Some(new_wl.clone());
     // check that the new whitelist exists
-    let res: WhitelistConfigResponse = deps
+    let wl_config: WhitelistConfigResponse = deps
         .querier
         .query_wasm_smart(new_wl, &WhitelistQueryMsg::Config {})?;
 
-    if res.is_active {
+    if wl_config.is_active {
         return Err(ContractError::WhitelistAlreadyStarted {});
     }
+
+    // Whitelist could be free, while factory minimum is not
+    let factory: ParamsResponse = deps
+        .querier
+        .query_wasm_smart(config.factory.clone(), &Sg2QueryMsg::Params {})?;
+
+    let factory_mint_price = factory.params.min_mint_price.amount.u128();
+    let whitelist_mint_price = wl_config.mint_price.amount.u128();
+
+    if factory_mint_price > whitelist_mint_price {
+        return Err(ContractError::InsufficientWhitelistMintPrice {
+            expected: factory_mint_price,
+            got: whitelist_mint_price,
+        });
+    }
+
     CONFIG.save(deps.storage, &config)?;
 
     Ok(Response::default()
@@ -769,7 +785,6 @@ pub fn execute_update_mint_price(
         .query_wasm_smart(config.clone().factory, &Sg2QueryMsg::Params {})?;
     let factory_params = factory.params;
 
-    // Check that the price is greater than the minimum
     if factory_params.min_mint_price.amount.u128() > price {
         return Err(ContractError::InsufficientMintPrice {
             expected: factory_params.min_mint_price.amount.u128(),

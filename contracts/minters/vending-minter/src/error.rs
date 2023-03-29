@@ -50,6 +50,9 @@ pub enum ContractError {
     #[error("Minimum network mint price {expected} got {got}")]
     InsufficientMintPrice { expected: u128, got: u128 },
 
+    #[error("Minimum whitelist mint price {expected} got {got}")]
+    InsufficientWhitelistMintPrice { expected: u128, got: u128 },
+
     #[error("Update price {updated} higher than allowed price {allowed}")]
     UpdatedMintPriceTooHigh { allowed: u128, updated: u128 },
 
