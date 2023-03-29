@@ -43,6 +43,7 @@ export interface MinterParamsForNullable_Empty {
   code_id: number;
   creation_fee: Coin;
   extension?: Empty | null;
+  frozen: boolean;
   max_trading_offset_secs: number;
   min_mint_price: Coin;
   mint_fee_bps: number;

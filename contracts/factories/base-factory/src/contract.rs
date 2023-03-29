@@ -1,7 +1,7 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    ensure_eq, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult, WasmMsg,
+    ensure, ensure_eq, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult, WasmMsg,
 };
 use cw2::set_contract_version;
 use cw_utils::must_pay;
@@ -59,6 +59,7 @@ pub fn execute_create_minter(
     must_be_allowed_collection(deps.as_ref(), msg.collection_params.code_id)?;
 
     let params = SUDO_PARAMS.load(deps.storage)?;
+    must_not_be_frozen(&params)?;
 
     let mut res = Response::new();
     checked_fair_burn(&info, params.creation_fee.amount.u128(), None, &mut res)?;
@@ -78,6 +79,11 @@ pub fn execute_create_minter(
     Ok(res
         .add_attribute("action", "create_minter")
         .add_message(msg))
+}
+
+pub fn must_not_be_frozen<T>(params: &MinterParams<T>) -> Result<(), ContractError> {
+    ensure!(!params.frozen, ContractError::Frozen {});
+    Ok(())
 }
 
 pub fn must_be_allowed_collection(deps: Deps, code_id: u64) -> Result<(), ContractError> {
@@ -116,6 +122,10 @@ pub fn update_params<T, C>(
     param_msg: UpdateMinterParamsMsg<T>,
 ) -> Result<(), ContractError> {
     params.code_id = param_msg.code_id.unwrap_or(params.code_id);
+
+    if let Some(frozen) = param_msg.frozen {
+        params.frozen = frozen;
+    }
 
     if let Some(creation_fee) = param_msg.creation_fee {
         ensure_eq!(

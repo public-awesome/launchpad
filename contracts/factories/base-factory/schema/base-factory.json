@@ -42,6 +42,7 @@
           "allowed_sg721_code_ids",
           "code_id",
           "creation_fee",
+          "frozen",
           "max_trading_offset_secs",
           "min_mint_price",
           "mint_fee_bps"
@@ -73,6 +74,9 @@
                 "type": "null"
               }
             ]
+          },
+          "frozen": {
+            "type": "boolean"
           },
           "max_trading_offset_secs": {
             "type": "integer",
