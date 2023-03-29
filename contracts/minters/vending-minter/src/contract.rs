@@ -274,7 +274,6 @@ pub fn execute_update_discount_price(
         .query_wasm_smart(config.clone().factory, &Sg2QueryMsg::Params {})?;
     let factory_params = factory.params;
 
-    // Check that the price is >= than the minimum
     if factory_params.min_mint_price.amount.u128() > price {
         return Err(ContractError::InsufficientMintPrice {
             expected: factory_params.min_mint_price.amount.u128(),
@@ -425,8 +424,7 @@ pub fn execute_set_whitelist(
         return Err(ContractError::WhitelistAlreadyStarted {});
     }
 
-    // Check that the price is >= the factory minimum
-    // Added because whitelist could be free, while factory minimum is not
+    // Whitelist could be free, while factory minimum is not
     let factory: ParamsResponse = deps
         .querier
         .query_wasm_smart(config.factory.clone(), &Sg2QueryMsg::Params {})?;
@@ -784,7 +782,6 @@ pub fn execute_update_mint_price(
         .query_wasm_smart(config.clone().factory, &Sg2QueryMsg::Params {})?;
     let factory_params = factory.params;
 
-    // Check that the price is >= the factory minimum
     if factory_params.min_mint_price.amount.u128() > price {
         return Err(ContractError::InsufficientMintPrice {
             expected: factory_params.min_mint_price.amount.u128(),
