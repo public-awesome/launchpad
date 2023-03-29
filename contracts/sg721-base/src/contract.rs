@@ -54,7 +54,8 @@ where
         self.parent.contract_info.save(deps.storage, &info)?;
 
         let minter = deps.api.addr_validate(&msg.minter)?;
-        self.parent.minter.save(deps.storage, &minter)?;
+        // self.parent.minter(deps)
+        // self.parent.minter.save(deps.storage, &minter)?;
 
         // sg721 instantiation
         if msg.collection_info.description.len() > MAX_DESCRIPTION_LENGTH as usize {

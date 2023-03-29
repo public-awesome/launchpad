@@ -2,7 +2,7 @@ use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
     coin, Addr, BankMsg, Binary, Empty, Event, StdError, StdResult, Timestamp, Uint128,
 };
-use cw721_base::msg::{MintMsg, QueryMsg as Cw721QueryMsg};
+use cw721_base::msg::QueryMsg as Cw721QueryMsg;
 use cw_utils::Expiration;
 use sg721::RoyaltyInfoResponse;
 use sg_std::{Response, SubMsg, NATIVE_DENOM};
@@ -37,7 +37,18 @@ pub enum ExecuteMsg<T, E> {
     RevokeAll { operator: String },
 
     /// Mint a new NFT, can only be called by the contract minter
-    Mint(MintMsg<T>),
+    Mint {
+        /// Unique ID of the NFT
+        token_id: String,
+        /// The owner of the newly minter NFT
+        owner: String,
+        /// Universal resource identifier for this NFT
+        /// Should point to a JSON file that conforms to the ERC721
+        /// Metadata JSON Schema
+        token_uri: Option<String>,
+        /// Any custom extension used by this contract
+        extension: T,
+    },
 
     /// Burn an NFT the sender has access to
     Burn { token_id: String },

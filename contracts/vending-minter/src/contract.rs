@@ -17,7 +17,7 @@ use cosmwasm_std::{
     MessageInfo, Order, Reply, ReplyOn, StdError, StdResult, Timestamp, Uint128, WasmMsg,
 };
 use cw2::set_contract_version;
-use cw721_base::{Extension, MintMsg};
+use cw721_base::Extension;
 use cw_utils::{may_pay, maybe_addr, nonpayable, parse_reply_instantiate_data};
 use rand_core::{RngCore, SeedableRng};
 use rand_xoshiro::Xoshiro128PlusPlus;
@@ -627,7 +627,7 @@ fn _execute_mint(
     };
 
     // Create mint msgs
-    let mint_msg = Sg721ExecuteMsg::<Extension, Empty>::Mint(MintMsg::<Extension> {
+    let mint_msg = Sg721ExecuteMsg::<Extension, Empty>::Mint {
         token_id: mintable_token_mapping.token_id.to_string(),
         owner: recipient_addr.to_string(),
         token_uri: Some(format!(
@@ -635,7 +635,7 @@ fn _execute_mint(
             config.extension.base_token_uri, mintable_token_mapping.token_id
         )),
         extension: None,
-    });
+    };
     let msg = CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: sg721_address.to_string(),
         msg: to_binary(&mint_msg)?,
