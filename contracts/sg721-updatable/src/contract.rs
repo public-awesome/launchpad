@@ -94,9 +94,11 @@ pub fn execute(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    msg: ExecuteMsg,
+    msg: ExecuteMsg<Empty>,
 ) -> Result<Response, BaseError> {
-    Sg721Contract::default().execute(deps, env, info, msg)
+    match msg {
+        _ => Sg721Contract::default().execute(deps, env, info, msg.into()),
+    }
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
