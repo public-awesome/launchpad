@@ -1,8 +1,9 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, StdResult};
+use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Empty, Env, Event, MessageInfo, StdResult};
 use cw2::set_contract_version;
 
+use cw_utils::nonpayable;
 use sg_std::fees::burn_and_distribute_fee;
 use sg_std::StargazeMsgWrapper;
 
@@ -14,7 +15,7 @@ use url::Url;
 use crate::msg::{
     CollectionInfoResponse, ExecuteMsg, InstantiateMsg, QueryMsg, RoyaltyInfoResponse,
 };
-use crate::state::{CollectionInfo, RoyaltyInfo, COLLECTION_INFO};
+use crate::state::{CollectionInfo, RoyaltyInfo, COLLECTION_INFO, FROZEN_TOKEN_METADATA};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sg-721";
@@ -79,6 +80,7 @@ pub fn instantiate(
         royalty_info,
     };
 
+    FROZEN_TOKEN_METADATA.save(deps.storage, &false)?;
     COLLECTION_INFO.save(deps.storage, &collection_info)?;
 
     Ok(Response::default()
@@ -95,10 +97,74 @@ pub fn execute(
     env: Env,
     info: MessageInfo,
     msg: ExecuteMsg<Empty>,
-) -> Result<Response, BaseError> {
+) -> Result<Response, ContractError> {
     match msg {
-        _ => Sg721Contract::default().execute(deps, env, info, msg.into()),
+        ExecuteMsg::FreezeTokenMetadata {} => execute_freeze_token_metadata(deps, env, info),
+        ExecuteMsg::UpdateTokenMetadata {
+            token_id,
+            token_uri,
+        } => execute_update_token_metadata(deps, env, info, token_id, token_uri),
+        _ => Sg721Contract::default()
+            .execute(deps, env, info, msg.into())
+            .map_err(|e| e.into()),
     }
+}
+
+pub fn execute_freeze_token_metadata(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+) -> Result<Response, ContractError> {
+    nonpayable(&info)?;
+    // Check if sender is creator
+    let collection_info: CollectionInfoResponse = query_config(deps.as_ref())?;
+    if info.sender != collection_info.creator {
+        return Err(ContractError::Base(BaseError::Unauthorized {}));
+    }
+
+    FROZEN_TOKEN_METADATA.save(deps.storage, &true)?;
+
+    let event = Event::new("freeze_token_metadata").add_attribute("frozen", "true");
+    Ok(Response::new().add_event(event))
+}
+
+pub fn execute_update_token_metadata(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    token_id: String,
+    token_uri: Option<String>,
+) -> Result<Response, ContractError> {
+    nonpayable(&info)?;
+    // Check if sender is creator
+    let owner = deps.api.addr_validate(info.sender.as_ref())?;
+    let collection_info: CollectionInfoResponse = query_config(deps.as_ref())?;
+    if owner != collection_info.creator {
+        return Err(ContractError::Base(BaseError::Unauthorized {}));
+    }
+
+    // Check if token metadata is frozen
+    let frozen = FROZEN_TOKEN_METADATA.load(deps.storage)?;
+    if frozen {
+        return Err(ContractError::TokenMetadataFrozen {});
+    }
+
+    // Update token metadata
+    Sg721Contract::default()
+        .tokens
+        .update(deps.storage, &token_id, |token| match token {
+            Some(mut token_info) => {
+                token_info.token_uri = token_uri.clone();
+                Ok(token_info)
+            }
+            None => Err(ContractError::TokenIdNotFound {}),
+        })?;
+
+    let event = Event::new("update_update_token_metadata")
+        .add_attribute("sender", info.sender)
+        .add_attribute("token_id", token_id)
+        .add_attribute("token_uri", token_uri.unwrap_or_default());
+    Ok(Response::new().add_event(event))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]

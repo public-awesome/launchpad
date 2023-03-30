@@ -33,6 +33,13 @@ impl RoyaltyInfoResponse {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub enum ExecuteMsg<T> {
+    /// Freeze token metadata so creator can no longer update token uris
+    FreezeTokenMetadata {},
+    /// Creator calls can update token uris
+    UpdateTokenMetadata {
+        token_id: String,
+        token_uri: Option<String>,
+    },
     // Sg721Base msgs
     TransferNft {
         recipient: String,
