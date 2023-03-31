@@ -22,7 +22,8 @@ use crate::msg::{
 use crate::state::{CollectionInfo, RoyaltyInfo, COLLECTION_INFO, FROZEN_TOKEN_METADATA};
 
 // version info for migration info
-const CONTRACT_NAME: &str = "crates.io:sg-721";
+const COMPATIBLE_MIGRATION_CONTRACT_NAME: &str = "crates.io:sg-721";
+const CONTRACT_NAME: &str = "crates.io:sg-721-updatable";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 const CREATION_FEE: u128 = 1_000_000_000;
@@ -202,7 +203,9 @@ fn query_config(deps: Deps) -> StdResult<CollectionInfoResponse> {
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
     let current_version = cw2::get_contract_version(deps.storage)?;
-    if current_version.contract != CONTRACT_NAME {
+    if ![CONTRACT_NAME, COMPATIBLE_MIGRATION_CONTRACT_NAME]
+        .contains(&current_version.contract.as_str())
+    {
         return Err(StdError::generic_err("Cannot upgrade to a different contract").into());
     }
     let version: Version = current_version
