@@ -1,6 +1,13 @@
+use cw_storage_plus::Item;
+use schemars::JsonSchema;
+use semver::Version;
+use serde::{Deserialize, Serialize};
+
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Empty, Env, Event, MessageInfo, StdResult};
+use cosmwasm_std::{
+    to_binary, Binary, Deps, DepsMut, Empty, Env, Event, MessageInfo, StdError, StdResult, Uint128,
+};
 use cw2::set_contract_version;
 
 use cw_utils::nonpayable;
@@ -193,6 +200,65 @@ fn query_config(deps: Deps) -> StdResult<CollectionInfoResponse> {
         external_link: info.external_link,
         royalty_info: royalty_info_res,
     })
+}
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
+    let current_version = cw2::get_contract_version(deps.storage)?;
+    if current_version.contract != CONTRACT_NAME {
+        return Err(StdError::generic_err("Cannot upgrade to a different contract").into());
+    }
+    let version: Version = current_version
+        .version
+        .parse()
+        .map_err(|_| StdError::generic_err("Invalid contract version"))?;
+    let new_version: Version = CONTRACT_VERSION
+        .parse()
+        .map_err(|_| StdError::generic_err("Invalid contract version"))?;
+
+    if version > new_version {
+        return Err(StdError::generic_err("Cannot upgrade to a previous contract version").into());
+    }
+    // if same version return
+    if version == new_version {
+        return Ok(Response::new());
+    }
+
+    // SudoParamsV015 represents the previous state from v0.15.0 version
+    #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+    pub struct SudoParamsV0801 {
+        pub trading_fee_percent: Decimal,
+        pub ask_expiry: ExpiryRange,
+        pub bid_expiry: ExpiryRange,
+        pub operators: Vec<Addr>,
+        pub max_finders_fee_percent: Decimal,
+        pub min_price: Uint128,
+        pub stale_bid_duration: Duration,
+        pub bid_removal_reward_percent: Decimal,
+    }
+
+    // load state that contains the old struct type
+    let params_item: Item<SudoParamsV0801> = Item::new("sudo-params");
+    let current_params = params_item.load(deps.storage)?;
+
+    // migrate to the new struct
+    let new_sudo_params = SudoParams {
+        trading_fee_percent: current_params.trading_fee_percent,
+        ask_expiry: current_params.ask_expiry,
+        bid_expiry: current_params.bid_expiry,
+        operators: current_params.operators,
+        max_finders_fee_percent: current_params.max_finders_fee_percent,
+        min_price: current_params.min_price,
+        stale_bid_duration: current_params.stale_bid_duration,
+        bid_removal_reward_percent: current_params.bid_removal_reward_percent,
+        listing_fee: Uint128::zero(),
+    };
+    // store migrated params
+    SUDO_PARAMS.save(deps.storage, &new_sudo_params)?;
+
+    // set new contract version
+    set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+    Ok(Response::new())
 }
 
 #[cfg(test)]
