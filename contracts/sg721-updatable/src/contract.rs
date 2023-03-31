@@ -193,9 +193,9 @@ pub fn execute_update_token_metadata(
 ) -> Result<Response, ContractError> {
     nonpayable(&info)?;
     // Check if sender is creator
-    let owner = deps.api.addr_validate(info.sender.as_ref())?;
+    let creator = deps.api.addr_validate(info.sender.as_ref())?;
     let collection_info: CollectionInfoResponse = query_config(deps.as_ref())?;
-    if owner != collection_info.creator {
+    if creator != collection_info.creator {
         return Err(ContractError::Base(BaseError::Unauthorized {}));
     }
 
