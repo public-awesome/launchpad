@@ -1700,3 +1700,39 @@ fn test_update_metadata() {
         .unwrap();
     assert_eq!(res.token_uri, Some(token_uri));
 }
+
+use cw2::set_contract_version;
+#[test]
+fn try_migrate() {
+    let mut deps = mock_dependencies_with_balance(&coins(2, "token"));
+    let env = mock_env();
+
+    // should error when different name
+    set_contract_version(&mut deps.storage, "crates.io:another-contract", "0.8.0").unwrap();
+    let err = sg721_updatable::contract::migrate(deps.as_mut(), env.clone(), Empty {}).unwrap_err();
+
+    assert_eq!(
+        err.to_string(),
+        "Generic error: Cannot upgrade to a different contract"
+    );
+
+    // should error when version is greater version
+    set_contract_version(&mut deps.storage, "crates.io:sg-721", "2.0.0").unwrap();
+    let err = sg721_updatable::contract::migrate(deps.as_mut(), env.clone(), Empty {}).unwrap_err();
+    assert_eq!(
+        err.to_string(),
+        "Generic error: Cannot upgrade to a previous contract version"
+    );
+
+    // // no op when same version
+    set_contract_version(
+        &mut deps.storage,
+        "crates.io:sg-721",
+        env!("CARGO_PKG_VERSION"),
+    )
+    .unwrap();
+    sg721_updatable::contract::migrate(deps.as_mut(), env.clone(), Empty {}).unwrap();
+
+    set_contract_version(&mut deps.storage, "crates.io:sg721-updatable", "0.8.0").unwrap();
+    sg721_updatable::contract::migrate(deps.as_mut(), env, Empty {}).unwrap();
+}
