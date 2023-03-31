@@ -200,7 +200,7 @@ fn initialization() {
 
     // Check valid addr
     let addr = "earth1";
-    let res = deps.api.addr_validate(&(*addr));
+    let res = deps.api.addr_validate(addr);
     assert!(res.is_ok());
 
     // 0 per address limit returns error
@@ -1489,7 +1489,7 @@ fn test_update_none_royalties() {
         .unwrap();
     let config: ConfigResponse = router
         .wrap()
-        .query_wasm_smart(minter_addr.clone(), &QueryMsg::Config {})
+        .query_wasm_smart(minter_addr, &QueryMsg::Config {})
         .unwrap();
 
     let update_royalty_msg: Sg721UpdatableExecuteMsg<Extension> =
@@ -1574,7 +1574,7 @@ fn test_update_royalties() {
         .unwrap();
     let config: ConfigResponse = router
         .wrap()
-        .query_wasm_smart(minter_addr.clone(), &QueryMsg::Config {})
+        .query_wasm_smart(minter_addr, &QueryMsg::Config {})
         .unwrap();
 
     let update_royalty_msg: sg721_updatable::msg::ExecuteMsg<Extension> =
@@ -1667,8 +1667,8 @@ fn test_update_metadata() {
     // mint
     let mint_msg = ExecuteMsg::Mint {};
     let res = router.execute_contract(
-        buyer.clone(),
-        minter_addr.clone(),
+        buyer,
+        minter_addr,
         &mint_msg,
         &coins(UNIT_PRICE, NATIVE_DENOM),
     );

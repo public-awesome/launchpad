@@ -4,7 +4,7 @@ use cw721_base::msg::QueryMsg as Cw721QueryMsg;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct InstantiateMsg {
     pub name: String,
     pub symbol: String,
@@ -12,7 +12,7 @@ pub struct InstantiateMsg {
     pub collection_info: CollectionInfo<RoyaltyInfoResponse>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct RoyaltyInfoResponse {
     pub payment_address: String,
     pub share: Decimal,
@@ -30,7 +30,7 @@ impl RoyaltyInfoResponse {
 
 pub type ExecuteMsg = cw721_base::ExecuteMsg<Empty>;
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
     OwnerOf {
@@ -139,7 +139,7 @@ impl From<QueryMsg> for Cw721QueryMsg {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct CollectionInfoResponse {
     pub creator: String,
     pub description: String,

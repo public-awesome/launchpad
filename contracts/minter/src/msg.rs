@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use sg721::msg::InstantiateMsg as Sg721InstantiateMsg;
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct InstantiateMsg {
     pub base_token_uri: String,
     pub num_tokens: u32,
@@ -16,7 +16,7 @@ pub struct InstantiateMsg {
     pub whitelist: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
     Mint {},
@@ -30,7 +30,7 @@ pub enum ExecuteMsg {
     RemoveDiscountPrice {},
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
     Config {},
@@ -40,7 +40,7 @@ pub enum QueryMsg {
     MintCount { address: String },
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct ConfigResponse {
     pub admin: String,
     pub base_token_uri: String,
@@ -54,17 +54,17 @@ pub struct ConfigResponse {
     pub whitelist: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct MintableNumTokensResponse {
     pub count: u32,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct StartTimeResponse {
     pub start_time: String,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct MintPriceResponse {
     pub public_price: Coin,
     pub whitelist_price: Option<Coin>,
@@ -72,7 +72,7 @@ pub struct MintPriceResponse {
     pub current_price: Coin,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct MintCountResponse {
     pub address: String,
     pub count: u32,

@@ -198,7 +198,7 @@ fn initialization() {
 
     // Check valid addr
     let addr = "earth1";
-    let res = deps.api.addr_validate(&(*addr));
+    let res = deps.api.addr_validate(addr);
     assert!(res.is_ok());
 
     // 0 per address limit returns error

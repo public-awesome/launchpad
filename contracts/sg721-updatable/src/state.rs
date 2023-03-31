@@ -3,7 +3,7 @@ use cw_storage_plus::Item;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct CollectionInfo<T> {
     pub creator: String,
     pub description: String,
@@ -12,7 +12,7 @@ pub struct CollectionInfo<T> {
     pub royalty_info: Option<T>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct RoyaltyInfo {
     pub payment_address: Addr,
     pub share: Decimal,
