@@ -1,17 +1,21 @@
 [package]
 name = "sg721-updatable"
-version = "0.1.0"
 authors = [
     "John Y <j@noreply.publicawesome.com>",
     "Shane Vitarana <s@noreply.publicawesome.com>",
 ]
-edition = "2021"
-
 exclude = [
     # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
     "contract.wasm",
     "hash.txt",
 ]
+description = "Stargaze Updatable NFT collection contract"
+version = { workspace = true }
+edition = { workspace = true }
+homepage = { workspace = true }
+repository = { workspace = true }
+license = { workspace = true }
+
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
