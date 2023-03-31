@@ -3,7 +3,8 @@ use semver::Version;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Binary, Deps, DepsMut, Empty, Env, Event, MessageInfo, StdError, StdResult,
+    to_binary, Binary, Decimal, Deps, DepsMut, Empty, Env, Event, MessageInfo, StdError, StdResult,
+    Uint128,
 };
 use cw2::set_contract_version;
 
@@ -119,10 +120,47 @@ pub fn execute(
             token_id,
             token_uri,
         } => execute_update_token_metadata(deps, env, info, token_id, token_uri),
+        ExecuteMsg::UpdateRoyaltyInfo {
+            payment_address,
+            share_bps,
+        } => execute_update_royalty_info(deps, info, payment_address, share_bps),
         _ => Sg721Contract::default()
             .execute(deps, env, info, msg.into())
             .map_err(|e| e.into()),
     }
+}
+
+pub fn execute_update_royalty_info(
+    deps: DepsMut,
+    info: MessageInfo,
+    payment_address: String,
+    share_bps: u64,
+) -> Result<Response, ContractError> {
+    let payment_addr = deps.api.addr_validate(&payment_address)?;
+    let share = Decimal::percent(share_bps) / Uint128::from(100u128);
+
+    let mut collection_info = COLLECTION_INFO.load(deps.storage)?;
+    let current_royalty_info = collection_info.royalty_info;
+
+    if let Some(current_royalty_info) = current_royalty_info {
+        if share > current_royalty_info.share {
+            return Err(ContractError::RoyaltyShareIncreased {});
+        }
+    } else {
+        return Err(ContractError::RoyaltyShareIncreased {});
+    }
+
+    collection_info.royalty_info = Some(RoyaltyInfo {
+        payment_address: payment_addr,
+        share,
+    });
+    COLLECTION_INFO.save(deps.storage, &collection_info)?;
+
+    let event = Event::new("update_royalty_info")
+        .add_attribute("sender", info.sender)
+        .add_attribute("payment_address", payment_address)
+        .add_attribute("share", share.to_string());
+    Ok(Response::new().add_event(event))
 }
 
 pub fn execute_freeze_token_metadata(

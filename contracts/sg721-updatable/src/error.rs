@@ -36,6 +36,9 @@ pub enum ContractError {
     #[error("Description too long")]
     DescriptionTooLong {},
 
+    #[error("Royalty share increased")]
+    RoyaltyShareIncreased {},
+
     #[error("{0}")]
     Payment(#[from] PaymentError),
 
@@ -48,14 +51,3 @@ pub enum ContractError {
     #[error("{0}")]
     Base(#[from] cw721_base::ContractError),
 }
-
-// impl From<ContractError> for Cw721ContractError {
-//     fn from(err: ContractError) -> Cw721ContractError {
-//         match err {
-//             ContractError::Unauthorized {} => Cw721ContractError::Unauthorized {},
-//             ContractError::Claimed {} => Cw721ContractError::Claimed {},
-//             ContractError::Expired {} => Cw721ContractError::Expired {},
-//             _ => unreachable!("cannot convert {:?} to Cw721ContractError", err),
-//         }
-//     }
-// }

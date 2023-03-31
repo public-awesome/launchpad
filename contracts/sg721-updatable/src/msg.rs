@@ -69,11 +69,10 @@ pub enum ExecuteMsg<T> {
     Burn {
         token_id: String,
     },
-    // TODO
-    // UpdateCollectionInfo {
-    //     collection_info: UpdateCollectionInfoMsg<RoyaltyInfoResponse>,
-    // },
-    // FreezeCollectionInfo {},
+    UpdateRoyaltyInfo {
+        payment_address: String,
+        share_bps: u64,
+    },
     UpdateTradingStartTime(Option<Timestamp>),
 
     Mint(MintMsg<T>),
