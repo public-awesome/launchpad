@@ -48,6 +48,7 @@ cw-utils = "0.13.4"
 schemars = "0.8"
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 sg721 = { path = "../sg721", features = ["library"] }
+sg721-updatable = { path = "../sg721-updatable", features = ["library"] }
 thiserror = { version = "1.0" }
 url = "2.2.0"
 sg-std = { path = "../../packages/sg-std" }

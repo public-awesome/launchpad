@@ -636,6 +636,7 @@ dependencies = [
  "serde",
  "sg-std",
  "sg721",
+ "sg721-updatable",
  "thiserror",
  "url",
  "whitelist",

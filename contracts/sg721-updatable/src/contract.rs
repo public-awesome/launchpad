@@ -30,11 +30,11 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 const CREATION_FEE: u128 = 1_000_000_000;
 
 // Disable instantiation for production build
-#[cfg(not(test))]
-const DISABLE_INSTANTIATE: bool = true;
+// #[cfg(not(test))]
+// const DISABLE_INSTANTIATE: bool = true;
 
-#[cfg(test)]
-const DISABLE_INSTANTIATE: bool = false;
+// #[cfg(test)]
+// const DISABLE_INSTANTIATE: bool = false;
 
 type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 pub type Sg721Contract<'a> = cw721_base::Cw721Contract<'a, Empty, StargazeMsgWrapper>;
@@ -46,9 +46,6 @@ pub fn instantiate(
     info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
-    if DISABLE_INSTANTIATE {
-        return Err(ContractError::Base(BaseError::Unauthorized {}));
-    }
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
     let fee_msgs = burn_and_distribute_fee(env, &info, CREATION_FEE)?;
@@ -136,10 +133,16 @@ pub fn execute_update_royalty_info(
     payment_address: String,
     share_bps: u64,
 ) -> Result<Response, ContractError> {
+    nonpayable(&info)?;
+    let mut collection_info = COLLECTION_INFO.load(deps.storage)?;
+    // check sender is authorized
+    if info.sender != collection_info.creator {
+        return Err(ContractError::Base(BaseError::Unauthorized {}));
+    }
+
     let payment_addr = deps.api.addr_validate(&payment_address)?;
     let share = Decimal::percent(share_bps) / Uint128::from(100u128);
 
-    let mut collection_info = COLLECTION_INFO.load(deps.storage)?;
     let current_royalty_info = collection_info.royalty_info;
 
     if let Some(current_royalty_info) = current_royalty_info {
