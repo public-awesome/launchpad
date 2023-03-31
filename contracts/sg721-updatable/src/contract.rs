@@ -30,11 +30,11 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 const CREATION_FEE: u128 = 1_000_000_000;
 
 // Disable instantiation for production build
-// #[cfg(not(test))]
-// const DISABLE_INSTANTIATE: bool = true;
+#[cfg(target = "wasm32-unknown-unknown")]
+const ENABLE_INSTANTIATE: bool = false;
 
-// #[cfg(test)]
-// const DISABLE_INSTANTIATE: bool = false;
+#[cfg(not(target = "wasm32-unknown-unknown"))]
+const ENABLE_INSTANTIATE: bool = true;
 
 type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 pub type Sg721Contract<'a> = cw721_base::Cw721Contract<'a, Empty, StargazeMsgWrapper>;
@@ -46,6 +46,9 @@ pub fn instantiate(
     info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
+    if !ENABLE_INSTANTIATE {
+        return Err(ContractError::Base(BaseError::Unauthorized {}));
+    }
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
     let fee_msgs = burn_and_distribute_fee(env, &info, CREATION_FEE)?;
