@@ -23,7 +23,7 @@ use crate::state::{CollectionInfo, RoyaltyInfo, COLLECTION_INFO, FROZEN_TOKEN_ME
 
 // version info for migration info
 const COMPATIBLE_MIGRATION_CONTRACT_NAME: &str = "crates.io:sg-721";
-const CONTRACT_NAME: &str = "crates.io:sg-721-updatable";
+const CONTRACT_NAME: &str = "crates.io:sg721-updatable";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 const CREATION_FEE: u128 = 1_000_000_000;
