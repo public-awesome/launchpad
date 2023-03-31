@@ -925,6 +925,7 @@ dependencies = [
  "cw721",
  "cw721-base",
  "schemars",
+ "semver",
  "serde",
  "sg-std",
  "thiserror",
