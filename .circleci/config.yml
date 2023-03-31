@@ -57,7 +57,7 @@ jobs:
             - /usr/local/cargo/registry
             - target
           key: cargocache-sg721-rust:1.64.0-{{ checksum "~/project/Cargo.lock" }}
- contract_sg721_updatable:
+  contract_sg721_updatable:
     docker:
       - image: rust:1.64.0
     working_directory: ~/project/contracts/sg721-updatable
