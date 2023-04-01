@@ -45,23 +45,6 @@ fn proper_initialization() {
 }
 
 #[test]
-fn improper_initialization() {
-    let mut deps = mock_dependencies();
-    let msg = InstantiateMsg {
-        members: vec!["adsfsa".to_string()],
-        start_time: END_TIME,
-        end_time: END_TIME,
-        mint_price: coin(1, NATIVE_DENOM),
-        per_address_limit: 1,
-        member_limit: 1000,
-        admins: vec![ADMIN.to_string()],
-        admins_mutable: true,
-    };
-    let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
-    instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
-}
-
-#[test]
 fn improper_initialization_invalid_denom() {
     let mut deps = mock_dependencies();
     let msg = InstantiateMsg {

@@ -1,5 +1,6 @@
 mod address_limit;
 mod allowed_code_ids;
+mod frozen_factory;
 mod happy_unhappy;
 mod mint_and_burn;
 mod splits;

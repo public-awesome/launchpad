@@ -1,51 +1,51 @@
-import codegen from '@cosmwasm/ts-codegen';
+import codegen from "@cosmwasm/ts-codegen";
 
 codegen({
   contracts: [
     {
-      name: 'BaseFactory',
-      dir: '../contracts/base-factory/schema',
+      name: "BaseFactory",
+      dir: "../contracts/factories/base-factory/schema",
     },
     {
-      name: 'BaseMinter',
-      dir: '../contracts/base-minter/schema',
+      name: "BaseMinter",
+      dir: "../contracts/minters/base-minter/schema",
     },
     {
-      name: 'Sg721Base',
-      dir: '../contracts/sg721-base/schema',
+      name: "Sg721Base",
+      dir: "../contracts/collections/sg721-base/schema",
     },
     {
-      name: 'Sg721MetadataOnchain',
-      dir: '../contracts/sg721-metadata-onchain/schema',
+      name: "Sg721MetadataOnchain",
+      dir: "../contracts/collections/sg721-metadata-onchain/schema",
     },
     {
-      name: 'Sg721Updatable',
-      dir: '../contracts/sg721-updatable/schema',
+      name: "Sg721Updatable",
+      dir: "../contracts/collections/sg721-updatable/schema",
     },
     {
-      name: 'Sg721Nt',
-      dir: '../contracts/sg721-nt/schema',
+      name: "Sg721Nt",
+      dir: "../contracts/collections/sg721-nt/schema",
     },
     {
-      name: 'Splits',
-      dir: '../contracts/splits/schema',
+      name: "Splits",
+      dir: "../contracts/splits/schema",
     },
     {
-      name: 'VendingFactory',
-      dir: '../contracts/vending-factory/schema',
+      name: "VendingFactory",
+      dir: "../contracts/factories/vending-factory/schema",
     },
     {
-      name: 'VendingMinter',
-      dir: '../contracts/vending-minter/schema',
+      name: "VendingMinter",
+      dir: "../contracts/minters/vending-minter/schema",
     },
   ],
-  outPath: './src/',
+  outPath: "./src/",
 
   // options are completely optional ;)
   options: {
     bundle: {
-      bundleFile: 'index.ts',
-      scope: 'contracts',
+      bundleFile: "index.ts",
+      scope: "contracts",
     },
     types: {
       enabled: true,
@@ -56,7 +56,7 @@ codegen({
     reactQuery: {
       enabled: false,
       optionalClient: true,
-      version: 'v4',
+      version: "v4",
       mutations: true,
       queryKeys: true,
     },
@@ -68,5 +68,5 @@ codegen({
     },
   },
 }).then(() => {
-  console.log('✨ all done!');
+  console.log("✨ all done!");
 });

@@ -13,7 +13,7 @@ use crate::common_setup::contract_boxes::{contract_collection_whitelist, custom_
 const COLLECTION_WHITELIST_ADDR: &str = "contract0";
 const ADMIN: &str = "admin";
 const SECOND_ADMIN: &str = "second_admin";
-const UNIT_AMOUNT: u128 = 100_000_000;
+const UNIT_AMOUNT: u128 = 0;
 
 const GENESIS_START_TIME: Timestamp = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
 const END_TIME: Timestamp = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 1000);

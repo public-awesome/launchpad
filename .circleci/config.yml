@@ -30,7 +30,7 @@ jobs:
   contract_sg721_base:
     docker:
       - image: rust:1.64.0
-    working_directory: ~/project/contracts/sg721-base
+    working_directory: ~/project/contracts/collections/sg721-base
     steps:
       - checkout:
           path: ~/project
@@ -66,7 +66,7 @@ jobs:
   contract_sg721_nt:
     docker:
       - image: rust:1.64.0
-    working_directory: ~/project/contracts/sg721-nt
+    working_directory: ~/project/contracts/collections/sg721-nt
     steps:
       - checkout:
           path: ~/project
@@ -102,7 +102,7 @@ jobs:
   contract_base_factory:
     docker:
       - image: rust:1.64.0
-    working_directory: ~/project/contracts/base-factory
+    working_directory: ~/project/contracts/factories/base-factory
     steps:
       - checkout:
           path: ~/project
@@ -138,7 +138,7 @@ jobs:
   contract_base_minter:
     docker:
       - image: rust:1.64.0
-    working_directory: ~/project/contracts/base-minter
+    working_directory: ~/project/contracts/minters/base-minter
     steps:
       - checkout:
           path: ~/project
@@ -174,7 +174,7 @@ jobs:
   contract_vending_factory:
     docker:
       - image: rust:1.64.0
-    working_directory: ~/project/contracts/vending-factory
+    working_directory: ~/project/contracts/factories/vending-factory
     steps:
       - checkout:
           path: ~/project
@@ -210,7 +210,7 @@ jobs:
   contract_vending_minter:
     docker:
       - image: rust:1.64.0
-    working_directory: ~/project/contracts/vending-minter
+    working_directory: ~/project/contracts/minters/vending-minter
     steps:
       - checkout:
           path: ~/project
@@ -246,7 +246,7 @@ jobs:
   contract_whitelist:
     docker:
       - image: rust:1.64.0
-    working_directory: ~/project/contracts/whitelist
+    working_directory: ~/project/contracts/whitelists/whitelist
     steps:
       - checkout:
           path: ~/project
@@ -439,7 +439,32 @@ jobs:
       - run:
           name: Build Wasm Release
           command: |
-            for C in ./contracts/*/
+            for C in ./contracts/collections/*/
+            do
+              echo "Compiling `basename $C`..."
+              (cd $C && cargo build --release --lib --target wasm32-unknown-unknown --locked)
+            done
+            for C in ./contracts/factories/*/
+            do
+              echo "Compiling `basename $C`..."
+              (cd $C && cargo build --release --lib --target wasm32-unknown-unknown --locked)
+            done
+            for C in ./contracts/minters/*/
+            do
+              echo "Compiling `basename $C`..."
+              (cd $C && cargo build --release --lib --target wasm32-unknown-unknown --locked)
+            done
+            for C in ./contracts/sg-eth-airdrop/
+            do
+              echo "Compiling `basename $C`..."
+              (cd $C && cargo build --release --lib --target wasm32-unknown-unknown --locked)
+            done
+            for C in ./contracts/splits/
+            do
+              echo "Compiling `basename $C`..."
+              (cd $C && cargo build --release --lib --target wasm32-unknown-unknown --locked)
+            done
+            for C in ./contracts/whitelists/*/
             do
               echo "Compiling `basename $C`..."
               (cd $C && cargo build --release --lib --target wasm32-unknown-unknown --locked)

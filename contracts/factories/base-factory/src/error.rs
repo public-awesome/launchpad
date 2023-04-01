@@ -20,6 +20,9 @@ pub enum ContractError {
     #[error("InvalidDenom")]
     InvalidDenom {},
 
+    #[error("Factory frozen. Cannot make new minters.")]
+    Frozen {},
+
     #[error("InvalidCollectionCodeId {code_id}")]
     InvalidCollectionCodeId { code_id: u64 },
 }

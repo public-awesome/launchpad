@@ -138,6 +138,7 @@
         "code_id",
         "creation_fee",
         "extension",
+        "frozen",
         "max_trading_offset_secs",
         "min_mint_price",
         "mint_fee_bps"
@@ -162,6 +163,9 @@
         },
         "extension": {
           "$ref": "#/definitions/ParamsExtension"
+        },
+        "frozen": {
+          "type": "boolean"
         },
         "max_trading_offset_secs": {
           "type": "integer",
