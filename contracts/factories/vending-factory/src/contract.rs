@@ -83,10 +83,6 @@ pub fn execute_create_minter(
         });
     }
 
-    if NATIVE_DENOM != msg.init_msg.mint_price.denom {
-        return Err(ContractError::BaseError(BaseContractError::InvalidDenom {}));
-    }
-
     if params.min_mint_price.amount > msg.init_msg.mint_price.amount {
         return Err(ContractError::InsufficientMintPrice {
             expected: params.min_mint_price.amount.u128(),
