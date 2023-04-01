@@ -74,6 +74,40 @@ pub fn vending_minter_per_address_limit(
     }
 }
 
+pub fn vending_minter_with_ibc_asset(
+    num_tokens: u32,
+    per_address_limit: u32,
+) -> MinterTemplateResponse<Accounts> {
+    let mut app = custom_mock_app();
+    let (creator, buyer) = setup_accounts(&mut app);
+    let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
+    let collection_params = mock_collection_params_1(Some(start_time));
+    let init_msg = vending_factory::msg::VendingMinterInitMsgExtension {
+        base_token_uri: "ipfs://aldkfjads".to_string(),
+        payment_address: None,
+        start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
+        num_tokens,
+        mint_price: coin(MIN_MINT_PRICE, "ibc/asset".to_string()),
+        per_address_limit,
+        whitelist: None,
+    };
+
+    let minter_params = minter_params_all(num_tokens, None, None, Some(init_msg));
+    let code_ids = vending_minter_code_ids(&mut app);
+    let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
+        &mut app,
+        creator.clone(),
+        vec![collection_params],
+        vec![minter_params],
+        code_ids,
+    );
+    MinterTemplateResponse {
+        router: app,
+        collection_response_vec: minter_collection_response,
+        accts: Accounts { creator, buyer },
+    }
+}
+
 pub fn vending_minter_with_start_time(
     num_tokens: u32,
     start_time: Timestamp,
