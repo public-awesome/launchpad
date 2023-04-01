@@ -110,10 +110,6 @@ mod tests {
     }
 
     mod init {
-
-        use std::error::Error;
-
-        use cosmwasm_std::{StdError, StdResult};
         use cw721_base::MinterResponse;
 
         use crate::common_setup::setup_minter::vending_minter::mock_params::mock_create_minter_init_msg;
