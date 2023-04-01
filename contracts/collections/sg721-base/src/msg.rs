@@ -210,3 +210,13 @@ impl CollectionInfoResponse {
         }
     }
 }
+
+#[cw_serde]
+pub enum NftParams<T> {
+    NftData {
+        token_id: String,
+        owner: String,
+        token_uri: Option<String>,
+        extension: T,
+    },
+}

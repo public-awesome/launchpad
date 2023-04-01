@@ -16,7 +16,7 @@ use sg721::{
 };
 use sg_std::Response;
 
-use crate::msg::{CollectionInfoResponse, QueryMsg};
+use crate::msg::{CollectionInfoResponse, NftParams, QueryMsg};
 use crate::{ContractError, Sg721Contract};
 
 const MAX_DESCRIPTION_LENGTH: u32 = 512;
@@ -156,7 +156,17 @@ where
                 token_uri,
                 owner,
                 extension,
-            } => self.mint(deps, env, info, token_id, owner, token_uri, extension),
+            } => self.mint(
+                deps,
+                env,
+                info,
+                NftParams::NftData {
+                    token_id,
+                    owner,
+                    token_uri,
+                    extension,
+                },
+            ),
             ExecuteMsg::Extension { msg: _ } => todo!(),
         }
     }
@@ -280,12 +290,17 @@ where
         deps: DepsMut,
         _env: Env,
         info: MessageInfo,
-        token_id: String,
-        owner: String,
-        token_uri: Option<String>,
-        extension: T,
+        nft_data: NftParams<T>,
     ) -> Result<Response, ContractError> {
         let minter = self.minter.load(deps.storage)?;
+        let (token_id, owner, token_uri, extension) = match nft_data {
+            NftParams::NftData {
+                token_id,
+                owner,
+                token_uri,
+                extension,
+            } => (token_id, owner, token_uri, extension),
+        };
 
         if info.sender != minter {
             return Err(ContractError::Unauthorized {});

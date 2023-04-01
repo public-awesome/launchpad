@@ -11,6 +11,7 @@ use sg721::InstantiateMsg;
 use sg721_base::Sg721Contract;
 pub type QueryMsg = sg721_base::msg::QueryMsg;
 pub type Sg721NonTransferableContract<'a> = Sg721Contract<'a, Extension>;
+use sg721_base::msg::NftParams;
 
 #[cfg(not(feature = "library"))]
 pub mod entry {
@@ -55,8 +56,17 @@ pub mod entry {
                 token_uri,
                 owner,
                 extension,
-            } => Sg721NonTransferableContract::default()
-                .mint(deps, env, info, token_id, owner, token_uri, extension),
+            } => Sg721NonTransferableContract::default().mint(
+                deps,
+                env,
+                info,
+                NftParams::NftData {
+                    token_id,
+                    owner,
+                    token_uri,
+                    extension,
+                },
+            ),
             ExecuteMsg::UpdateCollectionInfo {
                 new_collection_info,
             } => Sg721NonTransferableContract::default().update_collection_info(
