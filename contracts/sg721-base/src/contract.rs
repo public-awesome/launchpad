@@ -14,7 +14,7 @@ use sg721::{
     CollectionInfo, ExecuteMsg, InstantiateMsg, RoyaltyInfo, RoyaltyInfoResponse,
     UpdateCollectionInfoMsg,
 };
-use sg_std::{Response, StargazeMsgWrapper};
+use sg_std::Response;
 
 use crate::msg::{CollectionInfoResponse, QueryMsg};
 use crate::{ContractError, Sg721Contract};
@@ -54,30 +54,7 @@ where
 
         let minter = deps.api.addr_validate(&msg.minter)?;
         self.minter.save(deps.storage, &minter)?;
-        use cw_ownable;
         cw_ownable::initialize_owner(deps.storage, deps.api, Some(&msg.minter))?;
-        // self.parent.update_ownership();
-        // deps: DepsMut,
-        // env: Env,
-        // info: MessageInfo,
-        // action: cw_ownable::Action,
-        use cw721_base::Ownership;
-        // cw721_base::Cw721Contract::<
-        //     'a,
-        //     T,
-        //     StargazeMsgWrapper,
-        //     cosmwasm_std::Empty,
-        //     cosmwasm_std::Empty,
-        // >::initialize_owner();
-        // self.parent.initialize_owner();
-
-        // update_ownership(
-        //     deps.as_ref(),
-        //     _env,
-        //     info,
-        //     cw721_base::Action::TransferOwnership { new_owner: (), expiry: () }
-        //     msg.collection_info.creator,
-        // );
 
         // sg721 instantiation
         if msg.collection_info.description.len() > MAX_DESCRIPTION_LENGTH as usize {
