@@ -49,4 +49,7 @@ pub enum ContractError {
 
     #[error("MinterNotFound")]
     MinterNotFound {},
+
+    #[error("Ownership Update Error: {error}")]
+    OwnershipUpdateError { error: String },
 }

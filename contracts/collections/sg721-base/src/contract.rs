@@ -168,6 +168,17 @@ where
                 },
             ),
             ExecuteMsg::Extension { msg: _ } => todo!(),
+            sg721::ExecuteMsg::UpdateOwnership(msg) => self
+                .parent
+                .execute(
+                    deps,
+                    env,
+                    info,
+                    cw721_base::ExecuteMsg::UpdateOwnership(msg),
+                )
+                .map_err(|e| ContractError::OwnershipUpdateError {
+                    error: e.to_string(),
+                }),
         }
     }
 

@@ -1,12 +1,21 @@
 use cosmwasm_schema::cw_serde;
+use cosmwasm_schema::QueryResponses;
 use cosmwasm_std::{
     coin, Addr, BankMsg, Binary, Empty, Event, StdError, StdResult, Timestamp, Uint128,
 };
+use cw721::{
+    AllNftInfoResponse, ApprovalResponse, ApprovalsResponse, ContractInfoResponse, NftInfoResponse,
+    NumTokensResponse, OperatorsResponse, OwnerOfResponse, TokensResponse,
+};
+use cw721_base::msg::MinterResponse;
 use cw721_base::msg::QueryMsg as Cw721QueryMsg;
+use cw_ownable::cw_ownable_execute;
+use cw_ownable::cw_ownable_query;
 use cw_utils::Expiration;
 use sg721::RoyaltyInfoResponse;
 use sg_std::{Response, SubMsg, NATIVE_DENOM};
 
+#[cw_ownable_execute]
 #[cw_serde]
 pub enum ExecuteMsg<T, E> {
     /// Transfer is a base message to move a token to another account without triggering actions
@@ -57,46 +66,58 @@ pub enum ExecuteMsg<T, E> {
     Extension { msg: E },
 }
 
+#[cw_ownable_query]
+#[derive(QueryResponses)]
 #[cw_serde]
 pub enum QueryMsg {
+    #[returns(OwnerOfResponse)]
     OwnerOf {
         token_id: String,
         include_expired: Option<bool>,
     },
+    #[returns(ApprovalResponse)]
     Approval {
         token_id: String,
         spender: String,
         include_expired: Option<bool>,
     },
+    #[returns(ApprovalsResponse)]
     Approvals {
         token_id: String,
         include_expired: Option<bool>,
     },
+    #[returns(OperatorsResponse)]
     AllOperators {
         owner: String,
         include_expired: Option<bool>,
         start_after: Option<String>,
         limit: Option<u32>,
     },
+    #[returns(NumTokensResponse)]
     NumTokens {},
+    #[returns(ContractInfoResponse)]
     ContractInfo {},
-    NftInfo {
-        token_id: String,
-    },
+    #[returns(NftInfoResponse<Empty>)]
+    NftInfo { token_id: String },
+    #[returns(AllNftInfoResponse<Empty>)]
     AllNftInfo {
         token_id: String,
         include_expired: Option<bool>,
     },
+    #[returns(TokensResponse)]
     Tokens {
         owner: String,
         start_after: Option<String>,
         limit: Option<u32>,
     },
+    #[returns(TokensResponse)]
     AllTokens {
         start_after: Option<String>,
         limit: Option<u32>,
     },
+    #[returns(MinterResponse)]
     Minter {},
+    #[returns(MinterResponse)]
     CollectionInfo {},
 }
 
@@ -160,6 +181,7 @@ impl From<QueryMsg> for Cw721QueryMsg<Empty> {
                 Cw721QueryMsg::AllTokens { start_after, limit }
             }
             QueryMsg::Minter {} => Cw721QueryMsg::Minter {},
+            QueryMsg::Ownership {} => Cw721QueryMsg::Ownership {},
             _ => unreachable!("cannot convert {:?} to Cw721QueryMsg", msg),
         }
     }
