@@ -25,7 +25,7 @@ fn configure_mock_minter(app: &mut StargazeApp, creator: Addr) {
     let factory_code_id = app.store_code(contract_vending_factory());
     println!("factory_code_id: {}", factory_code_id);
 
-    let mut params = mock_params();
+    let mut params = mock_params(None);
     params.code_id = minter_code_id;
 
     let factory_addr = app

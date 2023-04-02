@@ -47,7 +47,11 @@ pub fn setup_minter_contract(setup_params: MinterSetupParams) -> MinterCollectio
     let start_time = setup_params.start_time;
     let init_msg = setup_params.init_msg;
 
-    let mut params = mock_params();
+    let mint_denom: Option<String> = init_msg
+        .as_ref()
+        .map(|msg| msg.mint_price.denom.to_string());
+
+    let mut params = mock_params(mint_denom);
     params.code_id = minter_code_id;
 
     let factory_addr = router

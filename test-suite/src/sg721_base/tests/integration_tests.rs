@@ -30,7 +30,7 @@ mod tests {
         let factory_id = app.store_code(contract_vending_factory());
         let minter_id = app.store_code(contract_vending_minter());
 
-        let mut params = mock_params();
+        let mut params = mock_params(None);
         params.code_id = minter_id;
 
         let msg = FactoryInstantiateMsg { params };
@@ -292,7 +292,7 @@ mod tests {
                 .unwrap();
             let default_start_time = mock_init_extension(None, None)
                 .start_time
-                .plus_seconds(mock_params().max_trading_offset_secs);
+                .plus_seconds(mock_params(None).max_trading_offset_secs);
             assert_eq!(res.start_trading_time, Some(default_start_time));
 
             // update collection info
