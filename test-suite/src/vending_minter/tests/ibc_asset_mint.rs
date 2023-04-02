@@ -34,6 +34,5 @@ fn mint_with_ibc_asset() {
     // Mint succeeds
     let mint_msg = ExecuteMsg::Mint {};
     let res = router.execute_contract(buyer, minter_addr, &mint_msg, &mint_price);
-    println!("{:?}", res);
-    // assert!(res.is_ok());
+    assert!(res.is_ok());
 }
