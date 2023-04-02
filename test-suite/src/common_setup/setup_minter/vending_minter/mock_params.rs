@@ -55,7 +55,7 @@ pub fn mock_params(mint_denom: Option<String>) -> VendingMinterParams {
         creation_fee: coin(CREATION_FEE, NATIVE_DENOM),
         min_mint_price: coin(
             MIN_MINT_PRICE,
-            mint_denom.unwrap_or(NATIVE_DENOM.to_string()),
+            mint_denom.unwrap_or_else(|| NATIVE_DENOM.to_string()),
         ),
         mint_fee_bps: MINT_FEE_FAIR_BURN,
         max_trading_offset_secs: 60 * 60 * 24 * 7,
