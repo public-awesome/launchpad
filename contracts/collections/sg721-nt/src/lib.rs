@@ -90,11 +90,7 @@ pub mod entry {
     }
 
     #[entry_point]
-    pub fn migrate(
-        deps: DepsMut,
-        _env: Env,
-        _msg: Empty,
-    ) -> Result<cosmwasm_response, ContractError> {
+    pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
         // make sure the correct contract is being upgraded, and it's being
         // upgraded from the correct version.
         let version = cw2::get_contract_version(deps.storage)?;

@@ -21,7 +21,6 @@ use crate::msg::{CollectionInfoResponse, NftParams, QueryMsg};
 use crate::{ContractError, Sg721Contract};
 
 use crate::entry::{CONTRACT_NAME, CONTRACT_VERSION, EXPECTED_FROM_VERSION};
-use cosmwasm_std::Response as cosmwasm_response;
 
 const MAX_DESCRIPTION_LENGTH: u32 = 512;
 
@@ -374,11 +373,7 @@ where
         })
     }
 
-    pub fn migrate(
-        deps: DepsMut,
-        _env: Env,
-        _msg: Empty,
-    ) -> Result<cosmwasm_response, ContractError> {
+    pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
         // make sure the correct contract is being upgraded, and it's being
         // upgraded from the correct version.
         let version = cw2::get_contract_version(deps.storage)?;

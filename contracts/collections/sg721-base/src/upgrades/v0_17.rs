@@ -1,10 +1,11 @@
 use cosmwasm_std::{CustomMsg, DepsMut, Response};
 use cw721_base_016 as v16;
 use serde::{de::DeserializeOwned, Serialize};
+use sg_std::Response as StargazeResponse;
 
 use crate::ContractError;
 
-pub fn migrate<T, C, E, Q>(deps: DepsMut) -> Result<Response, ContractError>
+pub fn migrate<T, C, E, Q>(deps: DepsMut) -> Result<StargazeResponse, ContractError>
 where
     T: Serialize + DeserializeOwned + Clone,
     Q: CustomMsg,

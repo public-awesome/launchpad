@@ -8,7 +8,7 @@ use sg721::InstantiateMsg;
 use sg721_base::msg::CollectionInfoResponse;
 
 use cw_utils::nonpayable;
-use sg721_base::ContractError as sg721_baseContractError;
+use sg721_base::ContractError as sg721BaseContractError;
 use sg721_base::ContractError::Unauthorized;
 use sg721_base::Sg721Contract;
 pub type Sg721UpdatableContract<'a> = Sg721Contract<'a, Extension>;
@@ -20,7 +20,6 @@ use cosmwasm_std::entry_point;
 const CONTRACT_NAME: &str = "crates.io:sg721-updatable";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const EXPECTED_FROM_VERSION: &str = "0.16.0";
-use cosmwasm_std::Response as cosmwasm_response;
 
 pub fn _instantiate(
     deps: DepsMut,
@@ -37,11 +36,7 @@ pub fn _instantiate(
 }
 
 #[entry_point]
-pub fn migrate(
-    deps: DepsMut,
-    _env: Env,
-    _msg: Empty,
-) -> Result<cosmwasm_response, sg721_baseContractError> {
+pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, sg721BaseContractError> {
     // make sure the correct contract is being upgraded, and it's being
     // upgraded from the correct version.
     let version = cw2::get_contract_version(deps.storage)?;
