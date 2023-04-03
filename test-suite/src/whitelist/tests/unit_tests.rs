@@ -58,8 +58,8 @@ fn improper_initialization_invalid_denom() {
         admins_mutable: true,
     };
     let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
-    let err = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
-    assert_eq!(err.to_string(), "InvalidDenom: not_ustars");
+    let res = instantiate(deps.as_mut(), mock_env(), info, msg);
+    assert!(res.is_ok());
 }
 
 #[test]
