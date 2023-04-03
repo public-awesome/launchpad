@@ -33,7 +33,7 @@ const CREATION_FEE: u128 = 1_000_000_000;
 const ENABLE_INSTANTIATE: bool = false;
 
 #[cfg(not(target = "wasm32-unknown-unknown"))]
-const ENABLE_INSTANTIATE: bool = true;
+const ENABLE_INSTANTIATE: bool = false;
 
 type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 pub type Sg721Contract<'a> = cw721_base::Cw721Contract<'a, Empty, StargazeMsgWrapper>;
