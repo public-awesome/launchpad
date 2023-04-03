@@ -636,6 +636,7 @@ dependencies = [
  "serde",
  "sg-std",
  "sg721",
+ "sg721-updatable",
  "thiserror",
  "url",
  "whitelist",
@@ -906,6 +907,26 @@ dependencies = [
  "cw721",
  "cw721-base",
  "schemars",
+ "serde",
+ "sg-std",
+ "thiserror",
+ "url",
+]
+
+[[package]]
+name = "sg721-updatable"
+version = "0.8.3"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cosmwasm-storage",
+ "cw-storage-plus 0.13.4",
+ "cw-utils 0.13.4",
+ "cw2 0.13.4",
+ "cw721",
+ "cw721-base",
+ "schemars",
+ "semver",
  "serde",
  "sg-std",
  "thiserror",

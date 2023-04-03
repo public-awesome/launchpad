@@ -18,4 +18,5 @@ pub struct RoyaltyInfo {
     pub share: Decimal,
 }
 
+pub const FROZEN_TOKEN_METADATA: Item<bool> = Item::new("frozen_token_metadata");
 pub const COLLECTION_INFO: Item<CollectionInfo<RoyaltyInfo>> = Item::new("collection_info");

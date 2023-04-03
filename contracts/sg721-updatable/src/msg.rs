@@ -1,6 +1,7 @@
 use crate::{state::CollectionInfo, ContractError};
-use cosmwasm_std::{Decimal, Empty};
-use cw721_base::msg::QueryMsg as Cw721QueryMsg;
+use cosmwasm_std::{Binary, Decimal, Empty, Timestamp};
+use cw721::Expiration;
+use cw721_base::{msg::QueryMsg as Cw721QueryMsg, MintMsg};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -11,6 +12,8 @@ pub struct InstantiateMsg {
     pub minter: String,
     pub collection_info: CollectionInfo<RoyaltyInfoResponse>,
 }
+
+pub type Cw721ExecuteMsg = cw721_base::msg::ExecuteMsg<Empty>;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct RoyaltyInfoResponse {
@@ -28,7 +31,110 @@ impl RoyaltyInfoResponse {
     }
 }
 
-pub type ExecuteMsg = cw721_base::ExecuteMsg<Empty>;
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum ExecuteMsg<T> {
+    /// Freeze token metadata so creator can no longer update token uris
+    FreezeTokenMetadata {},
+    /// Creator calls can update token uris
+    UpdateTokenMetadata {
+        token_id: String,
+        token_uri: Option<String>,
+    },
+    // Sg721Base msgs
+    TransferNft {
+        recipient: String,
+        token_id: String,
+    },
+    SendNft {
+        contract: String,
+        token_id: String,
+        msg: Binary,
+    },
+    Approve {
+        spender: String,
+        token_id: String,
+        expires: Option<Expiration>,
+    },
+    Revoke {
+        spender: String,
+        token_id: String,
+    },
+    ApproveAll {
+        operator: String,
+        expires: Option<Expiration>,
+    },
+    RevokeAll {
+        operator: String,
+    },
+    Burn {
+        token_id: String,
+    },
+    UpdateRoyaltyInfo {
+        payment_address: String,
+        share_bps: u64,
+    },
+    UpdateTradingStartTime(Option<Timestamp>),
+
+    Mint(MintMsg<T>),
+}
+
+impl<T> From<ExecuteMsg<T>> for Cw721ExecuteMsg
+where
+    T: Clone + PartialEq + Into<Option<cosmwasm_std::Empty>>,
+    Option<cosmwasm_std::Empty>: From<T>,
+{
+    fn from(msg: ExecuteMsg<T>) -> Cw721ExecuteMsg {
+        match msg {
+            ExecuteMsg::TransferNft {
+                recipient,
+                token_id,
+            } => Cw721ExecuteMsg::TransferNft {
+                recipient,
+                token_id,
+            },
+            ExecuteMsg::SendNft {
+                contract,
+                token_id,
+                msg,
+            } => Cw721ExecuteMsg::SendNft {
+                contract,
+                token_id,
+                msg,
+            },
+            ExecuteMsg::Approve {
+                spender,
+                token_id,
+                expires,
+            } => Cw721ExecuteMsg::Approve {
+                spender,
+                token_id,
+                expires,
+            },
+            ExecuteMsg::ApproveAll { operator, expires } => {
+                Cw721ExecuteMsg::ApproveAll { operator, expires }
+            }
+            ExecuteMsg::Revoke { spender, token_id } => {
+                Cw721ExecuteMsg::Revoke { spender, token_id }
+            }
+            ExecuteMsg::RevokeAll { operator } => Cw721ExecuteMsg::RevokeAll { operator },
+            ExecuteMsg::Burn { token_id } => Cw721ExecuteMsg::Burn { token_id },
+            // assume that the extension is always empty
+            ExecuteMsg::Mint(MintMsg {
+                token_id,
+                owner,
+                token_uri,
+                extension: _,
+            }) => Cw721ExecuteMsg::Mint(MintMsg {
+                token_id,
+                owner,
+                token_uri,
+                extension: Empty {},
+            }),
+            _ => unreachable!("Invalid ExecuteMsg"),
+        }
+    }
+}
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]

@@ -2,11 +2,13 @@ use crate::multi::StargazeApp;
 use cosmwasm_std::testing::{mock_dependencies_with_balance, mock_env, mock_info};
 use cosmwasm_std::{coin, coins, Addr, Decimal, Empty, Timestamp, Uint128};
 use cosmwasm_std::{Api, Coin};
-use cw721::{Cw721QueryMsg, OwnerOfResponse};
-use cw721_base::ExecuteMsg as Cw721ExecuteMsg;
+use cw721::{Cw721QueryMsg, NftInfoResponse, OwnerOfResponse};
+use cw721_base::{ExecuteMsg as Cw721ExecuteMsg, Extension};
 use cw_multi_test::{BankSudo, Contract, ContractWrapper, Executor, SudoMsg};
 use sg721::msg::{InstantiateMsg as Sg721InstantiateMsg, RoyaltyInfoResponse};
 use sg721::state::CollectionInfo;
+use sg721_updatable::msg::ExecuteMsg as Sg721UpdatableExecuteMsg;
+
 use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use whitelist::msg::InstantiateMsg as WhitelistInstantiateMsg;
 use whitelist::msg::{AddMembersMsg, ExecuteMsg as WhitelistExecuteMsg};
@@ -52,10 +54,11 @@ pub fn contract_minter() -> Box<dyn Contract<StargazeMsgWrapper>> {
 
 pub fn contract_sg721() -> Box<dyn Contract<StargazeMsgWrapper>> {
     let contract = ContractWrapper::new(
-        sg721::contract::execute,
-        sg721::contract::instantiate,
-        sg721::contract::query,
-    );
+        sg721_updatable::contract::execute,
+        sg721_updatable::contract::instantiate,
+        sg721_updatable::contract::query,
+    )
+    .with_migrate(sg721_updatable::contract::migrate);
     Box::new(contract)
 }
 
@@ -594,6 +597,7 @@ fn mint_count_query() {
         &mint_msg,
         &coins(WHITELIST_AMOUNT, NATIVE_DENOM),
     );
+
     assert!(res.is_ok());
 
     // Query count
@@ -1434,4 +1438,301 @@ fn unhappy_path() {
     let mint_msg = ExecuteMsg::Mint {};
     let res = router.execute_contract(buyer, minter_addr, &mint_msg, &coins(UNIT_PRICE, "uatom"));
     assert!(res.is_err());
+}
+
+//
+//
+// v1.1.0 tests
+//
+//
+#[test]
+fn test_update_none_royalties() {
+    let mut router = custom_mock_app();
+    let (creator, buyer) = setup_accounts(&mut router);
+    let num_tokens = 10;
+
+    // Upload contract code
+    let sg721_code_id = router.store_code(contract_sg721());
+    let minter_code_id = router.store_code(contract_minter());
+    let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
+
+    // Instantiate sale contract
+    let msg = InstantiateMsg {
+        unit_price: coin(UNIT_PRICE, NATIVE_DENOM),
+        num_tokens,
+        start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
+        per_address_limit: 5,
+        whitelist: None,
+        base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
+        sg721_code_id,
+        sg721_instantiate_msg: Sg721InstantiateMsg {
+            name: String::from("TEST"),
+            symbol: String::from("TEST"),
+            minter: creator.to_string(),
+            collection_info: CollectionInfo {
+                creator: creator.to_string(),
+                description: String::from("Stargaze Monkeys"),
+                image: "https://example.com/image.png".to_string(),
+                external_link: Some("https://example.com/external.html".to_string()),
+                royalty_info: None,
+            },
+        },
+    };
+    let minter_addr = router
+        .instantiate_contract(
+            minter_code_id,
+            creator.clone(),
+            &msg,
+            &creation_fee,
+            "Minter",
+            None,
+        )
+        .unwrap();
+    let config: ConfigResponse = router
+        .wrap()
+        .query_wasm_smart(minter_addr, &QueryMsg::Config {})
+        .unwrap();
+
+    let update_royalty_msg: Sg721UpdatableExecuteMsg<Extension> =
+        Sg721UpdatableExecuteMsg::UpdateRoyaltyInfo {
+            payment_address: "creator2".to_string(),
+            share_bps: 5,
+        };
+    let sg71_address = config.sg721_address;
+
+    let res = router.execute_contract(
+        buyer,
+        Addr::unchecked(sg71_address.clone()),
+        &update_royalty_msg,
+        &[],
+    );
+    let err = res.unwrap_err();
+
+    assert_eq!(
+        err.source().unwrap().to_string(),
+        sg721_updatable::ContractError::Unauthorized {}.to_string()
+    );
+
+    let res = router.execute_contract(
+        creator,
+        Addr::unchecked(sg71_address),
+        &update_royalty_msg,
+        &[],
+    );
+    let err = res.unwrap_err();
+
+    assert_eq!(
+        err.source().unwrap().to_string(),
+        sg721_updatable::ContractError::RoyaltyShareIncreased {}.to_string()
+    );
+}
+
+#[test]
+fn test_update_royalties() {
+    let mut router = custom_mock_app();
+    let (creator, _) = setup_accounts(&mut router);
+    let num_tokens = 10;
+
+    // Upload contract code
+    let sg721_code_id = router.store_code(contract_sg721());
+    let minter_code_id = router.store_code(contract_minter());
+    let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
+
+    // Instantiate sale contract
+    let msg = InstantiateMsg {
+        unit_price: coin(UNIT_PRICE, NATIVE_DENOM),
+        num_tokens,
+        start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
+        per_address_limit: 5,
+        whitelist: None,
+        base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
+        sg721_code_id,
+        sg721_instantiate_msg: Sg721InstantiateMsg {
+            name: String::from("TEST"),
+            symbol: String::from("TEST"),
+            minter: creator.to_string(),
+            collection_info: CollectionInfo {
+                creator: creator.to_string(),
+                description: String::from("Stargaze Monkeys"),
+                image: "https://example.com/image.png".to_string(),
+                external_link: Some("https://example.com/external.html".to_string()),
+                royalty_info: Some(RoyaltyInfoResponse {
+                    payment_address: creator.to_string(),
+                    share: Decimal::percent(10),
+                }),
+            },
+        },
+    };
+    let minter_addr = router
+        .instantiate_contract(
+            minter_code_id,
+            creator.clone(),
+            &msg,
+            &creation_fee,
+            "Minter",
+            None,
+        )
+        .unwrap();
+    let config: ConfigResponse = router
+        .wrap()
+        .query_wasm_smart(minter_addr, &QueryMsg::Config {})
+        .unwrap();
+
+    let update_royalty_msg: sg721_updatable::msg::ExecuteMsg<Extension> =
+        sg721_updatable::msg::ExecuteMsg::UpdateRoyaltyInfo {
+            payment_address: "creator2".to_string(),
+            share_bps: 1100,
+        };
+    let sg71_address = config.sg721_address;
+
+    let res = router.execute_contract(
+        creator.clone(),
+        Addr::unchecked(sg71_address.clone()),
+        &update_royalty_msg,
+        &[],
+    );
+    let err = res.unwrap_err();
+
+    assert_eq!(
+        err.source().unwrap().to_string(),
+        sg721_updatable::ContractError::RoyaltyShareIncreased {}.to_string()
+    );
+
+    let update_royalty_msg: sg721_updatable::msg::ExecuteMsg<Extension> =
+        sg721_updatable::msg::ExecuteMsg::UpdateRoyaltyInfo {
+            payment_address: "creator2".to_string(),
+            share_bps: 900,
+        };
+    let res = router.execute_contract(
+        creator,
+        Addr::unchecked(sg71_address),
+        &update_royalty_msg,
+        &[],
+    );
+    assert!(res.is_ok());
+}
+
+#[test]
+fn test_update_metadata() {
+    let mut router = custom_mock_app();
+    let (creator, buyer) = setup_accounts(&mut router);
+    let num_tokens = 10;
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME);
+
+    // Upload contract code
+    let sg721_code_id = router.store_code(contract_sg721());
+    let minter_code_id = router.store_code(contract_minter());
+    let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
+
+    // Instantiate sale contract
+    let msg = InstantiateMsg {
+        unit_price: coin(UNIT_PRICE, NATIVE_DENOM),
+        num_tokens,
+        start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
+        per_address_limit: 5,
+        whitelist: None,
+        base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
+        sg721_code_id,
+        sg721_instantiate_msg: Sg721InstantiateMsg {
+            name: String::from("TEST"),
+            symbol: String::from("TEST"),
+            minter: creator.to_string(),
+            collection_info: CollectionInfo {
+                creator: creator.to_string(),
+                description: String::from("Stargaze Monkeys"),
+                image: "https://example.com/image.png".to_string(),
+                external_link: Some("https://example.com/external.html".to_string()),
+                royalty_info: Some(RoyaltyInfoResponse {
+                    payment_address: creator.to_string(),
+                    share: Decimal::percent(10),
+                }),
+            },
+        },
+    };
+    let minter_addr = router
+        .instantiate_contract(
+            minter_code_id,
+            creator.clone(),
+            &msg,
+            &creation_fee,
+            "Minter",
+            None,
+        )
+        .unwrap();
+    let config: ConfigResponse = router
+        .wrap()
+        .query_wasm_smart(minter_addr.clone(), &QueryMsg::Config {})
+        .unwrap();
+    let sg721_addr = config.sg721_address;
+
+    // mint
+    let mint_msg = ExecuteMsg::Mint {};
+    let res = router.execute_contract(
+        buyer,
+        minter_addr,
+        &mint_msg,
+        &coins(UNIT_PRICE, NATIVE_DENOM),
+    );
+    assert!(res.is_ok());
+
+    // update metadata
+    let token_uri = "ipfs://something/1.json".to_string();
+    let update_metadata_msg: sg721_updatable::msg::ExecuteMsg<Extension> =
+        sg721_updatable::msg::ExecuteMsg::UpdateTokenMetadata {
+            token_id: "1".to_string(),
+            token_uri: Some(token_uri.clone()),
+        };
+    let res = router.execute_contract(
+        creator,
+        Addr::unchecked(sg721_addr.clone()),
+        &update_metadata_msg,
+        &[],
+    );
+    assert!(res.is_ok());
+
+    // check token uri updated
+    let query_token_info_msg = Cw721QueryMsg::NftInfo {
+        token_id: String::from("1"),
+    };
+    let res: NftInfoResponse<Extension> = router
+        .wrap()
+        .query_wasm_smart(sg721_addr, &query_token_info_msg)
+        .unwrap();
+    assert_eq!(res.token_uri, Some(token_uri));
+}
+
+use cw2::set_contract_version;
+#[test]
+fn try_migrate() {
+    let mut deps = mock_dependencies_with_balance(&coins(2, "token"));
+    let env = mock_env();
+
+    // should error when different name
+    set_contract_version(&mut deps.storage, "crates.io:another-contract", "0.8.0").unwrap();
+    let err = sg721_updatable::contract::migrate(deps.as_mut(), env.clone(), Empty {}).unwrap_err();
+
+    assert_eq!(
+        err.to_string(),
+        "Generic error: Cannot upgrade to a different contract"
+    );
+
+    // should error when version is greater version
+    set_contract_version(&mut deps.storage, "crates.io:sg-721", "2.0.0").unwrap();
+    let err = sg721_updatable::contract::migrate(deps.as_mut(), env.clone(), Empty {}).unwrap_err();
+    assert_eq!(
+        err.to_string(),
+        "Generic error: Cannot upgrade to a previous contract version"
+    );
+
+    // // no op when same version
+    set_contract_version(
+        &mut deps.storage,
+        "crates.io:sg-721",
+        env!("CARGO_PKG_VERSION"),
+    )
+    .unwrap();
+    sg721_updatable::contract::migrate(deps.as_mut(), env.clone(), Empty {}).unwrap();
+
+    set_contract_version(&mut deps.storage, "crates.io:sg721-updatable", "0.8.0").unwrap();
+    sg721_updatable::contract::migrate(deps.as_mut(), env, Empty {}).unwrap();
 }
