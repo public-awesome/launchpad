@@ -14,7 +14,6 @@ use sg_std::StargazeMsgWrapper;
 
 use crate::ContractError;
 use cw721::ContractInfoResponse;
-use cw721_base::ContractError as BaseError;
 use url::Url;
 
 use crate::msg::{
@@ -47,7 +46,7 @@ pub fn instantiate(
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     if !ENABLE_INSTANTIATE {
-        return Err(ContractError::Base(BaseError::Unauthorized {}));
+        return Err(ContractError::Unauthorized {});
     }
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
@@ -140,7 +139,7 @@ pub fn execute_update_royalty_info(
     let mut collection_info = COLLECTION_INFO.load(deps.storage)?;
     // check sender is authorized
     if info.sender != collection_info.creator {
-        return Err(ContractError::Base(BaseError::Unauthorized {}));
+        return Err(ContractError::Unauthorized {});
     }
 
     let payment_addr = deps.api.addr_validate(&payment_address)?;
@@ -178,7 +177,7 @@ pub fn execute_freeze_token_metadata(
     // Check if sender is creator
     let collection_info: CollectionInfoResponse = query_config(deps.as_ref())?;
     if info.sender != collection_info.creator {
-        return Err(ContractError::Base(BaseError::Unauthorized {}));
+        return Err(ContractError::Unauthorized {});
     }
 
     FROZEN_TOKEN_METADATA.save(deps.storage, &true)?;
@@ -199,7 +198,7 @@ pub fn execute_update_token_metadata(
     let creator = deps.api.addr_validate(info.sender.as_ref())?;
     let collection_info: CollectionInfoResponse = query_config(deps.as_ref())?;
     if creator != collection_info.creator {
-        return Err(ContractError::Base(BaseError::Unauthorized {}));
+        return Err(ContractError::Unauthorized {});
     }
 
     // Check if token metadata is frozen
