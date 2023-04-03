@@ -426,21 +426,6 @@ pub fn execute_set_whitelist(
         return Err(ContractError::WhitelistAlreadyStarted {});
     }
 
-    // Whitelist could be free, while factory minimum is not
-    let factory: ParamsResponse = deps
-        .querier
-        .query_wasm_smart(config.factory.clone(), &Sg2QueryMsg::Params {})?;
-
-    let factory_mint_price = factory.params.min_mint_price.amount.u128();
-    let whitelist_mint_price = wl_config.mint_price.amount.u128();
-
-    if factory_mint_price > whitelist_mint_price {
-        return Err(ContractError::InsufficientWhitelistMintPrice {
-            expected: factory_mint_price,
-            got: whitelist_mint_price,
-        });
-    }
-
     CONFIG.save(deps.storage, &config)?;
 
     Ok(Response::default()
