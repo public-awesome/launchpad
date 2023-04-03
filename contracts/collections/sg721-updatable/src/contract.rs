@@ -1,20 +1,26 @@
 use crate::error::ContractError;
 use crate::state::FROZEN_TOKEN_METADATA;
+use cosmwasm_std::Empty;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::{DepsMut, Env, Event, MessageInfo};
 use cw2::set_contract_version;
 use sg721::InstantiateMsg;
 use sg721_base::msg::CollectionInfoResponse;
 
-use cw721_base::Extension;
 use cw_utils::nonpayable;
+use sg721_base::ContractError as sg721_baseContractError;
 use sg721_base::ContractError::Unauthorized;
 use sg721_base::Sg721Contract;
 pub type Sg721UpdatableContract<'a> = Sg721Contract<'a, Extension>;
 use sg_std::Response;
+pub type Extension = Option<Empty>;
+
+use cosmwasm_std::entry_point;
 
 const CONTRACT_NAME: &str = "crates.io:sg721-updatable";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
+pub const EXPECTED_FROM_VERSION: &str = "0.16.0";
+use cosmwasm_std::Response as cosmwasm_response;
 
 pub fn _instantiate(
     deps: DepsMut,
@@ -28,6 +34,25 @@ pub fn _instantiate(
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
     let res = Sg721UpdatableContract::default().instantiate(deps, env, info, msg)?;
     Ok(res)
+}
+
+#[entry_point]
+pub fn migrate(
+    deps: DepsMut,
+    _env: Env,
+    _msg: Empty,
+) -> Result<cosmwasm_response, sg721_baseContractError> {
+    // make sure the correct contract is being upgraded, and it's being
+    // upgraded from the correct version.
+    let version = cw2::get_contract_version(deps.storage)?;
+    cw2::assert_contract_version(deps.as_ref().storage, CONTRACT_NAME, EXPECTED_FROM_VERSION)
+        .map_err(|_| sg721_base::ContractError::WrongMigrateVersion(version.version))?;
+
+    // update contract version
+    cw2::set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+
+    // perform the upgrade
+    sg721_base::upgrades::v0_17::migrate::<Extension, Empty, Empty, Empty>(deps)
 }
 
 pub fn execute_freeze_token_metadata(

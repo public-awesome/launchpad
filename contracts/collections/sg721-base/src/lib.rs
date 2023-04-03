@@ -2,6 +2,7 @@ pub mod contract;
 mod error;
 pub mod msg;
 mod state;
+pub mod upgrades;
 
 pub use crate::error::ContractError;
 pub use crate::state::Sg721Contract;
@@ -24,8 +25,9 @@ pub mod entry {
     use sg_std::Response;
 
     // version info for migration info
-    const CONTRACT_NAME: &str = "crates.io:sg721-base";
-    const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
+    pub const CONTRACT_NAME: &str = "crates.io:sg721-base";
+    pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
+    pub const EXPECTED_FROM_VERSION: &str = "0.16.0";
 
     #[cfg_attr(not(feature = "library"), entry_point)]
     pub fn instantiate(

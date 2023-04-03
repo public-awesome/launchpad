@@ -3,14 +3,18 @@ use cosmwasm_std::Empty;
 pub use sg721_base::ContractError;
 use sg_metadata::Metadata;
 
-// version info for migration info
-const CONTRACT_NAME: &str = "crates.io:sg721-metadata-onchain";
-const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
-
 pub type Sg721MetadataContract<'a> = sg721_base::Sg721Contract<'a, Metadata>;
 pub type InstantiateMsg = sg721::InstantiateMsg;
 pub type ExecuteMsg = sg721::ExecuteMsg<Metadata, Empty>;
 pub type QueryMsg = sg721_base::msg::QueryMsg;
+
+// version info for migration info
+const CONTRACT_NAME: &str = "crates.io:sg721-metadata-onchain";
+const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
+pub const EXPECTED_FROM_VERSION: &str = "0.16.0";
+use cosmwasm_std::Response as cosmwasm_response;
+
+pub type Extension = Option<Empty>;
 
 #[cfg(not(feature = "library"))]
 pub mod entry {
@@ -49,6 +53,25 @@ pub mod entry {
     #[entry_point]
     pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         Sg721MetadataContract::default().query(deps, env, msg)
+    }
+
+    #[entry_point]
+    pub fn migrate(
+        deps: DepsMut,
+        _env: Env,
+        _msg: Empty,
+    ) -> Result<cosmwasm_response, ContractError> {
+        // make sure the correct contract is being upgraded, and it's being
+        // upgraded from the correct version.
+        let version = cw2::get_contract_version(deps.storage)?;
+        cw2::assert_contract_version(deps.as_ref().storage, CONTRACT_NAME, EXPECTED_FROM_VERSION)
+            .map_err(|_| sg721_base::ContractError::WrongMigrateVersion(version.version))?;
+
+        // update contract version
+        cw2::set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+
+        // perform the upgrade
+        sg721_base::upgrades::v0_17::migrate::<Extension, Empty, Empty, Empty>(deps)
     }
 }
 

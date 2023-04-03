@@ -1,4 +1,5 @@
 use cw721_base::state::TokenInfo;
+use cw721_base::Extension;
 use url::Url;
 
 use cosmwasm_std::{
@@ -18,6 +19,9 @@ use sg_std::Response;
 
 use crate::msg::{CollectionInfoResponse, NftParams, QueryMsg};
 use crate::{ContractError, Sg721Contract};
+
+use crate::entry::{CONTRACT_NAME, CONTRACT_VERSION, EXPECTED_FROM_VERSION};
+use cosmwasm_std::Response as cosmwasm_response;
 
 const MAX_DESCRIPTION_LENGTH: u32 = 512;
 
@@ -368,6 +372,24 @@ where
             start_trading_time: info.start_trading_time,
             royalty_info: royalty_info_res,
         })
+    }
+
+    pub fn migrate(
+        deps: DepsMut,
+        _env: Env,
+        _msg: Empty,
+    ) -> Result<cosmwasm_response, ContractError> {
+        // make sure the correct contract is being upgraded, and it's being
+        // upgraded from the correct version.
+        let version = cw2::get_contract_version(deps.storage)?;
+        cw2::assert_contract_version(deps.as_ref().storage, CONTRACT_NAME, EXPECTED_FROM_VERSION)
+            .map_err(|_| ContractError::WrongMigrateVersion(version.version))?;
+
+        // update contract version
+        cw2::set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+
+        // perform the upgrade
+        crate::upgrades::v0_17::migrate::<Extension, Empty, Empty, Empty>(deps)
     }
 }
 

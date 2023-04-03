@@ -1,10 +1,6 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 
-// version info for migration info
-const CONTRACT_NAME: &str = "crates.io:sg721-nt";
-const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
-
 pub mod msg;
 use cw721_base::Extension;
 use sg721::InstantiateMsg;
@@ -13,12 +9,19 @@ pub type QueryMsg = sg721_base::msg::QueryMsg;
 pub type Sg721NonTransferableContract<'a> = Sg721Contract<'a, Extension>;
 use sg721_base::msg::NftParams;
 
+// version info for migration info
+// version info for migration info
+const CONTRACT_NAME: &str = "crates.io:sg721-nt";
+const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
+pub const EXPECTED_FROM_VERSION: &str = "0.16.0";
+use cosmwasm_std::Response as cosmwasm_response;
+
 #[cfg(not(feature = "library"))]
 pub mod entry {
     use super::*;
 
     use crate::msg::ExecuteMsg;
-    use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, StdResult};
+    use cosmwasm_std::{Binary, Deps, DepsMut, Empty, Env, MessageInfo, StdResult};
     use cw721::Cw721Execute;
     use sg721_base::ContractError;
     use sg_std::Response;
@@ -84,5 +87,24 @@ pub mod entry {
     #[entry_point]
     pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         Sg721NonTransferableContract::default().query(deps, env, msg)
+    }
+
+    #[entry_point]
+    pub fn migrate(
+        deps: DepsMut,
+        _env: Env,
+        _msg: Empty,
+    ) -> Result<cosmwasm_response, ContractError> {
+        // make sure the correct contract is being upgraded, and it's being
+        // upgraded from the correct version.
+        let version = cw2::get_contract_version(deps.storage)?;
+        cw2::assert_contract_version(deps.as_ref().storage, CONTRACT_NAME, EXPECTED_FROM_VERSION)
+            .map_err(|_| sg721_base::ContractError::WrongMigrateVersion(version.version))?;
+
+        // update contract version
+        cw2::set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+
+        // perform the upgrade
+        sg721_base::upgrades::v0_17::migrate::<Extension, Empty, Empty, Empty>(deps)
     }
 }
