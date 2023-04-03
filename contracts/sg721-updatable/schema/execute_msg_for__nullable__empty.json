@@ -1,10 +1,48 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "ExecuteMsg_for_Empty",
-  "description": "This is like Cw721ExecuteMsg but we add a Mint command for an owner to make this stand-alone. You will likely want to remove mint and use other control logic in any contract that inherits this.",
+  "title": "ExecuteMsg_for_Nullable_Empty",
   "oneOf": [
     {
-      "description": "Transfer is a base message to move a token to another account without triggering actions",
+      "description": "Freeze token metadata so creator can no longer update token uris",
+      "type": "object",
+      "required": [
+        "freeze_token_metadata"
+      ],
+      "properties": {
+        "freeze_token_metadata": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Creator calls can update token uris",
+      "type": "object",
+      "required": [
+        "update_token_metadata"
+      ],
+      "properties": {
+        "update_token_metadata": {
+          "type": "object",
+          "required": [
+            "token_id"
+          ],
+          "properties": {
+            "token_id": {
+              "type": "string"
+            },
+            "token_uri": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
       "type": "object",
       "required": [
         "transfer_nft"
@@ -29,7 +67,6 @@
       "additionalProperties": false
     },
     {
-      "description": "Send is a base message to transfer a token to a contract and trigger an action on the receiving contract.",
       "type": "object",
       "required": [
         "send_nft"
@@ -58,7 +95,6 @@
       "additionalProperties": false
     },
     {
-      "description": "Allows operator to transfer / send the token from the owner's account. If expiration is set, then this allowance has a time/height limit",
       "type": "object",
       "required": [
         "approve"
@@ -93,7 +129,6 @@
       "additionalProperties": false
     },
     {
-      "description": "Remove previously granted Approval",
       "type": "object",
       "required": [
         "revoke"
@@ -118,7 +153,6 @@
       "additionalProperties": false
     },
     {
-      "description": "Allows operator to transfer / send any token from the owner's account. If expiration is set, then this allowance has a time/height limit",
       "type": "object",
       "required": [
         "approve_all"
@@ -149,7 +183,6 @@
       "additionalProperties": false
     },
     {
-      "description": "Remove previously granted ApproveAll permission",
       "type": "object",
       "required": [
         "revoke_all"
@@ -170,20 +203,6 @@
       "additionalProperties": false
     },
     {
-      "description": "Mint a new NFT, can only be called by the contract minter",
-      "type": "object",
-      "required": [
-        "mint"
-      ],
-      "properties": {
-        "mint": {
-          "$ref": "#/definitions/MintMsg_for_Empty"
-        }
-      },
-      "additionalProperties": false
-    },
-    {
-      "description": "Burn an NFT the sender has access to",
       "type": "object",
       "required": [
         "burn"
@@ -199,6 +218,63 @@
               "type": "string"
             }
           }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "update_royalty_info"
+      ],
+      "properties": {
+        "update_royalty_info": {
+          "type": "object",
+          "required": [
+            "payment_address",
+            "share_bps"
+          ],
+          "properties": {
+            "payment_address": {
+              "type": "string"
+            },
+            "share_bps": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "update_trading_start_time"
+      ],
+      "properties": {
+        "update_trading_start_time": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Timestamp"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "mint"
+      ],
+      "properties": {
+        "mint": {
+          "$ref": "#/definitions/MintMsg_for_Nullable_Empty"
         }
       },
       "additionalProperties": false
@@ -259,19 +335,21 @@
         }
       ]
     },
-    "MintMsg_for_Empty": {
+    "MintMsg_for_Nullable_Empty": {
       "type": "object",
       "required": [
-        "extension",
         "owner",
         "token_id"
       ],
       "properties": {
         "extension": {
           "description": "Any custom extension used by this contract",
-          "allOf": [
+          "anyOf": [
             {
               "$ref": "#/definitions/Empty"
+            },
+            {
+              "type": "null"
             }
           ]
         },
