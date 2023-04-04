@@ -31,7 +31,7 @@ SG721_CODE_ID=1979
 # }
 
 # add a few minutes buffer to start time
-TIME=$(date -v+5000S +%s)
+TIME=$(date -v+30S +%s)
 
 MSG=$(cat <<EOF
 {
@@ -40,7 +40,7 @@ MSG=$(cat <<EOF
             "base_token_uri": "ipfs://bafybeiey2heysue3px2tgc523cmjbfjlox5zfzzan5syzdooikdvimtxwq",
             "start_time": "$(echo $TIME)000000000",
             "num_tokens": 1000,
-            "mint_price": { "amount": "50000000", "denom": "ustars" },
+            "mint_price": { "amount": "0", "denom": "ustars" },
             "per_address_limit": 30
         },
         "collection_params": {
