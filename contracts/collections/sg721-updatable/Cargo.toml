@@ -53,6 +53,7 @@ cw721-base      = { workspace = true }
 sg721           = { workspace = true }
 sg721-base      = { workspace = true, features = ["library"] }
 sg-std          = { workspace = true }
+semver          = { workspace = true }
 
 [dev-dependencies]
 cosmwasm-schema = { workspace = true }

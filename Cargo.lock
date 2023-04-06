@@ -3322,6 +3322,7 @@ dependencies = [
  "cw721",
  "cw721-base",
  "schemars",
+ "semver",
  "serde",
  "sg-std 2.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg721",
