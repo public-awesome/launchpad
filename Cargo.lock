@@ -3690,6 +3690,7 @@ dependencies = [
  "sg721",
  "sg721-base",
  "sg721-nt",
+ "sg721-updatable",
  "sha2 0.10.6",
  "shuffle",
  "thiserror",
