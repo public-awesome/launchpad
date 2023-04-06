@@ -18,7 +18,6 @@ use sg_std::Response;
 use semver::Version;
 
 const COMPATIBLE_MIGRATION_CONTRACT_NAME: &str = "crates.io:sg721-base";
-const EARLIEST_COMPATIBLE_CONTRACT_VERSION: &str = "0.24.0";
 const CONTRACT_NAME: &str = "crates.io:sg721-updatable";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -113,14 +112,7 @@ pub fn _migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, Contr
     let new_version: Version = CONTRACT_VERSION
         .parse()
         .map_err(|_| StdError::generic_err("Invalid contract version"))?;
-    let earliest_version: Version = EARLIEST_COMPATIBLE_CONTRACT_VERSION
-        .parse()
-        .map_err(|_| StdError::generic_err("Invalid contract version"))?;
 
-    // current version not launchpad v2
-    if version < earliest_version {
-        return Err(StdError::generic_err("Cannot upgrade to a previous contract version").into());
-    }
     if version > new_version {
         return Err(StdError::generic_err("Cannot upgrade to a previous contract version").into());
     }
