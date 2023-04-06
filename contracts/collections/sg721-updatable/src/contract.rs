@@ -1,3 +1,4 @@
+use cosmwasm_std::Empty;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::{DepsMut, Env, Event, MessageInfo};
 use cw2::set_contract_version;
@@ -91,6 +92,17 @@ pub fn execute_update_token_metadata(
         .add_attribute("token_id", token_id)
         .add_attribute("token_uri", token_uri.unwrap_or_default());
     Ok(Response::new().add_event(event))
+}
+
+pub fn _migrate(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    _msg: Empty,
+) -> Result<Response, ContractError> {
+    Ok(Response::new()
+        .add_attribute("action", "migrate")
+        .add_attribute("version", CONTRACT_VERSION))
 }
 
 #[cfg(test)]
