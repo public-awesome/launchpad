@@ -601,3 +601,56 @@ fn test_two_claims_allowed_success() {
     }];
     assert_eq!(balances, expected_balance)
 }
+
+#[test]
+fn test_metamask_ledger_sig() {
+    let claim_plaintext = &get_msg_plaintext(STARGAZE_WALLET_01.to_string());
+    let (_, eth_sig_str, _, eth_addr_str) = get_wallet_and_sig(claim_plaintext.clone());
+
+    let stargaze_wallet_01 = Addr::unchecked(STARGAZE_WALLET_01);
+
+    let mut app = custom_mock_app();
+    configure_mock_minter_with_mock_whitelist(&mut app);
+    let minter_addr = Addr::unchecked(MOCK_MINTER_ADDR_STR);
+    let airdrop_contract = Addr::unchecked(MOCK_AIRDROP_ADDR_STR);
+
+    let eth_addr_str = "0xf5e083dd7fabd3c88275c1786ceb08afe388ddb8".to_string();
+    let eth_sig_str = "c444ead5b4ad4bfc2a3adfc5961f5beacefcbaae4ae9443cd1f2a8ad01a21ce24c8347e306a46b47657e359975205b85d212e66a7a4d5c201cbbe6236e0d480201".to_string();
+
+    let params = InstantiateParams {
+        addresses: vec![eth_addr_str.clone()],
+        funds_amount: WHITELIST_AMOUNT + INSTANTIATION_FEE,
+        expected_airdrop_contract_id: 4,
+        minter_address: minter_addr.clone(),
+        admin_account: Addr::unchecked(OWNER),
+        app: &mut app,
+        per_address_limit: 1,
+        claim_msg_plaintext: CONFIG_PLAINTEXT.to_string(),
+    };
+    instantiate_contract(params).unwrap();
+    query_minter_as_expected(&mut app, airdrop_contract.clone(), minter_addr);
+    let balances = app
+        .wrap()
+        .query_all_balances(stargaze_wallet_01.clone())
+        .unwrap();
+    assert_eq!(balances, []);
+
+    let claim_message = ExecuteMsg::ClaimAirdrop {
+        eth_address: eth_addr_str,
+        eth_sig: eth_sig_str,
+    };
+    let _ = execute_contract_with_msg(
+        claim_message,
+        &mut app,
+        stargaze_wallet_01.clone(),
+        airdrop_contract,
+    )
+    .unwrap();
+
+    let balances = app.wrap().query_all_balances(stargaze_wallet_01).unwrap();
+    let expected_balance = [Coin {
+        denom: NATIVE_DENOM.to_string(),
+        amount: Uint128::new(WHITELIST_AMOUNT),
+    }];
+    assert_eq!(balances, expected_balance)
+}
