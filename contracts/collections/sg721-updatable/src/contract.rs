@@ -98,12 +98,7 @@ pub fn execute_update_token_metadata(
     Ok(Response::new().add_event(event))
 }
 
-pub fn _migrate(
-    deps: DepsMut,
-    _env: Env,
-    _info: MessageInfo,
-    _msg: Empty,
-) -> Result<Response, ContractError> {
+pub fn _migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
     let current_version = cw2::get_contract_version(deps.storage)?;
     if ![CONTRACT_NAME, COMPATIBLE_MIGRATION_CONTRACT_NAME]
         .contains(&current_version.contract.as_str())
@@ -136,10 +131,7 @@ pub fn _migrate(
 
     // set new contract version
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-    let event = Event::new("migrate")
-        .add_attribute("previous_version", current_version.version)
-        .add_attribute("version", CONTRACT_VERSION);
-    Ok(Response::new().add_event(event))
+    Ok(Response::new())
 }
 
 #[cfg(test)]
