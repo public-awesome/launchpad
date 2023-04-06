@@ -1,6 +1,6 @@
-use cosmwasm_std::Empty;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::{DepsMut, Env, Event, MessageInfo};
+use cosmwasm_std::{Empty, StdError};
 use cw2::set_contract_version;
 use sg721_base::msg::CollectionInfoResponse;
 
@@ -15,6 +15,7 @@ use sg721_base::Sg721Contract;
 pub type Sg721UpdatableContract<'a> = Sg721Contract<'a, Extension>;
 use sg_std::Response;
 
+const COMPATIBLE_MIGRATION_CONTRACT_NAME: &str = "crates.io:sg721-base";
 const CONTRACT_NAME: &str = "crates.io:sg721-updatable";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -100,9 +101,36 @@ pub fn _migrate(
     info: MessageInfo,
     _msg: Empty,
 ) -> Result<Response, ContractError> {
-    Ok(Response::new()
-        .add_attribute("action", "migrate")
-        .add_attribute("version", CONTRACT_VERSION))
+    let current_version = cw2::get_contract_version(deps.storage)?;
+    if ![CONTRACT_NAME, COMPATIBLE_MIGRATION_CONTRACT_NAME]
+        .contains(&current_version.contract.as_str())
+    {
+        return Err(StdError::generic_err("Cannot upgrade to a different contract").into());
+    }
+    let version: Version = current_version
+        .version
+        .parse()
+        .map_err(|_| StdError::generic_err("Invalid contract version"))?;
+    let new_version: Version = CONTRACT_VERSION
+        .parse()
+        .map_err(|_| StdError::generic_err("Invalid contract version"))?;
+
+    if version > new_version {
+        return Err(StdError::generic_err("Cannot upgrade to a previous contract version").into());
+    }
+    // if same version return
+    if version == new_version {
+        return Ok(Response::new());
+    }
+
+    FROZEN_TOKEN_METADATA.save(deps.storage, &false)?;
+
+    // set new contract version
+    set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+    let event = Event::new("migrate")
+        .add_attribute("previous_version", current_version.version)
+        .add_attribute("version", CONTRACT_VERSION);
+    Ok(Response::new().add_event(event))
 }
 
 #[cfg(test)]
