@@ -18,7 +18,7 @@ use sg_std::Response;
 use semver::Version;
 
 const COMPATIBLE_MIGRATION_CONTRACT_NAME: &str = "crates.io:sg721-base";
-const EARLIEST_COMPATIBLE_CONTRACT_VERSION: &str = "v0.24.0";
+const EARLIEST_COMPATIBLE_CONTRACT_VERSION: &str = "0.24.0";
 const CONTRACT_NAME: &str = "crates.io:sg721-updatable";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -100,6 +100,7 @@ pub fn execute_update_token_metadata(
 
 pub fn _migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
     let current_version = cw2::get_contract_version(deps.storage)?;
+
     if ![CONTRACT_NAME, COMPATIBLE_MIGRATION_CONTRACT_NAME]
         .contains(&current_version.contract.as_str())
     {
@@ -115,6 +116,7 @@ pub fn _migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, Contr
     let earliest_version: Version = EARLIEST_COMPATIBLE_CONTRACT_VERSION
         .parse()
         .map_err(|_| StdError::generic_err("Invalid contract version"))?;
+
     // current version not launchpad v2
     if version < earliest_version {
         return Err(StdError::generic_err("Cannot upgrade to a previous contract version").into());
