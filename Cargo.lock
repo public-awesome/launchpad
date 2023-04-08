@@ -3209,6 +3209,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "sg-whitelist-flex"
+version = "2.1.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus 0.16.0",
+ "cw-utils 0.16.0",
+ "cw2 0.16.0",
+ "rust_decimal",
+ "schemars",
+ "serde",
+ "sg-std 2.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg1",
+ "thiserror",
+]
+
+[[package]]
 name = "sg1"
 version = "2.1.0"
 dependencies = [
