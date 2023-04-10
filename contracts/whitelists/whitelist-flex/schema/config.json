@@ -7,7 +7,6 @@
     "member_limit",
     "mint_price",
     "num_members",
-    "per_address_limit",
     "start_time"
   ],
   "properties": {
@@ -27,13 +26,16 @@
       "format": "uint32",
       "minimum": 0.0
     },
-    "per_address_limit": {
-      "type": "integer",
-      "format": "uint32",
-      "minimum": 0.0
-    },
     "start_time": {
       "$ref": "#/definitions/Timestamp"
+    },
+    "whale_cap": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "format": "uint32",
+      "minimum": 0.0
     }
   },
   "additionalProperties": false,

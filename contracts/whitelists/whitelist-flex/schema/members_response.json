@@ -9,9 +9,29 @@
     "members": {
       "type": "array",
       "items": {
-        "type": "string"
+        "$ref": "#/definitions/Member"
       }
     }
   },
-  "additionalProperties": false
+  "additionalProperties": false,
+  "definitions": {
+    "Member": {
+      "type": "object",
+      "required": [
+        "address",
+        "mint_count"
+      ],
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "mint_count": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        }
+      },
+      "additionalProperties": false
+    }
+  }
 }

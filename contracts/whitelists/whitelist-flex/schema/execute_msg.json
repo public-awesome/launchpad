@@ -53,20 +53,6 @@
     {
       "type": "object",
       "required": [
-        "update_per_address_limit"
-      ],
-      "properties": {
-        "update_per_address_limit": {
-          "type": "integer",
-          "format": "uint32",
-          "minimum": 0.0
-        }
-      },
-      "additionalProperties": false
-    },
-    {
-      "type": "object",
-      "required": [
         "increase_member_limit"
       ],
       "properties": {
@@ -126,8 +112,26 @@
         "to_add": {
           "type": "array",
           "items": {
-            "type": "string"
+            "$ref": "#/definitions/Member"
           }
+        }
+      },
+      "additionalProperties": false
+    },
+    "Member": {
+      "type": "object",
+      "required": [
+        "address",
+        "mint_count"
+      ],
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "mint_count": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
         }
       },
       "additionalProperties": false
