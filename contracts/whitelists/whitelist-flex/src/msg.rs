@@ -4,7 +4,7 @@ use cosmwasm_std::{Coin, CosmosMsg, Empty, Timestamp};
 #[cw_serde]
 pub struct Member {
     pub address: String,
-    pub num_mints: u32,
+    pub mint_count: u32,
 }
 
 #[cw_serde]

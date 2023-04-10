@@ -126,11 +126,11 @@ pub fn instantiate(
     for member in msg.members.into_iter() {
         let addr = deps.api.addr_validate(&member.address)?;
         if let Some(whale_cap) = config.whale_cap {
-            if member.num_mints > whale_cap {
+            if member.mint_count > whale_cap {
                 return Err(ContractError::ExceededWhaleCap {});
             }
         }
-        WHITELIST.save(deps.storage, addr, &member.num_mints)?;
+        WHITELIST.save(deps.storage, addr, &member.mint_count)?;
     }
 
     Ok(res
@@ -240,7 +240,7 @@ pub fn execute_add_members(
         if WHITELIST.has(deps.storage, addr.clone()) {
             return Err(ContractError::DuplicateMember(addr.to_string()));
         }
-        WHITELIST.save(deps.storage, addr, &add.num_mints)?;
+        WHITELIST.save(deps.storage, addr, &add.mint_count)?;
         config.num_members += 1;
     }
 
@@ -375,9 +375,9 @@ pub fn query_members(
         .range(deps.storage, start, None, Order::Ascending)
         .take(limit)
         .map(|res| {
-            res.map(|(addr, num_mints)| Member {
+            res.map(|(addr, mint_count)| Member {
                 address: addr.into_string(),
-                num_mints,
+                mint_count,
             })
         })
         .map(Result::unwrap)
