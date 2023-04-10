@@ -11,7 +11,7 @@ use crate::msg::{
 use crate::state::{AdminList, Config, ADMIN_LIST, CONFIG, WHITELIST};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult};
+use cosmwasm_std::{ensure, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult};
 use cosmwasm_std::{Order, Timestamp};
 use cw2::set_contract_version;
 use cw_storage_plus::Bound;
@@ -68,12 +68,20 @@ pub fn instantiate(
         ));
     }
 
+    if let Some(whale_cap) = msg.whale_cap {
+        ensure!(
+            whale_cap > msg.member_limit,
+            ContractError::InvalidWhaleCap(whale_cap, msg.member_limit)
+        );
+    }
+
     let config = Config {
         start_time: msg.start_time,
         end_time: msg.end_time,
         num_members: msg.members.len() as u32,
         mint_price: msg.mint_price,
         member_limit: msg.member_limit,
+        whale_cap: msg.whale_cap,
     };
     CONFIG.save(deps.storage, &config)?;
 
@@ -117,6 +125,11 @@ pub fn instantiate(
 
     for member in msg.members.into_iter() {
         let addr = deps.api.addr_validate(&member.address)?;
+        if let Some(whale_cap) = config.whale_cap {
+            if member.num_mints > whale_cap {
+                return Err(ContractError::ExceededWhaleCap {});
+            }
+        }
         WHITELIST.save(deps.storage, addr, &member.num_mints)?;
     }
 
@@ -390,5 +403,6 @@ pub fn query_config(deps: Deps, env: Env) -> StdResult<ConfigResponse> {
         end_time: config.end_time,
         mint_price: config.mint_price,
         is_active: (env.block.time >= config.start_time) && (env.block.time < config.end_time),
+        whale_cap: config.whale_cap,
     })
 }

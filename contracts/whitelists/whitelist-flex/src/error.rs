@@ -29,11 +29,14 @@ pub enum ContractError {
     #[error("InvalidEndTime {0} > {1}")]
     InvalidEndTime(Timestamp, Timestamp),
 
+    #[error("InvalidWhaleCap {0} > {1}")]
+    InvalidWhaleCap(u32, u32),
+
     #[error("MembersExceeded: {expected} got {actual}")]
     MembersExceeded { expected: u32, actual: u32 },
 
-    #[error("Invalid minting limit per address. max: {max}, got: {got}")]
-    InvalidPerAddressLimit { max: String, got: String },
+    #[error("Exceeded whale cap")]
+    ExceededWhaleCap {},
 
     #[error("Invalid member limit. min: {min}, max: {max}, got: {got}")]
     InvalidMemberLimit { min: u32, max: u32, got: u32 },

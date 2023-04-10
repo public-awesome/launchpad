@@ -16,6 +16,7 @@ pub struct InstantiateMsg {
     pub member_limit: u32,
     pub admins: Vec<String>,
     pub admins_mutable: bool,
+    pub whale_cap: Option<u32>,
 }
 
 #[cw_serde]
@@ -103,6 +104,7 @@ pub struct ConfigResponse {
     pub end_time: Timestamp,
     pub mint_price: Coin,
     pub is_active: bool,
+    pub whale_cap: Option<u32>,
 }
 
 #[cw_serde]
