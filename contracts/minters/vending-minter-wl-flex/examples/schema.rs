@@ -4,11 +4,11 @@ use std::fs::create_dir_all;
 use cosmwasm_schema::{export_schema, remove_schemas, schema_for};
 
 use sg4::StatusResponse;
-use vending_minter::msg::{
+use vending_minter_wl_flex::msg::{
     ConfigResponse, ExecuteMsg, InstantiateMsg, MintCountResponse, MintPriceResponse,
     MintableNumTokensResponse, QueryMsg, StartTimeResponse,
 };
-use vending_minter::state::Config;
+use vending_minter_wl_flex::state::Config;
 
 fn main() {
     let mut out_dir = current_dir().unwrap();

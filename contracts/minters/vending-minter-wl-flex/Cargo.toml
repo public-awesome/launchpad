@@ -1,10 +1,10 @@
 [package]
-name = "vending-minter"
+name = "vending-minter-wl-flex"
 authors = [
-  "Jake Hartnell <jake@stargaze.zone>",
-  "Shane Vitarana <s@noreply.publicawesome.com>",
+    "John Y <j@noreply.publicawesome.com>",
+    "Shane Vitarana <s@noreply.publicawesome.com>",
 ]
-description = "Stargaze vending minter contract"
+description = "Stargaze vending minter contract with flexible whitelist"
 version = { workspace = true }
 edition = { workspace = true }
 homepage = { workspace = true }
@@ -12,9 +12,9 @@ repository = { workspace = true }
 license = { workspace = true }
 
 exclude = [
-  # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
-  "contract.wasm",
-  "hash.txt",
+    # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
+    "contract.wasm",
+    "hash.txt",
 ]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -51,4 +51,4 @@ sg-whitelist    = { workspace = true, features = ["library"] }
 thiserror       = { workspace = true }
 url             = { workspace = true }
 vending-factory = { workspace = true, features = ["library"] }
-semver           = {workspace = true  }
+semver          = { workspace = true }
