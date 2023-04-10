@@ -58,6 +58,9 @@ pub enum QueryMsg {
     HasMember {
         member: String,
     },
+    Member {
+        member: String,
+    },
     Config {},
     AdminList {},
     CanExecute {
@@ -74,6 +77,11 @@ pub struct MembersResponse {
 #[cw_serde]
 pub struct HasMemberResponse {
     pub has_member: bool,
+}
+
+#[cw_serde]
+pub struct MemberResponse {
+    pub member: Member,
 }
 
 #[cw_serde]

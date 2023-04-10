@@ -334,6 +334,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::HasEnded {} => to_binary(&query_has_ended(deps, env)?),
         QueryMsg::IsActive {} => to_binary(&query_is_active(deps, env)?),
         QueryMsg::HasMember { member } => to_binary(&query_has_member(deps, member)?),
+        QueryMsg::Member { member } => to_binary(&query_member(deps, member)?),
         QueryMsg::Config {} => to_binary(&query_config(deps, env)?),
         QueryMsg::AdminList {} => to_binary(&query_admin_list(deps)?),
         QueryMsg::CanExecute { sender, .. } => to_binary(&query_can_execute(deps, &sender)?),
@@ -391,6 +392,15 @@ pub fn query_has_member(deps: Deps, member: String) -> StdResult<HasMemberRespon
 
     Ok(HasMemberResponse {
         has_member: WHITELIST.has(deps.storage, addr),
+    })
+}
+
+pub fn query_member(deps: Deps, member: String) -> StdResult<Member> {
+    let addr = deps.api.addr_validate(&member)?;
+    let mint_count = WHITELIST.load(deps.storage, addr.clone())?;
+    Ok(Member {
+        address: addr.into_string(),
+        mint_count,
     })
 }
 
