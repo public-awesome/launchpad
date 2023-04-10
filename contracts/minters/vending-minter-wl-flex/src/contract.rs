@@ -28,8 +28,9 @@ use sg4::{Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
 use sg_std::math::U64Ext;
 use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME};
-use sg_whitelist::msg::{
-    ConfigResponse as WhitelistConfigResponse, HasMemberResponse, QueryMsg as WhitelistQueryMsg,
+use sg_whitelist_flex::msg::{
+    ConfigResponse as WhitelistConfigResponse, HasMemberResponse, Member,
+    QueryMsg as WhitelistQueryMsg,
 };
 use sha2::{Digest, Sha256};
 use shuffle::{fy::FisherYates, shuffler::Shuffler};
@@ -470,6 +471,7 @@ pub fn execute_mint_sender(
 }
 
 // Check if a whitelist exists and not ended
+// Check whitelist per limit address
 // Sender has to be whitelisted to mint
 fn is_public_mint(deps: Deps, info: &MessageInfo) -> Result<bool, ContractError> {
     let config = CONFIG.load(deps.storage)?;
@@ -490,7 +492,7 @@ fn is_public_mint(deps: Deps, info: &MessageInfo) -> Result<bool, ContractError>
     }
 
     let res: HasMemberResponse = deps.querier.query_wasm_smart(
-        whitelist,
+        whitelist.clone(),
         &WhitelistQueryMsg::HasMember {
             member: info.sender.to_string(),
         },
@@ -503,7 +505,13 @@ fn is_public_mint(deps: Deps, info: &MessageInfo) -> Result<bool, ContractError>
 
     // Check wl per address limit
     let mint_count = mint_count(deps, info)?;
-    if mint_count >= wl_config.per_address_limit {
+    let wl_limit: Member = deps.querier.query_wasm_smart(
+        whitelist,
+        &WhitelistQueryMsg::Member {
+            member: info.sender.to_string(),
+        },
+    )?;
+    if mint_count >= wl_limit.mint_count {
         return Err(ContractError::MaxPerAddressLimitExceeded {});
     }
 

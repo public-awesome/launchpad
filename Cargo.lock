@@ -4157,7 +4157,7 @@ dependencies = [
  "semver",
  "serde",
  "sg-std 2.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sg-whitelist",
+ "sg-whitelist-flex",
  "sg1",
  "sg2",
  "sg4",
