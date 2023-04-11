@@ -94,6 +94,27 @@
     {
       "type": "object",
       "required": [
+        "member"
+      ],
+      "properties": {
+        "member": {
+          "type": "object",
+          "required": [
+            "member"
+          ],
+          "properties": {
+            "member": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
         "config"
       ],
       "properties": {
