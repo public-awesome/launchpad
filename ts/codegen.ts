@@ -38,6 +38,14 @@ codegen({
       name: "VendingMinter",
       dir: "../contracts/minters/vending-minter/schema",
     },
+    {
+      name: "VendingMinterWlFlex",
+      dir: "../contracts/minters/vending-minter-wl-flex/schema",
+    },
+    {
+      name: "WhitelistFlex",
+      dir: "../contracts/whitelists/whitelist-flex/schema",
+    },
   ],
   outPath: "./src/",
 
