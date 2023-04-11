@@ -7,7 +7,7 @@ use crate::msg::{
 };
 use crate::state::{
     Config, ConfigExtension, CONFIG, MINTABLE_NUM_TOKENS, MINTABLE_TOKEN_POSITIONS, MINTER_ADDRS,
-    SG721_ADDRESS, STATUS,
+    SG721_ADDRESS, STATUS, WHITELIST_MINTER_ADDRS,
 };
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
@@ -46,7 +46,7 @@ pub struct TokenPositionMapping {
 }
 
 // version info for migration info
-const CONTRACT_NAME: &str = "crates.io:sg-minter";
+const CONTRACT_NAME: &str = "crates.io:sg-vending-minter-flex";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 const INSTANTIATE_SG721_REPLY_ID: u64 = 1;
@@ -440,17 +440,18 @@ pub fn execute_mint_sender(
 
     // If there is no active whitelist right now, check public mint
     // Check if after start_time
-    if is_public_mint(deps.as_ref(), &info)? && (env.block.time < config.extension.start_time) {
+    let is_public = is_public_mint(deps.as_ref(), &info)?;
+    if is_public && (env.block.time < config.extension.start_time) {
         return Err(ContractError::BeforeMintStartTime {});
     }
 
     // Check if already minted max per address limit
-    let mint_count = mint_count(deps.as_ref(), &info)?;
-    if mint_count >= config.extension.per_address_limit {
+    let mint_count = public_mint_count(deps.as_ref(), &info)?;
+    if is_public && mint_count >= config.extension.per_address_limit {
         return Err(ContractError::MaxPerAddressLimitExceeded {});
     }
 
-    _execute_mint(deps, env, info, action, false, None, None)
+    _execute_mint(deps, env, info, action, false, None, None, is_public)
 }
 
 // Check if a whitelist exists and not ended
@@ -487,14 +488,14 @@ fn is_public_mint(deps: Deps, info: &MessageInfo) -> Result<bool, ContractError>
     }
 
     // Check wl per address limit
-    let mint_count = mint_count(deps, info)?;
+    let wl_mint_count = whitelist_mint_count(deps, info)?;
     let wl_limit: Member = deps.querier.query_wasm_smart(
         whitelist,
         &WhitelistQueryMsg::Member {
             member: info.sender.to_string(),
         },
     )?;
-    if mint_count >= wl_limit.mint_count {
+    if wl_mint_count >= wl_limit.mint_count {
         return Err(ContractError::MaxPerAddressLimitExceeded {});
     }
 
@@ -518,7 +519,7 @@ pub fn execute_mint_to(
         ));
     }
 
-    _execute_mint(deps, env, info, action, true, Some(recipient), None)
+    _execute_mint(deps, env, info, action, true, Some(recipient), None, true)
 }
 
 pub fn execute_mint_for(
@@ -547,6 +548,7 @@ pub fn execute_mint_for(
         true,
         Some(recipient),
         Some(token_id),
+        true,
     )
 }
 
@@ -562,6 +564,7 @@ fn _execute_mint(
     is_admin: bool,
     recipient: Option<Addr>,
     token_id: Option<u32>,
+    is_public: bool,
 ) -> Result<Response, ContractError> {
     let mintable_num_tokens = MINTABLE_NUM_TOKENS.load(deps.storage)?;
     if mintable_num_tokens == 0 {
@@ -655,9 +658,15 @@ fn _execute_mint(
     let mintable_num_tokens = MINTABLE_NUM_TOKENS.load(deps.storage)?;
     // Decrement mintable num tokens
     MINTABLE_NUM_TOKENS.save(deps.storage, &(mintable_num_tokens - 1))?;
-    // Save the new mint count for the sender's address
-    let new_mint_count = mint_count(deps.as_ref(), &info)? + 1;
-    MINTER_ADDRS.save(deps.storage, &info.sender, &new_mint_count)?;
+    if is_public {
+        // Save the new mint count for the sender's address
+        let new_mint_count = public_mint_count(deps.as_ref(), &info)? + 1;
+        MINTER_ADDRS.save(deps.storage, &info.sender, &new_mint_count)?;
+    } else {
+        // Save the new mint count for the sender's address
+        let new_mint_count = whitelist_mint_count(deps.as_ref(), &info)? + 1;
+        WHITELIST_MINTER_ADDRS.save(deps.storage, &info.sender, &new_mint_count)?;
+    }
 
     let seller_amount = if !is_admin {
         let amount = mint_price.amount - network_fee;
@@ -995,8 +1004,16 @@ pub fn mint_price(deps: Deps, is_admin: bool) -> Result<Coin, StdError> {
     }
 }
 
-fn mint_count(deps: Deps, info: &MessageInfo) -> Result<u32, StdError> {
+fn public_mint_count(deps: Deps, info: &MessageInfo) -> Result<u32, StdError> {
     let mint_count = (MINTER_ADDRS.key(&info.sender).may_load(deps.storage)?).unwrap_or(0);
+    Ok(mint_count)
+}
+
+fn whitelist_mint_count(deps: Deps, info: &MessageInfo) -> Result<u32, StdError> {
+    let mint_count = (WHITELIST_MINTER_ADDRS
+        .key(&info.sender)
+        .may_load(deps.storage)?)
+    .unwrap_or(0);
     Ok(mint_count)
 }
 
