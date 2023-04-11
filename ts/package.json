@@ -1,6 +1,6 @@
 {
   "name": "@stargazezone/launchpad",
-  "version": "2.3.0",
+  "version": "2.3.3",
   "description": "Stargaze Launchpad CosmWasm Typescript Types",
   "main": "index.js",
   "scripts": {
