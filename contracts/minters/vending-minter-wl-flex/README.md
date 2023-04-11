@@ -1,5 +1,5 @@
-# Stargaze Vending Minter Contract
+# Stargaze Vending Minter with Flexible Whitelist Contract
 
-A minter that best works for generated art collections. It's designed for collections stored on IPFS that have a base URI root.
+A vending minter designed to have a flexible whitelist. The whitelist is genereated from a snapshot of an existing collection to give a per address limit based on existing NFT ownership.
 
-Mints are in random order. The entire collection is shuffled on instantiation. Each mint triggers a smaller "baby" shuffle. At any time, a `Shuffle {}` function can be called to add a time element to the random mint.
+This removes 3% whitelist limit. It only works with sg-whitelist-flex.
