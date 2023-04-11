@@ -10,7 +10,7 @@ use cw_utils::nonpayable;
 use sg_std::Response;
 
 // version info for migration info
-const CONTRACT_NAME: &str = "crates.io:whitelist-updatable";
+const CONTRACT_NAME: &str = "crates.io:whitelist-immutable";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[cfg_attr(not(feature = "library"), entry_point)]
