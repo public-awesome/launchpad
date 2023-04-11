@@ -20,6 +20,7 @@ echo "Publishing contracts"
 
 echo "Generating schema"
 cd $PROJECT_PATH
+cargo build
 . ./scripts/schema.sh $1
 
 cd $PROJECT_PATH
