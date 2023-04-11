@@ -1,4 +1,4 @@
-use cosmwasm_schema::cw_serde;
+use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Coin, CosmosMsg, Empty, Timestamp};
 
 #[cw_serde]
@@ -47,22 +47,28 @@ pub struct RemoveMembersMsg {
 }
 
 #[cw_serde]
+#[derive(QueryResponses)]
 pub enum QueryMsg {
+    #[returns(HasStartedResponse)]
     HasStarted {},
+    #[returns(HasEndedResponse)]
     HasEnded {},
+    #[returns(IsActiveResponse)]
     IsActive {},
+    #[returns(MembersResponse)]
     Members {
         start_after: Option<String>,
         limit: Option<u32>,
     },
-    HasMember {
-        member: String,
-    },
-    Member {
-        member: String,
-    },
+    #[returns(HasMemberResponse)]
+    HasMember { member: String },
+    #[returns(MemberResponse)]
+    Member { member: String },
+    #[returns(ConfigResponse)]
     Config {},
+    #[returns(AdminListResponse)]
     AdminList {},
+    #[returns(CanExecuteResponse)]
     CanExecute {
         sender: String,
         msg: CosmosMsg<Empty>,

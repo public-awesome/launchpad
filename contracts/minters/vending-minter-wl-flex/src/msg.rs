@@ -1,5 +1,6 @@
-use cosmwasm_schema::cw_serde;
+use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Coin, Timestamp};
+use sg4::StatusResponse;
 use vending_factory::{msg::VendingMinterCreateMsg, state::VendingMinterParams};
 
 #[cw_serde]
@@ -40,12 +41,19 @@ pub enum ExecuteMsg {
 }
 
 #[cw_serde]
+#[derive(QueryResponses)]
 pub enum QueryMsg {
+    #[returns(ConfigResponse)]
     Config {},
+    #[returns(MintableNumTokensResponse)]
     MintableNumTokens {},
+    #[returns(StartTimeResponse)]
     StartTime {},
+    #[returns(MintPriceResponse)]
     MintPrice {},
+    #[returns(MintCountResponse)]
     MintCount { address: String },
+    #[returns(StatusResponse)]
     Status {},
 }
 
