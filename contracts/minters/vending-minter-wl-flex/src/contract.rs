@@ -313,6 +313,12 @@ pub fn execute_purge(
     for key in keys {
         MINTER_ADDRS.remove(deps.storage, &key?);
     }
+    let keys = WHITELIST_MINTER_ADDRS
+        .keys(deps.storage, None, None, Order::Ascending)
+        .collect::<Vec<_>>();
+    for key in keys {
+        WHITELIST_MINTER_ADDRS.remove(deps.storage, &key?);
+    }
 
     Ok(Response::new()
         .add_attribute("action", "purge")
