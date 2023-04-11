@@ -9,7 +9,6 @@ use crate::state::{
     Config, ConfigExtension, CONFIG, MINTABLE_NUM_TOKENS, MINTABLE_TOKEN_POSITIONS, MINTER_ADDRS,
     SG721_ADDRESS, STATUS,
 };
-use crate::validation::{check_dynamic_per_address_limit, get_three_percent_of_tokens};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
@@ -72,22 +71,6 @@ pub fn instantiate(
 
     // set default status so it can be queried without failing
     STATUS.save(deps.storage, &Status::default())?;
-
-    if !check_dynamic_per_address_limit(
-        msg.init_msg.per_address_limit,
-        msg.init_msg.num_tokens,
-        factory_params.extension.max_per_address_limit,
-    )? {
-        return Err(ContractError::InvalidPerAddressLimit {
-            max: display_max_mintable_tokens(
-                msg.init_msg.per_address_limit,
-                msg.init_msg.num_tokens,
-                factory_params.extension.max_per_address_limit,
-            )?,
-            min: 1,
-            got: msg.init_msg.per_address_limit,
-        });
-    }
 
     // sanitize base token uri
     let mut base_token_uri = msg.init_msg.base_token_uri.trim().to_string();
@@ -929,22 +912,6 @@ pub fn execute_update_per_address_limit(
         });
     }
 
-    if !check_dynamic_per_address_limit(
-        per_address_limit,
-        config.extension.num_tokens,
-        factory_params.extension.max_per_address_limit,
-    )? {
-        return Err(ContractError::InvalidPerAddressLimit {
-            max: display_max_mintable_tokens(
-                per_address_limit,
-                config.extension.num_tokens,
-                factory_params.extension.max_per_address_limit,
-            )?,
-            min: 1,
-            got: per_address_limit,
-        });
-    }
-
     config.extension.per_address_limit = per_address_limit;
     CONFIG.save(deps.storage, &config)?;
     Ok(Response::new()
@@ -1035,17 +1002,12 @@ fn mint_count(deps: Deps, info: &MessageInfo) -> Result<u32, StdError> {
 
 pub fn display_max_mintable_tokens(
     per_address_limit: u32,
-    num_tokens: u32,
     max_per_address_limit: u32,
 ) -> Result<u32, ContractError> {
     if per_address_limit > max_per_address_limit {
         return Ok(max_per_address_limit);
     }
-    if num_tokens < 100 {
-        return Ok(3_u32);
-    }
-    let three_percent = get_three_percent_of_tokens(num_tokens)?.u128();
-    Ok(three_percent as u32)
+    Ok(max_per_address_limit)
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
