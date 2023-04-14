@@ -6,8 +6,8 @@ MSG=$(cat <<EOF
     "code_id": $MINTER_CODE_ID,
     "allowed_sg721_code_ids": [$SG721_BASE_CODE_ID],
     "frozen": false,
-    "creation_fee": {"amount": "3000000000", "denom": "ustars"},
-    "min_mint_price": {"amount": "50000000", "denom": "ustars"},
+    "creation_fee": {"amount": "20000000000", "denom": "ustars"},
+    "min_mint_price": {"amount": "0", "denom": "ustars"},
     "mint_fee_bps": 500,
     "max_trading_offset_secs": 604800,
     "extension": {
