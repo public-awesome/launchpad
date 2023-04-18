@@ -4,16 +4,16 @@ use cosmwasm_std::{Empty, StdError};
 use cw2::set_contract_version;
 use sg721_base::msg::CollectionInfoResponse;
 
-use crate::error::ContractError;
 use crate::state::FROZEN_TOKEN_METADATA;
+use crate::{error::ContractError, state::ENABLE_UPDATABLE};
 use sg721::InstantiateMsg;
 
 use cw721_base::Extension;
-use cw_utils::{may_pay, nonpayable};
+use cw_utils::nonpayable;
 use sg721_base::ContractError::Unauthorized;
 use sg721_base::Sg721Contract;
 pub type Sg721UpdatableContract<'a> = Sg721Contract<'a, Extension>;
-use sg_std::{Response, NATIVE_DENOM};
+use sg_std::Response;
 
 use semver::Version;
 
@@ -98,31 +98,19 @@ pub fn execute_update_token_metadata(
     Ok(Response::new().add_event(event))
 }
 
-pub fn _migrate(
-    deps: DepsMut,
-    _env: Env,
-    info: MessageInfo,
-    _msg: Empty,
-) -> Result<Response, ContractError> {
+pub fn _migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
     let current_version = cw2::get_contract_version(deps.storage)?;
-
+    let mut enable_updatable = true;
     if ![CONTRACT_NAME, COMPATIBLE_MIGRATION_CONTRACT_NAME]
         .contains(&current_version.contract.as_str())
     {
         return Err(StdError::generic_err("Cannot upgrade to a different contract").into());
     }
 
+    // when migrating from sg721-base to sg721-updatable
+    // need to pay migration fee to enable token metadata updates
     if COMPATIBLE_MIGRATION_CONTRACT_NAME == current_version.contract.as_str() {
-        // need to pay migration fee from sg721-base to sg721-updatable
-        // query migration fee from minter contract which can be changed by gov in factory sudo param
-        // TODO
-        let payment = may_pay(&info, NATIVE_DENOM)?;
-        // if payment != migration_fee.amount {
-        //     return Err(ContractError::IncorrectPaymentAmount(
-        //         coin(payment.u128(), &config.mint_price.denom),
-        //         mint_price,
-        //     ));
-        // }
+        enable_updatable = false;
     }
 
     let version: Version = current_version
@@ -149,6 +137,7 @@ pub fn _migrate(
     }
 
     FROZEN_TOKEN_METADATA.save(deps.storage, &false)?;
+    ENABLE_UPDATABLE.save(deps.storage, &enable_updatable)?;
 
     // set new contract version
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
