@@ -9,11 +9,11 @@ use crate::state::FROZEN_TOKEN_METADATA;
 use sg721::InstantiateMsg;
 
 use cw721_base::Extension;
-use cw_utils::nonpayable;
+use cw_utils::{may_pay, nonpayable};
 use sg721_base::ContractError::Unauthorized;
 use sg721_base::Sg721Contract;
 pub type Sg721UpdatableContract<'a> = Sg721Contract<'a, Extension>;
-use sg_std::Response;
+use sg_std::{Response, NATIVE_DENOM};
 
 use semver::Version;
 
@@ -98,7 +98,12 @@ pub fn execute_update_token_metadata(
     Ok(Response::new().add_event(event))
 }
 
-pub fn _migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
+pub fn _migrate(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    _msg: Empty,
+) -> Result<Response, ContractError> {
     let current_version = cw2::get_contract_version(deps.storage)?;
 
     if ![CONTRACT_NAME, COMPATIBLE_MIGRATION_CONTRACT_NAME]
@@ -106,6 +111,20 @@ pub fn _migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, Contr
     {
         return Err(StdError::generic_err("Cannot upgrade to a different contract").into());
     }
+
+    if COMPATIBLE_MIGRATION_CONTRACT_NAME == current_version.contract.as_str() {
+        // need to pay migration fee from sg721-base to sg721-updatable
+        // query migration fee from minter contract which can be changed by gov in factory sudo param
+        // TODO
+        let payment = may_pay(&info, NATIVE_DENOM)?;
+        // if payment != migration_fee.amount {
+        //     return Err(ContractError::IncorrectPaymentAmount(
+        //         coin(payment.u128(), &config.mint_price.denom),
+        //         mint_price,
+        //     ));
+        // }
+    }
+
     let version: Version = current_version
         .version
         .parse()

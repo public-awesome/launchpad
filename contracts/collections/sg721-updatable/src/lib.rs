@@ -57,7 +57,12 @@ pub mod entry {
     }
 
     #[entry_point]
-    pub fn migrate(deps: DepsMut, env: Env, msg: Empty) -> Result<Response, ContractError> {
-        _migrate(deps, env, msg)
+    pub fn migrate(
+        deps: DepsMut,
+        env: Env,
+        info: MessageInfo,
+        msg: Empty,
+    ) -> Result<Response, ContractError> {
+        _migrate(deps, env, info, msg)
     }
 }

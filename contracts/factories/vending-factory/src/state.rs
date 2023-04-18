@@ -10,6 +10,7 @@ pub struct ParamsExtension {
     pub airdrop_mint_price: Coin,
     pub airdrop_mint_fee_bps: u64,
     pub shuffle_fee: Coin,
+    pub migration_fee: Coin,
 }
 pub type VendingMinterParams = MinterParams<ParamsExtension>;
 
