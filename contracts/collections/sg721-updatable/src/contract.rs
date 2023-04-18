@@ -30,10 +30,40 @@ pub fn _instantiate(
 ) -> Result<Response, ContractError> {
     // Set frozen to false on instantiate. allows updating token metadata
     FROZEN_TOKEN_METADATA.save(deps.storage, &false)?;
+    // Set enable_updatable to true on instantiate. allows updating token metadata
+    ENABLE_UPDATABLE.save(deps.storage, &true)?;
 
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
     let res = Sg721UpdatableContract::default().instantiate(deps, env, info, msg)?;
     Ok(res)
+}
+
+pub fn execute_enable_updatable(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+) -> Result<Response, ContractError> {
+    let enable_updates = ENABLE_UPDATABLE.load(deps.storage)?;
+    if enable_updates == true {
+        return Err(ContractError::AlreadyEnableUpdatable {});
+    }
+
+    // TODO add check if sender is contract admin
+    // Check if sender is creator
+    let collection_info: CollectionInfoResponse =
+        Sg721UpdatableContract::default().query_collection_info(deps.as_ref())?;
+    if info.sender != collection_info.creator {
+        return Err(ContractError::Base(Unauthorized {}));
+    }
+
+    // Check fee matches enable updatable fee
+    // TODO
+
+    ENABLE_UPDATABLE.save(deps.storage, &true)?;
+
+    Ok(Response::new()
+        .add_attribute("action", "enable_updates")
+        .add_attribute("enabled", "true"))
 }
 
 pub fn execute_freeze_token_metadata(
@@ -78,6 +108,12 @@ pub fn execute_update_token_metadata(
         return Err(ContractError::TokenMetadataFrozen {});
     }
 
+    // Check if enable updatable is true
+    let enable_updates = ENABLE_UPDATABLE.load(deps.storage)?;
+    if !enable_updates {
+        return Err(ContractError::NotEnableUpdatable {});
+    }
+
     // Update token metadata
     Sg721UpdatableContract::default().tokens.update(
         deps.storage,
@@ -108,7 +144,7 @@ pub fn _migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, Contr
     }
 
     // when migrating from sg721-base to sg721-updatable
-    // need to pay migration fee to enable token metadata updates
+    // need to pay migration fee to enable updates
     if COMPATIBLE_MIGRATION_CONTRACT_NAME == current_version.contract.as_str() {
         enable_updatable = false;
     }

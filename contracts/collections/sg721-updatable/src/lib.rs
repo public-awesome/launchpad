@@ -12,8 +12,8 @@ pub mod entry {
     use crate::error::ContractError;
     use crate::{
         contract::{
-            _instantiate, _migrate, execute_freeze_token_metadata, execute_update_token_metadata,
-            Sg721UpdatableContract,
+            _instantiate, _migrate, execute_enable_updatable, execute_freeze_token_metadata,
+            execute_update_token_metadata, Sg721UpdatableContract,
         },
         msg::ExecuteMsg,
     };
@@ -41,6 +41,7 @@ pub mod entry {
     ) -> Result<Response, ContractError> {
         match msg {
             ExecuteMsg::FreezeTokenMetadata {} => execute_freeze_token_metadata(deps, env, info),
+            ExecuteMsg::EnableUpdatable {} => execute_enable_updatable(deps, env, info),
             ExecuteMsg::UpdateTokenMetadata {
                 token_id,
                 token_uri,
@@ -54,6 +55,7 @@ pub mod entry {
     #[entry_point]
     pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         Sg721UpdatableContract::default().query(deps, env, msg)
+        // TODO add query for enable_updatable and frozen_token_metadata
     }
 
     #[entry_point]

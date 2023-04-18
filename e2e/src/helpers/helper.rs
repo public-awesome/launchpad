@@ -62,6 +62,10 @@ pub fn instantiate_factory(
                         amount: Uint128::new(500_000_000),
                         denom: denom.to_string(),
                     },
+                    migration_fee: Coin {
+                        amount: Uint128::new(500_000_000),
+                        denom: denom.to_string(),
+                    },
                 },
             },
         },

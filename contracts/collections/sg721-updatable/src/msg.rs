@@ -15,6 +15,8 @@ pub enum ExecuteMsg<T, E> {
         token_id: String,
         token_uri: Option<String>,
     },
+    /// Enable updatable for updating token metadata. One time migration fee for sg721-base to sg721-updatable.
+    EnableUpdatable {},
     // Sg721Base msgs
     TransferNft {
         recipient: String,

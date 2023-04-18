@@ -8,7 +8,7 @@ use vending_factory::{
 
 use crate::common_setup::setup_minter::common::constants::{
     AIRDROP_MINT_FEE_FAIR_BURN, AIRDROP_MINT_PRICE, CREATION_FEE, MAX_PER_ADDRESS_LIMIT,
-    MAX_TOKEN_LIMIT, MINT_FEE_FAIR_BURN, MIN_MINT_PRICE, SHUFFLE_FEE,
+    MAX_TOKEN_LIMIT, MIGRATION_FEE, MINT_FEE_FAIR_BURN, MIN_MINT_PRICE, SHUFFLE_FEE,
 };
 
 pub fn mock_init_extension(
@@ -62,6 +62,7 @@ pub fn mock_params() -> VendingMinterParams {
             airdrop_mint_price: coin(AIRDROP_MINT_PRICE, NATIVE_DENOM),
             airdrop_mint_fee_bps: AIRDROP_MINT_FEE_FAIR_BURN,
             shuffle_fee: coin(SHUFFLE_FEE, NATIVE_DENOM),
+            migration_fee: coin(MIGRATION_FEE, NATIVE_DENOM),
         },
     }
 }

@@ -18,4 +18,10 @@ pub enum ContractError {
 
     #[error("TokenMetadataFrozen")]
     TokenMetadataFrozen {},
+
+    #[error("NotEnableUpdatable")]
+    NotEnableUpdatable {},
+
+    #[error("AlreadyEnableUpdatable")]
+    AlreadyEnableUpdatable {},
 }
