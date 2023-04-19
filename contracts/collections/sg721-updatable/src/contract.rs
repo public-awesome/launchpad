@@ -48,7 +48,7 @@ pub fn execute_enable_updatable(
 ) -> Result<Response, ContractError> {
     let enable_updates = ENABLE_UPDATABLE.load(deps.storage)?;
     let mut res = Response::new();
-    if enable_updates == true {
+    if enable_updates {
         return Err(ContractError::AlreadyEnableUpdatable {});
     }
 
