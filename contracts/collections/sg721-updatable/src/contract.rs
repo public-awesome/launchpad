@@ -1,9 +1,10 @@
+use cosmwasm_std::{Deps, Empty, StdError, StdResult};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::{DepsMut, Env, Event, MessageInfo};
-use cosmwasm_std::{Empty, StdError};
 use cw2::set_contract_version;
 use sg721_base::msg::CollectionInfoResponse;
 
+use crate::msg::EnableUpdatableResponse;
 use crate::state::FROZEN_TOKEN_METADATA;
 use crate::{error::ContractError, state::ENABLE_UPDATABLE};
 use sg721::InstantiateMsg;
@@ -135,6 +136,11 @@ pub fn execute_update_token_metadata(
         .add_attribute("token_id", token_id)
         .add_attribute("token_uri", token_uri.unwrap_or_default());
     Ok(Response::new().add_event(event))
+}
+
+pub fn query_enable_updatable(deps: Deps) -> StdResult<EnableUpdatableResponse> {
+    let enabled = ENABLE_UPDATABLE.load(deps.storage)?;
+    Ok(EnableUpdatableResponse { enabled })
 }
 
 pub fn _migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
