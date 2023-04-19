@@ -10,6 +10,7 @@ use sg721::InstantiateMsg;
 
 use cw721_base::Extension;
 use cw_utils::nonpayable;
+use sg1::checked_fair_burn;
 use sg721_base::ContractError::Unauthorized;
 use sg721_base::Sg721Contract;
 pub type Sg721UpdatableContract<'a> = Sg721Contract<'a, Extension>;
@@ -21,6 +22,7 @@ const COMPATIBLE_MIGRATION_CONTRACT_NAME: &str = "crates.io:sg721-base";
 const EARLIEST_COMPATIBLE_CONTRACT_VERSION: &str = "0.24.0";
 const CONTRACT_NAME: &str = "crates.io:sg721-updatable";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
+const ENABLE_UPDATABLE_FEE: u128 = 500_000_000;
 
 pub fn _instantiate(
     deps: DepsMut,
@@ -44,6 +46,7 @@ pub fn execute_enable_updatable(
     info: MessageInfo,
 ) -> Result<Response, ContractError> {
     let enable_updates = ENABLE_UPDATABLE.load(deps.storage)?;
+    let mut res = Response::new();
     if enable_updates == true {
         return Err(ContractError::AlreadyEnableUpdatable {});
     }
@@ -56,12 +59,12 @@ pub fn execute_enable_updatable(
         return Err(ContractError::Base(Unauthorized {}));
     }
 
-    // Check fee matches enable updatable fee
-    // TODO
+    // Check fee matches enable updatable fee and add fairburn msg
+    checked_fair_burn(&info, ENABLE_UPDATABLE_FEE, None, &mut res)?;
 
     ENABLE_UPDATABLE.save(deps.storage, &true)?;
 
-    Ok(Response::new()
+    Ok(res
         .add_attribute("action", "enable_updates")
         .add_attribute("enabled", "true"))
 }
@@ -144,7 +147,7 @@ pub fn _migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, Contr
     }
 
     // when migrating from sg721-base to sg721-updatable
-    // need to pay migration fee to enable updates
+    // need to pay enable updatable fee before updating token metadata
     if COMPATIBLE_MIGRATION_CONTRACT_NAME == current_version.contract.as_str() {
         enable_updatable = false;
     }
