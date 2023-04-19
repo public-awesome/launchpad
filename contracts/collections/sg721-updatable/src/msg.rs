@@ -121,6 +121,7 @@ where
 #[cw_serde]
 pub enum QueryMsg {
     EnableUpdatable {},
+    FreezeTokenMetadata {},
     OwnerOf {
         token_id: String,
         include_expired: Option<bool>,
@@ -231,4 +232,9 @@ impl From<QueryMsg> for Sg721QueryMsg {
 #[cw_serde]
 pub struct EnableUpdatableResponse {
     pub enabled: bool,
+}
+
+#[cw_serde]
+pub struct FrozenTokenMetadataResponse {
+    pub frozen: bool,
 }

@@ -4,7 +4,7 @@ use cosmwasm_std::{DepsMut, Env, Event, MessageInfo};
 use cw2::set_contract_version;
 use sg721_base::msg::CollectionInfoResponse;
 
-use crate::msg::EnableUpdatableResponse;
+use crate::msg::{EnableUpdatableResponse, FrozenTokenMetadataResponse};
 use crate::state::FROZEN_TOKEN_METADATA;
 use crate::{error::ContractError, state::ENABLE_UPDATABLE};
 use sg721::InstantiateMsg;
@@ -113,8 +113,8 @@ pub fn execute_update_token_metadata(
     }
 
     // Check if enable updatable is true
-    let enable_updates = ENABLE_UPDATABLE.load(deps.storage)?;
-    if !enable_updates {
+    let enable_updatable = ENABLE_UPDATABLE.load(deps.storage)?;
+    if !enable_updatable {
         return Err(ContractError::NotEnableUpdatable {});
     }
 
@@ -141,6 +141,11 @@ pub fn execute_update_token_metadata(
 pub fn query_enable_updatable(deps: Deps) -> StdResult<EnableUpdatableResponse> {
     let enabled = ENABLE_UPDATABLE.load(deps.storage)?;
     Ok(EnableUpdatableResponse { enabled })
+}
+
+pub fn query_frozen_token_metadata(deps: Deps) -> StdResult<FrozenTokenMetadataResponse> {
+    let frozen = FROZEN_TOKEN_METADATA.load(deps.storage)?;
+    Ok(FrozenTokenMetadataResponse { frozen })
 }
 
 pub fn _migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
