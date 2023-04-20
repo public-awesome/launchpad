@@ -31,6 +31,12 @@ import * as _23 from "./VendingFactory.message-composer";
 import * as _24 from "./VendingMinter.types";
 import * as _25 from "./VendingMinter.client";
 import * as _26 from "./VendingMinter.message-composer";
+import * as _27 from "./VendingMinterWlFlex.types";
+import * as _28 from "./VendingMinterWlFlex.client";
+import * as _29 from "./VendingMinterWlFlex.message-composer";
+import * as _30 from "./WhitelistFlex.types";
+import * as _31 from "./WhitelistFlex.client";
+import * as _32 from "./WhitelistFlex.message-composer";
 export namespace contracts {
   export const BaseFactory = { ..._0,
     ..._1,
@@ -67,5 +73,13 @@ export namespace contracts {
   export const VendingMinter = { ..._24,
     ..._25,
     ..._26
+  };
+  export const VendingMinterWlFlex = { ..._27,
+    ..._28,
+    ..._29
+  };
+  export const WhitelistFlex = { ..._30,
+    ..._31,
+    ..._32
   };
 }
