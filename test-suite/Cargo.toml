@@ -39,8 +39,8 @@ cosmwasm-std        = { workspace = true }
 cw4                 = { workspace = true }
 cw-multi-test       = { workspace = true }
 sg-multi-test       = { workspace = true }
-sg721-base-016      = { workspace = true }
 sg721-base          = { workspace = true }
+sg721-base-019      = { version = "0.19.0", package = "sg721-base" }
 sg721-updatable     = { workspace = true }
 cw4-group           = { workspace = true }
 sg-splits           = { workspace = true }

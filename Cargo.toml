@@ -56,7 +56,6 @@ sg-whitelist-flex   = { version = "2.3.0", path = "contracts/whitelists/whitelis
 ethereum-verify     = { version = "2.3.0", path = "packages/ethereum-verify" }
 sg-eth-airdrop      = { version = "2.3.0", path = "contracts/sg-eth-airdrop" }
 test-suite          = { version = "2.3.0", path = "test-suite" }
-sg721-base-016      = { version = "0.16.0", package = "sg721-base" }
 semver              = "1"
 
 [profile.release.package.sg721]
