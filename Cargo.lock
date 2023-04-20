@@ -2195,6 +2195,47 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
 
 [[package]]
+name = "open-edition-factory"
+version = "2.3.0"
+dependencies = [
+ "base-factory",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus 0.16.0",
+ "cw-utils 0.16.0",
+ "cw2 0.16.0",
+ "sg-metadata",
+ "sg-std 2.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg1",
+ "sg2",
+ "sg721",
+ "thiserror",
+]
+
+[[package]]
+name = "open-edition-minter"
+version = "2.3.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus 0.16.0",
+ "cw-utils 0.16.0",
+ "cw2 0.16.0",
+ "cw721-base",
+ "open-edition-factory",
+ "semver",
+ "serde",
+ "sg-metadata",
+ "sg-std 2.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg1",
+ "sg2",
+ "sg4",
+ "sg721",
+ "thiserror",
+ "url",
+]
+
+[[package]]
 name = "open-fastrlp"
 version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3689,6 +3730,8 @@ dependencies = [
  "ethers-core",
  "ethers-signers",
  "eyre",
+ "open-edition-factory",
+ "open-edition-minter",
  "rand_core 0.6.4",
  "rand_xoshiro",
  "rlp",
@@ -3696,6 +3739,7 @@ dependencies = [
  "serde",
  "sg-controllers",
  "sg-eth-airdrop",
+ "sg-metadata",
  "sg-multi-test",
  "sg-splits",
  "sg-std 2.3.0 (registry+https://github.com/rust-lang/crates.io-index)",

@@ -15,6 +15,10 @@ mod vending_factory;
 #[cfg(test)]
 mod vending_minter;
 #[cfg(test)]
+mod open_edition_factory;
+#[cfg(test)]
+mod open_edition_minter;
+#[cfg(test)]
 mod whitelist;
 #[cfg(test)]
 mod whitelist_immutable;

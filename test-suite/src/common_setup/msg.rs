@@ -32,6 +32,9 @@ pub struct MinterInstantiateParams {
 }
 
 use cosmwasm_schema::cw_serde;
+use open_edition_factory::msg::OpenEditionMinterInitMsgExtension;
+use open_edition_factory::types::NftData;
+
 #[cw_serde]
 pub struct CodeIds {
     pub minter_code_id: u64,
@@ -48,4 +51,26 @@ pub struct MinterTemplateResponse<T> {
 pub struct Accounts {
     pub creator: Addr,
     pub buyer: Addr,
+}
+
+pub struct OpenEditionMinterSetupParams<'a> {
+    pub router: &'a mut StargazeApp,
+    pub minter_admin: Addr,
+    pub collection_params: CollectionParams,
+    pub start_time: Option<Timestamp>,
+    pub nft_data: NftData,
+    pub per_address_limit: u32,
+    pub end_time: Option<Timestamp>,
+    pub minter_code_id: u64,
+    pub factory_code_id: u64,
+    pub sg721_code_id: u64,
+    pub init_msg: Option<OpenEditionMinterInitMsgExtension>,
+}
+
+pub struct OpenEditionMinterInstantiateParams {
+    pub start_time: Option<Timestamp>,
+    pub end_time: Option<Timestamp>,
+    pub per_address_limit: Option<u32>,
+    pub nft_data: Option<NftData>,
+    pub init_msg: Option<OpenEditionMinterInitMsgExtension>,
 }
