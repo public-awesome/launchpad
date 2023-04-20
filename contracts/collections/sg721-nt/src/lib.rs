@@ -14,7 +14,6 @@ use sg721_base::msg::NftParams;
 const CONTRACT_NAME: &str = "crates.io:sg721-nt";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const EXPECTED_FROM_VERSION: &str = "0.16.0";
-use cosmwasm_std::Response as cosmwasm_response;
 
 #[cfg(not(feature = "library"))]
 pub mod entry {
