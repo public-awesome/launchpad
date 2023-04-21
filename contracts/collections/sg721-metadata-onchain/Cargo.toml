@@ -38,7 +38,6 @@ sg721           = { workspace = true }
 sg721-base      = { workspace = true, features = ["library"] }
 sg-metadata     = { workspace = true }
 sg-std          = { workspace = true }
-cw721-base-016  = { workspace = true }
 cw-ownable = { workspace = true }
 
 [dev-dependencies]

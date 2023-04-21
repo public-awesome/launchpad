@@ -378,7 +378,9 @@ where
         // upgraded from the correct version.
         let version = cw2::get_contract_version(deps.storage)?;
         cw2::assert_contract_version(deps.as_ref().storage, CONTRACT_NAME, EXPECTED_FROM_VERSION)
-            .map_err(|_| ContractError::WrongMigrateVersion(version.version))?;
+            .map_err(|_| {
+            ContractError::WrongMigrateVersion(version.version, EXPECTED_FROM_VERSION.to_string())
+        })?;
 
         // update contract version
         cw2::set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;

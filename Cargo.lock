@@ -3399,7 +3399,6 @@ dependencies = [
  "cw-ownable",
  "cw2 1.0.1 (git+https://github.com/CosmWasm/cw-plus/?branch=main)",
  "cw721 0.17.0",
- "cw721-base 0.16.0",
  "cw721-base 0.17.0",
  "schemars",
  "serde",
