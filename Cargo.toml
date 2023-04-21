@@ -57,6 +57,9 @@ ethereum-verify     = { version = "2.3.0", path = "packages/ethereum-verify" }
 sg-eth-airdrop      = { version = "2.3.0", path = "contracts/sg-eth-airdrop" }
 test-suite          = { version = "2.3.0", path = "test-suite" }
 semver              = "1"
+sg721-base-015      = { version = "0.15.1", package = "sg721-base" }
+vending-minter-015  = { version = "0.15.1", package = "vending-minter" }
+vending-factory-003 = { version = "0.3.0", package = "vending-factory" }
 
 [profile.release.package.sg721]
 codegen-units = 1
