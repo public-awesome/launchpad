@@ -3379,7 +3379,6 @@ dependencies = [
  "cw-utils 1.0.1",
  "cw2 1.0.1 (git+https://github.com/mars-protocol/cw-plus?rev=1a3a944)",
  "cw721 0.17.0",
- "cw721-base 0.16.0",
  "cw721-base 0.17.0",
  "serde",
  "sg-std 2.3.0 (registry+https://github.com/rust-lang/crates.io-index)",

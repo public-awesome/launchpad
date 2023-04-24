@@ -56,7 +56,6 @@ ethereum-verify     = { version = "2.3.0", path = "packages/ethereum-verify" }
 sg-eth-airdrop      = { version = "2.3.0", path = "contracts/sg-eth-airdrop" }
 test-suite          = { version = "2.3.0", path = "test-suite" }
 semver              = "1"
-cw721-base-016  = { version = "0.16.0", package = "cw721-base" }
 cw-ownable =  "0.5.0"
 
 [profile.release.package.sg721]

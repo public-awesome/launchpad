@@ -37,7 +37,6 @@ sg721           = { workspace = true }
 sg-std          = { workspace = true }
 thiserror       = { workspace = true }
 url             = { workspace = true }
-cw721-base-016  = { workspace = true }
 cw-ownable = { workspace = true }
 cw721-base = { workspace = true  }
 
