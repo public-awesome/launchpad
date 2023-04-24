@@ -2,7 +2,6 @@ pub mod contract;
 mod error;
 pub mod msg;
 mod state;
-pub mod upgrades;
 
 pub use crate::error::ContractError;
 pub use crate::state::Sg721Contract;

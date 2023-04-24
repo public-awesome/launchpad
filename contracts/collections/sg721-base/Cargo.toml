@@ -30,7 +30,6 @@ cosmwasm-schema = { workspace = true }
 cosmwasm-std    = { workspace = true }
 cw2             = { workspace = true }
 cw721           = { workspace = true }
-cw721-base      = { workspace = true, features = ["library"] }
 cw-storage-plus = { workspace = true }
 cw-utils        = { workspace = true }
 serde           = { workspace = true }
@@ -40,4 +39,5 @@ thiserror       = { workspace = true }
 url             = { workspace = true }
 cw721-base-016  = { workspace = true }
 cw-ownable = { workspace = true }
+cw721-base = { workspace = true  }
 

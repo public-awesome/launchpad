@@ -19,7 +19,10 @@ pub type Extension = Option<Empty>;
 pub mod entry {
     use super::*;
 
+    use cosmwasm_std::Response as CosmWasmResponse;
     use cosmwasm_std::{entry_point, Binary, Deps, DepsMut, Env, MessageInfo, StdResult};
+    use cw721_base::ContractError as cw721BaseContractError;
+
     use sg721_base::{msg::QueryMsg, ContractError};
     use sg_std::Response;
 
@@ -55,23 +58,20 @@ pub mod entry {
     }
 
     #[entry_point]
-    pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
+    pub fn migrate(
+        deps: DepsMut,
+        _env: Env,
+        _msg: Empty,
+    ) -> Result<CosmWasmResponse, cw721BaseContractError> {
         // make sure the correct contract is being upgraded, and it's being
         // upgraded from the correct version.
-        let version = cw2::get_contract_version(deps.storage)?;
-        cw2::assert_contract_version(deps.as_ref().storage, CONTRACT_NAME, EXPECTED_FROM_VERSION)
-            .map_err(|_| {
-            sg721_base::ContractError::WrongMigrateVersion(
-                version.version,
-                EXPECTED_FROM_VERSION.to_string(),
-            )
-        })?;
+        cw2::assert_contract_version(deps.as_ref().storage, CONTRACT_NAME, EXPECTED_FROM_VERSION)?;
 
         // update contract version
         cw2::set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
         // perform the upgrade
-        sg721_base::upgrades::v0_17::migrate::<Extension, Empty, Empty, Empty>(deps)
+        cw721_base::upgrades::v0_17::migrate::<Extension, Empty, Empty, Empty>(deps)
     }
 }
 

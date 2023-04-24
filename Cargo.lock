@@ -284,7 +284,7 @@ dependencies = [
  "cosmwasm-std",
  "cw-storage-plus 1.0.1",
  "cw-utils 1.0.1",
- "cw2 1.0.1 (git+https://github.com/CosmWasm/cw-plus/?branch=main)",
+ "cw2 1.0.1 (git+https://github.com/mars-protocol/cw-plus?rev=1a3a944)",
  "schemars",
  "serde",
  "sg-std 2.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -302,7 +302,7 @@ dependencies = [
  "cosmwasm-std",
  "cw-storage-plus 1.0.1",
  "cw-utils 1.0.1",
- "cw2 1.0.1 (git+https://github.com/CosmWasm/cw-plus/?branch=main)",
+ "cw2 1.0.1 (git+https://github.com/mars-protocol/cw-plus?rev=1a3a944)",
  "cw721 0.17.0",
  "cw721-base 0.17.0",
  "schemars",
@@ -1125,7 +1125,7 @@ dependencies = [
 [[package]]
 name = "cw2"
 version = "1.0.1"
-source = "git+https://github.com/CosmWasm/cw-plus/?branch=main#645c781bcdd86c68448a039ac4881768255bd09c"
+source = "git+https://github.com/mars-protocol/cw-plus?rev=1a3a944#1a3a944b64cf6e9fcfada48f2b09aaa1a90aef74"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -1182,8 +1182,7 @@ dependencies = [
 [[package]]
 name = "cw721"
 version = "0.17.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aa49f5096cc1587489ac5d1d345936e8139738f40ad07a94c7b157b19f975c00"
+source = "git+https://github.com/CosmWasm/cw-nfts/?branch=main#5eb754d75888956bc3dbe7ace96fa16510864894"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -1212,15 +1211,14 @@ dependencies = [
 [[package]]
 name = "cw721-base"
 version = "0.17.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "72c2be7476fa786c3adc96b00e33a0c5917d2a84774d94c5dd76e987c315570f"
+source = "git+https://github.com/CosmWasm/cw-nfts/?branch=main#5eb754d75888956bc3dbe7ace96fa16510864894"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-ownable",
  "cw-storage-plus 1.0.1",
  "cw-utils 1.0.1",
- "cw2 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cw2 1.0.1 (git+https://github.com/mars-protocol/cw-plus?rev=1a3a944)",
  "cw721 0.17.0",
  "cw721-base 0.16.0",
  "schemars",
@@ -3187,7 +3185,7 @@ dependencies = [
  "cw-multi-test",
  "cw-storage-plus 1.0.1",
  "cw-utils 1.0.1",
- "cw2 1.0.1 (git+https://github.com/CosmWasm/cw-plus/?branch=main)",
+ "cw2 1.0.1 (git+https://github.com/mars-protocol/cw-plus?rev=1a3a944)",
  "ethereum-verify",
  "ethers-core",
  "ethers-signers",
@@ -3241,7 +3239,7 @@ dependencies = [
  "cw-controllers 1.0.1",
  "cw-storage-plus 1.0.1",
  "cw-utils 1.0.1",
- "cw2 1.0.1 (git+https://github.com/CosmWasm/cw-plus/?branch=main)",
+ "cw2 1.0.1 (git+https://github.com/mars-protocol/cw-plus?rev=1a3a944)",
  "cw4",
  "schemars",
  "serde",
@@ -3294,7 +3292,7 @@ dependencies = [
  "cosmwasm-std",
  "cw-storage-plus 1.0.1",
  "cw-utils 1.0.1",
- "cw2 1.0.1 (git+https://github.com/CosmWasm/cw-plus/?branch=main)",
+ "cw2 1.0.1 (git+https://github.com/mars-protocol/cw-plus?rev=1a3a944)",
  "rust_decimal",
  "schemars",
  "serde",
@@ -3311,7 +3309,7 @@ dependencies = [
  "cosmwasm-std",
  "cw-storage-plus 1.0.1",
  "cw-utils 1.0.1",
- "cw2 1.0.1 (git+https://github.com/CosmWasm/cw-plus/?branch=main)",
+ "cw2 1.0.1 (git+https://github.com/mars-protocol/cw-plus?rev=1a3a944)",
  "rust_decimal",
  "schemars",
  "serde",
@@ -3379,7 +3377,7 @@ dependencies = [
  "cw-ownable",
  "cw-storage-plus 1.0.1",
  "cw-utils 1.0.1",
- "cw2 1.0.1 (git+https://github.com/CosmWasm/cw-plus/?branch=main)",
+ "cw2 1.0.1 (git+https://github.com/mars-protocol/cw-plus?rev=1a3a944)",
  "cw721 0.17.0",
  "cw721-base 0.16.0",
  "cw721-base 0.17.0",
@@ -3397,7 +3395,7 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-ownable",
- "cw2 1.0.1 (git+https://github.com/CosmWasm/cw-plus/?branch=main)",
+ "cw2 1.0.1 (git+https://github.com/mars-protocol/cw-plus?rev=1a3a944)",
  "cw721 0.17.0",
  "cw721-base 0.17.0",
  "schemars",
@@ -3415,7 +3413,7 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-utils 1.0.1",
- "cw2 1.0.1 (git+https://github.com/CosmWasm/cw-plus/?branch=main)",
+ "cw2 1.0.1 (git+https://github.com/mars-protocol/cw-plus?rev=1a3a944)",
  "cw721 0.17.0",
  "cw721-base 0.17.0",
  "schemars",
@@ -3434,7 +3432,7 @@ dependencies = [
  "cw-multi-test",
  "cw-storage-plus 1.0.1",
  "cw-utils 1.0.1",
- "cw2 1.0.1 (git+https://github.com/CosmWasm/cw-plus/?branch=main)",
+ "cw2 1.0.1 (git+https://github.com/mars-protocol/cw-plus?rev=1a3a944)",
  "cw721 0.17.0",
  "cw721-base 0.17.0",
  "schemars",
@@ -3781,7 +3779,7 @@ dependencies = [
  "cw-ownable",
  "cw-storage-plus 1.0.1",
  "cw-utils 1.0.1",
- "cw2 1.0.1 (git+https://github.com/CosmWasm/cw-plus/?branch=main)",
+ "cw2 1.0.1 (git+https://github.com/mars-protocol/cw-plus?rev=1a3a944)",
  "cw4",
  "cw4-group",
  "cw721 0.17.0",
@@ -4201,7 +4199,7 @@ dependencies = [
  "cosmwasm-std",
  "cw-storage-plus 1.0.1",
  "cw-utils 1.0.1",
- "cw2 1.0.1 (git+https://github.com/CosmWasm/cw-plus/?branch=main)",
+ "cw2 1.0.1 (git+https://github.com/mars-protocol/cw-plus?rev=1a3a944)",
  "schemars",
  "serde",
  "sg-std 2.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -4219,7 +4217,7 @@ dependencies = [
  "cosmwasm-std",
  "cw-storage-plus 1.0.1",
  "cw-utils 1.0.1",
- "cw2 1.0.1 (git+https://github.com/CosmWasm/cw-plus/?branch=main)",
+ "cw2 1.0.1 (git+https://github.com/mars-protocol/cw-plus?rev=1a3a944)",
  "cw721 0.17.0",
  "cw721-base 0.17.0",
  "rand_core 0.6.4",
@@ -4248,7 +4246,7 @@ dependencies = [
  "cosmwasm-std",
  "cw-storage-plus 1.0.1",
  "cw-utils 1.0.1",
- "cw2 1.0.1 (git+https://github.com/CosmWasm/cw-plus/?branch=main)",
+ "cw2 1.0.1 (git+https://github.com/mars-protocol/cw-plus?rev=1a3a944)",
  "cw721 0.17.0",
  "cw721-base 0.17.0",
  "rand_core 0.6.4",
@@ -4412,7 +4410,7 @@ dependencies = [
  "cw-controllers 0.16.0",
  "cw-storage-plus 1.0.1",
  "cw-utils 1.0.1",
- "cw2 1.0.1 (git+https://github.com/CosmWasm/cw-plus/?branch=main)",
+ "cw2 1.0.1 (git+https://github.com/mars-protocol/cw-plus?rev=1a3a944)",
  "schemars",
  "serde",
  "sg-std 2.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
