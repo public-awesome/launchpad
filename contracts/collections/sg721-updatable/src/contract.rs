@@ -20,7 +20,7 @@ use sg_std::Response;
 use semver::Version;
 
 const COMPATIBLE_MIGRATION_CONTRACT_NAME: &str = "crates.io:sg721-base";
-const EARLIEST_COMPATIBLE_CONTRACT_VERSION: &str = "0.24.0";
+const EARLIEST_COMPATIBLE_CONTRACT_VERSION: &str = "0.15.1";
 const CONTRACT_NAME: &str = "crates.io:sg721-updatable";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 const ENABLE_UPDATABLE_FEE: u128 = 500_000_000;
