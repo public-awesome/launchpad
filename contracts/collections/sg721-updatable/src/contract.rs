@@ -357,4 +357,43 @@ mod tests {
             ContractError::TokenMetadataFrozen {}.to_string()
         );
     }
+
+    #[test]
+    fn enable_updatable() {
+        let mut deps = mock_deps();
+
+        // Instantiate contract
+        let info = mock_info(CREATOR, &[]);
+        let init_msg = InstantiateMsg {
+            name: "SpaceShips".to_string(),
+            symbol: "SPACE".to_string(),
+            minter: CREATOR.to_string(),
+            collection_info: CollectionInfo {
+                creator: CREATOR.to_string(),
+                description: "this is a test".to_string(),
+                image: "https://larry.engineer".to_string(),
+                external_link: None,
+                explicit_content: None,
+                start_trading_time: None,
+                royalty_info: None,
+            },
+        };
+        instantiate(deps.as_mut(), mock_env(), info.clone(), init_msg).unwrap();
+
+        let enable_updatable_msg = ExecuteMsg::EnableUpdatable {};
+        let err = execute(
+            deps.as_mut(),
+            mock_env(),
+            info.clone(),
+            enable_updatable_msg,
+        )
+        .unwrap_err();
+        assert_eq!(
+            err.to_string(),
+            ContractError::AlreadyEnableUpdatable {}.to_string()
+        );
+
+        let res = query_enable_updatable(deps.as_ref()).unwrap();
+        assert_eq!(res.enabled, true);
+    }
 }
