@@ -12,7 +12,7 @@ pub mod entry {
     use crate::error::ContractError;
     use crate::{
         contract::{
-            _instantiate, execute_freeze_token_metadata, execute_update_token_metadata,
+            _instantiate, _migrate, execute_freeze_token_metadata, execute_update_token_metadata,
             Sg721UpdatableContract,
         },
         msg::ExecuteMsg,
@@ -54,5 +54,10 @@ pub mod entry {
     #[entry_point]
     pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         Sg721UpdatableContract::default().query(deps, env, msg)
+    }
+
+    #[entry_point]
+    pub fn migrate(deps: DepsMut, env: Env, msg: Empty) -> Result<Response, ContractError> {
+        _migrate(deps, env, msg)
     }
 }

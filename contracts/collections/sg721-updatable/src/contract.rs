@@ -1,5 +1,6 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::{DepsMut, Env, Event, MessageInfo};
+use cosmwasm_std::{Empty, StdError};
 use cw2::set_contract_version;
 use sg721_base::msg::CollectionInfoResponse;
 
@@ -14,6 +15,10 @@ use sg721_base::Sg721Contract;
 pub type Sg721UpdatableContract<'a> = Sg721Contract<'a, Extension>;
 use sg_std::Response;
 
+use semver::Version;
+
+const COMPATIBLE_MIGRATION_CONTRACT_NAME: &str = "crates.io:sg721-base";
+const EARLIEST_COMPATIBLE_CONTRACT_VERSION: &str = "0.24.0";
 const CONTRACT_NAME: &str = "crates.io:sg721-updatable";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -91,6 +96,44 @@ pub fn execute_update_token_metadata(
         .add_attribute("token_id", token_id)
         .add_attribute("token_uri", token_uri.unwrap_or_default());
     Ok(Response::new().add_event(event))
+}
+
+pub fn _migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
+    let current_version = cw2::get_contract_version(deps.storage)?;
+
+    if ![CONTRACT_NAME, COMPATIBLE_MIGRATION_CONTRACT_NAME]
+        .contains(&current_version.contract.as_str())
+    {
+        return Err(StdError::generic_err("Cannot upgrade to a different contract").into());
+    }
+    let version: Version = current_version
+        .version
+        .parse()
+        .map_err(|_| StdError::generic_err("Invalid contract version"))?;
+    let new_version: Version = CONTRACT_VERSION
+        .parse()
+        .map_err(|_| StdError::generic_err("Invalid contract version"))?;
+    let earliest_version: Version = EARLIEST_COMPATIBLE_CONTRACT_VERSION
+        .parse()
+        .map_err(|_| StdError::generic_err("Invalid contract version"))?;
+
+    // current version not launchpad v2
+    if version < earliest_version {
+        return Err(StdError::generic_err("Cannot upgrade to a previous contract version").into());
+    }
+    if version > new_version {
+        return Err(StdError::generic_err("Cannot upgrade to a previous contract version").into());
+    }
+    // if same version return
+    if version == new_version {
+        return Ok(Response::new());
+    }
+
+    FROZEN_TOKEN_METADATA.save(deps.storage, &false)?;
+
+    // set new contract version
+    set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+    Ok(Response::new())
 }
 
 #[cfg(test)]
