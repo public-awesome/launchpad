@@ -3342,6 +3342,7 @@ dependencies = [
  "semver",
  "serde",
  "sg-std 2.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg1",
  "sg721",
  "sg721-base",
  "thiserror",
