@@ -34,12 +34,6 @@ pub enum ContractError {
     #[error("InvalidNftDataProvided")]
     InvalidNftDataProvided {},
 
-    #[error("YouCantHaveBothTokenUriAndExtension")]
-    YouCantHaveBothTokenUriAndExtension {},
-
-    #[error("ProvideAtLeastOneTypeOfNftData")]
-    ProvideAtLeastOneTypeOfNftData {},
-
     #[error("InvalidMintPerWalletValue")]
     InvalidMintPerWalletValue {},
 

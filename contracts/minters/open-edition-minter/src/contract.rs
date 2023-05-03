@@ -1,11 +1,10 @@
 use cosmwasm_std::{
-    Addr, BankMsg, Binary, coin, Coin, CosmosMsg, Deps, DepsMut, Empty, Env, MessageInfo,
+    Addr, BankMsg, Binary, coin, Coin, Deps, DepsMut, Empty, Env, MessageInfo,
     Order, Reply, ReplyOn, StdError, StdResult, Timestamp, to_binary, WasmMsg,
 };
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cw2::set_contract_version;
-use cw721_base::{Extension, MintMsg};
 use cw_utils::{may_pay, maybe_addr, nonpayable, parse_reply_instantiate_data};
 use semver::Version;
 use sg_std::math::U64Ext;
@@ -20,7 +19,7 @@ use sg4::{Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
 
 use crate::error::ContractError;
-use crate::helpers::dev_fee_msgs_and_amount;
+use crate::helpers::{dev_fee_msgs_and_amount, mint_nft_msg};
 use crate::msg::{
     ConfigResponse, ExecuteMsg, MintCountResponse, MintPriceResponse, QueryMsg, StartTimeResponse
 };
@@ -215,7 +214,7 @@ pub fn execute_mint_sender(
     if env.block.time < config.extension.start_time {
         return Err(ContractError::BeforeMintStartTime {});
     }
-    if env.block.time > config.extension.end_time {
+    if env.block.time >= config.extension.end_time {
         return Err(ContractError::AfterMintEndTime {});
     }
 
@@ -244,7 +243,7 @@ pub fn execute_mint_to(
         ));
     }
 
-    if env.block.time > config.extension.end_time {
+    if env.block.time >= config.extension.end_time {
         return Err(ContractError::AfterMintEndTime {});
     }
 
@@ -325,36 +324,20 @@ fn _execute_mint(
         Ok(updated_conf)
     })?;
 
-    // Create mint msgs -> dependent on the NFT data type
-    let msg = match config.extension.nft_data.nft_data_type
-    {
-        NftMetadataType::OnChainMetadata => {
-            let inner_mint_msg = Sg721ExecuteMsg::<sg_metadata::Metadata, Empty>::Mint(MintMsg::<sg_metadata::Metadata> {
-                token_id: token_id.clone(),
-                owner: recipient_addr.to_string(),
-                token_uri: None,
-                extension: config.extension.nft_data.extension.unwrap(),
-            });
-            CosmosMsg::Wasm(WasmMsg::Execute {
-                contract_addr: sg721_address.to_string(),
-                msg: to_binary(&inner_mint_msg)?,
-                funds: vec![],
-            })
+    // Create mint msg -> dependents on the NFT data type
+    let msg = mint_nft_msg(
+        sg721_address,
+        token_id.clone(),
+        recipient_addr.clone(),
+        match config.extension.nft_data.nft_data_type {
+            NftMetadataType::OnChainMetadata => config.extension.nft_data.extension,
+            NftMetadataType::OffChainMetadata => None,
         },
-        NftMetadataType::OffChainMetadata => {
-            let inner_mint_msg = Sg721ExecuteMsg::<Extension, Empty>::Mint(MintMsg::<Extension> {
-                token_id: token_id.clone(),
-                owner: recipient_addr.to_string(),
-                token_uri: config.extension.nft_data.token_uri,
-                extension: None,
-            });
-            CosmosMsg::Wasm(WasmMsg::Execute {
-                contract_addr: sg721_address.to_string(),
-                msg: to_binary(&inner_mint_msg)?,
-                funds: vec![],
-            })
+        match config.extension.nft_data.nft_data_type {
+            NftMetadataType::OnChainMetadata => None,
+            NftMetadataType::OffChainMetadata => config.extension.nft_data.token_uri,
         },
-    };
+    )?;
     res = res.add_message(msg);
 
     // Save the new mint count for the sender's address
@@ -528,12 +511,11 @@ pub fn execute_update_per_address_limit(
 pub fn mint_price(deps: Deps, is_admin: bool) -> Result<Coin, StdError> {
     let config = CONFIG.load(deps.storage)?;
 
-    let factory: ParamsResponse = deps
-        .querier
-        .query_wasm_smart(config.factory, &Sg2QueryMsg::Params {})?;
-    let factory_params = factory.params;
-
     if is_admin {
+        let factory: ParamsResponse = deps
+            .querier
+            .query_wasm_smart(config.factory, &Sg2QueryMsg::Params {})?;
+        let factory_params = factory.params;
         Ok(coin(
             factory_params.extension.airdrop_mint_price.amount.u128(),
             config.mint_price.denom,

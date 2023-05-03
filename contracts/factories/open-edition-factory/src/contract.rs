@@ -4,10 +4,9 @@ use cosmwasm_std::{
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cw2::set_contract_version;
-use cw_utils::must_pay;
 use sg_std::{NATIVE_DENOM, Response};
 
-use base_factory::contract::{must_be_allowed_collection, must_not_be_frozen, update_params};
+use base_factory::contract::{must_be_allowed_collection, must_not_be_frozen, must_pay_exact_amount, update_params};
 use base_factory::ContractError as BaseContractError;
 use sg1::checked_fair_burn;
 use sg2::query::{AllowedCollectionCodeIdResponse, AllowedCollectionCodeIdsResponse, Sg2QueryMsg};
@@ -54,10 +53,12 @@ pub fn execute_create_minter(
     mut msg: OpenEditionMinterCreateMsg,
 ) -> Result<Response, ContractError> {
 
-    must_pay(&info, NATIVE_DENOM)?;
+    let params = SUDO_PARAMS.load(deps.storage)?;
+
+    must_pay_exact_amount(&params, &info, NATIVE_DENOM)?;
+
     must_be_allowed_collection(deps.as_ref(), msg.collection_params.code_id)?;
 
-    let params = SUDO_PARAMS.load(deps.storage)?;
     must_not_be_frozen(&params)?;
 
     let mut res = Response::new();

@@ -1,9 +1,6 @@
 [package]
 name        = "open-edition-factory"
-authors     = [
-  "Racoon Supply <racoon.supply.nft@gmail.com>",
-  "Shane Vitarana <s@noreply.publicawesome.com>"
-]
+authors     = ["Racoon Supply <racoon.supply.nft@gmail.com>"]
 description = "Stargaze open edition minter factory contract"
 version     = { workspace = true }
 edition     = { workspace = true }

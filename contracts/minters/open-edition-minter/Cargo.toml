@@ -1,10 +1,6 @@
 [package]
 name        = "open-edition-minter"
-authors     = [
-  "Racoon Supply <racoon.supply.nft@gmail.com>",
-  "Jake Hartnell <jake@stargaze.zone>",
-  "Shane Vitarana <s@noreply.publicawesome.com>"
-]
+authors     = ["Racoon Supply <racoon.supply.nft@gmail.com>"]
 description = "Stargaze open edition minter contract"
 version     = { workspace = true }
 edition     = { workspace = true }
@@ -46,4 +42,4 @@ sg-metadata             = { workspace = true }
 thiserror               = { workspace = true }
 url                     = { workspace = true }
 open-edition-factory    = { workspace = true, features = ["library"] }
-semver                  = {workspace = true  }
+semver                  = {workspace = true }

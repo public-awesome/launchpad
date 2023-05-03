@@ -170,7 +170,7 @@ fn check_invalid_create_minter_nft_data() {
     );
     assert_eq!(
         vt.err().unwrap().err().unwrap().source().unwrap().to_string(),
-        "ProvideAtLeastOneTypeOfNftData".to_string()
+        "InvalidNftDataProvided".to_string()
     );
 
     // Sending None for token_uri but offchain metadata

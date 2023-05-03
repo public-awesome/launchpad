@@ -1,4 +1,5 @@
 use cosmwasm_schema::cw_serde;
+use cosmwasm_std::ensure;
 
 use sg_metadata::Metadata;
 
@@ -26,21 +27,8 @@ impl NftData {
         token_id_prefix_length: u32
     ) -> Result<Self, ContractError> {
 
-        if nft_data.extension.is_none() && nft_data.token_uri.is_none() {
-            return Err(ContractError::ProvideAtLeastOneTypeOfNftData {})
-        }
+        ensure!(nft_data.valid_nft_data(), ContractError::InvalidNftDataProvided {});
 
-        if nft_data.extension.is_some() {
-            if nft_data.token_uri.is_some() {
-                return Err(ContractError::YouCantHaveBothTokenUriAndExtension {})
-            }
-            if nft_data.nft_data_type != NftMetadataType::OnChainMetadata {
-                return Err(ContractError::InvalidNftDataProvided {})
-            }
-        }
-        if nft_data.token_uri.is_some() && nft_data.nft_data_type == NftMetadataType::OnChainMetadata {
-            return Err(ContractError::InvalidNftDataProvided {})
-        }
         // Validation of the metadata and token_uri is validated at the nft contract level
 
         // The token id prefix is just the name of the token id which will be concatenated with the NFT counter
@@ -56,4 +44,16 @@ impl NftData {
             token_uri: nft_data.token_uri,
         })
     }
+
+    pub fn valid_nft_data(&self) -> bool {
+        if self.token_uri.is_some() && self.extension.is_some() {
+            return false;
+        }
+        if self.token_uri.is_some() && self.nft_data_type == NftMetadataType::OffChainMetadata {
+            true
+        } else {
+            self.extension.is_some() && self.nft_data_type == NftMetadataType::OnChainMetadata
+        }
+    }
+
 }
