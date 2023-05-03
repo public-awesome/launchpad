@@ -9,9 +9,9 @@ repository  = { workspace = true }
 license     = { workspace = true }
 
 exclude = [
-  # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
-  "contract.wasm",
-  "hash.txt",
+    # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
+    "contract.wasm",
+    "hash.txt",
 ]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -40,6 +40,7 @@ cw4                      = { workspace = true }
 cw-multi-test            = { workspace = true }
 sg-multi-test            = { workspace = true }
 sg721-base               = { workspace = true }
+sg721-updatable          = { workspace = true }
 cw4-group                = { workspace = true }
 sg-splits                = { workspace = true }
 anyhow                   = "1.0.57"

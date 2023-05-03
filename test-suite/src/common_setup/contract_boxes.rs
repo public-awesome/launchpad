@@ -93,6 +93,16 @@ pub fn contract_sg721_base() -> Box<dyn Contract<StargazeMsgWrapper>> {
     Box::new(contract)
 }
 
+pub fn contract_sg721_updatable() -> Box<dyn Contract<StargazeMsgWrapper>> {
+    let contract = ContractWrapper::new(
+        sg721_updatable::entry::execute,
+        sg721_updatable::entry::instantiate,
+        sg721_updatable::entry::query,
+    )
+    .with_migrate(sg721_updatable::entry::migrate);
+    Box::new(contract)
+}
+
 pub fn contract_splits() -> Box<dyn Contract<StargazeMsgWrapper>> {
     let contract = ContractWrapper::new_with_empty(
         sg_splits::contract::execute,
