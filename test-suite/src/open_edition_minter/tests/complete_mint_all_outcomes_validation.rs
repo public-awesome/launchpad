@@ -144,7 +144,7 @@ fn check_mint_revenues_distribution() {
         .wrap()
         .query_wasm_smart(minter_addr.clone(), &query_config_msg)
         .unwrap();
-    assert_eq!(res.nb_of_nfts_minted, 2);
+    assert_eq!(res.minted_count, 2);
 
     // Check the Start time
     let query_config_msg = QueryMsg::StartTime {};

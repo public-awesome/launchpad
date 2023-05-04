@@ -38,7 +38,7 @@ pub struct ConfigResponse {
     pub admin: String,
     pub nft_data: NftData,
     pub payment_address: Option<Addr>,
-    pub nb_of_nfts_minted: u32,
+    pub minted_count: u32,
     pub per_address_limit: u32,
     pub end_time: Timestamp,
     pub sg721_address: String,

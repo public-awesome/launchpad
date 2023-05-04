@@ -591,7 +591,7 @@ fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
         admin: config.extension.admin.to_string(),
         nft_data: config.extension.nft_data,
         payment_address: config.extension.payment_address,
-        nb_of_nfts_minted: config.extension.nb_of_nfts_minted,
+        minted_count: config.extension.nb_of_nfts_minted,
         per_address_limit: config.extension.per_address_limit,
         end_time: config.extension.end_time,
         sg721_address: sg721_address.to_string(),

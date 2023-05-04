@@ -36,7 +36,7 @@ fn check_per_address_limit() {
         .query_wasm_smart(minter_addr.clone(), &query_config_msg)
         .unwrap();
     assert_eq!(res.per_address_limit, 2);
-    assert_eq!(res.nb_of_nfts_minted, 0);
+    assert_eq!(res.minted_count, 0);
 
     // Set a new limit per address, check unauthorized
     let per_address_limit_msg = ExecuteMsg::UpdatePerAddressLimit {
