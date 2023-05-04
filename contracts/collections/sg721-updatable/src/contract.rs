@@ -24,8 +24,6 @@ use sg_std::Response;
 use cosmwasm_std::Response as CosmWasmResponse;
 use cw721_base::ContractError as cw721BaseContractError;
 
-use cosmwasm_std::entry_point;
-
 use semver::Version;
 
 const COMPATIBLE_MIGRATION_CONTRACT_NAME: &str = "crates.io:sg721-base";
@@ -51,7 +49,6 @@ pub fn _instantiate(
     Ok(res)
 }
 
-#[entry_point]
 pub fn migrate(
     deps: DepsMut,
     _env: Env,
