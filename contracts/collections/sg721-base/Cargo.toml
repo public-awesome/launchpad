@@ -38,5 +38,5 @@ sg-std          = { workspace = true }
 thiserror       = { workspace = true }
 url             = { workspace = true }
 cw-ownable = { workspace = true }
-cw721-base = { workspace = true  }
+cw721-base = { workspace = true, features = ["library"]}
 

@@ -39,7 +39,7 @@ sg721-base      = { workspace = true, features = ["library"] }
 sg-metadata     = { workspace = true }
 sg-std          = { workspace = true }
 cw-ownable = { workspace = true }
-cw721-base = { git = "https://github.com/CosmWasm/cw-nfts/", branch="main" }
+cw721-base = { git = "https://github.com/CosmWasm/cw-nfts/", branch="main", features = ["library"] }
 
 [dev-dependencies]
 cw721      = { workspace = true }
