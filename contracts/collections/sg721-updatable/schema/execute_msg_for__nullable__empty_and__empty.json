@@ -45,6 +45,20 @@
       "additionalProperties": false
     },
     {
+      "description": "Enable updatable for updating token metadata. One time migration fee for sg721-base to sg721-updatable.",
+      "type": "object",
+      "required": [
+        "enable_updatable"
+      ],
+      "properties": {
+        "enable_updatable": {
+          "type": "object",
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
       "type": "object",
       "required": [
         "transfer_nft"

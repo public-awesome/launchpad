@@ -1,27 +1,39 @@
 use crate::error::ContractError;
 use crate::state::FROZEN_TOKEN_METADATA;
 use cosmwasm_std::Empty;
+
+use cosmwasm_std::{Deps, StdError, StdResult};
+
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::{DepsMut, Env, Event, MessageInfo};
 use cw2::set_contract_version;
 use sg721::InstantiateMsg;
 use sg721_base::msg::CollectionInfoResponse;
 
+use crate::msg::{EnableUpdatableResponse, FrozenTokenMetadataResponse};
+use crate::state::ENABLE_UPDATABLE;
+
+use cw721_base::Extension;
 use cw_utils::nonpayable;
+use sg1::checked_fair_burn;
 use sg721_base::ContractError::Unauthorized;
 use sg721_base::Sg721Contract;
 pub type Sg721UpdatableContract<'a> = Sg721Contract<'a, Extension>;
 use sg_std::Response;
-pub type Extension = Option<Empty>;
 
 use cosmwasm_std::Response as CosmWasmResponse;
 use cw721_base::ContractError as cw721BaseContractError;
 
 use cosmwasm_std::entry_point;
 
+use semver::Version;
+
+const COMPATIBLE_MIGRATION_CONTRACT_NAME: &str = "crates.io:sg721-base";
+const EARLIEST_COMPATIBLE_CONTRACT_VERSION: &str = "0.15.1";
 const CONTRACT_NAME: &str = "crates.io:sg721-updatable";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const EXPECTED_FROM_VERSION: &str = "0.16.0";
+const ENABLE_UPDATABLE_FEE: u128 = 500_000_000;
 
 pub fn _instantiate(
     deps: DepsMut,
@@ -31,6 +43,8 @@ pub fn _instantiate(
 ) -> Result<Response, ContractError> {
     // Set frozen to false on instantiate. allows updating token metadata
     FROZEN_TOKEN_METADATA.save(deps.storage, &false)?;
+    // Set enable_updatable to true on instantiate. allows updating token metadata
+    ENABLE_UPDATABLE.save(deps.storage, &true)?;
 
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
     let res = Sg721UpdatableContract::default().instantiate(deps, env, info, msg)?;
@@ -52,6 +66,35 @@ pub fn migrate(
 
     // perform the upgrade
     cw721_base::upgrades::v0_17::migrate::<Extension, Empty, Empty, Empty>(deps)
+}
+
+pub fn execute_enable_updatable(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+) -> Result<Response, ContractError> {
+    let enable_updates = ENABLE_UPDATABLE.load(deps.storage)?;
+    let mut res = Response::new();
+    if enable_updates {
+        return Err(ContractError::AlreadyEnableUpdatable {});
+    }
+
+    // TODO add check if sender is contract admin
+    // Check if sender is creator
+    let collection_info: CollectionInfoResponse =
+        Sg721UpdatableContract::default().query_collection_info(deps.as_ref())?;
+    if info.sender != collection_info.creator {
+        return Err(ContractError::Base(Unauthorized {}));
+    }
+
+    // Check fee matches enable updatable fee and add fairburn msg
+    checked_fair_burn(&info, ENABLE_UPDATABLE_FEE, None, &mut res)?;
+
+    ENABLE_UPDATABLE.save(deps.storage, &true)?;
+
+    Ok(res
+        .add_attribute("action", "enable_updates")
+        .add_attribute("enabled", "true"))
 }
 
 pub fn execute_freeze_token_metadata(
@@ -96,6 +139,12 @@ pub fn execute_update_token_metadata(
         return Err(ContractError::TokenMetadataFrozen {});
     }
 
+    // Check if enable updatable is true
+    let enable_updatable = ENABLE_UPDATABLE.load(deps.storage)?;
+    if !enable_updatable {
+        return Err(ContractError::NotEnableUpdatable {});
+    }
+
     // Update token metadata
     Sg721UpdatableContract::default().tokens.update(
         deps.storage,
@@ -114,6 +163,62 @@ pub fn execute_update_token_metadata(
         .add_attribute("token_id", token_id)
         .add_attribute("token_uri", token_uri.unwrap_or_default());
     Ok(Response::new().add_event(event))
+}
+
+pub fn query_enable_updatable(deps: Deps) -> StdResult<EnableUpdatableResponse> {
+    let enabled = ENABLE_UPDATABLE.load(deps.storage)?;
+    Ok(EnableUpdatableResponse { enabled })
+}
+
+pub fn query_frozen_token_metadata(deps: Deps) -> StdResult<FrozenTokenMetadataResponse> {
+    let frozen = FROZEN_TOKEN_METADATA.load(deps.storage)?;
+    Ok(FrozenTokenMetadataResponse { frozen })
+}
+
+pub fn _migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
+    let current_version = cw2::get_contract_version(deps.storage)?;
+    let mut enable_updatable = true;
+    if ![CONTRACT_NAME, COMPATIBLE_MIGRATION_CONTRACT_NAME]
+        .contains(&current_version.contract.as_str())
+    {
+        return Err(StdError::generic_err("Cannot upgrade to a different contract").into());
+    }
+
+    // when migrating from sg721-base to sg721-updatable
+    // need to pay enable updatable fee before updating token metadata
+    if COMPATIBLE_MIGRATION_CONTRACT_NAME == current_version.contract.as_str() {
+        enable_updatable = false;
+    }
+
+    let version: Version = current_version
+        .version
+        .parse()
+        .map_err(|_| StdError::generic_err("Invalid contract version"))?;
+    let new_version: Version = CONTRACT_VERSION
+        .parse()
+        .map_err(|_| StdError::generic_err("Invalid contract version"))?;
+    let earliest_version: Version = EARLIEST_COMPATIBLE_CONTRACT_VERSION
+        .parse()
+        .map_err(|_| StdError::generic_err("Invalid contract version"))?;
+
+    // current version not launchpad v2
+    if version < earliest_version {
+        return Err(StdError::generic_err("Cannot upgrade to a previous contract version").into());
+    }
+    if version > new_version {
+        return Err(StdError::generic_err("Cannot upgrade to a previous contract version").into());
+    }
+    // if same version return
+    if version == new_version {
+        return Ok(Response::new());
+    }
+
+    FROZEN_TOKEN_METADATA.save(deps.storage, &false)?;
+    ENABLE_UPDATABLE.save(deps.storage, &enable_updatable)?;
+
+    // set new contract version
+    set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+    Ok(Response::new())
 }
 
 #[cfg(test)]
@@ -276,5 +381,38 @@ mod tests {
             err.to_string(),
             ContractError::TokenMetadataFrozen {}.to_string()
         );
+    }
+
+    #[test]
+    fn enable_updatable() {
+        let mut deps = mock_deps();
+
+        // Instantiate contract
+        let info = mock_info(CREATOR, &[]);
+        let init_msg = InstantiateMsg {
+            name: "SpaceShips".to_string(),
+            symbol: "SPACE".to_string(),
+            minter: CREATOR.to_string(),
+            collection_info: CollectionInfo {
+                creator: CREATOR.to_string(),
+                description: "this is a test".to_string(),
+                image: "https://larry.engineer".to_string(),
+                external_link: None,
+                explicit_content: None,
+                start_trading_time: None,
+                royalty_info: None,
+            },
+        };
+        instantiate(deps.as_mut(), mock_env(), info.clone(), init_msg).unwrap();
+
+        let enable_updatable_msg = ExecuteMsg::EnableUpdatable {};
+        let err = execute(deps.as_mut(), mock_env(), info, enable_updatable_msg).unwrap_err();
+        assert_eq!(
+            err.to_string(),
+            ContractError::AlreadyEnableUpdatable {}.to_string()
+        );
+
+        let res = query_enable_updatable(deps.as_ref()).unwrap();
+        assert!(res.enabled);
     }
 }

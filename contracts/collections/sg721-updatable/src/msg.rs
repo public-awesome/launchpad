@@ -3,6 +3,7 @@ use cosmwasm_std::Binary;
 use cosmwasm_std::Timestamp;
 use cw_utils::Expiration;
 use sg721::{RoyaltyInfoResponse, UpdateCollectionInfoMsg};
+use sg721_base::msg::QueryMsg as Sg721QueryMsg;
 use sg721_base::ExecuteMsg as Sg721ExecuteMsg;
 
 #[cw_serde]
@@ -14,6 +15,8 @@ pub enum ExecuteMsg<T, E> {
         token_id: String,
         token_uri: Option<String>,
     },
+    /// Enable updatable for updating token metadata. One time migration fee for sg721-base to sg721-updatable.
+    EnableUpdatable {},
     // Sg721Base msgs
     TransferNft {
         recipient: String,
@@ -123,4 +126,125 @@ where
             _ => unreachable!("Invalid ExecuteMsg"),
         }
     }
+}
+
+#[cw_serde]
+pub enum QueryMsg {
+    EnableUpdatable {},
+    FreezeTokenMetadata {},
+    OwnerOf {
+        token_id: String,
+        include_expired: Option<bool>,
+    },
+    Approval {
+        token_id: String,
+        spender: String,
+        include_expired: Option<bool>,
+    },
+    Approvals {
+        token_id: String,
+        include_expired: Option<bool>,
+    },
+    AllOperators {
+        owner: String,
+        include_expired: Option<bool>,
+        start_after: Option<String>,
+        limit: Option<u32>,
+    },
+    NumTokens {},
+    ContractInfo {},
+    NftInfo {
+        token_id: String,
+    },
+    AllNftInfo {
+        token_id: String,
+        include_expired: Option<bool>,
+    },
+    Tokens {
+        owner: String,
+        start_after: Option<String>,
+        limit: Option<u32>,
+    },
+    AllTokens {
+        start_after: Option<String>,
+        limit: Option<u32>,
+    },
+    Minter {},
+    CollectionInfo {},
+}
+
+impl From<QueryMsg> for Sg721QueryMsg {
+    fn from(msg: QueryMsg) -> Sg721QueryMsg {
+        match msg {
+            QueryMsg::OwnerOf {
+                token_id,
+                include_expired,
+            } => Sg721QueryMsg::OwnerOf {
+                token_id,
+                include_expired,
+            },
+            QueryMsg::Approval {
+                token_id,
+                spender,
+                include_expired,
+            } => Sg721QueryMsg::Approval {
+                token_id,
+                spender,
+                include_expired,
+            },
+            QueryMsg::Approvals {
+                token_id,
+                include_expired,
+            } => Sg721QueryMsg::Approvals {
+                token_id,
+                include_expired,
+            },
+            QueryMsg::AllOperators {
+                owner,
+                include_expired,
+                start_after,
+                limit,
+            } => Sg721QueryMsg::AllOperators {
+                owner,
+                include_expired,
+                start_after,
+                limit,
+            },
+            QueryMsg::NumTokens {} => Sg721QueryMsg::NumTokens {},
+            QueryMsg::ContractInfo {} => Sg721QueryMsg::ContractInfo {},
+            QueryMsg::NftInfo { token_id } => Sg721QueryMsg::NftInfo { token_id },
+            QueryMsg::AllNftInfo {
+                token_id,
+                include_expired,
+            } => Sg721QueryMsg::AllNftInfo {
+                token_id,
+                include_expired,
+            },
+            QueryMsg::Tokens {
+                owner,
+                start_after,
+                limit,
+            } => Sg721QueryMsg::Tokens {
+                owner,
+                start_after,
+                limit,
+            },
+            QueryMsg::AllTokens { start_after, limit } => {
+                Sg721QueryMsg::AllTokens { start_after, limit }
+            }
+            QueryMsg::Minter {} => Sg721QueryMsg::Minter {},
+            QueryMsg::CollectionInfo {} => Sg721QueryMsg::CollectionInfo {},
+            _ => unreachable!("cannot convert {:?} to Sg721QueryMsg", msg),
+        }
+    }
+}
+
+#[cw_serde]
+pub struct EnableUpdatableResponse {
+    pub enabled: bool,
+}
+
+#[cw_serde]
+pub struct FrozenTokenMetadataResponse {
+    pub frozen: bool,
 }
