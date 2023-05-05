@@ -1080,6 +1080,7 @@ pub fn update_status(
     status.is_verified = is_verified;
     status.is_blocked = is_blocked;
     status.is_explicit = is_explicit;
+    STATUS.save(deps.storage, &status)?;
 
     Ok(Response::new().add_attribute("action", "sudo_update_status"))
 }

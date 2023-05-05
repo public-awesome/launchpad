@@ -20,6 +20,7 @@ echo "Publishing contracts"
 
 echo "Generating schema"
 cd $PROJECT_PATH
+cargo build
 . ./scripts/schema.sh $1
 
 cd $PROJECT_PATH
@@ -30,3 +31,11 @@ echo "Push tag to Github"
 git tag -a v$1 -m "Release $1"
 git push origin v$1
 
+echo "Publish Typescript types to NPM"
+cd $PROJECT_PATH
+cd ts
+npm version $1
+
+npm publish --access public
+
+cd ..
