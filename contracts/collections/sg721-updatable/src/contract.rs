@@ -383,19 +383,13 @@ mod tests {
         instantiate(deps.as_mut(), mock_env(), info.clone(), init_msg).unwrap();
 
         let enable_updatable_msg = ExecuteMsg::EnableUpdatable {};
-        let err = execute(
-            deps.as_mut(),
-            mock_env(),
-            info.clone(),
-            enable_updatable_msg,
-        )
-        .unwrap_err();
+        let err = execute(deps.as_mut(), mock_env(), info, enable_updatable_msg).unwrap_err();
         assert_eq!(
             err.to_string(),
             ContractError::AlreadyEnableUpdatable {}.to_string()
         );
 
         let res = query_enable_updatable(deps.as_ref()).unwrap();
-        assert_eq!(res.enabled, true);
+        assert!(res.enabled);
     }
 }
