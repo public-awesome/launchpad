@@ -26,7 +26,7 @@ pub mod entry {
     // version info for migration info
     pub const CONTRACT_NAME: &str = "crates.io:sg721-base";
     pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
-    pub const EXPECTED_FROM_VERSION: &str = "2.3.0";
+    pub const EARLIEST_VERSION: &str = "0.16.0";
     pub const TO_VERSION: &str = "3.0.0";
 
     #[cfg_attr(not(feature = "library"), entry_point)]

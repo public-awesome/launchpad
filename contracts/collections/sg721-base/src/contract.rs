@@ -4,7 +4,7 @@ use url::Url;
 
 use cosmwasm_std::{
     to_binary, Binary, ContractInfoResponse, Decimal, Deps, DepsMut, Empty, Env, Event,
-    MessageInfo, StdResult, Timestamp, WasmQuery,
+    MessageInfo, StdError, StdResult, Timestamp, WasmQuery,
 };
 
 use cw721::{ContractInfoResponse as CW721ContractInfoResponse, Cw721Execute};
@@ -20,7 +20,7 @@ use sg_std::Response;
 use crate::msg::{CollectionInfoResponse, NftParams, QueryMsg};
 use crate::{ContractError, Sg721Contract};
 
-use crate::entry::{CONTRACT_NAME, CONTRACT_VERSION, EXPECTED_FROM_VERSION, TO_VERSION};
+use crate::entry::{CONTRACT_NAME, CONTRACT_VERSION, EARLIEST_VERSION, TO_VERSION};
 
 const MAX_DESCRIPTION_LENGTH: u32 = 512;
 
@@ -376,13 +376,21 @@ where
     pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
         // make sure the correct contract is being upgraded, and it's being
         // upgraded from the correct version.
-        cw2::assert_contract_version(deps.as_ref().storage, CONTRACT_NAME, EXPECTED_FROM_VERSION)
-            .map_err(|_| {
-            ContractError::WrongMigrateVersion(
-                CONTRACT_VERSION.to_string(),
-                EXPECTED_FROM_VERSION.to_string(),
-            )
-        })?;
+
+        if CONTRACT_VERSION < EARLIEST_VERSION {
+            return Err(
+                StdError::generic_err("Cannot upgrade to a previous contract version").into(),
+            );
+        }
+        if CONTRACT_VERSION > TO_VERSION {
+            return Err(
+                StdError::generic_err("Cannot upgrade to a previous contract version").into(),
+            );
+        }
+        // if same version return
+        if CONTRACT_VERSION == TO_VERSION {
+            return Ok(Response::new());
+        }
 
         // update contract version
         cw2::set_contract_version(deps.storage, CONTRACT_NAME, TO_VERSION)?;

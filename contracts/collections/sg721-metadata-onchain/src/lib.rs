@@ -11,7 +11,7 @@ pub type QueryMsg = sg721_base::msg::QueryMsg;
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sg721-metadata-onchain";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
-pub const EXPECTED_FROM_VERSION: &str = "2.3.0";
+pub const EARLIEST_VERSION: &str = "0.16.0";
 pub const TO_VERSION: &str = "3.0.0";
 
 pub type Extension = Option<Empty>;
@@ -20,7 +20,7 @@ pub type Extension = Option<Empty>;
 pub mod entry {
     use super::*;
 
-    use cosmwasm_std::{entry_point, Binary, Deps, DepsMut, Env, MessageInfo, StdResult};
+    use cosmwasm_std::{entry_point, Binary, Deps, DepsMut, Env, MessageInfo, StdError, StdResult};
 
     use sg721_base::{msg::QueryMsg, ContractError};
     use sg_std::Response;
@@ -60,20 +60,27 @@ pub mod entry {
     pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
         // make sure the correct contract is being upgraded, and it's being
         // upgraded from the correct version.
-        cw2::assert_contract_version(deps.as_ref().storage, CONTRACT_NAME, EXPECTED_FROM_VERSION)
-            .map_err(|_| {
-            ContractError::WrongMigrateVersion(
-                CONTRACT_VERSION.to_string(),
-                EXPECTED_FROM_VERSION.to_string(),
-            )
-        })?;
+        if CONTRACT_VERSION < EARLIEST_VERSION {
+            return Err(
+                StdError::generic_err("Cannot upgrade to a previous contract version").into(),
+            );
+        }
+        if CONTRACT_VERSION > TO_VERSION {
+            return Err(
+                StdError::generic_err("Cannot upgrade to a previous contract version").into(),
+            );
+        }
+        // if same version return
+        if CONTRACT_VERSION == TO_VERSION {
+            return Ok(Response::new());
+        }
 
         // update contract version
         cw2::set_contract_version(deps.storage, CONTRACT_NAME, TO_VERSION)?;
 
         // perform the upgrade
         let cw17_res = cw721_base::upgrades::v0_17::migrate::<Extension, Empty, Empty, Empty>(deps)
-            .map_err(|e| ContractError::MigrationError(e.to_string()))?;
+            .map_err(|e| sg721_base::ContractError::MigrationError(e.to_string()))?;
         let mut sgz_res = Response::new();
         sgz_res.attributes = cw17_res.attributes;
         Ok(sgz_res)

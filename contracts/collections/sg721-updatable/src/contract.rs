@@ -1,6 +1,6 @@
 use crate::error::ContractError;
 use crate::state::FROZEN_TOKEN_METADATA;
-use cosmwasm_std::Empty;
+use cosmwasm_std::{Empty, StdError};
 
 use cosmwasm_std::{Deps, StdResult};
 
@@ -23,7 +23,7 @@ use sg_std::Response;
 
 const CONTRACT_NAME: &str = "crates.io:sg721-updatable";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
-pub const EXPECTED_FROM_VERSION: &str = "2.3.0";
+pub const EARLIEST_VERSION: &str = "0.16.0";
 pub const TO_VERSION: &str = "3.0.0";
 const ENABLE_UPDATABLE_FEE: u128 = 500_000_000;
 
@@ -153,13 +153,16 @@ pub fn query_frozen_token_metadata(deps: Deps) -> StdResult<FrozenTokenMetadataR
 pub fn _migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
     // make sure the correct contract is being upgraded, and it's being
     // upgraded from the correct version.
-    cw2::assert_contract_version(deps.as_ref().storage, CONTRACT_NAME, EXPECTED_FROM_VERSION)
-        .map_err(|_| {
-            sg721_base::ContractError::WrongMigrateVersion(
-                CONTRACT_VERSION.to_string(),
-                EXPECTED_FROM_VERSION.to_string(),
-            )
-        })?;
+    if CONTRACT_VERSION < EARLIEST_VERSION {
+        return Err(StdError::generic_err("Cannot upgrade to a previous contract version").into());
+    }
+    if CONTRACT_VERSION > TO_VERSION {
+        return Err(StdError::generic_err("Cannot upgrade to a previous contract version").into());
+    }
+    // if same version return
+    if CONTRACT_VERSION == TO_VERSION {
+        return Ok(Response::new());
+    }
 
     // update contract version
     cw2::set_contract_version(deps.storage, CONTRACT_NAME, TO_VERSION)?;
