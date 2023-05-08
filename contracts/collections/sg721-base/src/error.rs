@@ -53,9 +53,6 @@ pub enum ContractError {
     #[error("Ownership Update Error: {error}")]
     OwnershipUpdateError { error: String },
 
-    #[error("found version ({0}) while attempting to migrate from {1}")]
-    WrongMigrateVersion(String, String),
-
     #[error("Error while migrating: ({0}) ")]
     MigrationError(String),
 }
