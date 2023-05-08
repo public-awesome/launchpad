@@ -20,10 +20,7 @@ use sg_std::Response;
 use crate::msg::{CollectionInfoResponse, NftParams, QueryMsg};
 use crate::{ContractError, Sg721Contract};
 
-use cosmwasm_std::Response as CosmWasmResponse;
-use cw721_base::ContractError as cw721BaseContractError;
-
-use crate::entry::{CONTRACT_NAME, CONTRACT_VERSION, EXPECTED_FROM_VERSION};
+use crate::entry::{CONTRACT_NAME, CONTRACT_VERSION, EXPECTED_FROM_VERSION, TO_VERSION};
 
 const MAX_DESCRIPTION_LENGTH: u32 = 512;
 
@@ -376,20 +373,26 @@ where
         })
     }
 
-    pub fn migrate(
-        deps: DepsMut,
-        _env: Env,
-        _msg: Empty,
-    ) -> Result<CosmWasmResponse, cw721BaseContractError> {
+    pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
         // make sure the correct contract is being upgraded, and it's being
         // upgraded from the correct version.
-        cw2::assert_contract_version(deps.as_ref().storage, CONTRACT_NAME, EXPECTED_FROM_VERSION)?;
+        cw2::assert_contract_version(deps.as_ref().storage, CONTRACT_NAME, EXPECTED_FROM_VERSION)
+            .map_err(|_| {
+            ContractError::WrongMigrateVersion(
+                CONTRACT_VERSION.to_string(),
+                EXPECTED_FROM_VERSION.to_string(),
+            )
+        })?;
 
         // update contract version
-        cw2::set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+        cw2::set_contract_version(deps.storage, CONTRACT_NAME, TO_VERSION)?;
 
         // perform the upgrade
-        cw721_base::upgrades::v0_17::migrate::<Extension, Empty, Empty, Empty>(deps)
+        let cw17_res = cw721_base::upgrades::v0_17::migrate::<Extension, Empty, Empty, Empty>(deps)
+            .map_err(|e| ContractError::MigrationError(e.to_string()))?;
+        let mut sgz_res = Response::new();
+        sgz_res.attributes = cw17_res.attributes;
+        Ok(sgz_res)
     }
 }
 

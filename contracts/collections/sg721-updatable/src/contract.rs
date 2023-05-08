@@ -2,7 +2,7 @@ use crate::error::ContractError;
 use crate::state::FROZEN_TOKEN_METADATA;
 use cosmwasm_std::Empty;
 
-use cosmwasm_std::{Deps, StdError, StdResult};
+use cosmwasm_std::{Deps, StdResult};
 
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::{DepsMut, Env, Event, MessageInfo};
@@ -21,16 +21,10 @@ use sg721_base::Sg721Contract;
 pub type Sg721UpdatableContract<'a> = Sg721Contract<'a, Extension>;
 use sg_std::Response;
 
-use cosmwasm_std::Response as CosmWasmResponse;
-use cw721_base::ContractError as cw721BaseContractError;
-
-use semver::Version;
-
-const COMPATIBLE_MIGRATION_CONTRACT_NAME: &str = "crates.io:sg721-base";
-const EARLIEST_COMPATIBLE_CONTRACT_VERSION: &str = "0.15.1";
 const CONTRACT_NAME: &str = "crates.io:sg721-updatable";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
-pub const EXPECTED_FROM_VERSION: &str = "0.16.0";
+pub const EXPECTED_FROM_VERSION: &str = "2.3.0";
+pub const TO_VERSION: &str = "3.0.0";
 const ENABLE_UPDATABLE_FEE: u128 = 500_000_000;
 
 pub fn _instantiate(
@@ -47,22 +41,6 @@ pub fn _instantiate(
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
     let res = Sg721UpdatableContract::default().instantiate(deps, env, info, msg)?;
     Ok(res)
-}
-
-pub fn migrate(
-    deps: DepsMut,
-    _env: Env,
-    _msg: Empty,
-) -> Result<CosmWasmResponse, cw721BaseContractError> {
-    // make sure the correct contract is being upgraded, and it's being
-    // upgraded from the correct version.
-    cw2::assert_contract_version(deps.as_ref().storage, CONTRACT_NAME, EXPECTED_FROM_VERSION)?;
-
-    // update contract version
-    cw2::set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-
-    // perform the upgrade
-    cw721_base::upgrades::v0_17::migrate::<Extension, Empty, Empty, Empty>(deps)
 }
 
 pub fn execute_enable_updatable(
@@ -173,49 +151,25 @@ pub fn query_frozen_token_metadata(deps: Deps) -> StdResult<FrozenTokenMetadataR
 }
 
 pub fn _migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
-    let current_version = cw2::get_contract_version(deps.storage)?;
-    let mut enable_updatable = true;
-    if ![CONTRACT_NAME, COMPATIBLE_MIGRATION_CONTRACT_NAME]
-        .contains(&current_version.contract.as_str())
-    {
-        return Err(StdError::generic_err("Cannot upgrade to a different contract").into());
-    }
+    // make sure the correct contract is being upgraded, and it's being
+    // upgraded from the correct version.
+    cw2::assert_contract_version(deps.as_ref().storage, CONTRACT_NAME, EXPECTED_FROM_VERSION)
+        .map_err(|_| {
+            sg721_base::ContractError::WrongMigrateVersion(
+                CONTRACT_VERSION.to_string(),
+                EXPECTED_FROM_VERSION.to_string(),
+            )
+        })?;
 
-    // when migrating from sg721-base to sg721-updatable
-    // need to pay enable updatable fee before updating token metadata
-    if COMPATIBLE_MIGRATION_CONTRACT_NAME == current_version.contract.as_str() {
-        enable_updatable = false;
-    }
+    // update contract version
+    cw2::set_contract_version(deps.storage, CONTRACT_NAME, TO_VERSION)?;
 
-    let version: Version = current_version
-        .version
-        .parse()
-        .map_err(|_| StdError::generic_err("Invalid contract version"))?;
-    let new_version: Version = CONTRACT_VERSION
-        .parse()
-        .map_err(|_| StdError::generic_err("Invalid contract version"))?;
-    let earliest_version: Version = EARLIEST_COMPATIBLE_CONTRACT_VERSION
-        .parse()
-        .map_err(|_| StdError::generic_err("Invalid contract version"))?;
-
-    // current version not launchpad v2
-    if version < earliest_version {
-        return Err(StdError::generic_err("Cannot upgrade to a previous contract version").into());
-    }
-    if version > new_version {
-        return Err(StdError::generic_err("Cannot upgrade to a previous contract version").into());
-    }
-    // if same version return
-    if version == new_version {
-        return Ok(Response::new());
-    }
-
-    FROZEN_TOKEN_METADATA.save(deps.storage, &false)?;
-    ENABLE_UPDATABLE.save(deps.storage, &enable_updatable)?;
-
-    // set new contract version
-    set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-    Ok(Response::new())
+    // perform the upgrade
+    let cw17_res = cw721_base::upgrades::v0_17::migrate::<Extension, Empty, Empty, Empty>(deps)
+        .map_err(|e| sg721_base::ContractError::MigrationError(e.to_string()))?;
+    let mut sgz_res = Response::new();
+    sgz_res.attributes = cw17_res.attributes;
+    Ok(sgz_res)
 }
 
 #[cfg(test)]

@@ -55,4 +55,7 @@ pub enum ContractError {
 
     #[error("found version ({0}) while attempting to migrate from {1}")]
     WrongMigrateVersion(String, String),
+
+    #[error("Error while migrating: ({0}) ")]
+    MigrationError(String),
 }
