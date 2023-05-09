@@ -336,12 +336,15 @@ where
 
         self.parent.increment_tokens(deps.storage)?;
 
-        Ok(Response::new()
+        let mut res = Response::new()
             .add_attribute("action", "mint")
             .add_attribute("minter", info.sender)
-            .add_attribute("owner", owner)
-            .add_attribute("token_id", token_id)
-            .add_attribute("token_uri", token_uri.unwrap_or_default()))
+            .add_attribute("owner", msg.owner)
+            .add_attribute("token_id", msg.token_id);
+        if let Some(token_uri) = msg.token_uri {
+            res = res.add_attribute("token_uri", token_uri);
+        }
+        Ok(res)
     }
 
     pub fn query(&self, deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {

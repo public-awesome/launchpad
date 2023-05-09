@@ -133,10 +133,12 @@ pub fn execute_update_token_metadata(
         },
     )?;
 
-    let event = Event::new("update_update_token_metadata")
+    let mut event = Event::new("update_update_token_metadata")
         .add_attribute("sender", info.sender)
-        .add_attribute("token_id", token_id)
-        .add_attribute("token_uri", token_uri.unwrap_or_default());
+        .add_attribute("token_id", token_id);
+    if let Some(token_uri) = token_uri {
+        event = event.add_attribute("token_uri", token_uri);
+    }
     Ok(Response::new().add_event(event))
 }
 
