@@ -4,8 +4,9 @@ use std::fs::create_dir_all;
 use cosmwasm_schema::{export_schema, remove_schemas, schema_for};
 
 use sg_whitelist::msg::{
-    AdminListResponse, ConfigResponse, ExecuteMsg, HasEndedResponse, HasMemberResponse,
-    HasStartedResponse, InstantiateMsg, IsActiveResponse, MembersResponse, QueryMsg,
+    AdminListResponse, CanExecuteResponse, ConfigResponse, ExecuteMsg, HasEndedResponse,
+    HasMemberResponse, HasStartedResponse, InstantiateMsg, IsActiveResponse, MembersResponse,
+    QueryMsg,
 };
 use sg_whitelist::state::Config;
 
@@ -26,4 +27,5 @@ fn main() {
     export_schema(&schema_for!(MembersResponse), &out_dir);
     export_schema(&schema_for!(QueryMsg), &out_dir);
     export_schema(&schema_for!(AdminListResponse), &out_dir);
+    export_schema(&schema_for!(CanExecuteResponse), &out_dir);
 }
