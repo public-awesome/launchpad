@@ -426,6 +426,13 @@ pub fn execute_set_whitelist(
         return Err(ContractError::WhitelistAlreadyStarted {});
     }
 
+    if wl_config.mint_price.denom != config.mint_price.denom {
+        return Err(ContractError::InvalidDenom {
+            expected: config.mint_price.denom,
+            got: wl_config.mint_price.denom,
+        });
+    }
+
     // Whitelist could be free, while factory minimum is not
     let factory: ParamsResponse = deps
         .querier
