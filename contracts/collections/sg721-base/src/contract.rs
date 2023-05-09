@@ -339,9 +339,9 @@ where
         let mut res = Response::new()
             .add_attribute("action", "mint")
             .add_attribute("minter", info.sender)
-            .add_attribute("owner", msg.owner)
-            .add_attribute("token_id", msg.token_id);
-        if let Some(token_uri) = msg.token_uri {
+            .add_attribute("owner", owner)
+            .add_attribute("token_id", token_id);
+        if let Some(token_uri) = token_uri {
             res = res.add_attribute("token_uri", token_uri);
         }
         Ok(res)
