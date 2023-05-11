@@ -73,7 +73,7 @@ fn set_invalid_whitelist() {
     let vt = vending_minter_template(10);
     let (mut router, creator, _) = (vt.router, vt.accts.creator, vt.accts.buyer);
     let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
-    let whitelist_addr = setup_whitelist_contract(&mut router, &creator, None);
+    let whitelist_addr = setup_whitelist_contract(&mut router, &creator, None, None);
     const EXPIRATION_TIME: Timestamp = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000);
 
     // Set block to before genesis mint start time
@@ -153,7 +153,7 @@ fn whitelist_mint_count_query() {
     let minter_addr = minter_collection_response[0].minter.clone().unwrap();
     let collection_addr = minter_collection_response[0].collection.clone().unwrap();
 
-    let whitelist_addr = setup_whitelist_contract(&mut router, &creator, None);
+    let whitelist_addr = setup_whitelist_contract(&mut router, &creator, None, None);
     const EXPIRATION_TIME: Timestamp = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000);
 
     // Set block to before genesis mint start time
@@ -360,7 +360,7 @@ fn whitelist_already_started() {
         code_ids,
     );
     let minter_addr = minter_collection_response[0].minter.clone().unwrap();
-    let whitelist_addr = setup_whitelist_contract(&mut router, &creator, None);
+    let whitelist_addr = setup_whitelist_contract(&mut router, &creator, None, None);
 
     setup_block_time(&mut router, GENESIS_MINT_START_TIME + 101, None);
 
@@ -395,7 +395,7 @@ fn whitelist_can_update_before_start() {
         code_ids,
     );
     let minter_addr = minter_collection_response[0].minter.clone().unwrap();
-    let whitelist_addr = setup_whitelist_contract(&mut router, &creator, None);
+    let whitelist_addr = setup_whitelist_contract(&mut router, &creator, None, None);
 
     setup_block_time(&mut router, GENESIS_MINT_START_TIME - 1000, None);
 

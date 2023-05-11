@@ -49,5 +49,5 @@ pub fn configure_mock_minter_with_mock_whitelist(app: &mut StargazeApp) {
     let (creator, _) = setup_accounts(app);
     configure_mock_minter(app, creator.clone());
     let whitelist_code_id = app.store_code(mock_whitelist());
-    setup_whitelist_contract(app, &creator, Some(whitelist_code_id));
+    setup_whitelist_contract(app, &creator, Some(whitelist_code_id), None);
 }

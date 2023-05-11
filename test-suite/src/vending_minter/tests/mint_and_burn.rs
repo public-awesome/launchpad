@@ -85,7 +85,7 @@ fn update_discount_mint_price() {
     let vt = vending_minter_template(10);
     let (mut router, creator, buyer) = (vt.router, vt.accts.creator, vt.accts.buyer);
     let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
-    let whitelist_addr = setup_whitelist_contract(&mut router, &creator, None);
+    let whitelist_addr = setup_whitelist_contract(&mut router, &creator, None, None);
 
     setup_block_time(&mut router, GENESIS_MINT_START_TIME - 10, None);
     let set_whitelist_msg = ExecuteMsg::SetWhitelist {
