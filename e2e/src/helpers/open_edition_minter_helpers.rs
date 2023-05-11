@@ -22,7 +22,7 @@ pub const SG721_NAME: &str = "sg721_base";
 pub const FACTORY_NAME: &str = "open_edition_factory";
 pub const MINTER_NAME: &str = "open_edition_minter";
 
-pub const MAX_TOKENS: u32 = 10_000;
+pub const MAX_TOKENS: u32 = 10;
 pub const CREATION_FEE: u128 = 1_000_000_000;
 pub const MINT_PRICE: u128 = 100_000_000;
 
