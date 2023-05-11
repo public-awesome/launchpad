@@ -62,7 +62,6 @@ pub fn execute_create_minter(
     must_not_be_frozen(&params)?;
 
     let mut res = Response::new();
-    // TODO: Creation fee -> was not discussed -> should there be one?
     checked_fair_burn(&info, params.creation_fee.amount.u128(), None, &mut res)?;
 
     // All checks/validations for the minter's instantiate params are done within the `new_validated` method
@@ -114,11 +113,6 @@ pub fn sudo_update_params(
 
     update_params(&mut params, param_msg.clone())?;
 
-    params.extension.dev_fee_bps = param_msg
-        .extension
-        .dev_fee_bps
-        .unwrap_or(params.extension.dev_fee_bps);
-
     params.extension.dev_fee_address = param_msg
         .extension
         .dev_fee_address
@@ -134,15 +128,10 @@ pub fn sudo_update_params(
         .airdrop_mint_fee_bps
         .unwrap_or(params.extension.airdrop_mint_fee_bps);
 
-    params.extension.abs_max_mint_per_address = param_msg
+    params.extension.max_per_address_limit = param_msg
         .extension
-        .abs_max_mint_per_address
-        .unwrap_or(params.extension.abs_max_mint_per_address);
-
-    params.extension.token_id_prefix_length = param_msg
-        .extension
-        .token_id_prefix_length
-        .unwrap_or(params.extension.token_id_prefix_length);
+        .max_per_address_limit
+        .unwrap_or(params.extension.max_per_address_limit);
 
     SUDO_PARAMS.save(deps.storage, &params)?;
 

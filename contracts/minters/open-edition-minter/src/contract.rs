@@ -19,7 +19,7 @@ use sg4::{Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
 
 use crate::error::ContractError;
-use crate::helpers::{dev_fee_msgs_and_amount, mint_nft_msg};
+use crate::helpers::{mint_nft_msg};
 use crate::msg::{
     ConfigResponse, ExecuteMsg, MintCountResponse, MintPriceResponse, QueryMsg, StartTimeResponse
 };
@@ -120,7 +120,7 @@ pub fn instantiate(
             start_time: msg.init_msg.start_time,
             nft_data: msg.init_msg.nft_data,
             end_time: msg.init_msg.end_time,
-            nb_of_nfts_minted: 0,
+            nfts_minted: 0,
         },
         mint_price: msg.init_msg.mint_price,
     };
@@ -290,12 +290,7 @@ fn _execute_mint(
 
     // Create fee msgs
     // Metadata Storage fees -> minting fee will be enabled for on-chain metadata mints
-    // dev fees
-    // mint fees
-    let dev_fee_decimal = factory_params
-            .extension
-            .dev_fee_bps
-            .bps_to_decimal();
+    // dev fees are intrinsic in the mint fee (assuming a 50% share)
     let mint_fee = if is_admin {
         factory_params
             .extension
@@ -306,21 +301,12 @@ fn _execute_mint(
     };
     let network_fee = mint_price.amount * mint_fee;
     // This is for the network fee msg
-    checked_fair_burn(&info, network_fee.u128(), None, &mut res)?;
-    // Use another function for the bps to dev for the contract
-    let dev_fee_amount = dev_fee_msgs_and_amount(
-        deps.as_ref(),
-        mint_price.amount,
-        dev_fee_decimal,
-        deps.api.addr_validate(&factory_params.extension.dev_fee_address)?.to_string(),
-        &mut res
-    )?;
+    checked_fair_burn(&info, network_fee.u128(), Some(deps.api.addr_validate(&factory_params.extension.dev_fee_address)?), &mut res)?;
 
     // Token ID to mint + update the config counter
-    let mut token_id = config.extension.nft_data.token_id_prefix;
+    let token_id = (config.extension.nfts_minted + 1).to_string();
     CONFIG.update(deps.storage, |mut updated_conf| -> Result<_, ContractError> {
-        updated_conf.extension.nb_of_nfts_minted += 1;
-        token_id.push_str(&updated_conf.extension.nb_of_nfts_minted.to_string());
+        updated_conf.extension.nfts_minted += 1;
         Ok(updated_conf)
     })?;
 
@@ -345,8 +331,8 @@ fn _execute_mint(
     MINTER_ADDRS.save(deps.storage, &info.sender, &new_mint_count)?;
 
     let seller_amount = {
-        // the net amount is mint price - network fee - dev fee
-        let amount = mint_price.amount.checked_sub(network_fee)?.checked_sub(dev_fee_amount)?;
+        // the net amount is mint price - network fee (mint free + dev fee)
+        let amount = mint_price.amount.checked_sub(network_fee)?;
         let payment_address = config.extension.payment_address;
         let seller = config.extension.admin;
         // Sending 0 coins fails, so only send if amount is non-zero
@@ -366,7 +352,6 @@ fn _execute_mint(
         .add_attribute("recipient", recipient_addr)
         .add_attribute("token_id", token_id)
         .add_attribute("network_fee", network_fee.to_string())
-        .add_attribute("dev_fee", dev_fee_amount.to_string())
         .add_attribute("mint_price", mint_price.amount)
         .add_attribute("seller_amount", seller_amount))
 }
@@ -488,10 +473,10 @@ pub fn execute_update_per_address_limit(
         .query_wasm_smart(config.factory.clone(), &Sg2QueryMsg::Params {})?;
     let factory_params = factory.params;
 
-    if per_address_limit == 0 || per_address_limit > factory_params.extension.abs_max_mint_per_address
+    if per_address_limit == 0 || per_address_limit > factory_params.extension.max_per_address_limit
     {
         return Err(ContractError::InvalidPerAddressLimit {
-            max: factory_params.extension.abs_max_mint_per_address,
+            max: factory_params.extension.max_per_address_limit,
             min: 1,
             got: per_address_limit,
         });
@@ -591,7 +576,7 @@ fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
         admin: config.extension.admin.to_string(),
         nft_data: config.extension.nft_data,
         payment_address: config.extension.payment_address,
-        minted_count: config.extension.nb_of_nfts_minted,
+        minted_count: config.extension.nfts_minted,
         per_address_limit: config.extension.per_address_limit,
         end_time: config.extension.end_time,
         sg721_address: sg721_address.to_string(),

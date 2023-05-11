@@ -24,8 +24,6 @@ mod tests {
             assert_eq!(res.params.allowed_sg721_code_ids, vec![1, 3, 5, 6]);
             assert!(!res.params.frozen);
             assert_eq!(res.params.mint_fee_bps, 1000);
-            assert_eq!(res.params.extension.dev_fee_bps, 200);
-            assert_eq!(res.params.extension.token_id_prefix_length, 30);
 
             let update_msg = OpenEditionUpdateParamsMsg {
                 add_sg721_code_ids: Some(vec![12, 24]),
@@ -37,12 +35,10 @@ mod tests {
                 mint_fee_bps: Some(2000),
                 max_trading_offset_secs: None,
                 extension: OpenEditionUpdateParamsExtension {
-                    token_id_prefix_length: Some(15),
-                    abs_max_mint_per_address: None,
+                    max_per_address_limit: None,
                     min_mint_price: None,
                     airdrop_mint_fee_bps: None,
                     airdrop_mint_price: None,
-                    dev_fee_bps: None,
                     dev_fee_address: None,
                 },
             };
@@ -55,8 +51,6 @@ mod tests {
             assert_eq!(res.params.allowed_sg721_code_ids, vec![3, 5, 6, 12, 24]);
             assert!(res.params.frozen);
             assert_eq!(res.params.mint_fee_bps, 2000);
-            assert_eq!(res.params.extension.dev_fee_bps, 200);
-            assert_eq!(res.params.extension.token_id_prefix_length, 15);
         }
 
     }

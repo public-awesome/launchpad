@@ -1216,6 +1216,8 @@ dependencies = [
  "cosmwasm-std",
  "env_logger",
  "once_cell",
+ "open-edition-factory",
+ "open-edition-minter",
  "rand",
  "serde",
  "serde_json",

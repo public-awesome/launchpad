@@ -62,27 +62,6 @@ impl MinterContract {
     }
 }
 
-pub fn dev_fee_msgs_and_amount(
-    deps: Deps,
-    sale_price: Uint128,
-    dev_fee_decimal: Decimal,
-    developer: String,
-    res: &mut Response
-) -> Result<Uint128, ContractError> {
-    let mut event = Event::new("dev-fees");
-
-    let dev_fee = (sale_price * dev_fee_decimal).u128();
-    res.messages.push(SubMsg::new(BankMsg::Send {
-        to_address: deps.api.addr_validate(&developer)?.to_string(),
-        amount: coins(dev_fee, NATIVE_DENOM),
-    }));
-    event = event.add_attribute("dev", developer);
-    event = event.add_attribute("dev_amount", Uint128::from(dev_fee).to_string());
-    res.events.push(event);
-
-    Ok(Uint128::new(dev_fee))
-}
-
 pub fn mint_nft_msg(
     sg721_address: Addr,
     token_id: String,

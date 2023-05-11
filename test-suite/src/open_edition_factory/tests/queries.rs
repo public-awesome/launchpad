@@ -56,9 +56,7 @@ mod tests {
             assert_eq!(res.params.mint_fee_bps, params.mint_fee_bps);
             assert_eq!(res.params.min_mint_price, params.min_mint_price);
             assert_eq!(res.params.max_trading_offset_secs, params.max_trading_offset_secs);
-            assert_eq!(res.params.extension.dev_fee_bps, params.extension.dev_fee_bps);
-            assert_eq!(res.params.extension.token_id_prefix_length, params.extension.token_id_prefix_length);
-            assert_eq!(res.params.extension.abs_max_mint_per_address, params.extension.abs_max_mint_per_address);
+            assert_eq!(res.params.extension.max_per_address_limit, params.extension.max_per_address_limit);
             assert_eq!(res.params.extension.airdrop_mint_price, params.extension.airdrop_mint_price);
             assert_eq!(res.params.extension.airdrop_mint_fee_bps, params.extension.airdrop_mint_fee_bps);
             assert_eq!(res.params.extension.dev_fee_address, params.extension.dev_fee_address);

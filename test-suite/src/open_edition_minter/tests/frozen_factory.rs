@@ -38,12 +38,10 @@ fn frozen_factory_cannot_create_new_minters() {
         mint_fee_bps: None,
         max_trading_offset_secs: None,
         extension: OpenEditionUpdateParamsExtension {
-            token_id_prefix_length: None,
-            abs_max_mint_per_address: None,
+            max_per_address_limit: None,
             min_mint_price: None,
             airdrop_mint_fee_bps: None,
             airdrop_mint_price: None,
-            dev_fee_bps: None,
             dev_fee_address: None,
         },
     };
@@ -61,7 +59,6 @@ fn frozen_factory_cannot_create_new_minters() {
     let collection_params = mock_collection_params_1(Some(start_time));
     let default_nft_data = NftData {
         nft_data_type: NftMetadataType::OffChainMetadata,
-        token_id_prefix: "Token ID #".to_string(),
         extension: None,
         token_uri: Some("ipfs://bafybeiavall5udkxkdtdm4djezoxrmfc6o5fn2ug3ymrlvibvwmwydgrkm/1.jpg".to_string()),
     };

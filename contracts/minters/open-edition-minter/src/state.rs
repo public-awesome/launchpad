@@ -10,7 +10,7 @@ pub struct ConfigExtension {
     pub admin: Addr,
     pub payment_address: Option<Addr>,
     pub nft_data: NftData,
-    pub nb_of_nfts_minted: u32,
+    pub nfts_minted: u32,
     pub start_time: Timestamp,
     pub per_address_limit: u32,
     pub end_time: Timestamp

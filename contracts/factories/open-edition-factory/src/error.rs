@@ -28,9 +28,6 @@ pub enum ContractError {
     #[error("InvalidMintPrice")]
     InvalidMintPrice {},
 
-    #[error("TokenIdPrefixIsTooLong")]
-    TokenIdPrefixIsTooLong {},
-
     #[error("InvalidNftDataProvided")]
     InvalidNftDataProvided {},
 

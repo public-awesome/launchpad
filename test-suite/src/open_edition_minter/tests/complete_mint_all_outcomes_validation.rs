@@ -12,6 +12,7 @@ use sg4::StatusResponse;
 use crate::common_setup::{
     setup_accounts_and_block::{coins_for_msg, setup_block_time},
 };
+use crate::common_setup::setup_minter::common::constants::DEV_ADDRESS;
 use crate::common_setup::templates::open_edition_minter_custom_template;
 
 const MINT_PRICE: u128 = 100_000_000;
@@ -39,6 +40,8 @@ fn check_mint_revenues_distribution() {
     let initial_buyer_balances = router.wrap().query_all_balances(buyer.clone()).unwrap();
     let initial_creator_balances = router.wrap().query_all_balances(creator.clone()).unwrap();
     assert_eq!(initial_creator_balances[0].amount, Uint128::new(2_000_000_000));
+    let initial_dev_balances = router.wrap().query_all_balances(DEV_ADDRESS.clone()).unwrap();
+    assert_eq!(initial_dev_balances[0].amount, Uint128::new(2_000_000_000));
 
     // Invalid price
     let mint_msg = ExecuteMsg::Mint {};
@@ -119,16 +122,26 @@ fn check_mint_revenues_distribution() {
         initial_buyer_balances[0].amount - Uint128::new(200_000_000u128)
     );
 
-    // Creator should be at +100 x2 stars - dev fees 2_000_000 x 2 - mint fees (currently at 10 x2)
+    // Creator should be at +100 x2 stars - mint fees (currently at 10 x2) [Mint fees include Dev fees]
     let creator_balances = router.wrap().query_all_balances(creator.clone()).unwrap();
     assert_eq!(
         creator_balances[0].amount,
-        initial_creator_balances[0].amount + Uint128::new(200_000_000 - 4_000_000 - 20_000_000)
+        initial_creator_balances[0].amount + Uint128::new(200_000_000 - 20_000_000)
     );
 
-    // Should be owner of the token #2
+    // The fair burn is the fixed burn pct (currently 50%) - fixed dev fee (currently 10% but will be 50%)
+    // For 1 mint -> 100_000_000 * 0.1 = 10_000_000 -> 40% is burned and 10% to the dev
+    // burn = 4_000_000
+    // dev = 1_000_000
+    let dev_balances = router.wrap().query_all_balances(DEV_ADDRESS).unwrap();
+    assert_eq!(
+        dev_balances[0].amount,
+        initial_dev_balances[0].amount + Uint128::new(1_000_000 * 2)
+    );
+
+    // Should be owner of the token -> 2
     let query_owner_msg = Cw721QueryMsg::OwnerOf {
-        token_id: String::from("Token ID #2"),
+        token_id: String::from("2"),
         include_expired: None,
     };
 

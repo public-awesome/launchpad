@@ -62,12 +62,10 @@ pub fn mock_params_proper() -> OpenEditionMinterParams {
         mint_fee_bps: MINT_FEE_FAIR_BURN,
         max_trading_offset_secs: 60 * 60 * 24 * 7,
         extension: ParamsExtension {
-            token_id_prefix_length: 30,
-            abs_max_mint_per_address: 10,
+            max_per_address_limit: 10,
             airdrop_mint_fee_bps: 100,
             airdrop_mint_price: Coin { denom: NATIVE_DENOM.to_string(), amount: Uint128::new(100_000_000u128) },
-            dev_fee_address: DEV_ADDRESS.to_string(),
-            dev_fee_bps: 200,
+            dev_fee_address: DEV_ADDRESS.to_string()
         },
     }
 }

@@ -247,7 +247,7 @@ pub fn open_edition_minter_custom_template(
     start_minter_time: Option<Timestamp>,
     end_minter_time: Option<Timestamp>,
     nft_data: Option<NftData>,
-    abs_max_mint_per_address: Option<u32>,
+    max_per_address_limit: Option<u32>,
     per_address_limit_minter: Option<u32>,
     mint_price_minter: Option<Coin>,
     sg721_code: Option<Box<dyn Contract<StargazeMsgWrapper>>>,
@@ -259,7 +259,7 @@ pub fn open_edition_minter_custom_template(
 
     // Factory params
     let mut factory_params = mock_params_proper();
-    factory_params.extension.abs_max_mint_per_address = abs_max_mint_per_address.unwrap_or(factory_params.extension.abs_max_mint_per_address);
+    factory_params.extension.max_per_address_limit = max_per_address_limit.unwrap_or(factory_params.extension.max_per_address_limit);
 
     let factory_addr = app
         .instantiate_contract(
@@ -284,7 +284,6 @@ pub fn open_edition_minter_custom_template(
     let collection_params = mock_collection_params_1(Some(start_time));
     let default_nft_data = nft_data.unwrap_or(NftData {
         nft_data_type: NftMetadataType::OffChainMetadata,
-        token_id_prefix: "Token ID #".to_string(),
         extension: None,
         token_uri: Some("ipfs://bafybeiavall5udkxkdtdm4djezoxrmfc6o5fn2ug3ymrlvibvwmwydgrkm/1.jpg".to_string()),
     });

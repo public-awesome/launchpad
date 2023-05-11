@@ -158,7 +158,6 @@ fn check_invalid_create_minter_nft_data() {
         None,
         Some(NftData {
             nft_data_type: NftMetadataType::OffChainMetadata,
-            token_id_prefix: "Token Id #".to_string(),
             extension: None,
             token_uri: None,
         }),
@@ -179,7 +178,6 @@ fn check_invalid_create_minter_nft_data() {
         None,
         Some(NftData {
             nft_data_type: NftMetadataType::OffChainMetadata,
-            token_id_prefix: "Token Id #".to_string(),
             extension: metadata_def.clone(),
             token_uri: None,
         }),
@@ -200,7 +198,6 @@ fn check_invalid_create_minter_nft_data() {
         None,
         Some(NftData {
             nft_data_type: NftMetadataType::OnChainMetadata,
-            token_id_prefix: "Token Id #".to_string(),
             extension: None,
             token_uri: token_uri_def.clone(),
         }),
@@ -221,7 +218,6 @@ fn check_invalid_create_minter_nft_data() {
         None,
         Some(NftData {
             nft_data_type: NftMetadataType::OnChainMetadata,
-            token_id_prefix: "Token Id #".to_string(),
             extension: None,
             token_uri: token_uri_def,
         }),
@@ -234,27 +230,6 @@ fn check_invalid_create_minter_nft_data() {
     assert_eq!(
         vt.err().unwrap().err().unwrap().source().unwrap().to_string(),
         "InvalidNftDataProvided".to_string()
-    );
-
-    // Sending too long token id prefix
-    let vt = open_edition_minter_custom_template(
-        None,
-        None,
-        Some(NftData {
-            nft_data_type: NftMetadataType::OnChainMetadata,
-            token_id_prefix: "Token Id AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA #".to_string(),
-            extension: metadata_def,
-            token_uri: None,
-        }),
-        None,
-        None,
-        None,
-        None,
-        None
-    );
-    assert_eq!(
-        vt.err().unwrap().err().unwrap().source().unwrap().to_string(),
-        "TokenIdPrefixIsTooLong".to_string()
     );
 
 }

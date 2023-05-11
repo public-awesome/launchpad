@@ -304,8 +304,8 @@ where
             .add_attribute("minter", info.sender)
             .add_attribute("owner", msg.owner)
             .add_attribute("token_id", msg.token_id);
-        if msg.token_uri.is_some() {
-            res = res.add_attribute("token_uri", msg.token_uri.unwrap_or_default());
+        if let Some(token_uri) = msg.token_uri {
+            res = res.add_attribute("token_uri", token_uri);
         }
         Ok(res)
     }

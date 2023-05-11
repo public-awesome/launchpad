@@ -58,8 +58,8 @@ pub fn setup_open_edition_minter_contract(setup_params: OpenEditionMinterSetupPa
         );
 
     let factory_addr = factory_addr.unwrap();
-    let mut msg = mock_create_minter(start_time, end_time, Some(params.min_mint_price.clone()), Some(params.extension.abs_max_mint_per_address), nft_data.clone(), collection_params, None);
-    msg.init_msg = build_init_msg(init_msg, start_time, end_time, Some(params.extension.abs_max_mint_per_address), nft_data, Some(params.min_mint_price), None);
+    let mut msg = mock_create_minter(start_time, end_time, Some(params.min_mint_price.clone()), Some(params.extension.max_per_address_limit), nft_data.clone(), collection_params, None);
+    msg.init_msg = build_init_msg(init_msg, start_time, end_time, Some(params.extension.max_per_address_limit), nft_data, Some(params.min_mint_price), None);
     msg.collection_params.code_id = sg721_code_id;
     msg.collection_params.info.creator = minter_admin.to_string();
     let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);

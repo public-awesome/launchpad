@@ -32,9 +32,9 @@ impl OpenEditionMinterInitMsgExtension {
     ) -> Result<Self, ContractError> {
         // Validation of the Minter Params -> need to be in-line with the factory
 
-        init_msg.nft_data = NftData::new_validated(init_msg.nft_data, params.extension.token_id_prefix_length)?;
+        init_msg.nft_data = NftData::new_validated(init_msg.nft_data)?;
 
-        if init_msg.per_address_limit < 1 || init_msg.per_address_limit > params.extension.abs_max_mint_per_address {
+        if init_msg.per_address_limit < 1 || init_msg.per_address_limit > params.extension.max_per_address_limit {
             return Err(ContractError::InvalidMintPerWalletValue {})
         }
 
@@ -79,12 +79,10 @@ pub enum SudoMsg {
 /// Message for params so they can be updated individually by governance
 #[cw_serde]
 pub struct OpenEditionUpdateParamsExtension {
-    pub token_id_prefix_length: Option<u32>,
-    pub abs_max_mint_per_address: Option<u32>,
+    pub max_per_address_limit: Option<u32>,
     pub min_mint_price: Option<Coin>,
     pub airdrop_mint_fee_bps: Option<u64>,
     pub airdrop_mint_price: Option<Coin>,
-    pub dev_fee_bps: Option<u64>,
     pub dev_fee_address: Option<String>,
 }
 pub type OpenEditionUpdateParamsMsg = UpdateMinterParamsMsg<OpenEditionUpdateParamsExtension>;
