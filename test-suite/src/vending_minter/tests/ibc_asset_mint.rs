@@ -59,49 +59,25 @@ fn mint_with_ibc_asset() {
 #[test]
 fn denom_mismatch_creating_minter() {
     // create factory w NATIVE_DENOM, then try creating a minter w different denom
+
     let denom = "ibc/asset";
-    let num_tokens = 2;
     let mut app = custom_mock_app();
     let (creator, _) = setup_accounts(&mut app);
-    let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
-    let collection_params = mock_collection_params_1(Some(start_time));
 
-    let init_msg = vending_factory::msg::VendingMinterInitMsgExtension {
-        base_token_uri: "ipfs://aldkfjads".to_string(),
-        payment_address: None,
-        start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
-        num_tokens,
-        mint_price: coin(MINT_PRICE, denom),
-        per_address_limit: 1,
-        whitelist: Some("invalid address".to_string()),
-    };
+    let mut init_msg = mock_init_extension(None, None);
+    init_msg.mint_price = coin(MINT_PRICE, denom);
 
-    let minter_params = minter_params_all(num_tokens, None, None, Some(init_msg));
     let code_ids = vending_minter_code_ids(&mut app);
 
-    let setup_params: MinterSetupParams = MinterSetupParams {
-        router: &mut app,
-        minter_admin: creator,
-        num_tokens,
-        collection_params,
-        splits_addr: minter_params.splits_addr,
-        minter_code_id: code_ids.minter_code_id,
-        factory_code_id: code_ids.factory_code_id,
-        sg721_code_id: code_ids.sg721_code_id,
-        start_time: minter_params.start_time,
-        init_msg: minter_params.init_msg,
-    };
-
-    let minter_code_id = setup_params.minter_code_id;
-    let router = setup_params.router;
-    let factory_code_id = setup_params.factory_code_id;
-    let sg721_code_id = setup_params.sg721_code_id;
-    let minter_admin = setup_params.minter_admin;
+    let minter_code_id = code_ids.minter_code_id;
+    let factory_code_id = code_ids.factory_code_id;
+    let sg721_code_id = code_ids.sg721_code_id;
+    let minter_admin = creator.clone();
 
     let mut params = mock_params(None);
     params.code_id = minter_code_id;
 
-    let factory_addr = router
+    let factory_addr = app
         .instantiate_contract(
             factory_code_id,
             minter_admin.clone(),
@@ -112,15 +88,13 @@ fn denom_mismatch_creating_minter() {
         )
         .unwrap();
 
-    let mut init_msg = mock_init_extension(None, None);
-    init_msg.mint_price = coin(MINT_PRICE, denom);
     let mut msg = mock_create_minter_init_msg(mock_collection_params(), init_msg);
     msg.collection_params.code_id = sg721_code_id;
     msg.collection_params.info.creator = minter_admin.to_string();
     let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
     let msg = Sg2ExecuteMsg::CreateMinter(msg);
 
-    let err = router
+    let err = app
         .execute_contract(minter_admin, factory_addr, &msg, &creation_fee)
         .unwrap_err();
     assert_eq!(
