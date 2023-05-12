@@ -8,7 +8,7 @@ use crate::common_setup::{
     contract_boxes::contract_collection_whitelist, setup_accounts_and_block::setup_block_time,
 };
 
-const WHITELIST_AMOUNT: u128 = 66_000_000;
+pub const WHITELIST_AMOUNT: u128 = 66_000_000;
 const ZERO_FEE_WHITELIST: u128 = 0;
 const WL_PER_ADDRESS_LIMIT: u32 = 1;
 
