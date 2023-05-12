@@ -1,10 +1,6 @@
 use super::chain::Chain;
-use cosm_orc::orchestrator::cosm_orc::tokio_block;
 use cosm_orc::orchestrator::error::ProcessError;
-use cosm_orc::orchestrator::Coin as OrcCoin;
 use cosm_orc::orchestrator::{InstantiateResponse, SigningKey};
-use cosm_tome::chain::request::TxOptions;
-use cosm_tome::modules::bank::model::SendRequest;
 use cosmwasm_std::{Coin, Timestamp, Uint128};
 use sg2::{
     msg::{CollectionParams, CreateMinterMsg},
@@ -18,14 +14,20 @@ use open_edition_factory::{
 use open_edition_factory::types::NftData;
 
 // contract names used by cosm-orc to register stored code ids / instantiated addresses:
+#[allow(dead_code)]
 pub const SG721_NAME: &str = "sg721_base";
+#[allow(dead_code)]
 pub const FACTORY_NAME: &str = "open_edition_factory";
+#[allow(dead_code)]
 pub const MINTER_NAME: &str = "open_edition_minter";
-
+#[allow(dead_code)]
 pub const MAX_TOKENS: u32 = 10;
+#[allow(dead_code)]
 pub const CREATION_FEE: u128 = 1_000_000_000;
+#[allow(dead_code)]
 pub const MINT_PRICE: u128 = 100_000_000;
 
+#[allow(dead_code)]
 pub fn instantiate_factory(
     chain: &mut Chain,
     creator_addr: String,
@@ -69,8 +71,11 @@ pub fn instantiate_factory(
     )
 }
 
+#[allow(dead_code)]
+#[allow(clippy::too_many_arguments)]
 pub fn create_minter_msg(
     chain: &mut Chain,
+    code_id: Option<u64>,
     creator_addr: String,
     limit: u32,
     start_time: Timestamp,
@@ -93,7 +98,7 @@ pub fn create_minter_msg(
             end_time,
         },
         collection_params: CollectionParams {
-            code_id: chain.orc.contract_map.code_id(SG721_NAME).unwrap(),
+            code_id: code_id.unwrap_or(chain.orc.contract_map.code_id(SG721_NAME).unwrap()),
             name: "Collection".to_string(),
             symbol: "SYM".to_string(),
             info: CollectionInfo {

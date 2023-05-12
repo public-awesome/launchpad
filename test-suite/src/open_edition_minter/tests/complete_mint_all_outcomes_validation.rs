@@ -40,7 +40,7 @@ fn check_mint_revenues_distribution() {
     let initial_buyer_balances = router.wrap().query_all_balances(buyer.clone()).unwrap();
     let initial_creator_balances = router.wrap().query_all_balances(creator.clone()).unwrap();
     assert_eq!(initial_creator_balances[0].amount, Uint128::new(2_000_000_000));
-    let initial_dev_balances = router.wrap().query_all_balances(DEV_ADDRESS.clone()).unwrap();
+    let initial_dev_balances = router.wrap().query_all_balances(DEV_ADDRESS).unwrap();
     assert_eq!(initial_dev_balances[0].amount, Uint128::new(2_000_000_000));
 
     // Invalid price

@@ -259,8 +259,7 @@
     "NftData": {
       "type": "object",
       "required": [
-        "nft_data_type",
-        "token_id_prefix"
+        "nft_data_type"
       ],
       "properties": {
         "extension": {
@@ -275,9 +274,6 @@
         },
         "nft_data_type": {
           "$ref": "#/definitions/NftMetadataType"
-        },
-        "token_id_prefix": {
-          "type": "string"
         },
         "token_uri": {
           "type": [
@@ -334,19 +330,12 @@
     "ParamsExtension": {
       "type": "object",
       "required": [
-        "abs_max_mint_per_address",
         "airdrop_mint_fee_bps",
         "airdrop_mint_price",
         "dev_fee_address",
-        "dev_fee_bps",
-        "token_id_prefix_length"
+        "max_per_address_limit"
       ],
       "properties": {
-        "abs_max_mint_per_address": {
-          "type": "integer",
-          "format": "uint32",
-          "minimum": 0.0
-        },
         "airdrop_mint_fee_bps": {
           "type": "integer",
           "format": "uint64",
@@ -358,12 +347,7 @@
         "dev_fee_address": {
           "type": "string"
         },
-        "dev_fee_bps": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        },
-        "token_id_prefix_length": {
+        "max_per_address_limit": {
           "type": "integer",
           "format": "uint32",
           "minimum": 0.0

@@ -59,7 +59,7 @@ pub fn setup_accounts(router: &mut StargazeApp) -> (Addr, Addr) {
         .sudo(SudoMsg::Bank({
             BankSudo::Mint {
                 to_address: dev.to_string(),
-                amount: dev_funds.clone(),
+                amount: dev_funds,
             }
         }))
         .map_err(|err| println!("{:?}", err))
@@ -74,7 +74,7 @@ pub fn setup_accounts(router: &mut StargazeApp) -> (Addr, Addr) {
     assert_eq!(buyer_native_balances, buyer_funds);
 
     // Check native balances
-    let dev_native_balances = router.wrap().query_all_balances(dev.clone()).unwrap();
+    let dev_native_balances = router.wrap().query_all_balances(dev).unwrap();
     assert_eq!(dev_native_balances, buyer_funds);
 
     (creator, buyer)

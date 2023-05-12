@@ -6,10 +6,10 @@ use cosm_orc::orchestrator::Coin as OrcCoin;
 use cosm_orc::orchestrator::ExecReq;
 use sg2::msg::Sg2ExecuteMsg;
 use std::collections::HashMap;
-use std::env;
 use std::time::Duration;
 use test_context::test_context;
 use open_edition_factory::types::{NftData, NftMetadataType};
+use sg_metadata::Metadata;
 
 use crate::helpers::{
     chain::Chain,
@@ -25,7 +25,7 @@ use crate::helpers::{
 #[test_context(Chain)]
 #[test]
 #[ignore]
-fn test_instantiate_factory(chain: &mut Chain) {
+fn test_instantiate_open_edition_factory(chain: &mut Chain) {
     let creator = chain.cfg.users[0].clone();
     let dev = chain.cfg.users[1].clone();
     instantiate_factory(
@@ -56,8 +56,9 @@ fn test_create_minter(chain: &mut Chain) {
     let start_time = latest_block_time(chain).plus_seconds(10);
     let end_time = latest_block_time(chain).plus_seconds(60);
 
-    let minter_msg = Sg2ExecuteMsg::CreateMinter(create_minter_msg(
+    let valid_minter_msg = Sg2ExecuteMsg::CreateMinter(create_minter_msg(
         chain,
+        None,
         user_addr.to_string(),
         MAX_TOKENS,
         start_time,
@@ -76,7 +77,7 @@ fn test_create_minter(chain: &mut Chain) {
         .execute(
             FACTORY_NAME,
             "factory_exec_minter_inst_no_fee_err",
-            &minter_msg,
+            &valid_minter_msg,
             &user.key,
             vec![],
         )
@@ -90,7 +91,7 @@ fn test_create_minter(chain: &mut Chain) {
         .execute(
             FACTORY_NAME,
             "factory_exec_minter_inst_exact_fee_err",
-            &minter_msg,
+            &valid_minter_msg,
             &user.key,
             vec![OrcCoin {
                 amount: 50_000_000,
@@ -101,12 +102,115 @@ fn test_create_minter(chain: &mut Chain) {
     assert_matches!(err, ProcessError::CosmwasmError(TxError(..)));
     assert!(err.to_string().contains("Invalid Creation Fee amount"));
 
+    // must be allowed collection
+    let invalid_code_id_minter_msg = Sg2ExecuteMsg::CreateMinter(create_minter_msg(
+        chain,
+        Some(777u64),
+        user_addr.to_string(),
+        MAX_TOKENS,
+        start_time,
+        end_time,
+        None,
+        NftData {
+            nft_data_type: NftMetadataType::OffChainMetadata,
+            extension: None,
+            token_uri: Some("ipfs://...".to_string()),
+        }
+    ));
+    let err = chain
+        .orc
+        .execute(
+            FACTORY_NAME,
+            "factory_exec_minter_inst_exact_fee_err",
+            &invalid_code_id_minter_msg,
+            &user.key,
+            vec![OrcCoin {
+                amount: CREATION_FEE,
+                denom: denom.parse().unwrap(),
+            }],
+        )
+        .unwrap_err();
+    assert_matches!(err, ProcessError::CosmwasmError(TxError(..)));
+    assert!(err.to_string().contains("InvalidCollectionCodeId"));
+
+    // invalid nft data
+    let invalid_nft_data_minter_msg = Sg2ExecuteMsg::CreateMinter(create_minter_msg(
+        chain,
+        None,
+        user_addr.to_string(),
+        MAX_TOKENS,
+        start_time,
+        end_time,
+        None,
+        NftData {
+            nft_data_type: NftMetadataType::OffChainMetadata,
+            extension: Some(Metadata {
+                image: None,
+                image_data: None,
+                external_url: None,
+                description: None,
+                name: None,
+                attributes: None,
+                background_color: None,
+                animation_url: None,
+                youtube_url: None,
+            }),
+            token_uri: Some("ipfs://...".to_string()),
+        }
+    ));
+    let err = chain
+        .orc
+        .execute(
+            FACTORY_NAME,
+            "factory_exec_minter_inst_exact_fee_err",
+            &invalid_nft_data_minter_msg,
+            &user.key,
+            vec![OrcCoin {
+                amount: CREATION_FEE,
+                denom: denom.parse().unwrap(),
+            }],
+        )
+        .unwrap_err();
+    assert_matches!(err, ProcessError::CosmwasmError(TxError(..)));
+    assert!(err.to_string().contains("InvalidNftDataProvided"));
+
+    // invalid nft data
+    let invalid_nft_data_minter_msg = Sg2ExecuteMsg::CreateMinter(create_minter_msg(
+        chain,
+        None,
+        user_addr.to_string(),
+        MAX_TOKENS,
+        start_time,
+        end_time,
+        None,
+        NftData {
+            nft_data_type: NftMetadataType::OnChainMetadata,
+            extension: None,
+            token_uri: Some("ipfs://...".to_string()),
+        }
+    ));
+    let err = chain
+        .orc
+        .execute(
+            FACTORY_NAME,
+            "factory_exec_minter_inst_exact_fee_err",
+            &invalid_nft_data_minter_msg,
+            &user.key,
+            vec![OrcCoin {
+                amount: CREATION_FEE,
+                denom: denom.parse().unwrap(),
+            }],
+        )
+        .unwrap_err();
+    assert_matches!(err, ProcessError::CosmwasmError(TxError(..)));
+    assert!(err.to_string().contains("InvalidNftDataProvided"));
+
     let res = chain
         .orc
         .execute(
             FACTORY_NAME,
             "factory_exec_minter_inst",
-            &minter_msg,
+            &valid_minter_msg,
             &user.key,
             vec![OrcCoin {
                 amount: CREATION_FEE,
@@ -114,6 +218,12 @@ fn test_create_minter(chain: &mut Chain) {
             }],
         )
         .unwrap();
+
+    // Amount being burned
+    let tags_burn = res
+        .res
+        .find_event_tags("burn".to_string(), "amount".to_string());
+    assert!(!tags_burn[0].value.to_string().trim().is_empty());
 
     let tags = res
         .res
@@ -123,7 +233,7 @@ fn test_create_minter(chain: &mut Chain) {
     assert!(!minter_addr.trim().is_empty());
     assert!(!sg721_addr.trim().is_empty());
 
-    // generate 200 user keys and send them all enough money to each mint 10 tokens (max)
+    // generate 10 user keys and send them all enough money to each mint 10 tokens (max)
     let users = gen_users(chain, 10, MINT_PRICE * MAX_TOKENS as u128 * 2u128);
 
     let init_balance = tokio_block(
@@ -143,8 +253,6 @@ fn test_create_minter(chain: &mut Chain) {
 
     let mut total_mints = 0;
     let mut mints: HashMap<String, bool> = HashMap::new();
-
-    let num_users = users.len() as u32;
 
     // Batch mint all tokens:
     chain
@@ -204,7 +312,7 @@ fn test_create_minter(chain: &mut Chain) {
     // 10 * 10 * MINT_PRICE = 10k STARS x 0.9 (10% fee)
     assert_eq!(balance.amount, init_balance.amount + 9_000_000_000);
 
-    // Sleep to ensure we cannot mint
+    // Sleep to ensure we cannot mint after the end time
     chain
         .orc
         .poll_for_n_secs(100, Duration::from_millis(200_000))
@@ -252,13 +360,47 @@ fn test_start_trading_time(chain: &mut Chain) {
     let start_time = latest_block_time(chain).plus_seconds(5);
     let end_time = latest_block_time(chain).plus_seconds(60);
 
-    let minter_msg = Sg2ExecuteMsg::CreateMinter(create_minter_msg(
+    // The default offset is 1 day -> 86400
+    let invalid_minter_msg = Sg2ExecuteMsg::CreateMinter(create_minter_msg(
         chain,
+        None,
         user_addr.to_string(),
         MAX_TOKENS,
         start_time,
         end_time,
+        Some(start_time.plus_seconds(100_000)),
+        NftData {
+            nft_data_type: NftMetadataType::OffChainMetadata,
+            extension: None,
+            token_uri: Some("ipfs://...".to_string()),
+        }
+    ));
+
+    let err = chain
+        .orc
+        .execute(
+            FACTORY_NAME,
+            "factory_exec_minter_inst_exact_fee_err",
+            &invalid_minter_msg,
+            &user.key,
+            vec![OrcCoin {
+                amount: CREATION_FEE,
+                denom: denom.parse().unwrap(),
+            }],
+        )
+        .unwrap_err();
+    assert_matches!(err, ProcessError::CosmwasmError(TxError(..)));
+    assert!(err.to_string().contains("InvalidStartTradingTime"));
+
+    // Valid
+    let minter_msg = Sg2ExecuteMsg::CreateMinter(create_minter_msg(
+        chain,
         None,
+        user_addr.to_string(),
+        MAX_TOKENS,
+        start_time,
+        end_time,
+        Some(start_time.plus_seconds(80_400)),
         NftData {
             nft_data_type: NftMetadataType::OffChainMetadata,
             extension: None,
@@ -431,46 +573,11 @@ fn test_start_trading_time(chain: &mut Chain) {
         200_000_000
     );
 
-    // The real burn should be 500 STARS from the init and 200 mint x 4 STARS -> 500 + 800 = 1300
+    // The amount of tokens burned should be
+    // 500 STARS from the init + (200 mint x 4 STARS) -> 500 + 800 = 1300
+    // 4 STARS = (BURN_PCT - DEV_FEE) * mint_price = (0.5 - 0.1) * 100_000_000
     assert_eq!(
         initial_total_supply.amount - 1_300_000_000,
         total_supply.amount
     );
 }
-//
-// #[test_context(Chain)]
-// #[test]
-// #[ignore]
-// fn test_invalid_start_trading_time(chain: &mut Chain) {
-//     let denom = chain.cfg.orc_cfg.chain_cfg.denom.clone();
-//     let user = chain.cfg.users[0].clone();
-//     let user_addr = &user.account.address;
-//
-//     instantiate_factory(chain, user_addr.to_string(), &user.key).unwrap();
-//
-//     let start_time = latest_block_time(chain).plus_seconds(100_000);
-//
-//     let minter_msg = Sg2ExecuteMsg::CreateMinter(create_minter_msg(
-//         chain,
-//         user_addr.to_string(),
-//         1000,
-//         10,
-//         start_time,
-//         Some(start_time.plus_seconds(60 * 60 * 24 * 365)),
-//     ));
-//
-//     let res = chain.orc.execute(
-//         FACTORY_NAME,
-//         "factory_exec_minter_inst_w_trading_time_err",
-//         &minter_msg,
-//         &user.key,
-//         vec![OrcCoin {
-//             amount: CREATION_FEE,
-//             denom: denom.parse().unwrap(),
-//         }],
-//     );
-//
-//     let err = res.unwrap_err();
-//     assert_matches!(err, ProcessError::CosmwasmError(TxError(..)));
-//     assert!(err.to_string().contains("InvalidStartTradingTime"));
-// }

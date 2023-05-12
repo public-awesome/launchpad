@@ -1,11 +1,10 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Addr, BankMsg, Coin, coins, ContractInfoResponse, CustomQuery, Decimal, Deps, Empty, Event, Querier, QuerierWrapper, StdError, StdResult, to_binary, Uint128, WasmMsg, WasmQuery};
+use cosmwasm_std::{Addr, Coin, ContractInfoResponse, CustomQuery, Empty, Querier, QuerierWrapper, StdError, StdResult, to_binary, WasmMsg, WasmQuery};
 use cw721_base::{Extension, MintMsg};
-use sg_std::{CosmosMsg, NATIVE_DENOM, Response, SubMsg};
+use sg_std::{CosmosMsg};
 use sg_metadata::Metadata;
 use sg721::{ExecuteMsg as Sg721ExecuteMsg};
 
-use crate::ContractError;
 use crate::msg::{ConfigResponse, ExecuteMsg, QueryMsg};
 
 /// MinterContract is a wrapper around Addr that provides a lot of helpers

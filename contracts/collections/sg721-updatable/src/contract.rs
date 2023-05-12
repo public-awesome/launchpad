@@ -384,7 +384,7 @@ mod tests {
         let err = execute(
             deps.as_mut(),
             mock_env(),
-            info.clone(),
+            info,
             enable_updatable_msg,
         )
         .unwrap_err();
@@ -394,6 +394,6 @@ mod tests {
         );
 
         let res = query_enable_updatable(deps.as_ref()).unwrap();
-        assert_eq!(res.enabled, true);
+        assert!(res.enabled);
     }
 }

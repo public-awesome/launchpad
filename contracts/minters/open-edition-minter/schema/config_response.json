@@ -7,7 +7,7 @@
     "end_time",
     "factory",
     "mint_price",
-    "nb_of_nfts_minted",
+    "minted_count",
     "nft_data",
     "per_address_limit",
     "sg721_address",
@@ -27,7 +27,7 @@
     "mint_price": {
       "$ref": "#/definitions/Coin"
     },
-    "nb_of_nfts_minted": {
+    "minted_count": {
       "type": "integer",
       "format": "uint32",
       "minimum": 0.0
@@ -159,8 +159,7 @@
     "NftData": {
       "type": "object",
       "required": [
-        "nft_data_type",
-        "token_id_prefix"
+        "nft_data_type"
       ],
       "properties": {
         "extension": {
@@ -175,9 +174,6 @@
         },
         "nft_data_type": {
           "$ref": "#/definitions/NftMetadataType"
-        },
-        "token_id_prefix": {
-          "type": "string"
         },
         "token_uri": {
           "type": [

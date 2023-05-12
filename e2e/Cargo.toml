@@ -22,6 +22,7 @@ cosmwasm-std         = { workspace = true }
 sg2                  = { workspace = true }
 sg721                = { workspace = true }
 sg721-base           = { workspace = true }
+sg-metadata          = { workspace = true }
 vending-factory      = { workspace = true }
 vending-minter       = { workspace = true }
 open-edition-factory = { workspace = true }

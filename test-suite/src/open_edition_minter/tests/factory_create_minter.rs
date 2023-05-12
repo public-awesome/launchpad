@@ -178,7 +178,7 @@ fn check_invalid_create_minter_nft_data() {
         None,
         Some(NftData {
             nft_data_type: NftMetadataType::OffChainMetadata,
-            extension: metadata_def.clone(),
+            extension: metadata_def,
             token_uri: None,
         }),
         None,
