@@ -69,7 +69,7 @@ fn denom_mismatch_creating_minter() {
     let minter_code_id = code_ids.minter_code_id;
     let factory_code_id = code_ids.factory_code_id;
     let sg721_code_id = code_ids.sg721_code_id;
-    let minter_admin = creator.clone();
+    let minter_admin = creator;
 
     let mut params = mock_params(None);
     params.code_id = minter_code_id;
