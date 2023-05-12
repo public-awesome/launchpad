@@ -12,6 +12,8 @@ export type ExecuteMsgForNullable_EmptyAndEmpty = {
     token_uri?: string | null;
   };
 } | {
+  enable_updatable: {};
+} | {
   transfer_nft: {
     recipient: string;
     token_id: string;
