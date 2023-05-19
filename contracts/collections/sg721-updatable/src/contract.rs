@@ -170,11 +170,15 @@ pub fn _migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, Contr
     cw2::set_contract_version(deps.storage, CONTRACT_NAME, TO_VERSION)?;
 
     // perform the upgrade
-    let cw17_res = cw721_base::upgrades::v0_17::migrate::<Extension, Empty, Empty, Empty>(deps)
+    cw721_base::upgrades::v0_17::migrate::<Extension, Empty, Empty, Empty>(deps)
         .map_err(|e| sg721_base::ContractError::MigrationError(e.to_string()))?;
-    let mut sgz_res = Response::new();
-    sgz_res.attributes = cw17_res.attributes;
-    Ok(sgz_res)
+
+    let event = Event::new("migrate")
+        .add_attribute("from_name", CONTRACT_VERSION)
+        .add_attribute("from_version", CONTRACT_VERSION)
+        .add_attribute("to_name", CONTRACT_NAME)
+        .add_attribute("to_version", TO_VERSION);
+    Ok(Response::new().add_event(event))
 }
 
 #[cfg(test)]
