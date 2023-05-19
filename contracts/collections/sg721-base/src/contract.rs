@@ -3,8 +3,8 @@ use cw721_base::Extension;
 use url::Url;
 
 use cosmwasm_std::{
-    to_binary, Binary, ContractInfoResponse, Decimal, Deps, DepsMut, Empty, Env, Event,
-    MessageInfo, StdError, StdResult, Timestamp, WasmQuery,
+    to_binary, Addr, Binary, ContractInfoResponse, Decimal, Deps, DepsMut, Empty, Env, Event,
+    MessageInfo, StdError, StdResult, Storage, Timestamp, WasmQuery,
 };
 
 use cw721::{ContractInfoResponse as CW721ContractInfoResponse, Cw721Execute};
@@ -54,9 +54,6 @@ where
             symbol: msg.symbol,
         };
         self.parent.contract_info.save(deps.storage, &info)?;
-
-        let minter = deps.api.addr_validate(&msg.minter)?;
-        self.minter.save(deps.storage, &minter)?;
         cw_ownable::initialize_owner(deps.storage, deps.api, Some(&msg.minter))?;
 
         // sg721 instantiation
@@ -269,7 +266,7 @@ where
         info: MessageInfo,
         start_time: Option<Timestamp>,
     ) -> Result<Response, ContractError> {
-        let minter = self.minter.load(deps.storage)?;
+        let minter = get_owner_minter(deps.storage)?;
         if minter != info.sender {
             return Err(ContractError::Unauthorized {});
         }
@@ -306,7 +303,7 @@ where
         info: MessageInfo,
         nft_data: NftParams<T>,
     ) -> Result<Response, ContractError> {
-        let minter = self.minter.load(deps.storage)?;
+        let minter = get_owner_minter(deps.storage)?;
         let (token_id, owner, token_uri, extension) = match nft_data {
             NftParams::NftData {
                 token_id,
@@ -413,4 +410,12 @@ pub fn share_validate(share: Decimal) -> Result<Decimal, ContractError> {
     }
 
     Ok(share)
+}
+
+pub fn get_owner_minter(storage: &mut dyn Storage) -> Result<Addr, ContractError> {
+    let ownership = cw_ownable::get_ownership(storage)?;
+    match ownership.owner {
+        Some(owner_value) => Ok(owner_value),
+        None => Err(ContractError::MinterNotFound {}),
+    }
 }
