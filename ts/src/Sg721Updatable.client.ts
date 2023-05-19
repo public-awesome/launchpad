@@ -5,7 +5,7 @@
 */
 
 import { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
-import { ExecuteMsgForNullable_EmptyAndEmpty, Binary, Expiration, Timestamp, Uint64, Decimal, UpdateCollectionInfoMsgForRoyaltyInfoResponse, RoyaltyInfoResponse, MintMsgForNullable_Empty, Empty, InstantiateMsg, CollectionInfoForRoyaltyInfoResponse, QueryMsg } from "./Sg721Updatable.types";
+import { Expiration, Timestamp, Uint64, AllNftInfoResponse, OwnerOfResponse, Approval, NftInfoResponseForEmpty, Empty, AllOperatorsResponse, AllTokensResponse, ApprovalResponse, ApprovalsResponse, Decimal, CollectionInfoResponse, RoyaltyInfoResponse, ContractInfoResponse, ExecuteMsgForNullable_EmptyAndEmpty, Binary, UpdateCollectionInfoMsgForRoyaltyInfoResponse, MintMsgForNullable_Empty, InstantiateMsg, CollectionInfoForRoyaltyInfoResponse, MinterResponse, NftInfoResponse, NumTokensResponse, QueryMsg, TokensResponse } from "./Sg721Updatable.types";
 export interface Sg721UpdatableReadOnlyInterface {
   contractAddress: string;
   ownerOf: ({

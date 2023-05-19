@@ -4,6 +4,64 @@
 * and run the @cosmwasm/ts-codegen generate command to regenerate this file.
 */
 
+export type Expiration = {
+  at_height: number;
+} | {
+  at_time: Timestamp;
+} | {
+  never: {};
+};
+export type Timestamp = Uint64;
+export type Uint64 = string;
+export interface AllNftInfoResponse {
+  access: OwnerOfResponse;
+  info: NftInfoResponseForEmpty;
+}
+export interface OwnerOfResponse {
+  approvals: Approval[];
+  owner: string;
+}
+export interface Approval {
+  expires: Expiration;
+  spender: string;
+}
+export interface NftInfoResponseForEmpty {
+  extension: Empty;
+  token_uri?: string | null;
+}
+export interface Empty {
+  [k: string]: unknown;
+}
+export interface AllOperatorsResponse {
+  operators: Approval[];
+}
+export interface AllTokensResponse {
+  tokens: string[];
+}
+export interface ApprovalResponse {
+  approval: Approval;
+}
+export interface ApprovalsResponse {
+  approvals: Approval[];
+}
+export type Decimal = string;
+export interface CollectionInfoResponse {
+  creator: string;
+  description: string;
+  explicit_content?: boolean | null;
+  external_link?: string | null;
+  image: string;
+  royalty_info?: RoyaltyInfoResponse | null;
+  start_trading_time?: Timestamp | null;
+}
+export interface RoyaltyInfoResponse {
+  payment_address: string;
+  share: Decimal;
+}
+export interface ContractInfoResponse {
+  name: string;
+  symbol: string;
+}
 export type ExecuteMsgForNullable_EmptyAndEmpty = {
   freeze_token_metadata: {};
 } | {
@@ -11,6 +69,8 @@ export type ExecuteMsgForNullable_EmptyAndEmpty = {
     token_id: string;
     token_uri?: string | null;
   };
+} | {
+  enable_updatable: {};
 } | {
   transfer_nft: {
     recipient: string;
@@ -62,16 +122,6 @@ export type ExecuteMsgForNullable_EmptyAndEmpty = {
   };
 };
 export type Binary = string;
-export type Expiration = {
-  at_height: number;
-} | {
-  at_time: Timestamp;
-} | {
-  never: {};
-};
-export type Timestamp = Uint64;
-export type Uint64 = string;
-export type Decimal = string;
 export interface UpdateCollectionInfoMsgForRoyaltyInfoResponse {
   description?: string | null;
   explicit_content?: boolean | null;
@@ -79,18 +129,11 @@ export interface UpdateCollectionInfoMsgForRoyaltyInfoResponse {
   image?: string | null;
   royalty_info?: (RoyaltyInfoResponse | null) | null;
 }
-export interface RoyaltyInfoResponse {
-  payment_address: string;
-  share: Decimal;
-}
 export interface MintMsgForNullable_Empty {
   extension?: Empty | null;
   owner: string;
   token_id: string;
   token_uri?: string | null;
-}
-export interface Empty {
-  [k: string]: unknown;
 }
 export interface InstantiateMsg {
   collection_info: CollectionInfoForRoyaltyInfoResponse;
@@ -106,6 +149,16 @@ export interface CollectionInfoForRoyaltyInfoResponse {
   image: string;
   royalty_info?: RoyaltyInfoResponse | null;
   start_trading_time?: Timestamp | null;
+}
+export interface MinterResponse {
+  minter: string;
+}
+export interface NftInfoResponse {
+  extension: Empty;
+  token_uri?: string | null;
+}
+export interface NumTokensResponse {
+  count: number;
 }
 export type QueryMsg = {
   owner_of: {
@@ -159,3 +212,6 @@ export type QueryMsg = {
 } | {
   collection_info: {};
 };
+export interface TokensResponse {
+  tokens: string[];
+}

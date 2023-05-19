@@ -46,13 +46,16 @@ cosmwasm-std    = { workspace = true }
 cw-storage-plus = { workspace = true }
 cw-utils        = { workspace = true }
 cw2             = { workspace = true }
+cw721           = { workspace = true }
 schemars        = { workspace = true }
 serde           = { workspace = true }
 thiserror       = { workspace = true }
 cw721-base      = { workspace = true }
+sg1             = { workspace = true }
 sg721           = { workspace = true }
 sg721-base      = { workspace = true, features = ["library"] }
 sg-std          = { workspace = true }
+semver          = { workspace = true }
 
 [dev-dependencies]
 cosmwasm-schema = { workspace = true }

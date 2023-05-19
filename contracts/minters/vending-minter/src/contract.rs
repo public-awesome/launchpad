@@ -1220,5 +1220,10 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, Contra
 
     // set new contract version
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-    Ok(Response::new())
+    let event = Event::new("migrate")
+        .add_attribute("from_name", current_version.contract)
+        .add_attribute("from_version", current_version.version)
+        .add_attribute("to_name", CONTRACT_NAME)
+        .add_attribute("to_version", CONTRACT_VERSION);
+    Ok(Response::new().add_event(event))
 }
