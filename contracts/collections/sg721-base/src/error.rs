@@ -20,6 +20,9 @@ pub enum ContractError {
     #[error("Unauthorized")]
     Unauthorized {},
 
+    #[error("Unauthorized Owner Does Not Match Sender")]
+    UnauthorizedOwner {},
+
     #[error("InvalidCreationFee")]
     InvalidCreationFee {},
 
