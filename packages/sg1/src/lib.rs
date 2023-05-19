@@ -112,4 +112,21 @@ mod tests {
         assert_eq!(res.messages[0], bank_msg);
         assert_eq!(res.messages[1], burn_msg);
     }
+
+    #[test]
+    fn check_fair_burn_with_dev_rewards_different_amount() {
+        let mut res = Response::new();
+
+        fair_burn(1420u128, Some(Addr::unchecked("geordi")), &mut res);
+        let bank_msg = SubMsg::new(BankMsg::Send {
+            to_address: "geordi".to_string(),
+            amount: coins(710, NATIVE_DENOM),
+        });
+        let burn_msg = SubMsg::new(BankMsg::Burn {
+            amount: coins(710, NATIVE_DENOM),
+        });
+        assert_eq!(res.messages.len(), 2);
+        assert_eq!(res.messages[0], bank_msg);
+        assert_eq!(res.messages[1], burn_msg);
+    }
 }
