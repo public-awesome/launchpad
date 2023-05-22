@@ -1,4 +1,5 @@
 use cosmwasm_std::{Coin, Timestamp, Uint128};
+use open_edition_factory::ContractError as OpenEditionContractError;
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
 use open_edition_factory::types::{NftData, NftMetadataType};
@@ -10,16 +11,8 @@ use crate::common_setup::templates::open_edition_minter_custom_template;
 #[test]
 fn check_valid_create_minter() {
     // Set a per address lower or equal than the factory -> ok
-    let vt = open_edition_minter_custom_template(
-        None,
-        None,
-        None,
-        Some(10),
-        Some(5),
-        None,
-        None,
-        None
-    );
+    let vt =
+        open_edition_minter_custom_template(None, None, None, Some(10), Some(5), None, None, None);
     assert!(vt.is_ok());
 }
 
@@ -27,36 +20,42 @@ fn check_valid_create_minter() {
 fn check_invalid_create_minter_address_limit() {
     // If the absolute max per address defined in the factory is 10 and the message to init the
     // minter gives 20 -> error
-    let vt = open_edition_minter_custom_template(
-        None,
-        None,
-        None,
-        Some(10),
-        Some(20),
-        None,
-        None,
-        None
-    );
+    let vt =
+        open_edition_minter_custom_template(None, None, None, Some(10), Some(20), None, None, None);
     // When it is an error -> wrapped twice
     assert_eq!(
-        vt.err().unwrap().err().unwrap().source().unwrap().to_string(),
-        "InvalidMintPerWalletValue".to_string()
+        vt.err()
+            .unwrap()
+            .err()
+            .unwrap()
+            .source()
+            .unwrap()
+            .to_string(),
+        OpenEditionContractError::InvalidPerAddressLimit {
+            max: 10,
+            min: 1,
+            got: 20
+        }
+        .to_string()
     );
 
     // The minimum should be 1 -> 0 will give an error
-    let vt = open_edition_minter_custom_template(
-        None,
-        None,
-        None,
-        Some(10),
-        Some(0),
-        None,
-        None,
-        None
-    );
+    let vt =
+        open_edition_minter_custom_template(None, None, None, Some(10), Some(0), None, None, None);
     assert_eq!(
-        vt.err().unwrap().err().unwrap().source().unwrap().to_string(),
-        "InvalidMintPerWalletValue".to_string()
+        vt.err()
+            .unwrap()
+            .err()
+            .unwrap()
+            .source()
+            .unwrap()
+            .to_string(),
+        OpenEditionContractError::InvalidPerAddressLimit {
+            max: 10,
+            min: 1,
+            got: 0
+        }
+        .to_string()
     );
 }
 
@@ -71,10 +70,16 @@ fn check_invalid_create_minter_start_end_time() {
         Some(2),
         None,
         None,
-        None
+        None,
     );
     assert_eq!(
-        vt.err().unwrap().err().unwrap().source().unwrap().to_string(),
+        vt.err()
+            .unwrap()
+            .err()
+            .unwrap()
+            .source()
+            .unwrap()
+            .to_string(),
         "InvalidStartTime 0.000100000 < 1571797419.879305533".to_string()
     );
 
@@ -87,10 +92,16 @@ fn check_invalid_create_minter_start_end_time() {
         Some(2),
         None,
         None,
-        None
+        None,
     );
     assert_eq!(
-        vt.err().unwrap().err().unwrap().source().unwrap().to_string(),
+        vt.err()
+            .unwrap()
+            .err()
+            .unwrap()
+            .source()
+            .unwrap()
+            .to_string(),
         "InvalidEndTime 1647032400.000000100 > 1647032400.000000010".to_string()
     );
 }
@@ -104,12 +115,21 @@ fn check_invalid_create_minter_mint_price() {
         None,
         Some(10),
         Some(2),
-        Some(Coin { denom: "uinvalid".to_string(), amount: Uint128::new(MIN_MINT_PRICE_OPEN_EDITION) }),
+        Some(Coin {
+            denom: "uinvalid".to_string(),
+            amount: Uint128::new(MIN_MINT_PRICE_OPEN_EDITION),
+        }),
         None,
-        None
+        None,
     );
     assert_eq!(
-        vt.err().unwrap().err().unwrap().source().unwrap().to_string(),
+        vt.err()
+            .unwrap()
+            .err()
+            .unwrap()
+            .source()
+            .unwrap()
+            .to_string(),
         "InvalidDenom".to_string()
     );
 
@@ -120,12 +140,21 @@ fn check_invalid_create_minter_mint_price() {
         None,
         Some(10),
         Some(2),
-        Some(Coin { denom: NATIVE_DENOM.to_string(), amount: Uint128::new(100u128) }),
+        Some(Coin {
+            denom: NATIVE_DENOM.to_string(),
+            amount: Uint128::new(100u128),
+        }),
         None,
-        None
+        None,
     );
     assert_eq!(
-        vt.err().unwrap().err().unwrap().source().unwrap().to_string(),
+        vt.err()
+            .unwrap()
+            .err()
+            .unwrap()
+            .source()
+            .unwrap()
+            .to_string(),
         "InvalidMintPrice".to_string()
     );
 }
@@ -149,8 +178,10 @@ fn check_invalid_create_minter_nft_data() {
         animation_url: None,
         youtube_url: None,
     });
-    let token_uri_def = Some("ipfs://bafybeigi3bwpvyvsmnbj46ra4hyffcxdeaj6ntfk5jpic5mx27x6ih2qvq/images/1.png"
-        .to_string());
+    let token_uri_def = Some(
+        "ipfs://bafybeigi3bwpvyvsmnbj46ra4hyffcxdeaj6ntfk5jpic5mx27x6ih2qvq/images/1.png"
+            .to_string(),
+    );
 
     // Sending None for extension and token_uri
     let vt = open_edition_minter_custom_template(
@@ -165,10 +196,16 @@ fn check_invalid_create_minter_nft_data() {
         None,
         None,
         None,
-        None
+        None,
     );
     assert_eq!(
-        vt.err().unwrap().err().unwrap().source().unwrap().to_string(),
+        vt.err()
+            .unwrap()
+            .err()
+            .unwrap()
+            .source()
+            .unwrap()
+            .to_string(),
         "InvalidNftDataProvided".to_string()
     );
 
@@ -185,10 +222,16 @@ fn check_invalid_create_minter_nft_data() {
         None,
         None,
         None,
-        None
+        None,
     );
     assert_eq!(
-        vt.err().unwrap().err().unwrap().source().unwrap().to_string(),
+        vt.err()
+            .unwrap()
+            .err()
+            .unwrap()
+            .source()
+            .unwrap()
+            .to_string(),
         "InvalidNftDataProvided".to_string()
     );
 
@@ -205,10 +248,16 @@ fn check_invalid_create_minter_nft_data() {
         None,
         None,
         None,
-        None
+        None,
     );
     assert_eq!(
-        vt.err().unwrap().err().unwrap().source().unwrap().to_string(),
+        vt.err()
+            .unwrap()
+            .err()
+            .unwrap()
+            .source()
+            .unwrap()
+            .to_string(),
         "InvalidNftDataProvided".to_string()
     );
 
@@ -225,11 +274,16 @@ fn check_invalid_create_minter_nft_data() {
         None,
         None,
         None,
-        None
+        None,
     );
     assert_eq!(
-        vt.err().unwrap().err().unwrap().source().unwrap().to_string(),
+        vt.err()
+            .unwrap()
+            .err()
+            .unwrap()
+            .source()
+            .unwrap()
+            .to_string(),
         "InvalidNftDataProvided".to_string()
     );
-
 }

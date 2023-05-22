@@ -1,8 +1,8 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, Coin, Timestamp};
 
-use open_edition_factory::{msg::OpenEditionMinterCreateMsg, state::OpenEditionMinterParams};
 use open_edition_factory::types::NftData;
+use open_edition_factory::{msg::OpenEditionMinterCreateMsg, state::OpenEditionMinterParams};
 
 #[cw_serde]
 pub struct InstantiateMsg {
@@ -21,7 +21,7 @@ pub enum ExecuteMsg {
     },
     MintTo {
         recipient: String,
-    }
+    },
 }
 
 #[cw_serde]
@@ -38,14 +38,13 @@ pub struct ConfigResponse {
     pub admin: String,
     pub nft_data: NftData,
     pub payment_address: Option<Addr>,
-    pub minted_count: u32,
     pub per_address_limit: u32,
     pub end_time: Timestamp,
     pub sg721_address: String,
     pub sg721_code_id: u64,
     pub start_time: Timestamp,
     pub mint_price: Coin,
-    pub factory: String
+    pub factory: String,
 }
 
 #[cw_serde]

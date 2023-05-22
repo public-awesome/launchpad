@@ -1,9 +1,9 @@
-use cosmwasm_std::{
-    Addr, BankMsg, Binary, coin, Coin, Deps, DepsMut, Empty, Env, MessageInfo,
-    Order, Reply, ReplyOn, StdError, StdResult, Timestamp, to_binary, WasmMsg,
-};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
+use cosmwasm_std::{
+    coin, to_binary, Addr, BankMsg, Binary, Coin, Deps, DepsMut, Empty, Env, MessageInfo, Order,
+    Reply, ReplyOn, StdError, StdResult, Timestamp, WasmMsg,
+};
 use cw2::set_contract_version;
 use cw_utils::{may_pay, maybe_addr, nonpayable, parse_reply_instantiate_data};
 use semver::Version;
@@ -19,12 +19,12 @@ use sg4::{Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
 
 use crate::error::ContractError;
-use crate::helpers::{mint_nft_msg};
+use crate::helpers::mint_nft_msg;
 use crate::msg::{
-    ConfigResponse, ExecuteMsg, MintCountResponse, MintPriceResponse, QueryMsg, StartTimeResponse
+    ConfigResponse, ExecuteMsg, MintCountResponse, MintPriceResponse, QueryMsg, StartTimeResponse,
 };
 use crate::state::{
-    Config, CONFIG, ConfigExtension, MINTER_ADDRS, SG721_ADDRESS, STATUS,
+    increment_token_index, Config, ConfigExtension, CONFIG, MINTER_ADDRS, SG721_ADDRESS, STATUS,
 };
 use crate::validation::get_three_percent_of_tokens;
 
@@ -61,7 +61,10 @@ pub fn instantiate(
     match msg.init_msg.nft_data.nft_data_type {
         // If off-chain metadata -> Sanitize base token uri
         NftMetadataType::OffChainMetadata => {
-            let base_token_uri = msg.init_msg.nft_data.token_uri
+            let base_token_uri = msg
+                .init_msg
+                .nft_data
+                .token_uri
                 .as_ref()
                 .map(|uri| uri.trim().to_string())
                 .map_or_else(|| Err(ContractError::InvalidBaseTokenURI {}), Ok)?;
@@ -71,10 +74,14 @@ pub fn instantiate(
             }
 
             msg.init_msg.nft_data.token_uri = Some(base_token_uri);
-        },
+        }
         // If on-chain metadata -> make sure that the image data is a valid URL
         NftMetadataType::OnChainMetadata => {
-            let base_img_url = msg.init_msg.nft_data.extension.as_ref()
+            let base_img_url = msg
+                .init_msg
+                .nft_data
+                .extension
+                .as_ref()
                 .and_then(|ext| ext.image.as_ref().map(|img| img.trim()))
                 .map(Url::parse)
                 .transpose()?
@@ -118,9 +125,8 @@ pub fn instantiate(
             payment_address: maybe_addr(deps.api, msg.init_msg.payment_address)?,
             per_address_limit: msg.init_msg.per_address_limit,
             start_time: msg.init_msg.start_time,
-            nft_data: msg.init_msg.nft_data,
             end_time: msg.init_msg.end_time,
-            nfts_minted: 0,
+            nft_data: msg.init_msg.nft_data,
         },
         mint_price: msg.init_msg.mint_price,
     };
@@ -219,7 +225,8 @@ pub fn execute_mint_sender(
     }
 
     // Check if already minted max per address limit
-    if matches!(mint_count(deps.as_ref(), &info)?, count if count >= config.extension.per_address_limit) {
+    if matches!(mint_count(deps.as_ref(), &info)?, count if count >= config.extension.per_address_limit)
+    {
         return Err(ContractError::MaxPerAddressLimitExceeded {});
     }
 
@@ -259,9 +266,8 @@ fn _execute_mint(
     info: MessageInfo,
     action: &str,
     is_admin: bool,
-    recipient: Option<Addr>
+    recipient: Option<Addr>,
 ) -> Result<Response, ContractError> {
-
     let config = CONFIG.load(deps.storage)?;
 
     let sg721_address = SG721_ADDRESS.load(deps.storage)?;
@@ -301,14 +307,18 @@ fn _execute_mint(
     };
     let network_fee = mint_price.amount * mint_fee;
     // This is for the network fee msg
-    checked_fair_burn(&info, network_fee.u128(), Some(deps.api.addr_validate(&factory_params.extension.dev_fee_address)?), &mut res)?;
+    checked_fair_burn(
+        &info,
+        network_fee.u128(),
+        Some(
+            deps.api
+                .addr_validate(&factory_params.extension.dev_fee_address)?,
+        ),
+        &mut res,
+    )?;
 
     // Token ID to mint + update the config counter
-    let token_id = (config.extension.nfts_minted + 1).to_string();
-    CONFIG.update(deps.storage, |mut updated_conf| -> Result<_, ContractError> {
-        updated_conf.extension.nfts_minted += 1;
-        Ok(updated_conf)
-    })?;
+    let token_id = increment_token_index(deps.storage)?.to_string();
 
     // Create mint msg -> dependents on the NFT data type
     let msg = mint_nft_msg(
@@ -576,14 +586,13 @@ fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
         admin: config.extension.admin.to_string(),
         nft_data: config.extension.nft_data,
         payment_address: config.extension.payment_address,
-        minted_count: config.extension.nfts_minted,
         per_address_limit: config.extension.per_address_limit,
         end_time: config.extension.end_time,
         sg721_address: sg721_address.to_string(),
         sg721_code_id: config.collection_code_id,
         start_time: config.extension.start_time,
         mint_price: config.mint_price,
-        factory: config.factory.to_string()
+        factory: config.factory.to_string(),
     })
 }
 
@@ -627,7 +636,7 @@ fn query_mint_price(deps: Deps) -> StdResult<MintPriceResponse> {
     Ok(MintPriceResponse {
         public_price,
         airdrop_price,
-        current_price
+        current_price,
     })
 }
 

@@ -1,17 +1,13 @@
-use cosmwasm_std::{Coin, coins, Timestamp, Uint128};
-use cw721::{Cw721QueryMsg, OwnerOfResponse};
+use cosmwasm_std::{coins, Coin, Timestamp, Uint128};
+use cw721::{Cw721QueryMsg, NumTokensResponse, OwnerOfResponse};
 use cw_multi_test::{BankSudo, Executor, SudoMsg};
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
-use open_edition_minter::{
-    msg::{ExecuteMsg, QueryMsg},
-};
-use open_edition_minter::msg::{ConfigResponse, MintCountResponse, MintPriceResponse, StartTimeResponse};
+use open_edition_minter::msg::{ExecuteMsg, QueryMsg};
+use open_edition_minter::msg::{MintCountResponse, MintPriceResponse, StartTimeResponse};
 use sg4::StatusResponse;
 
-use crate::common_setup::{
-    setup_accounts_and_block::{coins_for_msg, setup_block_time},
-};
+use crate::common_setup::setup_accounts_and_block::{coins_for_msg, setup_block_time};
 use crate::common_setup::setup_minter::common::constants::DEV_ADDRESS;
 use crate::common_setup::templates::open_edition_minter_custom_template;
 
@@ -19,17 +15,8 @@ const MINT_PRICE: u128 = 100_000_000;
 
 #[test]
 fn check_mint_revenues_distribution() {
-
-    let vt = open_edition_minter_custom_template(
-        None,
-        None,
-        None,
-        None,
-        Some(3),
-        None,
-        None,
-        None
-    ).unwrap();
+    let vt = open_edition_minter_custom_template(None, None, None, None, Some(3), None, None, None)
+        .unwrap();
     let (mut router, creator, buyer) = (vt.router, vt.accts.creator, vt.accts.buyer);
     let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
     let collection_addr = vt.collection_response_vec[0].collection.clone().unwrap();
@@ -39,7 +26,10 @@ fn check_mint_revenues_distribution() {
 
     let initial_buyer_balances = router.wrap().query_all_balances(buyer.clone()).unwrap();
     let initial_creator_balances = router.wrap().query_all_balances(creator.clone()).unwrap();
-    assert_eq!(initial_creator_balances[0].amount, Uint128::new(2_000_000_000));
+    assert_eq!(
+        initial_creator_balances[0].amount,
+        Uint128::new(2_000_000_000)
+    );
     let initial_dev_balances = router.wrap().query_all_balances(DEV_ADDRESS).unwrap();
     assert_eq!(initial_dev_balances[0].amount, Uint128::new(2_000_000_000));
 
@@ -71,12 +61,7 @@ fn check_mint_revenues_distribution() {
 
     // Invalid price
     let mint_msg = ExecuteMsg::Mint {};
-    let res = router.execute_contract(
-        buyer.clone(),
-        minter_addr.clone(),
-        &mint_msg,
-        &[],
-    );
+    let res = router.execute_contract(buyer.clone(), minter_addr.clone(), &mint_msg, &[]);
     assert_eq!(
         res.err().unwrap().source().unwrap().to_string(),
         "IncorrectPaymentAmount 0ustars != 100000000ustars"
@@ -97,7 +82,7 @@ fn check_mint_revenues_distribution() {
         buyer.clone(),
         minter_addr.clone(),
         &mint_msg,
-        &coins(100u128, "invalid".to_string())
+        &coins(100u128, "invalid".to_string()),
     );
     assert_eq!(
         res.err().unwrap().source().unwrap().to_string(),
@@ -147,17 +132,17 @@ fn check_mint_revenues_distribution() {
 
     let res: OwnerOfResponse = router
         .wrap()
-        .query_wasm_smart(collection_addr, &query_owner_msg)
+        .query_wasm_smart(collection_addr.clone(), &query_owner_msg)
         .unwrap();
     assert_eq!(res.owner, buyer.to_string());
 
-    // Check the Config
-    let query_config_msg = QueryMsg::Config {};
-    let res: ConfigResponse = router
+    // Check mint count
+    let num_tokens_msg = Cw721QueryMsg::NumTokens {};
+    let res: NumTokensResponse = router
         .wrap()
-        .query_wasm_smart(minter_addr.clone(), &query_config_msg)
+        .query_wasm_smart(collection_addr.clone(), &num_tokens_msg)
         .unwrap();
-    assert_eq!(res.minted_count, 2);
+    assert_eq!(res.count, 2);
 
     // Check the Start time
     let query_config_msg = QueryMsg::StartTime {};
@@ -209,9 +194,27 @@ fn check_mint_revenues_distribution() {
         .wrap()
         .query_wasm_smart(minter_addr.clone(), &query_config_msg)
         .unwrap();
-    assert_eq!(res.airdrop_price, Coin { denom: NATIVE_DENOM.to_string(), amount: Uint128::new(100_000_000) });
-    assert_eq!(res.current_price, Coin { denom: NATIVE_DENOM.to_string(), amount: Uint128::new(100_000_000) });
-    assert_eq!(res.public_price, Coin { denom: NATIVE_DENOM.to_string(), amount: Uint128::new(100_000_000) });
+    assert_eq!(
+        res.airdrop_price,
+        Coin {
+            denom: NATIVE_DENOM.to_string(),
+            amount: Uint128::new(100_000_000)
+        }
+    );
+    assert_eq!(
+        res.current_price,
+        Coin {
+            denom: NATIVE_DENOM.to_string(),
+            amount: Uint128::new(100_000_000)
+        }
+    );
+    assert_eq!(
+        res.public_price,
+        Coin {
+            denom: NATIVE_DENOM.to_string(),
+            amount: Uint128::new(100_000_000)
+        }
+    );
 
     // If time end has been reached, can't mint anymore
     setup_block_time(&mut router, GENESIS_MINT_START_TIME + 1_000_000, None);
@@ -226,37 +229,26 @@ fn check_mint_revenues_distribution() {
         res.err().unwrap().source().unwrap().to_string(),
         "Minting has ended"
     );
-    
+
     // Try to execute admin only entry point from buyer
-    let exec_msg = ExecuteMsg::MintTo { recipient: buyer.to_string() };
-    let res = router.execute_contract(
-        buyer.clone(),
-        minter_addr.clone(),
-        &exec_msg,
-        &[],
-    );
+    let exec_msg = ExecuteMsg::MintTo {
+        recipient: buyer.to_string(),
+    };
+    let res = router.execute_contract(buyer.clone(), minter_addr.clone(), &exec_msg, &[]);
     assert_eq!(
         res.err().unwrap().source().unwrap().to_string(),
         "Unauthorized: Sender is not an admin"
     );
-    let exec_msg = ExecuteMsg::UpdatePerAddressLimit { per_address_limit: 200 };
-    let res = router.execute_contract(
-        buyer.clone(),
-        minter_addr.clone(),
-        &exec_msg,
-        &[],
-    );
+    let exec_msg = ExecuteMsg::UpdatePerAddressLimit {
+        per_address_limit: 200,
+    };
+    let res = router.execute_contract(buyer.clone(), minter_addr.clone(), &exec_msg, &[]);
     assert_eq!(
         res.err().unwrap().source().unwrap().to_string(),
         "Unauthorized: Sender is not an admin"
     );
     let exec_msg = ExecuteMsg::UpdateStartTradingTime(Some(Timestamp::from_nanos(1)));
-    let res = router.execute_contract(
-        buyer.clone(),
-        minter_addr.clone(),
-        &exec_msg,
-        &[],
-    );
+    let res = router.execute_contract(buyer.clone(), minter_addr.clone(), &exec_msg, &[]);
     assert_eq!(
         res.err().unwrap().source().unwrap().to_string(),
         "Unauthorized: Sender is not an admin"
@@ -297,5 +289,4 @@ fn check_mint_revenues_distribution() {
         )
         .unwrap();
     assert_eq!(res.count, 0);
-
 }
