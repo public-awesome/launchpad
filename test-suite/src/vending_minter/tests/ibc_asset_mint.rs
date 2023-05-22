@@ -6,6 +6,7 @@ use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use sg_whitelist::msg::{AddMembersMsg, ExecuteMsg as WhitelistExecuteMsg};
 use vending_factory::ContractError;
 use vending_minter::msg::ExecuteMsg;
+use vending_minter::ContractError as MinterContractError;
 
 use crate::common_setup::{
     contract_boxes::custom_mock_app,
@@ -112,20 +113,21 @@ fn wl_denom_mismatch() {
     // setup whitelist with custom denom
     let whitelist_addr = setup_whitelist_contract(&mut router, &creator, None, Some(denom));
 
-    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 101, None);
-
     // set whitelist in minter contract
     let set_whitelist_msg = ExecuteMsg::SetWhitelist {
         whitelist: whitelist_addr.to_string(),
     };
-    router
-        .execute_contract(
-            creator.clone(),
-            minter_addr,
-            &set_whitelist_msg,
-            &coins(MINT_PRICE, NATIVE_DENOM),
-        )
+    let err = router
+        .execute_contract(creator.clone(), minter_addr, &set_whitelist_msg, &[])
         .unwrap_err();
+    assert_eq!(
+        err.source().unwrap().to_string(),
+        MinterContractError::InvalidDenom {
+            expected: NATIVE_DENOM.to_string(),
+            got: denom.to_string()
+        }
+        .to_string()
+    );
 }
 
 #[test]
