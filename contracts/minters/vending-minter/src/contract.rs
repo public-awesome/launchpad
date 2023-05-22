@@ -632,9 +632,12 @@ fn _execute_mint(
 
     // send non-native fees to community pool
     if mint_price.denom != NATIVE_DENOM {
-        let msg =
-            create_fund_community_pool_msg(coins(network_fee.u128(), mint_price.clone().denom));
-        res = res.add_message(msg);
+        // only send non-zero amounts
+        if !network_fee.is_zero() {
+            let msg =
+                create_fund_community_pool_msg(coins(network_fee.u128(), mint_price.clone().denom));
+            res = res.add_message(msg);
+        }
     } else {
         checked_fair_burn(&info, network_fee.u128(), None, &mut res)?;
     }
