@@ -1,0 +1,26 @@
+queue_rules:
+  - name: default
+    conditions:
+      - "#approved-reviews-by>2"
+
+pull_request_rules:
+  - name: automerge to main if approved and labeled
+    conditions:
+      - "#approved-reviews-by>2"
+      - base=main
+      - label=automerge
+    actions:
+      queue:
+        name: default
+        method: squash
+        commit_message_template: |
+          {{ title }} (#{{ number }})
+          {{ body }}
+  - name: backport to v2
+    conditions:
+      - base=main
+      - label=backport/2.x
+    actions:
+      backport:
+        branches:
+          - release/v2.x
