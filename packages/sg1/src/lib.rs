@@ -5,7 +5,6 @@ use thiserror::Error;
 
 // governance parameters
 const FEE_BURN_PERCENT: u64 = 50;
-const DEV_INCENTIVE_PERCENT: u64 = 50;
 
 /// Burn and distribute fees and return an error if the fee is not enough
 pub fn checked_fair_burn(
@@ -31,38 +30,32 @@ pub fn checked_fair_burn(
 pub fn fair_burn(fee: u128, developer: Option<Addr>, res: &mut Response) {
     let mut event = Event::new("fair-burn");
 
-    let dev_fee = match developer {
-        Some(dev) => {
-            let dev_fee = (Uint128::from(fee) * Decimal::percent(DEV_INCENTIVE_PERCENT)).u128();
-            res.messages.push(SubMsg::new(BankMsg::Send {
-                to_address: dev.to_string(),
-                amount: coins(dev_fee, NATIVE_DENOM),
-            }));
-            event = event.add_attribute("dev", dev.to_string());
-            event = event.add_attribute("dev_amount", Uint128::from(dev_fee).to_string());
-            dev_fee
-        }
-        None => 0u128,
-    };
-
-    // burn half the fee
+    // calculate the fair burn fee
     let burn_fee = (Uint128::from(fee) * Decimal::percent(FEE_BURN_PERCENT)).u128();
     let burn_coin = coins(burn_fee, NATIVE_DENOM);
     res.messages
         .push(SubMsg::new(BankMsg::Burn { amount: burn_coin }));
+    event = event.add_attribute("burn_amount", Uint128::from(burn_fee).to_string());
 
-    // Send other half to fairburn pool
-    if dev_fee == 0u128 {
-        let dist_amount = fee - (burn_fee + dev_fee);
+    // send remainder to developer or community pool
+    let remainder = fee - burn_fee;
+
+    if let Some(dev) = developer {
+        res.messages.push(SubMsg::new(BankMsg::Send {
+            to_address: dev.to_string(),
+            amount: coins(remainder, NATIVE_DENOM),
+        }));
+        event = event.add_attribute("dev", dev.to_string());
+        event = event.add_attribute("dev_amount", Uint128::from(remainder).to_string());
+    } else {
         res.messages
             .push(SubMsg::new(create_fund_fairburn_pool_msg(coins(
-                dist_amount,
+                remainder,
                 NATIVE_DENOM,
             ))));
-        event = event.add_attribute("dist_amount", Uint128::from(dist_amount).to_string());
+        event = event.add_attribute("dist_amount", Uint128::from(remainder).to_string());
     }
 
-    event = event.add_attribute("burn_amount", Uint128::from(burn_fee).to_string());
     res.events.push(event);
 }
 
@@ -86,11 +79,11 @@ mod tests {
     fn check_fair_burn_no_dev_rewards() {
         let mut res = Response::new();
 
-        fair_burn(1000u128, None, &mut res);
+        fair_burn(9u128, None, &mut res);
         let burn_msg = SubMsg::new(BankMsg::Burn {
-            amount: coins(500, "ustars".to_string()),
+            amount: coins(4, "ustars".to_string()),
         });
-        let dist_msg = SubMsg::new(create_fund_fairburn_pool_msg(coins(500, NATIVE_DENOM)));
+        let dist_msg = SubMsg::new(create_fund_fairburn_pool_msg(coins(5, NATIVE_DENOM)));
         assert_eq!(res.messages.len(), 2);
         assert_eq!(res.messages[0], burn_msg);
         assert_eq!(res.messages[1], dist_msg);
@@ -100,17 +93,17 @@ mod tests {
     fn check_fair_burn_with_dev_rewards() {
         let mut res = Response::new();
 
-        fair_burn(1000u128, Some(Addr::unchecked("geordi")), &mut res);
+        fair_burn(9u128, Some(Addr::unchecked("geordi")), &mut res);
         let bank_msg = SubMsg::new(BankMsg::Send {
             to_address: "geordi".to_string(),
-            amount: coins(500, NATIVE_DENOM),
+            amount: coins(5, NATIVE_DENOM),
         });
         let burn_msg = SubMsg::new(BankMsg::Burn {
-            amount: coins(500, NATIVE_DENOM),
+            amount: coins(4, NATIVE_DENOM),
         });
         assert_eq!(res.messages.len(), 2);
-        assert_eq!(res.messages[0], bank_msg);
-        assert_eq!(res.messages[1], burn_msg);
+        assert_eq!(res.messages[0], burn_msg);
+        assert_eq!(res.messages[1], bank_msg);
     }
 
     #[test]
@@ -126,7 +119,7 @@ mod tests {
             amount: coins(710, NATIVE_DENOM),
         });
         assert_eq!(res.messages.len(), 2);
-        assert_eq!(res.messages[0], bank_msg);
-        assert_eq!(res.messages[1], burn_msg);
+        assert_eq!(res.messages[0], burn_msg);
+        assert_eq!(res.messages[1], bank_msg);
     }
 }
