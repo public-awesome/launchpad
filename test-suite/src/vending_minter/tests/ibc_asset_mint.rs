@@ -30,11 +30,11 @@ fn mint_with_ibc_asset() {
     let num_tokens = 7000;
     let per_address_limit = 10;
     let denom = "ibc/asset";
-    let vt = vending_minter_with_ibc_asset(num_tokens, per_address_limit, denom);
+    let vt = vending_minter_with_ibc_asset(num_tokens, per_address_limit);
     let (mut router, _, buyer) = (vt.router, vt.accts.creator, vt.accts.buyer);
     let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
 
-    let mint_price = coins(MINT_PRICE, denom.to_string());
+    let mint_price = coins(MINT_PRICE, "ibc/asset".to_string());
 
     // give the buyer some of the IBC asset
     router
