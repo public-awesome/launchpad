@@ -31,7 +31,7 @@ pub fn checked_fair_burn(
 pub fn fair_burn(fee: u128, developer: Option<Addr>, res: &mut Response) {
     let mut event = Event::new("fair-burn");
 
-    let (burn_percent, dev_fee) = match developer {
+    let dev_fee = match developer {
         Some(dev) => {
             let dev_fee = (Uint128::from(fee) * Decimal::percent(DEV_INCENTIVE_PERCENT)).u128();
             res.messages.push(SubMsg::new(BankMsg::Send {
@@ -40,13 +40,13 @@ pub fn fair_burn(fee: u128, developer: Option<Addr>, res: &mut Response) {
             }));
             event = event.add_attribute("dev", dev.to_string());
             event = event.add_attribute("dev_amount", Uint128::from(dev_fee).to_string());
-            (Decimal::percent(FEE_BURN_PERCENT), dev_fee)
+            dev_fee
         }
-        None => (Decimal::percent(FEE_BURN_PERCENT), 0u128),
+        None => 0u128,
     };
 
     // burn half the fee
-    let burn_fee = (Uint128::from(fee) * burn_percent).u128();
+    let burn_fee = (Uint128::from(fee) * Decimal::percent(FEE_BURN_PERCENT)).u128();
     let burn_coin = coins(burn_fee, NATIVE_DENOM);
     res.messages
         .push(SubMsg::new(BankMsg::Burn { amount: burn_coin }));
