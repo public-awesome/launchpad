@@ -1,18 +1,21 @@
-use cosmwasm_std::{
-    Binary, Deps, DepsMut, Env, MessageInfo, StdResult, to_binary, WasmMsg,
-};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
+use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult, WasmMsg};
 use cw2::set_contract_version;
-use sg_std::{NATIVE_DENOM, Response};
+use sg_std::{Response, NATIVE_DENOM};
 
-use base_factory::contract::{must_be_allowed_collection, must_not_be_frozen, must_pay_exact_amount, update_params};
+use base_factory::contract::{
+    must_be_allowed_collection, must_not_be_frozen, must_pay_exact_amount, update_params,
+};
 use base_factory::ContractError as BaseContractError;
 use sg1::checked_fair_burn;
 use sg2::query::{AllowedCollectionCodeIdResponse, AllowedCollectionCodeIdsResponse, Sg2QueryMsg};
 
 use crate::error::ContractError;
-use crate::msg::{ExecuteMsg, InstantiateMsg, OpenEditionMinterCreateMsg, OpenEditionMinterInitMsgExtension, OpenEditionUpdateParamsMsg, ParamsResponse, SudoMsg};
+use crate::msg::{
+    ExecuteMsg, InstantiateMsg, OpenEditionMinterCreateMsg, OpenEditionMinterInitMsgExtension,
+    OpenEditionUpdateParamsMsg, ParamsResponse, SudoMsg,
+};
 use crate::state::SUDO_PARAMS;
 
 // version info for migration info
@@ -52,7 +55,6 @@ pub fn execute_create_minter(
     info: MessageInfo,
     mut msg: OpenEditionMinterCreateMsg,
 ) -> Result<Response, ContractError> {
-
     let params = SUDO_PARAMS.load(deps.storage)?;
 
     must_pay_exact_amount(&params, &info, NATIVE_DENOM)?;
@@ -64,12 +66,11 @@ pub fn execute_create_minter(
     let mut res = Response::new();
     checked_fair_burn(&info, params.creation_fee.amount.u128(), None, &mut res)?;
 
-    // All checks/validations for the minter's instantiate params are done within the `new_validated` method
-    msg.init_msg = OpenEditionMinterInitMsgExtension::new_validated(
+    msg.init_msg = OpenEditionMinterInitMsgExtension::validate(
         msg.init_msg.clone(),
         env,
         deps.as_ref(),
-        &params
+        &params,
     )?;
 
     if NATIVE_DENOM != msg.init_msg.mint_price.denom {
