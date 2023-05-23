@@ -114,14 +114,12 @@ fn check_mint_revenues_distribution() {
         initial_creator_balances[0].amount + Uint128::new(200_000_000 - 20_000_000)
     );
 
-    // The fair burn is the fixed burn pct (currently 50%) - fixed dev fee (currently 10% but will be 50%)
-    // For 1 mint -> 100_000_000 * 0.1 = 10_000_000 -> 40% is burned and 10% to the dev
-    // burn = 4_000_000
-    // dev = 1_000_000
+    // Mint fees / mint = 10_000_000 where 50% is toward the fair burn pool and 50% is
+    // toward the dev so the dev should get 10_000_000 * 0.5 = 5_000_000 / mint
     let dev_balances = router.wrap().query_all_balances(DEV_ADDRESS).unwrap();
     assert_eq!(
         dev_balances[0].amount,
-        initial_dev_balances[0].amount + Uint128::new(1_000_000 * 2)
+        initial_dev_balances[0].amount + Uint128::new(5_000_000 * 2)
     );
 
     // Should be owner of the token -> 2
