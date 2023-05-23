@@ -301,7 +301,15 @@ fn _execute_mint(
     };
     let network_fee = mint_price.amount * mint_fee;
     // This is for the network fee msg
-    checked_fair_burn(&info, network_fee.u128(), Some(deps.api.addr_validate(&factory_params.extension.dev_fee_address)?), &mut res)?;
+    checked_fair_burn(
+        &info,
+        network_fee.u128(),
+        Some(
+            deps
+                .api
+                .addr_validate(&factory_params.extension.dev_fee_address)?),
+        &mut res
+    )?;
 
     // Token ID to mint + update the config counter
     let token_id = (config.extension.nfts_minted + 1).to_string();
