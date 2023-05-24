@@ -31,9 +31,6 @@ pub enum ContractError {
     #[error("InvalidNftDataProvided")]
     InvalidNftDataProvided {},
 
-    #[error("InvalidMintPerWalletValue")]
-    InvalidMintPerWalletValue {},
-
     #[error("InvalidMintStartTime")]
     InvalidMintStartTime {},
 

@@ -3,9 +3,9 @@ use cosmwasm_std::{Coin, Deps, Env, Timestamp};
 
 use sg2::msg::{CreateMinterMsg, Sg2ExecuteMsg, UpdateMinterParamsMsg};
 
-use crate::ContractError;
 use crate::state::OpenEditionMinterParams;
 use crate::types::NftData;
+use crate::ContractError;
 
 #[cw_serde]
 pub struct InstantiateMsg {
@@ -24,36 +24,42 @@ pub struct OpenEditionMinterInitMsgExtension {
 }
 
 impl OpenEditionMinterInitMsgExtension {
-    pub fn new_validated(
+    pub fn validate(
         mut init_msg: OpenEditionMinterInitMsgExtension,
         env: Env,
         _deps: Deps,
-        params: &OpenEditionMinterParams
+        params: &OpenEditionMinterParams,
     ) -> Result<Self, ContractError> {
         // Validation of the Minter Params -> need to be in-line with the factory
+        init_msg.nft_data = NftData::validate(init_msg.nft_data)?;
 
-        init_msg.nft_data = NftData::new_validated(init_msg.nft_data)?;
-
-        if init_msg.per_address_limit < 1 || init_msg.per_address_limit > params.extension.max_per_address_limit {
-            return Err(ContractError::InvalidMintPerWalletValue {})
+        let max = params.extension.max_per_address_limit;
+        let min = 1;
+        let per_address_limit = init_msg.per_address_limit;
+        if init_msg.per_address_limit < min || init_msg.per_address_limit > max {
+            return Err(ContractError::InvalidPerAddressLimit {
+                max,
+                min,
+                got: per_address_limit,
+            });
         }
 
         if init_msg.start_time <= env.block.time {
             return Err(ContractError::InvalidStartTime(
                 init_msg.start_time,
                 env.block.time,
-            ))
+            ));
         }
 
         if init_msg.end_time <= init_msg.start_time {
             return Err(ContractError::InvalidEndTime(
                 init_msg.start_time,
                 init_msg.end_time,
-            ))
+            ));
         }
 
         if init_msg.mint_price.amount < params.min_mint_price.amount {
-            return Err(ContractError::InvalidMintPrice {})
+            return Err(ContractError::InvalidMintPrice {});
         }
 
         Ok(OpenEditionMinterInitMsgExtension {
@@ -61,7 +67,7 @@ impl OpenEditionMinterInitMsgExtension {
             start_time: init_msg.start_time,
             end_time: init_msg.end_time,
             mint_price: init_msg.mint_price,
-            per_address_limit: init_msg.per_address_limit,
+            per_address_limit,
             payment_address: init_msg.payment_address,
         })
     }

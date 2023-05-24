@@ -10,22 +10,22 @@ use crate::ContractError;
 #[cw_serde]
 pub enum NftMetadataType {
     OnChainMetadata,
-    OffChainMetadata
+    OffChainMetadata,
 }
 
 #[cw_serde]
 pub struct NftData {
     pub nft_data_type: NftMetadataType,
     pub extension: Option<Metadata>,
-    pub token_uri: Option<String>
+    pub token_uri: Option<String>,
 }
 
 impl NftData {
-    pub fn new_validated(
-        nft_data: NftData,
-    ) -> Result<Self, ContractError> {
-
-        ensure!(nft_data.valid_nft_data(), ContractError::InvalidNftDataProvided {});
+    pub fn validate(nft_data: NftData) -> Result<Self, ContractError> {
+        ensure!(
+            nft_data.valid_nft_data(),
+            ContractError::InvalidNftDataProvided {}
+        );
 
         // Validation of the metadata and token_uri is validated at the nft contract level
 
@@ -46,5 +46,4 @@ impl NftData {
             self.extension.is_some() && self.nft_data_type == NftMetadataType::OnChainMetadata
         }
     }
-
 }

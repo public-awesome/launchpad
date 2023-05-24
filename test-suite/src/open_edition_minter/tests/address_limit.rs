@@ -2,10 +2,8 @@ use cosmwasm_std::coins;
 use cw_multi_test::Executor;
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
-use open_edition_minter::{
-    msg::{ExecuteMsg, QueryMsg},
-};
 use open_edition_minter::msg::ConfigResponse;
+use open_edition_minter::msg::{ExecuteMsg, QueryMsg};
 
 use crate::common_setup::setup_accounts_and_block::setup_block_time;
 use crate::common_setup::templates::open_edition_minter_custom_template;
@@ -14,16 +12,9 @@ const MINT_PRICE: u128 = 100_000_000;
 
 #[test]
 fn check_per_address_limit() {
-    let vt = open_edition_minter_custom_template(
-        None,
-        None,
-        None,
-        Some(10),
-        Some(2),
-        None,
-        None,
-        None
-    ).unwrap();
+    let vt =
+        open_edition_minter_custom_template(None, None, None, Some(10), Some(2), None, None, None)
+            .unwrap();
     let (mut router, creator, buyer) = (vt.router, vt.accts.creator, vt.accts.buyer);
     let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
     // Set to a valid mint time
@@ -36,7 +27,6 @@ fn check_per_address_limit() {
         .query_wasm_smart(minter_addr.clone(), &query_config_msg)
         .unwrap();
     assert_eq!(res.per_address_limit, 2);
-    assert_eq!(res.minted_count, 0);
 
     // Set a new limit per address, check unauthorized
     let per_address_limit_msg = ExecuteMsg::UpdatePerAddressLimit {
@@ -73,12 +63,7 @@ fn check_per_address_limit() {
     let per_address_limit_msg = ExecuteMsg::UpdatePerAddressLimit {
         per_address_limit: 0,
     };
-    let res = router.execute_contract(
-        creator,
-        minter_addr.clone(),
-        &per_address_limit_msg,
-        &[],
-    );
+    let res = router.execute_contract(creator, minter_addr.clone(), &per_address_limit_msg, &[]);
     assert_eq!(
         res.err().unwrap().source().unwrap().to_string(),
         "Invalid minting limit per address. max: 10, min: 1, got: 0"
