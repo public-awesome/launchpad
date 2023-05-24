@@ -242,8 +242,8 @@ fn test_create_minter(chain: &mut Chain) {
             .client
             .bank_query_balance(user_addr.parse().unwrap(), denom.parse().unwrap()),
     )
-    .unwrap()
-    .balance;
+        .unwrap()
+        .balance;
 
     // Sleep to ensure we can start minting
     chain
@@ -306,8 +306,8 @@ fn test_create_minter(chain: &mut Chain) {
             .client
             .bank_query_balance(user_addr.parse().unwrap(), denom.parse().unwrap()),
     )
-    .unwrap()
-    .balance;
+        .unwrap()
+        .balance;
 
     // 10 * 10 * MINT_PRICE = 10k STARS x 0.9 (10% fee)
     assert_eq!(balance.amount, init_balance.amount + 9_000_000_000);
@@ -461,8 +461,8 @@ fn test_start_trading_time(chain: &mut Chain) {
             .client
             .bank_query_balance(user_addr.parse().unwrap(), denom.parse().unwrap()),
     )
-    .unwrap()
-    .balance;
+        .unwrap()
+        .balance;
 
     let balance_dev_before_mint = tokio_block(
         chain
@@ -508,10 +508,11 @@ fn test_start_trading_time(chain: &mut Chain) {
         )
             .unwrap()
             .balance;
-        // Because it is 10 mints and each mint, 1% goes to the dev
+        // Because it is 10 mints and each mint, 50% of the mint fees goes to the dev
+        // mint price = 100_000_000 * 0.1 * 0.5 = 5_000_000 * 10 = 50_000_000
         assert_eq!(
             after_dev_balance.amount - initial_dev_balance.amount,
-            10_000_000
+            50_000_000
         );
         let fair_burn_fees = res
             .res
@@ -533,8 +534,8 @@ fn test_start_trading_time(chain: &mut Chain) {
 
     }
 
-    // 200 mints at 100_000_000 * 0.1 * 0.1
-    assert_eq!(total_dev_fees, 200_000_000);
+    // 200 mints at 100_000_000 * 0.1 * 0.5 = 1_000_000_000
+    assert_eq!(total_dev_fees, 1_000_000_000);
 
     assert_eq!(total_mints, 200);
 
@@ -544,22 +545,21 @@ fn test_start_trading_time(chain: &mut Chain) {
             .client
             .bank_query_balance(user_addr.parse().unwrap(), denom.parse().unwrap()),
     )
-    .unwrap()
-    .balance;
+        .unwrap()
+        .balance;
 
     // 200 x MINT_PRICE = 10k STARS x 0.9 (10% fee)
     assert_eq!(balance.amount, init_balance.amount + 18_000_000_000);
 
     // fairburn fees
-    // half of the 10% fees should be sent to fairburn pool
-    // 5STARS / mint * 200 = 1k STARS + 500STARS initially sent for collection creation fee
-    assert_eq!(total_fairburn_fees, 1_500_000_000);
+    // only the creation fee gets sent to the fairburn as 50%-50% = 0
+    assert_eq!(total_fairburn_fees, 500_000_000);
 
     let total_supply = tokio_block(chain.orc.client.bank_query_supply(denom.parse().unwrap()))
         .unwrap()
         .balance;
 
-    // 10% to the dev
+    // 200 * 100_000_000 * 0.1 * 0.5 = 1_000_000_000
     let balance_dev_after_mint = tokio_block(
         chain
             .orc
@@ -570,14 +570,13 @@ fn test_start_trading_time(chain: &mut Chain) {
         .balance;
     assert_eq!(
         balance_dev_after_mint.amount - balance_dev_before_mint.amount,
-        200_000_000
+        1_000_000_000
     );
 
     // The amount of tokens burned should be
-    // 500 STARS from the init + (200 mint x 4 STARS) -> 500 + 800 = 1300
-    // 4 STARS = (BURN_PCT - DEV_FEE) * mint_price = (0.5 - 0.1) * 100_000_000
+    // 500 STARS from the init + (200 mint x 100_000_000 x 0.1 x 0.5) -> 500 + 1_000 = 1_500
     assert_eq!(
-        initial_total_supply.amount - 1_300_000_000,
+        initial_total_supply.amount - 1_500_000_000,
         total_supply.amount
     );
 }
