@@ -138,7 +138,7 @@ fn check_mint_revenues_distribution() {
     let num_tokens_msg = Cw721QueryMsg::NumTokens {};
     let res: NumTokensResponse = router
         .wrap()
-        .query_wasm_smart(collection_addr.clone(), &num_tokens_msg)
+        .query_wasm_smart(collection_addr, &num_tokens_msg)
         .unwrap();
     assert_eq!(res.count, 2);
 
