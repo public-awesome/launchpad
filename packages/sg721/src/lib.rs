@@ -68,6 +68,7 @@ pub struct CollectionInfo<T> {
     pub explicit_content: Option<bool>,
     pub start_trading_time: Option<Timestamp>,
     pub royalty_info: Option<T>,
+    pub royalty_updated_at: Option<Timestamp>,
 }
 
 #[cw_serde]
