@@ -215,6 +215,7 @@ where
             // update royalty info to equal or less, else throw error
             if let Some(royalty_info_res) = current_royalty_info {
                 // TODO: if royalty_info.share > royalty_info_res.share + factory.royalty_share_increase_rate
+                // TODO: also check against the `royalties_updated_at` timestamp with the current block time
                 if royalty_info.share > royalty_info_res.share {
                     return Err(ContractError::RoyaltyShareIncreasedTooMuch {});
                 }
