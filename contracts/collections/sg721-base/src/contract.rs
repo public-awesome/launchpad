@@ -223,7 +223,7 @@ where
 
         // reminder: collection_msg.royalty_info is Option<Option<RoyaltyInfoResponse>>
         collection.royalty_info = if let Some(new_royalty_info_res) = new_royalty_info {
-            // update royalty info if less than current + increase rate, and after min time duration
+            // update royalty info if less than current + increase rate
             // else throw error
             if let Some(curr_royalty_info_res) = current_royalty_info {
                 if new_royalty_info_res.share
@@ -231,15 +231,20 @@ where
                 {
                     return Err(ContractError::RoyaltyShareIncreasedTooMuch {});
                 }
-                if collection
-                    .royalty_updated_at
+            } else {
+                return Err(ContractError::RoyaltyShareIncreasedTooMuch {});
+            }
+
+            // check if current time is after last royalty update + min duration
+            if let Some(royalty_updated_at) = collection.royalty_updated_at {
+                if royalty_updated_at
                     .plus_seconds(factory_params.params.royalty_min_time_duration_secs)
                     > env.block.time
                 {
                     return Err(ContractError::RoyaltyUpdateTooSoon {});
                 }
             } else {
-                return Err(ContractError::RoyaltyShareIncreasedTooMuch {});
+                return Err(ContractError::RoyaltyUpdateTooSoon {});
             }
 
             if new_royalty_info_res.share > max_royalty {
@@ -249,8 +254,10 @@ where
             // set new updated_at if successful
             collection.royalty_updated_at = Some(env.block.time);
             Some(RoyaltyInfo {
-                payment_address: deps.api.addr_validate(&royalty_info.payment_address)?,
-                share: share_validate(royalty_info.share)?,
+                payment_address: deps
+                    .api
+                    .addr_validate(&new_royalty_info_res.payment_address)?,
+                share: share_validate(new_royalty_info_res.share)?,
             })
         } else {
             None
