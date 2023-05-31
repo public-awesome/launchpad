@@ -29,6 +29,7 @@ export interface CollectionInfoForRoyaltyInfoResponse {
   external_link?: string | null;
   image: string;
   royalty_info?: RoyaltyInfoResponse | null;
+  royalty_updated_at?: Timestamp | null;
   start_trading_time?: Timestamp | null;
 }
 export interface RoyaltyInfoResponse {
@@ -44,9 +45,12 @@ export interface MinterParamsForNullable_Empty {
   creation_fee: Coin;
   extension?: Empty | null;
   frozen: boolean;
+  max_royalty_bps: number;
+  max_royalty_increase_rate_bps: number;
   max_trading_offset_secs: number;
   min_mint_price: Coin;
   mint_fee_bps: number;
+  royalty_min_time_duration_secs: number;
 }
 export interface Coin {
   amount: Uint128;

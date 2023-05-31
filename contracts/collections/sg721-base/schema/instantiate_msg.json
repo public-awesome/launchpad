@@ -63,6 +63,16 @@
             }
           ]
         },
+        "royalty_updated_at": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Timestamp"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "start_trading_time": {
           "anyOf": [
             {
