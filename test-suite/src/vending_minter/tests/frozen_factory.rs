@@ -45,6 +45,9 @@ fn frozen_factory_cannot_create_new_minters() {
         min_mint_price: None,
         mint_fee_bps: None,
         max_trading_offset_secs: None,
+        max_royalty_bps: None,
+        max_royalty_increase_rate_bps: None,
+        royalty_min_time_duration_secs: None,
         extension,
     };
     let sudo_msg = VendingFactorySudoMsg::UpdateParams(Box::new(update_msg));

@@ -63,6 +63,9 @@ pub fn instantiate_factory(
                         denom: denom.to_string(),
                     },
                 },
+                max_royalty_bps: 1500,
+                max_royalty_increase_rate_bps: 200,
+                royalty_min_time_duration_secs: 60 * 60 * 24,
             },
         },
         key,
@@ -106,6 +109,7 @@ pub fn create_minter_msg(
                 external_link: None,
                 explicit_content: None,
                 royalty_info: None,
+                royalty_updated_at: None,
             },
         },
     }

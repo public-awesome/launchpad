@@ -56,6 +56,9 @@ pub fn mock_params() -> VendingMinterParams {
         min_mint_price: coin(MIN_MINT_PRICE, NATIVE_DENOM),
         mint_fee_bps: MINT_FEE_FAIR_BURN,
         max_trading_offset_secs: 60 * 60 * 24 * 7,
+        max_royalty_bps: 1500,
+        max_royalty_increase_rate_bps: 200,
+        royalty_min_time_duration_secs: 60 * 60 * 24,
         extension: ParamsExtension {
             max_token_limit: MAX_TOKEN_LIMIT,
             max_per_address_limit: MAX_PER_ADDRESS_LIMIT,

@@ -47,6 +47,9 @@ fn update_code_id() {
         mint_fee_bps: None,
         max_trading_offset_secs: None,
         extension: None,
+        max_royalty_bps: Some(1500),
+        max_royalty_increase_rate_bps: Some(200),
+        royalty_min_time_duration_secs: Some(60 * 60 * 24),
     };
     let sudo_msg = SudoMsg::UpdateParams(Box::new(update_msg));
     let res = router.wasm_sudo(factory.clone(), &sudo_msg);

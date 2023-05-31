@@ -28,6 +28,7 @@ fn test_unauthorized_sg721_instantiation(chain: &mut Chain) {
                 royalty_info: None,
                 explicit_content: None,
                 start_trading_time: None,
+                royalty_updated_at: None,
             },
         },
         &user.key,

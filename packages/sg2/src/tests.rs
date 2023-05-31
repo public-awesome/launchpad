@@ -2,7 +2,23 @@ use crate::msg::CollectionParams;
 use cosmwasm_std::Decimal;
 use cosmwasm_std::Timestamp;
 use sg721::{CollectionInfo, RoyaltyInfoResponse};
+use sg_std::GENESIS_MINT_START_TIME;
 
+pub fn mock_collection_info() -> CollectionInfo<RoyaltyInfoResponse> {
+    CollectionInfo {
+        creator: "creator".to_string(),
+        description: String::from("Stargaze Monkeys"),
+        image: "https://example.com/image.png".to_string(),
+        external_link: Some("https://example.com/external.html".to_string()),
+        royalty_info: Some(RoyaltyInfoResponse {
+            payment_address: "curator".to_string(),
+            share: Decimal::percent(10),
+        }),
+        start_trading_time: None,
+        explicit_content: None,
+        royalty_updated_at: Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME)),
+    }
+}
 pub fn mock_collection_params() -> CollectionParams {
     CollectionParams {
         code_id: 1,
@@ -19,6 +35,7 @@ pub fn mock_collection_params() -> CollectionParams {
                 payment_address: "creator".to_string(),
                 share: Decimal::percent(10),
             }),
+            ..mock_collection_info()
         },
     }
 }
@@ -39,6 +56,7 @@ pub fn mock_collection_params_1(start_trading_time: Option<Timestamp>) -> Collec
                 payment_address: "creator".to_string(),
                 share: Decimal::percent(10),
             }),
+            ..mock_collection_info()
         },
     }
 }
@@ -59,6 +77,7 @@ pub fn mock_curator_payment_address(start_trading_time: Option<Timestamp>) -> Co
             }),
             start_trading_time,
             explicit_content: None,
+            ..mock_collection_info()
         },
     }
 }
@@ -81,6 +100,7 @@ pub fn mock_collection_params_high_fee(start_trading_time: Option<Timestamp>) ->
             }),
             start_trading_time,
             explicit_content: None,
+            ..mock_collection_info()
         },
     }
 }
@@ -103,6 +123,7 @@ pub fn mock_collection_two(start_trading_time: Option<Timestamp>) -> CollectionP
             }),
             start_trading_time,
             explicit_content: None,
+            ..mock_collection_info()
         },
     }
 }

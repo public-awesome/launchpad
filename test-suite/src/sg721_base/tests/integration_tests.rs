@@ -146,6 +146,7 @@ mod tests {
                     explicit_content: None,
                     start_trading_time: None,
                     royalty_info: None,
+                    royalty_updated_at: None,
                 },
             };
             let res = app.instantiate_contract(
@@ -430,7 +431,7 @@ mod tests {
 
         use crate::common_setup::setup_minter::vending_minter::mock_params::mock_create_minter_init_msg;
         use cosmwasm_std::{Decimal, Response, Uint128};
-        use sg2::msg::CollectionParams;
+        use sg2::{msg::CollectionParams, tests::mock_collection_info};
         use sg721::RoyaltyInfoResponse;
         use sg721_base::msg::{CollectionInfoResponse, QueryMsg};
 
@@ -473,6 +474,7 @@ mod tests {
                         payment_address: "creator".to_string(),
                         share: Decimal::percent(0),
                     }),
+                    royalty_updated_at: None,
                 },
                 ..mock_collection_params()
             };
@@ -514,6 +516,7 @@ mod tests {
                         payment_address: "creator".to_string(),
                         share: Decimal::percent(91),
                     }),
+                    royalty_updated_at: None,
                 },
                 ..mock_collection_params()
             };
@@ -555,6 +558,7 @@ mod tests {
                         payment_address: "creator".to_string(),
                         share: Decimal::percent(3),
                     }),
+                    royalty_updated_at: None,
                 },
                 ..mock_collection_params()
             };
@@ -594,6 +598,7 @@ mod tests {
                     start_trading_time: None,
                     explicit_content: Some(false),
                     royalty_info: None,
+                    ..mock_collection_info()
                 },
                 ..mock_collection_params()
             };

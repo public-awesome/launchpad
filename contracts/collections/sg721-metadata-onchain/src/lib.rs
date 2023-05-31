@@ -134,6 +134,7 @@ mod tests {
                 explicit_content: Some(false),
                 start_trading_time: None,
                 royalty_info: None,
+                royalty_updated_at: None,
             },
         };
         contract

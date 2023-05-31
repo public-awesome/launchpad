@@ -17,6 +17,9 @@ pub fn mock_params() -> BaseMinterParams {
         mint_fee_bps: MINT_FEE_BPS,
         max_trading_offset_secs: 60 * 60 * 24 * 7,
         extension: None,
+        max_royalty_bps: 1500,
+        max_royalty_increase_rate_bps: 200,
+        royalty_min_time_duration_secs: 60 * 60 * 24,
     }
 }
 
