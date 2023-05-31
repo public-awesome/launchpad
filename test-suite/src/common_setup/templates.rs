@@ -9,17 +9,21 @@ use crate::common_setup::{
 
 use crate::common_setup::setup_minter::base_minter::setup::base_minter_sg721_nt_code_ids;
 use crate::common_setup::setup_minter::base_minter::setup::configure_base_minter;
-use cosmwasm_std::{coin, Coin, coins, Timestamp, Uint128};
+use crate::common_setup::setup_minter::common::constants::{
+    CREATION_FEE, MIN_MINT_PRICE_OPEN_EDITION,
+};
+use crate::common_setup::setup_minter::common::parse_response::build_collection_response;
+use crate::common_setup::setup_minter::open_edition_minter::mock_params::{
+    mock_create_minter, mock_params_proper,
+};
+use crate::common_setup::setup_minter::open_edition_minter::setup::open_edition_minter_code_ids;
+use cosmwasm_std::{coin, coins, Coin, Timestamp, Uint128};
 use cw_multi_test::{AppResponse, Contract, Executor};
-use sg2::tests::mock_collection_params_1;
-use sg_multi_test::StargazeApp;
-use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM, StargazeMsgWrapper};
 use open_edition_factory::types::{NftData, NftMetadataType};
 use sg2::msg::Sg2ExecuteMsg;
-use crate::common_setup::setup_minter::common::constants::{CREATION_FEE, MIN_MINT_PRICE_OPEN_EDITION};
-use crate::common_setup::setup_minter::common::parse_response::build_collection_response;
-use crate::common_setup::setup_minter::open_edition_minter::mock_params::{mock_create_minter, mock_params_proper};
-use crate::common_setup::setup_minter::open_edition_minter::setup::open_edition_minter_code_ids;
+use sg2::tests::mock_collection_params_1;
+use sg_multi_test::StargazeApp;
+use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
 use super::msg::Accounts;
 use super::setup_minter::base_minter::setup::base_minter_sg721_collection_code_ids;
@@ -251,25 +255,28 @@ pub fn open_edition_minter_custom_template(
     per_address_limit_minter: Option<u32>,
     mint_price_minter: Option<Coin>,
     sg721_code: Option<Box<dyn Contract<StargazeMsgWrapper>>>,
-    sg721_codeid: Option<u64>
-) -> Result<MinterTemplateResponse<Accounts>, anyhow::Result<AppResponse>>  {
+    sg721_codeid: Option<u64>,
+) -> Result<MinterTemplateResponse<Accounts>, anyhow::Result<AppResponse>> {
     let mut app = custom_mock_app();
     let (creator, buyer) = setup_accounts(&mut app);
-    let code_ids = open_edition_minter_code_ids(&mut app, sg721_code.unwrap_or(contract_sg721_base()));
+    let code_ids =
+        open_edition_minter_code_ids(&mut app, sg721_code.unwrap_or(contract_sg721_base()));
 
     // Factory params
     let mut factory_params = mock_params_proper();
-    factory_params.extension.max_per_address_limit = max_per_address_limit.unwrap_or(factory_params.extension.max_per_address_limit);
+    factory_params.extension.max_per_address_limit =
+        max_per_address_limit.unwrap_or(factory_params.extension.max_per_address_limit);
 
-    let factory_addr = app
-        .instantiate_contract(
-            code_ids.factory_code_id,
-            creator.clone(),
-            &open_edition_factory::msg::InstantiateMsg { params: factory_params },
-            &[],
-            "factory",
-            None,
-        );
+    let factory_addr = app.instantiate_contract(
+        code_ids.factory_code_id,
+        creator.clone(),
+        &open_edition_factory::msg::InstantiateMsg {
+            params: factory_params,
+        },
+        &[],
+        "factory",
+        None,
+    );
 
     let factory_addr = factory_addr.unwrap();
 
@@ -279,13 +286,15 @@ pub fn open_edition_minter_custom_template(
     let per_address_limit_minter = per_address_limit_minter.or(Some(1));
     let mint_price = mint_price_minter.or(Some(Coin {
         denom: NATIVE_DENOM.to_string(),
-        amount: Uint128::new(MIN_MINT_PRICE_OPEN_EDITION)
+        amount: Uint128::new(MIN_MINT_PRICE_OPEN_EDITION),
     }));
     let collection_params = mock_collection_params_1(Some(start_time));
     let default_nft_data = nft_data.unwrap_or(NftData {
         nft_data_type: NftMetadataType::OffChainMetadata,
         extension: None,
-        token_uri: Some("ipfs://bafybeiavall5udkxkdtdm4djezoxrmfc6o5fn2ug3ymrlvibvwmwydgrkm/1.jpg".to_string()),
+        token_uri: Some(
+            "ipfs://bafybeiavall5udkxkdtdm4djezoxrmfc6o5fn2ug3ymrlvibvwmwydgrkm/1.jpg".to_string(),
+        ),
     });
     let mut msg = mock_create_minter(
         start_minter_time.or(Some(start_time)),
@@ -294,21 +303,16 @@ pub fn open_edition_minter_custom_template(
         per_address_limit_minter,
         default_nft_data,
         collection_params,
-        None
+        None,
     );
     msg.collection_params.code_id = sg721_codeid.unwrap_or(3);
     msg.collection_params.info.creator = creator.to_string();
     let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
     let msg = Sg2ExecuteMsg::CreateMinter(msg);
 
-    let res = app.execute_contract(
-        creator.clone(),
-        factory_addr.clone(),
-        &msg,
-        &creation_fee
-    );
+    let res = app.execute_contract(creator.clone(), factory_addr.clone(), &msg, &creation_fee);
     if res.is_err() {
-        return Err(res)
+        return Err(res);
     }
 
     let minter_collection_res = build_collection_response(res, factory_addr);

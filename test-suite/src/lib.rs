@@ -5,6 +5,10 @@ mod base_factory;
 #[cfg(test)]
 mod base_minter;
 #[cfg(test)]
+mod open_edition_factory;
+#[cfg(test)]
+mod open_edition_minter;
+#[cfg(test)]
 mod sg721_base;
 #[cfg(test)]
 mod sg_eth_airdrop;
@@ -14,10 +18,6 @@ mod splits;
 mod vending_factory;
 #[cfg(test)]
 mod vending_minter;
-#[cfg(test)]
-mod open_edition_factory;
-#[cfg(test)]
-mod open_edition_minter;
 #[cfg(test)]
 mod whitelist;
 #[cfg(test)]

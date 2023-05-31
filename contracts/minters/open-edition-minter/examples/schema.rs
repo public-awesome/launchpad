@@ -4,8 +4,8 @@ use std::fs::create_dir_all;
 use cosmwasm_schema::{export_schema, remove_schemas, schema_for};
 
 use open_edition_minter::msg::{
-    ConfigResponse, ExecuteMsg, InstantiateMsg, MintableNumTokensResponse, MintCountResponse,
-    MintPriceResponse, QueryMsg, StartTimeResponse,
+    ConfigResponse, ExecuteMsg, InstantiateMsg, MintCountResponse, MintPriceResponse,
+    MintableNumTokensResponse, QueryMsg, StartTimeResponse,
 };
 use open_edition_minter::state::Config;
 use sg4::StatusResponse;

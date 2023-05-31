@@ -4,21 +4,18 @@ use cosm_orc::orchestrator::error::CosmwasmError::TxError;
 use cosm_orc::orchestrator::error::ProcessError;
 use cosm_orc::orchestrator::Coin as OrcCoin;
 use cosm_orc::orchestrator::ExecReq;
+use open_edition_factory::types::{NftData, NftMetadataType};
+use open_edition_minter::msg::ExecuteMsg::{UpdatePerAddressLimit, UpdateStartTradingTime};
 use sg2::msg::Sg2ExecuteMsg;
 use std::collections::HashMap;
 use std::time::Duration;
 use test_context::test_context;
-use open_edition_factory::types::{NftData, NftMetadataType};
-use open_edition_minter::msg::ExecuteMsg::{UpdatePerAddressLimit, UpdateStartTradingTime};
 
 use crate::helpers::{
     chain::Chain,
+    helper::{gen_users, latest_block_time},
     open_edition_minter_helpers::{
-        create_minter_msg, instantiate_factory, CREATION_FEE, FACTORY_NAME, MAX_TOKENS,
-        MINT_PRICE,
-    },
-    helper::{
-        gen_users, latest_block_time,
+        create_minter_msg, instantiate_factory, CREATION_FEE, FACTORY_NAME, MAX_TOKENS, MINT_PRICE,
     },
 };
 
@@ -26,7 +23,6 @@ use crate::helpers::{
 #[test]
 #[ignore]
 fn test_open_edition_exec_functions(chain: &mut Chain) {
-
     let denom = chain.cfg.orc_cfg.chain_cfg.denom.clone();
     let user = chain.cfg.users[0].clone();
     let user_addr = &user.account.address;
@@ -36,8 +32,9 @@ fn test_open_edition_exec_functions(chain: &mut Chain) {
         chain,
         user_addr.clone(),
         dev.account.address.clone(),
-        &user.key
-    ).unwrap();
+        &user.key,
+    )
+    .unwrap();
 
     let start_time = latest_block_time(chain).plus_seconds(10);
     let end_time = latest_block_time(chain).plus_seconds(60);
@@ -54,7 +51,7 @@ fn test_open_edition_exec_functions(chain: &mut Chain) {
             nft_data_type: NftMetadataType::OffChainMetadata,
             extension: None,
             token_uri: Some("ipfs://...".to_string()),
-        }
+        },
     ));
 
     let res = chain
@@ -105,11 +102,15 @@ fn test_open_edition_exec_functions(chain: &mut Chain) {
             &UpdateStartTradingTime(Some(start_time.plus_seconds(10))),
             &user.key,
             vec![],
-        ).unwrap();
+        )
+        .unwrap();
     let tags_update = res
         .res
         .find_event_tags("wasm".to_string(), "action".to_string());
-    assert_eq!(tags_update[0].value.to_string().trim(), "update_start_trading_time".to_string());
+    assert_eq!(
+        tags_update[0].value.to_string().trim(),
+        "update_start_trading_time".to_string()
+    );
 
     // Initial after changing time
     let init_balance = tokio_block(
@@ -118,8 +119,8 @@ fn test_open_edition_exec_functions(chain: &mut Chain) {
             .client
             .bank_query_balance(user_addr.parse().unwrap(), denom.parse().unwrap()),
     )
-        .unwrap()
-        .balance;
+    .unwrap()
+    .balance;
 
     // Batch mint 5 tokens / user:
     for user in &users {
@@ -174,15 +175,18 @@ fn test_open_edition_exec_functions(chain: &mut Chain) {
     assert_eq!(balance.amount, init_balance.amount + 4_500_000_000);
 
     // Mint To
-    let _res = chain.orc.execute(
-        "minter",
-        "minter_exec_mint_to_token",
-        &vending_minter::msg::ExecuteMsg::MintTo {
-            recipient: dev.account.address.to_string(),
-        },
-        &user.key,
-        vec![],
-    ).unwrap();
+    let _res = chain
+        .orc
+        .execute(
+            "minter",
+            "minter_exec_mint_to_token",
+            &vending_minter::msg::ExecuteMsg::MintTo {
+                recipient: dev.account.address.to_string(),
+            },
+            &user.key,
+            vec![],
+        )
+        .unwrap();
 
     // Mint To -> not admin
     let res = chain.orc.execute(
@@ -222,11 +226,17 @@ fn test_open_edition_exec_functions(chain: &mut Chain) {
     let tags_update = res
         .res
         .find_event_tags("wasm".to_string(), "action".to_string());
-    assert_eq!(tags_update[0].value.to_string().trim(), "update_per_address_limit".to_string());
+    assert_eq!(
+        tags_update[0].value.to_string().trim(),
+        "update_per_address_limit".to_string()
+    );
     let tags_update_value = res
         .res
         .find_event_tags("wasm".to_string(), "limit".to_string());
-    assert_eq!(tags_update_value[0].value.to_string().trim(), "5".to_string());
+    assert_eq!(
+        tags_update_value[0].value.to_string().trim(),
+        "5".to_string()
+    );
 
     // Cannot mint more:
     let res = chain.orc.execute(
@@ -241,14 +251,15 @@ fn test_open_edition_exec_functions(chain: &mut Chain) {
     );
     let err = res.unwrap_err();
     assert_matches!(err, ProcessError::CosmwasmError(TxError(..)));
-    assert!(err.to_string().contains("Max minting limit per address exceeded"));
+    assert!(err
+        .to_string()
+        .contains("Max minting limit per address exceeded"));
 
     // Sleep to ensure we cannot mint after the end time
     chain
         .orc
         .poll_for_n_secs(100, Duration::from_millis(200_000))
         .unwrap();
-
 
     // Cannot mint more:
     let res = chain.orc.execute(
@@ -275,5 +286,4 @@ fn test_open_edition_exec_functions(chain: &mut Chain) {
         vec![],
     );
     assert!(res.is_ok());
-
 }

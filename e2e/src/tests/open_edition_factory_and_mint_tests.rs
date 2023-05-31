@@ -4,21 +4,18 @@ use cosm_orc::orchestrator::error::CosmwasmError::TxError;
 use cosm_orc::orchestrator::error::ProcessError;
 use cosm_orc::orchestrator::Coin as OrcCoin;
 use cosm_orc::orchestrator::ExecReq;
+use open_edition_factory::types::{NftData, NftMetadataType};
 use sg2::msg::Sg2ExecuteMsg;
+use sg_metadata::Metadata;
 use std::collections::HashMap;
 use std::time::Duration;
 use test_context::test_context;
-use open_edition_factory::types::{NftData, NftMetadataType};
-use sg_metadata::Metadata;
 
 use crate::helpers::{
     chain::Chain,
+    helper::{gen_users, latest_block_time},
     open_edition_minter_helpers::{
-        create_minter_msg, instantiate_factory, CREATION_FEE, FACTORY_NAME, MAX_TOKENS,
-        MINT_PRICE,
-    },
-    helper::{
-        gen_users, latest_block_time,
+        create_minter_msg, instantiate_factory, CREATION_FEE, FACTORY_NAME, MAX_TOKENS, MINT_PRICE,
     },
 };
 
@@ -32,26 +29,21 @@ fn test_instantiate_open_edition_factory(chain: &mut Chain) {
         chain,
         creator.account.address,
         dev.account.address,
-        &creator.key
-    ).unwrap();
+        &creator.key,
+    )
+    .unwrap();
 }
 
 #[test_context(Chain)]
 #[test]
 #[ignore]
 fn test_create_minter(chain: &mut Chain) {
-
     let denom = chain.cfg.orc_cfg.chain_cfg.denom.clone();
     let user = chain.cfg.users[0].clone();
     let user_addr = &user.account.address;
     let dev = chain.cfg.users[1].clone();
 
-    instantiate_factory(
-        chain,
-        user_addr.clone(),
-        dev.account.address,
-        &user.key
-    ).unwrap();
+    instantiate_factory(chain, user_addr.clone(), dev.account.address, &user.key).unwrap();
 
     let start_time = latest_block_time(chain).plus_seconds(10);
     let end_time = latest_block_time(chain).plus_seconds(60);
@@ -68,7 +60,7 @@ fn test_create_minter(chain: &mut Chain) {
             nft_data_type: NftMetadataType::OffChainMetadata,
             extension: None,
             token_uri: Some("ipfs://...".to_string()),
-        }
+        },
     ));
 
     // requires fee
@@ -115,7 +107,7 @@ fn test_create_minter(chain: &mut Chain) {
             nft_data_type: NftMetadataType::OffChainMetadata,
             extension: None,
             token_uri: Some("ipfs://...".to_string()),
-        }
+        },
     ));
     let err = chain
         .orc
@@ -156,7 +148,7 @@ fn test_create_minter(chain: &mut Chain) {
                 youtube_url: None,
             }),
             token_uri: Some("ipfs://...".to_string()),
-        }
+        },
     ));
     let err = chain
         .orc
@@ -187,7 +179,7 @@ fn test_create_minter(chain: &mut Chain) {
             nft_data_type: NftMetadataType::OnChainMetadata,
             extension: None,
             token_uri: Some("ipfs://...".to_string()),
-        }
+        },
     ));
     let err = chain
         .orc
@@ -242,8 +234,8 @@ fn test_create_minter(chain: &mut Chain) {
             .client
             .bank_query_balance(user_addr.parse().unwrap(), denom.parse().unwrap()),
     )
-        .unwrap()
-        .balance;
+    .unwrap()
+    .balance;
 
     // Sleep to ensure we can start minting
     chain
@@ -306,8 +298,8 @@ fn test_create_minter(chain: &mut Chain) {
             .client
             .bank_query_balance(user_addr.parse().unwrap(), denom.parse().unwrap()),
     )
-        .unwrap()
-        .balance;
+    .unwrap()
+    .balance;
 
     // 10 * 10 * MINT_PRICE = 10k STARS x 0.9 (10% fee)
     assert_eq!(balance.amount, init_balance.amount + 9_000_000_000);
@@ -317,7 +309,6 @@ fn test_create_minter(chain: &mut Chain) {
         .orc
         .poll_for_n_secs(100, Duration::from_millis(200_000))
         .unwrap();
-
 
     // Cannot mint more:
     let res = chain.orc.execute(
@@ -354,8 +345,9 @@ fn test_start_trading_time(chain: &mut Chain) {
         chain,
         user_addr.clone(),
         dev.account.address.clone(),
-        &user.key
-    ).unwrap();
+        &user.key,
+    )
+    .unwrap();
 
     let start_time = latest_block_time(chain).plus_seconds(5);
     let end_time = latest_block_time(chain).plus_seconds(60);
@@ -373,7 +365,7 @@ fn test_start_trading_time(chain: &mut Chain) {
             nft_data_type: NftMetadataType::OffChainMetadata,
             extension: None,
             token_uri: Some("ipfs://...".to_string()),
-        }
+        },
     ));
 
     let err = chain
@@ -405,7 +397,7 @@ fn test_start_trading_time(chain: &mut Chain) {
             nft_data_type: NftMetadataType::OffChainMetadata,
             extension: None,
             token_uri: Some("ipfs://...".to_string()),
-        }
+        },
     ));
 
     let res = chain
@@ -461,8 +453,8 @@ fn test_start_trading_time(chain: &mut Chain) {
             .client
             .bank_query_balance(user_addr.parse().unwrap(), denom.parse().unwrap()),
     )
-        .unwrap()
-        .balance;
+    .unwrap()
+    .balance;
 
     let balance_dev_before_mint = tokio_block(
         chain
@@ -470,8 +462,8 @@ fn test_start_trading_time(chain: &mut Chain) {
             .client
             .bank_query_balance(dev.account.address.parse().unwrap(), denom.parse().unwrap()),
     )
-        .unwrap()
-        .balance;
+    .unwrap()
+    .balance;
 
     // 20 users - 10 mints -> 200 mints
     for user in &users {
@@ -488,26 +480,22 @@ fn test_start_trading_time(chain: &mut Chain) {
                 }],
             });
         }
-        let initial_dev_balance = tokio_block(
-            chain
-                .orc
-                .client
-                .bank_query_balance(dev.account.address.clone().parse().unwrap(), denom.parse().unwrap()),
-        )
-            .unwrap()
-            .balance;
+        let initial_dev_balance = tokio_block(chain.orc.client.bank_query_balance(
+            dev.account.address.clone().parse().unwrap(),
+            denom.parse().unwrap(),
+        ))
+        .unwrap()
+        .balance;
         let res = chain
             .orc
             .execute_batch("minter_batch_exec_mint_token_w_trading_time", reqs, user)
             .unwrap();
-        let after_dev_balance = tokio_block(
-            chain
-                .orc
-                .client
-                .bank_query_balance(dev.account.address.clone().parse().unwrap(), denom.parse().unwrap()),
-        )
-            .unwrap()
-            .balance;
+        let after_dev_balance = tokio_block(chain.orc.client.bank_query_balance(
+            dev.account.address.clone().parse().unwrap(),
+            denom.parse().unwrap(),
+        ))
+        .unwrap()
+        .balance;
         // Because it is 10 mints and each mint, 50% of the mint fees goes to the dev
         // mint price = 100_000_000 * 0.1 * 0.5 = 5_000_000 * 10 = 50_000_000
         assert_eq!(
@@ -531,7 +519,6 @@ fn test_start_trading_time(chain: &mut Chain) {
             let amount = fee.value.split(&denom).collect::<Vec<&str>>()[0];
             total_dev_fees += amount.parse::<u128>().unwrap();
         }
-
     }
 
     // 200 mints at 100_000_000 * 0.1 * 0.5 = 1_000_000_000
@@ -545,8 +532,8 @@ fn test_start_trading_time(chain: &mut Chain) {
             .client
             .bank_query_balance(user_addr.parse().unwrap(), denom.parse().unwrap()),
     )
-        .unwrap()
-        .balance;
+    .unwrap()
+    .balance;
 
     // 200 x MINT_PRICE = 10k STARS x 0.9 (10% fee)
     assert_eq!(balance.amount, init_balance.amount + 18_000_000_000);
@@ -566,8 +553,8 @@ fn test_start_trading_time(chain: &mut Chain) {
             .client
             .bank_query_balance(dev.account.address.parse().unwrap(), denom.parse().unwrap()),
     )
-        .unwrap()
-        .balance;
+    .unwrap()
+    .balance;
     assert_eq!(
         balance_dev_after_mint.amount - balance_dev_before_mint.amount,
         1_000_000_000

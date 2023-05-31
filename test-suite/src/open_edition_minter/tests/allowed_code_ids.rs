@@ -11,10 +11,16 @@ fn invalid_code_id() {
         Some(5),
         None,
         None,
-        Some(19)
+        Some(19),
     );
     assert_eq!(
-        vt.err().unwrap().err().unwrap().source().unwrap().to_string(),
+        vt.err()
+            .unwrap()
+            .err()
+            .unwrap()
+            .source()
+            .unwrap()
+            .to_string(),
         "InvalidCollectionCodeId 19".to_string()
     );
 

@@ -1,6 +1,6 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
-    Addr, Coin, ContractInfoResponse, CustomQuery, Querier, QuerierWrapper, StdResult, to_binary,
+    to_binary, Addr, Coin, ContractInfoResponse, CustomQuery, Querier, QuerierWrapper, StdResult,
     WasmMsg, WasmQuery,
 };
 use sg_std::CosmosMsg;

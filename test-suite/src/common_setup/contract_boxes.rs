@@ -22,7 +22,7 @@ pub fn contract_open_edition_factory() -> Box<dyn Contract<StargazeMsgWrapper>> 
         open_edition_factory::contract::instantiate,
         open_edition_factory::contract::query,
     )
-        .with_sudo(open_edition_factory::contract::sudo);
+    .with_sudo(open_edition_factory::contract::sudo);
     Box::new(contract)
 }
 
@@ -70,7 +70,7 @@ pub fn contract_open_edition_minter() -> Box<dyn Contract<StargazeMsgWrapper>> {
         open_edition_minter::contract::instantiate,
         open_edition_minter::contract::query,
     )
-        .with_reply(open_edition_minter::contract::reply);
+    .with_reply(open_edition_minter::contract::reply);
     Box::new(contract)
 }
 
