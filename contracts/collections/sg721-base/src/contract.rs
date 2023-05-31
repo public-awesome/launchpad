@@ -210,7 +210,7 @@ where
         let minter_address = self.parent.minter.load(deps.storage)?;
         let minter_config: MinterConfig<T> = deps
             .querier
-            .query_wasm_smart(minter_address.clone(), &MinterQueryMsg::Config {})?;
+            .query_wasm_smart(minter_address, &MinterQueryMsg::Config {})?;
         let factory_address = minter_config.factory;
         let factory_params: ParamsResponse<T> = deps
             .querier
