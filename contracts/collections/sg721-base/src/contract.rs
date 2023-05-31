@@ -29,7 +29,7 @@ where
     pub fn instantiate(
         &self,
         deps: DepsMut,
-        _env: Env,
+        env: Env,
         info: MessageInfo,
         msg: InstantiateMsg,
     ) -> Result<Response, ContractError> {
@@ -85,6 +85,7 @@ where
             explicit_content: msg.collection_info.explicit_content,
             start_trading_time: msg.collection_info.start_trading_time,
             royalty_info,
+            royalty_updated_at: Some(env.block.time),
         };
 
         self.collection_info.save(deps.storage, &collection_info)?;
