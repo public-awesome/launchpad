@@ -46,4 +46,10 @@ pub enum ContractError {
 
     #[error("RoyaltyShareIncreasedTooMuch")]
     RoyaltyShareIncreasedTooMuch {},
+
+    #[error("RoyaltyShareTooHigh")]
+    RoyaltyShareTooHigh {},
+
+    #[error("RoyaltyUpdateTooSoon")]
+    RoyaltyUpdateTooSoon {},
 }

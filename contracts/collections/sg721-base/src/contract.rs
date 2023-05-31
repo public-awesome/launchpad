@@ -159,7 +159,7 @@ where
     pub fn update_collection_info(
         &self,
         deps: DepsMut,
-        _env: Env,
+        env: Env,
         info: MessageInfo,
         collection_msg: UpdateCollectionInfoMsg<RoyaltyInfoResponse>,
     ) -> Result<Response, ContractError> {
@@ -206,8 +206,7 @@ where
             .royalty_info
             .unwrap_or_else(|| current_royalty_info.clone());
 
-        // get the factory from the minter to get
-        // max_royalty, max_royalty_increase_rate, royalty_min_time_duration_secs
+        // get the factory for max_royalty, max_royalty_increase_rate
         let minter_address = self.parent.minter.load(deps.storage)?;
         let minter_config: MinterConfig<T> = deps
             .querier
@@ -221,25 +220,34 @@ where
             .params
             .max_royalty_increase_rate_bps
             .bps_to_decimal();
-        let royalty_min_time_duration = factory_params.params.royalty_min_time_duration_secs;
 
         // reminder: collection_msg.royalty_info is Option<Option<RoyaltyInfoResponse>>
-        collection.royalty_info = if let Some(royalty_info) = new_royalty_info {
-            // update royalty info to equal or less,
-            // update royalty info to greater,
+        collection.royalty_info = if let Some(new_royalty_info_res) = new_royalty_info {
+            // update royalty info if less than current + increase rate, and after min time duration
             // else throw error
-            if let Some(royalty_info_res) = current_royalty_info {
-                // TODO: if royalty_info.share > royalty_info_res.share + factory.royalty_share_increase_rate
-                // TODO: also check against the `royalties_updated_at` timestamp with the current block time
-                if royalty_info.share > royalty_info_res.share {
+            if let Some(curr_royalty_info_res) = current_royalty_info {
+                if new_royalty_info_res.share
+                    > curr_royalty_info_res.share + max_royalty_increase_rate
+                {
                     return Err(ContractError::RoyaltyShareIncreasedTooMuch {});
+                }
+                if collection
+                    .royalty_updated_at
+                    .plus_seconds(factory_params.params.royalty_min_time_duration_secs)
+                    > env.block.time
+                {
+                    return Err(ContractError::RoyaltyUpdateTooSoon {});
                 }
             } else {
                 return Err(ContractError::RoyaltyShareIncreasedTooMuch {});
             }
 
-            // TODO: check against factory.max_royalties
+            if new_royalty_info_res.share > max_royalty {
+                return Err(ContractError::RoyaltyShareTooHigh {});
+            }
 
+            // set new updated_at if successful
+            collection.royalty_updated_at = Some(env.block.time);
             Some(RoyaltyInfo {
                 payment_address: deps.api.addr_validate(&royalty_info.payment_address)?,
                 share: share_validate(royalty_info.share)?,
