@@ -207,16 +207,22 @@ where
             .royalty_info
             .unwrap_or_else(|| current_royalty_info.clone());
 
+        // TODO: get the factory from the minter
+        // TODO: convert bps to percentage if needed
+
         // reminder: collection_msg.royalty_info is Option<Option<RoyaltyInfoResponse>>
         collection.royalty_info = if let Some(royalty_info) = new_royalty_info {
             // update royalty info to equal or less, else throw error
             if let Some(royalty_info_res) = current_royalty_info {
+                // TODO: if royalty_info.share > royalty_info_res.share + factory.royalty_share_increase_rate
                 if royalty_info.share > royalty_info_res.share {
-                    return Err(ContractError::RoyaltyShareIncreased {});
+                    return Err(ContractError::RoyaltyShareIncreasedTooMuch {});
                 }
             } else {
-                return Err(ContractError::RoyaltyShareIncreased {});
+                return Err(ContractError::RoyaltyShareIncreasedTooMuch {});
             }
+
+            // TODO: check against factory.max_royalties
 
             Some(RoyaltyInfo {
                 payment_address: deps.api.addr_validate(&royalty_info.payment_address)?,
