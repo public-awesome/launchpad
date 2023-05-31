@@ -1,21 +1,20 @@
-use cw721_base::state::TokenInfo;
-use cw721_base::MintMsg;
-use url::Url;
-
 use cosmwasm_std::{
     to_binary, Binary, ContractInfoResponse, Decimal, Deps, DepsMut, Empty, Env, Event,
     MessageInfo, StdResult, Timestamp, WasmQuery,
 };
-
 use cw721::{ContractInfoResponse as CW721ContractInfoResponse, Cw721Execute};
+use cw721_base::state::TokenInfo;
+use cw721_base::MintMsg;
 use cw_utils::nonpayable;
 use serde::{de::DeserializeOwned, Serialize};
-
+use sg2::query::{ParamsResponse, Sg2QueryMsg};
+use sg4::{MinterConfig, MinterConfigResponse, QueryMsg as MinterQueryMsg};
 use sg721::{
     CollectionInfo, ExecuteMsg, InstantiateMsg, RoyaltyInfo, RoyaltyInfoResponse,
     UpdateCollectionInfoMsg,
 };
-use sg_std::Response;
+use sg_std::{math::U64Ext, Response};
+use url::Url;
 
 use crate::msg::{CollectionInfoResponse, QueryMsg};
 use crate::{ContractError, Sg721Contract};
@@ -207,12 +206,28 @@ where
             .royalty_info
             .unwrap_or_else(|| current_royalty_info.clone());
 
-        // TODO: get the factory from the minter
-        // TODO: convert bps to percentage if needed
+        // get the factory from the minter to get
+        // max_royalty, max_royalty_increase_rate, royalty_min_time_duration_secs
+        let minter_address = self.parent.minter.load(deps.storage)?;
+        let minter_config: MinterConfig<T> = deps
+            .querier
+            .query_wasm_smart(minter_address.clone(), &MinterQueryMsg::Config {})?;
+        let factory_address = minter_config.factory;
+        let factory_params: ParamsResponse<T> = deps
+            .querier
+            .query_wasm_smart(factory_address, &Sg2QueryMsg::Params {})?;
+        let max_royalty = factory_params.params.max_royalty_bps.bps_to_decimal();
+        let max_royalty_increase_rate = factory_params
+            .params
+            .max_royalty_increase_rate_bps
+            .bps_to_decimal();
+        let royalty_min_time_duration = factory_params.params.royalty_min_time_duration_secs;
 
         // reminder: collection_msg.royalty_info is Option<Option<RoyaltyInfoResponse>>
         collection.royalty_info = if let Some(royalty_info) = new_royalty_info {
-            // update royalty info to equal or less, else throw error
+            // update royalty info to equal or less,
+            // update royalty info to greater,
+            // else throw error
             if let Some(royalty_info_res) = current_royalty_info {
                 // TODO: if royalty_info.share > royalty_info_res.share + factory.royalty_share_increase_rate
                 // TODO: also check against the `royalties_updated_at` timestamp with the current block time
