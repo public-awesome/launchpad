@@ -286,6 +286,7 @@ mod tests {
                 explicit_content: None,
                 start_trading_time: None,
                 royalty_info: None,
+                royalty_updated_at: None,
             },
         };
         instantiate(deps.as_mut(), mock_env(), info.clone(), init_msg).unwrap();
@@ -383,6 +384,7 @@ mod tests {
                 explicit_content: None,
                 start_trading_time: None,
                 royalty_info: None,
+                royalty_updated_at: None,
             },
         };
         instantiate(deps.as_mut(), mock_env(), info.clone(), init_msg).unwrap();

@@ -8,7 +8,7 @@ use cw721_base::MintMsg;
 use cw_utils::nonpayable;
 use serde::{de::DeserializeOwned, Serialize};
 use sg2::query::{ParamsResponse, Sg2QueryMsg};
-use sg4::{MinterConfig, MinterConfigResponse, QueryMsg as MinterQueryMsg};
+use sg4::{MinterConfig, QueryMsg as MinterQueryMsg};
 use sg721::{
     CollectionInfo, ExecuteMsg, InstantiateMsg, RoyaltyInfo, RoyaltyInfoResponse,
     UpdateCollectionInfoMsg,
