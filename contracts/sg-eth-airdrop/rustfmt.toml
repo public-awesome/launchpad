@@ -1,7 +1,7 @@
 # stable
-newline_style = "unix"
-hard_tabs = false
-tab_spaces = 4
+newline_style = "Unix"
+hard_tabs     = false
+tab_spaces    = 4
 
 # unstable... should we require `rustup run nightly cargo fmt` ?
 # or just update the style guide when they are stable?
