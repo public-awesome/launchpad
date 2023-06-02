@@ -116,8 +116,10 @@ mod tests {
         use crate::common_setup::setup_minter::vending_minter::mock_params::mock_create_minter_init_msg;
 
         use super::*;
+        use sg4::MinterConfigResponse;
         use sg721_base::msg::QueryMsg;
-        use vending_minter::msg::{ConfigResponse, QueryMsg as VendingMinterQueryMsg};
+        use vending_minter::msg::QueryMsg as VendingMinterQueryMsg;
+        use vending_minter::state::ConfigExtension as VendingMinterConfigExtension;
 
         #[test]
         fn create_sg721_base_collection() {
@@ -183,11 +185,14 @@ mod tests {
                 .query_wasm_smart(contract, &QueryMsg::Minter {})
                 .unwrap();
             let minter = res.minter;
-            let res: ConfigResponse = app
+            let res: MinterConfigResponse<VendingMinterConfigExtension> = app
                 .wrap()
                 .query_wasm_smart(minter, &VendingMinterQueryMsg::Config {})
                 .unwrap();
-            assert_eq!(res.base_token_uri, base_token_uri.trim().to_string());
+            assert_eq!(
+                res.config.extension.base_token_uri,
+                base_token_uri.trim().to_string()
+            );
 
             // test sanitizing base token uri IPFS -> ipfs
             let base_token_uri = " IPFS://somecidhereipfs ".to_string();
@@ -209,11 +214,14 @@ mod tests {
                 .query_wasm_smart(contract, &QueryMsg::Minter {})
                 .unwrap();
             let minter = res.minter;
-            let res: ConfigResponse = app
+            let res: MinterConfigResponse<VendingMinterConfigExtension> = app
                 .wrap()
                 .query_wasm_smart(minter, &VendingMinterQueryMsg::Config {})
                 .unwrap();
-            assert_eq!(res.base_token_uri, "ipfs://somecidhereipfs");
+            assert_eq!(
+                res.config.extension.base_token_uri,
+                "ipfs://somecidhereipfs"
+            );
 
             // test case sensitive ipfs IPFS://aBcDeF -> ipfs://aBcDeF
             let base_token_uri = "IPFS://aBcDeF".to_string();
@@ -230,11 +238,11 @@ mod tests {
                 .query_wasm_smart(contract, &QueryMsg::Minter {})
                 .unwrap();
             let minter = res.minter;
-            let res: ConfigResponse = app
+            let res: MinterConfigResponse<VendingMinterConfigExtension> = app
                 .wrap()
                 .query_wasm_smart(minter, &VendingMinterQueryMsg::Config {})
                 .unwrap();
-            assert_eq!(res.base_token_uri, "ipfs://aBcDeF");
+            assert_eq!(res.config.extension.base_token_uri, "ipfs://aBcDeF");
         }
     }
 
@@ -277,6 +285,7 @@ mod tests {
             );
             assert!(res.is_err());
         }
+
         #[test]
         fn update_collection_info() {
             // customize params so external_link is None
@@ -284,20 +293,17 @@ mod tests {
             params.info.external_link = None;
             let custom_create_minter_msg =
                 mock_create_minter_init_msg(params.clone(), mock_init_extension(None, None));
-            let (app, contract) = custom_proper_instantiate(custom_create_minter_msg.clone());
+            let (mut app, contract) = custom_proper_instantiate(custom_create_minter_msg.clone());
 
             // default trading start time is start time + default trading start time offset
             let res: CollectionInfoResponse = app
                 .wrap()
-                .query_wasm_smart(contract, &QueryMsg::CollectionInfo {})
+                .query_wasm_smart(contract.clone(), &QueryMsg::CollectionInfo {})
                 .unwrap();
             let default_start_time = mock_init_extension(None, None)
                 .start_time
                 .plus_seconds(mock_params().max_trading_offset_secs);
             assert_eq!(res.start_trading_time, Some(default_start_time));
-
-            // update collection info
-            let (mut app, contract) = custom_proper_instantiate(custom_create_minter_msg);
 
             let creator = Addr::unchecked("creator".to_string());
 
