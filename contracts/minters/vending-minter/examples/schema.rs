@@ -3,12 +3,12 @@ use std::fs::create_dir_all;
 
 use cosmwasm_schema::{export_schema, remove_schemas, schema_for};
 
-use sg4::StatusResponse;
+use sg4::{MinterConfigResponse, StatusResponse};
 use vending_minter::msg::{
-    ConfigResponse, ExecuteMsg, InstantiateMsg, MintCountResponse, MintPriceResponse,
-    MintableNumTokensResponse, QueryMsg, StartTimeResponse,
+    ExecuteMsg, InstantiateMsg, MintCountResponse, MintPriceResponse, MintableNumTokensResponse,
+    QueryMsg, StartTimeResponse,
 };
-use vending_minter::state::Config;
+use vending_minter::state::{Config, ConfigExtension};
 
 fn main() {
     let mut out_dir = current_dir().unwrap();
@@ -20,7 +20,10 @@ fn main() {
     export_schema(&schema_for!(ExecuteMsg), &out_dir);
     export_schema(&schema_for!(QueryMsg), &out_dir);
     export_schema(&schema_for!(Config), &out_dir);
-    export_schema(&schema_for!(ConfigResponse), &out_dir);
+    export_schema(
+        &schema_for!(MinterConfigResponse<ConfigExtension>),
+        &out_dir,
+    );
     export_schema(&schema_for!(MintableNumTokensResponse), &out_dir);
     export_schema(&schema_for!(MintCountResponse), &out_dir);
     export_schema(&schema_for!(StartTimeResponse), &out_dir);

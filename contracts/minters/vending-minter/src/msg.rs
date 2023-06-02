@@ -50,21 +50,6 @@ pub enum QueryMsg {
 }
 
 #[cw_serde]
-pub struct ConfigResponse {
-    pub admin: String,
-    pub base_token_uri: String,
-    pub num_tokens: u32,
-    pub per_address_limit: u32,
-    pub sg721_address: String,
-    pub sg721_code_id: u64,
-    pub start_time: Timestamp,
-    pub mint_price: Coin,
-    pub whitelist: Option<String>,
-    pub factory: String,
-    pub discount_price: Option<Coin>,
-}
-
-#[cw_serde]
 pub struct MintableNumTokensResponse {
     pub count: u32,
 }

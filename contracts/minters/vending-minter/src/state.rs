@@ -14,6 +14,7 @@ pub struct ConfigExtension {
     pub per_address_limit: u32,
     pub discount_price: Option<Coin>,
 }
+
 pub type Config = MinterConfig<ConfigExtension>;
 
 pub const CONFIG: Item<Config> = Item::new("config");

@@ -8,7 +8,7 @@ use cw721_base::MintMsg;
 use cw_utils::nonpayable;
 use serde::{de::DeserializeOwned, Serialize};
 use sg2::query::{ParamsResponse, Sg2QueryMsg};
-use sg4::{MinterConfig, QueryMsg as MinterQueryMsg};
+use sg4::{MinterConfigResponse, QueryMsg as MinterQueryMsg};
 use sg721::{
     CollectionInfo, ExecuteMsg, InstantiateMsg, RoyaltyInfo, RoyaltyInfoResponse,
     UpdateCollectionInfoMsg,
@@ -208,10 +208,10 @@ where
 
         // get the factory for max_royalty, max_royalty_increase_rate
         let minter_address = self.parent.minter.load(deps.storage)?;
-        let minter_config: MinterConfig<T> = deps
+        let minter_config: MinterConfigResponse<T> = deps
             .querier
             .query_wasm_smart(minter_address, &MinterQueryMsg::Config {})?;
-        let factory_address = minter_config.factory;
+        let factory_address = minter_config.config.factory;
         let factory_params: ParamsResponse<T> = deps
             .querier
             .query_wasm_smart(factory_address, &Sg2QueryMsg::Params {})?;
@@ -223,32 +223,37 @@ where
 
         // reminder: collection_msg.royalty_info is Option<Option<RoyaltyInfoResponse>>
         collection.royalty_info = if let Some(new_royalty_info_res) = new_royalty_info {
+            if new_royalty_info_res.share > max_royalty {
+                return Err(ContractError::RoyaltyShareTooHigh {});
+            }
+
             // update royalty info if less than current + increase rate
             // else throw error
+            let mut royalty_changed = false;
             if let Some(curr_royalty_info_res) = current_royalty_info {
                 if new_royalty_info_res.share
                     > curr_royalty_info_res.share + max_royalty_increase_rate
                 {
                     return Err(ContractError::RoyaltyShareIncreasedTooMuch {});
                 }
+                if new_royalty_info_res.share != curr_royalty_info_res.share {
+                    royalty_changed = true;
+                }
             } else {
                 return Err(ContractError::RoyaltyShareIncreasedTooMuch {});
             }
 
+            // if royalty share changed,
             // check if current time is after last royalty update + min duration
+            // royalty_updated_at is always Some because it is set in instantiate
             if let Some(royalty_updated_at) = collection.royalty_updated_at {
-                if royalty_updated_at
-                    .plus_seconds(factory_params.params.royalty_min_time_duration_secs)
-                    > env.block.time
+                if royalty_changed
+                    && royalty_updated_at
+                        .plus_seconds(factory_params.params.royalty_min_time_duration_secs)
+                        > env.block.time
                 {
                     return Err(ContractError::RoyaltyUpdateTooSoon {});
                 }
-            } else {
-                return Err(ContractError::RoyaltyUpdateTooSoon {});
-            }
-
-            if new_royalty_info_res.share > max_royalty {
-                return Err(ContractError::RoyaltyShareTooHigh {});
             }
 
             // set new updated_at if successful
