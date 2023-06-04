@@ -3,7 +3,7 @@ use base_factory::ContractError as BaseContractError;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    ensure_eq, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult, WasmMsg,
+    ensure, ensure_eq, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult, WasmMsg,
 };
 use cw2::set_contract_version;
 use cw_utils::must_pay;
@@ -83,9 +83,10 @@ pub fn execute_create_minter(
         });
     }
 
-    if NATIVE_DENOM != msg.init_msg.mint_price.denom {
-        return Err(ContractError::BaseError(BaseContractError::InvalidDenom {}));
-    }
+    ensure!(
+        params.min_mint_price.denom == msg.init_msg.mint_price.denom,
+        ContractError::DenomMismatch {}
+    );
 
     if params.min_mint_price.amount > msg.init_msg.mint_price.amount {
         return Err(ContractError::InsufficientMintPrice {

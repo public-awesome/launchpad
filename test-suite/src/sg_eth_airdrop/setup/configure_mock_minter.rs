@@ -25,7 +25,7 @@ fn configure_mock_minter(app: &mut StargazeApp, creator: Addr) {
     let factory_code_id = app.store_code(contract_vending_factory());
     println!("factory_code_id: {}", factory_code_id);
 
-    let mut params = mock_params();
+    let mut params = mock_params(None);
     params.code_id = minter_code_id;
 
     let factory_addr = app
@@ -49,5 +49,5 @@ pub fn configure_mock_minter_with_mock_whitelist(app: &mut StargazeApp) {
     let (creator, _) = setup_accounts(app);
     configure_mock_minter(app, creator.clone());
     let whitelist_code_id = app.store_code(mock_whitelist());
-    setup_whitelist_contract(app, &creator, Some(whitelist_code_id));
+    setup_whitelist_contract(app, &creator, Some(whitelist_code_id), None);
 }

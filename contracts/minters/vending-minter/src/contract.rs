@@ -13,8 +13,8 @@ use crate::validation::{check_dynamic_per_address_limit, get_three_percent_of_to
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coin, to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Deps, DepsMut, Empty, Env, Event,
-    MessageInfo, Order, Reply, ReplyOn, StdError, StdResult, Timestamp, Uint128, WasmMsg,
+    coin, coins, to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Deps, DepsMut, Empty, Env,
+    Event, MessageInfo, Order, Reply, ReplyOn, StdError, StdResult, Timestamp, Uint128, WasmMsg,
 };
 use cw2::set_contract_version;
 use cw721_base::Extension;
@@ -27,7 +27,9 @@ use sg2::query::Sg2QueryMsg;
 use sg4::{Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
 use sg_std::math::U64Ext;
-use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME};
+use sg_std::{
+    create_fund_community_pool_msg, StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM,
+};
 use sg_whitelist::msg::{
     ConfigResponse as WhitelistConfigResponse, HasMemberResponse, QueryMsg as WhitelistQueryMsg,
 };
@@ -424,6 +426,13 @@ pub fn execute_set_whitelist(
         return Err(ContractError::WhitelistAlreadyStarted {});
     }
 
+    if wl_config.mint_price.denom != config.mint_price.denom {
+        return Err(ContractError::InvalidDenom {
+            expected: config.mint_price.denom,
+            got: wl_config.mint_price.denom,
+        });
+    }
+
     // Whitelist could be free, while factory minimum is not
     let factory: ParamsResponse = deps
         .querier
@@ -618,8 +627,20 @@ fn _execute_mint(
     } else {
         factory_params.mint_fee_bps.bps_to_decimal()
     };
+
     let network_fee = mint_price.amount * mint_fee;
-    checked_fair_burn(&info, network_fee.u128(), None, &mut res)?;
+
+    // send non-native fees to community pool
+    if mint_price.denom != NATIVE_DENOM {
+        // only send non-zero amounts
+        if !network_fee.is_zero() {
+            let msg =
+                create_fund_community_pool_msg(coins(network_fee.u128(), mint_price.clone().denom));
+            res = res.add_message(msg);
+        }
+    } else {
+        checked_fair_burn(&info, network_fee.u128(), None, &mut res)?;
+    }
 
     let mintable_token_mapping = match token_id {
         Some(token_id) => {
@@ -676,7 +697,7 @@ fn _execute_mint(
         if !amount.is_zero() {
             let msg = BankMsg::Send {
                 to_address: payment_address.unwrap_or(seller).to_string(),
-                amount: vec![coin(amount.u128(), mint_price.denom)],
+                amount: vec![coin(amount.u128(), mint_price.clone().denom)],
             };
             res = res.add_message(msg);
         }
@@ -690,9 +711,15 @@ fn _execute_mint(
         .add_attribute("sender", info.sender)
         .add_attribute("recipient", recipient_addr)
         .add_attribute("token_id", mintable_token_mapping.token_id.to_string())
-        .add_attribute("network_fee", network_fee)
-        .add_attribute("mint_price", mint_price.amount)
-        .add_attribute("seller_amount", seller_amount))
+        .add_attribute(
+            "network_fee",
+            coin(network_fee.u128(), mint_price.clone().denom).to_string(),
+        )
+        .add_attribute("mint_price", mint_price.to_string())
+        .add_attribute(
+            "seller_amount",
+            coin(seller_amount.u128(), mint_price.denom).to_string(),
+        ))
 }
 
 fn random_token_list(
