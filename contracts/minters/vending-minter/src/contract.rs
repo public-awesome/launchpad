@@ -426,6 +426,13 @@ pub fn execute_set_whitelist(
         return Err(ContractError::WhitelistAlreadyStarted {});
     }
 
+    if wl_config.mint_price.denom != config.mint_price.denom {
+        return Err(ContractError::InvalidDenom {
+            expected: config.mint_price.denom,
+            got: wl_config.mint_price.denom,
+        });
+    }
+
     // Whitelist could be free, while factory minimum is not
     let factory: ParamsResponse = deps
         .querier
@@ -625,9 +632,12 @@ fn _execute_mint(
 
     // send non-native fees to community pool
     if mint_price.denom != NATIVE_DENOM {
-        let msg =
-            create_fund_community_pool_msg(coins(network_fee.u128(), mint_price.clone().denom));
-        res = res.add_message(msg);
+        // only send non-zero amounts
+        if !network_fee.is_zero() {
+            let msg =
+                create_fund_community_pool_msg(coins(network_fee.u128(), mint_price.clone().denom));
+            res = res.add_message(msg);
+        }
     } else {
         checked_fair_burn(&info, network_fee.u128(), None, &mut res)?;
     }

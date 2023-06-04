@@ -78,6 +78,7 @@ pub fn vending_minter_per_address_limit(
 pub fn vending_minter_with_ibc_asset(
     num_tokens: u32,
     per_address_limit: u32,
+    denom: &str,
 ) -> MinterTemplateResponse<Accounts> {
     let mut app = custom_mock_app();
     let (creator, buyer) = setup_accounts(&mut app);
@@ -88,7 +89,7 @@ pub fn vending_minter_with_ibc_asset(
         payment_address: None,
         start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
         num_tokens,
-        mint_price: coin(MINT_PRICE, "ibc/asset".to_string()),
+        mint_price: coin(MINT_PRICE, denom),
         per_address_limit,
         whitelist: None,
     };
