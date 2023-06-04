@@ -1,13 +1,17 @@
-use cosmwasm_std::{Deps, Empty, StdError, StdResult};
+use crate::error::ContractError;
+use crate::state::FROZEN_TOKEN_METADATA;
+use cosmwasm_std::{Empty, StdError};
+
+use cosmwasm_std::{Deps, StdResult};
+
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::{DepsMut, Env, Event, MessageInfo};
 use cw2::set_contract_version;
+use sg721::InstantiateMsg;
 use sg721_base::msg::CollectionInfoResponse;
 
 use crate::msg::{EnableUpdatableResponse, FrozenTokenMetadataResponse};
-use crate::state::FROZEN_TOKEN_METADATA;
-use crate::{error::ContractError, state::ENABLE_UPDATABLE};
-use sg721::InstantiateMsg;
+use crate::state::ENABLE_UPDATABLE;
 
 use cw721_base::Extension;
 use cw_utils::nonpayable;
@@ -17,12 +21,10 @@ use sg721_base::Sg721Contract;
 pub type Sg721UpdatableContract<'a> = Sg721Contract<'a, Extension>;
 use sg_std::Response;
 
-use semver::Version;
-
-const COMPATIBLE_MIGRATION_CONTRACT_NAME: &str = "crates.io:sg721-base";
-const EARLIEST_COMPATIBLE_CONTRACT_VERSION: &str = "0.15.1";
 const CONTRACT_NAME: &str = "crates.io:sg721-updatable";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
+pub const EARLIEST_VERSION: &str = "0.16.0";
+pub const TO_VERSION: &str = "3.0.0";
 const ENABLE_UPDATABLE_FEE: u128 = 500_000_000;
 
 pub fn _instantiate(
@@ -151,53 +153,31 @@ pub fn query_frozen_token_metadata(deps: Deps) -> StdResult<FrozenTokenMetadataR
 }
 
 pub fn _migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
-    let current_version = cw2::get_contract_version(deps.storage)?;
-    let mut enable_updatable = true;
-    if ![CONTRACT_NAME, COMPATIBLE_MIGRATION_CONTRACT_NAME]
-        .contains(&current_version.contract.as_str())
-    {
-        return Err(StdError::generic_err("Cannot upgrade to a different contract").into());
-    }
-
-    // when migrating from sg721-base to sg721-updatable
-    // need to pay enable updatable fee before updating token metadata
-    if COMPATIBLE_MIGRATION_CONTRACT_NAME == current_version.contract.as_str() {
-        enable_updatable = false;
-    }
-
-    let version: Version = current_version
-        .version
-        .parse()
-        .map_err(|_| StdError::generic_err("Invalid contract version"))?;
-    let new_version: Version = CONTRACT_VERSION
-        .parse()
-        .map_err(|_| StdError::generic_err("Invalid contract version"))?;
-    let earliest_version: Version = EARLIEST_COMPATIBLE_CONTRACT_VERSION
-        .parse()
-        .map_err(|_| StdError::generic_err("Invalid contract version"))?;
-
-    // current version not launchpad v2
-    if version < earliest_version {
+    // make sure the correct contract is being upgraded, and it's being
+    // upgraded from the correct version.
+    if CONTRACT_VERSION < EARLIEST_VERSION {
         return Err(StdError::generic_err("Cannot upgrade to a previous contract version").into());
     }
-    if version > new_version {
+    if CONTRACT_VERSION > TO_VERSION {
         return Err(StdError::generic_err("Cannot upgrade to a previous contract version").into());
     }
     // if same version return
-    if version == new_version {
+    if CONTRACT_VERSION == TO_VERSION {
         return Ok(Response::new());
     }
 
-    FROZEN_TOKEN_METADATA.save(deps.storage, &false)?;
-    ENABLE_UPDATABLE.save(deps.storage, &enable_updatable)?;
+    // update contract version
+    cw2::set_contract_version(deps.storage, CONTRACT_NAME, TO_VERSION)?;
 
-    // set new contract version
-    set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+    // perform the upgrade
+    cw721_base::upgrades::v0_17::migrate::<Extension, Empty, Empty, Empty>(deps)
+        .map_err(|e| sg721_base::ContractError::MigrationError(e.to_string()))?;
+
     let event = Event::new("migrate")
-        .add_attribute("from_name", current_version.contract)
-        .add_attribute("from_version", current_version.version)
+        .add_attribute("from_name", CONTRACT_VERSION)
+        .add_attribute("from_version", CONTRACT_VERSION)
         .add_attribute("to_name", CONTRACT_NAME)
-        .add_attribute("to_version", CONTRACT_VERSION);
+        .add_attribute("to_version", TO_VERSION);
     Ok(Response::new().add_event(event))
 }
 
@@ -213,7 +193,6 @@ mod tests {
         QuerierResult, QueryRequest, SystemError, SystemResult, WasmQuery,
     };
     use cw721::Cw721Query;
-    use cw721_base::MintMsg;
     use sg721::{CollectionInfo, InstantiateMsg};
     use std::marker::PhantomData;
 
@@ -292,13 +271,12 @@ mod tests {
 
         // Mint token
         let token_id = "Enterprise";
-        let mint_msg = MintMsg {
+        let exec_msg = ExecuteMsg::Mint {
             token_id: token_id.to_string(),
             owner: "john".to_string(),
             token_uri: Some("https://starships.example.com/Starship/Enterprise.json".into()),
             extension: None,
         };
-        let exec_msg = ExecuteMsg::Mint(mint_msg);
         execute(deps.as_mut(), mock_env(), info.clone(), exec_msg).unwrap();
 
         // Update token metadata fails because token id is not found

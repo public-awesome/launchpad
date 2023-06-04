@@ -20,6 +20,9 @@ mod tests {
     use crate::common_setup::setup_minter::vending_minter::mock_params::{
         mock_create_minter, mock_init_extension, mock_params,
     };
+    use cosmwasm_std::Empty;
+    use cw721_base::msg::ExecuteMsg as cw721ExecuteMsg;
+    use cw721_base::Ownership;
 
     const GOVERNANCE: &str = "governance";
     const ADMIN: &str = "admin";
@@ -110,7 +113,6 @@ mod tests {
     }
 
     mod init {
-
         use cw721_base::MinterResponse;
 
         use crate::common_setup::setup_minter::vending_minter::mock_params::mock_create_minter_init_msg;
@@ -182,6 +184,7 @@ mod tests {
                 .query_wasm_smart(contract, &QueryMsg::Minter {})
                 .unwrap();
             let minter = res.minter;
+            let minter = minter.unwrap();
             let res: ConfigResponse = app
                 .wrap()
                 .query_wasm_smart(minter, &VendingMinterQueryMsg::Config {})
@@ -207,7 +210,7 @@ mod tests {
                 .wrap()
                 .query_wasm_smart(contract, &QueryMsg::Minter {})
                 .unwrap();
-            let minter = res.minter;
+            let minter = res.minter.unwrap();
             let res: ConfigResponse = app
                 .wrap()
                 .query_wasm_smart(minter, &VendingMinterQueryMsg::Config {})
@@ -228,7 +231,7 @@ mod tests {
                 .wrap()
                 .query_wasm_smart(contract, &QueryMsg::Minter {})
                 .unwrap();
-            let minter = res.minter;
+            let minter = res.minter.unwrap();
             let res: ConfigResponse = app
                 .wrap()
                 .query_wasm_smart(minter, &VendingMinterQueryMsg::Config {})
@@ -618,6 +621,97 @@ mod tests {
                 )
                 .unwrap();
             assert_eq!(royalty_payout, Uint128::zero());
+        }
+    }
+
+    mod ownership {
+        use cosmwasm_std::Attribute;
+        use cw721_base::MinterResponse;
+
+        use crate::common_setup::setup_minter::vending_minter::mock_params::mock_create_minter_init_msg;
+
+        use super::*;
+        use sg721_base::msg::QueryMsg;
+        use vending_minter::msg::{ConfigResponse, QueryMsg as VendingMinterQueryMsg};
+
+        #[test]
+        fn test_update_ownership() {
+            let base_token_uri = "ipfs://somecidhere".to_string();
+            let init_msg = VendingMinterInitMsgExtension {
+                base_token_uri,
+                ..mock_init_extension(None, None)
+            };
+            let custom_create_minter_msg =
+                mock_create_minter_init_msg(mock_collection_params(), init_msg);
+            let (mut app, contract) = custom_proper_instantiate(custom_create_minter_msg);
+
+            // query minter config to confirm base_token_uri got trimmed
+            let res: MinterResponse = app
+                .wrap()
+                .query_wasm_smart(contract, &QueryMsg::Minter {})
+                .unwrap();
+            let minter = res.minter;
+            let minter = minter.unwrap();
+            let res: ConfigResponse = app
+                .wrap()
+                .query_wasm_smart(minter.clone(), &VendingMinterQueryMsg::Config {})
+                .unwrap();
+            let sg721_address = res.sg721_address;
+
+            let update_ownership_msg: cw721ExecuteMsg<Empty, Empty> =
+                cw721ExecuteMsg::UpdateOwnership(cw_ownable::Action::TransferOwnership {
+                    new_owner: "new_owner".to_string(),
+                    expiry: None,
+                });
+            let res = app.execute_contract(
+                Addr::unchecked(minter),
+                Addr::unchecked(sg721_address.clone()),
+                &update_ownership_msg,
+                &[],
+            );
+            let attribute_owner_response = res.unwrap().events[1].clone().attributes[2].clone();
+            let expected_attribute = Attribute {
+                key: "pending_owner".to_string(),
+                value: "new_owner".to_string(),
+            };
+            assert_eq!(attribute_owner_response, expected_attribute);
+            let res: cw_ownable::Ownership<Addr> = app
+                .wrap()
+                .query_wasm_smart(
+                    sg721_address.clone(),
+                    &sg721_base::msg::QueryMsg::Ownership {},
+                )
+                .unwrap();
+            let pending_owner = res.pending_owner;
+            let expected_pending_owner = Some(Addr::unchecked("new_owner".to_string()));
+            assert_eq!(pending_owner, expected_pending_owner);
+
+            let accept_ownership_msg: cw721ExecuteMsg<Empty, Empty> =
+                cw721ExecuteMsg::UpdateOwnership(cw_ownable::Action::AcceptOwnership {});
+            let res = app.execute_contract(
+                Addr::unchecked("new_owner".to_string()),
+                Addr::unchecked(sg721_address.clone()),
+                &accept_ownership_msg,
+                &[],
+            );
+            let pending_owner_response = res.unwrap().events[1].clone().attributes[2].clone();
+            let expected_pending_owner_response = Attribute {
+                key: "pending_owner".to_string(),
+                value: "none".to_string(),
+            };
+            assert_eq!(pending_owner_response, expected_pending_owner_response);
+
+            let res: cw_ownable::Ownership<Addr> = app
+                .wrap()
+                .query_wasm_smart(sg721_address, &sg721_base::msg::QueryMsg::Ownership {})
+                .unwrap();
+
+            let expected_onwership_response = Ownership {
+                owner: Some(Addr::unchecked("new_owner".to_string())),
+                pending_owner: None,
+                pending_expiry: None,
+            };
+            assert_eq!(res, expected_onwership_response);
         }
     }
 }

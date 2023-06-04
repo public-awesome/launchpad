@@ -11,7 +11,6 @@ where
     T: Serialize + DeserializeOwned + Clone,
 {
     pub parent: Parent<'a, T>,
-
     pub collection_info: Item<'a, CollectionInfo<RoyaltyInfo>>,
 
     /// Instantiate set to false by the minter, then true by creator to freeze collection info

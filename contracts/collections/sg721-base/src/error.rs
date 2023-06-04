@@ -20,6 +20,9 @@ pub enum ContractError {
     #[error("Unauthorized")]
     Unauthorized {},
 
+    #[error("Unauthorized Owner Does Not Match Sender")]
+    UnauthorizedOwner {},
+
     #[error("InvalidCreationFee")]
     InvalidCreationFee {},
 
@@ -46,4 +49,13 @@ pub enum ContractError {
 
     #[error("RoyaltyShareIncreased")]
     RoyaltyShareIncreased {},
+
+    #[error("MinterNotFound")]
+    MinterNotFound {},
+
+    #[error("Ownership Update Error: {error}")]
+    OwnershipUpdateError { error: String },
+
+    #[error("Error while migrating: ({0}) ")]
+    MigrationError(String),
 }

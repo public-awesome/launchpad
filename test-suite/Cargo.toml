@@ -57,6 +57,7 @@ base-factory        = { workspace = true }
 base-minter         = { workspace = true }
 sg721-nt            = { workspace = true }
 sg-controllers      = { workspace = true }
+cw-ownable = "0.5.1"
 
 [dev-dependencies]
 serde           = { workspace = true }

@@ -227,7 +227,7 @@ mod tests {
             .unwrap();
 
         // Verify contract version set properly
-        let version = query_contract_info(&app, splits_addr.clone()).unwrap();
+        let version = query_contract_info(&app.wrap(), splits_addr.clone()).unwrap();
         assert_eq!(
             ContractVersion {
                 contract: "crates.io:sg-splits".to_string(),
