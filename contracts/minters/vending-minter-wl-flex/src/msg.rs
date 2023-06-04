@@ -95,4 +95,5 @@ pub struct MintPriceResponse {
 pub struct MintCountResponse {
     pub address: String,
     pub count: u32,
+    pub whitelist_count: u32,
 }
