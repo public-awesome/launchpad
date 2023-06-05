@@ -89,14 +89,16 @@ pub fn must_not_be_frozen<T>(params: &MinterParams<T>) -> Result<(), ContractErr
 pub fn must_pay_exact_amount<T>(
     params: &MinterParams<T>,
     info: &MessageInfo,
-    accepted_denom: &str
+    accepted_denom: &str,
 ) -> Result<(), ContractError> {
     must_pay(info, accepted_denom)?;
     // `must_pay` checks if the denom is ok and if there is only 1 denom sent so the below is safe
-    ensure!(info.funds[0].amount == params.creation_fee.amount, ContractError::InvalidCreationFeeAmount {});
+    ensure!(
+        info.funds[0].amount == params.creation_fee.amount,
+        ContractError::InvalidCreationFeeAmount {}
+    );
     Ok(())
 }
-
 
 pub fn must_be_allowed_collection(deps: Deps, code_id: u64) -> Result<(), ContractError> {
     let res = query_allowed_collection_code_id(deps, code_id)?;
