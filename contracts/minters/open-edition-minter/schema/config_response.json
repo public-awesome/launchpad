@@ -7,7 +7,6 @@
     "end_time",
     "factory",
     "mint_price",
-    "minted_count",
     "nft_data",
     "per_address_limit",
     "sg721_address",
@@ -26,11 +25,6 @@
     },
     "mint_price": {
       "$ref": "#/definitions/Coin"
-    },
-    "minted_count": {
-      "type": "integer",
-      "format": "uint32",
-      "minimum": 0.0
     },
     "nft_data": {
       "$ref": "#/definitions/NftData"

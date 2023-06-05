@@ -25,7 +25,9 @@ mod tests {
             .instantiate_contract(
                 factory_id,
                 Addr::unchecked(GOVERNANCE),
-                &InstantiateMsg { params: params.clone() },
+                &InstantiateMsg {
+                    params: params.clone(),
+                },
                 &[],
                 "factory",
                 None,
@@ -36,7 +38,7 @@ mod tests {
     }
 
     mod init {
-        use open_edition_factory::msg::{ParamsResponse};
+        use open_edition_factory::msg::ParamsResponse;
         use sg2::query::{AllowedCollectionCodeIdResponse, AllowedCollectionCodeIdsResponse};
 
         use super::*;
@@ -49,17 +51,35 @@ mod tests {
                 .wrap()
                 .query_wasm_smart(factory_contract.0.to_string(), &query_config_msg)
                 .unwrap();
-            assert_eq!(res.params.allowed_sg721_code_ids, params.allowed_sg721_code_ids);
+            assert_eq!(
+                res.params.allowed_sg721_code_ids,
+                params.allowed_sg721_code_ids
+            );
             assert_eq!(res.params.creation_fee, params.creation_fee);
             assert_eq!(res.params.code_id, params.code_id);
             assert_eq!(res.params.frozen, params.frozen);
             assert_eq!(res.params.mint_fee_bps, params.mint_fee_bps);
             assert_eq!(res.params.min_mint_price, params.min_mint_price);
-            assert_eq!(res.params.max_trading_offset_secs, params.max_trading_offset_secs);
-            assert_eq!(res.params.extension.max_per_address_limit, params.extension.max_per_address_limit);
-            assert_eq!(res.params.extension.airdrop_mint_price, params.extension.airdrop_mint_price);
-            assert_eq!(res.params.extension.airdrop_mint_fee_bps, params.extension.airdrop_mint_fee_bps);
-            assert_eq!(res.params.extension.dev_fee_address, params.extension.dev_fee_address);
+            assert_eq!(
+                res.params.max_trading_offset_secs,
+                params.max_trading_offset_secs
+            );
+            assert_eq!(
+                res.params.extension.max_per_address_limit,
+                params.extension.max_per_address_limit
+            );
+            assert_eq!(
+                res.params.extension.airdrop_mint_price,
+                params.extension.airdrop_mint_price
+            );
+            assert_eq!(
+                res.params.extension.airdrop_mint_fee_bps,
+                params.extension.airdrop_mint_fee_bps
+            );
+            assert_eq!(
+                res.params.extension.dev_fee_address,
+                params.extension.dev_fee_address
+            );
         }
 
         #[test]

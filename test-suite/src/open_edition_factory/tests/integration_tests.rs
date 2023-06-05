@@ -2,8 +2,10 @@
 mod tests {
 
     mod init {
-        use open_edition_factory::msg::{OpenEditionUpdateParamsExtension, OpenEditionUpdateParamsMsg, ParamsResponse, SudoMsg};
         use crate::open_edition_factory::tests::common::proper_instantiate;
+        use open_edition_factory::msg::{
+            OpenEditionUpdateParamsExtension, OpenEditionUpdateParamsMsg, ParamsResponse, SudoMsg,
+        };
 
         // Assumption: CreateMinter method is validated at the minter level
 
@@ -52,6 +54,5 @@ mod tests {
             assert!(res.params.frozen);
             assert_eq!(res.params.mint_fee_bps, 2000);
         }
-
     }
 }

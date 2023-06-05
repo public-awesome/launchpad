@@ -52,7 +52,6 @@
         "admin",
         "end_time",
         "nft_data",
-        "nfts_minted",
         "per_address_limit",
         "start_time"
       ],
@@ -65,11 +64,6 @@
         },
         "nft_data": {
           "$ref": "#/definitions/NftData"
-        },
-        "nfts_minted": {
-          "type": "integer",
-          "format": "uint32",
-          "minimum": 0.0
         },
         "payment_address": {
           "anyOf": [

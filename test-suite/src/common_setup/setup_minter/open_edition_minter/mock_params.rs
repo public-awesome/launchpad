@@ -1,13 +1,15 @@
 use cosmwasm_std::{coin, Coin, Timestamp, Uint128};
-use sg2::msg::CollectionParams;
-use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
+use open_edition_factory::types::NftData;
 use open_edition_factory::{
     msg::{OpenEditionMinterCreateMsg, OpenEditionMinterInitMsgExtension},
-    state::{ParamsExtension, OpenEditionMinterParams},
+    state::{OpenEditionMinterParams, ParamsExtension},
 };
-use open_edition_factory::types::{NftData};
+use sg2::msg::CollectionParams;
+use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
-use crate::common_setup::setup_minter::common::constants::{CREATION_FEE, MINT_FEE_FAIR_BURN, DEV_ADDRESS, MIN_MINT_PRICE_OPEN_EDITION};
+use crate::common_setup::setup_minter::common::constants::{
+    CREATION_FEE, DEV_ADDRESS, MINT_FEE_FAIR_BURN, MIN_MINT_PRICE_OPEN_EDITION,
+};
 
 pub fn mock_init_minter_extension(
     start_time: Option<Timestamp>,
@@ -15,7 +17,7 @@ pub fn mock_init_minter_extension(
     per_address_limit_minter: Option<u32>,
     mint_price: Option<Coin>,
     nft_data: NftData,
-    payment_address: Option<String>
+    payment_address: Option<String>,
 ) -> OpenEditionMinterInitMsgExtension {
     OpenEditionMinterInitMsgExtension {
         nft_data,
@@ -34,10 +36,17 @@ pub fn mock_create_minter(
     per_address_limit_minter: Option<u32>,
     default_nft_data: NftData,
     collection_params: CollectionParams,
-    payment_address: Option<String>
+    payment_address: Option<String>,
 ) -> OpenEditionMinterCreateMsg {
     OpenEditionMinterCreateMsg {
-        init_msg: mock_init_minter_extension(start_time, end_time, per_address_limit_minter, mint_price, default_nft_data, payment_address),
+        init_msg: mock_init_minter_extension(
+            start_time,
+            end_time,
+            per_address_limit_minter,
+            mint_price,
+            default_nft_data,
+            payment_address,
+        ),
         collection_params,
     }
 }
@@ -64,8 +73,11 @@ pub fn mock_params_proper() -> OpenEditionMinterParams {
         extension: ParamsExtension {
             max_per_address_limit: 10,
             airdrop_mint_fee_bps: 100,
-            airdrop_mint_price: Coin { denom: NATIVE_DENOM.to_string(), amount: Uint128::new(100_000_000u128) },
-            dev_fee_address: DEV_ADDRESS.to_string()
+            airdrop_mint_price: Coin {
+                denom: NATIVE_DENOM.to_string(),
+                amount: Uint128::new(100_000_000u128),
+            },
+            dev_fee_address: DEV_ADDRESS.to_string(),
         },
     }
 }

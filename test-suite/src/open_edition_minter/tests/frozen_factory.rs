@@ -1,4 +1,4 @@
-use cosmwasm_std::{Coin, coins, Timestamp, Uint128};
+use cosmwasm_std::{coins, Coin, Timestamp, Uint128};
 use cw_multi_test::{BankSudo, Executor, SudoMsg};
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
@@ -14,16 +14,8 @@ use crate::common_setup::templates::open_edition_minter_custom_template;
 
 #[test]
 fn frozen_factory_cannot_create_new_minters() {
-    let vt = open_edition_minter_custom_template(
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None
-    ).unwrap();
+    let vt = open_edition_minter_custom_template(None, None, None, None, None, None, None, None)
+        .unwrap();
     let (mut router, creator, _buyer) = (vt.router, vt.accts.creator, vt.accts.buyer);
     let _minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
     let factory_addr = vt.collection_response_vec[0].factory.clone().unwrap();
@@ -54,13 +46,15 @@ fn frozen_factory_cannot_create_new_minters() {
     let per_address_limit_minter = Some(1);
     let mint_price = Some(Coin {
         denom: NATIVE_DENOM.to_string(),
-        amount: Uint128::new(MIN_MINT_PRICE_OPEN_EDITION)
+        amount: Uint128::new(MIN_MINT_PRICE_OPEN_EDITION),
     });
     let collection_params = mock_collection_params_1(Some(start_time));
     let default_nft_data = NftData {
         nft_data_type: NftMetadataType::OffChainMetadata,
         extension: None,
-        token_uri: Some("ipfs://bafybeiavall5udkxkdtdm4djezoxrmfc6o5fn2ug3ymrlvibvwmwydgrkm/1.jpg".to_string()),
+        token_uri: Some(
+            "ipfs://bafybeiavall5udkxkdtdm4djezoxrmfc6o5fn2ug3ymrlvibvwmwydgrkm/1.jpg".to_string(),
+        ),
     };
     let mut msg = mock_create_minter(
         Some(start_time),
@@ -69,7 +63,7 @@ fn frozen_factory_cannot_create_new_minters() {
         per_address_limit_minter,
         default_nft_data,
         collection_params,
-        None
+        None,
     );
     msg.collection_params.code_id = 3;
     msg.collection_params.info.creator = creator.to_string();
