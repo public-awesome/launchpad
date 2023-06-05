@@ -2,16 +2,16 @@ use super::chain::Chain;
 use cosm_orc::orchestrator::error::ProcessError;
 use cosm_orc::orchestrator::{InstantiateResponse, SigningKey};
 use cosmwasm_std::{Coin, Timestamp, Uint128};
+use open_edition_factory::types::NftData;
+use open_edition_factory::{
+    msg::{InstantiateMsg, OpenEditionMinterInitMsgExtension},
+    state::ParamsExtension,
+};
 use sg2::{
     msg::{CollectionParams, CreateMinterMsg},
     MinterParams,
 };
 use sg721::CollectionInfo;
-use open_edition_factory::{
-    msg::{InstantiateMsg, OpenEditionMinterInitMsgExtension},
-    state::ParamsExtension,
-};
-use open_edition_factory::types::NftData;
 
 // contract names used by cosm-orc to register stored code ids / instantiated addresses:
 #[allow(dead_code)]
@@ -81,7 +81,7 @@ pub fn create_minter_msg(
     start_time: Timestamp,
     end_time: Timestamp,
     start_trading_time: Option<Timestamp>,
-    nft_data: NftData
+    nft_data: NftData,
 ) -> CreateMinterMsg<OpenEditionMinterInitMsgExtension> {
     let denom = &chain.cfg.orc_cfg.chain_cfg.denom;
 
