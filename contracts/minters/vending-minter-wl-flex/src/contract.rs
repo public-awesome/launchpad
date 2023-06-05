@@ -135,7 +135,7 @@ pub fn instantiate(
         factory: factory.clone(),
         collection_code_id: msg.collection_params.code_id,
         extension: ConfigExtension {
-            admin: deps
+            owner: deps
                 .api
                 .addr_validate(&msg.collection_params.info.creator)?,
             payment_address: maybe_addr(deps.api, msg.init_msg.payment_address)?,
@@ -176,7 +176,7 @@ pub fn instantiate(
                 collection_info,
             })?,
             funds: info.funds,
-            admin: Some(config.extension.admin.to_string()),
+            admin: Some(config.extension.owner.to_string()),
             label: format!("SG721-{}", msg.collection_params.name.trim()),
         }
         .into(),
@@ -236,7 +236,7 @@ pub fn execute_update_discount_price(
 ) -> Result<Response, ContractError> {
     nonpayable(&info)?;
     let mut config = CONFIG.load(deps.storage)?;
-    if info.sender != config.extension.admin {
+    if info.sender != config.extension.owner {
         return Err(ContractError::Unauthorized(
             "Sender is not an admin".to_owned(),
         ));
@@ -280,7 +280,7 @@ pub fn execute_remove_discount_price(
 ) -> Result<Response, ContractError> {
     nonpayable(&info)?;
     let mut config = CONFIG.load(deps.storage)?;
-    if info.sender != config.extension.admin {
+    if info.sender != config.extension.owner {
         return Err(ContractError::Unauthorized(
             "Sender is not an admin".to_owned(),
         ));
@@ -383,7 +383,7 @@ pub fn execute_set_whitelist(
 ) -> Result<Response, ContractError> {
     nonpayable(&info)?;
     let mut config = CONFIG.load(deps.storage)?;
-    if config.extension.admin != info.sender {
+    if config.extension.owner != info.sender {
         return Err(ContractError::Unauthorized(
             "Sender is not an admin".to_owned(),
         ));
@@ -519,7 +519,7 @@ pub fn execute_mint_to(
     let action = "mint_to";
 
     // Check only admin
-    if info.sender != config.extension.admin {
+    if info.sender != config.extension.owner {
         return Err(ContractError::Unauthorized(
             "Sender is not an admin".to_owned(),
         ));
@@ -540,7 +540,7 @@ pub fn execute_mint_for(
     let action = "mint_for";
 
     // Check only admin
-    if info.sender != config.extension.admin {
+    if info.sender != config.extension.owner {
         return Err(ContractError::Unauthorized(
             "Sender is not an admin".to_owned(),
         ));
@@ -678,7 +678,7 @@ fn _execute_mint(
     let seller_amount = if !is_admin {
         let amount = mint_price.amount - network_fee;
         let payment_address = config.extension.payment_address;
-        let seller = config.extension.admin;
+        let seller = config.extension.owner;
         // Sending 0 coins fails, so only send if amount is non-zero
         if !amount.is_zero() {
             let msg = BankMsg::Send {
@@ -774,7 +774,7 @@ pub fn execute_update_mint_price(
 ) -> Result<Response, ContractError> {
     nonpayable(&info)?;
     let mut config = CONFIG.load(deps.storage)?;
-    if info.sender != config.extension.admin {
+    if info.sender != config.extension.owner {
         return Err(ContractError::Unauthorized(
             "Sender is not an admin".to_owned(),
         ));
@@ -815,7 +815,7 @@ pub fn execute_update_start_time(
 ) -> Result<Response, ContractError> {
     nonpayable(&info)?;
     let mut config = CONFIG.load(deps.storage)?;
-    if info.sender != config.extension.admin {
+    if info.sender != config.extension.owner {
         return Err(ContractError::Unauthorized(
             "Sender is not an admin".to_owned(),
         ));
@@ -854,7 +854,7 @@ pub fn execute_update_start_trading_time(
     let config = CONFIG.load(deps.storage)?;
     let sg721_contract_addr = SG721_ADDRESS.load(deps.storage)?;
 
-    if info.sender != config.extension.admin {
+    if info.sender != config.extension.owner {
         return Err(ContractError::Unauthorized(
             "Sender is not an admin".to_owned(),
         ));
@@ -908,7 +908,7 @@ pub fn execute_update_per_address_limit(
 ) -> Result<Response, ContractError> {
     nonpayable(&info)?;
     let mut config = CONFIG.load(deps.storage)?;
-    if info.sender != config.extension.admin {
+    if info.sender != config.extension.owner {
         return Err(ContractError::Unauthorized(
             "Sender is not an admin".to_owned(),
         ));
@@ -944,7 +944,7 @@ pub fn execute_burn_remaining(
     nonpayable(&info)?;
     let config = CONFIG.load(deps.storage)?;
     // Check only admin
-    if info.sender != config.extension.admin {
+    if info.sender != config.extension.owner {
         return Err(ContractError::Unauthorized(
             "Sender is not an admin".to_owned(),
         ));
@@ -1078,7 +1078,7 @@ fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
     let sg721_address = SG721_ADDRESS.load(deps.storage)?;
 
     Ok(ConfigResponse {
-        admin: config.extension.admin.to_string(),
+        admin: config.extension.owner.to_string(),
         base_token_uri: config.extension.base_token_uri,
         sg721_address: sg721_address.to_string(),
         sg721_code_id: config.collection_code_id,
