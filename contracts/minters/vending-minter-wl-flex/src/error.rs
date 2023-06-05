@@ -1,4 +1,5 @@
 use cosmwasm_std::{Coin, StdError, Timestamp};
+use cw_ownable::OwnershipError;
 use cw_utils::PaymentError;
 use sg1::FeeError;
 use thiserror::Error;
@@ -16,6 +17,9 @@ pub enum ContractError {
 
     #[error("{0}")]
     Fee(#[from] FeeError),
+
+    #[error("{0}")]
+    Ownership(#[from] OwnershipError),
 
     #[error("Unauthorized: {0}")]
     Unauthorized(String),

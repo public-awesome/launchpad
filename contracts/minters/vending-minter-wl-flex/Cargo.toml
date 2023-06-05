@@ -35,6 +35,7 @@ cw2               = { workspace = true }
 cw721             = { workspace = true }
 cw721-base        = { workspace = true, features = ["library"] }
 cw-storage-plus   = { workspace = true }
+cw-ownable        = { workspace = true }
 cw-utils          = { workspace = true }
 rand_core         = { version = "0.6.4", default-features = false }
 rand_xoshiro      = { version = "0.6.0", default-features = false }

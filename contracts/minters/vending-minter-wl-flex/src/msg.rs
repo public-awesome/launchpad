@@ -1,5 +1,6 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Coin, Timestamp};
+use cw_ownable::{cw_ownable_execute, cw_ownable_query};
 use sg4::StatusResponse;
 use vending_factory::{msg::VendingMinterCreateMsg, state::VendingMinterParams};
 
@@ -9,6 +10,7 @@ pub struct InstantiateMsg {
     pub params: VendingMinterParams,
 }
 
+#[cw_ownable_execute]
 #[cw_serde]
 pub enum ExecuteMsg {
     Mint {},
@@ -40,6 +42,7 @@ pub enum ExecuteMsg {
     RemoveDiscountPrice {},
 }
 
+#[cw_ownable_query]
 #[cw_serde]
 #[derive(QueryResponses)]
 pub enum QueryMsg {
@@ -59,7 +62,6 @@ pub enum QueryMsg {
 
 #[cw_serde]
 pub struct ConfigResponse {
-    pub admin: String,
     pub base_token_uri: String,
     pub num_tokens: u32,
     pub per_address_limit: u32,

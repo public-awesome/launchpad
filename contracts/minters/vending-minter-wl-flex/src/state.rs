@@ -5,7 +5,6 @@ use sg4::{MinterConfig, Status};
 
 #[cw_serde]
 pub struct ConfigExtension {
-    pub owner: Addr,
     pub payment_address: Option<Addr>,
     pub base_token_uri: String,
     pub num_tokens: u32,

@@ -12,11 +12,12 @@ use crate::state::{
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coin, to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Deps, DepsMut, Empty, Env, Event,
-    MessageInfo, Order, Reply, ReplyOn, StdError, StdResult, Timestamp, Uint128, WasmMsg,
+    coin, coins, to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Deps, DepsMut, Empty, Env,
+    Event, MessageInfo, Order, Reply, ReplyOn, StdError, StdResult, Timestamp, Uint128, WasmMsg,
 };
 use cw2::set_contract_version;
 use cw721_base::Extension;
+use cw_ownable::get_ownership;
 use cw_utils::{may_pay, maybe_addr, nonpayable, parse_reply_instantiate_data};
 use rand_core::{RngCore, SeedableRng};
 use rand_xoshiro::Xoshiro128PlusPlus;
@@ -26,7 +27,7 @@ use sg2::query::Sg2QueryMsg;
 use sg4::{Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
 use sg_std::math::U64Ext;
-use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME};
+use sg_std::{create_fund_community_pool_msg, StargazeMsgWrapper, GENESIS_MINT_START_TIME};
 use sg_whitelist_flex::msg::{
     ConfigResponse as WhitelistConfigResponse, HasMemberResponse, Member,
     QueryMsg as WhitelistQueryMsg,
@@ -59,6 +60,11 @@ pub fn instantiate(
     msg: VendingMinterCreateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+
+    let owner = deps
+        .api
+        .addr_validate(&msg.collection_params.info.creator)?;
+    cw_ownable::initialize_owner(deps.storage, deps.api, Some(owner.as_ref()))?;
 
     let factory = info.sender.clone();
 
@@ -135,9 +141,6 @@ pub fn instantiate(
         factory: factory.clone(),
         collection_code_id: msg.collection_params.code_id,
         extension: ConfigExtension {
-            owner: deps
-                .api
-                .addr_validate(&msg.collection_params.info.creator)?,
             payment_address: maybe_addr(deps.api, msg.init_msg.payment_address)?,
             base_token_uri,
             num_tokens: msg.init_msg.num_tokens,
@@ -176,7 +179,9 @@ pub fn instantiate(
                 collection_info,
             })?,
             funds: info.funds,
-            admin: Some(config.extension.owner.to_string()),
+            admin: cw_ownable::get_ownership(deps.storage)?
+                .owner
+                .map(|o| o.to_string()),
             label: format!("SG721-{}", msg.collection_params.name.trim()),
         }
         .into(),
@@ -225,7 +230,19 @@ pub fn execute(
             execute_update_discount_price(deps, env, info, price)
         }
         ExecuteMsg::RemoveDiscountPrice {} => execute_remove_discount_price(deps, info),
+        ExecuteMsg::UpdateOwnership(action) => update_ownership(deps, env, info, action),
     }
+}
+
+/// Wraps around cw_ownable::update_ownership to extract the result and wrap it in a Stargaze Response
+fn update_ownership(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    action: cw_ownable::Action,
+) -> Result<Response, ContractError> {
+    let ownership = cw_ownable::update_ownership(deps, &env.block, &info.sender, action)?;
+    Ok(Response::new().add_attributes(ownership.into_attributes()))
 }
 
 pub fn execute_update_discount_price(
@@ -235,12 +252,10 @@ pub fn execute_update_discount_price(
     price: u128,
 ) -> Result<Response, ContractError> {
     nonpayable(&info)?;
+    cw_ownable::assert_owner(deps.storage, &info.sender)?;
+
     let mut config = CONFIG.load(deps.storage)?;
-    if info.sender != config.extension.owner {
-        return Err(ContractError::Unauthorized(
-            "Sender is not an admin".to_owned(),
-        ));
-    }
+
     if env.block.time < config.extension.start_time {
         return Err(ContractError::BeforeMintStartTime {});
     }
@@ -279,12 +294,9 @@ pub fn execute_remove_discount_price(
     info: MessageInfo,
 ) -> Result<Response, ContractError> {
     nonpayable(&info)?;
+    cw_ownable::assert_owner(deps.storage, &info.sender)?;
+
     let mut config = CONFIG.load(deps.storage)?;
-    if info.sender != config.extension.owner {
-        return Err(ContractError::Unauthorized(
-            "Sender is not an admin".to_owned(),
-        ));
-    }
     config.extension.discount_price = None;
     CONFIG.save(deps.storage, &config)?;
 
@@ -382,12 +394,9 @@ pub fn execute_set_whitelist(
     whitelist: &str,
 ) -> Result<Response, ContractError> {
     nonpayable(&info)?;
+    cw_ownable::assert_owner(deps.storage, &info.sender)?;
+
     let mut config = CONFIG.load(deps.storage)?;
-    if config.extension.owner != info.sender {
-        return Err(ContractError::Unauthorized(
-            "Sender is not an admin".to_owned(),
-        ));
-    };
 
     if env.block.time >= config.extension.start_time {
         return Err(ContractError::AlreadyStarted {});
@@ -515,15 +524,9 @@ pub fn execute_mint_to(
     recipient: String,
 ) -> Result<Response, ContractError> {
     let recipient = deps.api.addr_validate(&recipient)?;
-    let config = CONFIG.load(deps.storage)?;
     let action = "mint_to";
 
-    // Check only admin
-    if info.sender != config.extension.owner {
-        return Err(ContractError::Unauthorized(
-            "Sender is not an admin".to_owned(),
-        ));
-    }
+    cw_ownable::assert_owner(deps.storage, &info.sender)?;
 
     _execute_mint(deps, env, info, action, true, Some(recipient), None, true)
 }
@@ -535,16 +538,10 @@ pub fn execute_mint_for(
     token_id: u32,
     recipient: String,
 ) -> Result<Response, ContractError> {
-    let recipient = deps.api.addr_validate(&recipient)?;
-    let config = CONFIG.load(deps.storage)?;
-    let action = "mint_for";
+    cw_ownable::assert_owner(deps.storage, &info.sender)?;
 
-    // Check only admin
-    if info.sender != config.extension.owner {
-        return Err(ContractError::Unauthorized(
-            "Sender is not an admin".to_owned(),
-        ));
-    }
+    let recipient = deps.api.addr_validate(&recipient)?;
+    let action = "mint_for";
 
     _execute_mint(
         deps,
@@ -678,14 +675,21 @@ fn _execute_mint(
     let seller_amount = if !is_admin {
         let amount = mint_price.amount - network_fee;
         let payment_address = config.extension.payment_address;
-        let seller = config.extension.owner;
+        let seller = cw_ownable::get_ownership(deps.storage)?.owner;
         // Sending 0 coins fails, so only send if amount is non-zero
         if !amount.is_zero() {
-            let msg = BankMsg::Send {
-                to_address: payment_address.unwrap_or(seller).to_string(),
-                amount: vec![coin(amount.u128(), mint_price.denom)],
-            };
-            res = res.add_message(msg);
+            let payment = coins(amount.u128(), mint_price.denom);
+            if seller.is_none() && payment_address.is_none() {
+                res = res.add_message(create_fund_community_pool_msg(payment));
+            } else {
+                let msg = BankMsg::Send {
+                    to_address: payment_address
+                        .unwrap_or_else(|| seller.unwrap())
+                        .to_string(),
+                    amount: payment,
+                };
+                res = res.add_message(msg);
+            }
         }
         amount
     } else {
@@ -773,12 +777,9 @@ pub fn execute_update_mint_price(
     price: u128,
 ) -> Result<Response, ContractError> {
     nonpayable(&info)?;
+    cw_ownable::assert_owner(deps.storage, &info.sender)?;
+
     let mut config = CONFIG.load(deps.storage)?;
-    if info.sender != config.extension.owner {
-        return Err(ContractError::Unauthorized(
-            "Sender is not an admin".to_owned(),
-        ));
-    }
     // If current time is after the stored start time, only allow lowering price
     if env.block.time >= config.extension.start_time && price >= config.mint_price.amount.u128() {
         return Err(ContractError::UpdatedMintPriceTooHigh {
@@ -814,12 +815,9 @@ pub fn execute_update_start_time(
     start_time: Timestamp,
 ) -> Result<Response, ContractError> {
     nonpayable(&info)?;
+    cw_ownable::assert_owner(deps.storage, &info.sender)?;
+
     let mut config = CONFIG.load(deps.storage)?;
-    if info.sender != config.extension.owner {
-        return Err(ContractError::Unauthorized(
-            "Sender is not an admin".to_owned(),
-        ));
-    }
     // If current time is after the stored start time return error
     if env.block.time >= config.extension.start_time {
         return Err(ContractError::AlreadyStarted {});
@@ -851,14 +849,10 @@ pub fn execute_update_start_trading_time(
     start_time: Option<Timestamp>,
 ) -> Result<Response, ContractError> {
     nonpayable(&info)?;
+    cw_ownable::assert_owner(deps.storage, &info.sender)?;
+
     let config = CONFIG.load(deps.storage)?;
     let sg721_contract_addr = SG721_ADDRESS.load(deps.storage)?;
-
-    if info.sender != config.extension.owner {
-        return Err(ContractError::Unauthorized(
-            "Sender is not an admin".to_owned(),
-        ));
-    }
 
     // add custom rules here
     let factory_params: ParamsResponse = deps
@@ -907,12 +901,9 @@ pub fn execute_update_per_address_limit(
     per_address_limit: u32,
 ) -> Result<Response, ContractError> {
     nonpayable(&info)?;
+    cw_ownable::assert_owner(deps.storage, &info.sender)?;
+
     let mut config = CONFIG.load(deps.storage)?;
-    if info.sender != config.extension.owner {
-        return Err(ContractError::Unauthorized(
-            "Sender is not an admin".to_owned(),
-        ));
-    }
 
     let factory: ParamsResponse = deps
         .querier
@@ -942,13 +933,7 @@ pub fn execute_burn_remaining(
     info: MessageInfo,
 ) -> Result<Response, ContractError> {
     nonpayable(&info)?;
-    let config = CONFIG.load(deps.storage)?;
-    // Check only admin
-    if info.sender != config.extension.owner {
-        return Err(ContractError::Unauthorized(
-            "Sender is not an admin".to_owned(),
-        ));
-    }
+    cw_ownable::assert_owner(deps.storage, &info.sender)?;
 
     // check mint not sold out
     let mintable_num_tokens = MINTABLE_NUM_TOKENS.load(deps.storage)?;
@@ -1070,6 +1055,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::MintableNumTokens {} => to_binary(&query_mintable_num_tokens(deps)?),
         QueryMsg::MintPrice {} => to_binary(&query_mint_price(deps)?),
         QueryMsg::MintCount { address } => to_binary(&query_mint_count(deps, address)?),
+        QueryMsg::Ownership {} => to_binary(&get_ownership(deps.storage)?),
     }
 }
 
@@ -1078,7 +1064,6 @@ fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
     let sg721_address = SG721_ADDRESS.load(deps.storage)?;
 
     Ok(ConfigResponse {
-        admin: config.extension.owner.to_string(),
         base_token_uri: config.extension.base_token_uri,
         sg721_address: sg721_address.to_string(),
         sg721_code_id: config.collection_code_id,
