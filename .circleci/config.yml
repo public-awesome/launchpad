@@ -247,7 +247,7 @@ jobs:
 
   contract_open_edition_factory:
     docker:
-      - image: rust:1.64.0
+      - image: rust:1.67.1
     working_directory: ~/project/contracts/factories/open-edition-factory
     steps:
       - checkout:
@@ -257,7 +257,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-open-edition-factory-rust:1.64.0-{{ checksum "~/project/Cargo.lock" }}
+            - cargocache-open-edition-factory-rust:1.67.1-{{ checksum "~/project/Cargo.lock" }}
       - run:
           name: Unit Tests
           environment:
@@ -279,11 +279,11 @@ jobs:
           paths:
             - /usr/local/cargo/registry
             - target
-          key: cargocache-open-edition-factory-rust:1.64.0-{{ checksum "~/project/Cargo.lock" }}
+          key: cargocache-open-edition-factory-rust:1.67.1-{{ checksum "~/project/Cargo.lock" }}
 
   contract_open_edition_minter:
     docker:
-      - image: rust:1.64.0
+      - image: rust:1.67.1
     working_directory: ~/project/contracts/minters/open-edition-minter
     steps:
       - checkout:
@@ -293,7 +293,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-open-edition-minter-rust:1.64.0-{{ checksum "~/project/Cargo.lock" }}
+            - cargocache-open-edition-minter-rust:1.67.1-{{ checksum "~/project/Cargo.lock" }}
       - run:
           name: Unit Tests
           environment:
@@ -315,7 +315,7 @@ jobs:
           paths:
             - /usr/local/cargo/registry
             - target
-          key: cargocache-open-edition-minter-rust:1.64.0-{{ checksum "~/project/Cargo.lock" }}
+          key: cargocache-open-edition-minter-rust:1.67.1-{{ checksum "~/project/Cargo.lock" }}
 
   contract_whitelist:
     docker:
