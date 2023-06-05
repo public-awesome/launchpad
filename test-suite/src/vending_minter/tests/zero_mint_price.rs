@@ -60,7 +60,7 @@ fn zero_mint_price() {
     let sg721_code_id = setup_params.sg721_code_id;
     let minter_admin = setup_params.minter_admin;
 
-    let mut params = mock_params();
+    let mut params = mock_params(None);
     params.code_id = minter_code_id;
     params.min_mint_price = coin(MINT_PRICE, NATIVE_DENOM);
 
@@ -150,7 +150,7 @@ fn zero_wl_mint_price() {
     let sg721_code_id = setup_params.sg721_code_id;
     let minter_admin = setup_params.minter_admin;
 
-    let mut params = mock_params();
+    let mut params = mock_params(None);
     params.code_id = minter_code_id;
     params.min_mint_price = coin(MINT_PRICE, NATIVE_DENOM);
 
@@ -247,7 +247,7 @@ fn zero_wl_mint_errs_with_min_mint_factory() {
     let sg721_code_id = setup_params.sg721_code_id;
     let minter_admin = setup_params.minter_admin;
 
-    let mut params = mock_params();
+    let mut params = mock_params(None);
     params.code_id = minter_code_id;
     params.min_mint_price = coin(min_mint_price, NATIVE_DENOM);
 

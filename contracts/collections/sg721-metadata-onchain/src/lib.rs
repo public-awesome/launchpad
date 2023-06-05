@@ -3,20 +3,25 @@ use cosmwasm_std::Empty;
 pub use sg721_base::ContractError;
 use sg_metadata::Metadata;
 
-// version info for migration info
-const CONTRACT_NAME: &str = "crates.io:sg721-metadata-onchain";
-const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
-
 pub type Sg721MetadataContract<'a> = sg721_base::Sg721Contract<'a, Metadata>;
 pub type InstantiateMsg = sg721::InstantiateMsg;
 pub type ExecuteMsg = sg721::ExecuteMsg<Metadata, Empty>;
 pub type QueryMsg = sg721_base::msg::QueryMsg;
 
+// version info for migration info
+const CONTRACT_NAME: &str = "crates.io:sg721-metadata-onchain";
+const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
+pub const EARLIEST_VERSION: &str = "0.16.0";
+pub const TO_VERSION: &str = "3.0.0";
+
+pub type Extension = Option<Empty>;
+
 #[cfg(not(feature = "library"))]
 pub mod entry {
     use super::*;
 
-    use cosmwasm_std::{entry_point, Binary, Deps, DepsMut, Env, MessageInfo, StdResult};
+    use cosmwasm_std::{entry_point, Binary, Deps, DepsMut, Env, MessageInfo, StdError, StdResult};
+
     use sg721_base::{msg::QueryMsg, ContractError};
     use sg_std::Response;
 
@@ -50,6 +55,36 @@ pub mod entry {
     pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         Sg721MetadataContract::default().query(deps, env, msg)
     }
+
+    #[entry_point]
+    pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
+        // make sure the correct contract is being upgraded, and it's being
+        // upgraded from the correct version.
+        if CONTRACT_VERSION < EARLIEST_VERSION {
+            return Err(
+                StdError::generic_err("Cannot upgrade to a previous contract version").into(),
+            );
+        }
+        if CONTRACT_VERSION > TO_VERSION {
+            return Err(
+                StdError::generic_err("Cannot upgrade to a previous contract version").into(),
+            );
+        }
+        // if same version return
+        if CONTRACT_VERSION == TO_VERSION {
+            return Ok(Response::new());
+        }
+
+        // update contract version
+        cw2::set_contract_version(deps.storage, CONTRACT_NAME, TO_VERSION)?;
+
+        // perform the upgrade
+        let cw17_res = cw721_base::upgrades::v0_17::migrate::<Extension, Empty, Empty, Empty>(deps)
+            .map_err(|e| sg721_base::ContractError::MigrationError(e.to_string()))?;
+        let mut sgz_res = Response::new();
+        sgz_res.attributes = cw17_res.attributes;
+        Ok(sgz_res)
+    }
 }
 
 #[cfg(test)]
@@ -62,7 +97,6 @@ mod tests {
         QuerierResult, QueryRequest, SystemError, SystemResult, WasmQuery,
     };
     use cw721::Cw721Query;
-    use cw721_base::MintMsg;
     use sg721::{CollectionInfo, ExecuteMsg, InstantiateMsg};
     use std::marker::PhantomData;
 
@@ -142,19 +176,20 @@ mod tests {
 
         // mint token
         let token_id = "Enterprise";
-        let mint_msg = MintMsg {
+        let extension = Metadata {
+            description: Some("Spaceship with Warp Drive".into()),
+            name: Some("Starship USS Enterprise".to_string()),
+            ..Metadata::default()
+        };
+        let mint_msg = ExecuteMsg::Mint {
             token_id: token_id.to_string(),
             owner: "john".to_string(),
             token_uri: Some("https://starships.example.com/Starship/Enterprise.json".into()),
-            extension: Metadata {
-                description: Some("Spaceship with Warp Drive".into()),
-                name: Some("Starship USS Enterprise".to_string()),
-                ..Metadata::default()
-            },
+            extension: extension.clone(),
         };
-        let exec_msg = ExecuteMsg::Mint(mint_msg.clone());
+
         contract
-            .execute(deps.as_mut(), mock_env(), info, exec_msg)
+            .execute(deps.as_mut(), mock_env(), info, mint_msg)
             .unwrap();
 
         // check token contains correct metadata
@@ -162,7 +197,10 @@ mod tests {
             .parent
             .nft_info(deps.as_ref(), token_id.into())
             .unwrap();
-        assert_eq!(res.token_uri, mint_msg.token_uri);
-        assert_eq!(res.extension, mint_msg.extension);
+        assert_eq!(
+            res.token_uri,
+            Some("https://starships.example.com/Starship/Enterprise.json".into())
+        );
+        assert_eq!(res.extension, extension);
     }
 }

@@ -50,7 +50,7 @@ cw721           = { workspace = true }
 schemars        = { workspace = true }
 serde           = { workspace = true }
 thiserror       = { workspace = true }
-cw721-base      = { workspace = true }
+cw721-base      = { workspace = true, features = ["library"] }
 sg1             = { workspace = true }
 sg721           = { workspace = true }
 sg721-base      = { workspace = true, features = ["library"] }

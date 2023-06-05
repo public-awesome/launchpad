@@ -16,7 +16,7 @@ mod tests {
         let factory_id = app.store_code(contract_vending_factory());
         let minter_id = 2;
 
-        let mut params = mock_params();
+        let mut params = mock_params(None);
         params.code_id = minter_id;
 
         let factory_contract_addr = app

@@ -8,7 +8,7 @@ use crate::common_setup::{
     contract_boxes::contract_collection_whitelist, setup_accounts_and_block::setup_block_time,
 };
 
-const WHITELIST_AMOUNT: u128 = 66_000_000;
+pub const WHITELIST_AMOUNT: u128 = 66_000_000;
 const ZERO_FEE_WHITELIST: u128 = 0;
 const WL_PER_ADDRESS_LIMIT: u32 = 1;
 
@@ -16,17 +16,22 @@ pub fn setup_whitelist_contract(
     router: &mut StargazeApp,
     creator: &Addr,
     whitelist_code_id: Option<u64>,
+    denom: Option<&str>,
 ) -> Addr {
     let whitelist_code_id = match whitelist_code_id {
         Some(value) => value,
         None => router.store_code(contract_collection_whitelist()),
+    };
+    let denom = match denom {
+        Some(value) => value,
+        None => NATIVE_DENOM,
     };
 
     let msg = WhitelistInstantiateMsg {
         members: vec![],
         start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME + 100),
         end_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10000000),
-        mint_price: coin(WHITELIST_AMOUNT, NATIVE_DENOM),
+        mint_price: coin(WHITELIST_AMOUNT, denom),
         per_address_limit: WL_PER_ADDRESS_LIMIT,
         member_limit: 1000,
         admins: vec![creator.to_string()],
@@ -82,7 +87,7 @@ pub fn configure_collection_whitelist(
     buyer: Addr,
     minter_addr: Addr,
 ) -> Addr {
-    let whitelist_addr = setup_whitelist_contract(router, &creator, None);
+    let whitelist_addr = setup_whitelist_contract(router, &creator, None, None);
     const AFTER_GENESIS_TIME: Timestamp = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 100);
 
     // Set to just before genesis mint start time

@@ -1,10 +1,10 @@
 use cw721_base::state::TokenInfo;
-use cw721_base::MintMsg;
+use cw721_base::Extension;
 use url::Url;
 
 use cosmwasm_std::{
-    to_binary, Binary, ContractInfoResponse, Decimal, Deps, DepsMut, Empty, Env, Event,
-    MessageInfo, StdResult, Timestamp, WasmQuery,
+    to_binary, Addr, Binary, ContractInfoResponse, Decimal, Deps, DepsMut, Empty, Env, Event,
+    MessageInfo, StdError, StdResult, Storage, Timestamp, WasmQuery,
 };
 
 use cw721::{ContractInfoResponse as CW721ContractInfoResponse, Cw721Execute};
@@ -17,8 +17,10 @@ use sg721::{
 };
 use sg_std::Response;
 
-use crate::msg::{CollectionInfoResponse, QueryMsg};
+use crate::msg::{CollectionInfoResponse, NftParams, QueryMsg};
 use crate::{ContractError, Sg721Contract};
+
+use crate::entry::{CONTRACT_NAME, CONTRACT_VERSION, EARLIEST_VERSION, TO_VERSION};
 
 const MAX_DESCRIPTION_LENGTH: u32 = 512;
 
@@ -52,9 +54,7 @@ where
             symbol: msg.symbol,
         };
         self.parent.contract_info.save(deps.storage, &info)?;
-
-        let minter = deps.api.addr_validate(&msg.minter)?;
-        self.parent.minter.save(deps.storage, &minter)?;
+        cw_ownable::initialize_owner(deps.storage, deps.api, Some(&msg.minter))?;
 
         // sg721 instantiation
         if msg.collection_info.description.len() > MAX_DESCRIPTION_LENGTH as usize {
@@ -151,8 +151,34 @@ where
                 self.update_start_trading_time(deps, env, info, start_time)
             }
             ExecuteMsg::FreezeCollectionInfo {} => self.freeze_collection_info(deps, env, info),
-            ExecuteMsg::Mint(msg) => self.mint(deps, env, info, msg),
+            ExecuteMsg::Mint {
+                token_id,
+                token_uri,
+                owner,
+                extension,
+            } => self.mint(
+                deps,
+                env,
+                info,
+                NftParams::NftData {
+                    token_id,
+                    owner,
+                    token_uri,
+                    extension,
+                },
+            ),
             ExecuteMsg::Extension { msg: _ } => todo!(),
+            sg721::ExecuteMsg::UpdateOwnership(msg) => self
+                .parent
+                .execute(
+                    deps,
+                    env,
+                    info,
+                    cw721_base::ExecuteMsg::UpdateOwnership(msg),
+                )
+                .map_err(|e| ContractError::OwnershipUpdateError {
+                    error: e.to_string(),
+                }),
         }
     }
 
@@ -240,10 +266,7 @@ where
         info: MessageInfo,
         start_time: Option<Timestamp>,
     ) -> Result<Response, ContractError> {
-        let minter = self.parent.minter.load(deps.storage)?;
-        if minter != info.sender {
-            return Err(ContractError::Unauthorized {});
-        }
+        assert_minter_owner(deps.storage, &info.sender)?;
 
         let mut collection_info = self.collection_info.load(deps.storage)?;
         collection_info.start_trading_time = start_time;
@@ -275,24 +298,28 @@ where
         deps: DepsMut,
         _env: Env,
         info: MessageInfo,
-        msg: MintMsg<T>,
+        nft_data: NftParams<T>,
     ) -> Result<Response, ContractError> {
-        let minter = self.parent.minter.load(deps.storage)?;
-
-        if info.sender != minter {
-            return Err(ContractError::Unauthorized {});
-        }
+        assert_minter_owner(deps.storage, &info.sender)?;
+        let (token_id, owner, token_uri, extension) = match nft_data {
+            NftParams::NftData {
+                token_id,
+                owner,
+                token_uri,
+                extension,
+            } => (token_id, owner, token_uri, extension),
+        };
 
         // create the token
         let token = TokenInfo {
-            owner: deps.api.addr_validate(&msg.owner)?,
+            owner: deps.api.addr_validate(&owner)?,
             approvals: vec![],
-            token_uri: msg.token_uri.clone(),
-            extension: msg.extension,
+            token_uri: token_uri.clone(),
+            extension,
         };
         self.parent
             .tokens
-            .update(deps.storage, &msg.token_id, |old| match old {
+            .update(deps.storage, &token_id, |old| match old {
                 Some(_) => Err(ContractError::Claimed {}),
                 None => Ok(token),
             })?;
@@ -302,9 +329,9 @@ where
         let mut res = Response::new()
             .add_attribute("action", "mint")
             .add_attribute("minter", info.sender)
-            .add_attribute("owner", msg.owner)
-            .add_attribute("token_id", msg.token_id);
-        if let Some(token_uri) = msg.token_uri {
+            .add_attribute("owner", owner)
+            .add_attribute("token_id", token_id);
+        if let Some(token_uri) = token_uri {
             res = res.add_attribute("token_uri", token_uri);
         }
         Ok(res)
@@ -338,6 +365,36 @@ where
             royalty_info: royalty_info_res,
         })
     }
+
+    pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
+        // make sure the correct contract is being upgraded, and it's being
+        // upgraded from the correct version.
+
+        if CONTRACT_VERSION < EARLIEST_VERSION {
+            return Err(
+                StdError::generic_err("Cannot upgrade to a previous contract version").into(),
+            );
+        }
+        if CONTRACT_VERSION > TO_VERSION {
+            return Err(
+                StdError::generic_err("Cannot upgrade to a previous contract version").into(),
+            );
+        }
+        // if same version return
+        if CONTRACT_VERSION == TO_VERSION {
+            return Ok(Response::new());
+        }
+
+        // update contract version
+        cw2::set_contract_version(deps.storage, CONTRACT_NAME, TO_VERSION)?;
+
+        // perform the upgrade
+        let cw17_res = cw721_base::upgrades::v0_17::migrate::<Extension, Empty, Empty, Empty>(deps)
+            .map_err(|e| ContractError::MigrationError(e.to_string()))?;
+        let mut sgz_res = Response::new();
+        sgz_res.attributes = cw17_res.attributes;
+        Ok(sgz_res)
+    }
 }
 
 pub fn share_validate(share: Decimal) -> Result<Decimal, ContractError> {
@@ -346,4 +403,20 @@ pub fn share_validate(share: Decimal) -> Result<Decimal, ContractError> {
     }
 
     Ok(share)
+}
+
+pub fn get_owner_minter(storage: &mut dyn Storage) -> Result<Addr, ContractError> {
+    let ownership = cw_ownable::get_ownership(storage)?;
+    match ownership.owner {
+        Some(owner_value) => Ok(owner_value),
+        None => Err(ContractError::MinterNotFound {}),
+    }
+}
+
+pub fn assert_minter_owner(storage: &mut dyn Storage, sender: &Addr) -> Result<(), ContractError> {
+    let res = cw_ownable::assert_owner(storage, sender);
+    match res {
+        Ok(_) => Ok(()),
+        Err(_) => Err(ContractError::UnauthorizedOwner {}),
+    }
 }
