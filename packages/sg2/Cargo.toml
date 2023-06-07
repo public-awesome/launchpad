@@ -19,5 +19,4 @@ cw-utils        = { workspace = true }
 schemars        = { workspace = true }
 serde           = { workspace = true }
 sg721           = { workspace = true }
-sg-std          = { workspace = true }
 thiserror       = { workspace = true }

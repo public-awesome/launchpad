@@ -43,12 +43,9 @@
           "code_id",
           "creation_fee",
           "frozen",
-          "max_royalty_bps",
-          "max_royalty_increase_rate_bps",
           "max_trading_offset_secs",
           "min_mint_price",
-          "mint_fee_bps",
-          "royalty_min_time_duration_secs"
+          "mint_fee_bps"
         ],
         "properties": {
           "allowed_sg721_code_ids": {
@@ -81,16 +78,6 @@
           "frozen": {
             "type": "boolean"
           },
-          "max_royalty_bps": {
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 0.0
-          },
-          "max_royalty_increase_rate_bps": {
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 0.0
-          },
           "max_trading_offset_secs": {
             "type": "integer",
             "format": "uint64",
@@ -100,11 +87,6 @@
             "$ref": "#/definitions/Coin"
           },
           "mint_fee_bps": {
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 0.0
-          },
-          "royalty_min_time_duration_secs": {
             "type": "integer",
             "format": "uint64",
             "minimum": 0.0
@@ -169,16 +151,6 @@
             "anyOf": [
               {
                 "$ref": "#/definitions/RoyaltyInfoResponse"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "royalty_updated_at": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/Timestamp"
               },
               {
                 "type": "null"
