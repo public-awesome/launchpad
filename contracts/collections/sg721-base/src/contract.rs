@@ -222,18 +222,11 @@ where
             .bps_to_decimal();
 
         // reminder: collection_msg.royalty_info is Option<Option<RoyaltyInfoResponse>>
-        collection.royalty_info = if let Some(new_royalty_info_res) = new_royalty_info {
-            if new_royalty_info_res.share > max_royalty {
-                return Err(ContractError::RoyaltyShareTooHigh {});
-            }
-
-            // update royalty info if less than current + increase rate
-            // else throw error
-            let mut royalty_changed = false;
-            if let Some(curr_royalty_info_res) = current_royalty_info {
-                if new_royalty_info_res.share
-                    > curr_royalty_info_res.share + max_royalty_increase_rate
-                {
+        collection.royalty_info = if let Some(royalty_info) = new_royalty_info {
+            // update royalty info to equal or less, else throw error
+            if let Some(royalty_info_res) = current_royalty_info {
+                // TODO: if royalty_info.share > royalty_info_res.share + factory.royalty_share_increase_rate
+                if royalty_info.share > royalty_info_res.share {
                     return Err(ContractError::RoyaltyShareIncreasedTooMuch {});
                 }
                 if new_royalty_info_res.share != curr_royalty_info_res.share {
