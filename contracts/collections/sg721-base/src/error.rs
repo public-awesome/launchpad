@@ -47,8 +47,8 @@ pub enum ContractError {
     #[error("CollectionInfoFrozen")]
     CollectionInfoFrozen {},
 
-    #[error("RoyaltyShareIncreased")]
-    RoyaltyShareIncreased {},
+    #[error("Exceeded royalty share increase")]
+    RoyaltyShareIncreasedTooMuch {},
 
     #[error("MinterNotFound")]
     MinterNotFound {},

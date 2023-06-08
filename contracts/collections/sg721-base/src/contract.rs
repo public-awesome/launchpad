@@ -234,10 +234,10 @@ where
             // update royalty info to equal or less, else throw error
             if let Some(royalty_info_res) = current_royalty_info {
                 if royalty_info.share > royalty_info_res.share {
-                    return Err(ContractError::RoyaltyShareIncreased {});
+                    return Err(ContractError::RoyaltyShareIncreasedTooMuch {});
                 }
             } else {
-                return Err(ContractError::RoyaltyShareIncreased {});
+                return Err(ContractError::RoyaltyShareIncreasedTooMuch {});
             }
 
             Some(RoyaltyInfo {
