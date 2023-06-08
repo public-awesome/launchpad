@@ -18,6 +18,7 @@ pub fn mock_collection_params() -> CollectionParams {
             royalty_info: Some(RoyaltyInfoResponse {
                 payment_address: "creator".to_string(),
                 share: Decimal::percent(10),
+                updated_at: Timestamp::from_nanos(0),
             }),
         },
     }
@@ -38,6 +39,7 @@ pub fn mock_collection_params_1(start_trading_time: Option<Timestamp>) -> Collec
             royalty_info: Some(RoyaltyInfoResponse {
                 payment_address: "creator".to_string(),
                 share: Decimal::percent(10),
+                updated_at: Timestamp::from_nanos(0),
             }),
         },
     }
@@ -56,6 +58,7 @@ pub fn mock_curator_payment_address(start_trading_time: Option<Timestamp>) -> Co
             royalty_info: Some(RoyaltyInfoResponse {
                 payment_address: "curator".to_string(),
                 share: Decimal::percent(10),
+                updated_at: Timestamp::from_nanos(0),
             }),
             start_trading_time,
             explicit_content: None,
@@ -78,6 +81,7 @@ pub fn mock_collection_params_high_fee(start_trading_time: Option<Timestamp>) ->
             royalty_info: Some(RoyaltyInfoResponse {
                 payment_address: "creator".to_string(),
                 share: Decimal::percent(100),
+                updated_at: Timestamp::from_nanos(0),
             }),
             start_trading_time,
             explicit_content: None,
@@ -100,6 +104,7 @@ pub fn mock_collection_two(start_trading_time: Option<Timestamp>) -> CollectionP
             royalty_info: Some(RoyaltyInfoResponse {
                 payment_address: "creator".to_string(),
                 share: Decimal::percent(10),
+                updated_at: Timestamp::from_nanos(0),
             }),
             start_trading_time,
             explicit_content: None,

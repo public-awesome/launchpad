@@ -95,6 +95,7 @@ pub struct UpdateCollectionInfoMsg<T> {
 pub struct RoyaltyInfo {
     pub payment_address: Addr,
     pub share: Decimal,
+    pub updated_at: Timestamp,
 }
 
 // allows easy conversion from RoyaltyInfo to RoyaltyInfoResponse
@@ -103,6 +104,7 @@ impl RoyaltyInfo {
         RoyaltyInfoResponse {
             payment_address: self.payment_address.to_string(),
             share: self.share,
+            updated_at: self.updated_at,
         }
     }
 }
@@ -111,6 +113,7 @@ impl RoyaltyInfo {
 pub struct RoyaltyInfoResponse {
     pub payment_address: String,
     pub share: Decimal,
+    pub updated_at: Timestamp,
 }
 
 #[cw_serde]

@@ -31,7 +31,7 @@ where
     pub fn instantiate(
         &self,
         deps: DepsMut,
-        _env: Env,
+        env: Env,
         info: MessageInfo,
         msg: InstantiateMsg,
     ) -> Result<Response, ContractError> {
@@ -71,6 +71,7 @@ where
             Some(royalty_info) => Some(RoyaltyInfo {
                 payment_address: deps.api.addr_validate(&royalty_info.payment_address)?,
                 share: share_validate(royalty_info.share)?,
+                updated_at: env.block.time,
             }),
             None => None,
         };
@@ -185,7 +186,7 @@ where
     pub fn update_collection_info(
         &self,
         deps: DepsMut,
-        _env: Env,
+        env: Env,
         info: MessageInfo,
         collection_msg: UpdateCollectionInfoMsg<RoyaltyInfoResponse>,
     ) -> Result<Response, ContractError> {
@@ -246,6 +247,7 @@ where
             Some(RoyaltyInfo {
                 payment_address: deps.api.addr_validate(&royalty_info.payment_address)?,
                 share: share_validate(royalty_info.share)?,
+                updated_at: env.block.time,
             })
         } else {
             None
@@ -351,6 +353,7 @@ where
             Some(royalty_info) => Some(RoyaltyInfoResponse {
                 payment_address: royalty_info.payment_address.to_string(),
                 share: royalty_info.share,
+                updated_at: royalty_info.updated_at,
             }),
             None => None,
         };

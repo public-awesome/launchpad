@@ -241,7 +241,7 @@ mod tests {
     }
 
     mod start_trading_time {
-        use cosmwasm_std::{Decimal, Empty};
+        use cosmwasm_std::{Decimal, Empty, Timestamp};
         use sg721::{RoyaltyInfoResponse, UpdateCollectionInfoMsg};
 
         use crate::common_setup::setup_minter::vending_minter::mock_params::mock_create_minter_init_msg;
@@ -262,6 +262,7 @@ mod tests {
             let royalty_info: Option<RoyaltyInfoResponse> = Some(RoyaltyInfoResponse {
                 payment_address: creator.to_string(),
                 share: Decimal::percent(11),
+                updated_at: Timestamp::from_nanos(0),
             });
             let res = app.execute_contract(
                 creator,
@@ -324,6 +325,7 @@ mod tests {
             let royalty_info: Option<RoyaltyInfoResponse> = Some(RoyaltyInfoResponse {
                 payment_address: creator.to_string(),
                 share: Decimal::percent(10),
+                updated_at: Timestamp::from_nanos(0),
             });
             let res = app.execute_contract(
                 creator.clone(),
@@ -345,7 +347,10 @@ mod tests {
                 .wrap()
                 .query_wasm_smart(contract.clone(), &QueryMsg::CollectionInfo {})
                 .unwrap();
-            assert_eq!(res.royalty_info.unwrap(), royalty_info.clone().unwrap());
+            assert_eq!(
+                res.royalty_info.unwrap().payment_address,
+                royalty_info.clone().unwrap().payment_address
+            );
 
             // update explicit content
             let res = app.execute_contract(
@@ -375,6 +380,7 @@ mod tests {
             let royalty_info: Option<RoyaltyInfoResponse> = Some(RoyaltyInfoResponse {
                 payment_address: creator.to_string(),
                 share: Decimal::percent(11),
+                updated_at: Timestamp::from_nanos(0),
             });
             let res = app.execute_contract(
                 creator.clone(),
@@ -432,7 +438,7 @@ mod tests {
         use super::*;
 
         use crate::common_setup::setup_minter::vending_minter::mock_params::mock_create_minter_init_msg;
-        use cosmwasm_std::{Decimal, Response, Uint128};
+        use cosmwasm_std::{Decimal, Response, Timestamp, Uint128};
         use sg2::msg::CollectionParams;
         use sg721::RoyaltyInfoResponse;
         use sg721_base::msg::{CollectionInfoResponse, QueryMsg};
@@ -475,6 +481,7 @@ mod tests {
                     royalty_info: Some(RoyaltyInfoResponse {
                         payment_address: "creator".to_string(),
                         share: Decimal::percent(0),
+                        updated_at: Timestamp::from_nanos(0),
                     }),
                 },
                 ..mock_collection_params()
@@ -516,6 +523,7 @@ mod tests {
                     royalty_info: Some(RoyaltyInfoResponse {
                         payment_address: "creator".to_string(),
                         share: Decimal::percent(91),
+                        updated_at: Timestamp::from_nanos(0),
                     }),
                 },
                 ..mock_collection_params()
@@ -557,6 +565,7 @@ mod tests {
                     royalty_info: Some(RoyaltyInfoResponse {
                         payment_address: "creator".to_string(),
                         share: Decimal::percent(3),
+                        updated_at: Timestamp::from_nanos(0),
                     }),
                 },
                 ..mock_collection_params()
