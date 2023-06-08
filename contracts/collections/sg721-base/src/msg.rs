@@ -12,7 +12,7 @@ use cw721_base::msg::QueryMsg as Cw721QueryMsg;
 use cw_ownable::cw_ownable_execute;
 use cw_ownable::cw_ownable_query;
 use cw_utils::Expiration;
-use sg721::RoyaltyInfoResponse;
+use sg721::RoyaltyInfo;
 use sg_std::{Response, SubMsg, NATIVE_DENOM};
 
 #[cw_ownable_execute]
@@ -195,7 +195,7 @@ pub struct CollectionInfoResponse {
     pub external_link: Option<String>,
     pub explicit_content: Option<bool>,
     pub start_trading_time: Option<Timestamp>,
-    pub royalty_info: Option<RoyaltyInfoResponse>,
+    pub royalty_info: Option<RoyaltyInfo<String>>,
 }
 
 impl CollectionInfoResponse {

@@ -1,7 +1,8 @@
 use crate::msg::CollectionParams;
+use cosmwasm_std::Addr;
 use cosmwasm_std::Decimal;
 use cosmwasm_std::Timestamp;
-use sg721::{CollectionInfo, RoyaltyInfoResponse};
+use sg721::{CollectionInfo, RoyaltyInfo};
 
 pub fn mock_collection_params() -> CollectionParams {
     CollectionParams {
@@ -15,8 +16,8 @@ pub fn mock_collection_params() -> CollectionParams {
             external_link: Some("https://example.com/external.html".to_string()),
             start_trading_time: None,
             explicit_content: Some(false),
-            royalty_info: Some(RoyaltyInfoResponse {
-                payment_address: "creator".to_string(),
+            royalty_info: Some(RoyaltyInfo {
+                payment_address: Addr::unchecked("creator"),
                 share: Decimal::percent(10),
                 updated_at: Timestamp::from_nanos(0),
             }),
@@ -36,8 +37,8 @@ pub fn mock_collection_params_1(start_trading_time: Option<Timestamp>) -> Collec
             external_link: Some("https://example.com/external.html".to_string()),
             start_trading_time,
             explicit_content: Some(false),
-            royalty_info: Some(RoyaltyInfoResponse {
-                payment_address: "creator".to_string(),
+            royalty_info: Some(RoyaltyInfo {
+                payment_address: Addr::unchecked("creator"),
                 share: Decimal::percent(10),
                 updated_at: Timestamp::from_nanos(0),
             }),
@@ -55,8 +56,8 @@ pub fn mock_curator_payment_address(start_trading_time: Option<Timestamp>) -> Co
             description: String::from("Stargaze Monkeys"),
             image: "https://example.com/image.png".to_string(),
             external_link: Some("https://example.com/external.html".to_string()),
-            royalty_info: Some(RoyaltyInfoResponse {
-                payment_address: "curator".to_string(),
+            royalty_info: Some(RoyaltyInfo {
+                payment_address: Addr::unchecked("curator"),
                 share: Decimal::percent(10),
                 updated_at: Timestamp::from_nanos(0),
             }),
@@ -78,8 +79,8 @@ pub fn mock_collection_params_high_fee(start_trading_time: Option<Timestamp>) ->
                 "ipfs://bafybeigi3bwpvyvsmnbj46ra4hyffcxdeaj6ntfk5jpic5mx27x6ih2qvq/images/1.png"
                     .to_string(),
             external_link: Some("https://example.com/external.html".to_string()),
-            royalty_info: Some(RoyaltyInfoResponse {
-                payment_address: "creator".to_string(),
+            royalty_info: Some(RoyaltyInfo {
+                payment_address: Addr::unchecked("creator"),
                 share: Decimal::percent(100),
                 updated_at: Timestamp::from_nanos(0),
             }),
@@ -101,8 +102,8 @@ pub fn mock_collection_two(start_trading_time: Option<Timestamp>) -> CollectionP
                 "ipfs://bafybeigi3bwpvyvsmnbj46ra4hyffcxdeaj6ntfk5jpic5mx27x6ih2qvq/images/1.png"
                     .to_string(),
             external_link: Some("https://example.com/external.html".to_string()),
-            royalty_info: Some(RoyaltyInfoResponse {
-                payment_address: "creator".to_string(),
+            royalty_info: Some(RoyaltyInfo {
+                payment_address: Addr::unchecked("creator"),
                 share: Decimal::percent(10),
                 updated_at: Timestamp::from_nanos(0),
             }),

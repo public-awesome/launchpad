@@ -1,6 +1,6 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::Coin;
-use sg721::{CollectionInfo, RoyaltyInfoResponse};
+use cosmwasm_std::{Addr, Coin};
+use sg721::{CollectionInfo, RoyaltyInfo};
 
 #[cw_serde]
 pub struct CreateMinterMsg<T> {
@@ -14,7 +14,7 @@ pub struct CollectionParams {
     pub code_id: u64,
     pub name: String,
     pub symbol: String,
-    pub info: CollectionInfo<RoyaltyInfoResponse>,
+    pub info: CollectionInfo<RoyaltyInfo<Addr>>,
 }
 
 /// Message for params so they can be updated individually by governance

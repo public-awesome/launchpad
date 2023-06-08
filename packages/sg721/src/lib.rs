@@ -1,5 +1,6 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Addr, Binary, Decimal, Timestamp};
+use cosmwasm_std::{Binary, Decimal, Timestamp};
+use cw_address_like::AddressLike;
 use cw_ownable::cw_ownable_execute;
 use cw_utils::Expiration;
 
@@ -63,7 +64,7 @@ pub enum ExecuteMsg<T, E> {
     },
     /// Update specific collection info fields
     UpdateCollectionInfo {
-        collection_info: UpdateCollectionInfoMsg<RoyaltyInfoResponse>,
+        collection_info: UpdateCollectionInfoMsg<RoyaltyInfo<String>>,
     },
     /// Called by the minter to update trading start time
     UpdateStartTradingTime(Option<Timestamp>),
@@ -92,34 +93,34 @@ pub struct UpdateCollectionInfoMsg<T> {
 }
 
 #[cw_serde]
-pub struct RoyaltyInfo {
-    pub payment_address: Addr,
+pub struct RoyaltyInfo<T: AddressLike> {
+    pub payment_address: T,
     pub share: Decimal,
     pub updated_at: Timestamp,
 }
 
-// allows easy conversion from RoyaltyInfo to RoyaltyInfoResponse
-impl RoyaltyInfo {
-    pub fn to_response(&self) -> RoyaltyInfoResponse {
-        RoyaltyInfoResponse {
-            payment_address: self.payment_address.to_string(),
-            share: self.share,
-            updated_at: self.updated_at,
-        }
-    }
-}
+// // allows easy conversion from RoyaltyInfo to RoyaltyInfoResponse
+// impl RoyaltyInfo {
+//     pub fn to_response(&self) -> RoyaltyInfoResponse {
+//         RoyaltyInfoResponse {
+//             payment_address: self.payment_address.to_string(),
+//             share: self.share,
+//             updated_at: self.updated_at,
+//         }
+//     }
+// }
 
-#[cw_serde]
-pub struct RoyaltyInfoResponse {
-    pub payment_address: String,
-    pub share: Decimal,
-    pub updated_at: Timestamp,
-}
+// #[cw_serde]
+// pub struct RoyaltyInfoResponse {
+//     pub payment_address: String,
+//     pub share: Decimal,
+//     pub updated_at: Timestamp,
+// }
 
 #[cw_serde]
 pub struct InstantiateMsg {
     pub name: String,
     pub symbol: String,
     pub minter: String,
-    pub collection_info: CollectionInfo<RoyaltyInfoResponse>,
+    pub collection_info: CollectionInfo<RoyaltyInfo<String>>,
 }

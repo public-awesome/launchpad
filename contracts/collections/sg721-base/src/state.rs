@@ -1,4 +1,4 @@
-use cosmwasm_std::Empty;
+use cosmwasm_std::{Addr, Empty};
 use cw_storage_plus::Item;
 use serde::{de::DeserializeOwned, Serialize};
 use sg721::{CollectionInfo, RoyaltyInfo};
@@ -11,7 +11,7 @@ where
     T: Serialize + DeserializeOwned + Clone,
 {
     pub parent: Parent<'a, T>,
-    pub collection_info: Item<'a, CollectionInfo<RoyaltyInfo>>,
+    pub collection_info: Item<'a, CollectionInfo<RoyaltyInfo<Addr>>>,
 
     /// Instantiate set to false by the minter, then true by creator to freeze collection info
     pub frozen_collection_info: Item<'a, bool>,

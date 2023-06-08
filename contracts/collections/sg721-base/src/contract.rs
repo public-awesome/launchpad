@@ -11,10 +11,7 @@ use cw721::{ContractInfoResponse as CW721ContractInfoResponse, Cw721Execute};
 use cw_utils::nonpayable;
 use serde::{de::DeserializeOwned, Serialize};
 
-use sg721::{
-    CollectionInfo, ExecuteMsg, InstantiateMsg, RoyaltyInfo, RoyaltyInfoResponse,
-    UpdateCollectionInfoMsg,
-};
+use sg721::{CollectionInfo, ExecuteMsg, InstantiateMsg, RoyaltyInfo, UpdateCollectionInfoMsg};
 use sg_std::Response;
 
 use crate::msg::{CollectionInfoResponse, NftParams, QueryMsg};
@@ -67,7 +64,7 @@ where
             Url::parse(external_link)?;
         }
 
-        let royalty_info: Option<RoyaltyInfo> = match msg.collection_info.royalty_info {
+        let royalty_info: Option<RoyaltyInfo<Addr>> = match msg.collection_info.royalty_info {
             Some(royalty_info) => Some(RoyaltyInfo {
                 payment_address: deps.api.addr_validate(&royalty_info.payment_address)?,
                 share: share_validate(royalty_info.share)?,
@@ -188,7 +185,7 @@ where
         deps: DepsMut,
         env: Env,
         info: MessageInfo,
-        collection_msg: UpdateCollectionInfoMsg<RoyaltyInfoResponse>,
+        collection_msg: UpdateCollectionInfoMsg<RoyaltyInfo<String>>,
     ) -> Result<Response, ContractError> {
         let mut collection = self.collection_info.load(deps.storage)?;
 
