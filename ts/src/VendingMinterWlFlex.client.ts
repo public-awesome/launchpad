@@ -6,7 +6,7 @@
 
 import { CosmWasmClient, SigningCosmWasmClient, ExecuteResult } from "@cosmjs/cosmwasm-stargate";
 import { StdFee } from "@cosmjs/amino";
-import { Decimal, Timestamp, Uint64, Uint128, InstantiateMsg, CreateMinterMsgForVendingMinterInitMsgExtension, CollectionParams, CollectionInfoForRoyaltyInfoResponse, RoyaltyInfoResponse, VendingMinterInitMsgExtension, Coin, MinterParamsForParamsExtension, ParamsExtension, ExecuteMsg, QueryMsg, ConfigResponse, MintCountResponse, MintPriceResponse, MintableNumTokensResponse, StartTimeResponse, StatusResponse, Status } from "./VendingMinterWlFlex.types";
+import { Decimal, Timestamp, Uint64, Uint128, InstantiateMsg, CreateMinterMsgForVendingMinterInitMsgExtension, CollectionParamsForString, CollectionInfoForRoyaltyInfoForString, RoyaltyInfoForString, VendingMinterInitMsgExtension, Coin, MinterParamsForParamsExtension, ParamsExtension, ExecuteMsg, QueryMsg, ConfigResponse, MintCountResponse, MintPriceResponse, MintableNumTokensResponse, StartTimeResponse, StatusResponse, Status } from "./VendingMinterWlFlex.types";
 export interface VendingMinterWlFlexReadOnlyInterface {
   contractAddress: string;
   config: () => Promise<ConfigResponse>;

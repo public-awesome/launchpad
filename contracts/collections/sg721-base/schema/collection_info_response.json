@@ -32,7 +32,7 @@
     "royalty_info": {
       "anyOf": [
         {
-          "$ref": "#/definitions/RoyaltyInfoResponse"
+          "$ref": "#/definitions/RoyaltyInfo_for_String"
         },
         {
           "type": "null"
@@ -56,11 +56,12 @@
       "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
       "type": "string"
     },
-    "RoyaltyInfoResponse": {
+    "RoyaltyInfo_for_String": {
       "type": "object",
       "required": [
         "payment_address",
-        "share"
+        "share",
+        "updated_at"
       ],
       "properties": {
         "payment_address": {
@@ -68,6 +69,9 @@
         },
         "share": {
           "$ref": "#/definitions/Decimal"
+        },
+        "updated_at": {
+          "$ref": "#/definitions/Timestamp"
         }
       },
       "additionalProperties": false

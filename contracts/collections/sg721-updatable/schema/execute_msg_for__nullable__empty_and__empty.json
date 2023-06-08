@@ -258,7 +258,7 @@
           ],
           "properties": {
             "collection_info": {
-              "$ref": "#/definitions/UpdateCollectionInfoMsg_for_RoyaltyInfoResponse"
+              "$ref": "#/definitions/UpdateCollectionInfoMsg_for_RoyaltyInfo_for_String"
             }
           },
           "additionalProperties": false
@@ -425,11 +425,12 @@
         }
       ]
     },
-    "RoyaltyInfoResponse": {
+    "RoyaltyInfo_for_String": {
       "type": "object",
       "required": [
         "payment_address",
-        "share"
+        "share",
+        "updated_at"
       ],
       "properties": {
         "payment_address": {
@@ -437,6 +438,9 @@
         },
         "share": {
           "$ref": "#/definitions/Decimal"
+        },
+        "updated_at": {
+          "$ref": "#/definitions/Timestamp"
         }
       },
       "additionalProperties": false
@@ -453,7 +457,7 @@
       "description": "A thin wrapper around u64 that is using strings for JSON encoding/decoding, such that the full u64 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u64` to get the value out:\n\n``` # use cosmwasm_std::Uint64; let a = Uint64::from(42u64); assert_eq!(a.u64(), 42);\n\nlet b = Uint64::from(70u32); assert_eq!(b.u64(), 70); ```",
       "type": "string"
     },
-    "UpdateCollectionInfoMsg_for_RoyaltyInfoResponse": {
+    "UpdateCollectionInfoMsg_for_RoyaltyInfo_for_String": {
       "type": "object",
       "properties": {
         "description": {
@@ -485,7 +489,7 @@
             {
               "anyOf": [
                 {
-                  "$ref": "#/definitions/RoyaltyInfoResponse"
+                  "$ref": "#/definitions/RoyaltyInfo_for_String"
                 },
                 {
                   "type": "null"

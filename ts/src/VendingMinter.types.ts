@@ -71,27 +71,28 @@ export interface InstantiateMsg {
   params: MinterParamsForParamsExtension;
 }
 export interface CreateMinterMsgForVendingMinterInitMsgExtension {
-  collection_params: CollectionParams;
+  collection_params: CollectionParamsForString;
   init_msg: VendingMinterInitMsgExtension;
 }
-export interface CollectionParams {
+export interface CollectionParamsForString {
   code_id: number;
-  info: CollectionInfoForRoyaltyInfoResponse;
+  info: CollectionInfoForRoyaltyInfoForString;
   name: string;
   symbol: string;
 }
-export interface CollectionInfoForRoyaltyInfoResponse {
+export interface CollectionInfoForRoyaltyInfoForString {
   creator: string;
   description: string;
   explicit_content?: boolean | null;
   external_link?: string | null;
   image: string;
-  royalty_info?: RoyaltyInfoResponse | null;
+  royalty_info?: RoyaltyInfoForString | null;
   start_trading_time?: Timestamp | null;
 }
-export interface RoyaltyInfoResponse {
+export interface RoyaltyInfoForString {
   payment_address: string;
   share: Decimal;
+  updated_at: Timestamp;
 }
 export interface VendingMinterInitMsgExtension {
   base_token_uri: string;
@@ -108,6 +109,8 @@ export interface MinterParamsForParamsExtension {
   creation_fee: Coin;
   extension: ParamsExtension;
   frozen: boolean;
+  max_royalty_bps: number;
+  max_royalty_increase_rate_bps: number;
   max_trading_offset_secs: number;
   min_mint_price: Coin;
   mint_fee_bps: number;

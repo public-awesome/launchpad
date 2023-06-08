@@ -6,7 +6,7 @@
 
 import { SigningCosmWasmClient, ExecuteResult } from "@cosmjs/cosmwasm-stargate";
 import { StdFee } from "@cosmjs/amino";
-import { Uint128, InstantiateMsg, MinterParamsForNullable_Empty, Coin, Empty, ExecuteMsg, Decimal, Timestamp, Uint64, CreateMinterMsgForNullable_Empty, CollectionParams, CollectionInfoForRoyaltyInfoResponse, RoyaltyInfoResponse } from "./BaseFactory.types";
+import { Uint128, InstantiateMsg, MinterParamsForNullable_Empty, Coin, Empty, ExecuteMsg, Decimal, Timestamp, Uint64, CreateMinterMsgForNullable_Empty, CollectionParamsForString, CollectionInfoForRoyaltyInfoForString, RoyaltyInfoForString } from "./BaseFactory.types";
 export interface BaseFactoryInterface {
   contractAddress: string;
   sender: string;
@@ -14,7 +14,7 @@ export interface BaseFactoryInterface {
     collectionParams,
     initMsg
   }: {
-    collectionParams: CollectionParams;
+    collectionParams: CollectionParamsForString;
     initMsg?: Empty;
   }, fee?: number | StdFee | "auto", memo?: string, funds?: Coin[]) => Promise<ExecuteResult>;
 }
@@ -34,7 +34,7 @@ export class BaseFactoryClient implements BaseFactoryInterface {
     collectionParams,
     initMsg
   }: {
-    collectionParams: CollectionParams;
+    collectionParams: CollectionParamsForString;
     initMsg?: Empty;
   }, fee: number | StdFee | "auto" = "auto", memo?: string, funds?: Coin[]): Promise<ExecuteResult> => {
     return await this.client.execute(this.sender, this.contractAddress, {

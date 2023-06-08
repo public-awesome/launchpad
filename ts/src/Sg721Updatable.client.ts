@@ -5,7 +5,7 @@
 */
 
 import { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
-import { Expiration, Timestamp, Uint64, AllNftInfoResponse, OwnerOfResponse, Approval, NftInfoResponseForEmpty, Empty, AllOperatorsResponse, AllTokensResponse, ApprovalResponse, ApprovalsResponse, Decimal, CollectionInfoResponse, RoyaltyInfoResponse, ContractInfoResponse, ExecuteMsgForNullable_EmptyAndEmpty, Binary, UpdateCollectionInfoMsgForRoyaltyInfoResponse, MintMsgForNullable_Empty, InstantiateMsg, CollectionInfoForRoyaltyInfoResponse, MinterResponse, NftInfoResponse, NumTokensResponse, QueryMsg, TokensResponse } from "./Sg721Updatable.types";
+import { Expiration, Timestamp, Uint64, AllNftInfoResponse, OwnerOfResponse, Approval, NftInfoResponseForEmpty, Empty, AllOperatorsResponse, AllTokensResponse, ApprovalResponse, ApprovalsResponse, Decimal, CollectionInfoResponse, RoyaltyInfoForString, ContractInfoResponse, ExecuteMsgForNullable_EmptyAndEmpty, Binary, UpdateCollectionInfoMsgForRoyaltyInfoForString, InstantiateMsg, CollectionInfoForRoyaltyInfoForString, MinterResponse, NftInfoResponse, NumTokensResponse, QueryMsg, TokensResponse } from "./Sg721Updatable.types";
 export interface Sg721UpdatableReadOnlyInterface {
   contractAddress: string;
   ownerOf: ({
@@ -74,6 +74,7 @@ export interface Sg721UpdatableReadOnlyInterface {
   }) => Promise<AllTokensResponse>;
   minter: () => Promise<MinterResponse>;
   collectionInfo: () => Promise<CollectionInfoResponse>;
+  ownership: () => Promise<OwnershipResponse>;
 }
 export class Sg721UpdatableQueryClient implements Sg721UpdatableReadOnlyInterface {
   client: CosmWasmClient;
@@ -94,6 +95,7 @@ export class Sg721UpdatableQueryClient implements Sg721UpdatableReadOnlyInterfac
     this.allTokens = this.allTokens.bind(this);
     this.minter = this.minter.bind(this);
     this.collectionInfo = this.collectionInfo.bind(this);
+    this.ownership = this.ownership.bind(this);
   }
 
   ownerOf = async ({
@@ -235,6 +237,11 @@ export class Sg721UpdatableQueryClient implements Sg721UpdatableReadOnlyInterfac
   collectionInfo = async (): Promise<CollectionInfoResponse> => {
     return this.client.queryContractSmart(this.contractAddress, {
       collection_info: {}
+    });
+  };
+  ownership = async (): Promise<OwnershipResponse> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      ownership: {}
     });
   };
 }

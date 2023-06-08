@@ -65,6 +65,12 @@ export type Cw721QueryMsg = {
     token_id: string;
   };
 } | {
+  operator: {
+    include_expired?: boolean | null;
+    operator: string;
+    owner: string;
+  };
+} | {
   all_operators: {
     include_expired?: boolean | null;
     limit?: number | null;
@@ -98,26 +104,27 @@ export type Cw721QueryMsg = {
 };
 export type Decimal = string;
 export interface InstantiateMsg {
-  collection_info: CollectionInfoForRoyaltyInfoResponse;
+  collection_info: CollectionInfoForRoyaltyInfoForString;
   minter: string;
   name: string;
   symbol: string;
 }
-export interface CollectionInfoForRoyaltyInfoResponse {
+export interface CollectionInfoForRoyaltyInfoForString {
   creator: string;
   description: string;
   explicit_content?: boolean | null;
   external_link?: string | null;
   image: string;
-  royalty_info?: RoyaltyInfoResponse | null;
+  royalty_info?: RoyaltyInfoForString | null;
   start_trading_time?: Timestamp | null;
 }
-export interface RoyaltyInfoResponse {
+export interface RoyaltyInfoForString {
   payment_address: string;
   share: Decimal;
+  updated_at: Timestamp;
 }
 export interface MinterResponse {
-  minter: string;
+  minter?: string | null;
 }
 export interface NftInfoResponse {
   extension: Empty;

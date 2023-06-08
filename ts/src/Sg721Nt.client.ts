@@ -4,4 +4,4 @@
 * and run the @cosmwasm/ts-codegen generate command to regenerate this file.
 */
 
-import { Expiration, Timestamp, Uint64, AllNftInfoResponse, OwnerOfResponse, Approval, NftInfoResponseForEmpty, Empty, AllOperatorsResponse, AllTokensResponse, ApprovalResponse, ApprovalsResponse, ContractInfoResponse, Cw721QueryMsg, Decimal, InstantiateMsg, CollectionInfoForRoyaltyInfoResponse, RoyaltyInfoResponse, MinterResponse, NftInfoResponse, NumTokensResponse, OperatorsResponse, TokensResponse } from "./Sg721Nt.types";
+import { Expiration, Timestamp, Uint64, AllNftInfoResponse, OwnerOfResponse, Approval, NftInfoResponseForEmpty, Empty, AllOperatorsResponse, AllTokensResponse, ApprovalResponse, ApprovalsResponse, ContractInfoResponse, Cw721QueryMsg, Decimal, InstantiateMsg, CollectionInfoForRoyaltyInfoForString, RoyaltyInfoForString, MinterResponse, NftInfoResponse, NumTokensResponse, OperatorsResponse, TokensResponse } from "./Sg721Nt.types";

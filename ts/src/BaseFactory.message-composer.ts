@@ -7,7 +7,7 @@
 import { MsgExecuteContractEncodeObject } from "cosmwasm";
 import { MsgExecuteContract } from "cosmjs-types/cosmwasm/wasm/v1/tx";
 import { toUtf8 } from "@cosmjs/encoding";
-import { Uint128, InstantiateMsg, MinterParamsForNullable_Empty, Coin, Empty, ExecuteMsg, Decimal, Timestamp, Uint64, CreateMinterMsgForNullable_Empty, CollectionParams, CollectionInfoForRoyaltyInfoResponse, RoyaltyInfoResponse } from "./BaseFactory.types";
+import { Uint128, InstantiateMsg, MinterParamsForNullable_Empty, Coin, Empty, ExecuteMsg, Decimal, Timestamp, Uint64, CreateMinterMsgForNullable_Empty, CollectionParamsForString, CollectionInfoForRoyaltyInfoForString, RoyaltyInfoForString } from "./BaseFactory.types";
 export interface BaseFactoryMessage {
   contractAddress: string;
   sender: string;
@@ -15,7 +15,7 @@ export interface BaseFactoryMessage {
     collectionParams,
     initMsg
   }: {
-    collectionParams: CollectionParams;
+    collectionParams: CollectionParamsForString;
     initMsg?: Empty;
   }, funds?: Coin[]) => MsgExecuteContractEncodeObject;
 }
@@ -33,7 +33,7 @@ export class BaseFactoryMessageComposer implements BaseFactoryMessage {
     collectionParams,
     initMsg
   }: {
-    collectionParams: CollectionParams;
+    collectionParams: CollectionParamsForString;
     initMsg?: Empty;
   }, funds?: Coin[]): MsgExecuteContractEncodeObject => {
     return {

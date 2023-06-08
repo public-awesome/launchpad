@@ -14,6 +14,8 @@ export interface MinterParamsForNullable_Empty {
   creation_fee: Coin;
   extension?: Empty | null;
   frozen: boolean;
+  max_royalty_bps: number;
+  max_royalty_increase_rate_bps: number;
   max_trading_offset_secs: number;
   min_mint_price: Coin;
   mint_fee_bps: number;
@@ -33,25 +35,26 @@ export type Decimal = string;
 export type Timestamp = Uint64;
 export type Uint64 = string;
 export interface CreateMinterMsgForNullable_Empty {
-  collection_params: CollectionParams;
+  collection_params: CollectionParamsForString;
   init_msg?: Empty | null;
 }
-export interface CollectionParams {
+export interface CollectionParamsForString {
   code_id: number;
-  info: CollectionInfoForRoyaltyInfoResponse;
+  info: CollectionInfoForRoyaltyInfoForString;
   name: string;
   symbol: string;
 }
-export interface CollectionInfoForRoyaltyInfoResponse {
+export interface CollectionInfoForRoyaltyInfoForString {
   creator: string;
   description: string;
   explicit_content?: boolean | null;
   external_link?: string | null;
   image: string;
-  royalty_info?: RoyaltyInfoResponse | null;
+  royalty_info?: RoyaltyInfoForString | null;
   start_trading_time?: Timestamp | null;
 }
-export interface RoyaltyInfoResponse {
+export interface RoyaltyInfoForString {
   payment_address: string;
   share: Decimal;
+  updated_at: Timestamp;
 }

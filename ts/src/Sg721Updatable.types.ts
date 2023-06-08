@@ -51,12 +51,13 @@ export interface CollectionInfoResponse {
   explicit_content?: boolean | null;
   external_link?: string | null;
   image: string;
-  royalty_info?: RoyaltyInfoResponse | null;
+  royalty_info?: RoyaltyInfoForString | null;
   start_trading_time?: Timestamp | null;
 }
-export interface RoyaltyInfoResponse {
+export interface RoyaltyInfoForString {
   payment_address: string;
   share: Decimal;
+  updated_at: Timestamp;
 }
 export interface ContractInfoResponse {
   name: string;
@@ -108,50 +109,49 @@ export type ExecuteMsgForNullable_EmptyAndEmpty = {
   };
 } | {
   update_collection_info: {
-    collection_info: UpdateCollectionInfoMsgForRoyaltyInfoResponse;
+    collection_info: UpdateCollectionInfoMsgForRoyaltyInfoForString;
   };
 } | {
   update_trading_start_time: Timestamp | null;
 } | {
   freeze_collection_info: {};
 } | {
-  mint: MintMsgForNullable_Empty;
+  mint: {
+    extension?: Empty | null;
+    owner: string;
+    token_id: string;
+    token_uri?: string | null;
+  };
 } | {
   extension: {
     msg: Empty;
   };
 };
 export type Binary = string;
-export interface UpdateCollectionInfoMsgForRoyaltyInfoResponse {
+export interface UpdateCollectionInfoMsgForRoyaltyInfoForString {
   description?: string | null;
   explicit_content?: boolean | null;
   external_link?: string | null;
   image?: string | null;
-  royalty_info?: (RoyaltyInfoResponse | null) | null;
-}
-export interface MintMsgForNullable_Empty {
-  extension?: Empty | null;
-  owner: string;
-  token_id: string;
-  token_uri?: string | null;
+  royalty_info?: (RoyaltyInfoForString | null) | null;
 }
 export interface InstantiateMsg {
-  collection_info: CollectionInfoForRoyaltyInfoResponse;
+  collection_info: CollectionInfoForRoyaltyInfoForString;
   minter: string;
   name: string;
   symbol: string;
 }
-export interface CollectionInfoForRoyaltyInfoResponse {
+export interface CollectionInfoForRoyaltyInfoForString {
   creator: string;
   description: string;
   explicit_content?: boolean | null;
   external_link?: string | null;
   image: string;
-  royalty_info?: RoyaltyInfoResponse | null;
+  royalty_info?: RoyaltyInfoForString | null;
   start_trading_time?: Timestamp | null;
 }
 export interface MinterResponse {
-  minter: string;
+  minter?: string | null;
 }
 export interface NftInfoResponse {
   extension: Empty;
@@ -211,6 +211,8 @@ export type QueryMsg = {
   minter: {};
 } | {
   collection_info: {};
+} | {
+  ownership: {};
 };
 export interface TokensResponse {
   tokens: string[];

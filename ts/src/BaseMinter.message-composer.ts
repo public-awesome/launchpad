@@ -7,7 +7,7 @@
 import { MsgExecuteContractEncodeObject } from "cosmwasm";
 import { MsgExecuteContract } from "cosmjs-types/cosmwasm/wasm/v1/tx";
 import { toUtf8 } from "@cosmjs/encoding";
-import { Decimal, Timestamp, Uint64, Uint128, InstantiateMsg, CreateMinterMsgForNullable_Empty, CollectionParams, CollectionInfoForRoyaltyInfoResponse, RoyaltyInfoResponse, Empty, MinterParamsForNullable_Empty, Coin, ExecuteMsg } from "./BaseMinter.types";
+import { Decimal, Timestamp, Uint64, Uint128, InstantiateMsg, CreateMinterMsgForNullable_Empty, CollectionParamsForString, CollectionInfoForRoyaltyInfoForString, RoyaltyInfoForString, Empty, MinterParamsForNullable_Empty, Coin, ExecuteMsg } from "./BaseMinter.types";
 export interface BaseMinterMessage {
   contractAddress: string;
   sender: string;

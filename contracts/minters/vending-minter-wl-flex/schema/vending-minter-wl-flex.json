@@ -35,7 +35,7 @@
           }
         }
       },
-      "CollectionInfo_for_RoyaltyInfoResponse": {
+      "CollectionInfo_for_RoyaltyInfo_for_String": {
         "type": "object",
         "required": [
           "creator",
@@ -67,7 +67,7 @@
           "royalty_info": {
             "anyOf": [
               {
-                "$ref": "#/definitions/RoyaltyInfoResponse"
+                "$ref": "#/definitions/RoyaltyInfo_for_String"
               },
               {
                 "type": "null"
@@ -87,7 +87,7 @@
         },
         "additionalProperties": false
       },
-      "CollectionParams": {
+      "CollectionParams_for_String": {
         "type": "object",
         "required": [
           "code_id",
@@ -103,7 +103,7 @@
             "minimum": 0.0
           },
           "info": {
-            "$ref": "#/definitions/CollectionInfo_for_RoyaltyInfoResponse"
+            "$ref": "#/definitions/CollectionInfo_for_RoyaltyInfo_for_String"
           },
           "name": {
             "type": "string"
@@ -122,7 +122,7 @@
         ],
         "properties": {
           "collection_params": {
-            "$ref": "#/definitions/CollectionParams"
+            "$ref": "#/definitions/CollectionParams_for_String"
           },
           "init_msg": {
             "$ref": "#/definitions/VendingMinterInitMsgExtension"
@@ -143,6 +143,8 @@
           "creation_fee",
           "extension",
           "frozen",
+          "max_royalty_bps",
+          "max_royalty_increase_rate_bps",
           "max_trading_offset_secs",
           "min_mint_price",
           "mint_fee_bps"
@@ -170,6 +172,16 @@
           },
           "frozen": {
             "type": "boolean"
+          },
+          "max_royalty_bps": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          },
+          "max_royalty_increase_rate_bps": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
           },
           "max_trading_offset_secs": {
             "type": "integer",
@@ -222,11 +234,12 @@
         },
         "additionalProperties": false
       },
-      "RoyaltyInfoResponse": {
+      "RoyaltyInfo_for_String": {
         "type": "object",
         "required": [
           "payment_address",
-          "share"
+          "share",
+          "updated_at"
         ],
         "properties": {
           "payment_address": {
@@ -234,6 +247,9 @@
           },
           "share": {
             "$ref": "#/definitions/Decimal"
+          },
+          "updated_at": {
+            "$ref": "#/definitions/Timestamp"
           }
         },
         "additionalProperties": false
@@ -757,13 +773,19 @@
       "type": "object",
       "required": [
         "address",
-        "count"
+        "count",
+        "whitelist_count"
       ],
       "properties": {
         "address": {
           "type": "string"
         },
         "count": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "whitelist_count": {
           "type": "integer",
           "format": "uint32",
           "minimum": 0.0
