@@ -111,7 +111,7 @@ pub fn vending_minter_updatable_code_ids(router: &mut StargazeApp) -> CodeIds {
 pub fn configure_minter(
     app: &mut StargazeApp,
     minter_admin: Addr,
-    collection_params_vec: Vec<CollectionParams>,
+    collection_params_vec: Vec<CollectionParams<String>>,
     minter_instantiate_params_vec: Vec<MinterInstantiateParams>,
     code_ids: CodeIds,
 ) -> Vec<MinterCollectionResponse> {

@@ -1,6 +1,6 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use sg721::{RoyaltyInfoResponse, UpdateCollectionInfoMsg};
+use sg721::{RoyaltyInfo, UpdateCollectionInfoMsg};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -22,7 +22,7 @@ pub enum ExecuteMsg<T> {
     Burn { token_id: String },
     /// Update collection info
     UpdateCollectionInfo {
-        new_collection_info: UpdateCollectionInfoMsg<RoyaltyInfoResponse>,
+        new_collection_info: UpdateCollectionInfoMsg<RoyaltyInfo<String>>,
     },
     /// Freeze collection info from further updates
     FreezeCollectionInfo {},

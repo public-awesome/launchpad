@@ -1,20 +1,21 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Addr, Coin};
+use cosmwasm_std::Coin;
+use cw_address_like::AddressLike;
 use sg721::{CollectionInfo, RoyaltyInfo};
 
 #[cw_serde]
 pub struct CreateMinterMsg<T> {
     pub init_msg: T,
-    pub collection_params: CollectionParams,
+    pub collection_params: CollectionParams<String>,
 }
 
 #[cw_serde]
-pub struct CollectionParams {
+pub struct CollectionParams<T: AddressLike> {
     /// The collection code id
     pub code_id: u64,
     pub name: String,
     pub symbol: String,
-    pub info: CollectionInfo<RoyaltyInfo<Addr>>,
+    pub info: CollectionInfo<RoyaltyInfo<T>>,
 }
 
 /// Message for params so they can be updated individually by governance

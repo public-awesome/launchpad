@@ -20,7 +20,7 @@ pub fn mock_params() -> BaseMinterParams {
     }
 }
 
-pub fn mock_create_minter(collection_params: CollectionParams) -> BaseMinterCreateMsg {
+pub fn mock_create_minter(collection_params: CollectionParams<String>) -> BaseMinterCreateMsg {
     BaseMinterCreateMsg {
         init_msg: None,
         collection_params,

@@ -1,5 +1,5 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Binary, Decimal, Timestamp};
+use cosmwasm_std::{Addr, Binary, Decimal, Timestamp};
 use cw_address_like::AddressLike;
 use cw_ownable::cw_ownable_execute;
 use cw_utils::Expiration;
@@ -99,23 +99,15 @@ pub struct RoyaltyInfo<T: AddressLike> {
     pub updated_at: Timestamp,
 }
 
-// // allows easy conversion from RoyaltyInfo to RoyaltyInfoResponse
-// impl RoyaltyInfo {
-//     pub fn to_response(&self) -> RoyaltyInfoResponse {
-//         RoyaltyInfoResponse {
-//             payment_address: self.payment_address.to_string(),
-//             share: self.share,
-//             updated_at: self.updated_at,
-//         }
-//     }
-// }
-
-// #[cw_serde]
-// pub struct RoyaltyInfoResponse {
-//     pub payment_address: String,
-//     pub share: Decimal,
-//     pub updated_at: Timestamp,
-// }
+impl From<RoyaltyInfo<Addr>> for RoyaltyInfo<String> {
+    fn from(royalty_info: RoyaltyInfo<Addr>) -> Self {
+        RoyaltyInfo {
+            payment_address: royalty_info.payment_address.to_string(),
+            share: royalty_info.share,
+            updated_at: royalty_info.updated_at,
+        }
+    }
+}
 
 #[cw_serde]
 pub struct InstantiateMsg {

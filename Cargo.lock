@@ -3335,6 +3335,7 @@ version = "2.3.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
+ "cw-address-like",
  "cw-storage-plus 1.0.1",
  "cw-utils 1.0.1",
  "schemars",

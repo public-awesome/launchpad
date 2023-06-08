@@ -2,7 +2,8 @@ use cosmwasm_schema::cw_serde;
 use cosmwasm_std::Binary;
 use cosmwasm_std::Timestamp;
 use cw_utils::Expiration;
-use sg721::{RoyaltyInfoResponse, UpdateCollectionInfoMsg};
+use sg721::RoyaltyInfo;
+use sg721::UpdateCollectionInfoMsg;
 use sg721_base::msg::QueryMsg as Sg721QueryMsg;
 use sg721_base::ExecuteMsg as Sg721ExecuteMsg;
 
@@ -47,7 +48,7 @@ pub enum ExecuteMsg<T, E> {
         token_id: String,
     },
     UpdateCollectionInfo {
-        collection_info: UpdateCollectionInfoMsg<RoyaltyInfoResponse>,
+        collection_info: UpdateCollectionInfoMsg<RoyaltyInfo<String>>,
     },
     UpdateTradingStartTime(Option<Timestamp>),
     FreezeCollectionInfo {},

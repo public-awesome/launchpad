@@ -223,8 +223,7 @@ where
         // convert from response to royalty info for storage
         let current_royalty_info = collection
             .royalty_info
-            .as_ref()
-            .map(|royalty_info| royalty_info.to_response());
+            .map(|royalty_info| royalty_info.into());
 
         let new_royalty_info = collection_msg
             .royalty_info
@@ -346,8 +345,8 @@ where
     pub fn query_collection_info(&self, deps: Deps) -> StdResult<CollectionInfoResponse> {
         let info = self.collection_info.load(deps.storage)?;
 
-        let royalty_info_res: Option<RoyaltyInfoResponse> = match info.royalty_info {
-            Some(royalty_info) => Some(RoyaltyInfoResponse {
+        let royalty_info_res: Option<RoyaltyInfo<String>> = match info.royalty_info {
+            Some(royalty_info) => Some(RoyaltyInfo {
                 payment_address: royalty_info.payment_address.to_string(),
                 share: royalty_info.share,
                 updated_at: royalty_info.updated_at,

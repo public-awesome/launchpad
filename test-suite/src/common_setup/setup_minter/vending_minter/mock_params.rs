@@ -28,7 +28,7 @@ pub fn mock_init_extension(
 
 pub fn mock_create_minter(
     splits_addr: Option<String>,
-    collection_params: CollectionParams,
+    collection_params: CollectionParams<String>,
     start_time: Option<Timestamp>,
 ) -> VendingMinterCreateMsg {
     VendingMinterCreateMsg {
@@ -38,7 +38,7 @@ pub fn mock_create_minter(
 }
 
 pub fn mock_create_minter_init_msg(
-    collection_params: CollectionParams,
+    collection_params: CollectionParams<String>,
     init_msg: VendingMinterInitMsgExtension,
 ) -> VendingMinterCreateMsg {
     VendingMinterCreateMsg {

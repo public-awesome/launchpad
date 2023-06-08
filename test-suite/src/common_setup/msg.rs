@@ -9,7 +9,7 @@ pub struct MinterSetupParams<'a> {
     pub router: &'a mut StargazeApp,
     pub minter_admin: Addr,
     pub num_tokens: u32,
-    pub collection_params: CollectionParams,
+    pub collection_params: CollectionParams<String>,
     pub splits_addr: Option<String>,
     pub start_time: Option<Timestamp>,
     pub minter_code_id: u64,

@@ -4,7 +4,7 @@ use cosmwasm_std::Decimal;
 use cosmwasm_std::Timestamp;
 use sg721::{CollectionInfo, RoyaltyInfo};
 
-pub fn mock_collection_params() -> CollectionParams {
+pub fn mock_collection_params() -> CollectionParams<String> {
     CollectionParams {
         code_id: 1,
         name: "Collection Name".to_string(),
@@ -17,7 +17,7 @@ pub fn mock_collection_params() -> CollectionParams {
             start_trading_time: None,
             explicit_content: Some(false),
             royalty_info: Some(RoyaltyInfo {
-                payment_address: Addr::unchecked("creator"),
+                payment_address: "creator".to_string(),
                 share: Decimal::percent(10),
                 updated_at: Timestamp::from_nanos(0),
             }),
@@ -25,7 +25,7 @@ pub fn mock_collection_params() -> CollectionParams {
     }
 }
 
-pub fn mock_collection_params_1(start_trading_time: Option<Timestamp>) -> CollectionParams {
+pub fn mock_collection_params_1(start_trading_time: Option<Timestamp>) -> CollectionParams<String> {
     CollectionParams {
         code_id: 1,
         name: "Collection Name".to_string(),
@@ -38,7 +38,7 @@ pub fn mock_collection_params_1(start_trading_time: Option<Timestamp>) -> Collec
             start_trading_time,
             explicit_content: Some(false),
             royalty_info: Some(RoyaltyInfo {
-                payment_address: Addr::unchecked("creator"),
+                payment_address: "creator".to_string(),
                 share: Decimal::percent(10),
                 updated_at: Timestamp::from_nanos(0),
             }),
@@ -46,7 +46,9 @@ pub fn mock_collection_params_1(start_trading_time: Option<Timestamp>) -> Collec
     }
 }
 
-pub fn mock_curator_payment_address(start_trading_time: Option<Timestamp>) -> CollectionParams {
+pub fn mock_curator_payment_address(
+    start_trading_time: Option<Timestamp>,
+) -> CollectionParams<Addr> {
     CollectionParams {
         code_id: 1,
         name: String::from("Test Coin"),
@@ -67,7 +69,9 @@ pub fn mock_curator_payment_address(start_trading_time: Option<Timestamp>) -> Co
     }
 }
 
-pub fn mock_collection_params_high_fee(start_trading_time: Option<Timestamp>) -> CollectionParams {
+pub fn mock_collection_params_high_fee(
+    start_trading_time: Option<Timestamp>,
+) -> CollectionParams<Addr> {
     CollectionParams {
         code_id: 1,
         name: String::from("Test Coin"),
@@ -90,7 +94,7 @@ pub fn mock_collection_params_high_fee(start_trading_time: Option<Timestamp>) ->
     }
 }
 
-pub fn mock_collection_two(start_trading_time: Option<Timestamp>) -> CollectionParams {
+pub fn mock_collection_two(start_trading_time: Option<Timestamp>) -> CollectionParams<Addr> {
     CollectionParams {
         code_id: 1,
         name: String::from("Test Collection 2"),

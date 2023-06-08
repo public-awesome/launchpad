@@ -242,7 +242,7 @@ mod tests {
 
     mod start_trading_time {
         use cosmwasm_std::{Decimal, Empty, Timestamp};
-        use sg721::{RoyaltyInfoResponse, UpdateCollectionInfoMsg};
+        use sg721::{RoyaltyInfo, UpdateCollectionInfoMsg};
 
         use crate::common_setup::setup_minter::vending_minter::mock_params::mock_create_minter_init_msg;
 
@@ -259,7 +259,7 @@ mod tests {
             let (mut app, contract) = custom_proper_instantiate(custom_create_minter_msg);
             let creator = Addr::unchecked("creator".to_string());
 
-            let royalty_info: Option<RoyaltyInfoResponse> = Some(RoyaltyInfoResponse {
+            let royalty_info: Option<RoyaltyInfo<String>> = Some(RoyaltyInfo {
                 payment_address: creator.to_string(),
                 share: Decimal::percent(11),
                 updated_at: Timestamp::from_nanos(0),
@@ -322,7 +322,7 @@ mod tests {
             assert!(res.is_ok());
 
             // update royalty_info
-            let royalty_info: Option<RoyaltyInfoResponse> = Some(RoyaltyInfoResponse {
+            let royalty_info: Option<RoyaltyInfo<String>> = Some(RoyaltyInfo {
                 payment_address: creator.to_string(),
                 share: Decimal::percent(10),
                 updated_at: Timestamp::from_nanos(0),
@@ -377,7 +377,7 @@ mod tests {
             assert!(res.explicit_content.unwrap());
 
             // try update royalty_info higher
-            let royalty_info: Option<RoyaltyInfoResponse> = Some(RoyaltyInfoResponse {
+            let royalty_info: Option<RoyaltyInfo<String>> = Some(RoyaltyInfo {
                 payment_address: creator.to_string(),
                 share: Decimal::percent(11),
                 updated_at: Timestamp::from_nanos(0),
@@ -440,7 +440,7 @@ mod tests {
         use crate::common_setup::setup_minter::vending_minter::mock_params::mock_create_minter_init_msg;
         use cosmwasm_std::{Decimal, Response, Timestamp, Uint128};
         use sg2::msg::CollectionParams;
-        use sg721::RoyaltyInfoResponse;
+        use sg721::RoyaltyInfo;
         use sg721_base::msg::{CollectionInfoResponse, QueryMsg};
 
         #[test]
@@ -478,7 +478,7 @@ mod tests {
                     external_link: Some("https://example.com/external.html".to_string()),
                     start_trading_time: None,
                     explicit_content: Some(false),
-                    royalty_info: Some(RoyaltyInfoResponse {
+                    royalty_info: Some(RoyaltyInfo {
                         payment_address: "creator".to_string(),
                         share: Decimal::percent(0),
                         updated_at: Timestamp::from_nanos(0),
@@ -520,7 +520,7 @@ mod tests {
                     external_link: Some("https://example.com/external.html".to_string()),
                     start_trading_time: None,
                     explicit_content: Some(false),
-                    royalty_info: Some(RoyaltyInfoResponse {
+                    royalty_info: Some(RoyaltyInfo {
                         payment_address: "creator".to_string(),
                         share: Decimal::percent(91),
                         updated_at: Timestamp::from_nanos(0),
@@ -562,7 +562,7 @@ mod tests {
                     external_link: Some("https://example.com/external.html".to_string()),
                     start_trading_time: None,
                     explicit_content: Some(false),
-                    royalty_info: Some(RoyaltyInfoResponse {
+                    royalty_info: Some(RoyaltyInfo {
                         payment_address: "creator".to_string(),
                         share: Decimal::percent(3),
                         updated_at: Timestamp::from_nanos(0),
