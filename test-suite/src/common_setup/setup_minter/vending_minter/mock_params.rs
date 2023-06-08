@@ -66,5 +66,7 @@ pub fn mock_params(mint_denom: Option<String>) -> VendingMinterParams {
             airdrop_mint_fee_bps: AIRDROP_MINT_FEE_FAIR_BURN,
             shuffle_fee: coin(SHUFFLE_FEE, NATIVE_DENOM),
         },
+        max_royalty_bps: 1000,
+        max_royalty_increase_rate_bps: 200,
     }
 }

@@ -63,6 +63,8 @@ pub fn instantiate_factory(
                         denom: denom.to_string(),
                     },
                 },
+                max_royalty_bps: 1000,
+                max_royalty_increase_rate_bps: 200,
             },
         },
         key,
