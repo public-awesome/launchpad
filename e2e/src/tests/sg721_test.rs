@@ -22,12 +22,6 @@ fn test_unauthorized_sg721_instantiation(chain: &mut Chain) {
             minter: user_addr.to_string(),
             collection_info: CollectionInfo {
                 creator: user_addr.to_string(),
-                description: "Description".to_string(),
-                image: "https://example.com/image.png".to_string(),
-                external_link: Some("https://github.com/public-awesome".to_string()),
-                royalty_info: None,
-                explicit_content: None,
-                start_trading_time: None,
                 ..mock_collection_info()
             },
         },

@@ -144,12 +144,6 @@ mod tests {
                 minter: ADMIN.to_string(),
                 collection_info: CollectionInfo {
                     creator: ADMIN.to_string(),
-                    description: "description".to_string(),
-                    image: "description".to_string(),
-                    external_link: None,
-                    explicit_content: None,
-                    start_trading_time: None,
-                    royalty_info: None,
                     ..mock_collection_info()
                 },
             };
@@ -588,11 +582,6 @@ mod tests {
             let custom_collection_params = CollectionParams {
                 info: CollectionInfo {
                     creator: "creator".to_string(),
-                    description: String::from("Stargaze Monkeys"),
-                    image: "https://example.com/image.png".to_string(),
-                    external_link: Some("https://example.com/external.html".to_string()),
-                    start_trading_time: None,
-                    explicit_content: Some(false),
                     royalty_info: Some(RoyaltyInfo {
                         payment_address: "creator".to_string(),
                         share: Decimal::percent(0),
@@ -631,9 +620,6 @@ mod tests {
             let custom_collection_params = CollectionParams {
                 info: CollectionInfo {
                     creator: "creator".to_string(),
-                    description: String::from("Stargaze Monkeys"),
-                    image: "https://example.com/image.png".to_string(),
-                    external_link: Some("https://example.com/external.html".to_string()),
                     start_trading_time: None,
                     explicit_content: Some(false),
                     royalty_info: Some(RoyaltyInfo {
@@ -674,11 +660,6 @@ mod tests {
             let custom_collection_params = CollectionParams {
                 info: CollectionInfo {
                     creator: "creator".to_string(),
-                    description: String::from("Stargaze Monkeys"),
-                    image: "https://example.com/image.png".to_string(),
-                    external_link: Some("https://example.com/external.html".to_string()),
-                    start_trading_time: None,
-                    explicit_content: Some(false),
                     royalty_info: Some(RoyaltyInfo {
                         payment_address: "creator".to_string(),
                         share: Decimal::percent(3),
@@ -717,12 +698,6 @@ mod tests {
             let init_msg = mock_init_extension(None, None);
             let custom_collection_params = CollectionParams {
                 info: CollectionInfo {
-                    creator: "creator".to_string(),
-                    description: String::from("Stargaze Monkeys"),
-                    image: "https://example.com/image.png".to_string(),
-                    external_link: Some("https://example.com/external.html".to_string()),
-                    start_trading_time: None,
-                    explicit_content: Some(false),
                     royalty_info: None,
                     ..mock_collection_info()
                 },

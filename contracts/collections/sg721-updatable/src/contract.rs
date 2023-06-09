@@ -258,13 +258,6 @@ mod tests {
             symbol: "SPACE".to_string(),
             minter: CREATOR.to_string(),
             collection_info: CollectionInfo {
-                creator: CREATOR.to_string(),
-                description: "this is a test".to_string(),
-                image: "https://larry.engineer".to_string(),
-                external_link: None,
-                explicit_content: None,
-                start_trading_time: None,
-                royalty_info: None,
                 ..mock_collection_info()
             },
         };
@@ -355,13 +348,7 @@ mod tests {
             symbol: "SPACE".to_string(),
             minter: CREATOR.to_string(),
             collection_info: CollectionInfo {
-                creator: CREATOR.to_string(),
-                description: "this is a test".to_string(),
                 image: "https://larry.engineer".to_string(),
-                external_link: None,
-                explicit_content: None,
-                start_trading_time: None,
-                royalty_info: None,
                 ..mock_collection_info()
             },
         };

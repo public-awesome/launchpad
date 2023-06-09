@@ -165,10 +165,6 @@ mod tests {
                 creator: CREATOR.to_string(),
                 description: "this is a test".to_string(),
                 image: "https://larry.engineer".to_string(),
-                external_link: None,
-                explicit_content: Some(false),
-                start_trading_time: None,
-                royalty_info: None,
                 ..mock_collection_info()
             },
         };

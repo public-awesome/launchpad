@@ -68,10 +68,8 @@ pub fn mock_collection_two(start_trading_time: Option<Timestamp>) -> CollectionP
             image:
                 "ipfs://bafybeigi3bwpvyvsmnbj46ra4hyffcxdeaj6ntfk5jpic5mx27x6ih2qvq/images/1.png"
                     .to_string(),
-            external_link: Some("https://example.com/external.html".to_string()),
             royalty_info: Some(mock_royalty_info("creator".to_string())),
             start_trading_time,
-            explicit_content: None,
             ..mock_collection_info()
         },
         ..mock_collection_params()
