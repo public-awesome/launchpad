@@ -256,7 +256,6 @@ where
             }
             // update royalty info to equal or less, else throw error
             if let Some(curr_royalty_info_res) = current_royalty_info {
-                // TODO: if royalty_info.share > royalty_info_res.share + factory.royalty_share_increase_rate
                 if new_royalty_info_res.share
                     > curr_royalty_info_res.share + max_royalty_increase_rate
                 {

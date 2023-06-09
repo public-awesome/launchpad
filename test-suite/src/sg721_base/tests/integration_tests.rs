@@ -119,8 +119,9 @@ mod tests {
         use crate::common_setup::setup_minter::vending_minter::mock_params::mock_create_minter_init_msg;
 
         use super::*;
+        use sg4::MinterConfig;
         use sg721_base::msg::QueryMsg;
-        use vending_minter::msg::{ConfigResponse, QueryMsg as VendingMinterQueryMsg};
+        use vending_minter::msg::{ConfigExtensionResponse, QueryMsg as VendingMinterQueryMsg};
 
         #[test]
         fn create_sg721_base_collection() {
@@ -187,11 +188,14 @@ mod tests {
                 .unwrap();
             let minter = res.minter;
             let minter = minter.unwrap();
-            let res: ConfigResponse = app
+            let res: MinterConfig<ConfigExtensionResponse> = app
                 .wrap()
                 .query_wasm_smart(minter, &VendingMinterQueryMsg::Config {})
                 .unwrap();
-            assert_eq!(res.base_token_uri, base_token_uri.trim().to_string());
+            assert_eq!(
+                res.extension.base_token_uri,
+                base_token_uri.trim().to_string()
+            );
 
             // test sanitizing base token uri IPFS -> ipfs
             let base_token_uri = " IPFS://somecidhereipfs ".to_string();
@@ -213,11 +217,11 @@ mod tests {
                 .query_wasm_smart(contract, &QueryMsg::Minter {})
                 .unwrap();
             let minter = res.minter.unwrap();
-            let res: ConfigResponse = app
+            let res: MinterConfig<ConfigExtensionResponse> = app
                 .wrap()
                 .query_wasm_smart(minter, &VendingMinterQueryMsg::Config {})
                 .unwrap();
-            assert_eq!(res.base_token_uri, "ipfs://somecidhereipfs");
+            assert_eq!(res.extension.base_token_uri, "ipfs://somecidhereipfs");
 
             // test case sensitive ipfs IPFS://aBcDeF -> ipfs://aBcDeF
             let base_token_uri = "IPFS://aBcDeF".to_string();
@@ -234,11 +238,11 @@ mod tests {
                 .query_wasm_smart(contract, &QueryMsg::Minter {})
                 .unwrap();
             let minter = res.minter.unwrap();
-            let res: ConfigResponse = app
+            let res: MinterConfig<ConfigExtensionResponse> = app
                 .wrap()
                 .query_wasm_smart(minter, &VendingMinterQueryMsg::Config {})
                 .unwrap();
-            assert_eq!(res.base_token_uri, "ipfs://aBcDeF");
+            assert_eq!(res.extension.base_token_uri, "ipfs://aBcDeF");
         }
     }
 
@@ -647,8 +651,9 @@ mod tests {
         use crate::common_setup::setup_minter::vending_minter::mock_params::mock_create_minter_init_msg;
 
         use super::*;
+        use sg4::MinterConfig;
         use sg721_base::msg::QueryMsg;
-        use vending_minter::msg::{ConfigResponse, QueryMsg as VendingMinterQueryMsg};
+        use vending_minter::msg::{ConfigExtensionResponse, QueryMsg as VendingMinterQueryMsg};
 
         #[test]
         fn test_update_ownership() {
@@ -668,11 +673,11 @@ mod tests {
                 .unwrap();
             let minter = res.minter;
             let minter = minter.unwrap();
-            let res: ConfigResponse = app
+            let res: MinterConfig<ConfigExtensionResponse> = app
                 .wrap()
                 .query_wasm_smart(minter.clone(), &VendingMinterQueryMsg::Config {})
                 .unwrap();
-            let sg721_address = res.sg721_address;
+            let sg721_address = res.extension.collection_address.unwrap();
 
             let update_ownership_msg: cw721ExecuteMsg<Empty, Empty> =
                 cw721ExecuteMsg::UpdateOwnership(cw_ownable::Action::TransferOwnership {
