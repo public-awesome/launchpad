@@ -116,6 +116,7 @@ export interface CollectionInfoForRoyaltyInfoForString {
   external_link?: string | null;
   image: string;
   royalty_info?: RoyaltyInfoForString | null;
+  royalty_updated_at?: Timestamp | null;
   start_trading_time?: Timestamp | null;
 }
 export interface RoyaltyInfoForString {

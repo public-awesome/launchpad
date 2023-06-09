@@ -40,7 +40,8 @@
         "max_royalty_increase_rate_bps",
         "max_trading_offset_secs",
         "min_mint_price",
-        "mint_fee_bps"
+        "mint_fee_bps",
+        "royalty_min_time_duration_secs"
       ],
       "properties": {
         "allowed_sg721_code_ids": {
@@ -85,6 +86,11 @@
           "$ref": "#/definitions/Coin"
         },
         "mint_fee_bps": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "royalty_min_time_duration_secs": {
           "type": "integer",
           "format": "uint64",
           "minimum": 0.0

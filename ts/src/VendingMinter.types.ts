@@ -4,21 +4,20 @@
 * and run the @cosmwasm/ts-codegen generate command to regenerate this file.
 */
 
+export type Addr = string;
 export type Uint128 = string;
 export type Timestamp = Uint64;
 export type Uint64 = string;
-export interface ConfigResponse {
-  admin: string;
+export interface ConfigExtensionResponse {
+  admin: Addr;
   base_token_uri: string;
+  collection_address?: Addr | null;
   discount_price?: Coin | null;
-  factory: string;
-  mint_price: Coin;
   num_tokens: number;
+  payment_address?: Addr | null;
   per_address_limit: number;
-  sg721_address: string;
-  sg721_code_id: number;
   start_time: Timestamp;
-  whitelist?: string | null;
+  whitelist?: Addr | null;
 }
 export interface Coin {
   amount: Uint128;
@@ -87,6 +86,7 @@ export interface CollectionInfoForRoyaltyInfoForString {
   external_link?: string | null;
   image: string;
   royalty_info?: RoyaltyInfoForString | null;
+  royalty_updated_at?: Timestamp | null;
   start_trading_time?: Timestamp | null;
 }
 export interface RoyaltyInfoForString {
@@ -114,6 +114,7 @@ export interface MinterParamsForParamsExtension {
   max_trading_offset_secs: number;
   min_mint_price: Coin;
   mint_fee_bps: number;
+  royalty_min_time_duration_secs: number;
 }
 export interface ParamsExtension {
   airdrop_mint_fee_bps: number;
@@ -136,7 +137,6 @@ export interface MintPriceResponse {
 export interface MintableNumTokensResponse {
   count: number;
 }
-export type Addr = string;
 export interface MinterConfigForConfigExtension {
   collection_code_id: number;
   extension: ConfigExtension;
