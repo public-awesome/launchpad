@@ -250,7 +250,10 @@ mod tests {
         use cosmwasm_std::{Decimal, Empty, Timestamp};
         use sg721::{RoyaltyInfo, UpdateCollectionInfoMsg};
 
-        use crate::common_setup::setup_minter::vending_minter::mock_params::mock_create_minter_init_msg;
+        use crate::common_setup::{
+            setup_accounts_and_block::setup_block_time,
+            setup_minter::vending_minter::mock_params::mock_create_minter_init_msg,
+        };
 
         use super::*;
         use sg721_base::msg::{CollectionInfoResponse, QueryMsg};
@@ -310,7 +313,7 @@ mod tests {
 
             let creator = Addr::unchecked("creator".to_string());
 
-            // succeeds
+            // success
             let res = app.execute_contract(
                 creator.clone(),
                 contract.clone(),
@@ -326,6 +329,14 @@ mod tests {
                 &[],
             );
             assert!(res.is_ok());
+
+            setup_block_time(
+                &mut app,
+                default_start_time
+                    .plus_seconds(mock_params(None).royalty_min_time_duration_secs)
+                    .nanos(),
+                Some(11),
+            );
 
             // update royalty_info
             let royalty_info: Option<RoyaltyInfo<String>> = Some(RoyaltyInfo {

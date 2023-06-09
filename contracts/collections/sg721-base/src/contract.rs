@@ -260,12 +260,13 @@ where
                     return Err(ContractError::RoyaltyShareIncreasedTooMuch {});
                 }
 
-                // check if current time is after last royalty update + min duration
+                // if royalty share changed and current time is after last royalty update + min duration
                 // royalty_updated_at is always Some because it is set in instantiate
-                if curr_royalty_info_res
-                    .updated_at
-                    .plus_seconds(royalty_min_time_duration)
-                    > env.block.time
+                if (new_royalty_info_res.share != curr_royalty_info_res.share)
+                    && (curr_royalty_info_res
+                        .updated_at
+                        .plus_seconds(royalty_min_time_duration)
+                        > env.block.time)
                 {
                     return Err(ContractError::RoyaltyUpdateTooSoon {});
                 }
