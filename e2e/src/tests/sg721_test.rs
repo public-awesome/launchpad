@@ -1,7 +1,7 @@
 use assert_matches::assert_matches;
 use cosm_orc::orchestrator::error::CosmwasmError::TxError;
 use cosm_orc::orchestrator::error::ProcessError;
-use sg721::{CollectionInfo, InstantiateMsg};
+use sg721::{tests::mock_collection_info, CollectionInfo, InstantiateMsg};
 use test_context::test_context;
 
 use crate::helpers::{chain::Chain, helper::SG721_NAME};
@@ -28,6 +28,7 @@ fn test_unauthorized_sg721_instantiation(chain: &mut Chain) {
                 royalty_info: None,
                 explicit_content: None,
                 start_trading_time: None,
+                ..mock_collection_info()
             },
         },
         &user.key,

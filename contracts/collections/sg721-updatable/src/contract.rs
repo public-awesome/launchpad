@@ -193,6 +193,7 @@ mod tests {
         QuerierResult, QueryRequest, SystemError, SystemResult, WasmQuery,
     };
     use cw721::Cw721Query;
+    use sg721::tests::mock_collection_info;
     use sg721::{CollectionInfo, InstantiateMsg};
     use std::marker::PhantomData;
 
@@ -265,6 +266,7 @@ mod tests {
                 explicit_content: None,
                 start_trading_time: None,
                 royalty_info: None,
+                ..mock_collection_info()
             },
         };
         instantiate(deps.as_mut(), mock_env(), info.clone(), init_msg).unwrap();
@@ -361,6 +363,7 @@ mod tests {
                 explicit_content: None,
                 start_trading_time: None,
                 royalty_info: None,
+                ..mock_collection_info()
             },
         };
         instantiate(deps.as_mut(), mock_env(), info.clone(), init_msg).unwrap();

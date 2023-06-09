@@ -114,6 +114,7 @@ mod tests {
 
     mod init {
         use cw721_base::MinterResponse;
+        use sg721::tests::mock_collection_info;
 
         use crate::common_setup::setup_minter::vending_minter::mock_params::mock_create_minter_init_msg;
 
@@ -148,6 +149,7 @@ mod tests {
                     explicit_content: None,
                     start_trading_time: None,
                     royalty_info: None,
+                    ..mock_collection_info()
                 },
             };
             let res = app.instantiate_contract(
@@ -440,7 +442,7 @@ mod tests {
         use crate::common_setup::setup_minter::vending_minter::mock_params::mock_create_minter_init_msg;
         use cosmwasm_std::{Decimal, Response, Timestamp, Uint128};
         use sg2::msg::CollectionParams;
-        use sg721::RoyaltyInfo;
+        use sg721::{tests::mock_collection_info, RoyaltyInfo};
         use sg721_base::msg::{CollectionInfoResponse, QueryMsg};
 
         #[test]
@@ -483,6 +485,7 @@ mod tests {
                         share: Decimal::percent(0),
                         updated_at: Timestamp::from_nanos(0),
                     }),
+                    ..mock_collection_info()
                 },
                 ..mock_collection_params()
             };
@@ -525,6 +528,7 @@ mod tests {
                         share: Decimal::percent(91),
                         updated_at: Timestamp::from_nanos(0),
                     }),
+                    ..mock_collection_info()
                 },
                 ..mock_collection_params()
             };
@@ -567,6 +571,7 @@ mod tests {
                         share: Decimal::percent(3),
                         updated_at: Timestamp::from_nanos(0),
                     }),
+                    ..mock_collection_info()
                 },
                 ..mock_collection_params()
             };
@@ -606,6 +611,7 @@ mod tests {
                     start_trading_time: None,
                     explicit_content: Some(false),
                     royalty_info: None,
+                    ..mock_collection_info()
                 },
                 ..mock_collection_params()
             };

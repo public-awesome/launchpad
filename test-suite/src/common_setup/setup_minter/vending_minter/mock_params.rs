@@ -68,5 +68,6 @@ pub fn mock_params(mint_denom: Option<String>) -> VendingMinterParams {
         },
         max_royalty_bps: 1000,
         max_royalty_increase_rate_bps: 200,
+        royalty_min_time_duration_secs: 60 * 60 * 24 * 7,
     }
 }
