@@ -20,5 +20,6 @@ pub struct MinterParams<T> {
     pub max_trading_offset_secs: u64,
     pub max_royalty_bps: u64,
     pub max_royalty_increase_rate_bps: u64,
+    pub royalty_min_time_duration_secs: u64,
     pub extension: T,
 }
