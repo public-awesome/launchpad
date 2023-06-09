@@ -1,18 +1,18 @@
-use cw721_base::state::TokenInfo;
-use cw721_base::Extension;
-use url::Url;
-
 use cosmwasm_std::{
     to_binary, Addr, Binary, ContractInfoResponse, Decimal, Deps, DepsMut, Empty, Env, Event,
     MessageInfo, StdError, StdResult, Storage, Timestamp, WasmQuery,
 };
-
 use cw721::{ContractInfoResponse as CW721ContractInfoResponse, Cw721Execute};
+use cw721_base::state::TokenInfo;
+use cw721_base::Extension;
 use cw_utils::nonpayable;
 use serde::{de::DeserializeOwned, Serialize};
-
+use sg2::query::{ParamsResponse, Sg2QueryMsg};
+use sg4::{MinterConfig, MinterConfigResponse, QueryMsg as MinterQueryMsg};
 use sg721::{CollectionInfo, ExecuteMsg, InstantiateMsg, RoyaltyInfo, UpdateCollectionInfoMsg};
+use sg_std::math::U64Ext;
 use sg_std::Response;
+use url::Url;
 
 use crate::msg::{CollectionInfoResponse, NftParams, QueryMsg};
 use crate::{ContractError, Sg721Contract};
@@ -83,6 +83,7 @@ where
             explicit_content: msg.collection_info.explicit_content,
             start_trading_time: msg.collection_info.start_trading_time,
             royalty_info,
+            royalty_updated_at: Some(env.block.time),
         };
 
         self.collection_info.save(deps.storage, &collection_info)?;
@@ -229,8 +230,22 @@ where
             .royalty_info
             .unwrap_or_else(|| current_royalty_info.clone());
 
-        // TODO: get the factory from the minter
-        // TODO: convert bps to percentage if needed
+        // get the factory from the minter to get
+        // max_royalty, max_royalty_increase_rate, royalty_min_time_duration_secs
+        let minter_address = self.parent.minter(deps.as_ref())?.minter.unwrap();
+        let minter_config: MinterConfig<T> = deps
+            .querier
+            .query_wasm_smart(minter_address.clone(), &MinterQueryMsg::Config {})?;
+        let factory_address = minter_config.factory;
+        let factory_params: ParamsResponse<T> = deps
+            .querier
+            .query_wasm_smart(factory_address, &Sg2QueryMsg::Params {})?;
+        let max_royalty = factory_params.params.max_royalty_bps.bps_to_decimal();
+        let max_royalty_increase_rate = factory_params
+            .params
+            .max_royalty_increase_rate_bps
+            .bps_to_decimal();
+        let royalty_min_time_duration = factory_params.params.royalty_min_time_duration_secs;
 
         // reminder: collection_msg.royalty_info is Option<Option<RoyaltyInfoResponse>>
         collection.royalty_info = if let Some(royalty_info) = new_royalty_info {
