@@ -310,23 +310,22 @@ mod tests {
 
             let creator = Addr::unchecked("creator".to_string());
 
-            // TODO: fix this test
             // succeeds
-            // let res = app.execute_contract(
-            //     creator.clone(),
-            //     contract.clone(),
-            //     &Sg721ExecuteMsg::<Empty, Empty>::UpdateCollectionInfo {
-            //         collection_info: UpdateCollectionInfoMsg {
-            //             description: Some(params.info.description.clone()),
-            //             image: Some(params.info.image.clone()),
-            //             external_link: Some(params.info.external_link.clone()),
-            //             explicit_content: None,
-            //             royalty_info: None,
-            //         },
-            //     },
-            //     &[],
-            // );
-            // assert!(res.is_ok());
+            let res = app.execute_contract(
+                creator.clone(),
+                contract.clone(),
+                &Sg721ExecuteMsg::<Empty, Empty>::UpdateCollectionInfo {
+                    collection_info: UpdateCollectionInfoMsg {
+                        description: Some(params.info.description.clone()),
+                        image: Some(params.info.image.clone()),
+                        external_link: Some(params.info.external_link.clone()),
+                        explicit_content: None,
+                        royalty_info: None,
+                    },
+                },
+                &[],
+            );
+            assert!(res.is_ok());
 
             // update royalty_info
             let royalty_info: Option<RoyaltyInfo<String>> = Some(RoyaltyInfo {
