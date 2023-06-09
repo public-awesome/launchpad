@@ -8,7 +8,7 @@ use cw721_base::Extension;
 use cw_utils::nonpayable;
 use serde::{de::DeserializeOwned, Serialize};
 use sg2::query::{ParamsResponse, Sg2QueryMsg};
-use sg4::{MinterConfig, MinterConfigResponse, QueryMsg as MinterQueryMsg};
+use sg4::{MinterConfig, QueryMsg as MinterQueryMsg};
 use sg721::{CollectionInfo, ExecuteMsg, InstantiateMsg, RoyaltyInfo, UpdateCollectionInfoMsg};
 use sg_std::math::U64Ext;
 use sg_std::Response;
@@ -247,24 +247,46 @@ where
             .bps_to_decimal();
         let royalty_min_time_duration = factory_params.params.royalty_min_time_duration_secs;
 
+        let mut royalty_changed = false;
         // reminder: collection_msg.royalty_info is Option<Option<RoyaltyInfoResponse>>
-        collection.royalty_info = if let Some(royalty_info) = new_royalty_info {
+        collection.royalty_info = if let Some(new_royalty_info_res) = new_royalty_info {
+            // check if new_royalty_info_res > max_royalty
+            if new_royalty_info_res.share > max_royalty {
+                return Err(ContractError::RoyaltyShareTooHigh {});
+            }
             // update royalty info to equal or less, else throw error
-            if let Some(royalty_info_res) = current_royalty_info {
+            if let Some(curr_royalty_info_res) = current_royalty_info {
                 // TODO: if royalty_info.share > royalty_info_res.share + factory.royalty_share_increase_rate
-                // TODO: also check against the `royalties_updated_at` timestamp with the current block time
-                if royalty_info.share > royalty_info_res.share {
+                if new_royalty_info_res.share
+                    > curr_royalty_info_res.share + max_royalty_increase_rate
+                {
                     return Err(ContractError::RoyaltyShareIncreasedTooMuch {});
+                }
+                if new_royalty_info_res.share != curr_royalty_info_res.share {
+                    royalty_changed = true;
                 }
             } else {
                 return Err(ContractError::RoyaltyShareIncreasedTooMuch {});
             }
 
-            // TODO: check against factory.max_royalties
+            // if royalty share changed,
+            // check if current time is after last royalty update + min duration
+            // royalty_updated_at is always Some because it is set in instantiate
+            if let Some(royalty_updated_at) = collection.royalty_updated_at {
+                if royalty_changed
+                    && royalty_updated_at.plus_seconds(royalty_min_time_duration) > env.block.time
+                {
+                    return Err(ContractError::RoyaltyUpdateTooSoon {});
+                }
+            }
 
+            // set new updated_at if successful
+            collection.royalty_updated_at = Some(env.block.time);
             Some(RoyaltyInfo {
-                payment_address: deps.api.addr_validate(&royalty_info.payment_address)?,
-                share: share_validate(royalty_info.share)?,
+                payment_address: deps
+                    .api
+                    .addr_validate(&new_royalty_info_res.payment_address)?,
+                share: share_validate(new_royalty_info_res.share)?,
                 updated_at: env.block.time,
             })
         } else {
