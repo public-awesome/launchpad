@@ -249,6 +249,7 @@ mod tests {
     mod start_trading_time {
         use cosmwasm_std::{Decimal, Empty, Timestamp};
         use sg721::{RoyaltyInfo, UpdateCollectionInfoMsg};
+        use sg721_base::ContractError;
 
         use crate::common_setup::{
             setup_accounts_and_block::setup_block_time,
@@ -341,7 +342,7 @@ mod tests {
             // update royalty_info
             let royalty_info: Option<RoyaltyInfo<String>> = Some(RoyaltyInfo {
                 payment_address: creator.to_string(),
-                share: Decimal::percent(10),
+                share: Decimal::percent(4),
                 updated_at: Timestamp::from_nanos(0),
             });
             let res = app.execute_contract(
@@ -393,10 +394,99 @@ mod tests {
             // check explicit content changed to true
             assert!(res.explicit_content.unwrap());
 
-            // try update royalty_info higher
+            // RoyaltyUpdateTooSoon
+            let royalty_info: Option<RoyaltyInfo<String>> = Some(RoyaltyInfo {
+                payment_address: creator.to_string(),
+                share: Decimal::percent(5),
+                updated_at: Timestamp::from_nanos(0),
+            });
+            let err = app
+                .execute_contract(
+                    creator.clone(),
+                    contract.clone(),
+                    &Sg721ExecuteMsg::<Empty, Empty>::UpdateCollectionInfo {
+                        collection_info: UpdateCollectionInfoMsg {
+                            description: None,
+                            image: None,
+                            external_link: None,
+                            explicit_content: None,
+                            royalty_info: Some(royalty_info),
+                        },
+                    },
+                    &[],
+                )
+                .unwrap_err();
+            assert_eq!(
+                err.source().unwrap().to_string(),
+                ContractError::RoyaltyUpdateTooSoon {}.to_string()
+            );
+
+            setup_block_time(
+                &mut app,
+                default_start_time
+                    .plus_seconds(mock_params(None).royalty_min_time_duration_secs * 2)
+                    .nanos(),
+                Some(11),
+            );
+
+            // RoyaltyShareIncreasedTooMuch
+            let royalty_info: Option<RoyaltyInfo<String>> = Some(RoyaltyInfo {
+                payment_address: creator.to_string(),
+                share: Decimal::percent(9),
+                updated_at: Timestamp::from_nanos(0),
+            });
+            let err = app
+                .execute_contract(
+                    creator.clone(),
+                    contract.clone(),
+                    &Sg721ExecuteMsg::<Empty, Empty>::UpdateCollectionInfo {
+                        collection_info: UpdateCollectionInfoMsg {
+                            description: None,
+                            image: None,
+                            external_link: None,
+                            explicit_content: None,
+                            royalty_info: Some(royalty_info),
+                        },
+                    },
+                    &[],
+                )
+                .unwrap_err();
+            assert_eq!(
+                err.source().unwrap().to_string(),
+                ContractError::RoyaltyShareIncreasedTooMuch {}.to_string()
+            );
+
+            // RoyaltyShareTooHigh
             let royalty_info: Option<RoyaltyInfo<String>> = Some(RoyaltyInfo {
                 payment_address: creator.to_string(),
                 share: Decimal::percent(11),
+                updated_at: Timestamp::from_nanos(0),
+            });
+            let err = app
+                .execute_contract(
+                    creator.clone(),
+                    contract.clone(),
+                    &Sg721ExecuteMsg::<Empty, Empty>::UpdateCollectionInfo {
+                        collection_info: UpdateCollectionInfoMsg {
+                            description: None,
+                            image: None,
+                            external_link: None,
+                            explicit_content: None,
+                            royalty_info: Some(royalty_info),
+                        },
+                    },
+                    &[],
+                )
+                .unwrap_err();
+            assert_eq!(
+                err.source().unwrap().to_string(),
+                ContractError::RoyaltyShareTooHigh {}.to_string()
+            );
+
+            // success
+            let royalty_info: Option<RoyaltyInfo<String>> = Some(RoyaltyInfo {
+                payment_address: creator.to_string(),
+                share: Decimal::percent(5),
                 updated_at: Timestamp::from_nanos(0),
             });
             let res = app.execute_contract(
@@ -413,7 +503,15 @@ mod tests {
                 },
                 &[],
             );
-            assert!(res.is_err());
+            assert!(res.is_ok());
+
+            setup_block_time(
+                &mut app,
+                default_start_time
+                    .plus_seconds(mock_params(None).royalty_min_time_duration_secs * 2)
+                    .nanos(),
+                Some(11),
+            );
 
             // freeze collection throw err if not creator
             let res = app.execute_contract(
