@@ -1,6 +1,5 @@
-use cosmwasm_std::{Decimal, Timestamp};
-
 use crate::{CollectionInfo, RoyaltyInfo};
+use cosmwasm_std::{Decimal, Timestamp};
 
 pub fn mock_collection_info() -> CollectionInfo<RoyaltyInfo<String>> {
     CollectionInfo {
@@ -15,6 +14,5 @@ pub fn mock_collection_info() -> CollectionInfo<RoyaltyInfo<String>> {
         }),
         start_trading_time: None,
         explicit_content: None,
-        royalty_updated_at: None,
     }
 }

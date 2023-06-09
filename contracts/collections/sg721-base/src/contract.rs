@@ -83,7 +83,6 @@ where
             explicit_content: msg.collection_info.explicit_content,
             start_trading_time: msg.collection_info.start_trading_time,
             royalty_info,
-            royalty_updated_at: Some(env.block.time),
         };
 
         self.collection_info.save(deps.storage, &collection_info)?;
@@ -247,7 +246,6 @@ where
             .bps_to_decimal();
         let royalty_min_time_duration = factory_params.params.royalty_min_time_duration_secs;
 
-        let mut royalty_changed = false;
         // reminder: collection_msg.royalty_info is Option<Option<RoyaltyInfoResponse>>
         collection.royalty_info = if let Some(new_royalty_info_res) = new_royalty_info {
             // check if new_royalty_info_res > max_royalty
@@ -261,26 +259,21 @@ where
                 {
                     return Err(ContractError::RoyaltyShareIncreasedTooMuch {});
                 }
-                if new_royalty_info_res.share != curr_royalty_info_res.share {
-                    royalty_changed = true;
+
+                // check if current time is after last royalty update + min duration
+                // royalty_updated_at is always Some because it is set in instantiate
+                if curr_royalty_info_res
+                    .updated_at
+                    .plus_seconds(royalty_min_time_duration)
+                    > env.block.time
+                {
+                    return Err(ContractError::RoyaltyUpdateTooSoon {});
                 }
             } else {
                 return Err(ContractError::RoyaltyShareIncreasedTooMuch {});
             }
 
-            // if royalty share changed,
-            // check if current time is after last royalty update + min duration
-            // royalty_updated_at is always Some because it is set in instantiate
-            if let Some(royalty_updated_at) = collection.royalty_updated_at {
-                if royalty_changed
-                    && royalty_updated_at.plus_seconds(royalty_min_time_duration) > env.block.time
-                {
-                    return Err(ContractError::RoyaltyUpdateTooSoon {});
-                }
-            }
-
             // set new updated_at if successful
-            collection.royalty_updated_at = Some(env.block.time);
             Some(RoyaltyInfo {
                 payment_address: deps
                     .api

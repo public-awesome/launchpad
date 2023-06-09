@@ -109,7 +109,6 @@ pub fn create_minter_msg(
                 external_link: None,
                 explicit_content: None,
                 royalty_info: None,
-                royalty_updated_at: None,
             },
         },
     }
