@@ -35,8 +35,8 @@ pub fn query_collection_whitelist(deps: &DepsMut) -> Result<String, ContractErro
     let config = CONFIG.load(deps.storage)?;
     let minter_addr = config.minter_address;
     let config = MinterContract(minter_addr).config(&deps.querier)?;
-    match config.whitelist {
-        Some(whitelist) => Ok(whitelist),
+    match config.extension.whitelist {
+        Some(whitelist) => Ok(whitelist.into()),
         None => Err(ContractError::CollectionWhitelistMinterNotSet {}),
     }
 }
