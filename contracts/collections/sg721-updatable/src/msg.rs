@@ -132,6 +132,7 @@ where
 #[cw_serde]
 pub enum QueryMsg {
     EnableUpdatable {},
+    EnableUpdatableFee {},
     FreezeTokenMetadata {},
     OwnerOf {
         token_id: String,
@@ -255,6 +256,11 @@ pub enum SudoMsg {
 #[cw_serde]
 pub struct EnableUpdatableResponse {
     pub enabled: bool,
+}
+
+#[cw_serde]
+pub struct EnableUpdatableFeeResponse {
+    pub fee: Uint128,
 }
 
 #[cw_serde]

@@ -714,4 +714,90 @@ mod tests {
             assert_eq!(res, expected_onwership_response);
         }
     }
+
+    mod sg721_mutable {
+        use cosmwasm_std::{coin, Addr, Uint128};
+        use cw721::NumTokensResponse;
+        use cw_multi_test::{BankSudo, Executor, SudoMsg};
+        use sg2::tests::mock_collection_params;
+        use sg721_updatable::msg::{
+            EnableUpdatableFeeResponse, QueryMsg, Sg721MutableParamsExtension,
+            Sg721MutableParamsMsg, SudoMsg as Sg721SudoMsg,
+        };
+        use sg_multi_test::StargazeApp;
+        use sg_std::NATIVE_DENOM;
+        const ADMIN: &str = "admin";
+
+        use crate::common_setup::setup_minter::common::constants::CREATION_FEE;
+        use crate::{
+            common_setup::{
+                contract_boxes::contract_sg721_updatable,
+                setup_minter::vending_minter::mock_params::mock_create_minter,
+            },
+            sg721_base::tests::integration_tests::tests::proper_instantiate_factory,
+        };
+        use vending_factory::msg::ExecuteMsg;
+
+        fn proper_instantiate() -> (StargazeApp, Addr) {
+            let (mut app, factory_contract) = proper_instantiate_factory();
+            let sg721_id = app.store_code(contract_sg721_updatable());
+
+            let collection_params = mock_collection_params();
+            let mut m = mock_create_minter(None, collection_params, None);
+            m.collection_params.code_id = sg721_id;
+            let msg = ExecuteMsg::CreateMinter(m);
+
+            let creation_fee = coin(CREATION_FEE, NATIVE_DENOM);
+
+            app.sudo(SudoMsg::Bank(BankSudo::Mint {
+                to_address: ADMIN.to_string(),
+                amount: vec![creation_fee.clone()],
+            }))
+            .unwrap();
+
+            let bal = app.wrap().query_all_balances(ADMIN).unwrap();
+            assert_eq!(bal, vec![creation_fee.clone()]);
+
+            // this should create the minter + sg721
+            let cosmos_msg = factory_contract.call_with_funds(msg, creation_fee).unwrap();
+
+            let res = app.execute(Addr::unchecked(ADMIN), cosmos_msg);
+            assert!(res.is_ok());
+
+            (app, Addr::unchecked("contract2"))
+        }
+
+        #[test]
+        fn create_sg721_mutable_collection() {
+            let (app, contract) = proper_instantiate();
+
+            let res: NumTokensResponse = app
+                .wrap()
+                .query_wasm_smart(contract, &QueryMsg::NumTokens {})
+                .unwrap();
+            assert_eq!(res.count, 0);
+        }
+
+        #[test]
+        fn change_enable_updatable_fee() {
+            // change fee to 10,000 stars
+            let new_fee = 10_000_000_000_u128;
+            let msg = Sg721MutableParamsMsg {
+                extension: Sg721MutableParamsExtension {
+                    enable_updatable_fee: Some(Uint128::from(new_fee)),
+                },
+            };
+            let sudo_msg = Sg721SudoMsg::UpdateParams(Box::new(msg));
+            let (mut app, contract) = proper_instantiate();
+            let res = app.wasm_sudo(contract.clone(), &sudo_msg);
+            assert!(res.is_ok());
+
+            // confirm fee is changed
+            let res: EnableUpdatableFeeResponse = app
+                .wrap()
+                .query_wasm_smart(contract, &QueryMsg::EnableUpdatableFee {})
+                .unwrap();
+            assert_eq!(res.fee, Uint128::from(new_fee));
+        }
+    }
 }

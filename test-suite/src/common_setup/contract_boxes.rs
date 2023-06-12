@@ -79,7 +79,8 @@ pub fn contract_sg721_updatable() -> Box<dyn Contract<StargazeMsgWrapper>> {
         sg721_updatable::entry::instantiate,
         sg721_updatable::entry::query,
     )
-    .with_migrate(sg721_updatable::entry::migrate);
+    .with_migrate(sg721_updatable::entry::migrate)
+    .with_sudo(sg721_updatable::entry::sudo);
     Box::new(contract)
 }
 
