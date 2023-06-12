@@ -25,7 +25,7 @@ const CONTRACT_NAME: &str = "crates.io:sg721-updatable";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const EARLIEST_VERSION: &str = "0.16.0";
 pub const TO_VERSION: &str = "3.0.0";
-const ENABLE_UPDATABLE_FEE: u128 = 500_000_000;
+const ENABLE_UPDATABLE_FEE: u128 = 2_000_000_000;
 
 pub fn _instantiate(
     deps: DepsMut,
