@@ -74,6 +74,7 @@ export interface Sg721BaseReadOnlyInterface {
   }) => Promise<AllTokensResponse>;
   minter: () => Promise<MinterResponse>;
   collectionInfo: () => Promise<CollectionInfoResponse>;
+  ownership: () => Promise<OwnershipResponse>;
 }
 export class Sg721BaseQueryClient implements Sg721BaseReadOnlyInterface {
   client: CosmWasmClient;
@@ -94,6 +95,7 @@ export class Sg721BaseQueryClient implements Sg721BaseReadOnlyInterface {
     this.allTokens = this.allTokens.bind(this);
     this.minter = this.minter.bind(this);
     this.collectionInfo = this.collectionInfo.bind(this);
+    this.ownership = this.ownership.bind(this);
   }
 
   ownerOf = async ({
@@ -235,6 +237,11 @@ export class Sg721BaseQueryClient implements Sg721BaseReadOnlyInterface {
   collectionInfo = async (): Promise<CollectionInfoResponse> => {
     return this.client.queryContractSmart(this.contractAddress, {
       collection_info: {}
+    });
+  };
+  ownership = async (): Promise<OwnershipResponse> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      ownership: {}
     });
   };
 }

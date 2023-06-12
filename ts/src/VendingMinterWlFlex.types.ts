@@ -137,6 +137,7 @@ export interface ConfigResponse {
 export interface MintCountResponse {
   address: string;
   count: number;
+  whitelist_count: number;
 }
 export interface MintPriceResponse {
   airdrop_price: Coin;
