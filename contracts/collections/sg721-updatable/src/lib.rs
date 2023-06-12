@@ -9,18 +9,19 @@ pub type InstantiateMsg = sg721::InstantiateMsg;
 pub mod entry {
     use super::*;
     use crate::error::ContractError;
-    use crate::msg::QueryMsg;
+    use crate::msg::{QueryMsg, SudoMsg};
     use crate::{
         contract::{
             _instantiate, _migrate, execute_enable_updatable, execute_freeze_token_metadata,
             execute_update_token_metadata, query_enable_updatable, query_frozen_token_metadata,
-            Sg721UpdatableContract,
+            sudo_update_params, Sg721UpdatableContract,
         },
         msg::ExecuteMsg,
     };
     use cosmwasm_std::{entry_point, to_binary, Empty};
     use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, StdResult};
     use cw721_base::Extension;
+
     use sg_std::Response;
 
     #[entry_point]
@@ -59,6 +60,13 @@ pub mod entry {
             QueryMsg::EnableUpdatable {} => to_binary(&query_enable_updatable(deps)?),
             QueryMsg::FreezeTokenMetadata {} => to_binary(&query_frozen_token_metadata(deps)?),
             _ => Sg721UpdatableContract::default().query(deps, env, msg.into()),
+        }
+    }
+
+    #[cfg_attr(not(feature = "library"), entry_point)]
+    pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> Result<Response, ContractError> {
+        match msg {
+            SudoMsg::UpdateParams(params_msg) => sudo_update_params(deps, env, *params_msg),
         }
     }
 

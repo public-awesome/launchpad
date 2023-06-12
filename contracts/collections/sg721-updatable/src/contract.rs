@@ -1,6 +1,6 @@
 use crate::error::ContractError;
-use crate::state::FROZEN_TOKEN_METADATA;
-use cosmwasm_std::{Empty, StdError};
+use crate::state::{ENABLE_UPDATABLE_FEE, FROZEN_TOKEN_METADATA};
+use cosmwasm_std::{Empty, StdError, Uint128};
 
 use cosmwasm_std::{Deps, StdResult};
 
@@ -10,7 +10,7 @@ use cw2::set_contract_version;
 use sg721::InstantiateMsg;
 use sg721_base::msg::CollectionInfoResponse;
 
-use crate::msg::{EnableUpdatableResponse, FrozenTokenMetadataResponse};
+use crate::msg::{EnableUpdatableResponse, FrozenTokenMetadataResponse, Sg721MutableParamsMsg};
 use crate::state::ENABLE_UPDATABLE;
 
 use cw721_base::Extension;
@@ -25,7 +25,7 @@ const CONTRACT_NAME: &str = "crates.io:sg721-updatable";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const EARLIEST_VERSION: &str = "0.16.0";
 pub const TO_VERSION: &str = "3.0.0";
-const ENABLE_UPDATABLE_FEE: u128 = 2_000_000_000;
+const UPDATABLE_FEE: u128 = 2_000_000_000;
 
 pub fn _instantiate(
     deps: DepsMut,
@@ -37,6 +37,7 @@ pub fn _instantiate(
     FROZEN_TOKEN_METADATA.save(deps.storage, &false)?;
     // Set enable_updatable to true on instantiate. allows updating token metadata
     ENABLE_UPDATABLE.save(deps.storage, &true)?;
+    ENABLE_UPDATABLE_FEE.save(deps.storage, &Uint128::from(UPDATABLE_FEE))?;
 
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
     let res = Sg721UpdatableContract::default().instantiate(deps, env, info, msg)?;
@@ -49,6 +50,7 @@ pub fn execute_enable_updatable(
     info: MessageInfo,
 ) -> Result<Response, ContractError> {
     let enable_updates = ENABLE_UPDATABLE.load(deps.storage)?;
+    let enable_updatable_fee = ENABLE_UPDATABLE_FEE.load(deps.storage)?;
     let mut res = Response::new();
     if enable_updates {
         return Err(ContractError::AlreadyEnableUpdatable {});
@@ -63,7 +65,7 @@ pub fn execute_enable_updatable(
     }
 
     // Check fee matches enable updatable fee and add fairburn msg
-    checked_fair_burn(&info, ENABLE_UPDATABLE_FEE, None, &mut res)?;
+    checked_fair_burn(&info, enable_updatable_fee.u128(), None, &mut res)?;
 
     ENABLE_UPDATABLE.save(deps.storage, &true)?;
 
@@ -178,6 +180,24 @@ pub fn _migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, Contr
         .add_attribute("from_version", CONTRACT_VERSION)
         .add_attribute("to_name", CONTRACT_NAME)
         .add_attribute("to_version", TO_VERSION);
+    Ok(Response::new().add_event(event))
+}
+
+/// Only governance can update contract params
+pub fn sudo_update_params(
+    deps: DepsMut,
+    _env: Env,
+    param_msg: Sg721MutableParamsMsg,
+) -> Result<Response, ContractError> {
+    let mut enable_updatable_fee = ENABLE_UPDATABLE_FEE.load(deps.storage)?;
+    if let Some(fee) = param_msg.extension.enable_updatable_fee {
+        enable_updatable_fee = fee;
+    };
+
+    ENABLE_UPDATABLE_FEE.save(deps.storage, &enable_updatable_fee)?;
+
+    let event = Event::new("sudo_update_params")
+        .add_attribute("enable_updatable_fee", enable_updatable_fee.to_string());
     Ok(Response::new().add_event(event))
 }
 
