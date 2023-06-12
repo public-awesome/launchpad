@@ -48,11 +48,6 @@ pub struct ConfigResponse {
 }
 
 #[cw_serde]
-pub struct MintableNumTokensResponse {
-    pub count: u32,
-}
-
-#[cw_serde]
 pub struct StartTimeResponse {
     pub start_time: String,
 }

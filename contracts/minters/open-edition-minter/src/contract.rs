@@ -26,7 +26,6 @@ use crate::msg::{
 use crate::state::{
     increment_token_index, Config, ConfigExtension, CONFIG, MINTER_ADDRS, SG721_ADDRESS, STATUS,
 };
-use crate::validation::get_three_percent_of_tokens;
 
 pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 pub type SubMsg = cosmwasm_std::SubMsg<StargazeMsgWrapper>;
@@ -523,21 +522,6 @@ pub fn mint_price(deps: Deps, is_admin: bool) -> Result<Coin, StdError> {
 fn mint_count(deps: Deps, info: &MessageInfo) -> Result<u32, StdError> {
     let mint_count = (MINTER_ADDRS.key(&info.sender).may_load(deps.storage)?).unwrap_or(0);
     Ok(mint_count)
-}
-
-pub fn display_max_mintable_tokens(
-    per_address_limit: u32,
-    num_tokens: u32,
-    max_per_address_limit: u32,
-) -> Result<u32, ContractError> {
-    if per_address_limit > max_per_address_limit {
-        return Ok(max_per_address_limit);
-    }
-    if num_tokens < 100 {
-        return Ok(3_u32);
-    }
-    let three_percent = get_three_percent_of_tokens(num_tokens)?.u128();
-    Ok(three_percent as u32)
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]

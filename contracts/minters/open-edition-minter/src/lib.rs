@@ -6,4 +6,3 @@ pub mod msg;
 
 pub mod helpers;
 pub mod state;
-pub mod validation;
