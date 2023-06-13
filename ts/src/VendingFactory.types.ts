@@ -19,7 +19,6 @@ export interface MinterParamsForParamsExtension {
   max_trading_offset_secs: number;
   min_mint_price: Coin;
   mint_fee_bps: number;
-  royalty_min_time_duration_secs: number;
 }
 export interface Coin {
   amount: Uint128;
