@@ -242,6 +242,7 @@ mod tests {
 
     mod start_trading_time {
         use cosmwasm_std::{Decimal, Empty, Timestamp};
+        use sg2::ROYALTY_MIN_TIME_DURATION_SECS;
         use sg721::{RoyaltyInfo, UpdateCollectionInfoMsg};
         use sg721_base::ContractError;
 
@@ -328,7 +329,7 @@ mod tests {
             setup_block_time(
                 &mut app,
                 default_start_time
-                    .plus_seconds(mock_params(None).royalty_min_time_duration_secs)
+                    .plus_seconds(ROYALTY_MIN_TIME_DURATION_SECS)
                     .nanos(),
                 Some(11),
             );
@@ -418,7 +419,7 @@ mod tests {
             setup_block_time(
                 &mut app,
                 default_start_time
-                    .plus_seconds(mock_params(None).royalty_min_time_duration_secs * 2)
+                    .plus_seconds(ROYALTY_MIN_TIME_DURATION_SECS * 2)
                     .nanos(),
                 Some(11),
             );
@@ -502,7 +503,7 @@ mod tests {
             setup_block_time(
                 &mut app,
                 default_start_time
-                    .plus_seconds(mock_params(None).royalty_min_time_duration_secs * 2)
+                    .plus_seconds(ROYALTY_MIN_TIME_DURATION_SECS * 2)
                     .nanos(),
                 Some(11),
             );

@@ -6,6 +6,7 @@ pub mod query;
 pub mod tests;
 
 pub type CodeId = u64;
+pub const ROYALTY_MIN_TIME_DURATION_SECS: u64 = 86400;
 
 /// Common params for all minters used for storage
 #[cw_serde]
@@ -20,6 +21,5 @@ pub struct MinterParams<T> {
     pub max_trading_offset_secs: u64,
     pub max_royalty_bps: u64,
     pub max_royalty_increase_rate_bps: u64,
-    pub royalty_min_time_duration_secs: u64,
     pub extension: T,
 }

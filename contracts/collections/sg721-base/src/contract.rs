@@ -8,6 +8,7 @@ use cw721_base::Extension;
 use cw_utils::nonpayable;
 use serde::{de::DeserializeOwned, Serialize};
 use sg2::query::{ParamsResponse, Sg2QueryMsg};
+use sg2::ROYALTY_MIN_TIME_DURATION_SECS;
 use sg4::{MinterConfig, QueryMsg as MinterQueryMsg};
 use sg721::{CollectionInfo, ExecuteMsg, InstantiateMsg, RoyaltyInfo, UpdateCollectionInfoMsg};
 use sg_std::math::U64Ext;
@@ -230,7 +231,7 @@ where
             .unwrap_or_else(|| current_royalty_info.clone());
 
         // get the factory from the minter to get
-        // max_royalty, max_royalty_increase_rate, royalty_min_time_duration_secs
+        // max_royalty, max_royalty_increase_rate
         let minter_address = self.parent.minter(deps.as_ref())?.minter.unwrap();
         let minter_config: MinterConfig<T> = deps
             .querier
@@ -244,7 +245,6 @@ where
             .params
             .max_royalty_increase_rate_bps
             .bps_to_decimal();
-        let royalty_min_time_duration = factory_params.params.royalty_min_time_duration_secs;
 
         // reminder: collection_msg.royalty_info is Option<Option<RoyaltyInfoResponse>>
         collection.royalty_info = if let Some(new_royalty_info_res) = new_royalty_info {
@@ -265,7 +265,7 @@ where
                 if (new_royalty_info_res.share != curr_royalty_info_res.share)
                     && (curr_royalty_info_res
                         .updated_at
-                        .plus_seconds(royalty_min_time_duration)
+                        .plus_seconds(ROYALTY_MIN_TIME_DURATION_SECS)
                         > env.block.time)
                 {
                     return Err(ContractError::RoyaltyUpdateTooSoon {});

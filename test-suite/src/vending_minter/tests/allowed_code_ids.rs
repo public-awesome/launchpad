@@ -54,7 +54,6 @@ fn update_code_id() {
         max_trading_offset_secs: None,
         max_royalty_bps: None,
         max_royalty_increase_rate_bps: None,
-        royalty_min_time_duration_secs: None,
         extension,
     };
     let sudo_msg = SudoMsg::UpdateParams(Box::new(update_msg));
