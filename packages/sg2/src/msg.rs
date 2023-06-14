@@ -30,6 +30,8 @@ pub struct UpdateMinterParamsMsg<T> {
     pub min_mint_price: Option<Coin>,
     pub mint_fee_bps: Option<u64>,
     pub max_trading_offset_secs: Option<u64>,
+    pub max_royalty_bps: Option<u64>,
+    pub max_royalty_increase_rate_bps: Option<u64>,
     pub extension: T,
 }
 

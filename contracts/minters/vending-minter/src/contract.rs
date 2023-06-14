@@ -2,8 +2,8 @@ use std::convert::TryInto;
 
 use crate::error::ContractError;
 use crate::msg::{
-    ConfigResponse, ExecuteMsg, MintCountResponse, MintPriceResponse, MintableNumTokensResponse,
-    QueryMsg, StartTimeResponse,
+    ConfigExtensionResponse, ExecuteMsg, MintCountResponse, MintPriceResponse,
+    MintableNumTokensResponse, QueryMsg, StartTimeResponse,
 };
 use crate::state::{
     Config, ConfigExtension, CONFIG, MINTABLE_NUM_TOKENS, MINTABLE_TOKEN_POSITIONS, MINTER_ADDRS,
@@ -24,7 +24,7 @@ use rand_xoshiro::Xoshiro128PlusPlus;
 use semver::Version;
 use sg1::checked_fair_burn;
 use sg2::query::Sg2QueryMsg;
-use sg4::{Status, StatusResponse, SudoMsg};
+use sg4::{MinterConfig, Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
 use sg_std::math::U64Ext;
 use sg_std::{
@@ -1107,22 +1107,25 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     }
 }
 
-fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
+fn query_config(deps: Deps) -> StdResult<MinterConfig<ConfigExtensionResponse>> {
     let config = CONFIG.load(deps.storage)?;
     let sg721_address = SG721_ADDRESS.load(deps.storage)?;
 
-    Ok(ConfigResponse {
-        admin: config.extension.admin.to_string(),
-        base_token_uri: config.extension.base_token_uri,
-        sg721_address: sg721_address.to_string(),
-        sg721_code_id: config.collection_code_id,
-        num_tokens: config.extension.num_tokens,
-        start_time: config.extension.start_time,
+    Ok(MinterConfig {
+        factory: config.factory,
+        collection_code_id: config.collection_code_id,
         mint_price: config.mint_price,
-        per_address_limit: config.extension.per_address_limit,
-        whitelist: config.extension.whitelist.map(|w| w.to_string()),
-        factory: config.factory.to_string(),
-        discount_price: config.extension.discount_price,
+        extension: ConfigExtensionResponse {
+            collection_address: Some(sg721_address),
+            admin: config.extension.admin,
+            payment_address: config.extension.payment_address,
+            base_token_uri: config.extension.base_token_uri,
+            num_tokens: config.extension.num_tokens,
+            whitelist: config.extension.whitelist,
+            start_time: config.extension.start_time,
+            per_address_limit: config.extension.per_address_limit,
+            discount_price: config.extension.discount_price,
+        },
     })
 }
 

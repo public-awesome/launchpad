@@ -1,5 +1,5 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Coin, Timestamp};
+use cosmwasm_std::{Addr, Coin, Timestamp};
 use vending_factory::{msg::VendingMinterCreateMsg, state::VendingMinterParams};
 
 #[cw_serde]
@@ -50,21 +50,6 @@ pub enum QueryMsg {
 }
 
 #[cw_serde]
-pub struct ConfigResponse {
-    pub admin: String,
-    pub base_token_uri: String,
-    pub num_tokens: u32,
-    pub per_address_limit: u32,
-    pub sg721_address: String,
-    pub sg721_code_id: u64,
-    pub start_time: Timestamp,
-    pub mint_price: Coin,
-    pub whitelist: Option<String>,
-    pub factory: String,
-    pub discount_price: Option<Coin>,
-}
-
-#[cw_serde]
 pub struct MintableNumTokensResponse {
     pub count: u32,
 }
@@ -87,4 +72,18 @@ pub struct MintPriceResponse {
 pub struct MintCountResponse {
     pub address: String,
     pub count: u32,
+}
+
+// same as state::ConfigExtension, but adds collection_address
+#[cw_serde]
+pub struct ConfigExtensionResponse {
+    pub admin: Addr,
+    pub collection_address: Option<Addr>,
+    pub payment_address: Option<Addr>,
+    pub base_token_uri: String,
+    pub num_tokens: u32,
+    pub whitelist: Option<Addr>,
+    pub start_time: Timestamp,
+    pub per_address_limit: u32,
+    pub discount_price: Option<Coin>,
 }

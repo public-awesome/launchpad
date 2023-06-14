@@ -52,6 +52,8 @@ fn update_code_id() {
         min_mint_price: None,
         mint_fee_bps: None,
         max_trading_offset_secs: None,
+        max_royalty_bps: None,
+        max_royalty_increase_rate_bps: None,
         extension,
     };
     let sudo_msg = SudoMsg::UpdateParams(Box::new(update_msg));

@@ -50,6 +50,12 @@ pub enum ContractError {
     #[error("Exceeded royalty share increase")]
     RoyaltyShareIncreasedTooMuch {},
 
+    #[error("Exceeded max royalty share")]
+    RoyaltyShareTooHigh {},
+
+    #[error("Updated royalty too soon")]
+    RoyaltyUpdateTooSoon {},
+
     #[error("MinterNotFound")]
     MinterNotFound {},
 

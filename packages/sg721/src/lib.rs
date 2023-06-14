@@ -4,6 +4,8 @@ use cw_address_like::AddressLike;
 use cw_ownable::cw_ownable_execute;
 use cw_utils::Expiration;
 
+pub mod tests;
+
 #[cw_ownable_execute]
 #[cw_serde]
 pub enum ExecuteMsg<T, E> {

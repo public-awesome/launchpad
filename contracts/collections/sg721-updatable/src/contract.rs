@@ -54,7 +54,6 @@ pub fn execute_enable_updatable(
         return Err(ContractError::AlreadyEnableUpdatable {});
     }
 
-    // TODO add check if sender is contract admin
     // Check if sender is creator
     let collection_info: CollectionInfoResponse =
         Sg721UpdatableContract::default().query_collection_info(deps.as_ref())?;
@@ -193,6 +192,7 @@ mod tests {
         QuerierResult, QueryRequest, SystemError, SystemResult, WasmQuery,
     };
     use cw721::Cw721Query;
+    use sg721::tests::mock_collection_info;
     use sg721::{CollectionInfo, InstantiateMsg};
     use std::marker::PhantomData;
 
@@ -258,13 +258,7 @@ mod tests {
             symbol: "SPACE".to_string(),
             minter: CREATOR.to_string(),
             collection_info: CollectionInfo {
-                creator: CREATOR.to_string(),
-                description: "this is a test".to_string(),
-                image: "https://larry.engineer".to_string(),
-                external_link: None,
-                explicit_content: None,
-                start_trading_time: None,
-                royalty_info: None,
+                ..mock_collection_info()
             },
         };
         instantiate(deps.as_mut(), mock_env(), info.clone(), init_msg).unwrap();
@@ -354,13 +348,8 @@ mod tests {
             symbol: "SPACE".to_string(),
             minter: CREATOR.to_string(),
             collection_info: CollectionInfo {
-                creator: CREATOR.to_string(),
-                description: "this is a test".to_string(),
                 image: "https://larry.engineer".to_string(),
-                external_link: None,
-                explicit_content: None,
-                start_trading_time: None,
-                royalty_info: None,
+                ..mock_collection_info()
             },
         };
         instantiate(deps.as_mut(), mock_env(), info.clone(), init_msg).unwrap();

@@ -1,18 +1,18 @@
-use cw721_base::state::TokenInfo;
-use cw721_base::Extension;
-use url::Url;
-
 use cosmwasm_std::{
     to_binary, Addr, Binary, ContractInfoResponse, Decimal, Deps, DepsMut, Empty, Env, Event,
     MessageInfo, StdError, StdResult, Storage, Timestamp, WasmQuery,
 };
-
 use cw721::{ContractInfoResponse as CW721ContractInfoResponse, Cw721Execute};
-use cw_utils::nonpayable;
+use cw721_base::state::TokenInfo;
+use cw721_base::Extension;
+use cw_utils::{nonpayable, Expiration, DAY};
 use serde::{de::DeserializeOwned, Serialize};
-
+use sg2::query::{ParamsResponse, Sg2QueryMsg};
+use sg4::{MinterConfig, QueryMsg as MinterQueryMsg};
 use sg721::{CollectionInfo, ExecuteMsg, InstantiateMsg, RoyaltyInfo, UpdateCollectionInfoMsg};
+use sg_std::math::U64Ext;
 use sg_std::Response;
+use url::Url;
 
 use crate::msg::{CollectionInfoResponse, NftParams, QueryMsg};
 use crate::{ContractError, Sg721Contract};
@@ -229,27 +229,56 @@ where
             .royalty_info
             .unwrap_or_else(|| current_royalty_info.clone());
 
-        // TODO: get the factory from the minter
-        // TODO: convert bps to percentage if needed
+        // get the factory from the minter to get
+        // max_royalty, max_royalty_increase_rate
+        let minter_address = self.parent.minter(deps.as_ref())?.minter.unwrap();
+        let minter_config: MinterConfig<T> = deps
+            .querier
+            .query_wasm_smart(minter_address, &MinterQueryMsg::Config {})?;
+        let factory_address = minter_config.factory;
+        let factory_params: ParamsResponse<T> = deps
+            .querier
+            .query_wasm_smart(factory_address, &Sg2QueryMsg::Params {})?;
+        let max_royalty = factory_params.params.max_royalty_bps.bps_to_decimal();
+        let max_royalty_increase_rate = factory_params
+            .params
+            .max_royalty_increase_rate_bps
+            .bps_to_decimal();
 
         // reminder: collection_msg.royalty_info is Option<Option<RoyaltyInfoResponse>>
-        collection.royalty_info = if let Some(royalty_info) = new_royalty_info {
+        collection.royalty_info = if let Some(new_royalty_info_res) = new_royalty_info {
+            if new_royalty_info_res.share > max_royalty {
+                return Err(ContractError::RoyaltyShareTooHigh {});
+            }
             // update royalty info to equal or less, else throw error
-            if let Some(royalty_info_res) = current_royalty_info {
-                // TODO: if royalty_info.share > royalty_info_res.share + factory.royalty_share_increase_rate
-                // TODO: also check against the `royalties_updated_at` timestamp with the current block time
-                if royalty_info.share > royalty_info_res.share {
+            if let Some(curr_royalty_info_res) = current_royalty_info {
+                if new_royalty_info_res.share
+                    > curr_royalty_info_res.share + max_royalty_increase_rate
+                {
                     return Err(ContractError::RoyaltyShareIncreasedTooMuch {});
+                }
+
+                // now the royalty increase is within range
+
+                // make sure the update time is after 24 hours
+                let end = (Expiration::AtTime(curr_royalty_info_res.updated_at) + DAY)?;
+                let update_too_soon = !end.is_expired(&env.block);
+
+                // if royalty share changed and current time is after last royalty update + min duration
+                // royalty_updated_at is always Some because it is set in instantiate
+                if (new_royalty_info_res.share != curr_royalty_info_res.share) && update_too_soon {
+                    return Err(ContractError::RoyaltyUpdateTooSoon {});
                 }
             } else {
                 return Err(ContractError::RoyaltyShareIncreasedTooMuch {});
             }
 
-            // TODO: check against factory.max_royalties
-
+            // set new updated_at if successful
             Some(RoyaltyInfo {
-                payment_address: deps.api.addr_validate(&royalty_info.payment_address)?,
-                share: share_validate(royalty_info.share)?,
+                payment_address: deps
+                    .api
+                    .addr_validate(&new_royalty_info_res.payment_address)?,
+                share: share_validate(new_royalty_info_res.share)?,
                 updated_at: env.block.time,
             })
         } else {

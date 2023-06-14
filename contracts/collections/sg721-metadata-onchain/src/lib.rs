@@ -97,6 +97,7 @@ mod tests {
         QuerierResult, QueryRequest, SystemError, SystemResult, WasmQuery,
     };
     use cw721::Cw721Query;
+    use sg721::tests::mock_collection_info;
     use sg721::{CollectionInfo, ExecuteMsg, InstantiateMsg};
     use std::marker::PhantomData;
 
@@ -164,10 +165,7 @@ mod tests {
                 creator: CREATOR.to_string(),
                 description: "this is a test".to_string(),
                 image: "https://larry.engineer".to_string(),
-                external_link: None,
-                explicit_content: Some(false),
-                start_trading_time: None,
-                royalty_info: None,
+                ..mock_collection_info()
             },
         };
         contract
