@@ -5,7 +5,7 @@ use cosmwasm_std::{
 use cw721::{ContractInfoResponse as CW721ContractInfoResponse, Cw721Execute};
 use cw721_base::state::TokenInfo;
 use cw721_base::Extension;
-use cw_utils::nonpayable;
+use cw_utils::{nonpayable, Duration, Expiration, DAY};
 use serde::{de::DeserializeOwned, Serialize};
 use sg2::query::{ParamsResponse, Sg2QueryMsg};
 use sg2::ROYALTY_MIN_TIME_DURATION_SECS;
@@ -248,7 +248,6 @@ where
 
         // reminder: collection_msg.royalty_info is Option<Option<RoyaltyInfoResponse>>
         collection.royalty_info = if let Some(new_royalty_info_res) = new_royalty_info {
-            // check if new_royalty_info_res > max_royalty
             if new_royalty_info_res.share > max_royalty {
                 return Err(ContractError::RoyaltyShareTooHigh {});
             }
@@ -260,14 +259,15 @@ where
                     return Err(ContractError::RoyaltyShareIncreasedTooMuch {});
                 }
 
+                // now the royalty increase is within range
+
+                // make sure the update time is after 24 hours
+                let end = (Expiration::AtTime(curr_royalty_info_res.updated_at) + DAY)?;
+                let update_too_soon = !end.is_expired(&env.block);
+
                 // if royalty share changed and current time is after last royalty update + min duration
                 // royalty_updated_at is always Some because it is set in instantiate
-                if (new_royalty_info_res.share != curr_royalty_info_res.share)
-                    && (curr_royalty_info_res
-                        .updated_at
-                        .plus_seconds(ROYALTY_MIN_TIME_DURATION_SECS)
-                        > env.block.time)
-                {
+                if (new_royalty_info_res.share != curr_royalty_info_res.share) && update_too_soon {
                     return Err(ContractError::RoyaltyUpdateTooSoon {});
                 }
             } else {
