@@ -27,6 +27,7 @@ mod tests {
     const GOVERNANCE: &str = "governance";
     const ADMIN: &str = "admin";
     const NATIVE_DENOM: &str = "ustars";
+    const ROYALTY_MIN_TIME_DURATION_SECS: u64 = 86400;
 
     fn proper_instantiate_factory() -> (StargazeApp, FactoryContract) {
         let mut app = custom_mock_app();
@@ -242,7 +243,6 @@ mod tests {
 
     mod start_trading_time {
         use cosmwasm_std::{Decimal, Empty, Timestamp};
-        use sg2::ROYALTY_MIN_TIME_DURATION_SECS;
         use sg721::{RoyaltyInfo, UpdateCollectionInfoMsg};
         use sg721_base::ContractError;
 
