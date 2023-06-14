@@ -5,10 +5,9 @@ use cosmwasm_std::{
 use cw721::{ContractInfoResponse as CW721ContractInfoResponse, Cw721Execute};
 use cw721_base::state::TokenInfo;
 use cw721_base::Extension;
-use cw_utils::{nonpayable, Duration, Expiration, DAY};
+use cw_utils::{nonpayable, Expiration, DAY};
 use serde::{de::DeserializeOwned, Serialize};
 use sg2::query::{ParamsResponse, Sg2QueryMsg};
-use sg2::ROYALTY_MIN_TIME_DURATION_SECS;
 use sg4::{MinterConfig, QueryMsg as MinterQueryMsg};
 use sg721::{CollectionInfo, ExecuteMsg, InstantiateMsg, RoyaltyInfo, UpdateCollectionInfoMsg};
 use sg_std::math::U64Ext;

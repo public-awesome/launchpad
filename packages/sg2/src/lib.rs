@@ -6,7 +6,6 @@ pub mod query;
 pub mod tests;
 
 pub type CodeId = u64;
-pub const ROYALTY_MIN_TIME_DURATION_SECS: u64 = 86400;
 
 /// Common params for all minters used for storage
 #[cw_serde]
