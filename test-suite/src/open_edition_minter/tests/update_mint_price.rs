@@ -91,7 +91,7 @@ fn check_mint_price_updates() {
     let update_msg = ExecuteMsg::UpdateMintPrice {
         price: MINT_PRICE,
     };
-    let res = router.execute_contract(creator.clone(), minter_addr.clone(), &update_msg, &[]);
+    let res = router.execute_contract(creator, minter_addr, &update_msg, &[]);
     assert_eq!(
         res.err().unwrap().source().unwrap().to_string(),
         "Minting has ended"

@@ -295,7 +295,7 @@ pub fn open_edition_minter_custom_template(
     let mut app = custom_mock_app();
     let (creator, buyer) = setup_accounts(&mut app);
     let code_ids =
-        open_edition_minter_code_ids(&mut app, sg721_code.unwrap_or(contract_sg721_base()));
+        open_edition_minter_code_ids(&mut app, sg721_code.unwrap_or_else(contract_sg721_base));
 
     // Factory params
     let mut factory_params = mock_params_proper();
@@ -319,7 +319,7 @@ pub fn open_edition_minter_custom_template(
     let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 100);
     let end_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000);
     let per_address_limit_minter = per_address_limit_minter.or(Some(1));
-    let mint_price = mint_price_minter.or(Some(Coin {
+    let mint_price = mint_price_minter.or_else(|| Some(Coin {
         denom: NATIVE_DENOM.to_string(),
         amount: Uint128::new(MIN_MINT_PRICE_OPEN_EDITION),
     }));

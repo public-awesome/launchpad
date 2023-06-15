@@ -98,7 +98,7 @@ pub fn create_minter_msg(
             end_time,
         },
         collection_params: CollectionParams {
-            code_id: code_id.unwrap_or(chain.orc.contract_map.code_id(SG721_NAME).unwrap()),
+            code_id: code_id.unwrap_or_else(|| chain.orc.contract_map.code_id(SG721_NAME).unwrap()),
             name: "Collection".to_string(),
             symbol: "SYM".to_string(),
             info: CollectionInfo {

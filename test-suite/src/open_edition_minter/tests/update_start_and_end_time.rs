@@ -106,7 +106,7 @@ fn check_start_end_time_updates() {
     // Make valid change to end time
     let new_end_time_msg = ExecuteMsg::UpdateEndTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 20_000));
     let res = router.execute_contract(
-        creator.clone(),
+        creator,
         minter_addr.clone(),
         &new_end_time_msg,
         &[],
@@ -117,7 +117,7 @@ fn check_start_end_time_updates() {
     let query_end_time_msg: QueryMsg = QueryMsg::EndTime {};
     let res: EndTimeResponse = router
         .wrap()
-        .query_wasm_smart(minter_addr.clone(), &query_end_time_msg)
+        .query_wasm_smart(minter_addr, &query_end_time_msg)
         .unwrap();
     assert_eq!(res.end_time, Timestamp::from_nanos(GENESIS_MINT_START_TIME + 20_000).to_string());
 
