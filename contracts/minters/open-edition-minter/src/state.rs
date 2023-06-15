@@ -20,6 +20,9 @@ pub const CONFIG: Item<Config> = Item::new("config");
 pub const SG721_ADDRESS: Item<Addr> = Item::new("sg721_address");
 pub const MINTER_ADDRS: Map<&Addr, u32> = Map::new("ma");
 
+/// This keeps track of the mint count
+pub const TOTAL_MINT_COUNT: Item<u32> = Item::new("total_mint_count");
+
 /// Holds the status of the minter. Can be changed with on-chain governance proposals.
 pub const STATUS: Item<Status> = Item::new("status");
 

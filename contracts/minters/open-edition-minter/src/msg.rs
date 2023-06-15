@@ -14,6 +14,11 @@ pub struct InstantiateMsg {
 pub enum ExecuteMsg {
     Mint {},
     Purge {},
+    UpdateMintPrice {
+        price: u128,
+    },
+    UpdateStartTime(Timestamp),
+    UpdateEndTime(Timestamp),
     /// Runs custom checks against TradingStartTime on VendingMinter, then updates by calling sg721-base
     UpdateStartTradingTime(Option<Timestamp>),
     UpdatePerAddressLimit {
@@ -28,8 +33,10 @@ pub enum ExecuteMsg {
 pub enum QueryMsg {
     Config {},
     StartTime {},
+    EndTime {},
     MintPrice {},
     MintCount { address: String },
+    TotalMintCount {},
     Status {},
 }
 
@@ -58,6 +65,11 @@ pub struct StartTimeResponse {
 }
 
 #[cw_serde]
+pub struct EndTimeResponse {
+    pub end_time: String,
+}
+
+#[cw_serde]
 pub struct MintPriceResponse {
     pub public_price: Coin,
     pub airdrop_price: Coin,
@@ -67,5 +79,10 @@ pub struct MintPriceResponse {
 #[cw_serde]
 pub struct MintCountResponse {
     pub address: String,
+    pub count: u32,
+}
+
+#[cw_serde]
+pub struct TotalMintCountResponse {
     pub count: u32,
 }

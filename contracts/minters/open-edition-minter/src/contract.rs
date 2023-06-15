@@ -20,13 +20,8 @@ use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg
 
 use crate::error::ContractError;
 use crate::helpers::mint_nft_msg;
-use crate::msg::{
-    ConfigResponse, ExecuteMsg, MintCountResponse, MintPriceResponse, QueryMsg, StartTimeResponse,
-};
-use crate::state::{
-    increment_token_index, Config, ConfigExtension, CONFIG, MINTER_ADDRS, SG721_ADDRESS, STATUS,
-};
-use crate::validation::get_three_percent_of_tokens;
+use crate::msg::{ConfigResponse, EndTimeResponse, ExecuteMsg, MintCountResponse, MintPriceResponse, QueryMsg, StartTimeResponse, TotalMintCountResponse};
+use crate::state::{increment_token_index, Config, ConfigExtension, CONFIG, MINTER_ADDRS, SG721_ADDRESS, STATUS, TOTAL_MINT_COUNT};
 
 pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 pub type SubMsg = cosmwasm_std::SubMsg<StargazeMsgWrapper>;
@@ -133,6 +128,9 @@ pub fn instantiate(
 
     CONFIG.save(deps.storage, &config)?;
 
+    // Init the minted tokens count
+    TOTAL_MINT_COUNT.save(deps.storage, &0)?;
+
     // Submessage to instantiate sg721 contract
     let submsg = SubMsg {
         msg: WasmMsg::Instantiate {
@@ -171,6 +169,12 @@ pub fn execute(
     match msg {
         ExecuteMsg::Mint {} => execute_mint_sender(deps, env, info),
         ExecuteMsg::Purge {} => execute_purge(deps, env, info),
+        ExecuteMsg::UpdateMintPrice { price } =>
+            execute_update_mint_price(deps, env, info, price),
+        ExecuteMsg::UpdateStartTime(time) =>
+            execute_update_start_time(deps, env, info, time),
+        ExecuteMsg::UpdateEndTime(time) =>
+            execute_update_end_time(deps, env, info, time),
         ExecuteMsg::UpdateStartTradingTime(time) => {
             execute_update_start_trading_time(deps, env, info, time)
         }
@@ -225,7 +229,7 @@ pub fn execute_mint_sender(
     }
 
     // Check if already minted max per address limit
-    if matches!(mint_count(deps.as_ref(), &info)?, count if count >= config.extension.per_address_limit)
+    if matches!(mint_count_per_addr(deps.as_ref(), &info)?, count if count >= config.extension.per_address_limit)
     {
         return Err(ContractError::MaxPerAddressLimitExceeded {});
     }
@@ -337,8 +341,14 @@ fn _execute_mint(
     res = res.add_message(msg);
 
     // Save the new mint count for the sender's address
-    let new_mint_count = mint_count(deps.as_ref(), &info)? + 1;
+    let new_mint_count = mint_count_per_addr(deps.as_ref(), &info)? + 1;
     MINTER_ADDRS.save(deps.storage, &info.sender, &new_mint_count)?;
+
+    // Update the mint count
+    TOTAL_MINT_COUNT.update(deps.storage, |mut updated_mint_count| -> Result<_, ContractError> {
+        updated_mint_count += 1u32;
+        Ok(updated_mint_count)
+    })?;
 
     let seller_amount = {
         // the net amount is mint price - network fee (mint free + dev fee)
@@ -379,7 +389,13 @@ pub fn execute_update_mint_price(
             "Sender is not an admin".to_owned(),
         ));
     }
-    // If current time is after the stored start time, only allow lowering price
+
+    // If we are after the end_time return error
+    if env.block.time >= config.extension.end_time {
+        return Err(ContractError::AfterMintEndTime {});
+    }
+
+    // If current time is after the stored start_time, only allow lowering price
     if env.block.time >= config.extension.start_time && price >= config.mint_price.amount.u128() {
         return Err(ContractError::UpdatedMintPriceTooHigh {
             allowed: config.mint_price.amount.u128(),
@@ -401,11 +417,82 @@ pub fn execute_update_mint_price(
 
     config.mint_price = coin(price, config.mint_price.denom);
     CONFIG.save(deps.storage, &config)?;
-
     Ok(Response::new()
         .add_attribute("action", "update_mint_price")
         .add_attribute("sender", info.sender)
         .add_attribute("mint_price", price.to_string()))
+}
+
+pub fn execute_update_start_time(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    start_time: Timestamp,
+) -> Result<Response, ContractError> {
+    nonpayable(&info)?;
+    let mut config = CONFIG.load(deps.storage)?;
+    if info.sender != config.extension.admin {
+        return Err(ContractError::Unauthorized(
+            "Sender is not an admin".to_owned(),
+        ));
+    }
+    // If current time is after the stored start time return error
+    if env.block.time >= config.extension.start_time {
+        return Err(ContractError::AlreadyStarted {});
+    }
+
+    // If current time already passed the new start_time return error
+    if env.block.time > start_time {
+        return Err(ContractError::InvalidStartTime(start_time, env.block.time));
+    }
+
+    // If the new start_time is after end_time return error
+    if start_time > config.extension.end_time {
+        return Err(ContractError::InvalidStartTime(config.extension.end_time, start_time));
+    }
+
+    config.extension.start_time = start_time;
+    CONFIG.save(deps.storage, &config)?;
+    Ok(Response::new()
+        .add_attribute("action", "update_start_time")
+        .add_attribute("sender", info.sender)
+        .add_attribute("start_time", start_time.to_string()))
+}
+
+pub fn execute_update_end_time(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    end_time: Timestamp,
+) -> Result<Response, ContractError> {
+    nonpayable(&info)?;
+    let mut config = CONFIG.load(deps.storage)?;
+    if info.sender != config.extension.admin {
+        return Err(ContractError::Unauthorized(
+            "Sender is not an admin".to_owned(),
+        ));
+    }
+    // If current time is after the stored end time return error
+    if env.block.time >= config.extension.end_time {
+        return Err(ContractError::AlreadyStarted {});
+    }
+
+    // If current time already passed the new end_time return error
+    if env.block.time > end_time {
+        return Err(ContractError::InvalidEndTime(end_time, env.block.time));
+    }
+
+    // If the new end_time if before the start_time return error
+    if end_time < config.extension.start_time {
+        return Err(ContractError::InvalidEndTime(end_time, config.extension.start_time));
+    }
+
+    config.extension.end_time = end_time;
+    CONFIG.save(deps.storage, &config)?;
+    Ok(Response::new()
+        .add_attribute("action", "update_end_time")
+        .add_attribute("sender", info.sender)
+        .add_attribute("end_time", end_time.to_string()))
 }
 
 pub fn execute_update_start_trading_time(
@@ -520,24 +607,9 @@ pub fn mint_price(deps: Deps, is_admin: bool) -> Result<Coin, StdError> {
     }
 }
 
-fn mint_count(deps: Deps, info: &MessageInfo) -> Result<u32, StdError> {
+fn mint_count_per_addr(deps: Deps, info: &MessageInfo) -> Result<u32, StdError> {
     let mint_count = (MINTER_ADDRS.key(&info.sender).may_load(deps.storage)?).unwrap_or(0);
     Ok(mint_count)
-}
-
-pub fn display_max_mintable_tokens(
-    per_address_limit: u32,
-    num_tokens: u32,
-    max_per_address_limit: u32,
-) -> Result<u32, ContractError> {
-    if per_address_limit > max_per_address_limit {
-        return Ok(max_per_address_limit);
-    }
-    if num_tokens < 100 {
-        return Ok(3_u32);
-    }
-    let three_percent = get_three_percent_of_tokens(num_tokens)?.u128();
-    Ok(three_percent as u32)
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -573,8 +645,10 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::Config {} => to_binary(&query_config(deps)?),
         QueryMsg::Status {} => to_binary(&query_status(deps)?),
         QueryMsg::StartTime {} => to_binary(&query_start_time(deps)?),
+        QueryMsg::EndTime {} => to_binary(&query_end_time(deps)?),
         QueryMsg::MintPrice {} => to_binary(&query_mint_price(deps)?),
-        QueryMsg::MintCount { address } => to_binary(&query_mint_count(deps, address)?),
+        QueryMsg::MintCount { address } => to_binary(&query_mint_count_per_address(deps, address)?),
+        QueryMsg::TotalMintCount {} => to_binary(&query_mint_count(deps)?),
     }
 }
 
@@ -602,7 +676,7 @@ pub fn query_status(deps: Deps) -> StdResult<StatusResponse> {
     Ok(StatusResponse { status })
 }
 
-fn query_mint_count(deps: Deps, address: String) -> StdResult<MintCountResponse> {
+fn query_mint_count_per_address(deps: Deps, address: String) -> StdResult<MintCountResponse> {
     let addr = deps.api.addr_validate(&address)?;
     let mint_count = (MINTER_ADDRS.key(&addr).may_load(deps.storage)?).unwrap_or(0);
     Ok(MintCountResponse {
@@ -611,10 +685,24 @@ fn query_mint_count(deps: Deps, address: String) -> StdResult<MintCountResponse>
     })
 }
 
+fn query_mint_count(deps: Deps) -> StdResult<TotalMintCountResponse> {
+    let mint_count = TOTAL_MINT_COUNT.load(deps.storage)?;
+    Ok(TotalMintCountResponse {
+        count: mint_count,
+    })
+}
+
 fn query_start_time(deps: Deps) -> StdResult<StartTimeResponse> {
     let config = CONFIG.load(deps.storage)?;
     Ok(StartTimeResponse {
         start_time: config.extension.start_time.to_string(),
+    })
+}
+
+fn query_end_time(deps: Deps) -> StdResult<EndTimeResponse> {
+    let config = CONFIG.load(deps.storage)?;
+    Ok(EndTimeResponse {
+        end_time: config.extension.end_time.to_string(),
     })
 }
 

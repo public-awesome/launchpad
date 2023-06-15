@@ -3,7 +3,7 @@ use cw721::{Cw721QueryMsg, NumTokensResponse, OwnerOfResponse};
 use cw_multi_test::{BankSudo, Executor, SudoMsg};
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
-use open_edition_minter::msg::{ExecuteMsg, QueryMsg};
+use open_edition_minter::msg::{EndTimeResponse, ExecuteMsg, QueryMsg, TotalMintCountResponse};
 use open_edition_minter::msg::{MintCountResponse, MintPriceResponse, StartTimeResponse};
 use sg4::StatusResponse;
 
@@ -32,6 +32,32 @@ fn check_mint_revenues_distribution() {
     );
     let initial_dev_balances = router.wrap().query_all_balances(DEV_ADDRESS).unwrap();
     assert_eq!(initial_dev_balances[0].amount, Uint128::new(2_000_000_000));
+
+    // Query Start Time
+    // We know it is GENESIS_MINT_START_TIME + 100
+    let query_start_time_msg: QueryMsg = QueryMsg::StartTime {};
+    let res: StartTimeResponse = router
+        .wrap()
+        .query_wasm_smart(minter_addr.clone(), &query_start_time_msg)
+        .unwrap();
+    assert_eq!(res.start_time, Timestamp::from_nanos(GENESIS_MINT_START_TIME + 100).to_string());
+
+    // Query End Time
+    // We know it is GENESIS_MINT_START_TIME + 10_000
+    let query_end_time_msg: QueryMsg = QueryMsg::EndTime {};
+    let res: EndTimeResponse = router
+        .wrap()
+        .query_wasm_smart(minter_addr.clone(), &query_end_time_msg)
+        .unwrap();
+    assert_eq!(res.end_time, Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000).to_string());
+
+    // Query Total Minted Tokens -> Should be 0 at the start
+    let query_total_minted_msg: QueryMsg = QueryMsg::TotalMintCount {};
+    let res: TotalMintCountResponse = router
+        .wrap()
+        .query_wasm_smart(minter_addr.clone(), &query_total_minted_msg)
+        .unwrap();
+    assert_eq!(res.count, 0u32);
 
     // Invalid price
     let mint_msg = ExecuteMsg::Mint {};
@@ -213,6 +239,14 @@ fn check_mint_revenues_distribution() {
             amount: Uint128::new(100_000_000)
         }
     );
+
+    // Query Total Minted Tokens -> Should be 3 (2 normal mints + MintTo)
+    let query_total_minted_msg: QueryMsg = QueryMsg::TotalMintCount {};
+    let res: TotalMintCountResponse = router
+        .wrap()
+        .query_wasm_smart(minter_addr.clone(), &query_total_minted_msg)
+        .unwrap();
+    assert_eq!(res.count, 3u32);
 
     // If time end has been reached, can't mint anymore
     setup_block_time(&mut router, GENESIS_MINT_START_TIME + 1_000_000, None);
