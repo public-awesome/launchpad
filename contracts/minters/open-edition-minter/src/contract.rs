@@ -34,7 +34,7 @@ pub type SubMsg = cosmwasm_std::SubMsg<StargazeMsgWrapper>;
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sg-open-edition-minter";
-const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
+const CONTRACT_VERSION: &str = "3.0.0";
 
 const INSTANTIATE_SG721_REPLY_ID: u64 = 1;
 

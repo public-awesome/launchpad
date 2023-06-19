@@ -20,7 +20,7 @@ use crate::state::SUDO_PARAMS;
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:open-edition-factory";
-const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
+const CONTRACT_VERSION: &str = "3.0.0";
 
 /// Can only be called by governance
 #[cfg_attr(not(feature = "library"), entry_point)]

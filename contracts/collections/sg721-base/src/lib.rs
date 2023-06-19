@@ -36,13 +36,13 @@ pub mod entry {
         info: MessageInfo,
         msg: InstantiateMsg,
     ) -> Result<Response, ContractError> {
-        set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+        set_contract_version(deps.storage, CONTRACT_NAME, TO_VERSION)?;
 
         let res = Sg721Contract::<Extension>::default().instantiate(deps, env, info, msg)?;
 
         Ok(res
             .add_attribute("contract_name", CONTRACT_NAME)
-            .add_attribute("contract_version", CONTRACT_VERSION))
+            .add_attribute("contract_version", TO_VERSION))
     }
 
     #[cfg_attr(not(feature = "library"), entry_point)]
