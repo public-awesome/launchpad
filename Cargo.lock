@@ -1309,9 +1309,12 @@ dependencies = [
  "cosmwasm-std",
  "env_logger",
  "once_cell",
+ "open-edition-factory",
+ "open-edition-minter",
  "rand",
  "serde",
  "serde_json",
+ "sg-metadata",
  "sg2",
  "sg721",
  "sg721-base",
@@ -2286,6 +2289,47 @@ name = "opaque-debug"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
+
+[[package]]
+name = "open-edition-factory"
+version = "2.3.0"
+dependencies = [
+ "base-factory",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus 1.0.1",
+ "cw-utils 1.0.1",
+ "cw2 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg-metadata",
+ "sg-std 2.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg1",
+ "sg2",
+ "sg721",
+ "thiserror",
+]
+
+[[package]]
+name = "open-edition-minter"
+version = "2.3.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus 1.0.1",
+ "cw-utils 1.0.1",
+ "cw2 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cw721-base 0.17.0",
+ "open-edition-factory",
+ "semver",
+ "serde",
+ "sg-metadata",
+ "sg-std 2.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sg1",
+ "sg2",
+ "sg4",
+ "sg721",
+ "thiserror",
+ "url",
+]
 
 [[package]]
 name = "open-fastrlp"
@@ -3788,6 +3832,8 @@ dependencies = [
  "ethers-core",
  "ethers-signers",
  "eyre",
+ "open-edition-factory",
+ "open-edition-minter",
  "rand_core 0.6.4",
  "rand_xoshiro",
  "rlp",
@@ -3795,6 +3841,7 @@ dependencies = [
  "serde",
  "sg-controllers",
  "sg-eth-airdrop",
+ "sg-metadata",
  "sg-multi-test",
  "sg-splits",
  "sg-std 2.3.0 (registry+https://github.com/rust-lang/crates.io-index)",

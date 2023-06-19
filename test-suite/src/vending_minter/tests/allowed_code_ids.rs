@@ -13,8 +13,7 @@ use sg2::{
 };
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use vending_factory::msg::{
-    SudoMsg, VendingMinterCreateMsg, VendingMinterInitMsgExtension, VendingUpdateParamsExtension,
-    VendingUpdateParamsMsg,
+    SudoMsg, VendingMinterCreateMsg, VendingUpdateParamsExtension, VendingUpdateParamsMsg,
 };
 
 #[test]
@@ -75,9 +74,7 @@ fn update_code_id() {
     let mut collection_params = mock_collection_params_1(Some(start_time));
     collection_params.code_id = sg721_code_id;
 
-    let init_msg = VendingMinterInitMsgExtension {
-        ..mock_init_extension(None, None)
-    };
+    let init_msg = mock_init_extension(None, None);
     let mut msg = VendingMinterCreateMsg {
         init_msg,
         collection_params,

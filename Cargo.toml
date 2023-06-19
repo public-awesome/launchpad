@@ -51,6 +51,8 @@ url                 = "2.2.2"
 sha2                = { version = "0.10.2", default-features = false }
 vending-factory     = { version = "2.3.0", path = "contracts/factories/vending-factory" }
 vending-minter      = { version = "2.3.0", path = "contracts/minters/vending-minter" }
+open-edition-factory= { version = "2.1.0", path = "contracts/factories/open-edition-factory" }
+open-edition-minter = { version = "2.1.0", path = "contracts/minters/open-edition-minter" }
 whitelist-immutable = { version = "2.3.0", path = "contracts/whitelists/whitelist-immutable" }
 sg-whitelist-flex   = { version = "2.3.0", path = "contracts/whitelists/whitelist-flex" }
 ethereum-verify     = { version = "2.3.0", path = "packages/ethereum-verify" }
