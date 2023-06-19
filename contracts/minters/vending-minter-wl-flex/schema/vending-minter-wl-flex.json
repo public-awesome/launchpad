@@ -757,13 +757,19 @@
       "type": "object",
       "required": [
         "address",
-        "count"
+        "count",
+        "whitelist_count"
       ],
       "properties": {
         "address": {
           "type": "string"
         },
         "count": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "whitelist_count": {
           "type": "integer",
           "format": "uint32",
           "minimum": 0.0

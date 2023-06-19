@@ -29,6 +29,53 @@
       "additionalProperties": false
     },
     {
+      "type": "object",
+      "required": [
+        "update_mint_price"
+      ],
+      "properties": {
+        "update_mint_price": {
+          "type": "object",
+          "required": [
+            "price"
+          ],
+          "properties": {
+            "price": {
+              "type": "integer",
+              "format": "uint128",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "update_start_time"
+      ],
+      "properties": {
+        "update_start_time": {
+          "$ref": "#/definitions/Timestamp"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "update_end_time"
+      ],
+      "properties": {
+        "update_end_time": {
+          "$ref": "#/definitions/Timestamp"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
       "description": "Runs custom checks against TradingStartTime on VendingMinter, then updates by calling sg721-base",
       "type": "object",
       "required": [

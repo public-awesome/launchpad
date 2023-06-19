@@ -20,8 +20,14 @@ use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg
 
 use crate::error::ContractError;
 use crate::helpers::mint_nft_msg;
-use crate::msg::{ConfigResponse, EndTimeResponse, ExecuteMsg, MintCountResponse, MintPriceResponse, QueryMsg, StartTimeResponse, TotalMintCountResponse};
-use crate::state::{increment_token_index, Config, ConfigExtension, CONFIG, MINTER_ADDRS, SG721_ADDRESS, STATUS, TOTAL_MINT_COUNT};
+use crate::msg::{
+    ConfigResponse, EndTimeResponse, ExecuteMsg, MintCountResponse, MintPriceResponse, QueryMsg,
+    StartTimeResponse, TotalMintCountResponse,
+};
+use crate::state::{
+    increment_token_index, Config, ConfigExtension, CONFIG, MINTER_ADDRS, SG721_ADDRESS, STATUS,
+    TOTAL_MINT_COUNT,
+};
 
 pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 pub type SubMsg = cosmwasm_std::SubMsg<StargazeMsgWrapper>;
@@ -169,12 +175,9 @@ pub fn execute(
     match msg {
         ExecuteMsg::Mint {} => execute_mint_sender(deps, env, info),
         ExecuteMsg::Purge {} => execute_purge(deps, env, info),
-        ExecuteMsg::UpdateMintPrice { price } =>
-            execute_update_mint_price(deps, env, info, price),
-        ExecuteMsg::UpdateStartTime(time) =>
-            execute_update_start_time(deps, env, info, time),
-        ExecuteMsg::UpdateEndTime(time) =>
-            execute_update_end_time(deps, env, info, time),
+        ExecuteMsg::UpdateMintPrice { price } => execute_update_mint_price(deps, env, info, price),
+        ExecuteMsg::UpdateStartTime(time) => execute_update_start_time(deps, env, info, time),
+        ExecuteMsg::UpdateEndTime(time) => execute_update_end_time(deps, env, info, time),
         ExecuteMsg::UpdateStartTradingTime(time) => {
             execute_update_start_trading_time(deps, env, info, time)
         }
@@ -345,10 +348,13 @@ fn _execute_mint(
     MINTER_ADDRS.save(deps.storage, &info.sender, &new_mint_count)?;
 
     // Update the mint count
-    TOTAL_MINT_COUNT.update(deps.storage, |mut updated_mint_count| -> Result<_, ContractError> {
-        updated_mint_count += 1u32;
-        Ok(updated_mint_count)
-    })?;
+    TOTAL_MINT_COUNT.update(
+        deps.storage,
+        |mut updated_mint_count| -> Result<_, ContractError> {
+            updated_mint_count += 1u32;
+            Ok(updated_mint_count)
+        },
+    )?;
 
     let seller_amount = {
         // the net amount is mint price - network fee (mint free + dev fee)
@@ -448,7 +454,10 @@ pub fn execute_update_start_time(
 
     // If the new start_time is after end_time return error
     if start_time > config.extension.end_time {
-        return Err(ContractError::InvalidStartTime(config.extension.end_time, start_time));
+        return Err(ContractError::InvalidStartTime(
+            config.extension.end_time,
+            start_time,
+        ));
     }
 
     config.extension.start_time = start_time;
@@ -484,7 +493,10 @@ pub fn execute_update_end_time(
 
     // If the new end_time if before the start_time return error
     if end_time < config.extension.start_time {
-        return Err(ContractError::InvalidEndTime(end_time, config.extension.start_time));
+        return Err(ContractError::InvalidEndTime(
+            end_time,
+            config.extension.start_time,
+        ));
     }
 
     config.extension.end_time = end_time;
@@ -687,9 +699,7 @@ fn query_mint_count_per_address(deps: Deps, address: String) -> StdResult<MintCo
 
 fn query_mint_count(deps: Deps) -> StdResult<TotalMintCountResponse> {
     let mint_count = TOTAL_MINT_COUNT.load(deps.storage)?;
-    Ok(TotalMintCountResponse {
-        count: mint_count,
-    })
+    Ok(TotalMintCountResponse { count: mint_count })
 }
 
 fn query_start_time(deps: Deps) -> StdResult<StartTimeResponse> {
