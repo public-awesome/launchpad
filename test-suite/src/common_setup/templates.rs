@@ -319,10 +319,12 @@ pub fn open_edition_minter_custom_template(
     let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 100);
     let end_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000);
     let per_address_limit_minter = per_address_limit_minter.or(Some(1));
-    let mint_price = mint_price_minter.or_else(|| Some(Coin {
-        denom: NATIVE_DENOM.to_string(),
-        amount: Uint128::new(MIN_MINT_PRICE_OPEN_EDITION),
-    }));
+    let mint_price = mint_price_minter.or_else(|| {
+        Some(Coin {
+            denom: NATIVE_DENOM.to_string(),
+            amount: Uint128::new(MIN_MINT_PRICE_OPEN_EDITION),
+        })
+    });
     let collection_params = mock_collection_params_1(Some(start_time));
     let default_nft_data = nft_data.unwrap_or(NftData {
         nft_data_type: NftMetadataType::OffChainMetadata,

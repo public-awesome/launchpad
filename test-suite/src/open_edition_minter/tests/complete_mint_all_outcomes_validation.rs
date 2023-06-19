@@ -40,7 +40,10 @@ fn check_mint_revenues_distribution() {
         .wrap()
         .query_wasm_smart(minter_addr.clone(), &query_start_time_msg)
         .unwrap();
-    assert_eq!(res.start_time, Timestamp::from_nanos(GENESIS_MINT_START_TIME + 100).to_string());
+    assert_eq!(
+        res.start_time,
+        Timestamp::from_nanos(GENESIS_MINT_START_TIME + 100).to_string()
+    );
 
     // Query End Time
     // We know it is GENESIS_MINT_START_TIME + 10_000
@@ -49,7 +52,10 @@ fn check_mint_revenues_distribution() {
         .wrap()
         .query_wasm_smart(minter_addr.clone(), &query_end_time_msg)
         .unwrap();
-    assert_eq!(res.end_time, Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000).to_string());
+    assert_eq!(
+        res.end_time,
+        Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000).to_string()
+    );
 
     // Query Total Minted Tokens -> Should be 0 at the start
     let query_total_minted_msg: QueryMsg = QueryMsg::TotalMintCount {};

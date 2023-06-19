@@ -23,14 +23,30 @@ fn check_mint_price_updates() {
         .wrap()
         .query_wasm_smart(minter_addr.clone(), &query_mint_price_msg)
         .unwrap();
-    assert_eq!(res.current_price, Coin {denom: NATIVE_DENOM.to_string(), amount: Uint128::new(MINT_PRICE)});
-    assert_eq!(res.airdrop_price, Coin {denom: NATIVE_DENOM.to_string(), amount: Uint128::new(MINT_PRICE)});
-    assert_eq!(res.public_price, Coin {denom: NATIVE_DENOM.to_string(), amount: Uint128::new(MINT_PRICE)});
+    assert_eq!(
+        res.current_price,
+        Coin {
+            denom: NATIVE_DENOM.to_string(),
+            amount: Uint128::new(MINT_PRICE)
+        }
+    );
+    assert_eq!(
+        res.airdrop_price,
+        Coin {
+            denom: NATIVE_DENOM.to_string(),
+            amount: Uint128::new(MINT_PRICE)
+        }
+    );
+    assert_eq!(
+        res.public_price,
+        Coin {
+            denom: NATIVE_DENOM.to_string(),
+            amount: Uint128::new(MINT_PRICE)
+        }
+    );
 
     // Change to invalid price
-    let update_msg = ExecuteMsg::UpdateMintPrice {
-        price: 1u128,
-    };
+    let update_msg = ExecuteMsg::UpdateMintPrice { price: 1u128 };
     let res = router.execute_contract(creator.clone(), minter_addr.clone(), &update_msg, &[]);
     assert_eq!(
         res.err().unwrap().source().unwrap().to_string(),
@@ -50,9 +66,27 @@ fn check_mint_price_updates() {
         .wrap()
         .query_wasm_smart(minter_addr.clone(), &query_mint_price_msg)
         .unwrap();
-    assert_eq!(res.current_price, Coin {denom: NATIVE_DENOM.to_string(), amount: Uint128::new(MINT_PRICE + 100u128)});
-    assert_eq!(res.airdrop_price, Coin {denom: NATIVE_DENOM.to_string(), amount: Uint128::new(MINT_PRICE)});
-    assert_eq!(res.public_price, Coin {denom: NATIVE_DENOM.to_string(), amount: Uint128::new(MINT_PRICE + 100u128)});
+    assert_eq!(
+        res.current_price,
+        Coin {
+            denom: NATIVE_DENOM.to_string(),
+            amount: Uint128::new(MINT_PRICE + 100u128)
+        }
+    );
+    assert_eq!(
+        res.airdrop_price,
+        Coin {
+            denom: NATIVE_DENOM.to_string(),
+            amount: Uint128::new(MINT_PRICE)
+        }
+    );
+    assert_eq!(
+        res.public_price,
+        Coin {
+            denom: NATIVE_DENOM.to_string(),
+            amount: Uint128::new(MINT_PRICE + 100u128)
+        }
+    );
 
     // Set block forward, after start time. mint succeeds
     setup_block_time(&mut router, GENESIS_MINT_START_TIME + 200, None);
@@ -68,9 +102,7 @@ fn check_mint_price_updates() {
     );
 
     // Decrease the price after the start time
-    let update_msg = ExecuteMsg::UpdateMintPrice {
-        price: MINT_PRICE,
-    };
+    let update_msg = ExecuteMsg::UpdateMintPrice { price: MINT_PRICE };
     let res = router.execute_contract(creator.clone(), minter_addr.clone(), &update_msg, &[]);
     assert!(res.is_ok());
 
@@ -80,21 +112,36 @@ fn check_mint_price_updates() {
         .wrap()
         .query_wasm_smart(minter_addr.clone(), &query_mint_price_msg)
         .unwrap();
-    assert_eq!(res.current_price, Coin {denom: NATIVE_DENOM.to_string(), amount: Uint128::new(MINT_PRICE)});
-    assert_eq!(res.airdrop_price, Coin {denom: NATIVE_DENOM.to_string(), amount: Uint128::new(MINT_PRICE)});
-    assert_eq!(res.public_price, Coin {denom: NATIVE_DENOM.to_string(), amount: Uint128::new(MINT_PRICE)});
+    assert_eq!(
+        res.current_price,
+        Coin {
+            denom: NATIVE_DENOM.to_string(),
+            amount: Uint128::new(MINT_PRICE)
+        }
+    );
+    assert_eq!(
+        res.airdrop_price,
+        Coin {
+            denom: NATIVE_DENOM.to_string(),
+            amount: Uint128::new(MINT_PRICE)
+        }
+    );
+    assert_eq!(
+        res.public_price,
+        Coin {
+            denom: NATIVE_DENOM.to_string(),
+            amount: Uint128::new(MINT_PRICE)
+        }
+    );
 
     // If we are past the end time - cannot mint and cant change price either
     setup_block_time(&mut router, GENESIS_MINT_START_TIME + 50_000, None);
 
     // Try to change the price
-    let update_msg = ExecuteMsg::UpdateMintPrice {
-        price: MINT_PRICE,
-    };
+    let update_msg = ExecuteMsg::UpdateMintPrice { price: MINT_PRICE };
     let res = router.execute_contract(creator, minter_addr, &update_msg, &[]);
     assert_eq!(
         res.err().unwrap().source().unwrap().to_string(),
         "Minting has ended"
     );
-
 }

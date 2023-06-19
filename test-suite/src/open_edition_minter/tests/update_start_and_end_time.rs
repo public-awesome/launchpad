@@ -1,6 +1,6 @@
-use cosmwasm_std::{Timestamp};
+use cosmwasm_std::Timestamp;
 use cw_multi_test::Executor;
-use sg_std::{GENESIS_MINT_START_TIME};
+use sg_std::GENESIS_MINT_START_TIME;
 
 use open_edition_minter::msg::{EndTimeResponse, StartTimeResponse};
 use open_edition_minter::msg::{ExecuteMsg, QueryMsg};
@@ -22,7 +22,10 @@ fn check_start_end_time_updates() {
         .wrap()
         .query_wasm_smart(minter_addr.clone(), &query_start_time_msg)
         .unwrap();
-    assert_eq!(res.start_time, Timestamp::from_nanos(GENESIS_MINT_START_TIME + 100).to_string());
+    assert_eq!(
+        res.start_time,
+        Timestamp::from_nanos(GENESIS_MINT_START_TIME + 100).to_string()
+    );
 
     // Query End Time
     // We know it is GENESIS_MINT_START_TIME + 10_000
@@ -31,10 +34,14 @@ fn check_start_end_time_updates() {
         .wrap()
         .query_wasm_smart(minter_addr.clone(), &query_end_time_msg)
         .unwrap();
-    assert_eq!(res.end_time, Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000).to_string());
+    assert_eq!(
+        res.end_time,
+        Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000).to_string()
+    );
 
     // Cant change start time to before the current time
-    let new_start_time_msg = ExecuteMsg::UpdateStartTime(Timestamp::from_nanos(1_500_000_000_000_000_000));
+    let new_start_time_msg =
+        ExecuteMsg::UpdateStartTime(Timestamp::from_nanos(1_500_000_000_000_000_000));
     let res = router.execute_contract(
         creator.clone(),
         minter_addr.clone(),
@@ -47,7 +54,8 @@ fn check_start_end_time_updates() {
     );
 
     // Cant change start time to after the end time
-    let new_start_time_msg = ExecuteMsg::UpdateStartTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_001));
+    let new_start_time_msg =
+        ExecuteMsg::UpdateStartTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_001));
     let res = router.execute_contract(
         creator.clone(),
         minter_addr.clone(),
@@ -60,33 +68,26 @@ fn check_start_end_time_updates() {
     );
 
     // Cant change end time to before the current time
-    let new_end_time_msg = ExecuteMsg::UpdateEndTime(Timestamp::from_nanos(1_500_000_000_000_000_000));
-    let res = router.execute_contract(
-        creator.clone(),
-        minter_addr.clone(),
-        &new_end_time_msg,
-        &[],
-    );
+    let new_end_time_msg =
+        ExecuteMsg::UpdateEndTime(Timestamp::from_nanos(1_500_000_000_000_000_000));
+    let res = router.execute_contract(creator.clone(), minter_addr.clone(), &new_end_time_msg, &[]);
     assert_eq!(
         res.err().unwrap().source().unwrap().to_string(),
         "InvalidEndTime 1500000000.000000000 < 1571797419.879305533"
     );
 
     // Cant change end time to before the start time
-    let new_end_time_msg = ExecuteMsg::UpdateEndTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 99));
-    let res = router.execute_contract(
-        creator.clone(),
-        minter_addr.clone(),
-        &new_end_time_msg,
-        &[],
-    );
+    let new_end_time_msg =
+        ExecuteMsg::UpdateEndTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 99));
+    let res = router.execute_contract(creator.clone(), minter_addr.clone(), &new_end_time_msg, &[]);
     assert_eq!(
         res.err().unwrap().source().unwrap().to_string(),
         "InvalidEndTime 1647032400.000000099 < 1647032400.000000100"
     );
 
     // Make valid change to start time
-    let new_start_time_msg = ExecuteMsg::UpdateStartTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 1_000));
+    let new_start_time_msg =
+        ExecuteMsg::UpdateStartTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 1_000));
     let res = router.execute_contract(
         creator.clone(),
         minter_addr.clone(),
@@ -101,16 +102,15 @@ fn check_start_end_time_updates() {
         .wrap()
         .query_wasm_smart(minter_addr.clone(), &query_start_time_msg)
         .unwrap();
-    assert_eq!(res.start_time, Timestamp::from_nanos(GENESIS_MINT_START_TIME + 1_000).to_string());
+    assert_eq!(
+        res.start_time,
+        Timestamp::from_nanos(GENESIS_MINT_START_TIME + 1_000).to_string()
+    );
 
     // Make valid change to end time
-    let new_end_time_msg = ExecuteMsg::UpdateEndTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 20_000));
-    let res = router.execute_contract(
-        creator,
-        minter_addr.clone(),
-        &new_end_time_msg,
-        &[],
-    );
+    let new_end_time_msg =
+        ExecuteMsg::UpdateEndTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 20_000));
+    let res = router.execute_contract(creator, minter_addr.clone(), &new_end_time_msg, &[]);
     assert!(res.is_ok());
 
     // Query to validate the new end time
@@ -119,6 +119,8 @@ fn check_start_end_time_updates() {
         .wrap()
         .query_wasm_smart(minter_addr, &query_end_time_msg)
         .unwrap();
-    assert_eq!(res.end_time, Timestamp::from_nanos(GENESIS_MINT_START_TIME + 20_000).to_string());
-
+    assert_eq!(
+        res.end_time,
+        Timestamp::from_nanos(GENESIS_MINT_START_TIME + 20_000).to_string()
+    );
 }
