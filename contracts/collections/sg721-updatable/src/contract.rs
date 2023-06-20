@@ -10,10 +10,7 @@ use cw2::set_contract_version;
 use sg721::InstantiateMsg;
 use sg721_base::msg::CollectionInfoResponse;
 
-use crate::msg::{
-    EnableUpdatableFeeResponse, EnableUpdatableResponse, FrozenTokenMetadataResponse,
-    Sg721MutableParamsMsg,
-};
+use crate::msg::{EnableUpdatableResponse, FrozenTokenMetadataResponse, Sg721MutableParamsMsg};
 use crate::state::ENABLE_UPDATABLE;
 
 use cw721_base::Extension;
@@ -152,9 +149,9 @@ pub fn query_enable_updatable(deps: Deps) -> StdResult<EnableUpdatableResponse> 
     Ok(EnableUpdatableResponse { enabled })
 }
 
-pub fn query_enable_updatable_fee(deps: Deps) -> StdResult<EnableUpdatableFeeResponse> {
+pub fn query_enable_updatable_fee(deps: Deps) -> StdResult<Uint128> {
     let fee = ENABLE_UPDATABLE_FEE.load(deps.storage)?;
-    Ok(EnableUpdatableFeeResponse { fee })
+    Ok(fee)
 }
 
 pub fn query_frozen_token_metadata(deps: Deps) -> StdResult<FrozenTokenMetadataResponse> {

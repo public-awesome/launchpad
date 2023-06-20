@@ -259,11 +259,6 @@ pub struct EnableUpdatableResponse {
 }
 
 #[cw_serde]
-pub struct EnableUpdatableFeeResponse {
-    pub fee: Uint128,
-}
-
-#[cw_serde]
 pub struct FrozenTokenMetadataResponse {
     pub frozen: bool,
 }

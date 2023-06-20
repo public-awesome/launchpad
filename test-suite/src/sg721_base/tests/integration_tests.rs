@@ -721,8 +721,7 @@ mod tests {
         use cw_multi_test::{BankSudo, Executor, SudoMsg};
         use sg2::tests::mock_collection_params;
         use sg721_updatable::msg::{
-            EnableUpdatableFeeResponse, QueryMsg, Sg721MutableParamsExtension,
-            Sg721MutableParamsMsg, SudoMsg as Sg721SudoMsg,
+            QueryMsg, Sg721MutableParamsExtension, Sg721MutableParamsMsg, SudoMsg as Sg721SudoMsg,
         };
         use sg_multi_test::StargazeApp;
         use sg_std::NATIVE_DENOM;
@@ -793,11 +792,11 @@ mod tests {
             assert!(res.is_ok());
 
             // confirm fee is changed
-            let res: EnableUpdatableFeeResponse = app
+            let res: Uint128 = app
                 .wrap()
                 .query_wasm_smart(contract, &QueryMsg::EnableUpdatableFee {})
                 .unwrap();
-            assert_eq!(res.fee, Uint128::from(new_fee));
+            assert_eq!(res, Uint128::from(new_fee));
         }
     }
 }
