@@ -56,6 +56,9 @@ pub enum ContractError {
     #[error("Updated royalty too soon")]
     RoyaltyUpdateTooSoon {},
 
+    #[error("Royalty Info invalid")]
+    RoyaltyInfoInvalid {},
+
     #[error("MinterNotFound")]
     MinterNotFound {},
 

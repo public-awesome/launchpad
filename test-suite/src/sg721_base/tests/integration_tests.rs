@@ -242,8 +242,8 @@ mod tests {
     }
 
     mod start_trading_time {
-        use cosmwasm_std::{Decimal, Empty, Timestamp};
-        use sg721::{RoyaltyInfo, UpdateCollectionInfoMsg};
+        use cosmwasm_std::{Decimal, Empty};
+        use sg721::{tests::mock_royalty_info, RoyaltyInfo, UpdateCollectionInfoMsg};
         use sg721_base::ContractError;
 
         use crate::common_setup::{
@@ -265,9 +265,8 @@ mod tests {
             let creator = Addr::unchecked("creator".to_string());
 
             let royalty_info: Option<RoyaltyInfo<String>> = Some(RoyaltyInfo {
-                payment_address: creator.to_string(),
                 share: Decimal::percent(11),
-                updated_at: Timestamp::from_nanos(0),
+                ..mock_royalty_info(creator.to_string())
             });
             let res = app.execute_contract(
                 creator,
@@ -336,9 +335,8 @@ mod tests {
 
             // update royalty_info
             let royalty_info: Option<RoyaltyInfo<String>> = Some(RoyaltyInfo {
-                payment_address: creator.to_string(),
                 share: Decimal::percent(4),
-                updated_at: Timestamp::from_nanos(0),
+                ..mock_royalty_info(creator.to_string())
             });
             let res = app.execute_contract(
                 creator.clone(),
@@ -391,9 +389,8 @@ mod tests {
 
             // RoyaltyUpdateTooSoon
             let royalty_info: Option<RoyaltyInfo<String>> = Some(RoyaltyInfo {
-                payment_address: creator.to_string(),
                 share: Decimal::percent(5),
-                updated_at: Timestamp::from_nanos(0),
+                ..mock_royalty_info(creator.to_string())
             });
             let err = app
                 .execute_contract(
@@ -426,9 +423,8 @@ mod tests {
 
             // RoyaltyShareIncreasedTooMuch
             let royalty_info: Option<RoyaltyInfo<String>> = Some(RoyaltyInfo {
-                payment_address: creator.to_string(),
                 share: Decimal::percent(9),
-                updated_at: Timestamp::from_nanos(0),
+                ..mock_royalty_info(creator.to_string())
             });
             let err = app
                 .execute_contract(
@@ -453,9 +449,8 @@ mod tests {
 
             // RoyaltyShareTooHigh
             let royalty_info: Option<RoyaltyInfo<String>> = Some(RoyaltyInfo {
-                payment_address: creator.to_string(),
                 share: Decimal::percent(11),
-                updated_at: Timestamp::from_nanos(0),
+                ..mock_royalty_info(creator.to_string())
             });
             let err = app
                 .execute_contract(
@@ -480,9 +475,8 @@ mod tests {
 
             // success
             let royalty_info: Option<RoyaltyInfo<String>> = Some(RoyaltyInfo {
-                payment_address: creator.to_string(),
                 share: Decimal::percent(5),
-                updated_at: Timestamp::from_nanos(0),
+                ..mock_royalty_info(creator.to_string())
             });
             let res = app.execute_contract(
                 creator.clone(),
@@ -548,9 +542,12 @@ mod tests {
         use super::*;
 
         use crate::common_setup::setup_minter::vending_minter::mock_params::mock_create_minter_init_msg;
-        use cosmwasm_std::{Decimal, Response, Timestamp, Uint128};
+        use cosmwasm_std::{Decimal, Response, Uint128};
         use sg2::msg::CollectionParams;
-        use sg721::{tests::mock_collection_info, RoyaltyInfo};
+        use sg721::{
+            tests::{mock_collection_info, mock_royalty_info},
+            RoyaltyInfo,
+        };
         use sg721_base::msg::{CollectionInfoResponse, QueryMsg};
 
         #[test]
@@ -584,9 +581,8 @@ mod tests {
                 info: CollectionInfo {
                     creator: "creator".to_string(),
                     royalty_info: Some(RoyaltyInfo {
-                        payment_address: "creator".to_string(),
                         share: Decimal::percent(0),
-                        updated_at: Timestamp::from_nanos(0),
+                        ..mock_royalty_info("creator".to_string())
                     }),
                     ..mock_collection_info()
                 },
@@ -624,9 +620,8 @@ mod tests {
                     start_trading_time: None,
                     explicit_content: Some(false),
                     royalty_info: Some(RoyaltyInfo {
-                        payment_address: "creator".to_string(),
                         share: Decimal::percent(91),
-                        updated_at: Timestamp::from_nanos(0),
+                        ..mock_royalty_info("creator".to_string())
                     }),
                     ..mock_collection_info()
                 },
@@ -662,9 +657,8 @@ mod tests {
                 info: CollectionInfo {
                     creator: "creator".to_string(),
                     royalty_info: Some(RoyaltyInfo {
-                        payment_address: "creator".to_string(),
                         share: Decimal::percent(3),
-                        updated_at: Timestamp::from_nanos(0),
+                        ..mock_royalty_info("creator".to_string())
                     }),
                     ..mock_collection_info()
                 },

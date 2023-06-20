@@ -98,7 +98,7 @@ pub struct UpdateCollectionInfoMsg<T> {
 pub struct RoyaltyInfo<T: AddressLike> {
     pub payment_address: T,
     pub share: Decimal,
-    pub updated_at: Timestamp,
+    pub updated_at: Option<Timestamp>,
 }
 
 impl From<RoyaltyInfo<Addr>> for RoyaltyInfo<String> {
