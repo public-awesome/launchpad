@@ -70,7 +70,7 @@ export interface CollectionInfoResponse {
 export interface RoyaltyInfoForString {
   payment_address: string;
   share: Decimal;
-  updated_at: Timestamp;
+  updated_at?: Timestamp | null;
 }
 export interface ContractInfoResponse {
   name: string;
