@@ -101,6 +101,7 @@ pub struct RoyaltyInfo<T: AddressLike> {
     pub payment_address: T,
     pub share: Decimal,
     // ref: https://serde.rs/attr-skip-serializing.html#skip-serializing-field
+    // allows backwards compatibility with contracts that don't have this field
     #[serde(skip_serializing_if = "is_contract_version_less_than_3")]
     pub updated_at: Timestamp,
 }
