@@ -1,8 +1,10 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Addr, Binary, Decimal, Timestamp};
+use cosmwasm_std::{Addr, Binary, Decimal, Deps, StdError, Timestamp};
 use cw_address_like::AddressLike;
 use cw_ownable::cw_ownable_execute;
 use cw_utils::Expiration;
+use semver::Version;
+pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub mod tests;
 
@@ -98,7 +100,16 @@ pub struct UpdateCollectionInfoMsg<T> {
 pub struct RoyaltyInfo<T: AddressLike> {
     pub payment_address: T,
     pub share: Decimal,
-    pub updated_at: Option<Timestamp>,
+    // ref: https://serde.rs/attr-skip-serializing.html#skip-serializing-field
+    #[serde(skip_serializing_if = "is_contract_version_less_than_3")]
+    pub updated_at: Timestamp,
+}
+
+fn is_contract_version_less_than_3(_: &Timestamp) -> bool {
+    match Version::parse(&CONTRACT_VERSION) {
+        Ok(current_version) => current_version < Version::new(2, 3, 0),
+        Err(_) => true,
+    }
 }
 
 impl From<RoyaltyInfo<Addr>> for RoyaltyInfo<String> {
