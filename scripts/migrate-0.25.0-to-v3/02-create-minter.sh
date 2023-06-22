@@ -39,17 +39,17 @@ MSG=$(cat <<EOF
         "init_msg": {
             "base_token_uri": "ipfs://bafybeiey2heysue3px2tgc523cmjbfjlox5zfzzan5syzdooikdvimtxwq",
             "start_time": "$(echo $TIME)000000000",
-            "num_tokens": 1000,
+            "num_tokens": 100,
             "mint_price": { "amount": "50000000", "denom": "ustars" },
-            "per_address_limit": 30
+            "per_address_limit": 3
         },
         "collection_params": {
             "code_id": $SG721_CODE_ID,
-            "name": "Test Collection yubo",
-            "symbol": "YUBO",
+            "name": "Test Collection yubo2",
+            "symbol": "YUBO2",
             "info": {
                 "creator": "$ADMIN",
-                "description": "Test Collection yubo",
+                "description": "Test Collection yubo2",
                 "image": "ipfs://bafybeiavall5udkxkdtdm4djezoxrmfc6o5fn2ug3ymrlvibvwmwydgrkm/1.jpg"
             }
         }

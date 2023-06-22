@@ -1,5 +1,5 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Addr, Binary, Decimal, Deps, StdError, Timestamp};
+use cosmwasm_std::{Addr, Binary, Decimal, Timestamp};
 use cw_address_like::AddressLike;
 use cw_ownable::cw_ownable_execute;
 use cw_utils::Expiration;
@@ -106,7 +106,7 @@ pub struct RoyaltyInfo<T: AddressLike> {
 }
 
 fn is_contract_version_less_than_3(_: &Timestamp) -> bool {
-    match Version::parse(&CONTRACT_VERSION) {
+    match Version::parse(CONTRACT_VERSION) {
         Ok(current_version) => current_version < Version::new(2, 3, 0),
         Err(_) => true,
     }
