@@ -7,7 +7,7 @@ pub fn mock_royalty_info<T: AddressLike>(payment_address: T) -> RoyaltyInfo<Stri
     RoyaltyInfo {
         payment_address: payment_address.to_string(),
         share: Decimal::percent(10),
-        updated_at: Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME)),
+        updated_at: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
     }
 }
 
