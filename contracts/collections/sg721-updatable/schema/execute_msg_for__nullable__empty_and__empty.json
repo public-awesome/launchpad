@@ -429,7 +429,8 @@
       "type": "object",
       "required": [
         "payment_address",
-        "share"
+        "share",
+        "updated_at"
       ],
       "properties": {
         "payment_address": {
@@ -439,14 +440,7 @@
           "$ref": "#/definitions/Decimal"
         },
         "updated_at": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/Timestamp"
-            },
-            {
-              "type": "null"
-            }
-          ]
+          "$ref": "#/definitions/Timestamp"
         }
       },
       "additionalProperties": false

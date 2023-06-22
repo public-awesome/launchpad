@@ -91,7 +91,7 @@ export interface CollectionInfoForRoyaltyInfoForString {
 export interface RoyaltyInfoForString {
   payment_address: string;
   share: Decimal;
-  updated_at?: Timestamp | null;
+  updated_at: Timestamp;
 }
 export interface VendingMinterInitMsgExtension {
   base_token_uri: string;
