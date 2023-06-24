@@ -11,6 +11,11 @@ pub struct InstantiateMsg {
 }
 
 #[cw_serde]
+pub struct TokenUriMsg {
+    pub token_uri: String,
+}
+
+#[cw_serde]
 pub enum ExecuteMsg {
     Mint { token_uri: String },
     ReceiveNft(Cw721ReceiveMsg), // burn-to-mint

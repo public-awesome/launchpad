@@ -1,5 +1,5 @@
 use crate::error::ContractError;
-use crate::msg::{ConfigResponse, ExecuteMsg};
+use crate::msg::{ConfigResponse, ExecuteMsg, TokenUriMsg};
 use crate::state::{increment_token_index, Config, COLLECTION_ADDRESS, CONFIG, STATUS};
 
 use base_factory::msg::{BaseMinterCreateMsg, ParamsResponse};
@@ -8,8 +8,8 @@ use base_factory::state::Extension;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Addr, Binary, CosmosMsg, Deps, DepsMut, Empty, Env, MessageInfo, Reply, StdResult,
-    Timestamp, WasmMsg,
+    from_binary, to_binary, Addr, Binary, CosmosMsg, Deps, DepsMut, Empty, Env, MessageInfo, Reply,
+    StdResult, Timestamp, WasmMsg,
 };
 
 use cw2::set_contract_version;
@@ -113,13 +113,19 @@ pub fn execute(
     }
 }
 
+// TODO: add a test to call `send` on the collection contract with a `Cw721ReceiveMsg`
+// that includes a `TokenUriMsg` in the `msg` field
+
 pub fn execute_burn_to_mint(
     deps: DepsMut,
     info: MessageInfo,
     msg: Cw721ReceiveMsg,
 ) -> Result<Response, ContractError> {
     // TODO: call burn on the NFT
-    Ok(Response::new().add_attribute("action", "burn_to_mint"))
+
+    let TokenUriMsg { token_uri } = from_binary(&msg.msg)?;
+
+    _execute_mint_sender(deps, info, token_uri)
 }
 
 pub fn execute_mint_sender(
@@ -132,6 +138,16 @@ pub fn execute_mint_sender(
     if matches!(config.mint_price, Token::NonFungible(_)) {
         return Err(ContractError::InvalidMintPrice {});
     }
+
+    _execute_mint_sender(deps, info, token_uri)
+}
+
+fn _execute_mint_sender(
+    deps: DepsMut,
+    info: MessageInfo,
+    token_uri: String,
+) -> Result<Response, ContractError> {
+    let config = CONFIG.load(deps.storage)?;
 
     let collection_address = COLLECTION_ADDRESS.load(deps.storage)?;
 
