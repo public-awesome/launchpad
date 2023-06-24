@@ -7,6 +7,12 @@ pub mod tests;
 
 pub type CodeId = u64;
 
+#[cw_serde]
+pub enum Token {
+    Fungible(Coin),
+    NonFungible(String),
+}
+
 /// Common params for all minters used for storage
 #[cw_serde]
 pub struct MinterParams<T> {
@@ -15,7 +21,7 @@ pub struct MinterParams<T> {
     pub allowed_sg721_code_ids: Vec<CodeId>,
     pub frozen: bool,
     pub creation_fee: Coin,
-    pub min_mint_price: Coin,
+    pub min_mint_price: Token,
     pub mint_fee_bps: u64,
     pub max_trading_offset_secs: u64,
     pub extension: T,
