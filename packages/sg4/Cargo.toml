@@ -13,4 +13,5 @@ cosmwasm-schema = { workspace = true }
 cosmwasm-std    = { workspace = true }
 schemars        = { workspace = true }
 serde           = { workspace = true }
+sg2             = { workspace = true }
 thiserror       = { workspace = true }

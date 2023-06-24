@@ -3395,6 +3395,7 @@ dependencies = [
  "cosmwasm-std",
  "schemars",
  "serde",
+ "sg2",
  "thiserror",
 ]
 

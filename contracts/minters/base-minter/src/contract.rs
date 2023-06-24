@@ -13,10 +13,12 @@ use cosmwasm_std::{
 };
 
 use cw2::set_contract_version;
+use cw721::Cw721ReceiveMsg;
 use cw_utils::{must_pay, nonpayable, parse_reply_instantiate_data};
 
 use sg1::checked_fair_burn;
 use sg2::query::Sg2QueryMsg;
+use sg2::Token;
 use sg4::{QueryMsg, Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
 use sg721_base::msg::{CollectionInfoResponse, QueryMsg as Sg721QueryMsg};
@@ -107,7 +109,17 @@ pub fn execute(
         ExecuteMsg::UpdateStartTradingTime(time) => {
             execute_update_start_trading_time(deps, env, info, time)
         }
+        ExecuteMsg::ReceiveNft(msg) => execute_burn_to_mint(deps, info, msg),
     }
+}
+
+pub fn execute_burn_to_mint(
+    deps: DepsMut,
+    info: MessageInfo,
+    msg: Cw721ReceiveMsg,
+) -> Result<Response, ContractError> {
+    // TODO: call burn on the NFT
+    Ok(Response::new().add_attribute("action", "burn_to_mint"))
 }
 
 pub fn execute_mint_sender(
@@ -116,6 +128,11 @@ pub fn execute_mint_sender(
     token_uri: String,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
+
+    if matches!(config.mint_price, Token::NonFungible(_)) {
+        return Err(ContractError::InvalidMintPrice {});
+    }
+
     let collection_address = COLLECTION_ADDRESS.load(deps.storage)?;
 
     // This is a 1:1 minter, minted at min_mint_price
@@ -148,6 +165,7 @@ pub fn execute_mint_sender(
     // Create network fee msgs
     let mint_fee_percent = factory_params.mint_fee_bps.bps_to_decimal();
     let network_fee = config.mint_price.amount * mint_fee_percent;
+    // TODO: NFTs don't have a fee
     // For the base 1/1 minter, the entire mint price should be Fair Burned
     if network_fee != funds_sent {
         return Err(ContractError::InvalidMintPrice {});
