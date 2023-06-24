@@ -151,11 +151,19 @@ pub fn update_params<T, C>(
     }
 
     if let Some(min_mint_price) = param_msg.min_mint_price {
-        ensure_eq!(
-            &min_mint_price.denom,
-            &NATIVE_DENOM,
-            ContractError::InvalidDenom {}
-        );
+        match min_mint_price.clone() {
+            sg2::Token::Fungible(mint_price) => {
+                ensure_eq!(
+                    &mint_price.denom,
+                    &NATIVE_DENOM,
+                    ContractError::InvalidDenom {}
+                );
+            }
+            sg2::Token::NonFungible(collection) => {
+                // TODO: make sure we can query the collection
+                // perform a query on the collection so we know its the right type
+            }
+        }
         params.min_mint_price = min_mint_price;
     }
 

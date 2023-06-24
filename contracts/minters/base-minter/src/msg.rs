@@ -1,6 +1,7 @@
 use base_factory::{msg::BaseMinterCreateMsg, state::BaseMinterParams};
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Empty, Timestamp};
+use cw721::Cw721ReceiveMsg;
 use sg4::MinterConfigResponse;
 
 #[cw_serde]
@@ -12,6 +13,7 @@ pub struct InstantiateMsg {
 #[cw_serde]
 pub enum ExecuteMsg {
     Mint { token_uri: String },
+    ReceiveNft(Cw721ReceiveMsg), // burn-to-mint
     UpdateStartTradingTime(Option<Timestamp>),
 }
 

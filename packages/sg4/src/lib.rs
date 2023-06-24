@@ -1,12 +1,13 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Addr, Coin};
+use cosmwasm_std::Addr;
+use sg2::Token;
 
 /// Saved in every minter
 #[cw_serde]
 pub struct MinterConfig<T> {
     pub factory: Addr,
     pub collection_code_id: u64,
-    pub mint_price: Coin,
+    pub mint_price: Token,
     pub extension: T,
 }
 
