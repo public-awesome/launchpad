@@ -375,7 +375,7 @@ mod tests {
                 royalty_info: Some(RoyaltyInfoResponse {
                     payment_address: creator.clone(),
                     share: Decimal::percent(10),
-                    updated_at: Some(mock_env().block.time),
+                    updated_at: None,
                 }),
             },
         };
