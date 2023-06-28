@@ -1450,7 +1450,7 @@ fn test_update_none_royalties() {
     let mut router = custom_mock_app();
     let (creator, buyer) = setup_accounts(&mut router);
     let num_tokens = 10;
-
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME);
     // Upload contract code
     let sg721_code_id = router.store_code(contract_sg721());
     let minter_code_id = router.store_code(contract_minter());
@@ -1513,9 +1513,15 @@ fn test_update_none_royalties() {
         sg721_updatable::ContractError::Unauthorized {}.to_string()
     );
 
+    let update_royalty_msg: Sg721UpdatableExecuteMsg<Extension> =
+        Sg721UpdatableExecuteMsg::UpdateRoyaltyInfo {
+            payment_address: "creator2".to_string(),
+            share_bps: 1200,
+        };
+
     let res = router.execute_contract(
-        creator,
-        Addr::unchecked(sg71_address),
+        creator.clone(),
+        Addr::unchecked(sg71_address.clone()),
         &update_royalty_msg,
         &[],
     );
@@ -1523,8 +1529,91 @@ fn test_update_none_royalties() {
 
     assert_eq!(
         err.source().unwrap().to_string(),
-        sg721_updatable::ContractError::RoyaltyShareIncreased {}.to_string()
+        sg721_updatable::ContractError::RoyaltyShareIncreasedTooMuch {}.to_string()
     );
+
+    let update_royalty_msg: Sg721UpdatableExecuteMsg<Extension> =
+        Sg721UpdatableExecuteMsg::UpdateRoyaltyInfo {
+            payment_address: "creator2".to_string(),
+            share_bps: 400,
+        };
+
+    let res = router.execute_contract(
+        creator.clone(),
+        Addr::unchecked(sg71_address.clone()),
+        &update_royalty_msg,
+        &[],
+    ).unwrap();
+
+    assert_eq!(res.events[1].attributes[0].key, "_contract_addr");
+    assert_eq!(res.events[1].attributes[0].value, "contract1");
+    assert_eq!(res.events[1].attributes[1].key, "sender");
+    assert_eq!(res.events[1].attributes[1].value, "creator");
+    assert_eq!(res.events[1].attributes[2].key, "payment_address");
+    assert_eq!(res.events[1].attributes[2].value, "creator2");
+    assert_eq!(res.events[1].attributes[3].key, "share");
+    assert_eq!(res.events[1].attributes[3].value, "0.04");
+
+    let update_royalty_msg: Sg721UpdatableExecuteMsg<Extension> =
+        Sg721UpdatableExecuteMsg::UpdateRoyaltyInfo {
+            payment_address: "creator2".to_string(),
+            share_bps: 500,
+        };
+
+    let res = router.execute_contract(
+        creator.clone(),
+        Addr::unchecked(sg71_address.clone()),
+        &update_royalty_msg,
+        &[],
+    );
+    let err = res.unwrap_err();
+
+    assert_eq!(
+        err.source().unwrap().to_string(),
+        sg721_updatable::ContractError::RoyaltyUpdateTooSoon {}.to_string()
+    );
+
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 86400000000000);
+
+    let res = router.execute_contract(
+        creator.clone(),
+        Addr::unchecked(sg71_address.clone()),
+        &update_royalty_msg,
+        &[],
+    ).unwrap();
+
+    assert_eq!(res.events[1].attributes[0].key, "_contract_addr");
+    assert_eq!(res.events[1].attributes[0].value, "contract1");
+    assert_eq!(res.events[1].attributes[1].key, "sender");
+    assert_eq!(res.events[1].attributes[1].value, "creator");
+    assert_eq!(res.events[1].attributes[2].key, "payment_address");
+    assert_eq!(res.events[1].attributes[2].value, "creator2");
+    assert_eq!(res.events[1].attributes[3].key, "share");
+    assert_eq!(res.events[1].attributes[3].value, "0.05");
+
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 86500000000000);
+
+    let update_royalty_msg: Sg721UpdatableExecuteMsg<Extension> =
+        Sg721UpdatableExecuteMsg::UpdateRoyaltyInfo {
+            payment_address: "creator2".to_string(),
+            share_bps: 300,
+        };
+
+    let res = router.execute_contract(
+        creator.clone(),
+        Addr::unchecked(sg71_address.clone()),
+        &update_royalty_msg,
+        &[],
+    ).unwrap();
+
+    assert_eq!(res.events[1].attributes[0].key, "_contract_addr");
+    assert_eq!(res.events[1].attributes[0].value, "contract1");
+    assert_eq!(res.events[1].attributes[1].key, "sender");
+    assert_eq!(res.events[1].attributes[1].value, "creator");
+    assert_eq!(res.events[1].attributes[2].key, "payment_address");
+    assert_eq!(res.events[1].attributes[2].value, "creator2");
+    assert_eq!(res.events[1].attributes[3].key, "share");
+    assert_eq!(res.events[1].attributes[3].value, "0.03");
 }
 
 #[test]
@@ -1532,7 +1621,7 @@ fn test_update_royalties() {
     let mut router = custom_mock_app();
     let (creator, _) = setup_accounts(&mut router);
     let num_tokens = 10;
-
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME);
     // Upload contract code
     let sg721_code_id = router.store_code(contract_sg721());
     let minter_code_id = router.store_code(contract_minter());
@@ -1558,7 +1647,7 @@ fn test_update_royalties() {
                 external_link: Some("https://example.com/external.html".to_string()),
                 royalty_info: Some(RoyaltyInfoResponse {
                     payment_address: creator.to_string(),
-                    share: Decimal::percent(10),
+                    share: Decimal::percent(5),
                 }),
             },
         },
@@ -1595,7 +1684,7 @@ fn test_update_royalties() {
 
     assert_eq!(
         err.source().unwrap().to_string(),
-        sg721_updatable::ContractError::RoyaltyShareIncreased {}.to_string()
+        sg721_updatable::ContractError::RoyaltyShareIncreasedTooMuch {}.to_string()
     );
 
     let update_royalty_msg: sg721_updatable::msg::ExecuteMsg<Extension> =
@@ -1604,8 +1693,39 @@ fn test_update_royalties() {
             share_bps: 900,
         };
     let res = router.execute_contract(
-        creator,
-        Addr::unchecked(sg71_address),
+        creator.clone(),
+        Addr::unchecked(sg71_address.clone()),
+        &update_royalty_msg,
+        &[],
+    );
+
+    let err = res.unwrap_err();
+
+    assert_eq!(
+        err.source().unwrap().to_string(),
+        sg721_updatable::ContractError::RoyaltyUpdateTooSoon {}.to_string()
+    );
+
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 86400000000000);
+
+    let res = router.execute_contract(
+        creator.clone(),
+        Addr::unchecked(sg71_address.clone()),
+        &update_royalty_msg,
+        &[],
+    );
+    assert!(res.is_ok());
+
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 86500000000000);
+
+    let update_royalty_msg: sg721_updatable::msg::ExecuteMsg<Extension> =
+        sg721_updatable::msg::ExecuteMsg::UpdateRoyaltyInfo {
+            payment_address: "creator2".to_string(),
+            share_bps: 800,
+        };
+    let res = router.execute_contract(
+        creator.clone(),
+        Addr::unchecked(sg71_address.clone()),
         &update_royalty_msg,
         &[],
     );
