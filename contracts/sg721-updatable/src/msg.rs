@@ -82,8 +82,8 @@ pub enum ExecuteMsg<T> {
 
 impl<T> From<ExecuteMsg<T>> for Cw721ExecuteMsg
 where
-    T: Clone + PartialEq + Into<Option<cosmwasm_std::Empty>>,
-    Option<cosmwasm_std::Empty>: From<T>,
+    T: Clone + PartialEq + Into<Option<Empty>>,
+    Option<Empty>: From<T>,
 {
     fn from(msg: ExecuteMsg<T>) -> Cw721ExecuteMsg {
         match msg {
