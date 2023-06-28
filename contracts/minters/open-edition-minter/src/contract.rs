@@ -14,8 +14,8 @@ use url::Url;
 use open_edition_factory::msg::{OpenEditionMinterCreateMsg, ParamsResponse};
 use open_edition_factory::types::NftMetadataType;
 use sg1::checked_fair_burn;
-use sg2::helpers::{get_amount, get_amount_std_error, get_denom, get_denom_std_error};
 use sg2::query::Sg2QueryMsg;
+use sg2::Token;
 use sg4::{Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
 
@@ -288,7 +288,10 @@ fn _execute_mint(
 
     let mint_price: Coin = mint_price(deps.as_ref(), is_admin)?;
     // Exact payment only accepted
-    let denom = get_denom(config.mint_price).map_err(|e| ContractError::IncorrectFungibility {})?;
+    let denom = config
+        .mint_price
+        .get_denom()
+        .map_err(|_| ContractError::IncorrectFungibility {})?;
     let payment = may_pay(&info, &denom)?;
     if payment != mint_price.amount {
         return Err(ContractError::IncorrectPaymentAmount(
@@ -405,8 +408,11 @@ pub fn execute_update_mint_price(
     }
 
     // If current time is after the stored start_time, only allow lowering price
-    let amount = get_amount(config.mint_price.clone())
-        .map_err(|e| ContractError::IncorrectFungibility {})?;
+    let amount = config
+        .mint_price
+        .clone()
+        .get_amount()
+        .map_err(|_| ContractError::IncorrectFungibility {})?;
     if env.block.time >= config.extension.start_time && price >= amount.u128() {
         return Err(ContractError::UpdatedMintPriceTooHigh {
             allowed: amount.u128(),
@@ -419,15 +425,20 @@ pub fn execute_update_mint_price(
         .query_wasm_smart(config.clone().factory, &Sg2QueryMsg::Params {})?;
     let factory_params = factory.params;
 
-    let min_mint_price = get_amount(factory_params.min_mint_price)
-        .map_err(|e| ContractError::IncorrectFungibility {})?;
+    let min_mint_price = factory_params
+        .min_mint_price
+        .get_amount()
+        .map_err(|_| ContractError::IncorrectFungibility {})?;
     if min_mint_price.u128() > price {
         return Err(ContractError::InsufficientMintPrice {
             expected: min_mint_price.u128(),
             got: price,
         });
     }
-    let denom = get_denom(config.mint_price).map_err(|e| ContractError::IncorrectFungibility {})?;
+    let denom = config
+        .mint_price
+        .get_denom()
+        .map_err(|_| ContractError::IncorrectFungibility {})?;
     config.mint_price = sg2::Fungible(coin(price, denom));
     CONFIG.save(deps.storage, &config)?;
     Ok(Response::new()
@@ -611,8 +622,8 @@ pub fn execute_update_per_address_limit(
 // else => config unit price
 pub fn mint_price(deps: Deps, is_admin: bool) -> Result<Coin, StdError> {
     let config = CONFIG.load(deps.storage)?;
-    let denom = get_denom_std_error(config.mint_price.clone())?;
-    let mint_price = get_amount_std_error(config.mint_price)?;
+    let denom = config.mint_price.clone().get_denom_std_error()?;
+    let mint_price = config.mint_price.get_amount_std_error()?;
     if is_admin {
         let factory: ParamsResponse = deps
             .querier
@@ -675,8 +686,8 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
 fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
     let config = CONFIG.load(deps.storage)?;
     let sg721_address = SG721_ADDRESS.load(deps.storage)?;
-    let mint_price = get_amount_std_error(config.mint_price.clone())?;
-    let denom = get_denom_std_error(config.mint_price)?;
+    let mint_price = config.mint_price.clone().get_amount_std_error()?;
+    let denom = config.mint_price.get_denom_std_error()?;
     Ok(ConfigResponse {
         admin: config.extension.admin.to_string(),
         nft_data: config.extension.nft_data,
@@ -727,8 +738,8 @@ fn query_end_time(deps: Deps) -> StdResult<EndTimeResponse> {
 
 fn query_mint_price(deps: Deps) -> StdResult<MintPriceResponse> {
     let config = CONFIG.load(deps.storage)?;
-    let denom = get_denom_std_error(config.mint_price.clone())?;
-    let config_mint_price = get_amount_std_error(config.mint_price)?;
+    let denom = config.mint_price.clone().get_denom_std_error()?;
+    let config_mint_price = config.mint_price.get_amount_std_error()?;
     let factory: ParamsResponse = deps
         .querier
         .query_wasm_smart(config.factory, &Sg2QueryMsg::Params {})?;
