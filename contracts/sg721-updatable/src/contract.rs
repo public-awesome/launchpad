@@ -33,7 +33,7 @@ const MAX_ROYALTY_SHARE_BPS: u64 = 10_00;
 const ENABLE_INSTANTIATE: bool = false;
 
 #[cfg(not(target = "wasm32-unknown-unknown"))]
-const ENABLE_INSTANTIATE: bool = false;
+const ENABLE_INSTANTIATE: bool = true;
 
 type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 pub type Sg721Contract<'a> = cw721_base::Cw721Contract<'a, Empty, StargazeMsgWrapper>;

@@ -1614,8 +1614,8 @@ fn test_update_none_royalties() {
 
     let res = router
         .execute_contract(
-            creator.clone(),
-            Addr::unchecked(sg71_address.clone()),
+            creator,
+            Addr::unchecked(sg71_address),
             &update_royalty_msg,
             &[],
         )
@@ -1739,8 +1739,8 @@ fn test_update_royalties() {
             share_bps: 800,
         };
     let res = router.execute_contract(
-        creator.clone(),
-        Addr::unchecked(sg71_address.clone()),
+        creator,
+        Addr::unchecked(sg71_address),
         &update_royalty_msg,
         &[],
     );
@@ -1861,7 +1861,7 @@ fn try_migrate() {
 
     // // no op when same version
     set_contract_version(&mut deps.storage, "crates.io:sg-721", "0.8.3").unwrap();
-    sg721_updatable::contract::migrate(deps.as_mut(), env.clone(), Empty {}).unwrap();
+    sg721_updatable::contract::migrate(deps.as_mut(), env, Empty {}).unwrap();
 
     // Migration happy path
     let mut router = custom_mock_app();
@@ -1923,14 +1923,11 @@ fn try_migrate() {
         )
         .unwrap();
 
-    assert_eq!(
-        collection_info.royalty_info.unwrap().updated_at.is_some(),
-        false
-    );
+    assert!(collection_info.royalty_info.unwrap().updated_at.is_none());
 
     router
         .migrate_contract(
-            creator.clone(),
+            creator,
             Addr::unchecked(sg721_base_address.clone()),
             &Empty {},
             sg721_code_id,
@@ -1939,14 +1936,8 @@ fn try_migrate() {
 
     let collection_info: CollectionInfo<sg721_updatable::msg::RoyaltyInfoResponse> = router
         .wrap()
-        .query_wasm_smart(
-            sg721_base_address.clone(),
-            &sg721::msg::QueryMsg::CollectionInfo {},
-        )
+        .query_wasm_smart(sg721_base_address, &sg721::msg::QueryMsg::CollectionInfo {})
         .unwrap();
 
-    assert_eq!(
-        collection_info.royalty_info.unwrap().updated_at.is_some(),
-        true
-    );
+    assert!(collection_info.royalty_info.unwrap().updated_at.is_some(),);
 }
