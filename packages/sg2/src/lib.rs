@@ -1,6 +1,8 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::Coin;
 
+pub mod error;
+pub mod helpers;
 pub mod msg;
 pub mod query;
 pub mod tests;
