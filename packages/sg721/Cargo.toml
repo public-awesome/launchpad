@@ -32,7 +32,6 @@ cw721-base      = { workspace = true, features = ["library"] }
 cw-utils        = { workspace = true }
 cw-address-like = { workspace = true }
 serde           = { workspace = true }
-semver          = { workspace = true }
 sg-std          = { workspace = true }
 thiserror       = { workspace = true }
 cw-ownable      = "0.5.0"
