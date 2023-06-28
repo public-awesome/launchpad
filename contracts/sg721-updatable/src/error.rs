@@ -36,8 +36,14 @@ pub enum ContractError {
     #[error("Description too long")]
     DescriptionTooLong {},
 
-    #[error("Royalty share increased")]
-    RoyaltyShareIncreased {},
+    #[error("Royalty share percentage cannot exceed 10%")]
+    RoyaltyShareIncreasedTooMuch {},
+
+    #[error("Royalty share percentage cannot be increased more than once per day")]
+    RoyaltyUpdateTooSoon {},
+
+    #[error("Royalty Info invalid")]
+    RoyaltyInfoInvalid {},
 
     #[error("{0}")]
     Payment(#[from] PaymentError),
