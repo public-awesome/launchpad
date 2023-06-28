@@ -9,7 +9,7 @@ use base_factory::state::Extension;
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     from_binary, to_binary, Addr, Binary, CosmosMsg, Deps, DepsMut, Empty, Env, MessageInfo, Reply,
-    StdResult, Timestamp, WasmMsg,
+    StdResult, Timestamp, Uint128, WasmMsg,
 };
 
 use cw2::set_contract_version;
@@ -184,7 +184,10 @@ fn _execute_mint_sender(
 
     // Create network fee msgs
     let mint_fee_percent = factory_params.mint_fee_bps.bps_to_decimal();
-    let network_fee = config.mint_price.amount * mint_fee_percent;
+    let network_fee = match config.mint_price {
+        sg2::Token::Fungible(coin) => coin.amount * mint_fee_percent,
+        sg2::Token::NonFungible(_) => Uint128::new(0),
+    };
     // TODO: NFTs don't have a fee
     // For the base 1/1 minter, the entire mint price should be Fair Burned
     if network_fee != funds_sent {

@@ -7,11 +7,18 @@ pub mod tests;
 
 pub type CodeId = u64;
 
+pub use Token::{Fungible, NonFungible};
+
 #[cw_serde]
 pub enum Token {
     Fungible(Coin),
     NonFungible(String),
 }
+
+// #[cw_serde]
+// pub struct Token {
+//     pub thing: String,
+// }
 
 /// Common params for all minters used for storage
 #[cw_serde]
