@@ -56,5 +56,5 @@ export interface CollectionInfoForRoyaltyInfoForString {
 export interface RoyaltyInfoForString {
   payment_address: string;
   share: Decimal;
-  updated_at: Timestamp;
+  updated_at?: Timestamp | null;
 }
