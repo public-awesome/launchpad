@@ -404,7 +404,12 @@ where
         })
     }
 
-    pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
+    pub fn migrate(
+        &self,
+        deps: DepsMut,
+        _env: Env,
+        _msg: Empty,
+    ) -> Result<Response, ContractError> {
         // make sure the correct contract is being upgraded, and it's being
         // upgraded from the correct version.
 
