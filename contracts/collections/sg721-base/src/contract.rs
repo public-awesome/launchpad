@@ -68,7 +68,7 @@ where
             Some(royalty_info) => Some(RoyaltyInfo {
                 payment_address: deps.api.addr_validate(&royalty_info.payment_address)?,
                 share: share_validate(royalty_info.share)?,
-                updated_at: env.block.time,
+                updated_at: Some(env.block.time),
             }),
             None => None,
         };
@@ -261,7 +261,11 @@ where
 
                 // now the royalty increase is within range
                 // make sure the update time is after 24 hours
-                let updated_at = curr_royalty_info_res.updated_at;
+                let updated_at = match curr_royalty_info_res.updated_at {
+                    Some(updated_at) => updated_at,
+                    // If current royalty info updated_at is None, it might be an older version that has not been migrated properly.
+                    None => return Err(ContractError::RoyaltyInfoInvalid {}),
+                };
                 let end = (Expiration::AtTime(updated_at) + DAY)?;
                 let update_too_soon = !end.is_expired(&env.block);
 
@@ -278,7 +282,7 @@ where
                     .api
                     .addr_validate(&new_royalty_info_res.payment_address)?,
                 share: share_validate(new_royalty_info_res.share)?,
-                updated_at: env.block.time,
+                updated_at: Some(env.block.time),
             })
         } else {
             None
