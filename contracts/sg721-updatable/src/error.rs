@@ -39,7 +39,7 @@ pub enum ContractError {
     #[error("Royalty share percentage cannot exceed 10%")]
     RoyaltyShareIncreasedTooMuch {},
 
-    #[error("Royalty share percentage cannot be increased more than once per day")]
+    #[error("Royalty share percentage can only be increased a day after the last update")]
     RoyaltyUpdateTooSoon {},
 
     #[error("Royalty Info invalid")]
