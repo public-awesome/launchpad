@@ -31,7 +31,7 @@ SG721_CODE_ID=2604
 # }
 
 # add a few minutes buffer to start time
-TIME=$(date -v+5000S +%s)
+TIME=$(date -v+30S +%s)
 
 MSG=$(cat <<EOF
 {
@@ -50,7 +50,8 @@ MSG=$(cat <<EOF
             "info": {
                 "creator": "$ADMIN",
                 "description": "Test Collection yubo2",
-                "image": "ipfs://bafybeiavall5udkxkdtdm4djezoxrmfc6o5fn2ug3ymrlvibvwmwydgrkm/1.jpg"
+                "image": "ipfs://bafybeiavall5udkxkdtdm4djezoxrmfc6o5fn2ug3ymrlvibvwmwydgrkm/1.jpg",
+                "start_trading_time": "$(echo $TIME)000000000"
             }
         }
     }
