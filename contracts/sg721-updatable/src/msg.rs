@@ -19,6 +19,7 @@ pub type Cw721ExecuteMsg = cw721_base::msg::ExecuteMsg<Empty>;
 pub struct RoyaltyInfoResponse {
     pub payment_address: String,
     pub share: Decimal,
+    pub updated_at: Option<Timestamp>,
 }
 
 impl RoyaltyInfoResponse {
