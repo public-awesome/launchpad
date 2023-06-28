@@ -40,6 +40,9 @@ pub enum ContractError {
     #[error("IncorrectPaymentAmount {0} != {1}")]
     IncorrectPaymentAmount(Coin, Coin),
 
+    #[error("Expected fungible token, received nonfungible")]
+    IncorrectFungibility {},
+
     #[error("InvalidNumTokens {max}, min: 1")]
     InvalidNumTokens { max: u32, min: u32 },
 

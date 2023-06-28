@@ -58,9 +58,10 @@ impl OpenEditionMinterInitMsgExtension {
             ));
         }
 
-        if init_msg.mint_price.amount < params.min_mint_price.amount {
-            return Err(ContractError::InvalidMintPrice {});
-        }
+        //TODO BURNMINT
+        // if init_msg.mint_price.amount < params.min_mint_price.amount {
+        //     return Err(ContractError::InvalidMintPrice {});
+        // }
 
         Ok(OpenEditionMinterInitMsgExtension {
             nft_data: init_msg.nft_data,
