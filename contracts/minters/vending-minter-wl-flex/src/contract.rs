@@ -146,7 +146,7 @@ pub fn instantiate(
             start_time: msg.init_msg.start_time,
             discount_price: None,
         },
-        mint_price: msg.init_msg.mint_price,
+        mint_price: sg2::Fungible(msg.init_msg.mint_price),
     };
 
     CONFIG.save(deps.storage, &config)?;
@@ -244,11 +244,15 @@ pub fn execute_update_discount_price(
     if env.block.time < config.extension.start_time {
         return Err(ContractError::BeforeMintStartTime {});
     }
-
+    let config_mint_price = config
+        .mint_price
+        .clone()
+        .get_amount()
+        .map_err(|_| ContractError::IncorrectFungibility {})?;
     // discount price can't be greater than unit price
-    if price > config.mint_price.amount.u128() {
+    if price > config_mint_price.u128() {
         return Err(ContractError::UpdatedMintPriceTooHigh {
-            allowed: config.mint_price.amount.u128(),
+            allowed: config_mint_price.u128(),
             updated: price,
         });
     }
@@ -258,14 +262,24 @@ pub fn execute_update_discount_price(
         .query_wasm_smart(config.clone().factory, &Sg2QueryMsg::Params {})?;
     let factory_params = factory.params;
 
-    if factory_params.min_mint_price.amount.u128() > price {
+    let min_mint_price = factory_params
+        .min_mint_price
+        .clone()
+        .get_amount()
+        .map_err(|_| ContractError::IncorrectFungibility {})?;
+
+    if min_mint_price.u128() > price {
         return Err(ContractError::InsufficientMintPrice {
-            expected: factory_params.min_mint_price.amount.u128(),
+            expected: min_mint_price.u128(),
             got: price,
         });
     }
-
-    config.extension.discount_price = Some(coin(price, config.mint_price.denom.clone()));
+    let config_denom = config
+        .mint_price
+        .clone()
+        .get_denom()
+        .map_err(|_| ContractError::IncorrectFungibility {})?;
+    config.extension.discount_price = Some(coin(price, config_denom.clone()));
     CONFIG.save(deps.storage, &config)?;
 
     Ok(Response::new()
@@ -419,12 +433,18 @@ pub fn execute_set_whitelist(
         .querier
         .query_wasm_smart(config.factory.clone(), &Sg2QueryMsg::Params {})?;
 
-    let factory_mint_price = factory.params.min_mint_price.amount.u128();
+    let min_mint_price = factory
+        .params
+        .min_mint_price
+        .clone()
+        .get_amount()
+        .map_err(|_| ContractError::IncorrectFungibility {})?;
+    let factory_mint_price = min_mint_price;
     let whitelist_mint_price = wl_config.mint_price.amount.u128();
 
-    if factory_mint_price > whitelist_mint_price {
+    if factory_mint_price.u128() > whitelist_mint_price {
         return Err(ContractError::InsufficientWhitelistMintPrice {
-            expected: factory_mint_price,
+            expected: factory_mint_price.u128(),
             got: whitelist_mint_price,
         });
     }
@@ -593,13 +613,18 @@ fn _execute_mint(
         None => info.sender.clone(),
     };
 
-    let mint_price: Coin = mint_price(deps.as_ref(), is_admin)?;
+    let mint_price_with_discounts: Coin = mint_price(deps.as_ref(), is_admin)?;
+    let config_denom = config
+        .mint_price
+        .clone()
+        .get_denom()
+        .map_err(|_| ContractError::IncorrectFungibility {})?;
     // Exact payment only accepted
-    let payment = may_pay(&info, &config.mint_price.denom)?;
-    if payment != mint_price.amount {
+    let payment = may_pay(&info, &config_denom)?;
+    if payment != mint_price_with_discounts.amount {
         return Err(ContractError::IncorrectPaymentAmount(
-            coin(payment.u128(), &config.mint_price.denom),
-            mint_price,
+            coin(payment.u128(), &config_denom),
+            mint_price_with_discounts,
         ));
     }
 
@@ -619,7 +644,7 @@ fn _execute_mint(
     } else {
         factory_params.mint_fee_bps.bps_to_decimal()
     };
-    let network_fee = mint_price.amount * mint_fee;
+    let network_fee = mint_price_with_discounts.amount * mint_fee;
     checked_fair_burn(&info, network_fee.u128(), None, &mut res)?;
 
     let mintable_token_mapping = match token_id {
@@ -676,14 +701,14 @@ fn _execute_mint(
     }
 
     let seller_amount = if !is_admin {
-        let amount = mint_price.amount - network_fee;
+        let amount = mint_price_with_discounts.amount - network_fee;
         let payment_address = config.extension.payment_address;
         let seller = config.extension.admin;
         // Sending 0 coins fails, so only send if amount is non-zero
         if !amount.is_zero() {
             let msg = BankMsg::Send {
                 to_address: payment_address.unwrap_or(seller).to_string(),
-                amount: vec![coin(amount.u128(), mint_price.denom)],
+                amount: vec![coin(amount.u128(), mint_price_with_discounts.denom)],
             };
             res = res.add_message(msg);
         }
@@ -698,7 +723,7 @@ fn _execute_mint(
         .add_attribute("recipient", recipient_addr)
         .add_attribute("token_id", mintable_token_mapping.token_id.to_string())
         .add_attribute("network_fee", network_fee)
-        .add_attribute("mint_price", mint_price.amount)
+        .add_attribute("mint_price", mint_price_with_discounts.amount)
         .add_attribute("seller_amount", seller_amount))
 }
 
@@ -779,10 +804,16 @@ pub fn execute_update_mint_price(
             "Sender is not an admin".to_owned(),
         ));
     }
+    let config_mint_price = config
+        .mint_price
+        .clone()
+        .get_amount()
+        .map_err(|_| ContractError::IncorrectFungibility {})?;
+
     // If current time is after the stored start time, only allow lowering price
-    if env.block.time >= config.extension.start_time && price >= config.mint_price.amount.u128() {
+    if env.block.time >= config.extension.start_time && price >= config_mint_price.u128() {
         return Err(ContractError::UpdatedMintPriceTooHigh {
-            allowed: config.mint_price.amount.u128(),
+            allowed: config_mint_price.u128(),
             updated: price,
         });
     }
@@ -792,14 +823,26 @@ pub fn execute_update_mint_price(
         .query_wasm_smart(config.clone().factory, &Sg2QueryMsg::Params {})?;
     let factory_params = factory.params;
 
-    if factory_params.min_mint_price.amount.u128() > price {
+    let min_mint_price = factory_params
+        .min_mint_price
+        .clone()
+        .get_amount()
+        .map_err(|_| ContractError::IncorrectFungibility {})?;
+
+    if min_mint_price.u128() > price {
         return Err(ContractError::InsufficientMintPrice {
-            expected: factory_params.min_mint_price.amount.u128(),
+            expected: min_mint_price.u128(),
             got: price,
         });
     }
 
-    config.mint_price = coin(price, config.mint_price.denom);
+    let config_denom = config
+        .mint_price
+        .clone()
+        .get_denom()
+        .map_err(|_| ContractError::IncorrectFungibility {})?;
+
+    config.mint_price = sg2::Fungible(coin(price, config_denom));
     CONFIG.save(deps.storage, &config)?;
     Ok(Response::new()
         .add_attribute("action", "update_mint_price")
@@ -985,15 +1028,19 @@ pub fn mint_price(deps: Deps, is_admin: bool) -> Result<Coin, StdError> {
         .query_wasm_smart(config.factory, &Sg2QueryMsg::Params {})?;
     let factory_params = factory.params;
 
+    let config_denom = config.mint_price.clone().get_denom_std_error()?;
+    let config_mint_price = config.mint_price.clone().get_amount_std_error()?;
+    let coin_mint_price = coin(config_mint_price.u128(), config_denom.clone());
+
     if is_admin {
         return Ok(coin(
             factory_params.extension.airdrop_mint_price.amount.u128(),
-            config.mint_price.denom,
+            config_denom,
         ));
     }
 
     if config.extension.whitelist.is_none() {
-        let price = config.extension.discount_price.unwrap_or(config.mint_price);
+        let price = config.extension.discount_price.unwrap_or(coin_mint_price);
         return Ok(price);
     }
 
@@ -1006,7 +1053,7 @@ pub fn mint_price(deps: Deps, is_admin: bool) -> Result<Coin, StdError> {
     if wl_config.is_active {
         Ok(wl_config.mint_price)
     } else {
-        let price = config.extension.discount_price.unwrap_or(config.mint_price);
+        let price = config.extension.discount_price.unwrap_or(coin_mint_price);
         Ok(price)
     }
 }
@@ -1077,6 +1124,10 @@ fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
     let config = CONFIG.load(deps.storage)?;
     let sg721_address = SG721_ADDRESS.load(deps.storage)?;
 
+    let config_denom = config.mint_price.clone().get_denom_std_error()?;
+    let config_mint_price = config.mint_price.clone().get_amount_std_error()?;
+    let coin_mint_price = coin(config_mint_price.u128(), config_denom);
+
     Ok(ConfigResponse {
         admin: config.extension.admin.to_string(),
         base_token_uri: config.extension.base_token_uri,
@@ -1084,7 +1135,7 @@ fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
         sg721_code_id: config.collection_code_id,
         num_tokens: config.extension.num_tokens,
         start_time: config.extension.start_time,
-        mint_price: config.mint_price,
+        mint_price: coin_mint_price,
         per_address_limit: config.extension.per_address_limit,
         whitelist: config.extension.whitelist.map(|w| w.to_string()),
         factory: config.factory.to_string(),
@@ -1130,9 +1181,12 @@ fn query_mint_price(deps: Deps) -> StdResult<MintPriceResponse> {
         .query_wasm_smart(config.factory, &Sg2QueryMsg::Params {})?;
 
     let factory_params = factory.params;
+    let config_denom = config.mint_price.clone().get_denom_std_error()?;
+    let config_mint_price = config.mint_price.clone().get_amount_std_error()?;
+    let coin_mint_price = coin(config_mint_price.u128(), config_denom.clone());
 
     let current_price = mint_price(deps, false)?;
-    let public_price = config.mint_price.clone();
+    let public_price = coin_mint_price;
     let whitelist_price: Option<Coin> = if let Some(whitelist) = config.extension.whitelist {
         let wl_config: WhitelistConfigResponse = deps
             .querier
@@ -1143,7 +1197,7 @@ fn query_mint_price(deps: Deps) -> StdResult<MintPriceResponse> {
     };
     let airdrop_price = coin(
         factory_params.extension.airdrop_mint_price.amount.u128(),
-        config.mint_price.denom,
+        config_denom,
     );
     let discount_price = config.extension.discount_price;
     Ok(MintPriceResponse {
