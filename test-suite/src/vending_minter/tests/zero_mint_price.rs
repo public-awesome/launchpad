@@ -62,7 +62,7 @@ fn zero_mint_price() {
 
     let mut params = mock_params(None);
     params.code_id = minter_code_id;
-    params.min_mint_price = coin(MINT_PRICE, NATIVE_DENOM);
+    params.min_mint_price = sg2::Fungible(coin(MINT_PRICE, NATIVE_DENOM));
 
     let factory_addr = router
         .instantiate_contract(
@@ -152,7 +152,7 @@ fn zero_wl_mint_price() {
 
     let mut params = mock_params(None);
     params.code_id = minter_code_id;
-    params.min_mint_price = coin(MINT_PRICE, NATIVE_DENOM);
+    params.min_mint_price = sg2::Fungible(coin(MINT_PRICE, NATIVE_DENOM));
 
     let factory_addr = router
         .instantiate_contract(
@@ -249,7 +249,7 @@ fn zero_wl_mint_errs_with_min_mint_factory() {
 
     let mut params = mock_params(None);
     params.code_id = minter_code_id;
-    params.min_mint_price = coin(min_mint_price, NATIVE_DENOM);
+    params.min_mint_price = sg2::Fungible(coin(min_mint_price, NATIVE_DENOM));
 
     let factory_addr = router
         .instantiate_contract(

@@ -152,8 +152,9 @@ fn check_mint() {
         .wrap()
         .query_wasm_smart(minter_addr, &QueryMsg::Config {})
         .unwrap();
+    let config_mint_price = res.config.mint_price.get_amount().unwrap();
     assert_eq!(res.collection_address, "contract2".to_string());
-    assert_eq!(res.config.mint_price.amount.u128(), MIN_MINT_PRICE);
+    assert_eq!(config_mint_price.u128(), MIN_MINT_PRICE);
 
     let query_owner_msg = Cw721QueryMsg::OwnerOf {
         token_id: String::from("1"),
