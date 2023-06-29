@@ -173,7 +173,7 @@ pub fn execute_distribute_funds(
     let attributes = vec![
         attr("action", "distribute_funds"),
         attr("funds", funds.to_string()),
-        attr("sender", &info.sender),
+        attr("sender", info.sender),
     ];
 
     Ok(Response::new()

@@ -62,6 +62,15 @@ pub fn contract_sg721() -> Box<dyn Contract<StargazeMsgWrapper>> {
     Box::new(contract)
 }
 
+pub fn contract_sg721_base() -> Box<dyn Contract<StargazeMsgWrapper>> {
+    let contract = ContractWrapper::new(
+        sg721::contract::execute,
+        sg721::contract::instantiate,
+        sg721::contract::query,
+    );
+    Box::new(contract)
+}
+
 fn setup_whitelist_contract(router: &mut StargazeApp, creator: &Addr) -> Addr {
     let whitelist_code_id = router.store_code(contract_whitelist());
 
@@ -1450,7 +1459,7 @@ fn test_update_none_royalties() {
     let mut router = custom_mock_app();
     let (creator, buyer) = setup_accounts(&mut router);
     let num_tokens = 10;
-
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME);
     // Upload contract code
     let sg721_code_id = router.store_code(contract_sg721());
     let minter_code_id = router.store_code(contract_minter());
@@ -1513,9 +1522,15 @@ fn test_update_none_royalties() {
         sg721_updatable::ContractError::Unauthorized {}.to_string()
     );
 
+    let update_royalty_msg: Sg721UpdatableExecuteMsg<Extension> =
+        Sg721UpdatableExecuteMsg::UpdateRoyaltyInfo {
+            payment_address: "creator2".to_string(),
+            share_bps: 1200,
+        };
+
     let res = router.execute_contract(
-        creator,
-        Addr::unchecked(sg71_address),
+        creator.clone(),
+        Addr::unchecked(sg71_address.clone()),
         &update_royalty_msg,
         &[],
     );
@@ -1523,8 +1538,97 @@ fn test_update_none_royalties() {
 
     assert_eq!(
         err.source().unwrap().to_string(),
-        sg721_updatable::ContractError::RoyaltyShareIncreased {}.to_string()
+        sg721_updatable::ContractError::RoyaltyShareIncreasedTooMuch {}.to_string()
     );
+
+    let update_royalty_msg: Sg721UpdatableExecuteMsg<Extension> =
+        Sg721UpdatableExecuteMsg::UpdateRoyaltyInfo {
+            payment_address: "creator2".to_string(),
+            share_bps: 400,
+        };
+
+    let res = router
+        .execute_contract(
+            creator.clone(),
+            Addr::unchecked(sg71_address.clone()),
+            &update_royalty_msg,
+            &[],
+        )
+        .unwrap();
+
+    assert_eq!(res.events[1].attributes[0].key, "_contract_addr");
+    assert_eq!(res.events[1].attributes[0].value, "contract1");
+    assert_eq!(res.events[1].attributes[1].key, "sender");
+    assert_eq!(res.events[1].attributes[1].value, "creator");
+    assert_eq!(res.events[1].attributes[2].key, "payment_address");
+    assert_eq!(res.events[1].attributes[2].value, "creator2");
+    assert_eq!(res.events[1].attributes[3].key, "share");
+    assert_eq!(res.events[1].attributes[3].value, "0.04");
+
+    let update_royalty_msg: Sg721UpdatableExecuteMsg<Extension> =
+        Sg721UpdatableExecuteMsg::UpdateRoyaltyInfo {
+            payment_address: "creator2".to_string(),
+            share_bps: 500,
+        };
+
+    let res = router.execute_contract(
+        creator.clone(),
+        Addr::unchecked(sg71_address.clone()),
+        &update_royalty_msg,
+        &[],
+    );
+    let err = res.unwrap_err();
+
+    assert_eq!(
+        err.source().unwrap().to_string(),
+        sg721_updatable::ContractError::RoyaltyUpdateTooSoon {}.to_string()
+    );
+
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 86400000000000);
+
+    let res = router
+        .execute_contract(
+            creator.clone(),
+            Addr::unchecked(sg71_address.clone()),
+            &update_royalty_msg,
+            &[],
+        )
+        .unwrap();
+
+    assert_eq!(res.events[1].attributes[0].key, "_contract_addr");
+    assert_eq!(res.events[1].attributes[0].value, "contract1");
+    assert_eq!(res.events[1].attributes[1].key, "sender");
+    assert_eq!(res.events[1].attributes[1].value, "creator");
+    assert_eq!(res.events[1].attributes[2].key, "payment_address");
+    assert_eq!(res.events[1].attributes[2].value, "creator2");
+    assert_eq!(res.events[1].attributes[3].key, "share");
+    assert_eq!(res.events[1].attributes[3].value, "0.05");
+
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 86500000000000);
+
+    let update_royalty_msg: Sg721UpdatableExecuteMsg<Extension> =
+        Sg721UpdatableExecuteMsg::UpdateRoyaltyInfo {
+            payment_address: "creator2".to_string(),
+            share_bps: 300,
+        };
+
+    let res = router
+        .execute_contract(
+            creator,
+            Addr::unchecked(sg71_address),
+            &update_royalty_msg,
+            &[],
+        )
+        .unwrap();
+
+    assert_eq!(res.events[1].attributes[0].key, "_contract_addr");
+    assert_eq!(res.events[1].attributes[0].value, "contract1");
+    assert_eq!(res.events[1].attributes[1].key, "sender");
+    assert_eq!(res.events[1].attributes[1].value, "creator");
+    assert_eq!(res.events[1].attributes[2].key, "payment_address");
+    assert_eq!(res.events[1].attributes[2].value, "creator2");
+    assert_eq!(res.events[1].attributes[3].key, "share");
+    assert_eq!(res.events[1].attributes[3].value, "0.03");
 }
 
 #[test]
@@ -1532,7 +1636,7 @@ fn test_update_royalties() {
     let mut router = custom_mock_app();
     let (creator, _) = setup_accounts(&mut router);
     let num_tokens = 10;
-
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME);
     // Upload contract code
     let sg721_code_id = router.store_code(contract_sg721());
     let minter_code_id = router.store_code(contract_minter());
@@ -1558,7 +1662,7 @@ fn test_update_royalties() {
                 external_link: Some("https://example.com/external.html".to_string()),
                 royalty_info: Some(RoyaltyInfoResponse {
                     payment_address: creator.to_string(),
-                    share: Decimal::percent(10),
+                    share: Decimal::percent(5),
                 }),
             },
         },
@@ -1595,13 +1699,44 @@ fn test_update_royalties() {
 
     assert_eq!(
         err.source().unwrap().to_string(),
-        sg721_updatable::ContractError::RoyaltyShareIncreased {}.to_string()
+        sg721_updatable::ContractError::RoyaltyShareIncreasedTooMuch {}.to_string()
     );
 
     let update_royalty_msg: sg721_updatable::msg::ExecuteMsg<Extension> =
         sg721_updatable::msg::ExecuteMsg::UpdateRoyaltyInfo {
             payment_address: "creator2".to_string(),
             share_bps: 900,
+        };
+    let res = router.execute_contract(
+        creator.clone(),
+        Addr::unchecked(sg71_address.clone()),
+        &update_royalty_msg,
+        &[],
+    );
+
+    let err = res.unwrap_err();
+
+    assert_eq!(
+        err.source().unwrap().to_string(),
+        sg721_updatable::ContractError::RoyaltyUpdateTooSoon {}.to_string()
+    );
+
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 86400000000000);
+
+    let res = router.execute_contract(
+        creator.clone(),
+        Addr::unchecked(sg71_address.clone()),
+        &update_royalty_msg,
+        &[],
+    );
+    assert!(res.is_ok());
+
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 86500000000000);
+
+    let update_royalty_msg: sg721_updatable::msg::ExecuteMsg<Extension> =
+        sg721_updatable::msg::ExecuteMsg::UpdateRoyaltyInfo {
+            payment_address: "creator2".to_string(),
+            share_bps: 800,
         };
     let res = router.execute_contract(
         creator,
@@ -1725,14 +1860,84 @@ fn try_migrate() {
     );
 
     // // no op when same version
-    set_contract_version(
-        &mut deps.storage,
-        "crates.io:sg-721",
-        env!("CARGO_PKG_VERSION"),
-    )
-    .unwrap();
-    sg721_updatable::contract::migrate(deps.as_mut(), env.clone(), Empty {}).unwrap();
-
-    set_contract_version(&mut deps.storage, "crates.io:sg721-updatable", "0.8.0").unwrap();
+    set_contract_version(&mut deps.storage, "crates.io:sg-721", "0.8.4").unwrap();
     sg721_updatable::contract::migrate(deps.as_mut(), env, Empty {}).unwrap();
+
+    // Migration happy path
+    let mut router = custom_mock_app();
+    let (creator, _) = setup_accounts(&mut router);
+    let num_tokens = 10;
+    // Upload contract code
+    let sg721_base_code_id = router.store_code(contract_sg721_base());
+    let sg721_code_id = router.store_code(contract_sg721());
+    let minter_code_id = router.store_code(contract_minter());
+    let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
+
+    // Instantiate minter
+    let msg = InstantiateMsg {
+        unit_price: coin(UNIT_PRICE, NATIVE_DENOM),
+        num_tokens,
+        start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
+        per_address_limit: 5,
+        whitelist: None,
+        base_token_uri: "ipfs://QmYxw1rURvnbQbBRTfmVaZtxSrkrfsbodNzibgBrVrUrtN".to_string(),
+        sg721_code_id: sg721_base_code_id,
+        sg721_instantiate_msg: Sg721InstantiateMsg {
+            name: String::from("TEST"),
+            symbol: String::from("TEST"),
+            minter: creator.to_string(),
+            collection_info: CollectionInfo {
+                creator: creator.to_string(),
+                description: String::from("Stargaze Monkeys"),
+                image: "https://example.com/image.png".to_string(),
+                external_link: Some("https://example.com/external.html".to_string()),
+                royalty_info: Some(RoyaltyInfoResponse {
+                    payment_address: creator.to_string(),
+                    share: Decimal::percent(5),
+                }),
+            },
+        },
+    };
+    let minter_addr = router
+        .instantiate_contract(
+            minter_code_id,
+            creator.clone(),
+            &msg,
+            &creation_fee,
+            "Minter",
+            None,
+        )
+        .unwrap();
+    let config: ConfigResponse = router
+        .wrap()
+        .query_wasm_smart(minter_addr, &QueryMsg::Config {})
+        .unwrap();
+
+    let sg721_base_address = config.sg721_address;
+
+    let collection_info: CollectionInfo<sg721_updatable::msg::RoyaltyInfoResponse> = router
+        .wrap()
+        .query_wasm_smart(
+            sg721_base_address.clone(),
+            &sg721::msg::QueryMsg::CollectionInfo {},
+        )
+        .unwrap();
+
+    assert!(collection_info.royalty_info.unwrap().updated_at.is_none());
+
+    router
+        .migrate_contract(
+            creator,
+            Addr::unchecked(sg721_base_address.clone()),
+            &Empty {},
+            sg721_code_id,
+        )
+        .unwrap();
+
+    let collection_info: CollectionInfo<sg721_updatable::msg::RoyaltyInfoResponse> = router
+        .wrap()
+        .query_wasm_smart(sg721_base_address, &sg721::msg::QueryMsg::CollectionInfo {})
+        .unwrap();
+
+    assert!(collection_info.royalty_info.unwrap().updated_at.is_some(),);
 }

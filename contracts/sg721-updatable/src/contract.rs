@@ -7,8 +7,7 @@ use cosmwasm_std::{
     Uint128,
 };
 use cw2::set_contract_version;
-
-use cw_utils::nonpayable;
+use cw_utils::{nonpayable, Expiration, DAY};
 use sg_std::fees::burn_and_distribute_fee;
 use sg_std::StargazeMsgWrapper;
 
@@ -27,13 +26,14 @@ const CONTRACT_NAME: &str = "crates.io:sg721-updatable";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 const CREATION_FEE: u128 = 1_000_000_000;
+const MAX_ROYALTY_SHARE_BPS: u64 = 1_000;
 
 // Disable instantiation for production build
 #[cfg(target = "wasm32-unknown-unknown")]
 const ENABLE_INSTANTIATE: bool = false;
 
 #[cfg(not(target = "wasm32-unknown-unknown"))]
-const ENABLE_INSTANTIATE: bool = false;
+const ENABLE_INSTANTIATE: bool = true;
 
 type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 pub type Sg721Contract<'a> = cw721_base::Cw721Contract<'a, Empty, StargazeMsgWrapper>;
@@ -50,7 +50,7 @@ pub fn instantiate(
     }
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
-    let fee_msgs = burn_and_distribute_fee(env, &info, CREATION_FEE)?;
+    let fee_msgs = burn_and_distribute_fee(env.clone(), &info, CREATION_FEE)?;
 
     // cw721 instantiation
     let info = ContractInfoResponse {
@@ -81,6 +81,7 @@ pub fn instantiate(
         Some(royalty_info) => Some(RoyaltyInfo {
             payment_address: deps.api.addr_validate(&royalty_info.payment_address)?,
             share: royalty_info.share_validate()?,
+            updated_at: Some(env.block.time),
         }),
         None => None,
     };
@@ -122,7 +123,7 @@ pub fn execute(
         ExecuteMsg::UpdateRoyaltyInfo {
             payment_address,
             share_bps,
-        } => execute_update_royalty_info(deps, info, payment_address, share_bps),
+        } => execute_update_royalty_info(deps, info, env, payment_address, share_bps),
         _ => Sg721Contract::default()
             .execute(deps, env, info, msg.into())
             .map_err(|e| e.into()),
@@ -132,6 +133,7 @@ pub fn execute(
 pub fn execute_update_royalty_info(
     deps: DepsMut,
     info: MessageInfo,
+    env: Env,
     payment_address: String,
     share_bps: u64,
 ) -> Result<Response, ContractError> {
@@ -144,21 +146,35 @@ pub fn execute_update_royalty_info(
 
     let payment_addr = deps.api.addr_validate(&payment_address)?;
     let share = Decimal::percent(share_bps) / Uint128::from(100u128);
+    let max_share_limit = Decimal::percent(MAX_ROYALTY_SHARE_BPS) / Uint128::from(100u128);
+
+    if share > max_share_limit {
+        return Err(ContractError::RoyaltyShareIncreasedTooMuch {});
+    }
 
     let current_royalty_info = collection_info.royalty_info;
 
-    if let Some(current_royalty_info) = current_royalty_info {
-        if share > current_royalty_info.share {
-            return Err(ContractError::RoyaltyShareIncreased {});
-        }
-    } else {
-        return Err(ContractError::RoyaltyShareIncreased {});
-    }
+    if let Some(curr_royalty_info) = current_royalty_info {
+        let updated_at = match curr_royalty_info.updated_at {
+            Some(updated_at) => updated_at,
+            // If current royalty info updated_at is None, it might be an older version that has not been migrated properly.
+            None => return Err(ContractError::RoyaltyInfoInvalid {}),
+        };
 
+        // make sure the update time is after 24 hours
+        let end = (Expiration::AtTime(updated_at) + DAY)?;
+        let update_too_soon = !end.is_expired(&env.block);
+
+        if share > curr_royalty_info.share && update_too_soon {
+            return Err(ContractError::RoyaltyUpdateTooSoon {});
+        }
+    }
     collection_info.royalty_info = Some(RoyaltyInfo {
         payment_address: payment_addr,
         share,
+        updated_at: Some(env.block.time),
     });
+
     COLLECTION_INFO.save(deps.storage, &collection_info)?;
 
     let event = Event::new("update_royalty_info")
@@ -240,6 +256,7 @@ fn query_config(deps: Deps) -> StdResult<CollectionInfoResponse> {
         Some(royalty_info) => Some(RoyaltyInfoResponse {
             payment_address: royalty_info.payment_address.to_string(),
             share: royalty_info.share,
+            updated_at: royalty_info.updated_at,
         }),
         None => None,
     };
@@ -279,6 +296,18 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, Contra
 
     FROZEN_TOKEN_METADATA.save(deps.storage, &false)?;
 
+    let mut collection_info = COLLECTION_INFO.load(deps.storage)?;
+    let current_royalty_info = collection_info.royalty_info;
+    if let Some(royalty_info) = current_royalty_info {
+        let new_royalty_info = RoyaltyInfo {
+            payment_address: royalty_info.payment_address,
+            share: royalty_info.share,
+            // setting updated_at to 1 day ago to make updating royalties possible right after a migration
+            updated_at: Some(_env.block.time.minus_seconds(86400)),
+        };
+        collection_info.royalty_info = Some(new_royalty_info);
+        COLLECTION_INFO.save(deps.storage, &collection_info)?;
+    }
     // set new contract version
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
     Ok(Response::new())
@@ -346,6 +375,7 @@ mod tests {
                 royalty_info: Some(RoyaltyInfoResponse {
                     payment_address: creator.clone(),
                     share: Decimal::percent(10),
+                    updated_at: None,
                 }),
             },
         };
@@ -362,6 +392,7 @@ mod tests {
             Some(RoyaltyInfoResponse {
                 payment_address: creator,
                 share: Decimal::percent(10),
+                updated_at: Some(mock_env().block.time),
             }),
             value.royalty_info
         );

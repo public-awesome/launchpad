@@ -19,12 +19,13 @@ pub type Cw721ExecuteMsg = cw721_base::msg::ExecuteMsg<Empty>;
 pub struct RoyaltyInfoResponse {
     pub payment_address: String,
     pub share: Decimal,
+    pub updated_at: Option<Timestamp>,
 }
 
 impl RoyaltyInfoResponse {
     pub fn share_validate(&self) -> Result<Decimal, ContractError> {
         if self.share > Decimal::one() {
-            return Err(ContractError::InvalidRoyalities {});
+            return Err(ContractError::InvalidRoyalties {});
         }
 
         Ok(self.share)
@@ -81,8 +82,8 @@ pub enum ExecuteMsg<T> {
 
 impl<T> From<ExecuteMsg<T>> for Cw721ExecuteMsg
 where
-    T: Clone + PartialEq + Into<Option<cosmwasm_std::Empty>>,
-    Option<cosmwasm_std::Empty>: From<T>,
+    T: Clone + PartialEq + Into<Option<Empty>>,
+    Option<Empty>: From<T>,
 {
     fn from(msg: ExecuteMsg<T>) -> Cw721ExecuteMsg {
         match msg {

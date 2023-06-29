@@ -1,4 +1,4 @@
-use cosmwasm_std::{Addr, Decimal};
+use cosmwasm_std::{Addr, Decimal, Timestamp};
 use cw_storage_plus::Item;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -16,6 +16,7 @@ pub struct CollectionInfo<T> {
 pub struct RoyaltyInfo {
     pub payment_address: Addr,
     pub share: Decimal,
+    pub updated_at: Option<Timestamp>,
 }
 
 pub const FROZEN_TOKEN_METADATA: Item<bool> = Item::new("frozen_token_metadata");
