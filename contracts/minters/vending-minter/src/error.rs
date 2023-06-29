@@ -103,4 +103,7 @@ pub enum ContractError {
 
     #[error("Multiply Fraction Error")]
     CheckedMultiplyFractionError {},
+
+    #[error("Expected fungible token, received nonfungible")]
+    IncorrectFungibility {},
 }
