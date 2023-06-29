@@ -627,22 +627,19 @@ fn _execute_mint(
         None => info.sender.clone(),
     };
 
-    let mint_price_coin: Coin = mint_price(deps.as_ref(), is_admin)?;
-    // Exact payment only accepted
-    let mint_price = config
+    let mint_price_with_discounts: Coin = mint_price(deps.as_ref(), is_admin)?;
+    let config_denom = config
         .mint_price
         .clone()
-        .get_amount()
-        .map_err(|_| ContractError::IncorrectFungibility {})?;
-    let denom = config
-        .mint_price
         .get_denom()
         .map_err(|_| ContractError::IncorrectFungibility {})?;
-    let payment = may_pay(&info, &denom)?;
-    if payment != mint_price {
+
+    // Exact payment only accepted
+    let payment = may_pay(&info, &config_denom)?;
+    if payment != mint_price_with_discounts.amount {
         return Err(ContractError::IncorrectPaymentAmount(
-            coin(payment.u128(), &denom),
-            coin(mint_price.u128(), &denom),
+            coin(payment.u128(), &config_denom),
+            mint_price_with_discounts,
         ));
     }
 
@@ -663,13 +660,16 @@ fn _execute_mint(
         factory_params.mint_fee_bps.bps_to_decimal()
     };
 
-    let network_fee = mint_price * mint_fee;
+    let network_fee = mint_price_with_discounts.amount * mint_fee;
 
     // send non-native fees to community pool
-    if denom != NATIVE_DENOM {
+    if mint_price_with_discounts.denom != NATIVE_DENOM {
         // only send non-zero amounts
         if !network_fee.is_zero() {
-            let msg = create_fund_community_pool_msg(coins(network_fee.u128(), denom.clone()));
+            let msg = create_fund_community_pool_msg(coins(
+                network_fee.u128(),
+                mint_price_with_discounts.clone().denom,
+            ));
             res = res.add_message(msg);
         }
     } else {
@@ -724,14 +724,14 @@ fn _execute_mint(
     MINTER_ADDRS.save(deps.storage, &info.sender, &new_mint_count)?;
 
     let seller_amount = if !is_admin {
-        let amount = mint_price - network_fee;
+        let amount = mint_price_with_discounts.amount - network_fee;
         let payment_address = config.extension.payment_address;
         let seller = config.extension.admin;
         // Sending 0 coins fails, so only send if amount is non-zero
         if !amount.is_zero() {
             let msg = BankMsg::Send {
                 to_address: payment_address.unwrap_or(seller).to_string(),
-                amount: vec![coin(amount.u128(), denom.clone())],
+                amount: vec![coin(amount.u128(), mint_price_with_discounts.clone().denom)],
             };
             res = res.add_message(msg);
         }
@@ -747,12 +747,12 @@ fn _execute_mint(
         .add_attribute("token_id", mintable_token_mapping.token_id.to_string())
         .add_attribute(
             "network_fee",
-            coin(network_fee.u128(), denom.clone()).to_string(),
+            coin(network_fee.u128(), mint_price_with_discounts.clone().denom).to_string(),
         )
-        .add_attribute("mint_price", mint_price.to_string())
+        .add_attribute("mint_price", mint_price_with_discounts.to_string())
         .add_attribute(
             "seller_amount",
-            coin(seller_amount.u128(), denom).to_string(),
+            coin(seller_amount.u128(), mint_price_with_discounts.denom).to_string(),
         ))
 }
 
