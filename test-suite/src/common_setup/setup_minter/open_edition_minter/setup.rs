@@ -5,7 +5,7 @@ use crate::common_setup::msg::{
     MinterCollectionResponse, OpenEditionMinterInstantiateParams, OpenEditionMinterSetupParams,
 };
 use crate::common_setup::setup_minter::common::parse_response::build_collection_response;
-use cosmwasm_std::{coins, Addr, Coin, Timestamp};
+use cosmwasm_std::{coin, coins, Addr, Coin, Timestamp};
 use cw_multi_test::{Contract, Executor};
 use open_edition_factory::msg::OpenEditionMinterInitMsgExtension;
 use open_edition_factory::types::NftData;
@@ -72,10 +72,12 @@ pub fn setup_open_edition_minter_contract(
     );
 
     let factory_addr = factory_addr.unwrap();
+    let min_mint_price = params.min_mint_price.clone().get_amount().unwrap();
+    let denom = params.min_mint_price.get_denom().unwrap();
     let mut msg = mock_create_minter(
         start_time,
         end_time,
-        Some(params.min_mint_price.clone()),
+        Some(coin(min_mint_price.u128(), denom.clone())),
         Some(params.extension.max_per_address_limit),
         nft_data.clone(),
         collection_params,
@@ -87,7 +89,7 @@ pub fn setup_open_edition_minter_contract(
         end_time,
         Some(params.extension.max_per_address_limit),
         nft_data,
-        Some(params.min_mint_price),
+        Some(coin(min_mint_price.u128(), denom)),
         None,
     );
     msg.collection_params.code_id = sg721_code_id;
