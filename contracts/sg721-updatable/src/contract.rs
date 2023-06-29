@@ -26,7 +26,7 @@ const CONTRACT_NAME: &str = "crates.io:sg721-updatable";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 const CREATION_FEE: u128 = 1_000_000_000;
-const MAX_ROYALTY_SHARE_BPS: u64 = 10_00;
+const MAX_ROYALTY_SHARE_BPS: u64 = 1_000;
 
 // Disable instantiation for production build
 #[cfg(target = "wasm32-unknown-unknown")]
