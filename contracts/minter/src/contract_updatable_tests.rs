@@ -1860,7 +1860,7 @@ fn try_migrate() {
     );
 
     // // no op when same version
-    set_contract_version(&mut deps.storage, "crates.io:sg-721", "0.8.3").unwrap();
+    set_contract_version(&mut deps.storage, "crates.io:sg-721", "0.8.4").unwrap();
     sg721_updatable::contract::migrate(deps.as_mut(), env, Empty {}).unwrap();
 
     // Migration happy path
