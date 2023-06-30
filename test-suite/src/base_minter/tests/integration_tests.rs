@@ -152,7 +152,7 @@ fn check_mint() {
         .wrap()
         .query_wasm_smart(minter_addr, &QueryMsg::Config {})
         .unwrap();
-    let config_mint_price = res.config.mint_price.get_amount().unwrap();
+    let config_mint_price = res.config.mint_price.fungible_coin().unwrap();
     assert_eq!(res.collection_address, "contract2".to_string());
     assert_eq!(config_mint_price.u128(), MIN_MINT_PRICE);
 

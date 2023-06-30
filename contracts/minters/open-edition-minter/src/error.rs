@@ -5,6 +5,8 @@ use url::ParseError;
 
 use sg1::FeeError;
 
+pub const NONFUNGIBLE_ERROR_MSG: &str = "Expected fungible token, received nonfungible";
+
 #[derive(Error, Debug, PartialEq)]
 pub enum ContractError {
     #[error("{0}")]
