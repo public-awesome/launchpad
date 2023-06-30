@@ -18,7 +18,7 @@ pub enum Token {
 }
 
 impl Token {
-    pub fn get_denom(self) -> Result<String, ContractError> {
+    pub fn denom(self) -> Result<String, ContractError> {
         let denom = match self {
             Token::Fungible(coin) => coin.denom,
             Token::NonFungible(_) => return Err(ContractError::IncorrectFungibility {}),
@@ -26,41 +26,41 @@ impl Token {
         Ok(denom)
     }
 
-    pub fn get_amount(self) -> Result<Uint128, ContractError> {
-        let amount = match self {
-            Token::Fungible(coin) => coin.amount,
+    pub fn fungible_coin(self) -> Result<Coin, ContractError> {
+        let fungible_coin = match self {
+            Token::Fungible(coin) => coin,
             Token::NonFungible(_) => return Err(ContractError::IncorrectFungibility {}),
         };
-        Ok(amount)
+        Ok(fungible_coin)
     }
 
-    pub fn get_amount_std_error(self) -> Result<Uint128, StdError> {
-        let amount = self.get_amount();
-        let fungibility_error = "Incorrect Fungibility".to_string();
-        let result = match amount {
-            Ok(token_amount) => token_amount,
-            Err(_) => {
-                return Err(StdError::GenericErr {
-                    msg: fungibility_error,
-                })
-            }
-        };
-        Ok(result)
-    }
+    // pub fn get_amount_std_error(self) -> Result<Uint128, StdError> {
+    //     let amount = self.fungible_coin();
+    //     let fungibility_error = "Incorrect Fungibility".to_string();
+    //     let result = match amount {
+    //         Ok(token_amount) => token_amount,
+    //         Err(_) => {
+    //             return Err(StdError::GenericErr {
+    //                 msg: fungibility_error,
+    //             })
+    //         }
+    //     };
+    //     Ok(result)
+    // }
 
-    pub fn get_denom_std_error(self) -> Result<String, StdError> {
-        let denom = self.get_denom();
-        let fungibility_error = "Incorrect Fungibility".to_string();
-        let result = match denom {
-            Ok(denom_result) => denom_result,
-            Err(_) => {
-                return Err(StdError::GenericErr {
-                    msg: fungibility_error,
-                })
-            }
-        };
-        Ok(result)
-    }
+    // pub fn get_denom_std_error(self) -> Result<String, StdError> {
+    //     let denom = self.denom();
+    //     let fungibility_error = "Incorrect Fungibility".to_string();
+    //     let result = match denom {
+    //         Ok(denom_result) => denom_result,
+    //         Err(_) => {
+    //             return Err(StdError::GenericErr {
+    //                 msg: fungibility_error,
+    //             })
+    //         }
+    //     };
+    //     Ok(result)
+    // }
 }
 
 // #[cw_serde]
