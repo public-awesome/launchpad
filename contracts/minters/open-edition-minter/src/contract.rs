@@ -15,6 +15,7 @@ use open_edition_factory::msg::{OpenEditionMinterCreateMsg, ParamsResponse};
 use open_edition_factory::types::NftMetadataType;
 use sg1::checked_fair_burn;
 use sg2::query::Sg2QueryMsg;
+use sg2::Token;
 use sg4::{Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
 
@@ -418,12 +419,12 @@ pub fn execute_update_mint_price(
     //     ContractError::IncorrectFungibility {}
     // );
 
-    let mint_price = config.mint_price.amount()?.u128();
+    let config_mint_price = config.mint_price.clone().amount()?.u128();
 
     // If current time is after the stored start_time, only allow lowering price
-    if env.block.time >= config.extension.start_time && price >= mint_price {
+    if env.block.time >= config.extension.start_time && price >= config_mint_price.clone() {
         return Err(ContractError::UpdatedMintPriceTooHigh {
-            allowed: mint_price,
+            allowed: config_mint_price.clone(),
             updated: price,
         });
     }
@@ -433,26 +434,19 @@ pub fn execute_update_mint_price(
         .query_wasm_smart(config.clone().factory, &Sg2QueryMsg::Params {})?;
     let factory_params = factory.params;
 
-    let min_mint_price_coin = factory_params
-        .min_mint_price
-        .clone()
-        .fungible_coin()
-        .map_err(|_| ContractError::IncorrectFungibility {})?;
-    if min_mint_price_coin.amount.u128() > price {
+    let min_mint_price = factory_params.min_mint_price.amount()?;
+
+    if min_mint_price.u128() > price {
         return Err(ContractError::InsufficientMintPrice {
-            expected: min_mint_price_coin.amount.u128(),
+            expected: min_mint_price.u128(),
             got: price,
         });
     }
 
-    // let config_denom = config
-    //     .mint_price
-    //     .clone()
-    //     .denom()
-    //     .map_err(|_| ContractError::IncorrectFungibility {})?;
-    // config.mint_price = sg2::Fungible(coin(price, config_denom));
-
-    config.mint_price = sg2::Token::new_coin(price, config.mint_price.denom()?);
+    config.mint_price = Token::new_fungible_token(
+        config.mint_price.clone().amount()?.into(),
+        config.mint_price.clone().denom()?,
+    );
 
     CONFIG.save(deps.storage, &config)?;
 
@@ -638,11 +632,8 @@ pub fn execute_update_per_address_limit(
 pub fn mint_price(deps: Deps, is_admin: bool) -> Result<Coin, StdError> {
     let config = CONFIG.load(deps.storage)?;
 
-    let config_fungible_coin = config
-        .mint_price
-        .clone()
-        .fungible_coin()
-        .map_err(|_| StdError::generic_err(NONFUNGIBLE_ERROR_MSG.to_string()))?;
+    let config_mint_price = config.mint_price.clone().amount()?;
+    let config_denom = config.mint_price.denom()?;
     if is_admin {
         let factory: ParamsResponse = deps
             .querier
@@ -650,10 +641,10 @@ pub fn mint_price(deps: Deps, is_admin: bool) -> Result<Coin, StdError> {
         let factory_params = factory.params;
         Ok(coin(
             factory_params.extension.airdrop_mint_price.amount.u128(),
-            config_fungible_coin.denom,
+            config_denom,
         ))
     } else {
-        Ok(config_fungible_coin)
+        Ok(coin(config_mint_price.u128(), config_denom))
     }
 }
 
@@ -706,11 +697,8 @@ fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
     let config = CONFIG.load(deps.storage)?;
     let sg721_address = SG721_ADDRESS.load(deps.storage)?;
 
-    let config_fungible_coin = config
-        .mint_price
-        .clone()
-        .fungible_coin()
-        .map_err(|e| StdError::generic_err(NONFUNGIBLE_ERROR_MSG.to_string()))?;
+    let config_mint_price = config.mint_price.clone().amount()?;
+    let config_denom = config.mint_price.denom()?;
 
     Ok(ConfigResponse {
         admin: config.extension.admin.to_string(),
@@ -721,7 +709,7 @@ fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
         sg721_address: sg721_address.to_string(),
         sg721_code_id: config.collection_code_id,
         start_time: config.extension.start_time,
-        mint_price: config_fungible_coin,
+        mint_price: coin(config_mint_price.u128(), config_denom),
         factory: config.factory.to_string(),
     })
 }
@@ -766,20 +754,19 @@ fn query_mint_price(deps: Deps) -> StdResult<MintPriceResponse> {
     let factory: ParamsResponse = deps
         .querier
         .query_wasm_smart(config.factory, &Sg2QueryMsg::Params {})?;
-    let config_fungible_coin = config
-        .mint_price
-        .clone()
-        .fungible_coin()
-        .map_err(|_| StdError::generic_err(NONFUNGIBLE_ERROR_MSG.to_string()))?;
+
+    let config_mint_price = config.mint_price.clone().amount()?;
+    let config_denom = config.mint_price.denom()?;
+
     let factory_params = factory.params;
 
     let current_price = mint_price(deps, false)?;
     let airdrop_price = coin(
         factory_params.extension.airdrop_mint_price.amount.u128(),
-        config_fungible_coin.clone().denom,
+        config_denom.clone(),
     );
     Ok(MintPriceResponse {
-        public_price: config_fungible_coin,
+        public_price: coin(config_mint_price.u128(), config_denom),
         airdrop_price,
         current_price,
     })
