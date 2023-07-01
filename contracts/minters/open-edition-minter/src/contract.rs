@@ -1,8 +1,8 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coin, to_binary, Addr, BankMsg, Binary, Coin, Deps, DepsMut, Empty, Env, MessageInfo, Order,
-    Reply, ReplyOn, StdError, StdResult, Timestamp, WasmMsg,
+    coin, ensure, to_binary, Addr, BankMsg, Binary, Coin, Deps, DepsMut, Empty, Env, MessageInfo,
+    Order, Reply, ReplyOn, StdError, StdResult, Timestamp, WasmMsg,
 };
 use cw2::set_contract_version;
 use cw_utils::{may_pay, maybe_addr, nonpayable, parse_reply_instantiate_data};
@@ -405,16 +405,25 @@ pub fn execute_update_mint_price(
     if env.block.time >= config.extension.end_time {
         return Err(ContractError::AfterMintEndTime {});
     }
-    let config_fungible_coin = config
-        .mint_price
-        .clone()
-        .fungible_coin()
-        .map_err(|_| ContractError::IncorrectFungibility {})?;
+
+    // let config_fungible_coin = config
+    //     .mint_price
+    //     .clone()
+    //     .fungible_coin()
+    //     .map_err(|_| ContractError::IncorrectFungibility {})?;
+
+    // NOTE: This is not needed since token.amount() checks for it
+    // ensure!(
+    //     !config.mint_price.is_fungible(),
+    //     ContractError::IncorrectFungibility {}
+    // );
+
+    let mint_price = config.mint_price.amount()?.u128();
+
     // If current time is after the stored start_time, only allow lowering price
-    if env.block.time >= config.extension.start_time && price >= config_fungible_coin.amount.u128()
-    {
+    if env.block.time >= config.extension.start_time && price >= mint_price {
         return Err(ContractError::UpdatedMintPriceTooHigh {
-            allowed: config_fungible_coin.amount.u128(),
+            allowed: mint_price,
             updated: price,
         });
     }
@@ -436,13 +445,17 @@ pub fn execute_update_mint_price(
         });
     }
 
-    let config_denom = config
-        .mint_price
-        .clone()
-        .denom()
-        .map_err(|_| ContractError::IncorrectFungibility {})?;
-    config.mint_price = sg2::Fungible(coin(price, config_denom));
+    // let config_denom = config
+    //     .mint_price
+    //     .clone()
+    //     .denom()
+    //     .map_err(|_| ContractError::IncorrectFungibility {})?;
+    // config.mint_price = sg2::Fungible(coin(price, config_denom));
+
+    config.mint_price = sg2::Token::new_coin(price, config.mint_price.denom()?);
+
     CONFIG.save(deps.storage, &config)?;
+
     Ok(Response::new()
         .add_attribute("action", "update_mint_price")
         .add_attribute("sender", info.sender)
