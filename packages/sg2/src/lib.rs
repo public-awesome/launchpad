@@ -34,6 +34,13 @@ impl Token {
         Ok(fungible_coin)
     }
 
+    pub fn is_fungible(self) -> bool {
+        match self {
+            Token::Fungible(_) => true,
+            Token::NonFungible(_) => false,
+        }
+    }
+
     // pub fn get_amount_std_error(self) -> Result<Uint128, StdError> {
     //     let amount = self.fungible_coin();
     //     let fungibility_error = "Incorrect Fungibility".to_string();
