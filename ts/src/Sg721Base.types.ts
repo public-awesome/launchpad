@@ -78,7 +78,7 @@ export interface CollectionInfoForRoyaltyInfoResponse {
   start_trading_time?: Timestamp | null;
 }
 export interface MinterResponse {
-  minter: string;
+  minter?: string | null;
 }
 export interface NftInfoResponse {
   extension: Empty;
@@ -141,6 +141,8 @@ export type QueryMsg = {
   minter: {};
 } | {
   collection_info: {};
+} | {
+  ownership: {};
 };
 export interface TokensResponse {
   tokens: string[];
