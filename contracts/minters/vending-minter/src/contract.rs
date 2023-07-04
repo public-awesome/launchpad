@@ -290,7 +290,7 @@ pub fn execute_update_discount_price(
         .denom()
         .map_err(|_| ContractError::IncorrectFungibility {})?;
 
-    config.extension.discount_price = Some(coin(price, config_denom.clone()));
+    config.extension.discount_price = Some(coin(price, config_denom));
     CONFIG.save(deps.storage, &config)?;
 
     Ok(Response::new()
@@ -1055,12 +1055,7 @@ pub fn mint_price(deps: Deps, is_admin: bool) -> Result<Coin, StdError> {
 
     if is_admin {
         return Ok(coin(
-            factory_params
-                .extension
-                .airdrop_mint_price
-                .clone()
-                .amount
-                .u128(),
+            factory_params.extension.airdrop_mint_price.amount.u128(),
             config_denom,
         ));
     }

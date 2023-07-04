@@ -151,6 +151,7 @@ pub fn update_params<T, C>(
     }
 
     if let Some(min_mint_price) = param_msg.min_mint_price {
+        //TODO BURNTOMINT
         match min_mint_price.clone() {
             sg2::Token::Fungible(mint_price) => {
                 ensure_eq!(
@@ -159,7 +160,7 @@ pub fn update_params<T, C>(
                     ContractError::InvalidDenom {}
                 );
             }
-            sg2::Token::NonFungible(collection) => {
+            sg2::Token::NonFungible(_) => {
                 // TODO: make sure we can query the collection
                 // perform a query on the collection so we know its the right type
             }
