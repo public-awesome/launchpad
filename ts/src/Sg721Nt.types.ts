@@ -65,6 +65,12 @@ export type Cw721QueryMsg = {
     token_id: string;
   };
 } | {
+  operator: {
+    include_expired?: boolean | null;
+    operator: string;
+    owner: string;
+  };
+} | {
   all_operators: {
     include_expired?: boolean | null;
     limit?: number | null;
@@ -117,7 +123,7 @@ export interface RoyaltyInfoResponse {
   share: Decimal;
 }
 export interface MinterResponse {
-  minter: string;
+  minter?: string | null;
 }
 export interface NftInfoResponse {
   extension: Empty;

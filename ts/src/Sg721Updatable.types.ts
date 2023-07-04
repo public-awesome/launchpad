@@ -115,7 +115,12 @@ export type ExecuteMsgForNullable_EmptyAndEmpty = {
 } | {
   freeze_collection_info: {};
 } | {
-  mint: MintMsgForNullable_Empty;
+  mint: {
+    extension?: Empty | null;
+    owner: string;
+    token_id: string;
+    token_uri?: string | null;
+  };
 } | {
   extension: {
     msg: Empty;
@@ -128,12 +133,6 @@ export interface UpdateCollectionInfoMsgForRoyaltyInfoResponse {
   external_link?: string | null;
   image?: string | null;
   royalty_info?: (RoyaltyInfoResponse | null) | null;
-}
-export interface MintMsgForNullable_Empty {
-  extension?: Empty | null;
-  owner: string;
-  token_id: string;
-  token_uri?: string | null;
 }
 export interface InstantiateMsg {
   collection_info: CollectionInfoForRoyaltyInfoResponse;
@@ -151,7 +150,7 @@ export interface CollectionInfoForRoyaltyInfoResponse {
   start_trading_time?: Timestamp | null;
 }
 export interface MinterResponse {
-  minter: string;
+  minter?: string | null;
 }
 export interface NftInfoResponse {
   extension: Empty;
@@ -211,6 +210,8 @@ export type QueryMsg = {
   minter: {};
 } | {
   collection_info: {};
+} | {
+  ownership: {};
 };
 export interface TokensResponse {
   tokens: string[];
