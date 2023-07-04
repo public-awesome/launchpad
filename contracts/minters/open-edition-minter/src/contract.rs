@@ -407,18 +407,6 @@ pub fn execute_update_mint_price(
         return Err(ContractError::AfterMintEndTime {});
     }
 
-    // let config_fungible_coin = config
-    //     .mint_price
-    //     .clone()
-    //     .fungible_coin()
-    //     .map_err(|_| ContractError::IncorrectFungibility {})?;
-
-    // NOTE: This is not needed since token.amount() checks for it
-    // ensure!(
-    //     !config.mint_price.is_fungible(),
-    //     ContractError::IncorrectFungibility {}
-    // );
-
     let config_mint_price = config.mint_price.clone().amount()?.u128();
 
     // If current time is after the stored start_time, only allow lowering price
@@ -443,11 +431,8 @@ pub fn execute_update_mint_price(
         });
     }
 
-    config.mint_price = Token::new_fungible_token(
-        config.mint_price.clone().amount()?.into(),
-        config.mint_price.clone().denom()?,
-    );
-
+    config.mint_price = Token::new_fungible_token(price, config.mint_price.clone().denom()?);
+    println!("config is {:?}", config);
     CONFIG.save(deps.storage, &config)?;
 
     Ok(Response::new()
