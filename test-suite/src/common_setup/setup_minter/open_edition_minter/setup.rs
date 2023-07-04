@@ -72,7 +72,7 @@ pub fn setup_open_edition_minter_contract(
     );
 
     let factory_addr = factory_addr.unwrap();
-    let min_mint_price = params.min_mint_price.clone().fungible_coin().unwrap();
+    let min_mint_price = params.min_mint_price.clone().amount().unwrap();
     let denom = params.min_mint_price.denom().unwrap();
     let mut msg = mock_create_minter(
         start_time,
