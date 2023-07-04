@@ -267,7 +267,7 @@ pub fn execute_update_discount_price(
         });
     }
     let config_denom = config.mint_price.clone().denom()?;
-    config.extension.discount_price = Some(coin(price, config_denom.clone()));
+    config.extension.discount_price = Some(coin(price, config_denom));
     CONFIG.save(deps.storage, &config)?;
 
     Ok(Response::new()
