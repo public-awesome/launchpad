@@ -19,7 +19,7 @@ use sg2::Token;
 use sg4::{Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
 
-use crate::error::{ContractError, NONFUNGIBLE_ERROR_MSG};
+use crate::error::ContractError;
 use crate::helpers::mint_nft_msg;
 use crate::msg::{
     ConfigResponse, EndTimeResponse, ExecuteMsg, MintCountResponse, MintPriceResponse, QueryMsg,

@@ -1,6 +1,6 @@
 use std::convert::TryInto;
 
-use crate::error::{ContractError, NONFUNGIBLE_ERROR_MSG};
+use crate::error::ContractError;
 use crate::msg::{
     ConfigResponse, ExecuteMsg, MintCountResponse, MintPriceResponse, MintableNumTokensResponse,
     QueryMsg, StartTimeResponse,
