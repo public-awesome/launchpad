@@ -9,7 +9,6 @@ use cw2::set_contract_version;
 use cw_utils::must_pay;
 use sg1::checked_fair_burn;
 use sg2::query::{AllowedCollectionCodeIdResponse, AllowedCollectionCodeIdsResponse, Sg2QueryMsg};
-use sg2::Token;
 use sg_std::{Response, NATIVE_DENOM};
 
 use crate::error::ContractError;

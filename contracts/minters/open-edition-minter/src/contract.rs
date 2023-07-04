@@ -1,8 +1,8 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coin, ensure, to_binary, Addr, BankMsg, Binary, Coin, Deps, DepsMut, Empty, Env, MessageInfo,
-    Order, Reply, ReplyOn, StdError, StdResult, Timestamp, WasmMsg,
+    coin, to_binary, Addr, BankMsg, Binary, Coin, Deps, DepsMut, Empty, Env, MessageInfo, Order,
+    Reply, ReplyOn, StdError, StdResult, Timestamp, WasmMsg,
 };
 use cw2::set_contract_version;
 use cw_utils::{may_pay, maybe_addr, nonpayable, parse_reply_instantiate_data};
@@ -410,9 +410,9 @@ pub fn execute_update_mint_price(
     let config_mint_price = config.mint_price.clone().amount()?.u128();
 
     // If current time is after the stored start_time, only allow lowering price
-    if env.block.time >= config.extension.start_time && price >= config_mint_price.clone() {
+    if env.block.time >= config.extension.start_time && price >= config_mint_price {
         return Err(ContractError::UpdatedMintPriceTooHigh {
-            allowed: config_mint_price.clone(),
+            allowed: config_mint_price,
             updated: price,
         });
     }
