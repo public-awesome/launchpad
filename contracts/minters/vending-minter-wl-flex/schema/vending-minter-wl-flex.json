@@ -177,7 +177,7 @@
             "minimum": 0.0
           },
           "min_mint_price": {
-            "$ref": "#/definitions/Coin"
+            "$ref": "#/definitions/Token"
           },
           "mint_fee_bps": {
             "type": "integer",
@@ -243,6 +243,34 @@
         "allOf": [
           {
             "$ref": "#/definitions/Uint64"
+          }
+        ]
+      },
+      "Token": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "fungible"
+            ],
+            "properties": {
+              "fungible": {
+                "$ref": "#/definitions/Coin"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": [
+              "non_fungible"
+            ],
+            "properties": {
+              "non_fungible": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
           }
         ]
       },
