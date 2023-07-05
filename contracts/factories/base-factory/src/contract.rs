@@ -1,7 +1,8 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    ensure, ensure_eq, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult, WasmMsg,
+    ensure, ensure_eq, to_binary, Binary, Deps, DepsMut, Empty, Env, Event, MessageInfo, StdError,
+    StdResult, WasmMsg,
 };
 use cw2::set_contract_version;
 use cw_utils::must_pay;
@@ -16,7 +17,7 @@ use crate::msg::{
     BaseMinterCreateMsg, BaseSudoMsg, BaseUpdateParamsMsg, ExecuteMsg, InstantiateMsg,
     ParamsResponse, SudoMsg,
 };
-use crate::state::SUDO_PARAMS;
+use crate::state::{EARLIEST_VERSION, SUDO_PARAMS, TO_VERSION};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sg-base-factory";
@@ -199,4 +200,35 @@ fn query_allowed_collection_code_id(
     let code_ids = params.allowed_sg721_code_ids;
     let allowed = code_ids.contains(&code_id);
     Ok(AllowedCollectionCodeIdResponse { allowed })
+}
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn migrate(deps: DepsMut, env: Env, msg: Empty) -> StdResult<Response> {
+    try_migrate(deps, env, msg)
+}
+
+pub fn try_migrate(deps: DepsMut, _env: Env, _msg: Empty) -> StdResult<Response> {
+    // make sure the correct contract is being upgraded, and it's being
+    // upgraded from the correct version.
+
+    if CONTRACT_VERSION < EARLIEST_VERSION {
+        return Err(StdError::generic_err("Cannot upgrade to a previous contract version").into());
+    }
+    if CONTRACT_VERSION > TO_VERSION {
+        return Err(StdError::generic_err("Cannot upgrade to a previous contract version").into());
+    }
+    // if same version return
+    if CONTRACT_VERSION == TO_VERSION {
+        return Ok(Response::new());
+    }
+
+    // update contract version
+    cw2::set_contract_version(deps.storage, CONTRACT_NAME, TO_VERSION)?;
+
+    let event = Event::new("migrate")
+        .add_attribute("from_name", CONTRACT_NAME)
+        .add_attribute("to_version", TO_VERSION)
+        .add_attribute("from_version", CONTRACT_VERSION);
+
+    Ok(Response::new().add_event(event))
 }

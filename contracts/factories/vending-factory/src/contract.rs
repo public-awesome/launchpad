@@ -1,9 +1,12 @@
-use base_factory::contract::{must_be_allowed_collection, must_not_be_frozen, update_params};
+use base_factory::contract::{
+    must_be_allowed_collection, must_not_be_frozen, try_migrate, update_params,
+};
 use base_factory::ContractError as BaseContractError;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    ensure, ensure_eq, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult, WasmMsg,
+    ensure, ensure_eq, to_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, StdResult,
+    WasmMsg,
 };
 use cw2::set_contract_version;
 use cw_utils::must_pay;
@@ -113,6 +116,11 @@ pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> Result<Response, ContractE
     match msg {
         SudoMsg::UpdateParams(params_msg) => sudo_update_params(deps, env, *params_msg),
     }
+}
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn migrate(deps: DepsMut, env: Env, msg: Empty) -> StdResult<Response> {
+    try_migrate(deps, env, msg)
 }
 
 /// Only governance can update contract params
