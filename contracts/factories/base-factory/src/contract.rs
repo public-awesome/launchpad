@@ -159,6 +159,12 @@ pub fn update_params<T, C>(
         }
     }
 
+    params.max_royalty_bps = param_msg.max_royalty_bps.unwrap_or(params.max_royalty_bps);
+
+    params.max_royalty_increase_rate_bps = param_msg
+        .max_royalty_increase_rate_bps
+        .unwrap_or(params.max_royalty_increase_rate_bps);
+
     params.mint_fee_bps = param_msg.mint_fee_bps.unwrap_or(params.mint_fee_bps);
 
     params.max_trading_offset_secs = param_msg
