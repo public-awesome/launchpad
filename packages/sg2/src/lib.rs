@@ -7,6 +7,10 @@ pub mod tests;
 
 pub type CodeId = u64;
 
+// Sane defaults used for migrating v2.1.0 factory to v3.0.0 factory
+pub const DEFAULT_MAX_ROYALTY_BPS: u64 = 1000;
+pub const DEFAULT_MAX_ROYALTY_INCREASE_RATE_BPS: u64 = 200;
+
 /// Common params for all minters used for storage
 #[cw_serde]
 pub struct MinterParams<T> {
