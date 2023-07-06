@@ -222,17 +222,12 @@ pub fn try_migrate(deps: DepsMut, _env: Env, _msg: Empty) -> StdResult<Response>
         return Ok(Response::new());
     }
 
-    // set values for new fields in v3.0.0 sg2 MinterParams, can change afterwards w governance
-    // max_royalty_bps: u64,
-    // pub max_royalty_increase_rate_bps: u64,
-    let mut params = SUDO_PARAMS.load(deps.storage)?;
-    params.max_royalty_bps = DEFAULT_MAX_ROYALTY_BPS;
-    params.max_royalty_increase_rate_bps = DEFAULT_MAX_ROYALTY_INCREASE_RATE_BPS;
-
-    SUDO_PARAMS.save(deps.storage, &params)?;
-
     // update contract version
     cw2::set_contract_version(deps.storage, CONTRACT_NAME, TO_VERSION)?;
+
+    let mut params = SUDO_PARAMS.load(deps.storage)?;
+    update_migrate_params(&mut params)?;
+    SUDO_PARAMS.save(deps.storage, &params)?;
 
     let event = Event::new("migrate")
         .add_attribute("from_name", CONTRACT_NAME)
@@ -240,4 +235,15 @@ pub fn try_migrate(deps: DepsMut, _env: Env, _msg: Empty) -> StdResult<Response>
         .add_attribute("from_version", CONTRACT_VERSION);
 
     Ok(Response::new().add_event(event))
+}
+
+pub fn update_migrate_params<T>(params: &mut MinterParams<T>) -> StdResult<()> {
+    // set values for new fields in v3.0.0 sg2 MinterParams, can change afterwards w governance
+    // max_royalty_bps: u64,
+    // pub max_royalty_increase_rate_bps: u64,
+
+    params.max_royalty_bps = DEFAULT_MAX_ROYALTY_BPS;
+    params.max_royalty_increase_rate_bps = DEFAULT_MAX_ROYALTY_INCREASE_RATE_BPS;
+
+    Ok(())
 }

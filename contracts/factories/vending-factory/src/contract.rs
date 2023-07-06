@@ -1,4 +1,6 @@
-use base_factory::contract::{must_be_allowed_collection, must_not_be_frozen, update_params};
+use base_factory::contract::{
+    must_be_allowed_collection, must_not_be_frozen, update_migrate_params, update_params,
+};
 use base_factory::ContractError as BaseContractError;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
@@ -10,7 +12,6 @@ use cw2::set_contract_version;
 use cw_utils::must_pay;
 use sg1::checked_fair_burn;
 use sg2::query::{AllowedCollectionCodeIdResponse, AllowedCollectionCodeIdsResponse, Sg2QueryMsg};
-use sg2::{DEFAULT_MAX_ROYALTY_BPS, DEFAULT_MAX_ROYALTY_INCREASE_RATE_BPS};
 use sg_std::{Response, NATIVE_DENOM};
 
 use crate::error::ContractError;
@@ -218,17 +219,12 @@ pub fn try_migrate(deps: DepsMut, _env: Env, _msg: Empty) -> StdResult<Response>
         return Ok(Response::new());
     }
 
-    // set values for new fields in v3.0.0 sg2 MinterParams, can change afterwards w governance
-    // max_royalty_bps: u64,
-    // pub max_royalty_increase_rate_bps: u64,
-    let mut params = SUDO_PARAMS.load(deps.storage)?;
-    params.max_royalty_bps = DEFAULT_MAX_ROYALTY_BPS;
-    params.max_royalty_increase_rate_bps = DEFAULT_MAX_ROYALTY_INCREASE_RATE_BPS;
-
-    SUDO_PARAMS.save(deps.storage, &params)?;
-
     // update contract version
     cw2::set_contract_version(deps.storage, CONTRACT_NAME, TO_VERSION)?;
+
+    let mut params = SUDO_PARAMS.load(deps.storage)?;
+    update_migrate_params(&mut params)?;
+    SUDO_PARAMS.save(deps.storage, &params)?;
 
     let event = Event::new("migrate")
         .add_attribute("from_name", CONTRACT_NAME)
