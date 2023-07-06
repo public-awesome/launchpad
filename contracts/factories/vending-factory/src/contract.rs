@@ -1,17 +1,16 @@
-use base_factory::contract::{
-    must_be_allowed_collection, must_not_be_frozen, try_migrate, update_params,
-};
+use base_factory::contract::{must_be_allowed_collection, must_not_be_frozen, update_params};
 use base_factory::ContractError as BaseContractError;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    ensure, ensure_eq, to_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, StdResult,
-    WasmMsg,
+    ensure, ensure_eq, to_binary, Binary, Deps, DepsMut, Empty, Env, Event, MessageInfo, StdError,
+    StdResult, WasmMsg,
 };
 use cw2::set_contract_version;
 use cw_utils::must_pay;
 use sg1::checked_fair_burn;
 use sg2::query::{AllowedCollectionCodeIdResponse, AllowedCollectionCodeIdsResponse, Sg2QueryMsg};
+use sg2::{DEFAULT_MAX_ROYALTY_BPS, DEFAULT_MAX_ROYALTY_INCREASE_RATE_BPS};
 use sg_std::{Response, NATIVE_DENOM};
 
 use crate::error::ContractError;
@@ -19,7 +18,7 @@ use crate::msg::{
     ExecuteMsg, InstantiateMsg, ParamsResponse, SudoMsg, VendingMinterCreateMsg,
     VendingUpdateParamsMsg,
 };
-use crate::state::SUDO_PARAMS;
+use crate::state::{EARLIEST_VERSION, SUDO_PARAMS, TO_VERSION};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:vending-factory";
@@ -202,4 +201,39 @@ fn query_allowed_collection_code_id(
     let code_ids = params.allowed_sg721_code_ids;
     let allowed = code_ids.contains(&code_id);
     Ok(AllowedCollectionCodeIdResponse { allowed })
+}
+
+pub fn try_migrate(deps: DepsMut, _env: Env, _msg: Empty) -> StdResult<Response> {
+    // make sure the correct contract is being upgraded, and it's being
+    // upgraded from the correct version.
+
+    if CONTRACT_VERSION < EARLIEST_VERSION {
+        return Err(StdError::generic_err("Cannot upgrade to a previous contract version").into());
+    }
+    if CONTRACT_VERSION > TO_VERSION {
+        return Err(StdError::generic_err("Cannot upgrade to a previous contract version").into());
+    }
+    // if same version return
+    if CONTRACT_VERSION == TO_VERSION {
+        return Ok(Response::new());
+    }
+
+    // set values for new fields in v3.0.0 sg2 MinterParams, can change afterwards w governance
+    // max_royalty_bps: u64,
+    // pub max_royalty_increase_rate_bps: u64,
+    let mut params = SUDO_PARAMS.load(deps.storage)?;
+    params.max_royalty_bps = DEFAULT_MAX_ROYALTY_BPS;
+    params.max_royalty_increase_rate_bps = DEFAULT_MAX_ROYALTY_INCREASE_RATE_BPS;
+
+    SUDO_PARAMS.save(deps.storage, &params)?;
+
+    // update contract version
+    cw2::set_contract_version(deps.storage, CONTRACT_NAME, TO_VERSION)?;
+
+    let event = Event::new("migrate")
+        .add_attribute("from_name", CONTRACT_NAME)
+        .add_attribute("to_version", TO_VERSION)
+        .add_attribute("from_version", CONTRACT_VERSION);
+
+    Ok(Response::new().add_event(event))
 }

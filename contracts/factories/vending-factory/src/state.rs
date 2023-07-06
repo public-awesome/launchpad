@@ -14,3 +14,7 @@ pub struct ParamsExtension {
 pub type VendingMinterParams = MinterParams<ParamsExtension>;
 
 pub const SUDO_PARAMS: Item<VendingMinterParams> = Item::new("sudo-params");
+
+// migration version constants
+pub const EARLIEST_VERSION: &str = "2.1.0";
+pub const TO_VERSION: &str = "3.0.0";
