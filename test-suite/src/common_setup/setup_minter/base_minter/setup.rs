@@ -91,28 +91,49 @@ pub fn sudo_update_params(
     app: &mut StargazeApp,
     collection_responses: &Vec<MinterCollectionResponse>,
     code_ids: CodeIds,
+    update_msg: Option<sg2::msg::UpdateMinterParamsMsg<VendingUpdateParamsExtension>>,
 ) -> Vec<Result<AppResponse, anyhow::Error>> {
     let mut sudo_responses: Vec<Result<AppResponse, Error>> = vec![];
     for collection_response in collection_responses {
         let collection = collection_response.collection.clone().unwrap().to_string();
 
-        let update_msg = sg2::msg::UpdateMinterParamsMsg {
-            code_id: Some(code_ids.sg721_code_id),
-            add_sg721_code_ids: None,
-            rm_sg721_code_ids: None,
-            frozen: None,
-            creation_fee: Some(coin(0, NATIVE_DENOM)),
-            min_mint_price: Some(sg2::NonFungible(collection)),
-            mint_fee_bps: None,
-            max_trading_offset_secs: Some(100),
-            extension: VendingUpdateParamsExtension {
-                max_token_limit: None,
-                max_per_address_limit: None,
-                airdrop_mint_price: None,
-                airdrop_mint_fee_bps: None,
-                shuffle_fee: None,
+        let update_msg = match update_msg.clone() {
+            Some(some_update_message) => some_update_message,
+            None => sg2::msg::UpdateMinterParamsMsg {
+                code_id: Some(code_ids.sg721_code_id),
+                add_sg721_code_ids: None,
+                rm_sg721_code_ids: None,
+                frozen: None,
+                creation_fee: Some(coin(0, NATIVE_DENOM)),
+                min_mint_price: Some(sg2::NonFungible(collection)),
+                mint_fee_bps: None,
+                max_trading_offset_secs: Some(100),
+                extension: VendingUpdateParamsExtension {
+                    max_token_limit: None,
+                    max_per_address_limit: None,
+                    airdrop_mint_price: None,
+                    airdrop_mint_fee_bps: None,
+                    shuffle_fee: None,
+                },
             },
         };
+        // let update_msg = sg2::msg::UpdateMinterParamsMsg {
+        //     code_id: Some(code_ids.sg721_code_id),
+        //     add_sg721_code_ids: None,
+        //     rm_sg721_code_ids: None,
+        //     frozen: None,
+        //     creation_fee: Some(coin(0, NATIVE_DENOM)),
+        //     min_mint_price: Some(sg2::NonFungible(collection)),
+        //     mint_fee_bps: None,
+        //     max_trading_offset_secs: Some(100),
+        //     extension: VendingUpdateParamsExtension {
+        //         max_token_limit: None,
+        //         max_per_address_limit: None,
+        //         airdrop_mint_price: None,
+        //         airdrop_mint_fee_bps: None,
+        //         shuffle_fee: None,
+        //     },
+        // };
         let sudo_update_msg = base_factory::msg::SudoMsg::UpdateParams(Box::new(update_msg));
 
         let sudo_res = app.sudo(cw_multi_test::SudoMsg::Wasm(cw_multi_test::WasmSudo {
