@@ -35,6 +35,15 @@ pub fn instantiate(
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
+    // Check royalty rates exist
+    // They must be optional to work with migrations of older contracts
+    if msg.params.max_royalty_bps.is_none() {
+        return Err(ContractError::RoyaltyBpsNotSet {});
+    }
+    if msg.params.max_royalty_increase_rate_bps.is_none() {
+        return Err(ContractError::RoyaltyIncreaseRateBpsNotSet {});
+    }
+
     SUDO_PARAMS.save(deps.storage, &msg.params)?;
 
     Ok(Response::new())

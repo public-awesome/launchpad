@@ -33,6 +33,15 @@ pub fn instantiate(
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
+    // Check royalty rates exist
+    // They must be optional to work with migrations of older contracts
+    if msg.params.max_royalty_bps.is_none() {
+        return Err(ContractError::RoyaltyBpsNotSet {});
+    }
+    if msg.params.max_royalty_increase_rate_bps.is_none() {
+        return Err(ContractError::RoyaltyIncreaseRateBpsNotSet {});
+    }
+
     SUDO_PARAMS.save(deps.storage, &msg.params)?;
 
     Ok(Response::new())
@@ -159,11 +168,18 @@ pub fn update_params<T, C>(
         }
     }
 
-    params.max_royalty_bps = param_msg.max_royalty_bps.unwrap_or(params.max_royalty_bps);
+    params.max_royalty_bps = if let Some(max_royalty_bps) = param_msg.max_royalty_bps {
+        Some(max_royalty_bps)
+    } else {
+        params.max_royalty_bps
+    };
 
-    params.max_royalty_increase_rate_bps = param_msg
-        .max_royalty_increase_rate_bps
-        .unwrap_or(params.max_royalty_increase_rate_bps);
+    params.max_royalty_increase_rate_bps =
+        if let Some(max_royalty_increase_rate_bps) = param_msg.max_royalty_increase_rate_bps {
+            Some(max_royalty_increase_rate_bps)
+        } else {
+            params.max_royalty_increase_rate_bps
+        };
 
     params.mint_fee_bps = param_msg.mint_fee_bps.unwrap_or(params.mint_fee_bps);
 
@@ -248,8 +264,8 @@ pub fn update_migrate_params<T>(params: &mut MinterParams<T>) -> StdResult<()> {
     // max_royalty_bps: u64,
     // pub max_royalty_increase_rate_bps: u64,
 
-    params.max_royalty_bps = DEFAULT_MAX_ROYALTY_BPS;
-    params.max_royalty_increase_rate_bps = DEFAULT_MAX_ROYALTY_INCREASE_RATE_BPS;
+    params.max_royalty_bps = Some(DEFAULT_MAX_ROYALTY_BPS);
+    params.max_royalty_increase_rate_bps = Some(DEFAULT_MAX_ROYALTY_INCREASE_RATE_BPS);
 
     Ok(())
 }

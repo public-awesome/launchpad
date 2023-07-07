@@ -30,6 +30,12 @@ pub enum ContractError {
     #[error("Minimum network mint price {expected} got {got}")]
     InsufficientMintPrice { expected: u128, got: u128 },
 
+    #[error("RoyaltyBpsNotSet")]
+    RoyaltyBpsNotSet {},
+
+    #[error("RoyaltyIncreaseRateBpsNotSet")]
+    RoyaltyIncreaseRateBpsNotSet {},
+
     #[error("{0}")]
     BaseError(#[from] BaseContractError),
 }

@@ -22,7 +22,7 @@ pub struct MinterParams<T> {
     pub min_mint_price: Coin,
     pub mint_fee_bps: u64,
     pub max_trading_offset_secs: u64,
-    pub max_royalty_bps: u64,
-    pub max_royalty_increase_rate_bps: u64,
+    pub max_royalty_bps: Option<u64>,
+    pub max_royalty_increase_rate_bps: Option<u64>,
     pub extension: T,
 }

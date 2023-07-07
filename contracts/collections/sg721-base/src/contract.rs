@@ -239,11 +239,18 @@ where
         let factory_params: ParamsResponse<T> = deps
             .querier
             .query_wasm_smart(factory_address, &Sg2QueryMsg::Params {})?;
-        let max_royalty = factory_params.params.max_royalty_bps.bps_to_decimal();
-        let max_royalty_increase_rate = factory_params
-            .params
-            .max_royalty_increase_rate_bps
-            .bps_to_decimal();
+        let max_royalty = if let Some(max_royalty_bps) = factory_params.params.max_royalty_bps {
+            max_royalty_bps.bps_to_decimal()
+        } else {
+            return Err(ContractError::FactoryMaxRoyaltyNotSet {});
+        };
+        let max_royalty_increase_rate = if let Some(max_royalty_increase_rate_bps) =
+            factory_params.params.max_royalty_increase_rate_bps
+        {
+            max_royalty_increase_rate_bps.bps_to_decimal()
+        } else {
+            return Err(ContractError::FactoryMaxRoyaltyIncreaseRateNotSet {});
+        };
 
         // reminder: collection_msg.royalty_info is Option<Option<RoyaltyInfoResponse>>
         collection.royalty_info = if let Some(new_royalty_info_res) = new_royalty_info {

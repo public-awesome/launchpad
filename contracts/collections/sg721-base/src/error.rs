@@ -67,4 +67,10 @@ pub enum ContractError {
 
     #[error("Error while migrating: ({0}) ")]
     MigrationError(String),
+
+    #[error("FactoryMaxRoyaltyNotSet")]
+    FactoryMaxRoyaltyNotSet {},
+
+    #[error("FactoryMaxRoyaltyIncreaseRateNotSet")]
+    FactoryMaxRoyaltyIncreaseRateNotSet {},
 }
