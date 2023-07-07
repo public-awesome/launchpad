@@ -4,6 +4,7 @@ use crate::common_setup::contract_boxes::{
 };
 use crate::common_setup::msg::MinterCollectionResponse;
 use crate::common_setup::msg::MinterSetupParams;
+use crate::common_setup::setup_minter::base_minter::mock_params::MIN_MINT_PRICE;
 use crate::common_setup::setup_minter::common::parse_response::build_collection_response;
 use cosmwasm_std::{coin, coins, Addr};
 use cw_multi_test::Executor;
@@ -11,7 +12,9 @@ use sg2::msg::CreateMinterMsg;
 use sg2::msg::{CollectionParams, Sg2ExecuteMsg};
 use sg_multi_test::StargazeApp;
 use sg_std::NATIVE_DENOM;
-use vending_factory::msg::VendingMinterInitMsgExtension;
+use vending_factory::msg::{
+    VendingMinterInitMsgExtension, VendingUpdateParamsExtension, VendingUpdateParamsMsg,
+};
 
 use crate::common_setup::msg::{CodeIds, MinterInstantiateParams};
 use crate::common_setup::setup_minter::vending_minter::mock_params::{
@@ -48,6 +51,7 @@ pub fn setup_minter_contract(setup_params: MinterSetupParams) -> MinterCollectio
     let start_time = setup_params.start_time;
     let init_msg = setup_params.init_msg;
 
+    println!("num tokens is {:?} ", num_tokens);
     let mint_denom: Option<String> = init_msg
         .as_ref()
         .map(|msg| msg.mint_price.denom.to_string());
@@ -71,9 +75,52 @@ pub fn setup_minter_contract(setup_params: MinterSetupParams) -> MinterCollectio
     msg.collection_params.info.creator = minter_admin.to_string();
     let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
     let msg = Sg2ExecuteMsg::CreateMinter(msg);
+    let res = router.execute_contract(
+        minter_admin.clone(),
+        factory_addr.clone(),
+        &msg,
+        &creation_fee,
+    );
 
-    let res = router.execute_contract(minter_admin, factory_addr.clone(), &msg, &creation_fee);
-    build_collection_response(res, factory_addr)
+    let collection_response = build_collection_response(res, factory_addr.clone());
+    collection_response
+}
+
+pub fn sudo_update_params(
+    app: &mut StargazeApp,
+    collection_responses: &Vec<MinterCollectionResponse>,
+    code_ids: CodeIds,
+) {
+    for collection_response in collection_responses {
+        let update_msg = VendingUpdateParamsMsg {
+            code_id: Some(code_ids.sg721_code_id),
+            add_sg721_code_ids: None,
+            rm_sg721_code_ids: None,
+            frozen: None,
+            creation_fee: None,
+            min_mint_price: Some(sg2::NonFungible(
+                collection_response.collection.clone().unwrap().to_string(),
+            )),
+            mint_fee_bps: None,
+            max_trading_offset_secs: Some(100),
+            extension: VendingUpdateParamsExtension {
+                max_token_limit: None,
+                max_per_address_limit: None,
+                airdrop_mint_price: None,
+                airdrop_mint_fee_bps: None,
+                shuffle_fee: None,
+            },
+        };
+        // let box_msg = Box(update_msg);
+        let sudo_update_msg = vending_factory::msg::SudoMsg::UpdateParams(Box::new(update_msg));
+        println!("about to execute sudo");
+        use cosmwasm_std::to_binary;
+        let sudo_res = app.sudo(cw_multi_test::SudoMsg::Wasm(cw_multi_test::WasmSudo {
+            contract_addr: collection_response.factory.clone().unwrap(),
+            msg: to_binary(&sudo_update_msg).unwrap(),
+        }));
+        println!("sudo res is {:?}", sudo_res);
+    }
 }
 
 pub fn vending_minter_code_ids(router: &mut StargazeApp) -> CodeIds {
