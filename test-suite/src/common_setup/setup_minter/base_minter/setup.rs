@@ -10,6 +10,7 @@ use cw_multi_test::Executor;
 use sg2::msg::{CollectionParams, Sg2ExecuteMsg};
 use sg_multi_test::StargazeApp;
 use sg_std::NATIVE_DENOM;
+use vending_factory::msg::VendingUpdateParamsExtension;
 
 use crate::common_setup::msg::{CodeIds, MinterInstantiateParams};
 use crate::common_setup::setup_minter::base_minter::mock_params::{
@@ -80,6 +81,41 @@ pub fn setup_minter_contract(setup_params: MinterSetupParams) -> MinterCollectio
 
     let res = router.execute_contract(minter_admin, factory_addr.clone(), &msg, &creation_fee);
     build_collection_response(res, factory_addr)
+}
+
+pub fn sudo_update_params(
+    app: &mut StargazeApp,
+    collection_responses: &Vec<MinterCollectionResponse>,
+    code_ids: CodeIds,
+) {
+    for collection_response in collection_responses {
+        let update_msg = sg2::msg::UpdateMinterParamsMsg {
+            code_id: Some(code_ids.sg721_code_id),
+            add_sg721_code_ids: None,
+            rm_sg721_code_ids: None,
+            frozen: None,
+            creation_fee: None,
+            min_mint_price: Some(sg2::NonFungible(
+                collection_response.collection.clone().unwrap().to_string(),
+            )),
+            mint_fee_bps: None,
+            max_trading_offset_secs: Some(100),
+            extension: VendingUpdateParamsExtension {
+                max_token_limit: None,
+                max_per_address_limit: None,
+                airdrop_mint_price: None,
+                airdrop_mint_fee_bps: None,
+                shuffle_fee: None,
+            },
+        };
+        let sudo_update_msg = base_factory::msg::SudoMsg::UpdateParams(Box::new(update_msg));
+        use cosmwasm_std::to_binary;
+        let sudo_res = app.sudo(cw_multi_test::SudoMsg::Wasm(cw_multi_test::WasmSudo {
+            contract_addr: collection_response.factory.clone().unwrap(),
+            msg: to_binary(&sudo_update_msg).unwrap(),
+        }));
+        assert!(sudo_res.is_ok());
+    }
 }
 
 pub fn configure_base_minter(

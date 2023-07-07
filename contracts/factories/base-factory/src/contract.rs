@@ -1,7 +1,7 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    ensure, ensure_eq, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Querier, QuerierWrapper,
+    ensure, ensure_eq, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, QuerierWrapper,
     StdResult, WasmMsg,
 };
 use cw2::set_contract_version;
@@ -164,10 +164,10 @@ pub fn update_params<T, C>(
                 );
             }
             sg2::Token::NonFungible(collection) => {
-                let minter_response: cw721_base::msg::MinterResponse = querier
-                    .query_wasm_smart(collection.clone(), &sg721_base::QueryMsg::Minter {})?;
+                let minter_response: cw721_base::msg::MinterResponse =
+                    querier.query_wasm_smart(collection, &sg721_base::QueryMsg::Minter {})?;
 
-                if !minter_response.minter.is_some() {
+                if minter_response.minter.is_none() {
                     return Err(ContractError::NoMinterForNonfungibleToken {});
                 }
             }

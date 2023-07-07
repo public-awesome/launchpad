@@ -48,6 +48,13 @@ pub struct MinterTemplateResponse<T> {
     pub accts: T,
 }
 
+pub struct MinterTemplateResponseCodeIds<T> {
+    pub collection_response_vec: Vec<MinterCollectionResponse>,
+    pub router: StargazeApp,
+    pub accts: T,
+    pub code_ids: CodeIds,
+}
+
 pub struct Accounts {
     pub creator: Addr,
     pub buyer: Addr,
