@@ -285,11 +285,13 @@ dependencies = [
  "cw-storage-plus 1.1.0",
  "cw-utils 1.0.1",
  "cw2 1.1.0",
+ "cw721-base 0.18.0",
  "schemars",
  "serde",
  "sg-std 3.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sg1",
  "sg2",
+ "sg721-base",
  "thiserror",
 ]
 

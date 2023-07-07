@@ -113,7 +113,7 @@ pub fn sudo_update_params(
 ) -> Result<Response, ContractError> {
     let mut params = SUDO_PARAMS.load(deps.storage)?;
 
-    update_params(&mut params, param_msg.clone())?;
+    update_params(&mut params, param_msg.clone(), deps.querier)?;
 
     params.extension.dev_fee_address = param_msg
         .extension
