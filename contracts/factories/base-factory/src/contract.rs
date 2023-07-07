@@ -1,8 +1,7 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    ensure, ensure_eq, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, QuerierWrapper,
-    StdResult, WasmMsg,
+    ensure, ensure_eq, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult, WasmMsg,
 };
 use cw2::set_contract_version;
 use cw_utils::must_pay;
@@ -125,7 +124,7 @@ pub fn sudo_update_params(
 ) -> Result<Response, ContractError> {
     let mut params = SUDO_PARAMS.load(deps.storage)?;
 
-    update_params(&mut params, param_msg, deps.querier)?;
+    update_params(&mut params, param_msg, deps.as_ref())?;
 
     SUDO_PARAMS.save(deps.storage, &params)?;
 
@@ -136,9 +135,8 @@ pub fn sudo_update_params(
 pub fn update_params<T, C>(
     params: &mut MinterParams<C>,
     param_msg: UpdateMinterParamsMsg<T>,
-    querier: QuerierWrapper,
+    deps: Deps,
 ) -> Result<(), ContractError> {
-    println!("in update params base factory");
     params.code_id = param_msg.code_id.unwrap_or(params.code_id);
 
     if let Some(frozen) = param_msg.frozen {
@@ -153,7 +151,6 @@ pub fn update_params<T, C>(
         );
         params.creation_fee = creation_fee;
     }
-    println!("min mint price: {:?}", param_msg.min_mint_price);
     if let Some(min_mint_price) = param_msg.min_mint_price {
         match min_mint_price.clone() {
             sg2::Token::Fungible(mint_price) => {
@@ -164,11 +161,14 @@ pub fn update_params<T, C>(
                 );
             }
             sg2::Token::NonFungible(collection) => {
-                let minter_response: cw721_base::msg::MinterResponse =
-                    querier.query_wasm_smart(collection, &sg721_base::QueryMsg::Minter {})?;
-
-                if minter_response.minter.is_none() {
-                    return Err(ContractError::NoMinterForNonfungibleToken {});
+                let minter_response: Result<
+                    cw721_base::msg::MinterResponse,
+                    cosmwasm_std::StdError,
+                > = deps
+                    .querier
+                    .query_wasm_smart(collection, &sg721_base::QueryMsg::Minter {});
+                if minter_response.is_err() {
+                    return Err(ContractError::InvalidCollectionAddress {});
                 }
             }
         }

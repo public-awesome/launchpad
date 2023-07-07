@@ -5,7 +5,11 @@ use crate::common_setup::contract_boxes::contract_sg721_base;
 use crate::common_setup::msg::MinterCollectionResponse;
 use crate::common_setup::msg::MinterSetupParams;
 use crate::common_setup::setup_minter::common::parse_response::build_collection_response;
+use anyhow::Error;
+use cosmwasm_std::coin;
+use cosmwasm_std::to_binary;
 use cosmwasm_std::{coins, Addr};
+use cw_multi_test::AppResponse;
 use cw_multi_test::Executor;
 use sg2::msg::{CollectionParams, Sg2ExecuteMsg};
 use sg_multi_test::StargazeApp;
@@ -87,17 +91,18 @@ pub fn sudo_update_params(
     app: &mut StargazeApp,
     collection_responses: &Vec<MinterCollectionResponse>,
     code_ids: CodeIds,
-) {
+) -> Vec<Result<AppResponse, anyhow::Error>> {
+    let mut sudo_responses: Vec<Result<AppResponse, Error>> = vec![];
     for collection_response in collection_responses {
+        let collection = collection_response.collection.clone().unwrap().to_string();
+
         let update_msg = sg2::msg::UpdateMinterParamsMsg {
             code_id: Some(code_ids.sg721_code_id),
             add_sg721_code_ids: None,
             rm_sg721_code_ids: None,
             frozen: None,
-            creation_fee: None,
-            min_mint_price: Some(sg2::NonFungible(
-                collection_response.collection.clone().unwrap().to_string(),
-            )),
+            creation_fee: Some(coin(0, NATIVE_DENOM)),
+            min_mint_price: Some(sg2::NonFungible(collection)),
             mint_fee_bps: None,
             max_trading_offset_secs: Some(100),
             extension: VendingUpdateParamsExtension {
@@ -109,13 +114,14 @@ pub fn sudo_update_params(
             },
         };
         let sudo_update_msg = base_factory::msg::SudoMsg::UpdateParams(Box::new(update_msg));
-        use cosmwasm_std::to_binary;
+
         let sudo_res = app.sudo(cw_multi_test::SudoMsg::Wasm(cw_multi_test::WasmSudo {
             contract_addr: collection_response.factory.clone().unwrap(),
             msg: to_binary(&sudo_update_msg).unwrap(),
         }));
-        assert!(sudo_res.is_ok());
+        sudo_responses.push(sudo_res);
     }
+    sudo_responses
 }
 
 pub fn configure_base_minter(

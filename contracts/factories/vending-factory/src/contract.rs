@@ -126,7 +126,7 @@ pub fn sudo_update_params(
     println!("in the sudo update params");
     let mut params = SUDO_PARAMS.load(deps.storage)?;
 
-    update_params(&mut params, param_msg.clone(), deps.querier)?;
+    update_params(&mut params, param_msg.clone(), deps.as_ref())?;
 
     params.extension.max_token_limit = param_msg
         .extension
