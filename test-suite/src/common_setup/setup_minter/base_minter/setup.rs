@@ -1,6 +1,8 @@
 use crate::common_setup::contract_boxes::contract_base_factory;
 use crate::common_setup::contract_boxes::contract_base_minter;
 use crate::common_setup::contract_boxes::contract_nt_collection;
+use crate::common_setup::contract_boxes::contract_open_edition_factory;
+use crate::common_setup::contract_boxes::contract_open_edition_minter;
 use crate::common_setup::contract_boxes::contract_sg721_base;
 use crate::common_setup::msg::MinterCollectionResponse;
 use crate::common_setup::msg::MinterSetupParams;
@@ -44,6 +46,22 @@ pub fn base_minter_sg721_collection_code_ids(router: &mut StargazeApp) -> CodeId
 
     let factory_code_id = router.store_code(contract_base_factory());
     println!("base_factory_code_id: {}", factory_code_id);
+
+    let sg721_code_id = router.store_code(contract_sg721_base());
+    println!("sg721_code_id: {}", sg721_code_id);
+    CodeIds {
+        minter_code_id,
+        factory_code_id,
+        sg721_code_id,
+    }
+}
+
+pub fn open_edition_minter_sg721_collection_code_ids(router: &mut StargazeApp) -> CodeIds {
+    let minter_code_id = router.store_code(contract_open_edition_minter());
+    println!("open_edition_minter_code_id: {}", minter_code_id);
+
+    let factory_code_id = router.store_code(contract_open_edition_factory());
+    println!("open_edition_factory_code_id: {}", factory_code_id);
 
     let sg721_code_id = router.store_code(contract_sg721_base());
     println!("sg721_code_id: {}", sg721_code_id);
@@ -117,23 +135,6 @@ pub fn sudo_update_params(
                 },
             },
         };
-        // let update_msg = sg2::msg::UpdateMinterParamsMsg {
-        //     code_id: Some(code_ids.sg721_code_id),
-        //     add_sg721_code_ids: None,
-        //     rm_sg721_code_ids: None,
-        //     frozen: None,
-        //     creation_fee: Some(coin(0, NATIVE_DENOM)),
-        //     min_mint_price: Some(sg2::NonFungible(collection)),
-        //     mint_fee_bps: None,
-        //     max_trading_offset_secs: Some(100),
-        //     extension: VendingUpdateParamsExtension {
-        //         max_token_limit: None,
-        //         max_per_address_limit: None,
-        //         airdrop_mint_price: None,
-        //         airdrop_mint_fee_bps: None,
-        //         shuffle_fee: None,
-        //     },
-        // };
         let sudo_update_msg = base_factory::msg::SudoMsg::UpdateParams(Box::new(update_msg));
 
         let sudo_res = app.sudo(cw_multi_test::SudoMsg::Wasm(cw_multi_test::WasmSudo {
