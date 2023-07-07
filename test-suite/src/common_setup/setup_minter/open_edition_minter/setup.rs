@@ -5,9 +5,12 @@ use crate::common_setup::msg::{
     MinterCollectionResponse, OpenEditionMinterInstantiateParams, OpenEditionMinterSetupParams,
 };
 use crate::common_setup::setup_minter::common::parse_response::build_collection_response;
-use cosmwasm_std::{coin, coins, Addr, Coin, Timestamp};
-use cw_multi_test::{Contract, Executor};
-use open_edition_factory::msg::OpenEditionMinterInitMsgExtension;
+use anyhow::Error;
+use cosmwasm_std::{coin, coins, to_binary, Addr, Coin, Timestamp};
+use cw_multi_test::{AppResponse, Contract, Executor};
+use open_edition_factory::msg::{
+    OpenEditionMinterInitMsgExtension, OpenEditionUpdateParamsExtension, OpenEditionUpdateParamsMsg,
+};
 use open_edition_factory::types::NftData;
 use sg2::msg::{CollectionParams, Sg2ExecuteMsg};
 use sg_multi_test::StargazeApp;
@@ -116,6 +119,49 @@ pub fn open_edition_minter_code_ids(
         factory_code_id,
         sg721_code_id,
     }
+}
+
+pub fn sudo_update_params(
+    app: &mut StargazeApp,
+    collection_responses: &Vec<MinterCollectionResponse>,
+    code_ids: CodeIds,
+    update_msg: Option<OpenEditionUpdateParamsMsg>,
+) -> Vec<Result<AppResponse, anyhow::Error>> {
+    let mut sudo_responses: Vec<Result<AppResponse, Error>> = vec![];
+    for collection_response in collection_responses {
+        let collection = collection_response.collection.clone();
+        let collection = collection.unwrap_or(Addr::unchecked("fake"));
+
+        let update_msg = match update_msg.clone() {
+            Some(some_update_message) => some_update_message,
+            None => OpenEditionUpdateParamsMsg {
+                code_id: Some(code_ids.sg721_code_id),
+                add_sg721_code_ids: None,
+                rm_sg721_code_ids: None,
+                frozen: None,
+                creation_fee: Some(coin(0, NATIVE_DENOM)),
+                min_mint_price: Some(sg2::NonFungible(collection.to_string())),
+                mint_fee_bps: None,
+                max_trading_offset_secs: Some(100),
+                extension: OpenEditionUpdateParamsExtension {
+                    min_mint_price: None,
+                    dev_fee_address: None,
+                    max_per_address_limit: None,
+                    airdrop_mint_price: None,
+                    airdrop_mint_fee_bps: None,
+                },
+            },
+        };
+        let sudo_update_msg =
+            open_edition_factory::msg::SudoMsg::UpdateParams(Box::new(update_msg));
+
+        let sudo_res = app.sudo(cw_multi_test::SudoMsg::Wasm(cw_multi_test::WasmSudo {
+            contract_addr: collection_response.factory.clone().unwrap(),
+            msg: to_binary(&sudo_update_msg).unwrap(),
+        }));
+        sudo_responses.push(sudo_res);
+    }
+    sudo_responses
 }
 
 pub fn configure_open_edition_minter(
