@@ -51,7 +51,7 @@ pub fn vending_minter_template(num_tokens: u32) -> MinterTemplateResponse<Accoun
     }
 }
 
-pub fn vending_minter_with_sudo_update_params_template(
+pub fn base_minter_with_sudo_update_params_template(
     num_tokens: u32,
 ) -> MinterTemplateResponseCodeIds<Accounts> {
     let mut app = custom_mock_app();
