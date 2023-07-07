@@ -24,6 +24,7 @@ pub fn instantiate_group(app: &mut StargazeApp, members: Vec<Member>) -> Addr {
         .unwrap()
 }
 
+
 // Add a creator account with initial balances
 pub fn setup_accounts(router: &mut StargazeApp) -> (Addr, Addr) {
     let buyer = Addr::unchecked("buyer");

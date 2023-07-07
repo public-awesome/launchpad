@@ -1,5 +1,7 @@
 use crate::common_setup::setup_minter::vending_minter::mock_params::mock_create_minter;
-use crate::common_setup::templates::vending_minter_template;
+use crate::common_setup::templates::{
+    vending_minter_template, vending_minter_with_sudo_update_params_template,
+};
 use crate::common_setup::{
     setup_accounts_and_block::coins_for_msg, setup_accounts_and_block::setup_block_time,
 };
@@ -8,7 +10,7 @@ use cosmwasm_std::{
     testing::{mock_dependencies_with_balance, mock_env, mock_info},
     Api, Coin, Timestamp, Uint128,
 };
-use cw721::{Cw721QueryMsg, OwnerOfResponse};
+use cw721::{Cw721QueryMsg, NumTokensResponse, OwnerOfResponse};
 use cw_multi_test::Executor;
 use sg2::tests::mock_collection_params_1;
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
@@ -86,6 +88,7 @@ fn initialization() {
 fn happy_path() {
     let vt = vending_minter_template(2);
     let (mut router, creator, buyer) = (vt.router, vt.accts.creator, vt.accts.buyer);
+
     let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
     let collection_addr = vt.collection_response_vec[0].collection.clone().unwrap();
 
@@ -120,6 +123,12 @@ fn happy_path() {
         &coins(MINT_PRICE, NATIVE_DENOM),
     );
     assert!(res.is_ok());
+
+    let res: NumTokensResponse = router
+        .wrap()
+        .query_wasm_smart(collection_addr.clone(), &sg721_base::QueryMsg::NumTokens {})
+        .unwrap();
+    println!("num tokens after is {:?}", res);
 
     // Balances are correct
     // The creator should get the unit price - mint fee for the mint above
@@ -290,4 +299,45 @@ fn unhappy_path() {
     let mint_msg = ExecuteMsg::Mint {};
     let res = router.execute_contract(buyer, minter_addr, &mint_msg, &coins(MINT_PRICE, "uatom"));
     assert!(res.is_err());
+}
+
+#[test]
+fn happy_path_with_params_update() {
+    let vt = vending_minter_with_sudo_update_params_template(2);
+    let (mut router, creator, buyer) = (vt.router, vt.accts.creator, vt.accts.buyer);
+
+    let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
+    let collection_addr = vt.collection_response_vec[0].collection.clone().unwrap();
+
+    // Default start time genesis mint time
+    let res: StartTimeResponse = router
+        .wrap()
+        .query_wasm_smart(minter_addr.clone(), &QueryMsg::StartTime {})
+        .unwrap();
+    assert_eq!(
+        res.start_time,
+        Timestamp::from_nanos(GENESIS_MINT_START_TIME).to_string()
+    );
+
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 1, None);
+
+    // Fail with incorrect tokens
+    let mint_msg = ExecuteMsg::Mint {};
+    let err = router.execute_contract(
+        buyer.clone(),
+        minter_addr.clone(),
+        &mint_msg,
+        &coins(MINT_PRICE + 100, NATIVE_DENOM),
+    );
+    assert!(err.is_err());
+
+    // Succeeds if funds are sent
+    let mint_msg = ExecuteMsg::Mint {};
+    let res = router.execute_contract(
+        buyer.clone(),
+        minter_addr.clone(),
+        &mint_msg,
+        &coins(MINT_PRICE, NATIVE_DENOM),
+    );
+    assert!(res.is_ok());
 }
