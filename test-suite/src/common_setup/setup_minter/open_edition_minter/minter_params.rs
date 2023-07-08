@@ -17,6 +17,7 @@ pub fn minter_params_open_edition(
     init_msg: OpenEditionMinterInitMsgExtension,
     start_time: Option<Timestamp>,
     end_time: Option<Timestamp>,
+    nft_data: Option<NftData>,
 ) -> OpenEditionMinterInstantiateParams {
     let start_time = start_time.unwrap_or(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 100));
     let end_time = end_time.unwrap_or(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000));
@@ -25,14 +26,16 @@ pub fn minter_params_open_edition(
         start_time: Some(start_time),
         end_time: Some(end_time),
         per_address_limit: Some(init_msg.per_address_limit),
-        nft_data: Some(NftData {
-            nft_data_type: NftMetadataType::OffChainMetadata,
-            extension: None,
-            token_uri: Some(
-                "ipfs://bafybeiavall5udkxkdtdm4djezoxrmfc6o5fn2ug3ymrlvibvwmwydgrkm/1.jpg"
-                    .to_string(),
-            ),
-        }),
+        nft_data: Some(
+            nft_data.unwrap_or(NftData {
+                nft_data_type: NftMetadataType::OffChainMetadata,
+                extension: None,
+                token_uri: Some(
+                    "ipfs://bafybeiavall5udkxkdtdm4djezoxrmfc6o5fn2ug3ymrlvibvwmwydgrkm/1.jpg"
+                        .to_string(),
+                ),
+            }),
+        ),
         init_msg: Some(init_msg),
         params_extension: Some(params_extension),
     }
@@ -53,17 +56,19 @@ pub fn init_msg(
     per_address_limit_minter: Option<u32>,
     start_time: Option<Timestamp>,
     end_time: Option<Timestamp>,
+    mint_price: Option<Coin>,
 ) -> OpenEditionMinterInitMsgExtension {
     let start_time = start_time.unwrap_or(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 100));
     let end_time = end_time.unwrap_or(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000));
+    let mint_price = mint_price.unwrap_or(Coin {
+        denom: NATIVE_DENOM.to_string(),
+        amount: Uint128::new(MIN_MINT_PRICE_OPEN_EDITION),
+    });
     mock_init_minter_extension(
         Some(start_time),
         Some(end_time),
         per_address_limit_minter,
-        Some(Coin {
-            denom: NATIVE_DENOM.to_string(),
-            amount: Uint128::new(MIN_MINT_PRICE_OPEN_EDITION),
-        }),
+        Some(mint_price),
         nft_data,
         None,
     )

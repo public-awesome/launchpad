@@ -26,7 +26,13 @@ fn invalid_code_id() {
         dev_fee_address: DEV_ADDRESS.to_string(),
     };
     let per_address_limit_minter = Some(2);
-    let init_msg = init_msg(default_nft_data(), per_address_limit_minter, None, None);
+    let init_msg = init_msg(
+        default_nft_data(),
+        per_address_limit_minter,
+        None,
+        None,
+        None,
+    );
     let mut app = custom_mock_app();
     let mut code_ids = open_edition_minter_code_ids(&mut app);
     code_ids.sg721_code_id = 19;

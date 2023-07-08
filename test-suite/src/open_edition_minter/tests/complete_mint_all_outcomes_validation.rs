@@ -29,7 +29,13 @@ fn check_mint_revenues_distribution() {
         dev_fee_address: DEV_ADDRESS.to_string(),
     };
     let per_address_limit_minter = Some(3);
-    let init_msg = init_msg(default_nft_data(), per_address_limit_minter, None, None);
+    let init_msg = init_msg(
+        default_nft_data(),
+        per_address_limit_minter,
+        None,
+        None,
+        None,
+    );
     let vt = open_edition_minter_custom_template(params_extension, init_msg).unwrap();
 
     let (mut router, creator, buyer) = (vt.router, vt.accts.creator, vt.accts.buyer);

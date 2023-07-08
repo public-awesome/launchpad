@@ -61,7 +61,6 @@ pub fn mock_create_minter_init_msg(
     }
 }
 
-
 //     start_minter_time: Option<Timestamp>,
 //     end_minter_time: Option<Timestamp>,
 //     nft_data: Option<NftData>,
