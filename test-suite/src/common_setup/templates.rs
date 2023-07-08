@@ -329,7 +329,7 @@ pub fn open_edition_minter_custom_template(
     let (creator, buyer) = setup_accounts(&mut app);
     let code_ids = open_edition_minter_code_ids(&mut app);
     let collection_params = mock_collection_params_1(None);
-    let minter_params = minter_params_open_edition(params_extension, init_msg);
+    let minter_params = minter_params_open_edition(params_extension, init_msg, None, None);
 
     let minter_collection_response = configure_open_edition_minter(
         &mut app,
@@ -354,7 +354,7 @@ pub fn open_edition_minter_custom_code_ids(
     let mut app = app;
     let (creator, buyer) = setup_accounts(&mut app);
     let collection_params = mock_collection_params_1(None);
-    let minter_params = minter_params_open_edition(params_extension, init_msg);
+    let minter_params = minter_params_open_edition(params_extension, init_msg, None, None);
 
     let minter_collection_response = configure_open_edition_minter(
         &mut app,

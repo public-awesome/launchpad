@@ -1,19 +1,4 @@
-// use crate::common_setup::templates::open_edition_minter_custom_template;
-
-// // Set an invalid code id for the nft contract
-// let vt = open_edition_minter_custom_template(
-//     None,
-//     None,
-//     None,
-//     Some(10),
-//     Some(5),
-//     None,
-//     None,
-//     Some(19),
-// );
-
 use cosmwasm_std::{Coin, Uint128};
-use cw_multi_test::custom_app;
 use open_edition_factory::state::ParamsExtension;
 use sg_std::NATIVE_DENOM;
 
@@ -26,7 +11,7 @@ use crate::common_setup::{
             setup::open_edition_minter_code_ids,
         },
     },
-    templates::{open_edition_minter_custom_code_ids, open_edition_minter_custom_template},
+    templates::open_edition_minter_custom_code_ids,
 };
 
 #[test]
@@ -41,7 +26,7 @@ fn invalid_code_id() {
         dev_fee_address: DEV_ADDRESS.to_string(),
     };
     let per_address_limit_minter = Some(2);
-    let init_msg = init_msg(default_nft_data(), per_address_limit_minter);
+    let init_msg = init_msg(default_nft_data(), per_address_limit_minter, None, None);
     let mut app = custom_mock_app();
     let mut code_ids = open_edition_minter_code_ids(&mut app);
     code_ids.sg721_code_id = 19;
