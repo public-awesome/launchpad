@@ -61,6 +61,16 @@ pub fn mock_create_minter_init_msg(
     }
 }
 
+
+//     start_minter_time: Option<Timestamp>,
+//     end_minter_time: Option<Timestamp>,
+//     nft_data: Option<NftData>,
+//     max_per_address_limit: Option<u32>,
+//     per_address_limit_minter: Option<u32>,
+//     mint_price_minter: Option<Coin>,
+//     sg721_code: Option<Box<dyn Contract<StargazeMsgWrapper>>>,
+//     sg721_codeid: Option<u64>,
+
 pub fn mock_params_proper() -> OpenEditionMinterParams {
     OpenEditionMinterParams {
         code_id: 1,

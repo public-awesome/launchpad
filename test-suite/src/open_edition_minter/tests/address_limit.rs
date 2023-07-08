@@ -10,11 +10,65 @@ use crate::common_setup::templates::open_edition_minter_custom_template;
 
 const MINT_PRICE: u128 = 100_000_000;
 
+// let mut factory_params = mock_params_proper();
+// factory_params.extension.max_per_address_limit =
+//     max_per_address_limit.unwrap_or(factory_params.extension.max_per_address_limit);
+
+// let factory_addr = app.instantiate_contract(
+//     code_ids.factory_code_id,
+//     creator.clone(),
+//     &open_edition_factory::msg::InstantiateMsg {
+//         params: factory_params,
+//     },
+//     &[],
+//     "factory",
+//     None,
+// );
+
+// let factory_addr = factory_addr.unwrap();
+
+// // Minter -> Default params
+// let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 100);
+// let end_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000);
+// let per_address_limit_minter = per_address_limit_minter.or(Some(1));
+// let mint_price = mint_price_minter.or_else(|| {
+//     Some(Coin {
+//         denom: NATIVE_DENOM.to_string(),
+//         amount: Uint128::new(MIN_MINT_PRICE_OPEN_EDITION),
+//     })
+// });
+// let collection_params = mock_collection_params_1(Some(start_time));
+// let default_nft_data = nft_data.unwrap_or(NftData {
+//     nft_data_type: NftMetadataType::OffChainMetadata,
+//     extension: None,
+//     token_uri: Some(
+//         "ipfs://bafybeiavall5udkxkdtdm4djezoxrmfc6o5fn2ug3ymrlvibvwmwydgrkm/1.jpg".to_string(),
+//     ),
+// });
+// let mut msg = mock_create_minter(
+//     start_minter_time.or(Some(start_time)),
+//     end_minter_time.or(Some(end_time)),
+//     mint_price,
+//     per_address_limit_minter,
+//     default_nft_data,
+//     collection_params,
+//     None,
+// );
+// msg.collection_params.code_id = sg721_codeid.unwrap_or(3);
+// msg.collection_params.info.creator = creator.to_string();
+// let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
+// let msg = Sg2ExecuteMsg::CreateMinter(msg);
+
+// let res = app.execute_contract(creator.clone(), factory_addr.clone(), &msg, &creation_fee);
+// if res.is_err() {
+//     return Err(res);
+// }
+
+// let minter_collection_res = build_collection_response(res, factory_addr);
+
 #[test]
 fn check_per_address_limit() {
-    let vt =
-        open_edition_minter_custom_template(None, None, None, Some(10), Some(2), None, None, None)
-            .unwrap();
+    let vt = open_edition_minter_custom_template(Some(10), Some(2)).unwrap();
     let (mut router, creator, buyer) = (vt.router, vt.accts.creator, vt.accts.buyer);
     let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
     // Set to a valid mint time
