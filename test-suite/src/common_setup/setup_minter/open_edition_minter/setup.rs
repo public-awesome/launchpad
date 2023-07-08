@@ -7,14 +7,14 @@ use crate::common_setup::msg::{
 use crate::common_setup::setup_minter::common::parse_response::build_collection_response;
 use anyhow::Error;
 use cosmwasm_std::{coin, coins, to_binary, Addr, Coin, Timestamp};
-use cw_multi_test::{AppResponse, Contract, Executor};
+use cw_multi_test::{AppResponse, Executor};
 use open_edition_factory::msg::{
     OpenEditionMinterInitMsgExtension, OpenEditionUpdateParamsExtension, OpenEditionUpdateParamsMsg,
 };
 use open_edition_factory::types::NftData;
 use sg2::msg::{CollectionParams, Sg2ExecuteMsg};
 use sg_multi_test::StargazeApp;
-use sg_std::{StargazeMsgWrapper, NATIVE_DENOM};
+use sg_std::NATIVE_DENOM;
 
 use crate::common_setup::msg::CodeIds;
 use crate::common_setup::setup_minter::open_edition_minter::mock_params::{

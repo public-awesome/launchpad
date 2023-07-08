@@ -1,281 +1,329 @@
-// use cosmwasm_std::{Coin, Timestamp, Uint128};
-// use open_edition_factory::ContractError as OpenEditionContractError;
-// use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
+use cosmwasm_std::{Coin, Timestamp, Uint128};
+use open_edition_factory::state::ParamsExtension;
+use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
-// use open_edition_factory::types::{NftData, NftMetadataType};
-// use sg_metadata::{Metadata, Trait};
+use crate::common_setup::setup_minter::common::constants::{
+    DEV_ADDRESS, MIN_MINT_PRICE_OPEN_EDITION,
+};
+use crate::common_setup::setup_minter::open_edition_minter::minter_params::{
+    default_nft_data, init_msg,
+};
+use crate::common_setup::templates::{
+    open_edition_minter_custom_template, open_edition_minter_nft_data,
+    open_edition_minter_start_and_end_time,
+};
+use open_edition_factory::types::{NftData, NftMetadataType};
+use sg_metadata::{Metadata, Trait};
 
-// use crate::common_setup::setup_minter::common::constants::MIN_MINT_PRICE_OPEN_EDITION;
-// use crate::common_setup::templates::open_edition_minter_custom_template;
+// let vt =
+// open_edition_minter_custom_template(None, None, None, Some(10), Some(5), None, None, None);
 
-// #[test]
-// fn check_valid_create_minter() {
-//     // Set a per address lower or equal than the factory -> ok
-//     let vt =
-//         open_edition_minter_custom_template(None, None, None, Some(10), Some(5), None, None, None);
-//     assert!(vt.is_ok());
-// }
+#[test]
+fn check_valid_create_minter() {
+    // Set a per address lower or equal than the factory -> ok
+    let max_per_address_limit = 10;
+    let params_extension = ParamsExtension {
+        max_per_address_limit,
+        airdrop_mint_fee_bps: 100,
+        airdrop_mint_price: Coin {
+            denom: NATIVE_DENOM.to_string(),
+            amount: Uint128::new(100_000_000u128),
+        },
+        dev_fee_address: DEV_ADDRESS.to_string(),
+    };
+    let per_address_limit_minter = Some(2);
+    let init_msg = init_msg(
+        default_nft_data(),
+        per_address_limit_minter,
+        None,
+        None,
+        None,
+    );
+    let vt = open_edition_minter_custom_template(params_extension, init_msg).unwrap();
+    assert!(vt.collection_response_vec[0].error.is_none())
+}
 
-// #[test]
-// fn check_invalid_create_minter_address_limit() {
-//     // If the absolute max per address defined in the factory is 10 and the message to init the
-//     // minter gives 20 -> error
-//     let vt =
-//         open_edition_minter_custom_template(None, None, None, Some(10), Some(20), None, None, None);
-//     // When it is an error -> wrapped twice
-//     assert_eq!(
-//         vt.err()
-//             .unwrap()
-//             .err()
-//             .unwrap()
-//             .source()
-//             .unwrap()
-//             .to_string(),
-//         OpenEditionContractError::InvalidPerAddressLimit {
-//             max: 10,
-//             min: 1,
-//             got: 20
-//         }
-//         .to_string()
-//     );
+#[test]
+fn check_invalid_create_minter_address_limit() {
+    // If the absolute max per address defined in the factory is 10 and the message to init the
+    // minter gives 20 -> error
 
-//     // The minimum should be 1 -> 0 will give an error
-//     let vt =
-//         open_edition_minter_custom_template(None, None, None, Some(10), Some(0), None, None, None);
-//     assert_eq!(
-//         vt.err()
-//             .unwrap()
-//             .err()
-//             .unwrap()
-//             .source()
-//             .unwrap()
-//             .to_string(),
-//         OpenEditionContractError::InvalidPerAddressLimit {
-//             max: 10,
-//             min: 1,
-//             got: 0
-//         }
-//         .to_string()
-//     );
-// }
+    let max_per_address_limit = 10;
+    let params_extension = ParamsExtension {
+        max_per_address_limit,
+        airdrop_mint_fee_bps: 100,
+        airdrop_mint_price: Coin {
+            denom: NATIVE_DENOM.to_string(),
+            amount: Uint128::new(100_000_000u128),
+        },
+        dev_fee_address: DEV_ADDRESS.to_string(),
+    };
+    let per_address_limit_minter = Some(20);
+    let init_msg_1 = init_msg(
+        default_nft_data(),
+        per_address_limit_minter,
+        None,
+        None,
+        None,
+    );
+    let vt = open_edition_minter_custom_template(params_extension.clone(), init_msg_1).unwrap();
+    assert_eq!(
+        vt.collection_response_vec[0]
+            .error
+            .as_ref()
+            .unwrap()
+            .root_cause()
+            .to_string(),
+        "Invalid minting limit per address. max: 10, min: 1, got: 20".to_string()
+    );
 
-// #[test]
-// fn check_invalid_create_minter_start_end_time() {
-//     // If start time < now
-//     let vt = open_edition_minter_custom_template(
-//         Some(Timestamp::from_nanos(100_000)),
-//         None,
-//         None,
-//         Some(10),
-//         Some(2),
-//         None,
-//         None,
-//         None,
-//     );
-//     assert_eq!(
-//         vt.err()
-//             .unwrap()
-//             .err()
-//             .unwrap()
-//             .source()
-//             .unwrap()
-//             .to_string(),
-//         "InvalidStartTime 0.000100000 < 1571797419.879305533".to_string()
-//     );
+    let per_address_limit_minter = Some(0);
+    let init_msg_2 = init_msg(
+        default_nft_data(),
+        per_address_limit_minter,
+        None,
+        None,
+        None,
+    );
+    let vt = open_edition_minter_custom_template(params_extension, init_msg_2).unwrap();
+    assert_eq!(
+        vt.collection_response_vec[0]
+            .error
+            .as_ref()
+            .unwrap()
+            .root_cause()
+            .to_string(),
+        "Invalid minting limit per address. max: 10, min: 1, got: 0".to_string()
+    );
+}
 
-//     // If start time > end time
-//     let vt = open_edition_minter_custom_template(
-//         Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 100)),
-//         Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10)),
-//         None,
-//         Some(10),
-//         Some(2),
-//         None,
-//         None,
-//         None,
-//     );
-//     assert_eq!(
-//         vt.err()
-//             .unwrap()
-//             .err()
-//             .unwrap()
-//             .source()
-//             .unwrap()
-//             .to_string(),
-//         "InvalidEndTime 1647032400.000000100 > 1647032400.000000010".to_string()
-//     );
-// }
+#[test]
+fn check_invalid_create_minter_start_end_time() {
+    let params_extension = ParamsExtension {
+        max_per_address_limit: 10,
+        airdrop_mint_fee_bps: 100,
+        airdrop_mint_price: Coin {
+            denom: NATIVE_DENOM.to_string(),
+            amount: Uint128::new(100_000_000u128),
+        },
+        dev_fee_address: DEV_ADDRESS.to_string(),
+    };
+    let per_address_limit_minter = Some(2);
+    let start_time = Some(Timestamp::from_nanos(100_000));
+    let init_msg_1 = init_msg(
+        default_nft_data(),
+        per_address_limit_minter,
+        start_time,
+        None,
+        None,
+    );
+    let vt = open_edition_minter_start_and_end_time(
+        params_extension.clone(),
+        init_msg_1,
+        start_time,
+        None,
+    )
+    .unwrap();
+    assert_eq!(
+        vt.collection_response_vec[0]
+            .error
+            .as_ref()
+            .unwrap()
+            .root_cause()
+            .to_string(),
+        "InvalidStartTime 0.000100000 < 1571797419.879305533"
+    );
 
-// #[test]
-// fn check_invalid_create_minter_mint_price() {
-//     // Invalid denom
-//     let vt = open_edition_minter_custom_template(
-//         None,
-//         None,
-//         None,
-//         Some(10),
-//         Some(2),
-//         Some(Coin {
-//             denom: "uinvalid".to_string(),
-//             amount: Uint128::new(MIN_MINT_PRICE_OPEN_EDITION),
-//         }),
-//         None,
-//         None,
-//     );
-//     assert_eq!(
-//         vt.err()
-//             .unwrap()
-//             .err()
-//             .unwrap()
-//             .source()
-//             .unwrap()
-//             .to_string(),
-//         "InvalidDenom".to_string()
-//     );
+    let start_time = Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 100));
+    let end_time = Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10));
+    let init_msg_1 = init_msg(
+        default_nft_data(),
+        per_address_limit_minter,
+        start_time,
+        end_time,
+        None,
+    );
+    let vt =
+        open_edition_minter_start_and_end_time(params_extension, init_msg_1, start_time, end_time)
+            .unwrap();
 
-//     // Invalid price
-//     let vt = open_edition_minter_custom_template(
-//         None,
-//         None,
-//         None,
-//         Some(10),
-//         Some(2),
-//         Some(Coin {
-//             denom: NATIVE_DENOM.to_string(),
-//             amount: Uint128::new(100u128),
-//         }),
-//         None,
-//         None,
-//     );
-//     let err = vt.err().unwrap().unwrap_err().source().unwrap().to_string();
-//     assert_eq!(err, "InvalidMintPrice".to_string());
-// }
+    assert_eq!(
+        vt.collection_response_vec[0]
+            .error
+            .as_ref()
+            .unwrap()
+            .root_cause()
+            .to_string(),
+        "InvalidEndTime 1647032400.000000100 > 1647032400.000000010".to_string()
+    );
+}
 
-// #[test]
-// fn check_invalid_create_minter_nft_data() {
-//     let metadata_def = Some(Metadata {
-//         image: Some("https://k3hinzdutnzbpmacmzv3nygeicm5klx5lizzk4txdsnlos4gztsa.arweave.net/Vs6G5HSbchewAmZrtuDEQJnVLv1aM5Vydxyat0uGzOQ".to_string()),
-//         image_data: None,
-//         external_url: Some("https://www.google.com".to_string()),
-//         description: Some("Description".to_string()),
-//         name: Some("name".to_string()),
-//         attributes: Some(vec![
-//             Trait {
-//                 display_type: None,
-//                 trait_type: "Hello".to_string(),
-//                 value: "My Friend".to_string(),
-//             }
-//         ]),
-//         background_color: None,
-//         animation_url: None,
-//         youtube_url: None,
-//     });
-//     let token_uri_def = Some(
-//         "ipfs://bafybeigi3bwpvyvsmnbj46ra4hyffcxdeaj6ntfk5jpic5mx27x6ih2qvq/images/1.png"
-//             .to_string(),
-//     );
+#[test]
+fn check_invalid_create_minter_mint_price() {
+    // Invalid denom
+    let params_extension = ParamsExtension {
+        max_per_address_limit: 10,
+        airdrop_mint_fee_bps: 100,
+        airdrop_mint_price: Coin {
+            denom: NATIVE_DENOM.to_string(),
+            amount: Uint128::new(100_000_000u128),
+        },
+        dev_fee_address: DEV_ADDRESS.to_string(),
+    };
+    let per_address_limit_minter = Some(2);
+    let init_msg_1 = init_msg(
+        default_nft_data(),
+        per_address_limit_minter,
+        None,
+        None,
+        Some(Coin {
+            denom: "uinvalid".to_string(),
+            amount: Uint128::new(MIN_MINT_PRICE_OPEN_EDITION),
+        }),
+    );
+    let vt = open_edition_minter_custom_template(params_extension.clone(), init_msg_1).unwrap();
+    assert_eq!(
+        vt.collection_response_vec[0]
+            .error
+            .as_ref()
+            .unwrap()
+            .root_cause()
+            .to_string(),
+        "InvalidDenom"
+    );
+    // Invalid price
+    let init_msg_2 = init_msg(
+        default_nft_data(),
+        per_address_limit_minter,
+        None,
+        None,
+        Some(Coin {
+            denom: NATIVE_DENOM.to_string(),
+            amount: Uint128::new(100u128),
+        }),
+    );
+    let vt = open_edition_minter_custom_template(params_extension, init_msg_2).unwrap();
+    assert_eq!(
+        vt.collection_response_vec[0]
+            .error
+            .as_ref()
+            .unwrap()
+            .root_cause()
+            .to_string(),
+        "InvalidMintPrice"
+    );
+}
 
-//     // Sending None for extension and token_uri
-//     let vt = open_edition_minter_custom_template(
-//         None,
-//         None,
-//         Some(NftData {
-//             nft_data_type: NftMetadataType::OffChainMetadata,
-//             extension: None,
-//             token_uri: None,
-//         }),
-//         None,
-//         None,
-//         None,
-//         None,
-//         None,
-//     );
-//     assert_eq!(
-//         vt.err()
-//             .unwrap()
-//             .err()
-//             .unwrap()
-//             .source()
-//             .unwrap()
-//             .to_string(),
-//         "InvalidNftDataProvided".to_string()
-//     );
+#[test]
+fn check_invalid_create_minter_nft_data() {
+    let params_extension = ParamsExtension {
+        max_per_address_limit: 10,
+        airdrop_mint_fee_bps: 100,
+        airdrop_mint_price: Coin {
+            denom: NATIVE_DENOM.to_string(),
+            amount: Uint128::new(100_000_000u128),
+        },
+        dev_fee_address: DEV_ADDRESS.to_string(),
+    };
+    let per_address_limit_minter = Some(2);
+    let start_time = Some(Timestamp::from_nanos(100_000));
+    let nft_data_1 = NftData {
+        nft_data_type: NftMetadataType::OffChainMetadata,
+        extension: None,
+        token_uri: None,
+    };
+    let init_msg_1 = init_msg(
+        nft_data_1.clone(),
+        per_address_limit_minter,
+        start_time,
+        None,
+        None,
+    );
 
-//     // Sending None for token_uri but offchain metadata
-//     let vt = open_edition_minter_custom_template(
-//         None,
-//         None,
-//         Some(NftData {
-//             nft_data_type: NftMetadataType::OffChainMetadata,
-//             extension: metadata_def,
-//             token_uri: None,
-//         }),
-//         None,
-//         None,
-//         None,
-//         None,
-//         None,
-//     );
-//     assert_eq!(
-//         vt.err()
-//             .unwrap()
-//             .err()
-//             .unwrap()
-//             .source()
-//             .unwrap()
-//             .to_string(),
-//         "InvalidNftDataProvided".to_string()
-//     );
+    let vt =
+        open_edition_minter_nft_data(params_extension.clone(), init_msg_1, nft_data_1).unwrap();
+    assert_eq!(
+        vt.collection_response_vec[0]
+            .error
+            .as_ref()
+            .unwrap()
+            .root_cause()
+            .to_string(),
+        "InvalidNftDataProvided"
+    );
 
-//     // Sending None for extension but onchain metadata
-//     let vt = open_edition_minter_custom_template(
-//         None,
-//         None,
-//         Some(NftData {
-//             nft_data_type: NftMetadataType::OnChainMetadata,
-//             extension: None,
-//             token_uri: token_uri_def.clone(),
-//         }),
-//         None,
-//         None,
-//         None,
-//         None,
-//         None,
-//     );
-//     assert_eq!(
-//         vt.err()
-//             .unwrap()
-//             .err()
-//             .unwrap()
-//             .source()
-//             .unwrap()
-//             .to_string(),
-//         "InvalidNftDataProvided".to_string()
-//     );
+    let metadata_def = Some(Metadata {
+        image: Some("https://k3hinzdutnzbpmacmzv3nygeicm5klx5lizzk4txdsnlos4gztsa.arweave.net/Vs6G5HSbchewAmZrtuDEQJnVLv1aM5Vydxyat0uGzOQ".to_string()),
+        image_data: None,
+        external_url: Some("https://www.google.com".to_string()),
+        description: Some("Description".to_string()),
+        name: Some("name".to_string()),
+        attributes: Some(vec![
+            Trait {
+                display_type: None,
+                trait_type: "Hello".to_string(),
+                value: "My Friend".to_string(),
+            }
+        ]),
+        background_color: None,
+        animation_url: None,
+        youtube_url: None,
+    });
 
-//     // Sending extension and token_uri
-//     let vt = open_edition_minter_custom_template(
-//         None,
-//         None,
-//         Some(NftData {
-//             nft_data_type: NftMetadataType::OnChainMetadata,
-//             extension: None,
-//             token_uri: token_uri_def,
-//         }),
-//         None,
-//         None,
-//         None,
-//         None,
-//         None,
-//     );
-//     assert_eq!(
-//         vt.err()
-//             .unwrap()
-//             .err()
-//             .unwrap()
-//             .source()
-//             .unwrap()
-//             .to_string(),
-//         "InvalidNftDataProvided".to_string()
-//     );
-// }
+    let nft_data_2 = NftData {
+        nft_data_type: NftMetadataType::OffChainMetadata,
+        extension: metadata_def,
+        token_uri: None,
+    };
+
+    let init_msg_2 = init_msg(
+        nft_data_2.clone(),
+        per_address_limit_minter,
+        start_time,
+        None,
+        None,
+    );
+
+    let vt =
+        open_edition_minter_nft_data(params_extension.clone(), init_msg_2, nft_data_2).unwrap();
+    assert_eq!(
+        vt.collection_response_vec[0]
+            .error
+            .as_ref()
+            .unwrap()
+            .root_cause()
+            .to_string(),
+        "InvalidNftDataProvided"
+    );
+
+    let token_uri_def = Some(
+        "ipfs://bafybeigi3bwpvyvsmnbj46ra4hyffcxdeaj6ntfk5jpic5mx27x6ih2qvq/images/1.png"
+            .to_string(),
+    );
+
+    let nft_data_3 = NftData {
+        nft_data_type: NftMetadataType::OnChainMetadata,
+        extension: None,
+        token_uri: token_uri_def,
+    };
+
+    let init_msg_3 = init_msg(
+        nft_data_3.clone(),
+        per_address_limit_minter,
+        start_time,
+        None,
+        None,
+    );
+
+    let vt = open_edition_minter_nft_data(params_extension, init_msg_3, nft_data_3).unwrap();
+
+    assert_eq!(
+        vt.collection_response_vec[0]
+            .error
+            .as_ref()
+            .unwrap()
+            .root_cause()
+            .to_string(),
+        "InvalidNftDataProvided"
+    );
+}
