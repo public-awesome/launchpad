@@ -1,6 +1,7 @@
 use anyhow::Error;
 use cosmwasm_std::{Addr, Timestamp};
 
+use open_edition_factory::state::ParamsExtension;
 use sg2::msg::CollectionParams;
 use sg_multi_test::StargazeApp;
 use vending_factory::msg::VendingMinterInitMsgExtension;
@@ -80,4 +81,5 @@ pub struct OpenEditionMinterInstantiateParams {
     pub per_address_limit: Option<u32>,
     pub nft_data: Option<NftData>,
     pub init_msg: Option<OpenEditionMinterInitMsgExtension>,
+    pub params_extension: Option<ParamsExtension>,
 }
