@@ -25,3 +25,5 @@ pub fn minter_params_token(num_tokens: u32) -> MinterInstantiateParams {
         init_msg: None,
     }
 }
+
+
