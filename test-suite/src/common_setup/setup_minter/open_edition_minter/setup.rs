@@ -1,5 +1,5 @@
 use crate::common_setup::contract_boxes::{
-    contract_open_edition_factory, contract_open_edition_minter,
+    contract_open_edition_factory, contract_open_edition_minter, contract_sg721_base,
 };
 use crate::common_setup::msg::{
     MinterCollectionResponse, OpenEditionMinterInstantiateParams, OpenEditionMinterSetupParams,
@@ -104,15 +104,12 @@ pub fn setup_open_edition_minter_contract(
     build_collection_response(res, factory_addr)
 }
 
-pub fn open_edition_minter_code_ids(
-    router: &mut StargazeApp,
-    sg721_code: Box<dyn Contract<StargazeMsgWrapper>>,
-) -> CodeIds {
+pub fn open_edition_minter_code_ids(router: &mut StargazeApp) -> CodeIds {
     let minter_code_id = router.store_code(contract_open_edition_minter());
 
     let factory_code_id = router.store_code(contract_open_edition_factory());
 
-    let sg721_code_id = router.store_code(sg721_code);
+    let sg721_code_id = router.store_code(contract_sg721_base());
 
     CodeIds {
         minter_code_id,
