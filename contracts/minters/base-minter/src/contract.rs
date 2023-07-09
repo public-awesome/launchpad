@@ -1,5 +1,5 @@
 use crate::error::ContractError;
-use crate::msg::{ConfigResponse, ExecuteMsg, TokenUriMsg};
+use crate::msg::{ConfigResponse, ExecuteMsg};
 use crate::state::{increment_token_index, Config, COLLECTION_ADDRESS, CONFIG, STATUS};
 
 use base_factory::msg::{BaseMinterCreateMsg, ParamsResponse};
@@ -8,8 +8,8 @@ use base_factory::state::Extension;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    from_binary, to_binary, Addr, Binary, CosmosMsg, Deps, DepsMut, Empty, Env, MessageInfo, Reply,
-    StdResult, Timestamp, Uint128, WasmMsg,
+    to_binary, Addr, Binary, CosmosMsg, Deps, DepsMut, Empty, Env, MessageInfo, Reply, StdResult,
+    Timestamp, Uint128, WasmMsg,
 };
 
 use cw2::set_contract_version;
@@ -113,7 +113,12 @@ pub fn execute(
         ExecuteMsg::UpdateStartTradingTime(time) => {
             execute_update_start_trading_time(deps, env, info, time)
         }
-        ExecuteMsg::ReceiveNft(msg) => execute_burn_to_mint(deps, info, msg),
+        // ExecuteMsg::ReceiveNft(cw721::Cw721ReceiveMsg {
+        //     sender,
+        //     token_id,
+        //     msg,
+        // }) => execute_burn_to_mint(deps, env, info, token_id, sender, msg),
+        ExecuteMsg::ReceiveNft(msg) => execute_burn_to_mint(deps, env, info, msg),
     }
 }
 
@@ -121,15 +126,22 @@ pub fn execute(
 // that includes a `TokenUriMsg` in the `msg` field
 
 pub fn execute_burn_to_mint(
-    deps: DepsMut,
+    _deps: DepsMut,
+    _env: Env,
     info: MessageInfo,
     msg: Cw721ReceiveMsg,
 ) -> Result<Response, ContractError> {
-    // TODO: call burn on the NFT
-
-    let TokenUriMsg { token_uri } = from_binary(&msg.msg)?;
-
-    _execute_mint_sender(deps, info, token_uri)
+    let mut res = Response::new();
+    let burn_msg = cw721::Cw721ExecuteMsg::Burn {
+        token_id: msg.token_id,
+    };
+    let msg = CosmosMsg::Wasm(WasmMsg::Execute {
+        contract_addr: info.sender.to_string(),
+        msg: to_binary(&burn_msg)?,
+        funds: vec![],
+    });
+    res = res.add_message(msg);
+    Ok(res)
 }
 
 pub fn execute_mint_sender(
