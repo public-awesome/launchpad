@@ -324,7 +324,7 @@ pub fn base_minter_with_specified_sg721(
 pub fn open_edition_minter_custom_template(
     params_extension: ParamsExtension,
     init_msg: OpenEditionMinterInitMsgExtension,
-) -> Result<MinterTemplateResponse<Accounts>, anyhow::Result<AppResponse>> {
+) -> Result<MinterTemplateResponseCodeIds<Accounts>, anyhow::Result<AppResponse>> {
     let mut app = custom_mock_app();
     let (creator, buyer) = setup_accounts(&mut app);
     let code_ids = open_edition_minter_code_ids(&mut app);
@@ -336,12 +336,13 @@ pub fn open_edition_minter_custom_template(
         creator.clone(),
         vec![collection_params],
         vec![minter_params],
-        code_ids,
+        code_ids.clone(),
     );
-    Ok(MinterTemplateResponse {
+    Ok(MinterTemplateResponseCodeIds {
         router: app,
         collection_response_vec: minter_collection_response,
         accts: Accounts { creator, buyer },
+        code_ids,
     })
 }
 
