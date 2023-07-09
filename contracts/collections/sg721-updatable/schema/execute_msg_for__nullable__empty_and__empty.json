@@ -288,6 +288,25 @@
     {
       "type": "object",
       "required": [
+        "update_start_trading_time"
+      ],
+      "properties": {
+        "update_start_trading_time": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Timestamp"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
         "freeze_collection_info"
       ],
       "properties": {

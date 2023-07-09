@@ -113,6 +113,8 @@ export type ExecuteMsgForNullable_EmptyAndEmpty = {
 } | {
   update_trading_start_time: Timestamp | null;
 } | {
+  update_start_trading_time: Timestamp | null;
+} | {
   freeze_collection_info: {};
 } | {
   mint: MintMsgForNullable_Empty;
