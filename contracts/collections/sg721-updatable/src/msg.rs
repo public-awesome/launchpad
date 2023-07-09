@@ -51,6 +51,7 @@ pub enum ExecuteMsg<T, E> {
         collection_info: UpdateCollectionInfoMsg<RoyaltyInfoResponse>,
     },
     UpdateTradingStartTime(Option<Timestamp>),
+    UpdateStartTradingTime(Option<Timestamp>),
     FreezeCollectionInfo {},
     Mint(MintMsg<T>),
     Extension {
@@ -102,6 +103,12 @@ where
                 Sg721ExecuteMsg::UpdateCollectionInfo { collection_info }
             }
             ExecuteMsg::FreezeCollectionInfo {} => Sg721ExecuteMsg::FreezeCollectionInfo {},
+            ExecuteMsg::UpdateTradingStartTime(time) => {
+                Sg721ExecuteMsg::UpdateStartTradingTime(time)
+            }
+            ExecuteMsg::UpdateStartTradingTime(time) => {
+                Sg721ExecuteMsg::UpdateStartTradingTime(time)
+            }
             ExecuteMsg::Mint(MintMsg {
                 token_id,
                 owner,
