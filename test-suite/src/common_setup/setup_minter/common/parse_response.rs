@@ -38,11 +38,14 @@ pub fn build_collection_response(
                 error: None,
             }
         }
-        false => MinterCollectionResponse {
-            minter: None,
-            collection: None,
-            factory: Some(factory_addr),
-            error: Some(res.unwrap_err()),
-        },
+        false => {
+            println!("err is {:?}", res.as_ref().unwrap_err());
+            MinterCollectionResponse {
+                minter: None,
+                collection: None,
+                factory: Some(factory_addr),
+                error: Some(res.unwrap_err()),
+            }
+        }
     }
 }

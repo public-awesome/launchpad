@@ -19,6 +19,7 @@ pub struct TokenUriMsg {
 pub enum ExecuteMsg {
     Mint { token_uri: String },
     ReceiveNft(Cw721ReceiveMsg), // burn-to-mint
+    // SendNft(Cw721ReceiveMsg),
     UpdateStartTradingTime(Option<Timestamp>),
 }
 

@@ -4,11 +4,12 @@ use crate::common_setup::setup_minter::base_minter::mock_params::mock_params;
 use crate::common_setup::setup_minter::common::constants::MIN_MINT_PRICE;
 use crate::common_setup::templates::{
     base_minter_with_sg721, base_minter_with_sg721nt, base_minter_with_specified_sg721,
+    base_minter_with_two_sg721_collections,
 };
 use base_factory::msg::{BaseMinterCreateMsg, BaseUpdateParamsMsg, SudoMsg};
 
 use base_minter::msg::{ConfigResponse, ExecuteMsg};
-use cosmwasm_std::{coin, coins, Addr, Timestamp};
+use cosmwasm_std::{coin, coins, to_binary, Addr, Timestamp};
 use cw721::{Cw721ExecuteMsg, Cw721QueryMsg, OwnerOfResponse};
 use cw_multi_test::Executor;
 use sg2::msg::Sg2ExecuteMsg;
@@ -225,4 +226,50 @@ fn update_start_trading_time() {
         .query_wasm_smart(collection_addr, &Sg721QueryMsg::CollectionInfo {})
         .unwrap();
     assert_eq!(res.start_trading_time, Some(default_start_trading_time));
+}
+
+#[test]
+fn check_burns_tokens_when_received() {
+    let bmt = base_minter_with_two_sg721_collections(2);
+    let (mut router, creator) = (bmt.router, bmt.accts.creator);
+    let minter_addr_1 = bmt.collection_response_vec[0].minter.clone().unwrap();
+    let collection_addr_1 = bmt.collection_response_vec[0].collection.clone().unwrap();
+
+    let minter_addr_2 = bmt.collection_response_vec[1].minter.clone().unwrap();
+
+    // Mint one NFT
+    let mint_msg = ExecuteMsg::Mint {
+        token_uri: "ipfs://example".to_string(),
+    };
+    let res = router.execute_contract(
+        creator.clone(),
+        minter_addr_1,
+        &mint_msg,
+        &[coin(MIN_MINT_PRICE, NATIVE_DENOM)],
+    );
+
+    assert!(res.is_ok());
+
+    let num_tokens_res: cw721::NumTokensResponse = router
+        .wrap()
+        .query_wasm_smart(collection_addr_1.clone(), &Cw721QueryMsg::NumTokens {})
+        .unwrap();
+    // one token after mint
+    assert_eq!(num_tokens_res.count, 1);
+
+    let send_nft = Cw721ExecuteMsg::SendNft {
+        contract: minter_addr_2.to_string(),
+        token_id: 1.to_string(),
+        msg: to_binary("this is a test message").unwrap(),
+    };
+    let res = router.execute_contract(creator, collection_addr_1.clone(), &send_nft, &[]);
+    assert!(res.is_ok());
+
+    let num_tokens_res: cw721::NumTokensResponse = router
+        .wrap()
+        .query_wasm_smart(collection_addr_1, &Cw721QueryMsg::NumTokens {})
+        .unwrap();
+
+    // zero tokens after burn
+    assert_eq!(num_tokens_res.count, 0);
 }

@@ -12,17 +12,18 @@ use super::setup_minter::base_minter::setup::base_minter_sg721_collection_code_i
 use super::setup_minter::common::constants::{MINT_PRICE, MIN_MINT_PRICE};
 use super::setup_minter::common::minter_params::minter_params_all;
 use super::setup_minter::open_edition_minter::setup::configure_open_edition_minter;
+use crate::common_setup::setup_accounts_and_block::CREATION_FEE;
 use crate::common_setup::setup_minter::base_minter::setup::base_minter_sg721_nt_code_ids;
 use crate::common_setup::setup_minter::base_minter::setup::configure_base_minter;
 use crate::common_setup::setup_minter::open_edition_minter::minter_params::minter_params_open_edition;
 use crate::common_setup::setup_minter::open_edition_minter::setup::open_edition_minter_code_ids;
 use crate::common_setup::setup_minter::vending_minter::setup::vending_minter_updatable_code_ids;
 use cosmwasm_std::{coin, Timestamp};
-use cw_multi_test::AppResponse;
+use cw_multi_test::{AppResponse, BankSudo, SudoMsg};
 use open_edition_factory::msg::OpenEditionMinterInitMsgExtension;
 use open_edition_factory::state::ParamsExtension;
 use open_edition_factory::types::NftData;
-use sg2::tests::mock_collection_params_1;
+use sg2::tests::{mock_collection_params_1, mock_collection_two};
 use sg_multi_test::StargazeApp;
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
@@ -220,6 +221,39 @@ pub fn base_minter_with_sg721nt(num_tokens: u32) -> MinterTemplateResponse<Accou
         creator.clone(),
         vec![collection_params],
         vec![minter_params],
+        code_ids,
+    );
+    MinterTemplateResponse {
+        router,
+        collection_response_vec: minter_collection_response,
+        accts: Accounts { creator, buyer },
+    }
+}
+
+pub fn base_minter_with_two_sg721_collections(num_tokens: u32) -> MinterTemplateResponse<Accounts> {
+    let mut router = custom_mock_app();
+    let (creator, buyer) = setup_accounts(&mut router);
+
+    router
+        .sudo(SudoMsg::Bank({
+            BankSudo::Mint {
+                to_address: creator.to_string(),
+                amount: vec![coin(CREATION_FEE, NATIVE_DENOM)],
+            }
+        }))
+        .map_err(|err| println!("{:?}", err))
+        .ok();
+    let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
+    let collection_params = mock_collection_params_1(Some(start_time));
+    let collection_params_2 = mock_collection_two(Some(start_time));
+    let minter_params = minter_params_token(num_tokens);
+    let minter_params_2 = minter_params_token(num_tokens);
+    let code_ids = base_minter_sg721_collection_code_ids(&mut router);
+    let minter_collection_response = configure_base_minter(
+        &mut router,
+        creator.clone(),
+        vec![collection_params, collection_params_2],
+        vec![minter_params, minter_params_2],
         code_ids,
     );
     MinterTemplateResponse {
