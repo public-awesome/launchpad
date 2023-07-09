@@ -5,20 +5,20 @@ use crate::common_setup::contract_boxes::{
 use crate::common_setup::msg::MinterCollectionResponse;
 use crate::common_setup::msg::MinterSetupParams;
 use crate::common_setup::setup_minter::common::parse_response::build_collection_response;
-use cosmwasm_std::{coin, coins, Addr};
-use cw_multi_test::Executor;
+use cosmwasm_std::{coin, coins, to_binary, Addr};
+use cw_multi_test::{AppResponse, Executor};
 use sg2::msg::CreateMinterMsg;
 use sg2::msg::{CollectionParams, Sg2ExecuteMsg};
 use sg_multi_test::StargazeApp;
 use sg_std::NATIVE_DENOM;
-use vending_factory::msg::VendingMinterInitMsgExtension;
+use vending_factory::msg::{VendingMinterInitMsgExtension, VendingUpdateParamsExtension};
 
 use crate::common_setup::msg::{CodeIds, MinterInstantiateParams};
+use crate::common_setup::setup_minter::common::constants::{CREATION_FEE, MINT_PRICE};
 use crate::common_setup::setup_minter::vending_minter::mock_params::{
     mock_create_minter, mock_params,
 };
-
-use crate::common_setup::setup_minter::common::constants::{CREATION_FEE, MINT_PRICE};
+use anyhow::Error;
 
 pub fn build_init_msg(
     init_msg: Option<VendingMinterInitMsgExtension>,
@@ -134,4 +134,45 @@ pub fn configure_minter(
         minter_collection_info.push(minter_collection_res);
     }
     minter_collection_info
+}
+
+pub fn sudo_update_params(
+    app: &mut StargazeApp,
+    collection_responses: &Vec<MinterCollectionResponse>,
+    code_ids: CodeIds,
+    update_msg: Option<sg2::msg::UpdateMinterParamsMsg<VendingUpdateParamsExtension>>,
+) -> Vec<Result<AppResponse, anyhow::Error>> {
+    let mut sudo_responses: Vec<Result<AppResponse, Error>> = vec![];
+    for collection_response in collection_responses {
+        let collection = collection_response.collection.clone().unwrap().to_string();
+
+        let update_msg = match update_msg.clone() {
+            Some(some_update_message) => some_update_message,
+            None => sg2::msg::UpdateMinterParamsMsg {
+                code_id: Some(code_ids.sg721_code_id),
+                add_sg721_code_ids: None,
+                rm_sg721_code_ids: None,
+                frozen: None,
+                creation_fee: Some(coin(0, NATIVE_DENOM)),
+                min_mint_price: Some(sg2::NonFungible(collection)),
+                mint_fee_bps: None,
+                max_trading_offset_secs: Some(100),
+                extension: VendingUpdateParamsExtension {
+                    max_token_limit: None,
+                    max_per_address_limit: None,
+                    airdrop_mint_price: None,
+                    airdrop_mint_fee_bps: None,
+                    shuffle_fee: None,
+                },
+            },
+        };
+        let sudo_update_msg = vending_factory::msg::SudoMsg::UpdateParams(Box::new(update_msg));
+
+        let sudo_res = app.sudo(cw_multi_test::SudoMsg::Wasm(cw_multi_test::WasmSudo {
+            contract_addr: collection_response.factory.clone().unwrap(),
+            msg: to_binary(&sudo_update_msg).unwrap(),
+        }));
+        sudo_responses.push(sudo_res);
+    }
+    sudo_responses
 }

@@ -10,13 +10,13 @@ use crate::common_setup::setup_minter::common::parse_response::build_collection_
 use anyhow::Error;
 use cosmwasm_std::coin;
 use cosmwasm_std::to_binary;
+use cosmwasm_std::Empty;
 use cosmwasm_std::{coins, Addr};
 use cw_multi_test::AppResponse;
 use cw_multi_test::Executor;
 use sg2::msg::{CollectionParams, Sg2ExecuteMsg};
 use sg_multi_test::StargazeApp;
 use sg_std::NATIVE_DENOM;
-use vending_factory::msg::VendingUpdateParamsExtension;
 
 use crate::common_setup::msg::{CodeIds, MinterInstantiateParams};
 use crate::common_setup::setup_minter::base_minter::mock_params::{
@@ -109,7 +109,7 @@ pub fn sudo_update_params(
     app: &mut StargazeApp,
     collection_responses: &Vec<MinterCollectionResponse>,
     code_ids: CodeIds,
-    update_msg: Option<sg2::msg::UpdateMinterParamsMsg<VendingUpdateParamsExtension>>,
+    update_msg: Option<sg2::msg::UpdateMinterParamsMsg<Empty>>,
 ) -> Vec<Result<AppResponse, anyhow::Error>> {
     let mut sudo_responses: Vec<Result<AppResponse, Error>> = vec![];
     for collection_response in collection_responses {
@@ -126,13 +126,7 @@ pub fn sudo_update_params(
                 min_mint_price: Some(sg2::NonFungible(collection)),
                 mint_fee_bps: None,
                 max_trading_offset_secs: Some(100),
-                extension: VendingUpdateParamsExtension {
-                    max_token_limit: None,
-                    max_per_address_limit: None,
-                    airdrop_mint_price: None,
-                    airdrop_mint_fee_bps: None,
-                    shuffle_fee: None,
-                },
+                extension: Empty {},
             },
         };
         let sudo_update_msg = base_factory::msg::SudoMsg::UpdateParams(Box::new(update_msg));
