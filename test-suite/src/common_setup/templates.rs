@@ -402,26 +402,26 @@ pub fn base_minter_with_sudo_update_params_template(
     }
 }
 
-// pub fn open_edition_minter_with_sudo_update_params_template(
-//     num_tokens: u32,
-// ) -> MinterTemplateResponseCodeIds<Accounts> {
-//     let mut app = custom_mock_app();
-//     let (creator, buyer) = setup_accounts(&mut app);
-//     let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
-//     let collection_params = mock_collection_params_1(Some(start_time));
-//     let minter_params = minter_params_token(num_tokens);
-//     let code_ids = open_edition_minter_sg721_collection_code_ids(&mut app);
-//     let minter_collection_response: Vec<MinterCollectionResponse> = configure_open_edition_minter(
-//         &mut app,
-//         creator.clone(),
-//         vec![collection_params],
-//         vec![minter_params],
-//         code_ids.clone(),
-//     );
-//     MinterTemplateResponseCodeIds {
-//         router: app,
-//         collection_response_vec: minter_collection_response,
-//         accts: Accounts { creator, buyer },
-//         code_ids,
-//     }
-// }
+pub fn vending_minter_template_with_code_ids_template(
+    num_tokens: u32,
+) -> MinterTemplateResponseCodeIds<Accounts> {
+    let mut app = custom_mock_app();
+    let (creator, buyer) = setup_accounts(&mut app);
+    let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
+    let collection_params = mock_collection_params_1(Some(start_time));
+    let minter_params = minter_params_token(num_tokens);
+    let code_ids = vending_minter_code_ids(&mut app);
+    let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
+        &mut app,
+        creator.clone(),
+        vec![collection_params],
+        vec![minter_params],
+        code_ids.clone(),
+    );
+    MinterTemplateResponseCodeIds {
+        router: app,
+        collection_response_vec: minter_collection_response,
+        accts: Accounts { creator, buyer },
+        code_ids,
+    }
+}

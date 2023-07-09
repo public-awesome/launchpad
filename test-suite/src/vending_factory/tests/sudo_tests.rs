@@ -1,22 +1,23 @@
 use base_factory::msg::ParamsResponse;
 use cosmwasm_std::{coin, Addr};
 use sg_std::NATIVE_DENOM;
+use vending_factory::msg::VendingUpdateParamsExtension;
 
 use crate::common_setup::msg::MinterCollectionResponse;
-use crate::common_setup::setup_minter::base_minter::setup::sudo_update_params;
-use crate::common_setup::templates::base_minter_with_sudo_update_params_template;
+use crate::common_setup::setup_minter::vending_minter::setup::sudo_update_params;
+use crate::common_setup::templates::vending_minter_template_with_code_ids_template;
 use sg2::query::Sg2QueryMsg::Params;
 
 #[test]
 fn happy_path_with_params_update() {
-    let vt = base_minter_with_sudo_update_params_template(2);
+    let vt = vending_minter_template_with_code_ids_template(2);
     let (mut router, _, _) = (vt.router, vt.accts.creator, vt.accts.buyer);
     sudo_update_params(&mut router, &vt.collection_response_vec, vt.code_ids, None);
 }
 
 #[test]
 fn sudo_params_update_invalid_nft_collection() {
-    let vt = base_minter_with_sudo_update_params_template(2);
+    let vt = vending_minter_template_with_code_ids_template(2);
     let (mut router, _, _) = (vt.router, vt.accts.creator, vt.accts.buyer);
     let mut response_collection_vec: Vec<MinterCollectionResponse> = vec![];
     for entry in vt.collection_response_vec {
@@ -37,12 +38,12 @@ fn sudo_params_update_invalid_nft_collection() {
 
 #[test]
 fn sudo_params_update_creation_fee() {
-    let vt = base_minter_with_sudo_update_params_template(2);
+    let vt = vending_minter_template_with_code_ids_template(2);
     let (mut router, _, _) = (vt.router, vt.accts.creator, vt.accts.buyer);
     let collection = vt.collection_response_vec[0].collection.clone().unwrap();
     let factory = vt.collection_response_vec[0].factory.clone().unwrap();
     let code_ids = vt.code_ids.clone();
-    use cosmwasm_std::Empty;
+
     let update_msg = sg2::msg::UpdateMinterParamsMsg {
         code_id: Some(code_ids.sg721_code_id),
         add_sg721_code_ids: None,
@@ -52,7 +53,13 @@ fn sudo_params_update_creation_fee() {
         min_mint_price: Some(sg2::NonFungible(collection.to_string())),
         mint_fee_bps: None,
         max_trading_offset_secs: Some(100),
-        extension: Empty {},
+        extension: VendingUpdateParamsExtension {
+            max_token_limit: None,
+            max_per_address_limit: None,
+            airdrop_mint_price: None,
+            airdrop_mint_fee_bps: None,
+            shuffle_fee: None,
+        },
     };
     sudo_update_params(
         &mut router,
