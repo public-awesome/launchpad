@@ -315,7 +315,8 @@ where
         info: MessageInfo,
         nft_data: NftParams<T>,
     ) -> Result<Response, ContractError> {
-        let is_minter_caller = self.check_minter_caller(deps.as_ref(), _env, &info.sender)?;
+        let is_minter_caller =
+            self.check_minter_caller(deps.as_ref(), _env, info.sender.clone())?;
         if !is_minter_caller {
             assert_minter_owner(deps.storage, &info.sender)?;
         }
@@ -359,11 +360,11 @@ where
         &self,
         deps: Deps,
         env: Env,
-        sender: &Addr,
+        sender: Addr,
     ) -> Result<bool, ContractError> {
         let msg = msg::QueryMsg::Minter {};
         let minter: MinterResponse = from_binary(&self.parent.query(deps, env, msg.into())?)?;
-        let is_minter = *sender == minter.minter.unwrap();
+        let is_minter = sender.to_string() == minter.minter.unwrap();
         Ok(is_minter)
     }
 
