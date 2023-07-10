@@ -20,7 +20,7 @@ use cw_utils::{must_pay, nonpayable, parse_reply_instantiate_data};
 
 use sg1::checked_fair_burn;
 use sg2::query::Sg2QueryMsg;
-use sg2::Token;
+use sg2::{MinterParams, Token};
 use sg4::{QueryMsg, Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
 use sg721_base::msg::{CollectionInfoResponse, QueryMsg as Sg721QueryMsg};
@@ -188,6 +188,50 @@ pub fn execute_mint_sender(
     _execute_mint_sender(deps, env, info, token_uri)
 }
 
+fn _check_sender_is_collection_or_contract(
+    this_contract: Addr,
+    info: MessageInfo,
+    collection_info: CollectionInfoResponse,
+) -> Result<bool, ContractError> {
+    let sender_is_collection_or_contract =
+        vec![collection_info.creator, this_contract.to_string()].contains(&info.sender.to_string());
+    if !(sender_is_collection_or_contract) {
+        return Err(ContractError::Unauthorized(
+            "Sender is not sg721 creator".to_owned(),
+        ));
+    }
+    Ok(true)
+}
+
+fn _pay_mint_if_not_contract(
+    this_contract: Addr,
+    info: MessageInfo,
+    mint_price: Token,
+    factory_params: MinterParams<Option<Empty>>,
+) -> Result<Uint128, ContractError> {
+    let mut res = Response::new();
+    let this_contract = this_contract.to_string();
+    match info.clone().sender.to_string() == this_contract {
+        true => Ok(0_u128.into()),
+        false => {
+            let funds_sent = must_pay(&info, NATIVE_DENOM)?;
+            // Create network fee msgs
+            let mint_fee_percent = factory_params.mint_fee_bps.bps_to_decimal();
+            let network_fee = match mint_price {
+                sg2::Token::Fungible(coin) => coin.amount * mint_fee_percent,
+                sg2::Token::NonFungible(_) => Uint128::new(0),
+            };
+            // TODO: NFTs don't have a fee
+            // For the base 1/1 minter, the entire mint price should be Fair Burned
+            if network_fee != funds_sent {
+                return Err(ContractError::InvalidMintPrice {});
+            }
+            checked_fair_burn(&info, network_fee.u128(), None, &mut res)?;
+            Ok(network_fee)
+        }
+    }
+}
+
 fn _execute_mint_sender(
     deps: DepsMut,
     env: Env,
@@ -197,26 +241,18 @@ fn _execute_mint_sender(
     let config = CONFIG.load(deps.storage)?;
 
     let collection_address = COLLECTION_ADDRESS.load(deps.storage)?;
-    println!(
-        "_execute_mint_sender collection address is {:?}",
-        collection_address
-    );
     // This is a 1:1 minter, minted at min_mint_price
     // Should mint and then list on the marketplace for secondary sales
     let collection_info: CollectionInfoResponse = deps.querier.query_wasm_smart(
         collection_address.clone(),
         &Sg721QueryMsg::CollectionInfo {},
     )?;
-    println!(
-        "collection creator {:?} info sender {:?}",
-        collection_info.creator, info.sender
-    );
-    // allow only sg721 creator address to mint
-    if collection_info.creator != info.sender && info.sender != env.contract.address {
-        return Err(ContractError::Unauthorized(
-            "Sender is not sg721 creator".to_owned(),
-        ));
-    };
+
+    let _ = _check_sender_is_collection_or_contract(
+        env.contract.address.clone(),
+        info.clone(),
+        collection_info.clone(),
+    )?;
 
     let parsed_token_uri = Url::parse(&token_uri)?;
     if parsed_token_uri.scheme() != "ipfs" {
@@ -224,33 +260,21 @@ fn _execute_mint_sender(
     }
 
     let mut res = Response::new();
-
     let factory: ParamsResponse = deps
         .querier
         .query_wasm_smart(config.factory, &Sg2QueryMsg::Params {})?;
     let factory_params = factory.params;
 
-    let network_fee = 0;
-    if !(info.sender == env.contract.address) {
-        let funds_sent = must_pay(&info, NATIVE_DENOM)?;
-        // Create network fee msgs
-        let mint_fee_percent = factory_params.mint_fee_bps.bps_to_decimal();
-        let network_fee = match config.mint_price {
-            sg2::Token::Fungible(coin) => coin.amount * mint_fee_percent,
-            sg2::Token::NonFungible(_) => Uint128::new(0),
-        };
-        // TODO: NFTs don't have a fee
-        // For the base 1/1 minter, the entire mint price should be Fair Burned
-        if network_fee != funds_sent {
-            return Err(ContractError::InvalidMintPrice {});
-        }
-        checked_fair_burn(&info, network_fee.u128(), None, &mut res)?;
-    }
-
+    let network_fee = _pay_mint_if_not_contract(
+        env.contract.address,
+        info.clone(),
+        config.mint_price,
+        factory_params,
+    )?;
     // Create mint msgs
     let mint_msg = Sg721ExecuteMsg::<Extension, Empty>::Mint {
         token_id: increment_token_index(deps.storage)?.to_string(),
-        owner: "creator".to_string(),
+        owner: collection_info.creator,
         token_uri: Some(token_uri.clone()),
         extension: None,
     };
