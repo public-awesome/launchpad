@@ -11,7 +11,7 @@ use base_factory::state::Extension;
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     from_binary, to_binary, Addr, Binary, CosmosMsg, Deps, DepsMut, Empty, Env, MessageInfo, Reply,
-    ReplyOn, StdResult, Timestamp, Uint128, WasmMsg,
+    StdResult, Timestamp, Uint128, WasmMsg,
 };
 
 use cw2::set_contract_version;
@@ -106,7 +106,6 @@ pub fn execute(
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
-    println!("msg is {:?}", msg);
     match msg {
         ExecuteMsg::Mint { token_uri } => execute_mint_sender(deps, env, info, token_uri),
         ExecuteMsg::UpdateStartTradingTime(time) => {
@@ -126,10 +125,6 @@ pub fn execute_burn_to_mint(
     msg: Cw721ReceiveMsg,
 ) -> Result<Response, ContractError> {
     let mut res = Response::new();
-    println!("msg sender is {:?}", msg.sender);
-    println!("troken id is {:?}", msg.token_id);
-    println!("info funds is {:?}", info.funds);
-    println!("info is {:?}", info);
     let burn_msg = cw721::Cw721ExecuteMsg::Burn {
         token_id: msg.token_id,
     };
@@ -141,27 +136,9 @@ pub fn execute_burn_to_mint(
     res = res.add_message(cosmos_burn_msg);
 
     let token_uri_msg: TokenUriMsg = from_binary(&msg.msg)?;
-    println!("token uri msg is {:?}", token_uri_msg);
     let execute_mint_msg = ExecuteMsg::Mint {
         token_uri: token_uri_msg.token_uri,
     };
-    println!("info.sender in receive burn nftn is {:?}", info.sender);
-
-    // let cosmos_mint_msg = SubMsg {
-    //     id: 1,
-    //     gas_limit: None,
-    //     reply_on: ReplyOn::Success,
-    //     msg: WasmMsg::Execute {
-    //         funds: info.funds,
-    //         contract_addr: env.contract.address.to_string(),
-    //         msg: to_binary(&execute_mint_msg)?,
-    //     }
-    //     .into(),
-    // };
-
-    // res = res.add_submessage(cosmos_mint_msg);
-    // println!("before res");
-    // Ok(res)
     let cosmos_mint_msg = CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: env.contract.address.to_string(),
         msg: to_binary(&execute_mint_msg)?,
@@ -177,8 +154,6 @@ pub fn execute_mint_sender(
     info: MessageInfo,
     token_uri: String,
 ) -> Result<Response, ContractError> {
-    println!("in mint sender");
-    println!("info funds execute_mint_sender is {:?}", info.funds);
     let config = CONFIG.load(deps.storage)?;
 
     if matches!(config.mint_price, Token::NonFungible(_)) {

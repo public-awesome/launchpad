@@ -300,15 +300,10 @@ where
         info: MessageInfo,
         nft_data: NftParams<T>,
     ) -> Result<Response, ContractError> {
-        println!("we are in sg721 with sender {:?}", info.sender);
-        let msg = msg::QueryMsg::Minter {};
-        let minter: MinterResponse =
-            from_binary(&self.parent.query(deps.as_ref(), _env, msg.into())?)?;
-        println!("minter is {:?}", minter.minter);
-        if !(info.sender.to_string() == minter.minter.unwrap()) {
+        let is_minter_caller = self.check_minter_caller(deps.as_ref(), _env, &info.sender)?;
+        if !is_minter_caller {
             assert_minter_owner(deps.storage, &info.sender)?;
         }
-        println!("made it past the checks");
 
         let (token_id, owner, token_uri, extension) = match nft_data {
             NftParams::NftData {
@@ -318,9 +313,7 @@ where
                 extension,
             } => (token_id, owner, token_uri, extension),
         };
-        println!("owner validated is {:?}", owner);
-        let valid = deps.api.addr_validate(&owner)?;
-        println!("valid is {:?}", valid);
+        deps.api.addr_validate(&owner)?;
         // create the token
         let token = TokenInfo {
             owner: deps.api.addr_validate(&owner)?,
@@ -334,8 +327,6 @@ where
                 Some(_) => Err(ContractError::Claimed {}),
                 None => Ok(token),
             })?;
-
-        println!("before incremenet");
         self.parent.increment_tokens(deps.storage)?;
 
         let mut res = Response::new()
@@ -346,8 +337,19 @@ where
         if let Some(token_uri) = token_uri {
             res = res.add_attribute("token_uri", token_uri);
         }
-        println!("before res, res is {:?}", res);
         Ok(res)
+    }
+
+    pub fn check_minter_caller(
+        &self,
+        deps: Deps,
+        env: Env,
+        sender: &Addr,
+    ) -> Result<bool, ContractError> {
+        let msg = msg::QueryMsg::Minter {};
+        let minter: MinterResponse = from_binary(&self.parent.query(deps, env, msg.into())?)?;
+        let is_minter = sender.to_string() == minter.minter.unwrap();
+        Ok(is_minter)
     }
 
     pub fn query(&self, deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
