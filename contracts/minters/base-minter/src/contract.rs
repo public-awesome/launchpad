@@ -1,5 +1,7 @@
+use std::env;
+
 use crate::error::ContractError;
-use crate::msg::{ConfigResponse, ExecuteMsg};
+use crate::msg::{ConfigResponse, ExecuteMsg, TokenUriMsg};
 use crate::state::{increment_token_index, Config, COLLECTION_ADDRESS, CONFIG, STATUS};
 
 use base_factory::msg::{BaseMinterCreateMsg, ParamsResponse};
@@ -8,8 +10,8 @@ use base_factory::state::Extension;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Addr, Binary, CosmosMsg, Deps, DepsMut, Empty, Env, MessageInfo, Reply, StdResult,
-    Timestamp, Uint128, WasmMsg,
+    from_binary, to_binary, Addr, Binary, CosmosMsg, Deps, DepsMut, Empty, Env, MessageInfo, Reply,
+    ReplyOn, StdResult, Timestamp, Uint128, WasmMsg,
 };
 
 use cw2::set_contract_version;
@@ -104,16 +106,12 @@ pub fn execute(
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
+    println!("msg is {:?}", msg);
     match msg {
-        ExecuteMsg::Mint { token_uri } => execute_mint_sender(deps, info, token_uri),
+        ExecuteMsg::Mint { token_uri } => execute_mint_sender(deps, env, info, token_uri),
         ExecuteMsg::UpdateStartTradingTime(time) => {
             execute_update_start_trading_time(deps, env, info, time)
         }
-        // ExecuteMsg::ReceiveNft(cw721::Cw721ReceiveMsg {
-        //     sender,
-        //     token_id,
-        //     msg,
-        // }) => execute_burn_to_mint(deps, env, info, token_id, sender, msg),
         ExecuteMsg::ReceiveNft(msg) => execute_burn_to_mint(deps, env, info, msg),
     }
 }
@@ -123,54 +121,98 @@ pub fn execute(
 
 pub fn execute_burn_to_mint(
     _deps: DepsMut,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
     msg: Cw721ReceiveMsg,
 ) -> Result<Response, ContractError> {
     let mut res = Response::new();
+    println!("msg sender is {:?}", msg.sender);
+    println!("troken id is {:?}", msg.token_id);
+    println!("info funds is {:?}", info.funds);
+    println!("info is {:?}", info);
     let burn_msg = cw721::Cw721ExecuteMsg::Burn {
         token_id: msg.token_id,
     };
-    let msg = CosmosMsg::Wasm(WasmMsg::Execute {
+    let cosmos_burn_msg = CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: info.sender.to_string(),
         msg: to_binary(&burn_msg)?,
         funds: vec![],
     });
-    res = res.add_message(msg);
+    res = res.add_message(cosmos_burn_msg);
+
+    let token_uri_msg: TokenUriMsg = from_binary(&msg.msg)?;
+    println!("token uri msg is {:?}", token_uri_msg);
+    let execute_mint_msg = ExecuteMsg::Mint {
+        token_uri: token_uri_msg.token_uri,
+    };
+    println!("info.sender in receive burn nftn is {:?}", info.sender);
+
+    // let cosmos_mint_msg = SubMsg {
+    //     id: 1,
+    //     gas_limit: None,
+    //     reply_on: ReplyOn::Success,
+    //     msg: WasmMsg::Execute {
+    //         funds: info.funds,
+    //         contract_addr: env.contract.address.to_string(),
+    //         msg: to_binary(&execute_mint_msg)?,
+    //     }
+    //     .into(),
+    // };
+
+    // res = res.add_submessage(cosmos_mint_msg);
+    // println!("before res");
+    // Ok(res)
+    let cosmos_mint_msg = CosmosMsg::Wasm(WasmMsg::Execute {
+        contract_addr: env.contract.address.to_string(),
+        msg: to_binary(&execute_mint_msg)?,
+        funds: vec![],
+    });
+    let res = res.add_message(cosmos_mint_msg);
     Ok(res)
 }
 
 pub fn execute_mint_sender(
     deps: DepsMut,
+    env: Env,
     info: MessageInfo,
     token_uri: String,
 ) -> Result<Response, ContractError> {
+    println!("in mint sender");
+    println!("info funds execute_mint_sender is {:?}", info.funds);
     let config = CONFIG.load(deps.storage)?;
 
     if matches!(config.mint_price, Token::NonFungible(_)) {
         return Err(ContractError::InvalidMintPrice {});
     }
 
-    _execute_mint_sender(deps, info, token_uri)
+    _execute_mint_sender(deps, env, info, token_uri)
 }
 
 fn _execute_mint_sender(
     deps: DepsMut,
+    env: Env,
     info: MessageInfo,
     token_uri: String,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
 
     let collection_address = COLLECTION_ADDRESS.load(deps.storage)?;
-
+    println!(
+        "_execute_mint_sender collection address is {:?}",
+        collection_address
+    );
     // This is a 1:1 minter, minted at min_mint_price
     // Should mint and then list on the marketplace for secondary sales
     let collection_info: CollectionInfoResponse = deps.querier.query_wasm_smart(
         collection_address.clone(),
         &Sg721QueryMsg::CollectionInfo {},
     )?;
+    println!(
+        "collection creator {:?} info sender {:?}",
+        collection_info.creator, info.sender
+    );
     // allow only sg721 creator address to mint
-    if collection_info.creator != info.sender {
+    if collection_info.creator != info.sender && info.sender != env.contract.address {
         return Err(ContractError::Unauthorized(
             "Sender is not sg721 creator".to_owned(),
         ));
@@ -188,25 +230,27 @@ fn _execute_mint_sender(
         .query_wasm_smart(config.factory, &Sg2QueryMsg::Params {})?;
     let factory_params = factory.params;
 
-    let funds_sent = must_pay(&info, NATIVE_DENOM)?;
-
-    // Create network fee msgs
-    let mint_fee_percent = factory_params.mint_fee_bps.bps_to_decimal();
-    let network_fee = match config.mint_price {
-        sg2::Token::Fungible(coin) => coin.amount * mint_fee_percent,
-        sg2::Token::NonFungible(_) => Uint128::new(0),
-    };
-    // TODO: NFTs don't have a fee
-    // For the base 1/1 minter, the entire mint price should be Fair Burned
-    if network_fee != funds_sent {
-        return Err(ContractError::InvalidMintPrice {});
+    let network_fee = 0;
+    if !(info.sender == env.contract.address) {
+        let funds_sent = must_pay(&info, NATIVE_DENOM)?;
+        // Create network fee msgs
+        let mint_fee_percent = factory_params.mint_fee_bps.bps_to_decimal();
+        let network_fee = match config.mint_price {
+            sg2::Token::Fungible(coin) => coin.amount * mint_fee_percent,
+            sg2::Token::NonFungible(_) => Uint128::new(0),
+        };
+        // TODO: NFTs don't have a fee
+        // For the base 1/1 minter, the entire mint price should be Fair Burned
+        if network_fee != funds_sent {
+            return Err(ContractError::InvalidMintPrice {});
+        }
+        checked_fair_burn(&info, network_fee.u128(), None, &mut res)?;
     }
-    checked_fair_burn(&info, network_fee.u128(), None, &mut res)?;
 
     // Create mint msgs
     let mint_msg = Sg721ExecuteMsg::<Extension, Empty>::Mint {
         token_id: increment_token_index(deps.storage)?.to_string(),
-        owner: info.sender.to_string(),
+        owner: "creator".to_string(),
         token_uri: Some(token_uri.clone()),
         extension: None,
     };
