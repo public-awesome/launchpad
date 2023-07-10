@@ -363,7 +363,7 @@ where
     ) -> Result<bool, ContractError> {
         let msg = msg::QueryMsg::Minter {};
         let minter: MinterResponse = from_binary(&self.parent.query(deps, env, msg.into())?)?;
-        let is_minter = sender.to_string() == minter.minter.unwrap();
+        let is_minter = *sender == minter.minter.unwrap();
         Ok(is_minter)
     }
 
