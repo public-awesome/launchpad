@@ -333,14 +333,14 @@ fn check_mints_new_tokens_when_received() {
     assert!(res.is_ok());
     let num_tokens_res: cw721::NumTokensResponse = router
         .wrap()
-        .query_wasm_smart(collection_addr_1.clone(), &Cw721QueryMsg::NumTokens {})
+        .query_wasm_smart(collection_addr_1, &Cw721QueryMsg::NumTokens {})
         .unwrap();
     // one token after mint
     assert_eq!(num_tokens_res.count, 0);
 
     let num_tokens_res: cw721::NumTokensResponse = router
         .wrap()
-        .query_wasm_smart(collection_addr_2.clone(), &Cw721QueryMsg::NumTokens {})
+        .query_wasm_smart(collection_addr_2, &Cw721QueryMsg::NumTokens {})
         .unwrap();
     // one token after mint
     assert_eq!(num_tokens_res.count, 2);
