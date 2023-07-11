@@ -320,7 +320,6 @@ where
         if !is_minter_caller {
             assert_minter_owner(deps.storage, &info.sender)?;
         }
-
         let (token_id, owner, token_uri, extension) = match nft_data {
             NftParams::NftData {
                 token_id,
@@ -364,7 +363,7 @@ where
     ) -> Result<bool, ContractError> {
         let msg = msg::QueryMsg::Minter {};
         let minter: MinterResponse = from_binary(&self.parent.query(deps, env, msg.into())?)?;
-        let is_minter = sender.to_string() == minter.minter.unwrap();
+        let is_minter = sender == minter.minter.unwrap();
         Ok(is_minter)
     }
 

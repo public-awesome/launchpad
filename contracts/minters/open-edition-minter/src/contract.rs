@@ -1,10 +1,11 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coin, to_binary, Addr, BankMsg, Binary, Coin, Deps, DepsMut, Empty, Env, MessageInfo, Order,
-    Reply, ReplyOn, StdError, StdResult, Timestamp, WasmMsg,
+    coin, to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut, Empty, Env,
+    MessageInfo, Order, Reply, ReplyOn, StdError, StdResult, Timestamp, Uint128, WasmMsg,
 };
 use cw2::set_contract_version;
+use cw721::Cw721ReceiveMsg;
 use cw_utils::{may_pay, maybe_addr, nonpayable, parse_reply_instantiate_data};
 use semver::Version;
 use sg_std::math::U64Ext;
@@ -15,7 +16,7 @@ use open_edition_factory::msg::{OpenEditionMinterCreateMsg, ParamsResponse};
 use open_edition_factory::types::NftMetadataType;
 use sg1::checked_fair_burn;
 use sg2::query::Sg2QueryMsg;
-use sg2::Token;
+use sg2::{MinterParams, Token};
 use sg4::{Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
 
@@ -186,6 +187,7 @@ pub fn execute(
             execute_update_per_address_limit(deps, env, info, per_address_limit)
         }
         ExecuteMsg::MintTo { recipient } => execute_mint_to(deps, env, info, recipient),
+        ExecuteMsg::ReceiveNft(msg) => execute_burn_to_mint(deps, env, info, msg),
     }
 }
 
@@ -237,7 +239,6 @@ pub fn execute_mint_sender(
     {
         return Err(ContractError::MaxPerAddressLimitExceeded {});
     }
-
     _execute_mint(deps, env, info, action, false, None)
 }
 
@@ -265,12 +266,95 @@ pub fn execute_mint_to(
     _execute_mint(deps, env, info, action, true, Some(recipient))
 }
 
+fn _pay_mint_if_not_contract(
+    this_contract: Addr,
+    info: MessageInfo,
+    mint_price_with_discounts: Coin,
+    config_denom: String,
+) -> Result<Uint128, ContractError> {
+    let this_contract = this_contract.to_string();
+    match info.sender == this_contract {
+        true => Ok(Uint128::new(0)),
+        false => {
+            let payment = may_pay(&info, &config_denom)?;
+            if payment != mint_price_with_discounts.amount {
+                return Err(ContractError::IncorrectPaymentAmount(
+                    coin(payment.u128(), &config_denom),
+                    mint_price_with_discounts,
+                ));
+            }
+            Ok(payment)
+        }
+    }
+}
+
+fn _fairburn_if_not_contract_sender(
+    deps: &DepsMut,
+    this_contract: Addr,
+    info: MessageInfo,
+    mint_price_with_discounts: Coin,
+    mint_fee: Decimal,
+    factory_params: MinterParams<open_edition_factory::state::ParamsExtension>,
+) -> Result<(Response, Uint128), ContractError> {
+    let mut res = Response::new();
+    match info.clone().sender == this_contract {
+        true => Ok((res, Uint128::new(0))),
+        false => {
+            let network_fee = mint_price_with_discounts.amount * mint_fee;
+            // This is for the network fee msg
+            checked_fair_burn(
+                &info,
+                network_fee.u128(),
+                Some(
+                    deps.api
+                        .addr_validate(&factory_params.extension.dev_fee_address)?,
+                ),
+                &mut res,
+            )?;
+            Ok((res, network_fee))
+        }
+    }
+}
+
+// sg4::MinterConfig
+// open_edition_minter::state::ConfigExtension
+fn _compute_seller_amount_if_not_contract_sender(
+    info: MessageInfo,
+    this_contract: Addr,
+    res: Response,
+    mint_price_with_discounts: Coin,
+    network_fee: Uint128,
+    config_extension: crate::state::ConfigExtension,
+) -> Result<(Response, Uint128), ContractError> {
+    let mut res = res;
+    match info.sender == this_contract {
+        true => Ok((res, Uint128::new(0))),
+        false => {
+            let seller_amount = {
+                // the net amount is mint price - network fee (mint free + dev fee)
+                let amount = mint_price_with_discounts.amount.checked_sub(network_fee)?;
+                let payment_address = config_extension.payment_address;
+                let seller = config_extension.admin;
+                // Sending 0 coins fails, so only send if amount is non-zero
+                if !amount.is_zero() {
+                    let msg = BankMsg::Send {
+                        to_address: payment_address.unwrap_or(seller).to_string(),
+                        amount: vec![coin(amount.u128(), mint_price_with_discounts.denom)],
+                    };
+                    res = res.add_message(msg);
+                }
+                amount
+            };
+            Ok((res, seller_amount))
+        }
+    }
+}
 // Generalize checks and mint message creation
 // mint -> _execute_mint(recipient: None, token_id: None)
 // mint_to(recipient: "friend") -> _execute_mint(Some(recipient), token_id: None)
 fn _execute_mint(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
     action: &str,
     is_admin: bool,
@@ -292,15 +376,15 @@ fn _execute_mint(
         .denom()
         .map_err(|_| ContractError::IncorrectFungibility {})?;
     // Exact payment only accepted
-    let payment = may_pay(&info, &config_denom)?;
-    if payment != mint_price_with_discounts.amount {
-        return Err(ContractError::IncorrectPaymentAmount(
-            coin(payment.u128(), &config_denom),
-            mint_price_with_discounts,
-        ));
-    }
 
-    let mut res = Response::new();
+    _pay_mint_if_not_contract(
+        env.contract.address.clone(),
+        info.clone(),
+        mint_price_with_discounts.clone(),
+        config_denom,
+    )?;
+
+    // let mut res = Response::new();
 
     let factory: ParamsResponse = deps
         .querier
@@ -318,18 +402,14 @@ fn _execute_mint(
     } else {
         factory_params.mint_fee_bps.bps_to_decimal()
     };
-    let network_fee = mint_price_with_discounts.amount * mint_fee;
-    // This is for the network fee msg
-    checked_fair_burn(
-        &info,
-        network_fee.u128(),
-        Some(
-            deps.api
-                .addr_validate(&factory_params.extension.dev_fee_address)?,
-        ),
-        &mut res,
+    let (mut res, network_fee) = _fairburn_if_not_contract_sender(
+        &deps,
+        env.contract.address.clone(),
+        info.clone(),
+        mint_price_with_discounts.clone(),
+        mint_fee,
+        factory_params,
     )?;
-
     // Token ID to mint + update the config counter
     let token_id = increment_token_index(deps.storage)?.to_string();
 
@@ -339,16 +419,15 @@ fn _execute_mint(
         token_id.clone(),
         recipient_addr.clone(),
         match config.extension.nft_data.nft_data_type {
-            NftMetadataType::OnChainMetadata => config.extension.nft_data.extension,
+            NftMetadataType::OnChainMetadata => config.extension.clone().nft_data.extension,
             NftMetadataType::OffChainMetadata => None,
         },
         match config.extension.nft_data.nft_data_type {
             NftMetadataType::OnChainMetadata => None,
-            NftMetadataType::OffChainMetadata => config.extension.nft_data.token_uri,
+            NftMetadataType::OffChainMetadata => config.extension.clone().nft_data.token_uri,
         },
     )?;
     res = res.add_message(msg);
-
     // Save the new mint count for the sender's address
     let new_mint_count = mint_count_per_addr(deps.as_ref(), &info)? + 1;
     MINTER_ADDRS.save(deps.storage, &info.sender, &new_mint_count)?;
@@ -362,21 +441,14 @@ fn _execute_mint(
         },
     )?;
 
-    let seller_amount = {
-        // the net amount is mint price - network fee (mint free + dev fee)
-        let amount = mint_price_with_discounts.amount.checked_sub(network_fee)?;
-        let payment_address = config.extension.payment_address;
-        let seller = config.extension.admin;
-        // Sending 0 coins fails, so only send if amount is non-zero
-        if !amount.is_zero() {
-            let msg = BankMsg::Send {
-                to_address: payment_address.unwrap_or(seller).to_string(),
-                amount: vec![coin(amount.u128(), mint_price_with_discounts.denom)],
-            };
-            res = res.add_message(msg);
-        }
-        amount
-    };
+    let (res, seller_amount) = _compute_seller_amount_if_not_contract_sender(
+        info.clone(),
+        env.contract.address,
+        res,
+        mint_price_with_discounts.clone(),
+        network_fee,
+        config.extension,
+    )?;
 
     Ok(res
         .add_attribute("action", action)
@@ -432,7 +504,6 @@ pub fn execute_update_mint_price(
     }
 
     config.mint_price = Token::new_fungible_token(price, config.mint_price.clone().denom()?);
-    println!("config is {:?}", config);
     CONFIG.save(deps.storage, &config)?;
 
     Ok(Response::new()
@@ -609,6 +680,33 @@ pub fn execute_update_per_address_limit(
         .add_attribute("action", "update_per_address_limit")
         .add_attribute("sender", info.sender)
         .add_attribute("limit", per_address_limit.to_string()))
+}
+
+pub fn execute_burn_to_mint(
+    _deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    msg: Cw721ReceiveMsg,
+) -> Result<Response, ContractError> {
+    let mut res = Response::new();
+    let burn_msg = cw721::Cw721ExecuteMsg::Burn {
+        token_id: msg.token_id,
+    };
+    let cosmos_burn_msg = CosmosMsg::Wasm(WasmMsg::Execute {
+        contract_addr: info.sender.to_string(),
+        msg: to_binary(&burn_msg)?,
+        funds: vec![],
+    });
+    res = res.add_message(cosmos_burn_msg);
+
+    let execute_mint_msg = ExecuteMsg::Mint {};
+    let cosmos_mint_msg = CosmosMsg::Wasm(WasmMsg::Execute {
+        contract_addr: env.contract.address.to_string(),
+        msg: to_binary(&execute_mint_msg)?,
+        funds: vec![],
+    });
+    let res = res.add_message(cosmos_mint_msg);
+    Ok(res)
 }
 
 // if admin_no_fee => no fee,

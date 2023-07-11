@@ -119,9 +119,6 @@ pub fn execute(
     }
 }
 
-// TODO: add a test to call `send` on the collection contract with a `Cw721ReceiveMsg`
-// that includes a `TokenUriMsg` in the `msg` field
-
 pub fn execute_burn_to_mint(
     _deps: DepsMut,
     env: Env,
@@ -189,8 +186,7 @@ fn _pay_mint_if_not_contract(
     factory_params: MinterParams<Option<Empty>>,
 ) -> Result<Uint128, ContractError> {
     let mut res = Response::new();
-    let this_contract = this_contract.to_string();
-    match info.clone().sender.to_string() == this_contract {
+    match info.clone().sender == this_contract {
         true => Ok(0_u128.into()),
         false => {
             let funds_sent = must_pay(&info, NATIVE_DENOM)?;

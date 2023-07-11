@@ -505,3 +505,39 @@ pub fn vending_minter_template_with_code_ids_template(
         code_ids,
     }
 }
+
+pub fn open_edition_minter_with_two_sg721_collections(
+    params_extension: ParamsExtension,
+    init_msg: OpenEditionMinterInitMsgExtension,
+) -> Result<MinterTemplateResponse<Accounts>, anyhow::Result<AppResponse>> {
+    let mut router = custom_mock_app();
+    let (creator, buyer) = setup_accounts(&mut router);
+    router
+        .sudo(SudoMsg::Bank({
+            BankSudo::Mint {
+                to_address: creator.to_string(),
+                amount: vec![coin(CREATION_FEE * 2, NATIVE_DENOM)],
+            }
+        }))
+        .map_err(|err| println!("{:?}", err))
+        .ok();
+    let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
+    let collection_params = mock_collection_params_1(Some(start_time));
+    let collection_params_2 = mock_collection_two(Some(start_time));
+    let minter_params =
+        minter_params_open_edition(params_extension.clone(), init_msg.clone(), None, None, None);
+    let minter_params_2 = minter_params_open_edition(params_extension, init_msg, None, None, None);
+    let code_ids = open_edition_minter_code_ids(&mut router);
+    let minter_collection_response = configure_open_edition_minter(
+        &mut router,
+        creator.clone(),
+        vec![collection_params, collection_params_2],
+        vec![minter_params, minter_params_2],
+        code_ids,
+    );
+    Ok(MinterTemplateResponse {
+        router,
+        collection_response_vec: minter_collection_response,
+        accts: Accounts { creator, buyer },
+    })
+}
