@@ -43,8 +43,6 @@
           "code_id",
           "creation_fee",
           "frozen",
-          "max_royalty_bps",
-          "max_royalty_increase_rate_bps",
           "max_trading_offset_secs",
           "min_mint_price",
           "mint_fee_bps"
@@ -81,12 +79,18 @@
             "type": "boolean"
           },
           "max_royalty_bps": {
-            "type": "integer",
+            "type": [
+              "integer",
+              "null"
+            ],
             "format": "uint64",
             "minimum": 0.0
           },
           "max_royalty_increase_rate_bps": {
-            "type": "integer",
+            "type": [
+              "integer",
+              "null"
+            ],
             "format": "uint64",
             "minimum": 0.0
           },
