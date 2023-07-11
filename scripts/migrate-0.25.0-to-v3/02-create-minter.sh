@@ -1,6 +1,7 @@
 KEY=$(starsd keys show $ADMIN | jq -r .name)
-FACTORY=stars1qwn5rk7lzmr0td07zafnnsqcha0hx3fmnkpfjm65kppnxj4mzcaqqv023l
+FACTORY=stars1dfqgqmvw077capmmwcynqrrarrxqje2a48gn8f4f0jn0ntgrc3kqxeaj9k
 SG721_CODE_ID=2604
+# SG721_INCREASE_ROYALTIES_CODE_ID=2628
 
 # init msg
 # VendingMinterInitMsgExtension {
@@ -39,19 +40,24 @@ MSG=$(cat <<EOF
         "init_msg": {
             "base_token_uri": "ipfs://bafybeiey2heysue3px2tgc523cmjbfjlox5zfzzan5syzdooikdvimtxwq",
             "start_time": "$(echo $TIME)000000000",
-            "num_tokens": 100,
-            "mint_price": { "amount": "50000000", "denom": "ustars" },
-            "per_address_limit": 3
+            "num_tokens": 2000,
+            "mint_price": { "amount": "0", "denom": "ustars" },
+            "per_address_limit": 30
         },
         "collection_params": {
             "code_id": $SG721_CODE_ID,
-            "name": "Test Collection yubo2",
-            "symbol": "YUBO2",
+            "name": "Test Collection yubo 2",
+            "symbol": "YUBO1",
             "info": {
                 "creator": "$ADMIN",
-                "description": "Test Collection yubo2",
+                "description": "Test Collection yubo 2",
                 "image": "ipfs://bafybeiavall5udkxkdtdm4djezoxrmfc6o5fn2ug3ymrlvibvwmwydgrkm/1.jpg",
-                "start_trading_time": "$(echo $TIME)000000000"
+                "start_trading_time": "$(echo $TIME)000000000",
+                "royalty_info": {
+                    "payment_address": "$ADMIN",
+                    "share": "0.05"
+
+                }
             }
         }
     }
