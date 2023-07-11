@@ -234,10 +234,14 @@ pub fn try_migrate(deps: DepsMut, _env: Env, _msg: Empty) -> StdResult<Response>
     // upgraded from the correct version.
 
     if CONTRACT_VERSION < EARLIEST_VERSION {
-        return Err(StdError::generic_err("Cannot upgrade to a previous contract version").into());
+        return Err(StdError::generic_err(
+            "Cannot upgrade to a previous contract version",
+        ));
     }
     if CONTRACT_VERSION > TO_VERSION {
-        return Err(StdError::generic_err("Cannot upgrade to a previous contract version").into());
+        return Err(StdError::generic_err(
+            "Cannot upgrade to a previous contract version",
+        ));
     }
     // if same version return
     if CONTRACT_VERSION == TO_VERSION {
