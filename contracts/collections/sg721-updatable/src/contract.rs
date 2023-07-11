@@ -1,12 +1,14 @@
 use crate::error::ContractError;
 use crate::state::FROZEN_TOKEN_METADATA;
-use cosmwasm_std::{Empty, StdError};
+use cosmwasm_std::{Addr, Empty, StdError};
+use cw_storage_plus::Item;
 
 use cosmwasm_std::{Deps, StdResult};
 
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::{DepsMut, Env, Event, MessageInfo};
-use cw2::set_contract_version;
+use cw2::{get_contract_version, set_contract_version};
+use semver::Version;
 use sg721::InstantiateMsg;
 use sg721_base::msg::CollectionInfoResponse;
 
@@ -21,10 +23,10 @@ use sg721_base::Sg721Contract;
 pub type Sg721UpdatableContract<'a> = Sg721Contract<'a, Extension>;
 use sg_std::Response;
 
-const CONTRACT_NAME: &str = "crates.io:sg721-updatable";
+const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
-pub const EARLIEST_VERSION: &str = "0.16.0";
-pub const TO_VERSION: &str = "3.0.0";
+const EARLIEST_COMPATIBLE_VERSION: &str = "0.16.0";
+const COMPATIBLE_MIGRATION_CONTRACT_NAME: &str = "crates.io:sg721-base";
 const ENABLE_UPDATABLE_FEE: u128 = 500_000_000;
 
 pub fn _instantiate(
@@ -153,31 +155,67 @@ pub fn query_frozen_token_metadata(deps: Deps) -> StdResult<FrozenTokenMetadataR
 }
 
 pub fn _migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
-    // make sure the correct contract is being upgraded, and it's being
-    // upgraded from the correct version.
-    if CONTRACT_VERSION < EARLIEST_VERSION {
-        return Err(StdError::generic_err("Cannot upgrade to a previous contract version").into());
-    }
-    if CONTRACT_VERSION > TO_VERSION {
-        return Err(StdError::generic_err("Cannot upgrade to a previous contract version").into());
-    }
-    // if same version return
-    if CONTRACT_VERSION == TO_VERSION {
-        return Ok(Response::new());
+    let current_contract_info = get_contract_version(deps.storage)?;
+    let current_contract_name: String = current_contract_info.contract;
+    let current_version: Version = current_contract_info
+        .version
+        .parse()
+        .map_err(|_| StdError::generic_err("Unable to retrieve previous contract version"))?;
+
+    let new_version: Version = CONTRACT_VERSION
+        .parse()
+        .map_err(|_| StdError::generic_err("Invalid contract version"))?;
+
+    let earliest_compatible_version: Version = EARLIEST_COMPATIBLE_VERSION
+        .parse()
+        .map_err(|_| StdError::generic_err("Invalid contract version"))?;
+
+    // make sure the correct contract is being migrated
+    if ![CONTRACT_NAME, COMPATIBLE_MIGRATION_CONTRACT_NAME]
+        .contains(&current_contract_name.as_str())
+    {
+        return Err(StdError::generic_err("Cannot migrate to a different contract").into());
     }
 
-    // update contract version
-    cw2::set_contract_version(deps.storage, CONTRACT_NAME, TO_VERSION)?;
+    if current_version < earliest_compatible_version {
+        return Err(StdError::generic_err("Unsupported contract version").into());
+    }
+    if current_version > new_version {
+        return Err(StdError::generic_err("Cannot migrate to a previous contract version").into());
+    }
+    // if same contract return
+    if current_version == new_version && current_contract_name == CONTRACT_NAME {
+        return Err(StdError::generic_err(
+            "No change in contract name and version, cannot migrate",
+        )
+        .into());
+    }
 
-    // perform the upgrade
-    cw721_base::upgrades::v0_17::migrate::<Extension, Empty, Empty, Empty>(deps)
+    // switch minter with owner if a minter exists
+    pub const MINTER: Item<Addr> = Item::new("minter");
+    let minter = MINTER
+        .may_load(deps.storage)
         .map_err(|e| sg721_base::ContractError::MigrationError(e.to_string()))?;
+    if let Some(minter) = minter {
+        MINTER.remove(deps.storage);
+        // save new ownership info
+        cw_ownable::initialize_owner(deps.storage, deps.api, Some(minter.as_str()))
+            .map_err(|e| sg721_base::ContractError::MigrationError(e.to_string()))?;
+    }
+
+    if current_contract_name == COMPATIBLE_MIGRATION_CONTRACT_NAME {
+        // if migrating from sg721-base, set the initial values for the flags
+        FROZEN_TOKEN_METADATA.save(deps.storage, &false)?;
+        ENABLE_UPDATABLE.save(deps.storage, &false)?;
+    }
+    // update contract version
+    cw2::set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
     let event = Event::new("migrate")
-        .add_attribute("from_name", CONTRACT_VERSION)
-        .add_attribute("from_version", CONTRACT_VERSION)
+        .add_attribute("from_name", current_contract_name)
+        .add_attribute("from_version", current_version.to_string())
         .add_attribute("to_name", CONTRACT_NAME)
-        .add_attribute("to_version", TO_VERSION);
+        .add_attribute("to_version", CONTRACT_VERSION);
     Ok(Response::new().add_event(event))
 }
 
