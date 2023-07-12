@@ -1,4 +1,5 @@
 use std::convert::TryInto;
+use std::env;
 
 use crate::error::ContractError;
 use crate::msg::{
@@ -17,6 +18,7 @@ use cosmwasm_std::{
     Event, MessageInfo, Order, Reply, ReplyOn, StdError, StdResult, Timestamp, Uint128, WasmMsg,
 };
 use cw2::set_contract_version;
+use cw721::Cw721ReceiveMsg;
 use cw721_base::Extension;
 use cw_utils::{may_pay, maybe_addr, nonpayable, parse_reply_instantiate_data};
 use rand_core::{RngCore, SeedableRng};
@@ -243,7 +245,35 @@ pub fn execute(
             execute_update_discount_price(deps, env, info, price)
         }
         ExecuteMsg::RemoveDiscountPrice {} => execute_remove_discount_price(deps, info),
+        ExecuteMsg::ReceiveNft(msg) => execute_burn_to_mint(deps, env, info, msg),
     }
+}
+
+pub fn execute_burn_to_mint(
+    _deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    msg: Cw721ReceiveMsg,
+) -> Result<Response, ContractError> {
+    let mut res = Response::new();
+    let burn_msg = cw721::Cw721ExecuteMsg::Burn {
+        token_id: msg.token_id,
+    };
+    let cosmos_burn_msg = CosmosMsg::Wasm(WasmMsg::Execute {
+        contract_addr: info.sender.to_string(),
+        msg: to_binary(&burn_msg)?,
+        funds: vec![],
+    });
+    res = res.add_message(cosmos_burn_msg);
+
+    let execute_mint_msg = ExecuteMsg::Mint {};
+    let cosmos_mint_msg = CosmosMsg::Wasm(WasmMsg::Execute {
+        contract_addr: env.contract.address.to_string(),
+        msg: to_binary(&execute_mint_msg)?,
+        funds: vec![],
+    });
+    let res = res.add_message(cosmos_mint_msg);
+    Ok(res)
 }
 
 pub fn execute_update_discount_price(
@@ -482,7 +512,6 @@ pub fn execute_mint_sender(
     if is_public_mint(deps.as_ref(), &info)? && (env.block.time < config.extension.start_time) {
         return Err(ContractError::BeforeMintStartTime {});
     }
-
     // Check if already minted max per address limit
     let mint_count = mint_count(deps.as_ref(), &info)?;
     if mint_count >= config.extension.per_address_limit {
@@ -582,6 +611,62 @@ pub fn execute_mint_for(
     )
 }
 
+fn _pay_mint_if_not_contract(
+    this_contract: Addr,
+    info: MessageInfo,
+    mint_price_with_discounts: Coin,
+    config_denom: String,
+) -> Result<Uint128, ContractError> {
+    let this_contract = this_contract.to_string();
+    match info.sender == this_contract {
+        true => Ok(Uint128::new(0)),
+        false => {
+            let payment = may_pay(&info, &config_denom)?;
+            if payment != mint_price_with_discounts.amount {
+                return Err(ContractError::IncorrectPaymentAmount(
+                    coin(payment.u128(), &config_denom),
+                    mint_price_with_discounts,
+                ));
+            }
+            Ok(payment)
+        }
+    }
+}
+
+fn _compute_seller_amount_if_not_contract_sender(
+    info: MessageInfo,
+    this_contract: Addr,
+    mut res: Response,
+    mint_price_with_discounts: Coin,
+    network_fee: Uint128,
+    config_extension: crate::state::ConfigExtension,
+) -> Result<(Response, Uint128), ContractError> {
+    match info.sender == this_contract {
+        true => Ok((res, Uint128::new(0))),
+        false => {
+            let seller_amount = {
+                let amount = mint_price_with_discounts.amount - network_fee;
+                let payment_address = config_extension.payment_address;
+                let seller = config_extension.admin;
+                // Sending 0 coins fails, so only send if amount is non-zero
+                if !amount.is_zero() {
+                    let msg = BankMsg::Send {
+                        to_address: payment_address.unwrap_or(seller).to_string(),
+                        amount: vec![coin(amount.u128(), mint_price_with_discounts.denom)],
+                    };
+                    res = res.add_message(msg);
+                }
+                amount
+            };
+            Ok((res, seller_amount))
+        }
+    }
+}
+
+// Generalize checks and mint message creation
+// mint -> _execute_mint(recipient: None, token_id: None)
+// mint_to(recipient: "friend") -> _execute_mint(Some(recipient), token_id: None)
+// mint_for(recipient: "friend2", token_id: 420) -> _execute_mint(recipient, token_id)
 // Generalize checks and mint message creation
 // mint -> _execute_mint(recipient: None, token_id: None)
 // mint_to(recipient: "friend") -> _execute_mint(Some(recipient), token_id: None)
@@ -621,14 +706,13 @@ fn _execute_mint(
         .mint_price
         .denom()
         .map_err(|_| ContractError::IncorrectFungibility {})?;
-    // Exact payment only accepted
-    let payment = may_pay(&info, &config_denom)?;
-    if payment != mint_price_with_discounts.amount {
-        return Err(ContractError::IncorrectPaymentAmount(
-            coin(payment.u128(), &config_denom),
-            mint_price_with_discounts,
-        ));
-    }
+
+    _pay_mint_if_not_contract(
+        env.contract.address.clone(),
+        info.clone(),
+        mint_price_with_discounts.clone(),
+        config_denom,
+    )?;
 
     let mut res = Response::new();
 
@@ -648,19 +732,19 @@ fn _execute_mint(
     };
 
     let network_fee = mint_price_with_discounts.amount * mint_fee;
-
-    // send non-native fees to community pool
-    if mint_price_with_discounts.denom != NATIVE_DENOM {
-        // only send non-zero amounts
-        if !network_fee.is_zero() {
-            let msg = create_fund_community_pool_msg(coins(
-                network_fee.u128(),
-                mint_price_with_discounts.clone().denom,
-            ));
-            res = res.add_message(msg);
+    if env.contract.address != info.sender {
+        if mint_price_with_discounts.denom != NATIVE_DENOM {
+            // only send non-zero amounts
+            if !network_fee.is_zero() {
+                let msg = create_fund_community_pool_msg(coins(
+                    network_fee.u128(),
+                    mint_price_with_discounts.clone().denom,
+                ));
+                res = res.add_message(msg);
+            }
+        } else {
+            checked_fair_burn(&info, network_fee.u128(), None, &mut res)?;
         }
-    } else {
-        checked_fair_burn(&info, network_fee.u128(), None, &mut res)?;
     }
 
     let mintable_token_mapping = match token_id {
@@ -681,7 +765,7 @@ fn _execute_mint(
             }
             TokenPositionMapping { position, token_id }
         }
-        None => random_mintable_token_mapping(deps.as_ref(), env, info.sender.clone())?,
+        None => random_mintable_token_mapping(deps.as_ref(), env.clone(), info.sender.clone())?,
     };
 
     // Create mint msgs
@@ -710,22 +794,14 @@ fn _execute_mint(
     let new_mint_count = mint_count(deps.as_ref(), &info)? + 1;
     MINTER_ADDRS.save(deps.storage, &info.sender, &new_mint_count)?;
 
-    let seller_amount = if !is_admin {
-        let amount = mint_price_with_discounts.amount - network_fee;
-        let payment_address = config.extension.payment_address;
-        let seller = config.extension.admin;
-        // Sending 0 coins fails, so only send if amount is non-zero
-        if !amount.is_zero() {
-            let msg = BankMsg::Send {
-                to_address: payment_address.unwrap_or(seller).to_string(),
-                amount: vec![coin(amount.u128(), mint_price_with_discounts.clone().denom)],
-            };
-            res = res.add_message(msg);
-        }
-        amount
-    } else {
-        Uint128::zero()
-    };
+    let (res, seller_amount) = _compute_seller_amount_if_not_contract_sender(
+        info.clone(),
+        env.contract.address,
+        res,
+        mint_price_with_discounts.clone(),
+        network_fee,
+        config.extension,
+    )?;
 
     Ok(res
         .add_attribute("action", action)
@@ -736,7 +812,7 @@ fn _execute_mint(
             "network_fee",
             coin(network_fee.u128(), mint_price_with_discounts.clone().denom).to_string(),
         )
-        .add_attribute("mint_price", mint_price_with_discounts.to_string())
+        .add_attribute("mint_price", mint_price_with_discounts.clone().to_string())
         .add_attribute(
             "seller_amount",
             coin(seller_amount.u128(), mint_price_with_discounts.denom).to_string(),

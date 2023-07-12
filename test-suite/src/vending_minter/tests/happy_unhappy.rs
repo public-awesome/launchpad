@@ -8,7 +8,7 @@ use cosmwasm_std::{
     testing::{mock_dependencies_with_balance, mock_env, mock_info},
     Api, Coin, Timestamp, Uint128,
 };
-use cw721::{Cw721QueryMsg, NumTokensResponse, OwnerOfResponse};
+use cw721::{Cw721QueryMsg, OwnerOfResponse};
 use cw_multi_test::Executor;
 use sg2::tests::mock_collection_params_1;
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
@@ -89,7 +89,6 @@ fn happy_path() {
 
     let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
     let collection_addr = vt.collection_response_vec[0].collection.clone().unwrap();
-
     // Default start time genesis mint time
     let res: StartTimeResponse = router
         .wrap()
@@ -121,12 +120,6 @@ fn happy_path() {
         &coins(MINT_PRICE, NATIVE_DENOM),
     );
     assert!(res.is_ok());
-
-    let res: NumTokensResponse = router
-        .wrap()
-        .query_wasm_smart(collection_addr.clone(), &sg721_base::QueryMsg::NumTokens {})
-        .unwrap();
-    println!("num tokens after is {:?}", res);
 
     // Balances are correct
     // The creator should get the unit price - mint fee for the mint above

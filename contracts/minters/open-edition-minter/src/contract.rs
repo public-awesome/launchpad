@@ -316,8 +316,6 @@ fn _fairburn_if_not_contract_sender(
     }
 }
 
-// sg4::MinterConfig
-// open_edition_minter::state::ConfigExtension
 fn _compute_seller_amount_if_not_contract_sender(
     info: MessageInfo,
     this_contract: Addr,
