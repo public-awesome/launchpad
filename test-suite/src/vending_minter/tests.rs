@@ -1,5 +1,6 @@
 mod address_limit;
 mod allowed_code_ids;
+mod burn_to_mint;
 mod frozen_factory;
 mod happy_unhappy;
 mod ibc_asset_mint;
