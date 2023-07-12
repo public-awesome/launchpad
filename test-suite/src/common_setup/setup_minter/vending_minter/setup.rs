@@ -48,7 +48,6 @@ pub fn setup_minter_contract(setup_params: MinterSetupParams) -> MinterCollectio
     let start_time = setup_params.start_time;
     let init_msg = setup_params.init_msg;
 
-    println!("num tokens is {:?} ", num_tokens);
     let mint_denom: Option<String> = init_msg
         .as_ref()
         .map(|msg| msg.mint_price.denom.to_string());

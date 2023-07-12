@@ -33,8 +33,7 @@ fn happy_path_with_params_update() {
     );
     let vt = open_edition_minter_custom_template(params_extension, init_msg).unwrap();
     let mut router = vt.router;
-    let res = sudo_update_params(&mut router, &vt.collection_response_vec, vt.code_ids, None);
-    println!("res is {:?}", res);
+    sudo_update_params(&mut router, &vt.collection_response_vec, vt.code_ids, None);
 }
 
 #[test]
