@@ -123,7 +123,6 @@ pub fn sudo_update_params(
     _env: Env,
     param_msg: VendingUpdateParamsMsg,
 ) -> Result<Response, ContractError> {
-    println!("in the sudo update params");
     let mut params = SUDO_PARAMS.load(deps.storage)?;
 
     update_params(&mut params, param_msg.clone(), deps.as_ref())?;
