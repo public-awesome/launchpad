@@ -26,7 +26,12 @@ use sg_std::Response;
 const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 const EARLIEST_COMPATIBLE_VERSION: &str = "0.16.0";
-const COMPATIBLE_MIGRATION_CONTRACT_NAME: &str = "crates.io:sg721-base";
+const COMPATIBLE_CONTRACT_NAMES_FOR_MIGRATION: [&str; 4] = [
+    "sg721-base",
+    "crates.io:sg721-base",
+    "sg721-updatable",
+    "crates.io:sg721-updatable",
+];
 const ENABLE_UPDATABLE_FEE: u128 = 500_000_000;
 
 pub fn _instantiate(
@@ -171,9 +176,7 @@ pub fn _migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, Contr
         .map_err(|_| StdError::generic_err("Invalid contract version"))?;
 
     // make sure the correct contract is being migrated
-    if ![CONTRACT_NAME, COMPATIBLE_MIGRATION_CONTRACT_NAME]
-        .contains(&current_contract_name.as_str())
-    {
+    if !COMPATIBLE_CONTRACT_NAMES_FOR_MIGRATION.contains(&current_contract_name.as_str()) {
         return Err(StdError::generic_err("Cannot migrate to a different contract").into());
     }
 
@@ -192,7 +195,7 @@ pub fn _migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, Contr
     }
 
     // switch minter with owner if a minter exists
-    pub const MINTER: Item<Addr> = Item::new("minter");
+    const MINTER: Item<Addr> = Item::new("minter");
     let minter = MINTER
         .may_load(deps.storage)
         .map_err(|e| sg721_base::ContractError::MigrationError(e.to_string()))?;
@@ -203,8 +206,8 @@ pub fn _migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, Contr
             .map_err(|e| sg721_base::ContractError::MigrationError(e.to_string()))?;
     }
 
-    if current_contract_name == COMPATIBLE_MIGRATION_CONTRACT_NAME {
-        // if migrating from sg721-base, set the initial values for the flags
+    if ["sg721-base", "crates.io:sg721-base"].contains(&current_contract_name.as_str()) {
+        // if migrating from sg721-base, initialize flags
         FROZEN_TOKEN_METADATA.save(deps.storage, &false)?;
         ENABLE_UPDATABLE.save(deps.storage, &false)?;
     }
