@@ -17,8 +17,6 @@ use crate::msg::{
     ParamsResponse, SudoMsg,
 };
 use crate::state::SUDO_PARAMS;
-// use sg721_base::msg::{CollectionInfoResponse, QueryMsg as Sg721QueryMsg};
-
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sg-base-factory";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");

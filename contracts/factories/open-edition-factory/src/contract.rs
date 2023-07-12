@@ -76,14 +76,13 @@ pub fn execute_create_minter(
     if NATIVE_DENOM != msg.init_msg.mint_price.denom {
         return Err(ContractError::BaseError(BaseContractError::InvalidDenom {}));
     }
-
-    //TODO BURNMINT
-    // if params.min_mint_price.amount > msg.init_msg.mint_price.amount {
-    //     return Err(ContractError::InsufficientMintPrice {
-    //         expected: params.min_mint_price.amount.u128(),
-    //         got: msg.init_msg.mint_price.amount.into(),
-    //     });
-    // }
+    let min_mint_price = params.min_mint_price.amount()?;
+    if min_mint_price > msg.init_msg.mint_price.amount {
+        return Err(ContractError::InsufficientMintPrice {
+            expected: min_mint_price.into(),
+            got: msg.init_msg.mint_price.amount.into(),
+        });
+    }
 
     let wasm_msg = WasmMsg::Instantiate {
         admin: Some(info.sender.to_string()),
