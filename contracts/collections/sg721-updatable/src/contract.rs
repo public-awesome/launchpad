@@ -194,25 +194,20 @@ pub fn _migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, Contr
         .into());
     }
 
-    // switch minter with owner if a minter exists
-    const MINTER: Item<Addr> = Item::new("minter");
-    let minter = MINTER
-        .may_load(deps.storage)
-        .map_err(|e| sg721_base::ContractError::MigrationError(e.to_string()))?;
-    if let Some(minter) = minter {
-        MINTER.remove(deps.storage);
-        // save new ownership info
-        cw_ownable::initialize_owner(deps.storage, deps.api, Some(minter.as_str()))
-            .map_err(|e| sg721_base::ContractError::MigrationError(e.to_string()))?;
-    }
-
     if ["sg721-base", "crates.io:sg721-base"].contains(&current_contract_name.as_str()) {
         // if migrating from sg721-base, initialize flags
         FROZEN_TOKEN_METADATA.save(deps.storage, &false)?;
         ENABLE_UPDATABLE.save(deps.storage, &false)?;
     }
+
     // update contract version
     cw2::set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+
+    // switch minter with owner if it's an older contract
+    if current_version < Version::new(3, 0, 0) {
+        cw721_base::upgrades::v0_17::migrate::<Extension, Empty, Empty, Empty>(deps)
+            .map_err(|e| sg721_base::ContractError::MigrationError(e.to_string()))?;
+    }
 
     let event = Event::new("migrate")
         .add_attribute("from_name", current_contract_name)
