@@ -1,8 +1,6 @@
 use crate::error::ContractError;
 use crate::state::FROZEN_TOKEN_METADATA;
-use cosmwasm_std::{Addr, Empty, StdError};
-use cw_storage_plus::Item;
-
+use cosmwasm_std::{Empty, StdError};
 use cosmwasm_std::{Deps, StdResult};
 
 #[cfg(not(feature = "library"))]
