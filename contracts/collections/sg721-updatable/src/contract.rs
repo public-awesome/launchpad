@@ -1,7 +1,7 @@
 use crate::error::ContractError;
 use crate::state::FROZEN_TOKEN_METADATA;
-use cosmwasm_std::{Empty, StdError};
 use cosmwasm_std::{Deps, StdResult};
+use cosmwasm_std::{Empty, StdError};
 
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::{DepsMut, Env, Event, MessageInfo};
