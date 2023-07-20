@@ -1,8 +1,9 @@
 #[cfg(test)]
 mod tests {
+    use anyhow::Error;
     use cosmwasm_std::{coin, Addr};
     use cw721::NumTokensResponse;
-    use cw_multi_test::{BankSudo, Executor, SudoMsg};
+    use cw_multi_test::{AppResponse, BankSudo, Executor, SudoMsg};
     use sg2::msg::CreateMinterMsg;
     use sg2::tests::mock_collection_params;
     use sg721::ExecuteMsg as Sg721ExecuteMsg;
@@ -27,6 +28,10 @@ mod tests {
     const GOVERNANCE: &str = "governance";
     const ADMIN: &str = "admin";
     const NATIVE_DENOM: &str = "ustars";
+
+    pub fn assert_error(res: Result<AppResponse, Error>, expected: String) {
+        assert_eq!(res.unwrap_err().source().unwrap().to_string(), expected);
+    }
 
     fn proper_instantiate_factory() -> (StargazeApp, FactoryContract) {
         let mut app = custom_mock_app();
@@ -241,13 +246,19 @@ mod tests {
     }
 
     mod start_trading_time {
-        use cosmwasm_std::{Decimal, Empty};
+        use cosmwasm_std::{from_slice, Decimal, Empty, Timestamp};
         use sg721::{RoyaltyInfoResponse, UpdateCollectionInfoMsg};
 
-        use crate::common_setup::setup_minter::vending_minter::mock_params::mock_create_minter_init_msg;
+        use crate::common_setup::{
+            setup_accounts_and_block::setup_block_time,
+            setup_minter::vending_minter::mock_params::mock_create_minter_init_msg,
+        };
 
         use super::*;
-        use sg721_base::msg::{CollectionInfoResponse, QueryMsg};
+        use sg721_base::{
+            msg::{CollectionInfoResponse, QueryMsg},
+            ContractError,
+        };
 
         #[test]
         fn royalty_updates() {
@@ -291,7 +302,7 @@ mod tests {
             // default trading start time is start time + default trading start time offset
             let res: CollectionInfoResponse = app
                 .wrap()
-                .query_wasm_smart(contract, &QueryMsg::CollectionInfo {})
+                .query_wasm_smart(contract.clone(), &QueryMsg::CollectionInfo {})
                 .unwrap();
             let default_start_time = mock_init_extension(None, None)
                 .start_time
@@ -320,7 +331,7 @@ mod tests {
             );
             assert!(res.is_ok());
 
-            // lower royalty_info by more than 2% throws error
+            // royalty cannot be updated before a day has passed
             let royalty_info: Option<RoyaltyInfoResponse> = Some(RoyaltyInfoResponse {
                 payment_address: creator.to_string(),
                 share: Decimal::percent(7),
@@ -339,7 +350,46 @@ mod tests {
                 },
                 &[],
             );
-            assert!(res.is_err());
+            assert_error(
+                res,
+                ContractError::InvalidRoyalties(
+                    "Royalties can only be updated once per day".to_string(),
+                )
+                .to_string(),
+            );
+
+            // lower royalty_info by more than 2% throws error
+            let block_time = app.block_info().time;
+            setup_block_time(
+                &mut app,
+                block_time.plus_seconds(24 * 60 * 60).nanos(),
+                None,
+            );
+            let royalty_info: Option<RoyaltyInfoResponse> = Some(RoyaltyInfoResponse {
+                payment_address: creator.to_string(),
+                share: Decimal::percent(7),
+            });
+            let res = app.execute_contract(
+                creator.clone(),
+                contract.clone(),
+                &Sg721ExecuteMsg::<Empty, Empty>::UpdateCollectionInfo {
+                    collection_info: UpdateCollectionInfoMsg {
+                        description: Some(params.info.description.clone()),
+                        image: Some(params.info.image.clone()),
+                        external_link: Some(params.info.external_link.clone()),
+                        explicit_content: None,
+                        royalty_info: Some(royalty_info.clone()),
+                    },
+                },
+                &[],
+            );
+            assert_error(
+                res,
+                ContractError::InvalidRoyalties(
+                    "Share change cannot be greater than 2%".to_string(),
+                )
+                .to_string(),
+            );
 
             // lower royalty_info by 2% succeeds
             let royalty_info: Option<RoyaltyInfoResponse> = Some(RoyaltyInfoResponse {
@@ -362,6 +412,12 @@ mod tests {
             );
             assert!(res.is_ok());
 
+            let block_time = app.block_info().time;
+            setup_block_time(
+                &mut app,
+                block_time.plus_seconds(24 * 60 * 60).nanos(),
+                None,
+            );
             let royalty_info: Option<RoyaltyInfoResponse> = Some(RoyaltyInfoResponse {
                 payment_address: creator.to_string(),
                 share: Decimal::percent(7),
@@ -389,6 +445,12 @@ mod tests {
             assert_eq!(res.royalty_info.unwrap(), royalty_info.clone().unwrap());
 
             // raise royalty_info by more than 2% throws error
+            let block_time = app.block_info().time;
+            setup_block_time(
+                &mut app,
+                block_time.plus_seconds(24 * 60 * 60).nanos(),
+                None,
+            );
             let royalty_info: Option<RoyaltyInfoResponse> = Some(RoyaltyInfoResponse {
                 payment_address: creator.to_string(),
                 share: Decimal::percent(10),
@@ -407,7 +469,13 @@ mod tests {
                 },
                 &[],
             );
-            assert!(res.is_err());
+            assert_error(
+                res,
+                ContractError::InvalidRoyalties(
+                    "Share change cannot be greater than 2%".to_string(),
+                )
+                .to_string(),
+            );
 
             // raise royalty_info by 2% succeeds
             let royalty_info: Option<RoyaltyInfoResponse> = Some(RoyaltyInfoResponse {
@@ -446,7 +514,7 @@ mod tests {
                         image: Some(params.info.image.clone()),
                         external_link: Some(params.info.external_link.clone()),
                         explicit_content: Some(true),
-                        royalty_info: Some(royalty_info),
+                        royalty_info: None,
                     },
                 },
                 &[],

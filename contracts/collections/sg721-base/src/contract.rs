@@ -90,7 +90,8 @@ where
 
         self.frozen_collection_info.save(deps.storage, &false)?;
 
-        self.royalty_updated.save(deps.storage, &env.block.time)?;
+        self.royalty_updated_at
+            .save(deps.storage, &env.block.time)?;
 
         Ok(Response::new()
             .add_attribute("action", "instantiate")
@@ -186,7 +187,7 @@ where
     pub fn update_collection_info(
         &self,
         deps: DepsMut,
-        _env: Env,
+        env: Env,
         info: MessageInfo,
         collection_msg: UpdateCollectionInfoMsg<RoyaltyInfoResponse>,
     ) -> Result<Response, ContractError> {
@@ -224,6 +225,13 @@ where
 
         match collection_msg.royalty_info {
             Some(Some(new_royalty_info_response)) => {
+                let last_royalty_update = self.royalty_updated_at.load(deps.storage)?;
+                if last_royalty_update.plus_seconds(24 * 60 * 60) > env.block.time {
+                    return Err(ContractError::InvalidRoyalties(
+                        "Royalties can only be updated once per day".to_string(),
+                    ));
+                }
+
                 let new_royalty_info = RoyaltyInfo {
                     payment_address: deps
                         .api
@@ -247,6 +255,8 @@ where
                 }
 
                 collection.royalty_info = Some(new_royalty_info);
+                self.royalty_updated_at
+                    .save(deps.storage, &env.block.time)?;
             }
             _ => {}
         }
