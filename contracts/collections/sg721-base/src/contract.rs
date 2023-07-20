@@ -223,42 +223,39 @@ where
 
         collection.explicit_content = collection_msg.explicit_content;
 
-        match collection_msg.royalty_info {
-            Some(Some(new_royalty_info_response)) => {
-                let last_royalty_update = self.royalty_updated_at.load(deps.storage)?;
-                if last_royalty_update.plus_seconds(24 * 60 * 60) > env.block.time {
-                    return Err(ContractError::InvalidRoyalties(
-                        "Royalties can only be updated once per day".to_string(),
-                    ));
-                }
-
-                let new_royalty_info = RoyaltyInfo {
-                    payment_address: deps
-                        .api
-                        .addr_validate(&new_royalty_info_response.payment_address)?,
-                    share: share_validate(new_royalty_info_response.share)?,
-                };
-
-                if let Some(old_royalty_info) = collection.royalty_info {
-                    let share_delta = new_royalty_info.share.abs_diff(old_royalty_info.share);
-                    if share_delta > Decimal::percent(2) {
-                        return Err(ContractError::InvalidRoyalties(
-                            "Share change cannot be greater than 2%".to_string(),
-                        ));
-                    }
-                }
-
-                if new_royalty_info.share > Decimal::percent(10) {
-                    return Err(ContractError::InvalidRoyalties(
-                        "Share cannot be greater than 10%".to_string(),
-                    ));
-                }
-
-                collection.royalty_info = Some(new_royalty_info);
-                self.royalty_updated_at
-                    .save(deps.storage, &env.block.time)?;
+        if let Some(Some(new_royalty_info_response)) = collection_msg.royalty_info {
+            let last_royalty_update = self.royalty_updated_at.load(deps.storage)?;
+            if last_royalty_update.plus_seconds(24 * 60 * 60) > env.block.time {
+                return Err(ContractError::InvalidRoyalties(
+                    "Royalties can only be updated once per day".to_string(),
+                ));
             }
-            _ => {}
+
+            let new_royalty_info = RoyaltyInfo {
+                payment_address: deps
+                    .api
+                    .addr_validate(&new_royalty_info_response.payment_address)?,
+                share: share_validate(new_royalty_info_response.share)?,
+            };
+
+            if let Some(old_royalty_info) = collection.royalty_info {
+                let share_delta = new_royalty_info.share.abs_diff(old_royalty_info.share);
+                if share_delta > Decimal::percent(2) {
+                    return Err(ContractError::InvalidRoyalties(
+                        "Share change cannot be greater than 2%".to_string(),
+                    ));
+                }
+            }
+
+            if new_royalty_info.share > Decimal::percent(10) {
+                return Err(ContractError::InvalidRoyalties(
+                    "Share cannot be greater than 10%".to_string(),
+                ));
+            }
+
+            collection.royalty_info = Some(new_royalty_info);
+            self.royalty_updated_at
+                .save(deps.storage, &env.block.time)?;
         }
 
         self.collection_info.save(deps.storage, &collection)?;
@@ -384,16 +381,19 @@ where
             return Err(StdError::generic_err("Invalid contract name for migration").into());
         }
 
+        #[allow(clippy::cmp_owned)]
         if prev_contract_version.version >= CONTRACT_VERSION.to_string() {
             return Err(StdError::generic_err("Must upgrade contract version").into());
         }
 
         let mut response = Response::new();
 
+        #[allow(clippy::cmp_owned)]
         if prev_contract_version.version < "3.0.0".to_string() {
             response = crate::upgrades::v3_0_0::upgrade(deps.branch(), &env, response)?;
         }
 
+        #[allow(clippy::cmp_owned)]
         if prev_contract_version.version < "3.1.0".to_string() {
             response = crate::upgrades::v3_1_0::upgrade(deps.branch(), &env, response)?;
         }

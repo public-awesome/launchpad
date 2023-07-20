@@ -160,16 +160,19 @@ pub fn _migrate(mut deps: DepsMut, env: Env, _msg: Empty) -> Result<Response, Co
         return Err(StdError::generic_err("Invalid contract name for migration").into());
     }
 
+    #[allow(clippy::cmp_owned)]
     if prev_contract_version.version >= CONTRACT_VERSION.to_string() {
         return Err(StdError::generic_err("Must upgrade contract version").into());
     }
 
     let mut response = Response::new();
 
+    #[allow(clippy::cmp_owned)]
     if prev_contract_version.version < "3.0.0".to_string() {
         response = sg721_base::upgrades::v3_0_0::upgrade(deps.branch(), &env, response)?;
     }
 
+    #[allow(clippy::cmp_owned)]
     if prev_contract_version.version < "3.1.0".to_string() {
         response = sg721_base::upgrades::v3_1_0::upgrade(deps.branch(), &env, response)?;
     }

@@ -246,7 +246,7 @@ mod tests {
     }
 
     mod start_trading_time {
-        use cosmwasm_std::{from_slice, Decimal, Empty, Timestamp};
+        use cosmwasm_std::{Decimal, Empty};
         use sg721::{RoyaltyInfoResponse, UpdateCollectionInfoMsg};
 
         use crate::common_setup::{
@@ -302,7 +302,7 @@ mod tests {
             // default trading start time is start time + default trading start time offset
             let res: CollectionInfoResponse = app
                 .wrap()
-                .query_wasm_smart(contract.clone(), &QueryMsg::CollectionInfo {})
+                .query_wasm_smart(contract, &QueryMsg::CollectionInfo {})
                 .unwrap();
             let default_start_time = mock_init_extension(None, None)
                 .start_time
@@ -345,7 +345,7 @@ mod tests {
                         image: Some(params.info.image.clone()),
                         external_link: Some(params.info.external_link.clone()),
                         explicit_content: None,
-                        royalty_info: Some(royalty_info.clone()),
+                        royalty_info: Some(royalty_info),
                     },
                 },
                 &[],
@@ -378,7 +378,7 @@ mod tests {
                         image: Some(params.info.image.clone()),
                         external_link: Some(params.info.external_link.clone()),
                         explicit_content: None,
-                        royalty_info: Some(royalty_info.clone()),
+                        royalty_info: Some(royalty_info),
                     },
                 },
                 &[],
@@ -405,7 +405,7 @@ mod tests {
                         image: Some(params.info.image.clone()),
                         external_link: Some(params.info.external_link.clone()),
                         explicit_content: None,
-                        royalty_info: Some(royalty_info.clone()),
+                        royalty_info: Some(royalty_info),
                     },
                 },
                 &[],
@@ -442,7 +442,7 @@ mod tests {
                 .wrap()
                 .query_wasm_smart(contract.clone(), &QueryMsg::CollectionInfo {})
                 .unwrap();
-            assert_eq!(res.royalty_info.unwrap(), royalty_info.clone().unwrap());
+            assert_eq!(res.royalty_info.unwrap(), royalty_info.unwrap());
 
             // raise royalty_info by more than 2% throws error
             let block_time = app.block_info().time;
@@ -464,7 +464,7 @@ mod tests {
                         image: Some(params.info.image.clone()),
                         external_link: Some(params.info.external_link.clone()),
                         explicit_content: None,
-                        royalty_info: Some(royalty_info.clone()),
+                        royalty_info: Some(royalty_info),
                     },
                 },
                 &[],
@@ -502,7 +502,7 @@ mod tests {
                 .wrap()
                 .query_wasm_smart(contract.clone(), &QueryMsg::CollectionInfo {})
                 .unwrap();
-            assert_eq!(res.royalty_info.unwrap(), royalty_info.clone().unwrap());
+            assert_eq!(res.royalty_info.unwrap(), royalty_info.unwrap());
 
             // update explicit content
             let res = app.execute_contract(
