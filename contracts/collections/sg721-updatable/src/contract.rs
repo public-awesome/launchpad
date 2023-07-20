@@ -152,33 +152,39 @@ pub fn query_frozen_token_metadata(deps: Deps) -> StdResult<FrozenTokenMetadataR
     Ok(FrozenTokenMetadataResponse { frozen })
 }
 
-pub fn _migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
-    // make sure the correct contract is being upgraded, and it's being
-    // upgraded from the correct version.
-    if CONTRACT_VERSION < EARLIEST_VERSION {
-        return Err(StdError::generic_err("Cannot upgrade to a previous contract version").into());
-    }
-    if CONTRACT_VERSION > TO_VERSION {
-        return Err(StdError::generic_err("Cannot upgrade to a previous contract version").into());
-    }
-    // if same version return
-    if CONTRACT_VERSION == TO_VERSION {
-        return Ok(Response::new());
+pub fn _migrate(mut deps: DepsMut, env: Env, _msg: Empty) -> Result<Response, ContractError> {
+    let prev_contract_version = cw2::get_contract_version(deps.storage)?;
+
+    let valid_contract_names = vec![CONTRACT_NAME.to_string()];
+    if !valid_contract_names.contains(&prev_contract_version.contract) {
+        return Err(StdError::generic_err("Invalid contract name for migration").into());
     }
 
-    // update contract version
-    cw2::set_contract_version(deps.storage, CONTRACT_NAME, TO_VERSION)?;
+    if prev_contract_version.version >= CONTRACT_VERSION.to_string() {
+        return Err(StdError::generic_err("Must upgrade contract version").into());
+    }
 
-    // perform the upgrade
-    cw721_base::upgrades::v0_17::migrate::<Extension, Empty, Empty, Empty>(deps)
-        .map_err(|e| sg721_base::ContractError::MigrationError(e.to_string()))?;
+    let mut response = Response::new();
 
-    let event = Event::new("migrate")
-        .add_attribute("from_name", CONTRACT_VERSION)
-        .add_attribute("from_version", CONTRACT_VERSION)
-        .add_attribute("to_name", CONTRACT_NAME)
-        .add_attribute("to_version", TO_VERSION);
-    Ok(Response::new().add_event(event))
+    if prev_contract_version.version < "3.0.0".to_string() {
+        response = sg721_base::upgrades::v3_0_0::upgrade(deps.branch(), &env, response)?;
+    }
+
+    if prev_contract_version.version < "3.1.0".to_string() {
+        response = sg721_base::upgrades::v3_1_0::upgrade(deps.branch(), &env, response)?;
+    }
+
+    cw2::set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+
+    response = response.add_event(
+        Event::new("migrate")
+            .add_attribute("from_name", prev_contract_version.contract)
+            .add_attribute("from_version", prev_contract_version.version)
+            .add_attribute("to_name", CONTRACT_NAME)
+            .add_attribute("to_version", CONTRACT_VERSION),
+    );
+
+    Ok(response)
 }
 
 #[cfg(test)]
