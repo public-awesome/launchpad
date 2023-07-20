@@ -1,4 +1,4 @@
-use cosmwasm_std::Empty;
+use cosmwasm_std::{Empty, Timestamp};
 use cw_storage_plus::Item;
 use serde::{de::DeserializeOwned, Serialize};
 use sg721::{CollectionInfo, RoyaltyInfo};
@@ -15,6 +15,7 @@ where
 
     /// Instantiate set to false by the minter, then true by creator to freeze collection info
     pub frozen_collection_info: Item<'a, bool>,
+    pub royalty_updated: Item<'a, Timestamp>,
 }
 
 impl<'a, T> Default for Sg721Contract<'a, T>
@@ -26,6 +27,7 @@ where
             parent: cw721_base::Cw721Contract::default(),
             collection_info: Item::new("collection_info"),
             frozen_collection_info: Item::new("frozen_collection_info"),
+            royalty_updated: Item::new("royalty_updated"),
         }
     }
 }

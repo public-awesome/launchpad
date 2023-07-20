@@ -35,8 +35,8 @@ pub enum ContractError {
     #[error("Approval not found for: {spender}")]
     ApprovalNotFound { spender: String },
 
-    #[error("Invalid Royalties")]
-    InvalidRoyalties {},
+    #[error("InvalidRoyalties: {0}")]
+    InvalidRoyalties(String),
 
     #[error("Description too long")]
     DescriptionTooLong {},
@@ -46,9 +46,6 @@ pub enum ContractError {
 
     #[error("CollectionInfoFrozen")]
     CollectionInfoFrozen {},
-
-    #[error("RoyaltyShareIncreased")]
-    RoyaltyShareIncreased {},
 
     #[error("MinterNotFound")]
     MinterNotFound {},
