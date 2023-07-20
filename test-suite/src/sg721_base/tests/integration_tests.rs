@@ -320,10 +320,99 @@ mod tests {
             );
             assert!(res.is_ok());
 
-            // update royalty_info
+            // lower royalty_info by more than 2% throws error
+            let royalty_info: Option<RoyaltyInfoResponse> = Some(RoyaltyInfoResponse {
+                payment_address: creator.to_string(),
+                share: Decimal::percent(7),
+            });
+            let res = app.execute_contract(
+                creator.clone(),
+                contract.clone(),
+                &Sg721ExecuteMsg::<Empty, Empty>::UpdateCollectionInfo {
+                    collection_info: UpdateCollectionInfoMsg {
+                        description: Some(params.info.description.clone()),
+                        image: Some(params.info.image.clone()),
+                        external_link: Some(params.info.external_link.clone()),
+                        explicit_content: None,
+                        royalty_info: Some(royalty_info.clone()),
+                    },
+                },
+                &[],
+            );
+            assert!(res.is_err());
+
+            // lower royalty_info by 2% succeeds
+            let royalty_info: Option<RoyaltyInfoResponse> = Some(RoyaltyInfoResponse {
+                payment_address: creator.to_string(),
+                share: Decimal::percent(8),
+            });
+            let res = app.execute_contract(
+                creator.clone(),
+                contract.clone(),
+                &Sg721ExecuteMsg::<Empty, Empty>::UpdateCollectionInfo {
+                    collection_info: UpdateCollectionInfoMsg {
+                        description: Some(params.info.description.clone()),
+                        image: Some(params.info.image.clone()),
+                        external_link: Some(params.info.external_link.clone()),
+                        explicit_content: None,
+                        royalty_info: Some(royalty_info.clone()),
+                    },
+                },
+                &[],
+            );
+            assert!(res.is_ok());
+
+            let royalty_info: Option<RoyaltyInfoResponse> = Some(RoyaltyInfoResponse {
+                payment_address: creator.to_string(),
+                share: Decimal::percent(7),
+            });
+            let res = app.execute_contract(
+                creator.clone(),
+                contract.clone(),
+                &Sg721ExecuteMsg::<Empty, Empty>::UpdateCollectionInfo {
+                    collection_info: UpdateCollectionInfoMsg {
+                        description: Some(params.info.description.clone()),
+                        image: Some(params.info.image.clone()),
+                        external_link: Some(params.info.external_link.clone()),
+                        explicit_content: None,
+                        royalty_info: Some(royalty_info.clone()),
+                    },
+                },
+                &[],
+            );
+            assert!(res.is_ok());
+
+            let res: CollectionInfoResponse = app
+                .wrap()
+                .query_wasm_smart(contract.clone(), &QueryMsg::CollectionInfo {})
+                .unwrap();
+            assert_eq!(res.royalty_info.unwrap(), royalty_info.clone().unwrap());
+
+            // raise royalty_info by more than 2% throws error
             let royalty_info: Option<RoyaltyInfoResponse> = Some(RoyaltyInfoResponse {
                 payment_address: creator.to_string(),
                 share: Decimal::percent(10),
+            });
+            let res = app.execute_contract(
+                creator.clone(),
+                contract.clone(),
+                &Sg721ExecuteMsg::<Empty, Empty>::UpdateCollectionInfo {
+                    collection_info: UpdateCollectionInfoMsg {
+                        description: Some(params.info.description.clone()),
+                        image: Some(params.info.image.clone()),
+                        external_link: Some(params.info.external_link.clone()),
+                        explicit_content: None,
+                        royalty_info: Some(royalty_info.clone()),
+                    },
+                },
+                &[],
+            );
+            assert!(res.is_err());
+
+            // raise royalty_info by 2% succeeds
+            let royalty_info: Option<RoyaltyInfoResponse> = Some(RoyaltyInfoResponse {
+                payment_address: creator.to_string(),
+                share: Decimal::percent(9),
             });
             let res = app.execute_contract(
                 creator.clone(),
@@ -370,27 +459,6 @@ mod tests {
                 .unwrap();
             // check explicit content changed to true
             assert!(res.explicit_content.unwrap());
-
-            // try update royalty_info higher
-            let royalty_info: Option<RoyaltyInfoResponse> = Some(RoyaltyInfoResponse {
-                payment_address: creator.to_string(),
-                share: Decimal::percent(11),
-            });
-            let res = app.execute_contract(
-                creator.clone(),
-                contract.clone(),
-                &Sg721ExecuteMsg::<Empty, Empty>::UpdateCollectionInfo {
-                    collection_info: UpdateCollectionInfoMsg {
-                        description: None,
-                        image: None,
-                        external_link: None,
-                        explicit_content: None,
-                        royalty_info: Some(royalty_info),
-                    },
-                },
-                &[],
-            );
-            assert!(res.is_err());
 
             // freeze collection throw err if not creator
             let res = app.execute_contract(

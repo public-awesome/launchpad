@@ -238,13 +238,12 @@ where
                             "Share change cannot be greater than 2%".to_string(),
                         ));
                     }
-                    if new_royalty_info.share > old_royalty_info.share
-                        && new_royalty_info.share > Decimal::percent(10)
-                    {
-                        return Err(ContractError::InvalidRoyalties(
-                            "Share cannot be greater than 10%".to_string(),
-                        ));
-                    }
+                }
+
+                if new_royalty_info.share > Decimal::percent(10) {
+                    return Err(ContractError::InvalidRoyalties(
+                        "Share cannot be greater than 10%".to_string(),
+                    ));
                 }
 
                 collection.royalty_info = Some(new_royalty_info);
