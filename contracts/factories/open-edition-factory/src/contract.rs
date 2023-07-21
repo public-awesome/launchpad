@@ -7,7 +7,6 @@ use sg_std::{Response, NATIVE_DENOM};
 use base_factory::contract::{
     must_be_allowed_collection, must_not_be_frozen, must_pay_exact_amount, update_params,
 };
-use base_factory::ContractError as BaseContractError;
 use sg1::checked_fair_burn;
 use sg2::query::{AllowedCollectionCodeIdResponse, AllowedCollectionCodeIdsResponse, Sg2QueryMsg};
 
@@ -72,10 +71,6 @@ pub fn execute_create_minter(
         deps.as_ref(),
         &params,
     )?;
-
-    if NATIVE_DENOM != msg.init_msg.mint_price.denom {
-        return Err(ContractError::BaseError(BaseContractError::InvalidDenom {}));
-    }
 
     if params.min_mint_price.amount > msg.init_msg.mint_price.amount {
         return Err(ContractError::InsufficientMintPrice {
