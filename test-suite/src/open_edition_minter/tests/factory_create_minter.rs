@@ -193,6 +193,7 @@ fn check_invalid_create_minter_mint_price() {
 #[test]
 fn check_custom_create_minter_denom() {
     // allow ibc/frenz denom
+    let denom = "ibc/frenz";
     let vt = open_edition_minter_custom_template(
         None,
         None,
@@ -200,23 +201,14 @@ fn check_custom_create_minter_denom() {
         Some(10),
         Some(2),
         Some(Coin {
-            denom: "uinvalid".to_string(),
+            denom: denom.to_string(),
             amount: Uint128::new(MIN_MINT_PRICE_OPEN_EDITION),
         }),
-        None,
+        Some(denom),
         None,
         None,
     );
-    assert_eq!(
-        vt.err()
-            .unwrap()
-            .err()
-            .unwrap()
-            .source()
-            .unwrap()
-            .to_string(),
-        "InvalidDenom".to_string()
-    );
+    assert!(vt.is_ok());
 }
 
 #[test]
