@@ -67,7 +67,7 @@ pub fn mock_params_proper(denom: Option<&str>) -> OpenEditionMinterParams {
         code_id: 1,
         allowed_sg721_code_ids: vec![1, 3, 5, 6],
         frozen: false,
-        creation_fee: coin(CREATION_FEE, denom),
+        creation_fee: coin(CREATION_FEE, NATIVE_DENOM),
         min_mint_price: coin(MIN_MINT_PRICE_OPEN_EDITION, denom),
         mint_fee_bps: MINT_FEE_FAIR_BURN,
         max_trading_offset_secs: 60 * 60 * 24 * 7,
@@ -75,7 +75,7 @@ pub fn mock_params_proper(denom: Option<&str>) -> OpenEditionMinterParams {
             max_per_address_limit: 10,
             airdrop_mint_fee_bps: 100,
             airdrop_mint_price: Coin {
-                denom: denom.to_string(),
+                denom: NATIVE_DENOM.to_string(),
                 amount: Uint128::new(100_000_000u128),
             },
             dev_fee_address: DEV_ADDRESS.to_string(),

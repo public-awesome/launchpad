@@ -1,12 +1,15 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult, WasmMsg};
+use cosmwasm_std::{
+    ensure, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult, WasmMsg,
+};
 use cw2::set_contract_version;
 use sg_std::{Response, NATIVE_DENOM};
 
 use base_factory::contract::{
     must_be_allowed_collection, must_not_be_frozen, must_pay_exact_amount, update_params,
 };
+use base_factory::ContractError as BaseContractError;
 use sg1::checked_fair_burn;
 use sg2::query::{AllowedCollectionCodeIdResponse, AllowedCollectionCodeIdsResponse, Sg2QueryMsg};
 
@@ -30,6 +33,15 @@ pub fn instantiate(
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+
+    // airdrop fee should be in NATIVE_DENOM
+    if msg.params.extension.airdrop_mint_price.denom != NATIVE_DENOM {
+        return Err(ContractError::BaseError(BaseContractError::InvalidDenom {}));
+    }
+    // creation_fee should be in NATIVE_DENOM
+    if msg.params.creation_fee.denom != NATIVE_DENOM {
+        return Err(ContractError::BaseError(BaseContractError::InvalidDenom {}));
+    }
 
     SUDO_PARAMS.save(deps.storage, &msg.params)?;
 
@@ -71,6 +83,11 @@ pub fn execute_create_minter(
         deps.as_ref(),
         &params,
     )?;
+
+    ensure!(
+        params.min_mint_price.denom == msg.init_msg.mint_price.denom,
+        BaseContractError::InvalidDenom {}
+    );
 
     if params.min_mint_price.amount > msg.init_msg.mint_price.amount {
         return Err(ContractError::InsufficientMintPrice {
