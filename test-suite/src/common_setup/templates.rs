@@ -394,6 +394,8 @@ pub fn open_edition_minter_custom_template(
     let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
     let msg = Sg2ExecuteMsg::CreateMinter(msg);
 
+    dbg!(msg.clone());
+
     let res = app.execute_contract(creator.clone(), factory_addr.clone(), &msg, &creation_fee);
     if res.is_err() {
         return Err(res);
