@@ -11,6 +11,7 @@ fn invalid_code_id() {
         Some(5),
         None,
         None,
+        None,
         Some(19),
     );
     assert_eq!(

@@ -14,8 +14,9 @@ use crate::common_setup::templates::open_edition_minter_custom_template;
 
 #[test]
 fn frozen_factory_cannot_create_new_minters() {
-    let vt = open_edition_minter_custom_template(None, None, None, None, None, None, None, None)
-        .unwrap();
+    let vt =
+        open_edition_minter_custom_template(None, None, None, None, None, None, None, None, None)
+            .unwrap();
     let (mut router, creator, _buyer) = (vt.router, vt.accts.creator, vt.accts.buyer);
     let _minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
     let factory_addr = vt.collection_response_vec[0].factory.clone().unwrap();

@@ -335,6 +335,7 @@ pub fn open_edition_minter_custom_template(
     max_per_address_limit: Option<u32>,
     per_address_limit_minter: Option<u32>,
     mint_price_minter: Option<Coin>,
+    custom_denom: Option<&str>,
     sg721_code: Option<Box<dyn Contract<StargazeMsgWrapper>>>,
     sg721_codeid: Option<u64>,
 ) -> Result<MinterTemplateResponse<Accounts>, anyhow::Result<AppResponse>> {
@@ -344,7 +345,7 @@ pub fn open_edition_minter_custom_template(
         open_edition_minter_code_ids(&mut app, sg721_code.unwrap_or_else(contract_sg721_base));
 
     // Factory params
-    let mut factory_params = mock_params_proper(None);
+    let mut factory_params = mock_params_proper(custom_denom);
     factory_params.extension.max_per_address_limit =
         max_per_address_limit.unwrap_or(factory_params.extension.max_per_address_limit);
 

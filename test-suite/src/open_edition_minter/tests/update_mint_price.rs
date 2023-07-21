@@ -11,9 +11,18 @@ const MINT_PRICE: u128 = 100_000_000;
 
 #[test]
 fn check_mint_price_updates() {
-    let vt =
-        open_edition_minter_custom_template(None, None, None, Some(10), Some(2), None, None, None)
-            .unwrap();
+    let vt = open_edition_minter_custom_template(
+        None,
+        None,
+        None,
+        Some(10),
+        Some(2),
+        None,
+        None,
+        None,
+        None,
+    )
+    .unwrap();
     let (mut router, creator, _buyer) = (vt.router, vt.accts.creator, vt.accts.buyer);
     let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
 

@@ -11,8 +11,17 @@ use crate::common_setup::templates::open_edition_minter_custom_template;
 #[test]
 fn check_valid_create_minter() {
     // Set a per address lower or equal than the factory -> ok
-    let vt =
-        open_edition_minter_custom_template(None, None, None, Some(10), Some(5), None, None, None);
+    let vt = open_edition_minter_custom_template(
+        None,
+        None,
+        None,
+        Some(10),
+        Some(5),
+        None,
+        None,
+        None,
+        None,
+    );
     assert!(vt.is_ok());
 }
 
@@ -20,8 +29,17 @@ fn check_valid_create_minter() {
 fn check_invalid_create_minter_address_limit() {
     // If the absolute max per address defined in the factory is 10 and the message to init the
     // minter gives 20 -> error
-    let vt =
-        open_edition_minter_custom_template(None, None, None, Some(10), Some(20), None, None, None);
+    let vt = open_edition_minter_custom_template(
+        None,
+        None,
+        None,
+        Some(10),
+        Some(20),
+        None,
+        None,
+        None,
+        None,
+    );
     // When it is an error -> wrapped twice
     assert_eq!(
         vt.err()
@@ -40,8 +58,17 @@ fn check_invalid_create_minter_address_limit() {
     );
 
     // The minimum should be 1 -> 0 will give an error
-    let vt =
-        open_edition_minter_custom_template(None, None, None, Some(10), Some(0), None, None, None);
+    let vt = open_edition_minter_custom_template(
+        None,
+        None,
+        None,
+        Some(10),
+        Some(0),
+        None,
+        None,
+        None,
+        None,
+    );
     assert_eq!(
         vt.err()
             .unwrap()
@@ -71,6 +98,7 @@ fn check_invalid_create_minter_start_end_time() {
         None,
         None,
         None,
+        None,
     );
     assert_eq!(
         vt.err()
@@ -90,6 +118,7 @@ fn check_invalid_create_minter_start_end_time() {
         None,
         Some(10),
         Some(2),
+        None,
         None,
         None,
         None,
@@ -121,6 +150,7 @@ fn check_invalid_create_minter_mint_price() {
         }),
         None,
         None,
+        None,
     );
     assert_eq!(
         vt.err()
@@ -146,6 +176,7 @@ fn check_invalid_create_minter_mint_price() {
         }),
         None,
         None,
+        None,
     );
     assert_eq!(
         vt.err()
@@ -156,6 +187,35 @@ fn check_invalid_create_minter_mint_price() {
             .unwrap()
             .to_string(),
         "InvalidMintPrice".to_string()
+    );
+}
+
+#[test]
+fn check_custom_create_minter_denom() {
+    // allow ibc/frenz denom
+    let vt = open_edition_minter_custom_template(
+        None,
+        None,
+        None,
+        Some(10),
+        Some(2),
+        Some(Coin {
+            denom: "uinvalid".to_string(),
+            amount: Uint128::new(MIN_MINT_PRICE_OPEN_EDITION),
+        }),
+        None,
+        None,
+        None,
+    );
+    assert_eq!(
+        vt.err()
+            .unwrap()
+            .err()
+            .unwrap()
+            .source()
+            .unwrap()
+            .to_string(),
+        "InvalidDenom".to_string()
     );
 }
 
@@ -197,6 +257,7 @@ fn check_invalid_create_minter_nft_data() {
         None,
         None,
         None,
+        None,
     );
     assert_eq!(
         vt.err()
@@ -218,6 +279,7 @@ fn check_invalid_create_minter_nft_data() {
             extension: metadata_def,
             token_uri: None,
         }),
+        None,
         None,
         None,
         None,
@@ -249,6 +311,7 @@ fn check_invalid_create_minter_nft_data() {
         None,
         None,
         None,
+        None,
     );
     assert_eq!(
         vt.err()
@@ -270,6 +333,7 @@ fn check_invalid_create_minter_nft_data() {
             extension: None,
             token_uri: token_uri_def,
         }),
+        None,
         None,
         None,
         None,

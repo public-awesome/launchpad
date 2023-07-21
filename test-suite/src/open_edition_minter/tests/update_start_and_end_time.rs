@@ -9,9 +9,18 @@ use crate::common_setup::templates::open_edition_minter_custom_template;
 
 #[test]
 fn check_start_end_time_updates() {
-    let vt =
-        open_edition_minter_custom_template(None, None, None, Some(10), Some(2), None, None, None)
-            .unwrap();
+    let vt = open_edition_minter_custom_template(
+        None,
+        None,
+        None,
+        Some(10),
+        Some(2),
+        None,
+        None,
+        None,
+        None,
+    )
+    .unwrap();
     let (mut router, creator, _buyer) = (vt.router, vt.accts.creator, vt.accts.buyer);
     let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
 
