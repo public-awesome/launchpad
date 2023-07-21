@@ -344,7 +344,7 @@ pub fn open_edition_minter_custom_template(
         open_edition_minter_code_ids(&mut app, sg721_code.unwrap_or_else(contract_sg721_base));
 
     // Factory params
-    let mut factory_params = mock_params_proper();
+    let mut factory_params = mock_params_proper(None);
     factory_params.extension.max_per_address_limit =
         max_per_address_limit.unwrap_or(factory_params.extension.max_per_address_limit);
 

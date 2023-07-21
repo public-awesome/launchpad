@@ -13,7 +13,7 @@ pub fn proper_instantiate() -> (StargazeApp, FactoryContract) {
     let factory_id = app.store_code(contract_open_edition_factory());
     let minter_id = 2;
 
-    let mut params = mock_params_proper();
+    let mut params = mock_params_proper(None);
     params.code_id = minter_id;
 
     let factory_contract_addr = app

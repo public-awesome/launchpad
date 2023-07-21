@@ -57,7 +57,7 @@ pub fn setup_open_edition_minter_contract(
     let init_msg = setup_params.init_msg.clone();
     let nft_data = setup_params.init_msg.unwrap().nft_data;
 
-    let mut params = mock_params_proper();
+    let mut params = mock_params_proper(None);
     params.code_id = minter_code_id;
 
     let factory_addr = router.instantiate_contract(
