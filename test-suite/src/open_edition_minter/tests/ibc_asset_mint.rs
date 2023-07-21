@@ -1,16 +1,21 @@
-use cosmwasm_std::{coin, coins, Uint128};
+use base_factory::ContractError as BaseContractError;
+use cosmwasm_std::{coin, coins};
 use cw_multi_test::{BankSudo, Executor, SudoMsg};
 use open_edition_factory::types::{NftData, NftMetadataType};
 use open_edition_minter::msg::ExecuteMsg;
-use sg_std::GENESIS_MINT_START_TIME;
+use sg2::{msg::Sg2ExecuteMsg, tests::mock_collection_params};
+use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
 use crate::common_setup::{
     contract_boxes::{contract_sg721_base, custom_mock_app},
     setup_accounts_and_block::{setup_accounts, setup_block_time},
     setup_minter::{
-        common::constants::MIN_MINT_PRICE_OPEN_EDITION,
+        common::constants::{CREATION_FEE, MIN_MINT_PRICE_OPEN_EDITION},
         open_edition_minter::{
-            mock_params::mock_init_minter_extension, setup::open_edition_minter_code_ids,
+            mock_params::{
+                mock_create_minter_init_msg, mock_init_minter_extension, mock_params_proper,
+            },
+            setup::open_edition_minter_code_ids,
         },
     },
     templates::open_edition_minter_custom_template,
@@ -20,14 +25,14 @@ use crate::common_setup::{
 fn check_custom_create_minter_denom() {
     // allow ibc/frenz denom
     let denom = "ibc/frenz";
-    let mint_price = coins(MIN_MINT_PRICE_OPEN_EDITION, denom.to_string());
+    let mint_price = coin(MIN_MINT_PRICE_OPEN_EDITION, denom.to_string());
     let vt = open_edition_minter_custom_template(
         None,
         None,
         None,
         Some(10),
         Some(2),
-        Some(mint_price[0]),
+        Some(mint_price.clone()),
         Some(denom),
         None,
         None,
@@ -41,7 +46,7 @@ fn check_custom_create_minter_denom() {
         .sudo(SudoMsg::Bank({
             BankSudo::Mint {
                 to_address: buyer.to_string(),
-                amount: mint_price.clone(),
+                amount: vec![mint_price.clone()],
             }
         }))
         .map_err(|err| println!("{:?}", err))
@@ -51,7 +56,7 @@ fn check_custom_create_minter_denom() {
 
     // Mint succeeds
     let mint_msg = ExecuteMsg::Mint {};
-    let res = router.execute_contract(buyer, minter_addr, &mint_msg, &mint_price);
+    let res = router.execute_contract(buyer, minter_addr, &mint_msg, &[mint_price]);
     assert!(res.is_ok());
 }
 
@@ -65,13 +70,9 @@ fn denom_mismatch_creating_minter() {
     let mint_price = coin(MIN_MINT_PRICE_OPEN_EDITION, denom.to_string());
     let nft_data = NftData {
         nft_data_type: NftMetadataType::OffChainMetadata,
-        token_uri: None,
+        token_uri: Some("ipfs://1234".to_string()),
         extension: None,
     };
-    let mut init_msg =
-        mock_init_minter_extension(None, None, None, Some(mint_price), nft_data, None);
-    init_msg.mint_price = mint_price;
-
     let code_ids = open_edition_minter_code_ids(&mut app, contract_sg721_base());
 
     let minter_code_id = code_ids.minter_code_id;
@@ -79,20 +80,23 @@ fn denom_mismatch_creating_minter() {
     let sg721_code_id = code_ids.sg721_code_id;
     let minter_admin = creator;
 
-    let mut params = mock_params(None);
+    let mut params = mock_params_proper(None);
     params.code_id = minter_code_id;
 
     let factory_addr = app
         .instantiate_contract(
             factory_code_id,
             minter_admin.clone(),
-            &vending_factory::msg::InstantiateMsg { params },
+            &open_edition_factory::msg::InstantiateMsg { params },
             &[],
             "factory",
             None,
         )
         .unwrap();
 
+    let mut init_msg =
+        mock_init_minter_extension(None, None, None, Some(mint_price.clone()), nft_data, None);
+    init_msg.mint_price = mint_price;
     let mut msg = mock_create_minter_init_msg(mock_collection_params(), init_msg);
     msg.collection_params.code_id = sg721_code_id;
     msg.collection_params.info.creator = minter_admin.to_string();
@@ -104,7 +108,7 @@ fn denom_mismatch_creating_minter() {
         .unwrap_err();
     assert_eq!(
         err.source().unwrap().to_string(),
-        ContractError::DenomMismatch {}.to_string()
+        BaseContractError::InvalidDenom {}.to_string()
     );
 }
 
