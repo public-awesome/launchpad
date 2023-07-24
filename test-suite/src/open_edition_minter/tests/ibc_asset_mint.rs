@@ -82,6 +82,55 @@ fn noble_ibc_minter() {
     // factory needs airdrop_mint_price: 0
     // factory needs mint_fee_bps: 100_00 (100%)
     // this means full burn goes to fairburn pool
+
+    // allow ibc/frenz denom
+    let denom = "ibc/frenz";
+    let mint_price = coin(MIN_MINT_PRICE_OPEN_EDITION, denom.to_string());
+    let custom_params = OpenEditionMinterCustomParams {
+        denom: Some(denom),
+        mint_fee_bps: Some(100_00),
+        airdrop_mint_price_amount: Some(Uint128::zero()),
+    };
+    let vt = open_edition_minter_custom_template(
+        None,
+        None,
+        None,
+        Some(10),
+        Some(2),
+        Some(mint_price.clone()),
+        custom_params,
+        None,
+        None,
+    )
+    .unwrap();
+    let (mut router, creator, buyer) = (vt.router, vt.accts.creator, vt.accts.buyer);
+    let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
+
+    // give the buyer some of the IBC asset
+    router
+        .sudo(SudoMsg::Bank({
+            BankSudo::Mint {
+                to_address: buyer.to_string(),
+                amount: vec![mint_price.clone()],
+            }
+        }))
+        .map_err(|err| println!("{:?}", err))
+        .ok();
+
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 100, None);
+
+    // Mint succeeds
+    let mint_msg = ExecuteMsg::Mint {};
+    let res = router.execute_contract(buyer.clone(), minter_addr, &mint_msg, &[mint_price.clone()]);
+    assert!(res.is_ok());
+
+    // confirm balances
+    // confirm buyer IBC assets spent
+    let balance = router.wrap().query_balance(buyer, denom).unwrap();
+    assert_eq!(balance.amount, Uint128::zero());
+    // for noble, seller has 0% IBC asset
+    let balance = router.wrap().query_balance(creator, denom).unwrap();
+    assert_eq!(balance.amount, Uint128::zero());
 }
 
 #[test]
