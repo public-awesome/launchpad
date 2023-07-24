@@ -116,7 +116,7 @@ fn test_create_minter(chain: &mut Chain) {
     assert!(!sg721_addr.trim().is_empty());
 
     // generate 200 user keys and send them all enough money to each mint 50 tokens + gas
-    let users = gen_users(chain, 200, MINT_PRICE * 52);
+    let users = gen_users(chain, 200, MINT_PRICE * 52, None);
 
     let init_balance = tokio_block(
         chain
@@ -271,7 +271,7 @@ fn test_start_trading_time(chain: &mut Chain) {
     let amount = fair_burn_fees[0].value.split(&denom).collect::<Vec<&str>>()[0];
     total_fairburn_fees += amount.parse::<u128>().unwrap();
 
-    let users = gen_users(chain, 20, MINT_PRICE * 12);
+    let users = gen_users(chain, 20, MINT_PRICE * 12, None);
     let num_users = users.len() as u32;
 
     chain

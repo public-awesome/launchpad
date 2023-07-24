@@ -14,15 +14,16 @@ use test_context::test_context;
 use crate::helpers::{
     chain::Chain,
     helper::{gen_users, latest_block_time},
-    open_edition_minter_helpers::{
-        create_minter_msg, instantiate_factory, CREATION_FEE, FACTORY_NAME, MAX_TOKENS, MINT_PRICE,
+    open_edition_ibc_minter_helpers::{
+        create_minter_msg, instantiate_factory, CREATION_FEE, FACTORY_NAME, MAX_TOKENS, MINT_DENOM,
+        MINT_PRICE,
     },
 };
 
 #[test_context(Chain)]
 #[test]
 #[ignore]
-fn test_open_edition_exec_functions(chain: &mut Chain) {
+fn test_open_edition_ibc_exec_functions(chain: &mut Chain) {
     let denom = chain.cfg.orc_cfg.chain_cfg.denom.clone();
     let user = chain.cfg.users[0].clone();
     let user_addr = &user.account.address;
@@ -75,7 +76,12 @@ fn test_open_edition_exec_functions(chain: &mut Chain) {
     let (minter_addr, _sg721_addr) = (tags[0].value.to_string(), tags[1].value.to_string());
 
     // generate 10 user keys and send them all enough money to each mint 10 tokens (max)
-    let users = gen_users(chain, 10, MINT_PRICE * MAX_TOKENS as u128 * 2u128, None);
+    let users = gen_users(
+        chain,
+        10,
+        MINT_PRICE * MAX_TOKENS as u128 * 2u128,
+        Some(MINT_DENOM),
+    );
 
     // Sleep to ensure we can start minting
     chain
@@ -117,7 +123,7 @@ fn test_open_edition_exec_functions(chain: &mut Chain) {
         chain
             .orc
             .client
-            .bank_query_balance(user_addr.parse().unwrap(), denom.parse().unwrap()),
+            .bank_query_balance(user_addr.parse().unwrap(), MINT_DENOM.parse().unwrap()),
     )
     .unwrap()
     .balance;
@@ -132,7 +138,7 @@ fn test_open_edition_exec_functions(chain: &mut Chain) {
                 msg: Box::new(open_edition_minter::msg::ExecuteMsg::Mint {}),
                 funds: vec![OrcCoin {
                     amount: MINT_PRICE,
-                    denom: denom.parse().unwrap(),
+                    denom: MINT_DENOM.parse().unwrap(),
                 }],
             });
         }
@@ -166,13 +172,13 @@ fn test_open_edition_exec_functions(chain: &mut Chain) {
         chain
             .orc
             .client
-            .bank_query_balance(user_addr.parse().unwrap(), denom.parse().unwrap()),
+            .bank_query_balance(user_addr.parse().unwrap(), MINT_DENOM.parse().unwrap()),
     )
     .unwrap()
     .balance;
 
-    // 5 * 10 * MINT_PRICE = 5k STARS x 0.9 (10% fee)
-    assert_eq!(balance.amount, init_balance.amount + 4_500_000_000);
+    // 5 * 10 * MINT_PRICE = 5k STARS x 0 (100% fee)
+    assert_eq!(balance.amount, init_balance.amount);
 
     // Mint To
     let _res = chain

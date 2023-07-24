@@ -23,7 +23,7 @@ pub fn mock_init_minter_extension(
     OpenEditionMinterInitMsgExtension {
         nft_data,
         start_time: start_time.unwrap_or(Timestamp::from_nanos(GENESIS_MINT_START_TIME)),
-        mint_price: mint_price.unwrap_or_else(|| coin(MIN_MINT_PRICE_OPEN_EDITION, NATIVE_DENOM)),
+        mint_price: mint_price.unwrap_or(coin(MIN_MINT_PRICE_OPEN_EDITION, NATIVE_DENOM)),
         per_address_limit: per_address_limit_minter.unwrap_or(1u32),
         end_time: end_time.unwrap_or(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
         payment_address,
@@ -68,7 +68,7 @@ pub fn mock_params_custom(custom_params: OpenEditionMinterCustomParams) -> OpenE
     let mint_fee_bps = custom_params.mint_fee_bps.unwrap_or(MINT_FEE_FAIR_BURN);
     let airdrop_mint_price_amount = custom_params
         .airdrop_mint_price_amount
-        .unwrap_or_else(|| Uint128::new(MIN_MINT_PRICE_OPEN_EDITION));
+        .unwrap_or(Uint128::new(MIN_MINT_PRICE_OPEN_EDITION));
     OpenEditionMinterParams {
         code_id: 1,
         allowed_sg721_code_ids: vec![1, 3, 5, 6],
