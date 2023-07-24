@@ -75,7 +75,7 @@ pub fn mock_params_custom(custom_params: OpenEditionMinterCustomParams) -> OpenE
         frozen: false,
         creation_fee: coin(CREATION_FEE, NATIVE_DENOM),
         min_mint_price: coin(MIN_MINT_PRICE_OPEN_EDITION, denom),
-        mint_fee_bps: mint_fee_bps,
+        mint_fee_bps,
         max_trading_offset_secs: 60 * 60 * 24 * 7,
         extension: ParamsExtension {
             max_per_address_limit: 10,

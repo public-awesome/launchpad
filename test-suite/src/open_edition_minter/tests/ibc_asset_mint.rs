@@ -88,7 +88,7 @@ fn noble_ibc_minter() {
     let mint_price = coin(MIN_MINT_PRICE_OPEN_EDITION, denom.to_string());
     let custom_params = OpenEditionMinterCustomParams {
         denom: Some(denom),
-        mint_fee_bps: Some(100_00),
+        mint_fee_bps: Some(10000),
         airdrop_mint_price_amount: Some(Uint128::zero()),
     };
     let vt = open_edition_minter_custom_template(
@@ -121,7 +121,7 @@ fn noble_ibc_minter() {
 
     // Mint succeeds
     let mint_msg = ExecuteMsg::Mint {};
-    let res = router.execute_contract(buyer.clone(), minter_addr, &mint_msg, &[mint_price.clone()]);
+    let res = router.execute_contract(buyer.clone(), minter_addr, &mint_msg, &[mint_price]);
     assert!(res.is_ok());
 
     // confirm balances
