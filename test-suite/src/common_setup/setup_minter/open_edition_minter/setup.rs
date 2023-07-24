@@ -15,7 +15,7 @@ use sg_std::{StargazeMsgWrapper, NATIVE_DENOM};
 
 use crate::common_setup::msg::CodeIds;
 use crate::common_setup::setup_minter::open_edition_minter::mock_params::{
-    mock_create_minter, mock_init_minter_extension, mock_params_proper,
+    mock_create_minter, mock_init_minter_extension, mock_params_custom,
 };
 
 use crate::common_setup::setup_minter::common::constants::CREATION_FEE;
@@ -57,7 +57,7 @@ pub fn setup_open_edition_minter_contract(
     let init_msg = setup_params.init_msg.clone();
     let nft_data = setup_params.init_msg.unwrap().nft_data;
 
-    let mut params = mock_params_proper(None);
+    let mut params = mock_params_custom(None, None, None);
     params.code_id = minter_code_id;
 
     let factory_addr = router.instantiate_contract(

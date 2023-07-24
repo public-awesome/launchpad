@@ -14,7 +14,7 @@ use crate::common_setup::setup_minter::common::constants::{
 };
 use crate::common_setup::setup_minter::common::parse_response::build_collection_response;
 use crate::common_setup::setup_minter::open_edition_minter::mock_params::{
-    mock_create_minter, mock_params_proper,
+    mock_create_minter, mock_params_custom,
 };
 use crate::common_setup::setup_minter::open_edition_minter::setup::open_edition_minter_code_ids;
 use cosmwasm_std::{coin, coins, Coin, Timestamp, Uint128};
@@ -345,7 +345,7 @@ pub fn open_edition_minter_custom_template(
         open_edition_minter_code_ids(&mut app, sg721_code.unwrap_or_else(contract_sg721_base));
 
     // Factory params
-    let mut factory_params = mock_params_proper(custom_denom);
+    let mut factory_params = mock_params_custom(custom_denom, None, None);
     factory_params.extension.max_per_address_limit =
         max_per_address_limit.unwrap_or(factory_params.extension.max_per_address_limit);
 
@@ -393,8 +393,6 @@ pub fn open_edition_minter_custom_template(
     msg.collection_params.info.creator = creator.to_string();
     let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
     let msg = Sg2ExecuteMsg::CreateMinter(msg);
-
-    dbg!(msg.clone());
 
     let res = app.execute_contract(creator.clone(), factory_addr.clone(), &msg, &creation_fee);
     if res.is_err() {

@@ -1,5 +1,5 @@
 use base_factory::ContractError as BaseContractError;
-use cosmwasm_std::{coin, coins};
+use cosmwasm_std::{coin, coins, Decimal, Uint128};
 use cw_multi_test::{BankSudo, Executor, SudoMsg};
 use open_edition_factory::types::{NftData, NftMetadataType};
 use open_edition_minter::msg::ExecuteMsg;
@@ -13,7 +13,7 @@ use crate::common_setup::{
         common::constants::{CREATION_FEE, MIN_MINT_PRICE_OPEN_EDITION},
         open_edition_minter::{
             mock_params::{
-                mock_create_minter_init_msg, mock_init_minter_extension, mock_params_proper,
+                mock_create_minter_init_msg, mock_init_minter_extension, mock_params_custom,
             },
             setup::open_edition_minter_code_ids,
         },
@@ -38,7 +38,7 @@ fn check_custom_create_minter_denom() {
         None,
     )
     .unwrap();
-    let (mut router, _, buyer) = (vt.router, vt.accts.creator, vt.accts.buyer);
+    let (mut router, creator, buyer) = (vt.router, vt.accts.creator, vt.accts.buyer);
     let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
 
     // give the buyer some of the IBC asset
@@ -52,12 +52,30 @@ fn check_custom_create_minter_denom() {
         .map_err(|err| println!("{:?}", err))
         .ok();
 
-    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 1, None);
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 100, None);
 
     // Mint succeeds
     let mint_msg = ExecuteMsg::Mint {};
-    let res = router.execute_contract(buyer, minter_addr, &mint_msg, &[mint_price]);
+    let res = router.execute_contract(buyer.clone(), minter_addr, &mint_msg, &[mint_price.clone()]);
     assert!(res.is_ok());
+
+    // confirm balances
+    // confirm buyer IBC assets spent
+    let balance = router.wrap().query_balance(buyer, denom).unwrap();
+    assert_eq!(balance.amount, Uint128::zero());
+    // TODO only for noble, seller has 90% IBC asset
+    let network_fee = mint_price.amount * Decimal::percent(10);
+    let seller_amount = mint_price.amount.checked_sub(network_fee).unwrap();
+    let balance = router.wrap().query_balance(creator, denom).unwrap();
+    assert_eq!(balance.amount, seller_amount);
+    // all mint goes to fairburn_pool confirmed in e2e test
+}
+
+#[test]
+fn noble_ibc_minter() {
+    // factory needs airdrop_mint_price: 0
+    // factory needs mint_fee_bps: 100_00 (100%)
+    // this means full burn goes to fairburn pool
 }
 
 #[test]
@@ -80,7 +98,7 @@ fn denom_mismatch_creating_minter() {
     let sg721_code_id = code_ids.sg721_code_id;
     let minter_admin = creator;
 
-    let mut params = mock_params_proper(None);
+    let mut params = mock_params_custom(None, None, None);
     params.code_id = minter_code_id;
 
     let factory_addr = app

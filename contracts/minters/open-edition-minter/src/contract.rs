@@ -1,14 +1,14 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coin, to_binary, Addr, BankMsg, Binary, Coin, Deps, DepsMut, Empty, Env, MessageInfo, Order,
-    Reply, ReplyOn, StdError, StdResult, Timestamp, WasmMsg,
+    coin, coins, to_binary, Addr, BankMsg, Binary, Coin, Deps, DepsMut, Empty, Env, MessageInfo,
+    Order, Reply, ReplyOn, StdError, StdResult, Timestamp, WasmMsg,
 };
 use cw2::set_contract_version;
 use cw_utils::{may_pay, maybe_addr, nonpayable, parse_reply_instantiate_data};
 use semver::Version;
 use sg_std::math::U64Ext;
-use sg_std::StargazeMsgWrapper;
+use sg_std::{create_fund_fairburn_pool_msg, StargazeMsgWrapper, NATIVE_DENOM};
 use url::Url;
 
 use open_edition_factory::msg::{OpenEditionMinterCreateMsg, ParamsResponse};
@@ -313,16 +313,27 @@ fn _execute_mint(
         factory_params.mint_fee_bps.bps_to_decimal()
     };
     let network_fee = mint_price.amount * mint_fee;
+
     // This is for the network fee msg
-    checked_fair_burn(
-        &info,
-        network_fee.u128(),
-        Some(
-            deps.api
-                .addr_validate(&factory_params.extension.dev_fee_address)?,
-        ),
-        &mut res,
-    )?;
+    // send non-native fees to community pool
+    if mint_price.denom != NATIVE_DENOM {
+        // only send non-zero amounts
+        if !network_fee.is_zero() {
+            let msg =
+                create_fund_fairburn_pool_msg(coins(network_fee.u128(), mint_price.clone().denom));
+            res = res.add_message(msg);
+        }
+    } else {
+        checked_fair_burn(
+            &info,
+            network_fee.u128(),
+            Some(
+                deps.api
+                    .addr_validate(&factory_params.extension.dev_fee_address)?,
+            ),
+            &mut res,
+        )?;
+    }
 
     // Token ID to mint + update the config counter
     let token_id = increment_token_index(deps.storage)?.to_string();
