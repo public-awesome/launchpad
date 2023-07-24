@@ -5,6 +5,7 @@ use crate::common_setup::msg::{
     MinterCollectionResponse, OpenEditionMinterInstantiateParams, OpenEditionMinterSetupParams,
 };
 use crate::common_setup::setup_minter::common::parse_response::build_collection_response;
+use crate::common_setup::templates::OpenEditionMinterCustomParams;
 use cosmwasm_std::{coins, Addr, Coin, Timestamp};
 use cw_multi_test::{Contract, Executor};
 use open_edition_factory::msg::OpenEditionMinterInitMsgExtension;
@@ -57,7 +58,12 @@ pub fn setup_open_edition_minter_contract(
     let init_msg = setup_params.init_msg.clone();
     let nft_data = setup_params.init_msg.unwrap().nft_data;
 
-    let mut params = mock_params_custom(None, None, None);
+    let custom_params = OpenEditionMinterCustomParams {
+        denom: None,
+        mint_fee_bps: None,
+        airdrop_mint_price_amount: None,
+    };
+    let mut params = mock_params_custom(custom_params);
     params.code_id = minter_code_id;
 
     let factory_addr = router.instantiate_contract(

@@ -326,6 +326,18 @@ pub fn base_minter_with_specified_sg721(
     }
 }
 
+pub struct OpenEditionMinterCustomParams<'a> {
+    pub denom: Option<&'a str>,
+    pub mint_fee_bps: Option<u64>,
+    pub airdrop_mint_price_amount: Option<Uint128>,
+}
+
+pub const DEFAULT_CUSTOM_PARAMS: OpenEditionMinterCustomParams = OpenEditionMinterCustomParams {
+    denom: None,
+    mint_fee_bps: None,
+    airdrop_mint_price_amount: None,
+};
+
 // Custom params set to a high level function to ease the tests
 #[allow(clippy::too_many_arguments)]
 pub fn open_edition_minter_custom_template(
@@ -335,7 +347,7 @@ pub fn open_edition_minter_custom_template(
     max_per_address_limit: Option<u32>,
     per_address_limit_minter: Option<u32>,
     mint_price_minter: Option<Coin>,
-    custom_denom: Option<&str>,
+    custom_params: OpenEditionMinterCustomParams,
     sg721_code: Option<Box<dyn Contract<StargazeMsgWrapper>>>,
     sg721_codeid: Option<u64>,
 ) -> Result<MinterTemplateResponse<Accounts>, anyhow::Result<AppResponse>> {
@@ -345,7 +357,7 @@ pub fn open_edition_minter_custom_template(
         open_edition_minter_code_ids(&mut app, sg721_code.unwrap_or_else(contract_sg721_base));
 
     // Factory params
-    let mut factory_params = mock_params_custom(custom_denom, None, None);
+    let mut factory_params = mock_params_custom(custom_params);
     factory_params.extension.max_per_address_limit =
         max_per_address_limit.unwrap_or(factory_params.extension.max_per_address_limit);
 

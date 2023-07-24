@@ -9,7 +9,7 @@ use sg4::StatusResponse;
 
 use crate::common_setup::setup_accounts_and_block::{coins_for_msg, setup_block_time};
 use crate::common_setup::setup_minter::common::constants::DEV_ADDRESS;
-use crate::common_setup::templates::open_edition_minter_custom_template;
+use crate::common_setup::templates::{open_edition_minter_custom_template, DEFAULT_CUSTOM_PARAMS};
 
 const MINT_PRICE: u128 = 100_000_000;
 
@@ -22,7 +22,7 @@ fn check_mint_revenues_distribution() {
         None,
         Some(3),
         None,
-        None,
+        DEFAULT_CUSTOM_PARAMS,
         None,
         None,
     )

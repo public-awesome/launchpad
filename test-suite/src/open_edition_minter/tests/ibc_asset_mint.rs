@@ -18,7 +18,9 @@ use crate::common_setup::{
             setup::open_edition_minter_code_ids,
         },
     },
-    templates::open_edition_minter_custom_template,
+    templates::{
+        open_edition_minter_custom_template, OpenEditionMinterCustomParams, DEFAULT_CUSTOM_PARAMS,
+    },
 };
 
 #[test]
@@ -26,6 +28,10 @@ fn check_custom_create_minter_denom() {
     // allow ibc/frenz denom
     let denom = "ibc/frenz";
     let mint_price = coin(MIN_MINT_PRICE_OPEN_EDITION, denom.to_string());
+    let custom_params = OpenEditionMinterCustomParams {
+        denom: Some(denom),
+        ..DEFAULT_CUSTOM_PARAMS
+    };
     let vt = open_edition_minter_custom_template(
         None,
         None,
@@ -33,7 +39,7 @@ fn check_custom_create_minter_denom() {
         Some(10),
         Some(2),
         Some(mint_price.clone()),
-        Some(denom),
+        custom_params,
         None,
         None,
     )
@@ -98,7 +104,7 @@ fn denom_mismatch_creating_minter() {
     let sg721_code_id = code_ids.sg721_code_id;
     let minter_admin = creator;
 
-    let mut params = mock_params_custom(None, None, None);
+    let mut params = mock_params_custom(DEFAULT_CUSTOM_PARAMS);
     params.code_id = minter_code_id;
 
     let factory_addr = app

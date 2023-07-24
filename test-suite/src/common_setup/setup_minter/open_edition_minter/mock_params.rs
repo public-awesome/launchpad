@@ -10,6 +10,7 @@ use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use crate::common_setup::setup_minter::common::constants::{
     CREATION_FEE, DEV_ADDRESS, MINT_FEE_FAIR_BURN, MIN_MINT_PRICE_OPEN_EDITION,
 };
+use crate::common_setup::templates::OpenEditionMinterCustomParams;
 
 pub fn mock_init_minter_extension(
     start_time: Option<Timestamp>,
@@ -62,15 +63,12 @@ pub fn mock_create_minter_init_msg(
 }
 
 // Pass custom params to change minter values
-pub fn mock_params_custom(
-    denom: Option<&str>,
-    mint_fee_bps: Option<u64>,
-    airdrop_mint_price_amount: Option<Uint128>,
-) -> OpenEditionMinterParams {
-    let denom = denom.unwrap_or(NATIVE_DENOM);
-    let mint_fee_bps = mint_fee_bps.unwrap_or(MINT_FEE_FAIR_BURN);
-    let airdrop_mint_price_amount =
-        airdrop_mint_price_amount.unwrap_or_else(|| Uint128::new(MIN_MINT_PRICE_OPEN_EDITION));
+pub fn mock_params_custom(custom_params: OpenEditionMinterCustomParams) -> OpenEditionMinterParams {
+    let denom = custom_params.denom.unwrap_or(NATIVE_DENOM);
+    let mint_fee_bps = custom_params.mint_fee_bps.unwrap_or(MINT_FEE_FAIR_BURN);
+    let airdrop_mint_price_amount = custom_params
+        .airdrop_mint_price_amount
+        .unwrap_or_else(|| Uint128::new(MIN_MINT_PRICE_OPEN_EDITION));
     OpenEditionMinterParams {
         code_id: 1,
         allowed_sg721_code_ids: vec![1, 3, 5, 6],

@@ -6,7 +6,9 @@ use open_edition_factory::types::{NftData, NftMetadataType};
 use sg_metadata::{Metadata, Trait};
 
 use crate::common_setup::setup_minter::common::constants::MIN_MINT_PRICE_OPEN_EDITION;
-use crate::common_setup::templates::open_edition_minter_custom_template;
+use crate::common_setup::templates::{
+    open_edition_minter_custom_template, OpenEditionMinterCustomParams, DEFAULT_CUSTOM_PARAMS,
+};
 
 #[test]
 fn check_valid_create_minter() {
@@ -18,7 +20,7 @@ fn check_valid_create_minter() {
         Some(10),
         Some(5),
         None,
-        None,
+        DEFAULT_CUSTOM_PARAMS,
         None,
         None,
     );
@@ -36,7 +38,7 @@ fn check_invalid_create_minter_address_limit() {
         Some(10),
         Some(20),
         None,
-        None,
+        DEFAULT_CUSTOM_PARAMS,
         None,
         None,
     );
@@ -65,7 +67,7 @@ fn check_invalid_create_minter_address_limit() {
         Some(10),
         Some(0),
         None,
-        None,
+        DEFAULT_CUSTOM_PARAMS,
         None,
         None,
     );
@@ -96,7 +98,7 @@ fn check_invalid_create_minter_start_end_time() {
         Some(10),
         Some(2),
         None,
-        None,
+        DEFAULT_CUSTOM_PARAMS,
         None,
         None,
     );
@@ -119,7 +121,7 @@ fn check_invalid_create_minter_start_end_time() {
         Some(10),
         Some(2),
         None,
-        None,
+        DEFAULT_CUSTOM_PARAMS,
         None,
         None,
     );
@@ -148,7 +150,7 @@ fn check_invalid_create_minter_mint_price() {
             denom: "uinvalid".to_string(),
             amount: Uint128::new(MIN_MINT_PRICE_OPEN_EDITION),
         }),
-        None,
+        DEFAULT_CUSTOM_PARAMS,
         None,
         None,
     );
@@ -174,7 +176,7 @@ fn check_invalid_create_minter_mint_price() {
             denom: NATIVE_DENOM.to_string(),
             amount: Uint128::new(100u128),
         }),
-        None,
+        DEFAULT_CUSTOM_PARAMS,
         None,
         None,
     );
@@ -194,6 +196,11 @@ fn check_invalid_create_minter_mint_price() {
 fn check_custom_create_minter_denom() {
     // allow ibc/frenz denom
     let denom = "ibc/frenz";
+    let custom_params = OpenEditionMinterCustomParams {
+        denom: Some(denom),
+        mint_fee_bps: None,
+        airdrop_mint_price_amount: None,
+    };
     let vt = open_edition_minter_custom_template(
         None,
         None,
@@ -204,7 +211,7 @@ fn check_custom_create_minter_denom() {
             denom: denom.to_string(),
             amount: Uint128::new(MIN_MINT_PRICE_OPEN_EDITION),
         }),
-        Some(denom),
+        custom_params,
         None,
         None,
     );
@@ -247,7 +254,7 @@ fn check_invalid_create_minter_nft_data() {
         None,
         None,
         None,
-        None,
+        DEFAULT_CUSTOM_PARAMS,
         None,
         None,
     );
@@ -274,7 +281,7 @@ fn check_invalid_create_minter_nft_data() {
         None,
         None,
         None,
-        None,
+        DEFAULT_CUSTOM_PARAMS,
         None,
         None,
     );
@@ -301,7 +308,7 @@ fn check_invalid_create_minter_nft_data() {
         None,
         None,
         None,
-        None,
+        DEFAULT_CUSTOM_PARAMS,
         None,
         None,
     );
@@ -328,7 +335,7 @@ fn check_invalid_create_minter_nft_data() {
         None,
         None,
         None,
-        None,
+        DEFAULT_CUSTOM_PARAMS,
         None,
         None,
     );

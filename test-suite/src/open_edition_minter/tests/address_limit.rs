@@ -6,7 +6,7 @@ use open_edition_minter::msg::ConfigResponse;
 use open_edition_minter::msg::{ExecuteMsg, QueryMsg};
 
 use crate::common_setup::setup_accounts_and_block::setup_block_time;
-use crate::common_setup::templates::open_edition_minter_custom_template;
+use crate::common_setup::templates::{open_edition_minter_custom_template, DEFAULT_CUSTOM_PARAMS};
 
 const MINT_PRICE: u128 = 100_000_000;
 
@@ -19,7 +19,7 @@ fn check_per_address_limit() {
         Some(10),
         Some(2),
         None,
-        None,
+        DEFAULT_CUSTOM_PARAMS,
         None,
         None,
     )
