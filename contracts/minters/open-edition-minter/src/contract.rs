@@ -8,7 +8,7 @@ use cw2::set_contract_version;
 use cw_utils::{may_pay, maybe_addr, nonpayable, parse_reply_instantiate_data};
 use semver::Version;
 use sg_std::math::U64Ext;
-use sg_std::{create_fund_fairburn_pool_msg, StargazeMsgWrapper, NATIVE_DENOM};
+use sg_std::{create_fund_community_pool_msg, StargazeMsgWrapper, NATIVE_DENOM};
 use url::Url;
 
 use open_edition_factory::msg::{OpenEditionMinterCreateMsg, ParamsResponse};
@@ -320,7 +320,7 @@ fn _execute_mint(
         // only send non-zero amounts
         if !network_fee.is_zero() {
             let msg =
-                create_fund_fairburn_pool_msg(coins(network_fee.u128(), mint_price.clone().denom));
+                create_fund_community_pool_msg(coins(network_fee.u128(), mint_price.clone().denom));
             res = res.add_message(msg);
         }
     } else {
