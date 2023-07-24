@@ -34,8 +34,8 @@ pub fn instantiate(
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
-    // airdrop fee should be in NATIVE_DENOM
-    if msg.params.extension.airdrop_mint_price.denom != NATIVE_DENOM {
+    // airdrop fee and mint fee should be same denom
+    if msg.params.extension.airdrop_mint_price.denom != msg.params.min_mint_price.denom {
         return Err(ContractError::BaseError(BaseContractError::InvalidDenom {}));
     }
     // creation_fee should be in NATIVE_DENOM

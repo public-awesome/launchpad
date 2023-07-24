@@ -75,7 +75,7 @@ pub fn mock_params_proper(denom: Option<&str>) -> OpenEditionMinterParams {
             max_per_address_limit: 10,
             airdrop_mint_fee_bps: 100,
             airdrop_mint_price: Coin {
-                denom: NATIVE_DENOM.to_string(),
+                denom: denom.to_string(),
                 amount: Uint128::new(100_000_000u128),
             },
             dev_fee_address: DEV_ADDRESS.to_string(),
