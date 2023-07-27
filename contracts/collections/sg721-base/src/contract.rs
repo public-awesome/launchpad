@@ -22,6 +22,8 @@ use crate::{ContractError, Sg721Contract};
 use crate::entry::{CONTRACT_NAME, CONTRACT_VERSION};
 
 const MAX_DESCRIPTION_LENGTH: u32 = 512;
+const MAX_SHARE_DELTA_PCT: u64 = 2;
+const MAX_ROYALTY_SHARE_PCT: u64 = 10;
 
 impl<'a, T> Sg721Contract<'a, T>
 where
@@ -239,18 +241,23 @@ where
             };
 
             if let Some(old_royalty_info) = collection.royalty_info {
-                let share_delta = new_royalty_info.share.abs_diff(old_royalty_info.share);
-                if share_delta > Decimal::percent(2) {
-                    return Err(ContractError::InvalidRoyalties(
-                        "Share change cannot be greater than 2%".to_string(),
-                    ));
-                }
-            }
+                if old_royalty_info.share < new_royalty_info.share {
+                    let share_delta = new_royalty_info.share.abs_diff(old_royalty_info.share);
 
-            if new_royalty_info.share > Decimal::percent(10) {
-                return Err(ContractError::InvalidRoyalties(
-                    "Share cannot be greater than 10%".to_string(),
-                ));
+                    if share_delta > Decimal::percent(MAX_SHARE_DELTA_PCT) {
+                        return Err(ContractError::InvalidRoyalties(format!(
+                            "Share increase cannot be greater than {}%",
+                            MAX_SHARE_DELTA_PCT.to_string()
+                        )));
+                    }
+                    if new_royalty_info.share > Decimal::percent(MAX_ROYALTY_SHARE_PCT) {
+                        return Err(ContractError::InvalidRoyalties(
+                            format!("Share cannot be greater than {}%", MAX_ROYALTY_SHARE_PCT)
+                                .to_string(),
+                        ));
+                    }
+                } else {
+                }
             }
 
             collection.royalty_info = Some(new_royalty_info);

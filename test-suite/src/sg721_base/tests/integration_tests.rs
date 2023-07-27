@@ -358,7 +358,7 @@ mod tests {
                 .to_string(),
             );
 
-            // lower royalty_info by more than 2% throws error
+            // lower royalty_info by more than 2% succeeds
             let block_time = app.block_info().time;
             setup_block_time(
                 &mut app,
@@ -383,66 +383,7 @@ mod tests {
                 },
                 &[],
             );
-            assert_error(
-                res,
-                ContractError::InvalidRoyalties(
-                    "Share change cannot be greater than 2%".to_string(),
-                )
-                .to_string(),
-            );
-
-            // lower royalty_info by 2% succeeds
-            let royalty_info: Option<RoyaltyInfoResponse> = Some(RoyaltyInfoResponse {
-                payment_address: creator.to_string(),
-                share: Decimal::percent(8),
-            });
-            let res = app.execute_contract(
-                creator.clone(),
-                contract.clone(),
-                &Sg721ExecuteMsg::<Empty, Empty>::UpdateCollectionInfo {
-                    collection_info: UpdateCollectionInfoMsg {
-                        description: Some(params.info.description.clone()),
-                        image: Some(params.info.image.clone()),
-                        external_link: Some(params.info.external_link.clone()),
-                        explicit_content: None,
-                        royalty_info: Some(royalty_info),
-                    },
-                },
-                &[],
-            );
             assert!(res.is_ok());
-
-            let block_time = app.block_info().time;
-            setup_block_time(
-                &mut app,
-                block_time.plus_seconds(24 * 60 * 60).nanos(),
-                None,
-            );
-            let royalty_info: Option<RoyaltyInfoResponse> = Some(RoyaltyInfoResponse {
-                payment_address: creator.to_string(),
-                share: Decimal::percent(7),
-            });
-            let res = app.execute_contract(
-                creator.clone(),
-                contract.clone(),
-                &Sg721ExecuteMsg::<Empty, Empty>::UpdateCollectionInfo {
-                    collection_info: UpdateCollectionInfoMsg {
-                        description: Some(params.info.description.clone()),
-                        image: Some(params.info.image.clone()),
-                        external_link: Some(params.info.external_link.clone()),
-                        explicit_content: None,
-                        royalty_info: Some(royalty_info.clone()),
-                    },
-                },
-                &[],
-            );
-            assert!(res.is_ok());
-
-            let res: CollectionInfoResponse = app
-                .wrap()
-                .query_wasm_smart(contract.clone(), &QueryMsg::CollectionInfo {})
-                .unwrap();
-            assert_eq!(res.royalty_info.unwrap(), royalty_info.unwrap());
 
             // raise royalty_info by more than 2% throws error
             let block_time = app.block_info().time;
@@ -472,7 +413,7 @@ mod tests {
             assert_error(
                 res,
                 ContractError::InvalidRoyalties(
-                    "Share change cannot be greater than 2%".to_string(),
+                    "Share increase cannot be greater than 2%".to_string(),
                 )
                 .to_string(),
             );
