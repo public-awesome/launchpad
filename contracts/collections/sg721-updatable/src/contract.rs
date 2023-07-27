@@ -7,6 +7,7 @@ use cosmwasm_std::{Deps, StdResult};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::{DepsMut, Env, Event, MessageInfo};
 use cw2::set_contract_version;
+use semver::Version;
 use sg721::InstantiateMsg;
 use sg721_base::msg::CollectionInfoResponse;
 
@@ -21,10 +22,15 @@ use sg721_base::Sg721Contract;
 pub type Sg721UpdatableContract<'a> = Sg721Contract<'a, Extension>;
 use sg_std::Response;
 
-const CONTRACT_NAME: &str = "crates.io:sg721-updatable";
+const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
-pub const EARLIEST_VERSION: &str = "0.16.0";
-pub const TO_VERSION: &str = "3.0.0";
+const EARLIEST_COMPATIBLE_VERSION: &str = "0.16.0";
+const COMPATIBLE_CONTRACT_NAMES_FOR_MIGRATION: [&str; 4] = [
+    "sg721-base",
+    "crates.io:sg721-base",
+    "sg721-updatable",
+    "crates.io:sg721-updatable",
+];
 const ENABLE_UPDATABLE_FEE: u128 = 500_000_000;
 
 pub fn _instantiate(
@@ -153,27 +159,55 @@ pub fn query_frozen_token_metadata(deps: Deps) -> StdResult<FrozenTokenMetadataR
 }
 
 pub fn _migrate(mut deps: DepsMut, env: Env, _msg: Empty) -> Result<Response, ContractError> {
-    let prev_contract_version = cw2::get_contract_version(deps.storage)?;
+    let prev_contract_info = cw2::get_contract_version(deps.storage)?;
+    let prev_contract_name: String = prev_contract_info.contract;
+    let prev_contract_version: Version = prev_contract_info
+        .version
+        .parse()
+        .map_err(|_| StdError::generic_err("Unable to retrieve previous contract version"))?;
 
-    let valid_contract_names = vec![CONTRACT_NAME.to_string()];
-    if !valid_contract_names.contains(&prev_contract_version.contract) {
+    let new_version: Version = CONTRACT_VERSION
+        .parse()
+        .map_err(|_| StdError::generic_err("Invalid contract version"))?;
+
+    let earliest_compatible_version: Version = EARLIEST_COMPATIBLE_VERSION
+        .parse()
+        .map_err(|_| StdError::generic_err("Invalid contract version"))?;
+
+    if !COMPATIBLE_CONTRACT_NAMES_FOR_MIGRATION.contains(&prev_contract_name.as_str()) {
         return Err(StdError::generic_err("Invalid contract name for migration").into());
     }
 
-    #[allow(clippy::cmp_owned)]
-    if prev_contract_version.version >= CONTRACT_VERSION.to_string() {
-        return Err(StdError::generic_err("Must upgrade contract version").into());
+    if prev_contract_version < earliest_compatible_version {
+        return Err(StdError::generic_err("Unsupported contract version").into());
+    }
+
+    if prev_contract_version > new_version {
+        return Err(StdError::generic_err("Cannot migrate to a previous contract version").into());
+    }
+
+    if prev_contract_version == new_version && prev_contract_name == CONTRACT_NAME {
+        return Err(StdError::generic_err(
+            "No change in contract name and version, cannot migrate",
+        )
+        .into());
+    }
+
+    if ["sg721-base", "crates.io:sg721-base"].contains(&prev_contract_name.as_str()) {
+        // if migrating from sg721-base, initialize flags
+        FROZEN_TOKEN_METADATA.save(deps.storage, &false)?;
+        ENABLE_UPDATABLE.save(deps.storage, &false)?;
     }
 
     let mut response = Response::new();
 
     #[allow(clippy::cmp_owned)]
-    if prev_contract_version.version < "3.0.0".to_string() {
+    if prev_contract_version < Version::new(3, 0, 0) {
         response = sg721_base::upgrades::v3_0_0::upgrade(deps.branch(), &env, response)?;
     }
 
     #[allow(clippy::cmp_owned)]
-    if prev_contract_version.version < "3.1.0".to_string() {
+    if prev_contract_version < Version::new(3, 1, 0) {
         response = sg721_base::upgrades::v3_1_0::upgrade(deps.branch(), &env, response)?;
     }
 
@@ -181,8 +215,8 @@ pub fn _migrate(mut deps: DepsMut, env: Env, _msg: Empty) -> Result<Response, Co
 
     response = response.add_event(
         Event::new("migrate")
-            .add_attribute("from_name", prev_contract_version.contract)
-            .add_attribute("from_version", prev_contract_version.version)
+            .add_attribute("from_name", prev_contract_name)
+            .add_attribute("from_version", prev_contract_version.to_string())
             .add_attribute("to_name", CONTRACT_NAME)
             .add_attribute("to_version", CONTRACT_VERSION),
     );
