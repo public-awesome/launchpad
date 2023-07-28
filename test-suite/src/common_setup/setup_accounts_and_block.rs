@@ -5,6 +5,7 @@ use sg_multi_test::StargazeApp;
 use sg_std::NATIVE_DENOM;
 
 use crate::common_setup::contract_boxes::contract_group;
+use crate::common_setup::setup_minter::common::constants::DEV_ADDRESS;
 
 const OWNER: &str = "admin0001";
 
@@ -27,10 +28,13 @@ pub fn instantiate_group(app: &mut StargazeApp, members: Vec<Member>) -> Addr {
 pub fn setup_accounts(router: &mut StargazeApp) -> (Addr, Addr) {
     let buyer = Addr::unchecked("buyer");
     let creator = Addr::unchecked("creator");
+    let dev = Addr::unchecked(DEV_ADDRESS);
     // 3,000 tokens
     let creator_funds = coins(INITIAL_BALANCE + CREATION_FEE, NATIVE_DENOM);
     // 2,000 tokens
     let buyer_funds = coins(INITIAL_BALANCE, NATIVE_DENOM);
+    // 2,000 tokens
+    let dev_funds = coins(INITIAL_BALANCE, NATIVE_DENOM);
     router
         .sudo(SudoMsg::Bank({
             BankSudo::Mint {
@@ -51,6 +55,16 @@ pub fn setup_accounts(router: &mut StargazeApp) -> (Addr, Addr) {
         .map_err(|err| println!("{:?}", err))
         .ok();
 
+    router
+        .sudo(SudoMsg::Bank({
+            BankSudo::Mint {
+                to_address: dev.to_string(),
+                amount: dev_funds,
+            }
+        }))
+        .map_err(|err| println!("{:?}", err))
+        .ok();
+
     // Check native balances
     let creator_native_balances = router.wrap().query_all_balances(creator.clone()).unwrap();
     assert_eq!(creator_native_balances, creator_funds);
@@ -58,6 +72,10 @@ pub fn setup_accounts(router: &mut StargazeApp) -> (Addr, Addr) {
     // Check native balances
     let buyer_native_balances = router.wrap().query_all_balances(buyer.clone()).unwrap();
     assert_eq!(buyer_native_balances, buyer_funds);
+
+    // Check native balances
+    let dev_native_balances = router.wrap().query_all_balances(dev).unwrap();
+    assert_eq!(dev_native_balances, buyer_funds);
 
     (creator, buyer)
 }

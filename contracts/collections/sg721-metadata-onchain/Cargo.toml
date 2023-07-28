@@ -31,17 +31,15 @@ library = []
 [dependencies]
 cosmwasm-schema = { workspace = true }
 cosmwasm-std    = { workspace = true }
-cw2 = { workspace = true }
+cw2             = { workspace = true }
 schemars        = { workspace = true }
 serde           = { workspace = true }
 sg721           = { workspace = true }
 sg721-base      = { workspace = true, features = ["library"] }
 sg-metadata     = { workspace = true }
 sg-std          = { workspace = true }
-cw-ownable = { workspace = true }
-cw721-base = { git = "https://github.com/CosmWasm/cw-nfts/", branch="main", features = ["library"] }
+cw-ownable      = { workspace = true }
+cw721-base      = { workspace = true, features = ["library"] }
 
 [dev-dependencies]
-cw721      = { workspace = true }
-
-
+cw721 = { workspace = true }
