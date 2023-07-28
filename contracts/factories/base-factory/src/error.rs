@@ -20,9 +20,6 @@ pub enum ContractError {
     #[error("InvalidDenom")]
     InvalidDenom {},
 
-    #[error("Invalid Creation Fee amount received to create the minter.")]
-    InvalidCreationFeeAmount {},
-
     #[error("Factory frozen. Cannot make new minters.")]
     Frozen {},
 

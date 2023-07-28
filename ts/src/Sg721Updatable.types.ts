@@ -111,7 +111,7 @@ export type ExecuteMsgForNullable_EmptyAndEmpty = {
     collection_info: UpdateCollectionInfoMsgForRoyaltyInfoResponse;
   };
 } | {
-  update_start_trading_time: Timestamp | null;
+  update_trading_start_time: Timestamp | null;
 } | {
   freeze_collection_info: {};
 } | {

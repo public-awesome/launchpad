@@ -17,10 +17,6 @@ sleep 10
 cd contracts/factories/vending-factory && cargo publish && cd ../../..
 sleep 15
 cd contracts/minters/vending-minter && cargo publish && cd ../../..
-sleep 15
-cd contracts/factories/open-edition-factory && cargo publish && cd ../../..
-sleep 15
-cd contracts/minters/open-edition-minter && cargo publish && cd ../../..
 sleep 10
 cd contracts/whitelists/whitelist-immutable && cargo publish && cd ../../..
 sleep 15

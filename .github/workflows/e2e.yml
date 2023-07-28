@@ -18,10 +18,10 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v3
 
-      - name: Install latest toolchain
+      - name: Install latest nightly toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: stable
+          toolchain: nightly
           targets: wasm32-unknown-unknown
 
       - name: Rust Dependencies Cache
@@ -46,7 +46,7 @@ jobs:
 
       - name: Deploy local Stargaze node
         run: make deploy-local
-
+      
       - name: Optimize Contracts
         run: make optimize
 

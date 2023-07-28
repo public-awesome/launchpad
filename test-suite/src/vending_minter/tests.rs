@@ -6,7 +6,6 @@ mod ibc_asset_mint;
 mod mint_and_burn;
 mod splits;
 mod trading_time;
-mod trading_time_updatable;
 mod updatable;
 mod whitelist;
 mod zero_mint_price;
