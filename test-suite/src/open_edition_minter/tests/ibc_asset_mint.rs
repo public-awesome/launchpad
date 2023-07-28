@@ -1,5 +1,5 @@
 use base_factory::ContractError as BaseContractError;
-use cosmwasm_std::{coin, coins, Decimal, Uint128};
+use cosmwasm_std::{coin, coins, Addr, Decimal, Uint128};
 use cw_multi_test::{BankSudo, Executor, SudoMsg};
 use open_edition_factory::types::{NftData, NftMetadataType};
 use open_edition_minter::msg::ExecuteMsg;
@@ -78,7 +78,7 @@ fn check_custom_create_minter_denom() {
 }
 
 #[test]
-fn noble_ibc_minter() {
+fn one_hundred_percent_burned_ibc_minter() {
     // factory needs airdrop_mint_price: 0
     // factory needs mint_fee_bps: 100_00 (100%)
     // this means full burn goes to fairburn pool
@@ -121,7 +121,7 @@ fn noble_ibc_minter() {
 
     // Mint succeeds
     let mint_msg = ExecuteMsg::Mint {};
-    let res = router.execute_contract(buyer.clone(), minter_addr, &mint_msg, &[mint_price]);
+    let res = router.execute_contract(buyer.clone(), minter_addr, &mint_msg, &[mint_price.clone()]);
     assert!(res.is_ok());
 
     // confirm balances
@@ -131,6 +131,13 @@ fn noble_ibc_minter() {
     // for noble, seller has 0% IBC asset
     let balance = router.wrap().query_balance(creator, denom).unwrap();
     assert_eq!(balance.amount, Uint128::zero());
+    // confirm mint_price 100% sent to community pool
+    // "community_pool" address from packages/sg-multi-test/src/multi.rs
+    let balance = router
+        .wrap()
+        .query_balance(Addr::unchecked("community_pool"), denom)
+        .unwrap();
+    assert_eq!(balance.amount, Uint128::from(mint_price.amount));
 }
 
 #[test]
@@ -184,7 +191,3 @@ fn denom_mismatch_creating_minter() {
         BaseContractError::InvalidDenom {}.to_string()
     );
 }
-
-// TODO add wl denom mismatch test
-
-// TODO add wl mint test
