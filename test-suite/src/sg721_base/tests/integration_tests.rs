@@ -716,13 +716,11 @@ mod tests {
     }
 
     mod sg721_mutable {
-        use cosmwasm_std::{coin, Addr, Uint128};
+        use cosmwasm_std::{coin, Addr};
         use cw721::NumTokensResponse;
         use cw_multi_test::{BankSudo, Executor, SudoMsg};
         use sg2::tests::mock_collection_params;
-        use sg721_updatable::msg::{
-            QueryMsg, Sg721MutableParamsExtension, Sg721MutableParamsMsg, SudoMsg as Sg721SudoMsg,
-        };
+        use sg721_updatable::msg::QueryMsg;
         use sg_multi_test::StargazeApp;
         use sg_std::NATIVE_DENOM;
         const ADMIN: &str = "admin";
@@ -775,28 +773,6 @@ mod tests {
                 .query_wasm_smart(contract, &QueryMsg::NumTokens {})
                 .unwrap();
             assert_eq!(res.count, 0);
-        }
-
-        #[test]
-        fn change_enable_updatable_fee() {
-            // change fee to 10,000 stars
-            let new_fee = 10_000_000_000_u128;
-            let msg = Sg721MutableParamsMsg {
-                extension: Sg721MutableParamsExtension {
-                    enable_updatable_fee: Some(Uint128::from(new_fee)),
-                },
-            };
-            let sudo_msg = Sg721SudoMsg::UpdateParams(Box::new(msg));
-            let (mut app, contract) = proper_instantiate();
-            let res = app.wasm_sudo(contract.clone(), &sudo_msg);
-            assert!(res.is_ok());
-
-            // confirm fee is changed
-            let res: Uint128 = app
-                .wrap()
-                .query_wasm_smart(contract, &QueryMsg::EnableUpdatableFee {})
-                .unwrap();
-            assert_eq!(res, Uint128::from(new_fee));
         }
     }
 }
