@@ -120,9 +120,3 @@ pub struct InstantiateMsg {
     pub minter: String,
     pub collection_info: CollectionInfo<RoyaltyInfoResponse>,
 }
-
-/// Message for params so they can be updated individually by governance
-#[cw_serde]
-pub struct UpdateSg721ParamsMsg<T> {
-    pub extension: T,
-}
