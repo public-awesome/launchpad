@@ -33,17 +33,19 @@ pub fn instantiate(
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+    let params = msg.params;
 
-    // airdrop fee and mint fee should be same denom
-    if msg.params.extension.airdrop_mint_price.denom != msg.params.min_mint_price.denom {
-        return Err(ContractError::BaseError(BaseContractError::InvalidDenom {}));
-    }
-    // creation_fee should be in NATIVE_DENOM
-    if msg.params.creation_fee.denom != NATIVE_DENOM {
-        return Err(ContractError::BaseError(BaseContractError::InvalidDenom {}));
-    }
+    ensure!(
+        params.extension.airdrop_mint_price.denom == params.min_mint_price.denom,
+        BaseContractError::InvalidDenom {}
+    );
 
-    SUDO_PARAMS.save(deps.storage, &msg.params)?;
+    ensure!(
+        params.creation_fee.denom == NATIVE_DENOM,
+        BaseContractError::InvalidDenom {}
+    );
+
+    SUDO_PARAMS.save(deps.storage, &params)?;
 
     Ok(Response::new())
 }
@@ -89,12 +91,13 @@ pub fn execute_create_minter(
         BaseContractError::InvalidDenom {}
     );
 
-    if params.min_mint_price.amount > msg.init_msg.mint_price.amount {
-        return Err(ContractError::InsufficientMintPrice {
+    ensure!(
+        params.min_mint_price.amount >= msg.init_msg.mint_price.amount,
+        ContractError::InsufficientMintPrice {
             expected: params.min_mint_price.amount.u128(),
             got: msg.init_msg.mint_price.amount.into(),
-        });
-    }
+        }
+    );
 
     let wasm_msg = WasmMsg::Instantiate {
         admin: Some(info.sender.to_string()),

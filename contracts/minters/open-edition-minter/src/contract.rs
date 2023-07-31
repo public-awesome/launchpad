@@ -1,19 +1,19 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coin, coins, to_binary, Addr, BankMsg, Binary, Coin, Deps, DepsMut, Empty, Env, MessageInfo,
-    Order, Reply, ReplyOn, StdError, StdResult, Timestamp, WasmMsg,
+    coin, to_binary, Addr, BankMsg, Binary, Coin, Deps, DepsMut, Empty, Env, MessageInfo, Order,
+    Reply, ReplyOn, StdError, StdResult, Timestamp, WasmMsg,
 };
 use cw2::set_contract_version;
 use cw_utils::{may_pay, maybe_addr, nonpayable, parse_reply_instantiate_data};
 use semver::Version;
 use sg_std::math::U64Ext;
-use sg_std::{create_fund_community_pool_msg, StargazeMsgWrapper, NATIVE_DENOM};
+use sg_std::{StargazeMsgWrapper, NATIVE_DENOM};
 use url::Url;
 
 use open_edition_factory::msg::{OpenEditionMinterCreateMsg, ParamsResponse};
 use open_edition_factory::types::NftMetadataType;
-use sg1::checked_fair_burn;
+use sg1::{checked_fair_burn, ibc_denom_fair_burn};
 use sg2::query::Sg2QueryMsg;
 use sg4::{Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
@@ -318,10 +318,19 @@ fn _execute_mint(
     // send non-native fees to community pool
     if mint_price.denom != NATIVE_DENOM {
         // only send non-zero amounts
+        // send portion to dev addr
         if !network_fee.is_zero() {
-            let msg =
-                create_fund_community_pool_msg(coins(network_fee.u128(), mint_price.clone().denom));
-            res = res.add_message(msg);
+            ibc_denom_fair_burn(
+                coin(network_fee.u128(), mint_price.denom.to_string()),
+                Some(
+                    deps.api
+                        .addr_validate(&factory_params.extension.dev_fee_address)?,
+                ),
+                &mut res,
+            )?;
+            // let msg =
+            //     create_fund_community_pool_msg(coins(network_fee.u128(), mint_price.clone().denom));
+            // res = res.add_message(msg);
         }
     } else {
         checked_fair_burn(

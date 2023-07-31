@@ -81,7 +81,7 @@ fn check_custom_create_minter_denom() {
 fn one_hundred_percent_burned_ibc_minter() {
     // factory needs airdrop_mint_price: 0
     // factory needs mint_fee_bps: 100_00 (100%)
-    // this means full burn goes to fairburn pool
+    // 100% fairburn, so 50% goes to dev, 50% goes to community pool
 
     // allow ibc/frenz denom
     let denom = "ibc/frenz";
@@ -137,7 +137,10 @@ fn one_hundred_percent_burned_ibc_minter() {
         .wrap()
         .query_balance(Addr::unchecked("community_pool"), denom)
         .unwrap();
-    assert_eq!(balance.amount, Uint128::from(mint_price.amount));
+    assert_eq!(
+        balance.amount,
+        Uint128::from(mint_price.amount * Decimal::percent(50))
+    );
 }
 
 #[test]
