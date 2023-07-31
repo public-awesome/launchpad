@@ -9,12 +9,12 @@ pub type InstantiateMsg = sg721::InstantiateMsg;
 pub mod entry {
     use super::*;
     use crate::error::ContractError;
-    use crate::msg::{QueryMsg, SudoMsg};
+    use crate::msg::QueryMsg;
     use crate::{
         contract::{
             _instantiate, _migrate, execute_enable_updatable, execute_freeze_token_metadata,
             execute_update_token_metadata, query_enable_updatable, query_enable_updatable_fee,
-            query_frozen_token_metadata, sudo_update_params, Sg721UpdatableContract,
+            query_frozen_token_metadata, Sg721UpdatableContract,
         },
         msg::ExecuteMsg,
     };
@@ -58,16 +58,9 @@ pub mod entry {
     pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         match msg {
             QueryMsg::EnableUpdatable {} => to_binary(&query_enable_updatable(deps)?),
-            QueryMsg::EnableUpdatableFee {} => to_binary(&query_enable_updatable_fee(deps)?),
+            QueryMsg::EnableUpdatableFee {} => to_binary(&query_enable_updatable_fee()?),
             QueryMsg::FreezeTokenMetadata {} => to_binary(&query_frozen_token_metadata(deps)?),
             _ => Sg721UpdatableContract::default().query(deps, env, msg.into()),
-        }
-    }
-
-    #[cfg_attr(not(feature = "library"), entry_point)]
-    pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> Result<Response, ContractError> {
-        match msg {
-            SudoMsg::UpdateParams(params_msg) => sudo_update_params(deps, env, *params_msg),
         }
     }
 

@@ -1,9 +1,8 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::Binary;
 use cosmwasm_std::Timestamp;
-use cosmwasm_std::Uint128;
 use cw_utils::Expiration;
-use sg721::{RoyaltyInfoResponse, UpdateCollectionInfoMsg, UpdateSg721ParamsMsg};
+use sg721::{RoyaltyInfoResponse, UpdateCollectionInfoMsg};
 use sg721_base::msg::QueryMsg as Sg721QueryMsg;
 use sg721_base::ExecuteMsg as Sg721ExecuteMsg;
 
@@ -239,18 +238,6 @@ impl From<QueryMsg> for Sg721QueryMsg {
             _ => unreachable!("cannot convert {:?} to Sg721QueryMsg", msg),
         }
     }
-}
-
-#[cw_serde]
-pub struct Sg721MutableParamsExtension {
-    pub enable_updatable_fee: Option<Uint128>,
-}
-
-pub type Sg721MutableParamsMsg = UpdateSg721ParamsMsg<Sg721MutableParamsExtension>;
-
-#[cw_serde]
-pub enum SudoMsg {
-    UpdateParams(Box<Sg721MutableParamsMsg>),
 }
 
 #[cw_serde]
