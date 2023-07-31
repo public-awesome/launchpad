@@ -38,7 +38,7 @@ pub fn ibc_denom_fair_burn(
     match &developer {
         Some(developer) => {
             // Calculate the fees. 50% to dev, 50% to community pool
-            let dev_fee = (fee.amount * Decimal::percent(FEE_BURN_PERCENT)).u128();
+            let dev_fee = (fee.amount.mul_ceil(Decimal::percent(FEE_BURN_PERCENT))).u128();
             let dev_coin = coins(dev_fee, fee.denom.to_string());
             let comm_fee = coin(fee.amount.u128() - dev_fee, fee.denom);
 
