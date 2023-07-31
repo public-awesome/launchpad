@@ -18,9 +18,12 @@ once_cell      = "1.13.0"
 serde          = { version = "1.0", default-features = false, features = ["derive"] }
 rand           = "0.8"
 
-cosmwasm-std    = { workspace = true }
-sg2             = { workspace = true }
-sg721           = { workspace = true }
-sg721-base      = { workspace = true }
-vending-factory = { workspace = true }
-vending-minter  = { workspace = true }
+cosmwasm-std         = { workspace = true }
+sg2                  = { workspace = true }
+sg721                = { workspace = true }
+sg721-base           = { workspace = true }
+sg-metadata          = { workspace = true }
+vending-factory      = { workspace = true }
+vending-minter       = { workspace = true }
+open-edition-factory = { workspace = true }
+open-edition-minter  = { workspace = true }
