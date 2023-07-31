@@ -137,10 +137,7 @@ fn one_hundred_percent_burned_ibc_minter() {
         .wrap()
         .query_balance(Addr::unchecked("community_pool"), denom)
         .unwrap();
-    assert_eq!(
-        balance.amount,
-        Uint128::from(mint_price.amount * Decimal::percent(50))
-    );
+    assert_eq!(balance.amount, mint_price.amount * Decimal::percent(50));
 }
 
 #[test]
