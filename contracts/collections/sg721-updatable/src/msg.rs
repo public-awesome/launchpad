@@ -134,6 +134,7 @@ where
 #[cw_serde]
 pub enum QueryMsg {
     EnableUpdatable {},
+    EnableUpdatableFee {},
     FreezeTokenMetadata {},
     OwnerOf {
         token_id: String,
