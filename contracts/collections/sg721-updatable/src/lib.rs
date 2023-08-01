@@ -13,14 +13,15 @@ pub mod entry {
     use crate::{
         contract::{
             _instantiate, _migrate, execute_enable_updatable, execute_freeze_token_metadata,
-            execute_update_token_metadata, query_enable_updatable, query_frozen_token_metadata,
-            Sg721UpdatableContract,
+            execute_update_token_metadata, query_enable_updatable, query_enable_updatable_fee,
+            query_frozen_token_metadata, Sg721UpdatableContract,
         },
         msg::ExecuteMsg,
     };
     use cosmwasm_std::{entry_point, to_binary, Empty};
     use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, StdResult};
     use cw721_base::Extension;
+
     use sg_std::Response;
 
     #[entry_point]
@@ -57,6 +58,7 @@ pub mod entry {
     pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         match msg {
             QueryMsg::EnableUpdatable {} => to_binary(&query_enable_updatable(deps)?),
+            QueryMsg::EnableUpdatableFee {} => to_binary(&query_enable_updatable_fee()?),
             QueryMsg::FreezeTokenMetadata {} => to_binary(&query_frozen_token_metadata(deps)?),
             _ => Sg721UpdatableContract::default().query(deps, env, msg.into()),
         }

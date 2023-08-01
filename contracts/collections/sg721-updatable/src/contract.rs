@@ -1,6 +1,6 @@
 use crate::error::ContractError;
 use crate::state::FROZEN_TOKEN_METADATA;
-use cosmwasm_std::{Empty, StdError};
+use cosmwasm_std::{Empty, StdError, Uint128};
 
 use cosmwasm_std::{Deps, StdResult};
 
@@ -31,7 +31,7 @@ const COMPATIBLE_CONTRACT_NAMES_FOR_MIGRATION: [&str; 4] = [
     "sg721-updatable",
     "crates.io:sg721-updatable",
 ];
-const ENABLE_UPDATABLE_FEE: u128 = 500_000_000;
+const ENABLE_UPDATABLE_FEE: u128 = 2_000_000_000;
 
 pub fn _instantiate(
     deps: DepsMut,
@@ -151,6 +151,10 @@ pub fn execute_update_token_metadata(
 pub fn query_enable_updatable(deps: Deps) -> StdResult<EnableUpdatableResponse> {
     let enabled = ENABLE_UPDATABLE.load(deps.storage)?;
     Ok(EnableUpdatableResponse { enabled })
+}
+
+pub fn query_enable_updatable_fee() -> StdResult<Uint128> {
+    Ok(Uint128::from(ENABLE_UPDATABLE_FEE))
 }
 
 pub fn query_frozen_token_metadata(deps: Deps) -> StdResult<FrozenTokenMetadataResponse> {
