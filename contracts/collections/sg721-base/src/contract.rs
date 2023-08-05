@@ -1,5 +1,5 @@
 use cw721_base::state::TokenInfo;
-use cw721_base::{Extension, MinterResponse};
+use cw721_base::MinterResponse;
 
 use url::Url;
 
