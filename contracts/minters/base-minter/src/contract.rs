@@ -82,7 +82,11 @@ pub fn instantiate(
             collection_info,
         })?,
         funds: info.funds,
-        admin: None,
+        admin: Some(
+            deps.api
+                .addr_validate(&msg.collection_params.info.creator)?
+                .to_string(),
+        ),
         label: format!(
             "SG721-{}-{}",
             msg.collection_params.code_id,

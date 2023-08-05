@@ -49,7 +49,7 @@ pub enum ExecuteMsg<T, E> {
     UpdateCollectionInfo {
         collection_info: UpdateCollectionInfoMsg<RoyaltyInfoResponse>,
     },
-    UpdateTradingStartTime(Option<Timestamp>),
+    UpdateStartTradingTime(Option<Timestamp>),
     FreezeCollectionInfo {},
     Mint {
         /// Unique ID of the NFT
@@ -123,6 +123,9 @@ where
                 token_uri,
                 extension: extension.into(),
             },
+            ExecuteMsg::UpdateStartTradingTime(start_trading_time) => {
+                Sg721ExecuteMsg::UpdateStartTradingTime(start_trading_time)
+            }
             _ => unreachable!("Invalid ExecuteMsg"),
         }
     }
@@ -131,6 +134,7 @@ where
 #[cw_serde]
 pub enum QueryMsg {
     EnableUpdatable {},
+    EnableUpdatableFee {},
     FreezeTokenMetadata {},
     OwnerOf {
         token_id: String,

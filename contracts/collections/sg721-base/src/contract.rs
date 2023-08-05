@@ -1,5 +1,6 @@
 use cw721_base::state::TokenInfo;
 use cw721_base::{Extension, MinterResponse};
+
 use url::Url;
 
 use cosmwasm_std::{
@@ -20,9 +21,11 @@ use sg_std::Response;
 use crate::msg::{self, CollectionInfoResponse, NftParams, QueryMsg};
 use crate::{ContractError, Sg721Contract};
 
-use crate::entry::{CONTRACT_NAME, CONTRACT_VERSION, EARLIEST_VERSION, TO_VERSION};
+use crate::entry::{CONTRACT_NAME, CONTRACT_VERSION};
 
 const MAX_DESCRIPTION_LENGTH: u32 = 512;
+const MAX_SHARE_DELTA_PCT: u64 = 2;
+const MAX_ROYALTY_SHARE_PCT: u64 = 10;
 
 impl<'a, T> Sg721Contract<'a, T>
 where
@@ -31,7 +34,7 @@ where
     pub fn instantiate(
         &self,
         deps: DepsMut,
-        _env: Env,
+        env: Env,
         info: MessageInfo,
         msg: InstantiateMsg,
     ) -> Result<Response, ContractError> {
@@ -90,6 +93,9 @@ where
         self.collection_info.save(deps.storage, &collection_info)?;
 
         self.frozen_collection_info.save(deps.storage, &false)?;
+
+        self.royalty_updated_at
+            .save(deps.storage, &env.block.time)?;
 
         Ok(Response::new()
             .add_attribute("action", "instantiate")
@@ -185,7 +191,7 @@ where
     pub fn update_collection_info(
         &self,
         deps: DepsMut,
-        _env: Env,
+        env: Env,
         info: MessageInfo,
         collection_msg: UpdateCollectionInfoMsg<RoyaltyInfoResponse>,
     ) -> Result<Response, ContractError> {
@@ -221,35 +227,44 @@ where
 
         collection.explicit_content = collection_msg.explicit_content;
 
-        // convert collection royalty info to response for comparison
-        // convert from response to royalty info for storage
-        let current_royalty_info = collection
-            .royalty_info
-            .as_ref()
-            .map(|royalty_info| royalty_info.to_response());
-
-        let new_royalty_info = collection_msg
-            .royalty_info
-            .unwrap_or_else(|| current_royalty_info.clone());
-
-        // reminder: collection_msg.royalty_info is Option<Option<RoyaltyInfoResponse>>
-        collection.royalty_info = if let Some(royalty_info) = new_royalty_info {
-            // update royalty info to equal or less, else throw error
-            if let Some(royalty_info_res) = current_royalty_info {
-                if royalty_info.share > royalty_info_res.share {
-                    return Err(ContractError::RoyaltyShareIncreased {});
-                }
-            } else {
-                return Err(ContractError::RoyaltyShareIncreased {});
+        if let Some(Some(new_royalty_info_response)) = collection_msg.royalty_info {
+            let last_royalty_update = self.royalty_updated_at.load(deps.storage)?;
+            if last_royalty_update.plus_seconds(24 * 60 * 60) > env.block.time {
+                return Err(ContractError::InvalidRoyalties(
+                    "Royalties can only be updated once per day".to_string(),
+                ));
             }
 
-            Some(RoyaltyInfo {
-                payment_address: deps.api.addr_validate(&royalty_info.payment_address)?,
-                share: share_validate(royalty_info.share)?,
-            })
-        } else {
-            None
-        };
+            let new_royalty_info = RoyaltyInfo {
+                payment_address: deps
+                    .api
+                    .addr_validate(&new_royalty_info_response.payment_address)?,
+                share: share_validate(new_royalty_info_response.share)?,
+            };
+
+            if let Some(old_royalty_info) = collection.royalty_info {
+                if old_royalty_info.share < new_royalty_info.share {
+                    let share_delta = new_royalty_info.share.abs_diff(old_royalty_info.share);
+
+                    if share_delta > Decimal::percent(MAX_SHARE_DELTA_PCT) {
+                        return Err(ContractError::InvalidRoyalties(format!(
+                            "Share increase cannot be greater than {}%",
+                            MAX_SHARE_DELTA_PCT
+                        )));
+                    }
+                    if new_royalty_info.share > Decimal::percent(MAX_ROYALTY_SHARE_PCT) {
+                        return Err(ContractError::InvalidRoyalties(format!(
+                            "Share cannot be greater than {}%",
+                            MAX_ROYALTY_SHARE_PCT
+                        )));
+                    }
+                }
+            }
+
+            collection.royalty_info = Some(new_royalty_info);
+            self.royalty_updated_at
+                .save(deps.storage, &env.block.time)?;
+        }
 
         self.collection_info.save(deps.storage, &collection)?;
 
@@ -381,40 +396,50 @@ where
         })
     }
 
-    pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
-        // make sure the correct contract is being upgraded, and it's being
-        // upgraded from the correct version.
+    pub fn migrate(mut deps: DepsMut, env: Env, _msg: Empty) -> Result<Response, ContractError> {
+        let prev_contract_version = cw2::get_contract_version(deps.storage)?;
 
-        if CONTRACT_VERSION < EARLIEST_VERSION {
-            return Err(
-                StdError::generic_err("Cannot upgrade to a previous contract version").into(),
-            );
-        }
-        if CONTRACT_VERSION > TO_VERSION {
-            return Err(
-                StdError::generic_err("Cannot upgrade to a previous contract version").into(),
-            );
-        }
-        // if same version return
-        if CONTRACT_VERSION == TO_VERSION {
-            return Ok(Response::new());
+        let valid_contract_names = vec![CONTRACT_NAME.to_string()];
+        if !valid_contract_names.contains(&prev_contract_version.contract) {
+            return Err(StdError::generic_err("Invalid contract name for migration").into());
         }
 
-        // update contract version
-        cw2::set_contract_version(deps.storage, CONTRACT_NAME, TO_VERSION)?;
+        #[allow(clippy::cmp_owned)]
+        if prev_contract_version.version >= CONTRACT_VERSION.to_string() {
+            return Err(StdError::generic_err("Must upgrade contract version").into());
+        }
 
-        // perform the upgrade
-        let cw17_res = cw721_base::upgrades::v0_17::migrate::<Extension, Empty, Empty, Empty>(deps)
-            .map_err(|e| ContractError::MigrationError(e.to_string()))?;
-        let mut sgz_res = Response::new();
-        sgz_res.attributes = cw17_res.attributes;
-        Ok(sgz_res)
+        let mut response = Response::new();
+
+        #[allow(clippy::cmp_owned)]
+        if prev_contract_version.version < "3.0.0".to_string() {
+            response = crate::upgrades::v3_0_0::upgrade(deps.branch(), &env, response)?;
+        }
+
+        #[allow(clippy::cmp_owned)]
+        if prev_contract_version.version < "3.1.0".to_string() {
+            response = crate::upgrades::v3_1_0::upgrade(deps.branch(), &env, response)?;
+        }
+
+        cw2::set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+
+        response = response.add_event(
+            Event::new("migrate")
+                .add_attribute("from_name", prev_contract_version.contract)
+                .add_attribute("from_version", prev_contract_version.version)
+                .add_attribute("to_name", CONTRACT_NAME)
+                .add_attribute("to_version", CONTRACT_VERSION),
+        );
+
+        Ok(response)
     }
 }
 
 pub fn share_validate(share: Decimal) -> Result<Decimal, ContractError> {
     if share > Decimal::one() {
-        return Err(ContractError::InvalidRoyalties {});
+        return Err(ContractError::InvalidRoyalties(
+            "Share cannot be greater than 100%".to_string(),
+        ));
     }
 
     Ok(share)
