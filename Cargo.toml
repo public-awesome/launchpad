@@ -42,7 +42,7 @@ sg721-nt             = { version = "3.1.0", path = "contracts/collections/sg721-
 sg721-updatable      = { version = "3.1.0", path = "contracts/collections/sg721-updatable" }
 sg-controllers       = { version = "3.1.0", path = "packages/controllers" }
 sg-metadata          = { version = "3.1.0", path = "packages/sg-metadata" }
-sg-multi-test        = { version = "3.1.0", path = "packages/sg-multi-test" }
+sg-multi-test        = { version = "3.1.0" }
 sg-splits            = { version = "3.1.0", path = "contracts/splits" }
 sg-std               = { version = "3.1.0" }
 sg-whitelist         = { version = "3.1.0", path = "contracts/whitelists/whitelist" }
@@ -90,14 +90,6 @@ codegen-units = 1
 incremental   = false
 
 [profile.release.package.sg-whitelist]
-codegen-units = 1
-incremental   = false
-
-[profile.release.package.sg-utils]
-codegen-units = 1
-incremental   = false
-
-[profile.release.package.sg-std]
 codegen-units = 1
 incremental   = false
 
