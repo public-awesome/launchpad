@@ -92,7 +92,7 @@ pub fn execute_create_minter(
     );
 
     ensure!(
-        params.min_mint_price.amount >= msg.init_msg.mint_price.amount,
+        params.min_mint_price.amount <= msg.init_msg.mint_price.amount,
         ContractError::InsufficientMintPrice {
             expected: params.min_mint_price.amount.u128(),
             got: msg.init_msg.mint_price.amount.into(),
