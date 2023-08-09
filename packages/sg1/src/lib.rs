@@ -35,12 +35,20 @@ pub fn ibc_denom_fair_burn(
     developer: Option<Addr>,
     res: &mut Response,
 ) -> Result<(), FeeError> {
+    let mut event = Event::new("ibc-fair-burn");
+
     match &developer {
         Some(developer) => {
             // Calculate the fees. 50% to dev, 50% to community pool
             let dev_fee = (fee.amount.mul_ceil(Decimal::percent(FEE_BURN_PERCENT))).u128();
             let dev_coin = coins(dev_fee, fee.denom.to_string());
-            let comm_fee = coin(fee.amount.u128() - dev_fee, fee.denom);
+            let comm_fee = coin(fee.amount.u128() - dev_fee, fee.denom.to_string());
+
+            event = event.add_attribute("dev_addr", developer.to_string());
+            event = event.add_attribute("dev_denom", fee.denom.to_string());
+            event = event.add_attribute("dev_amount", fee.amount.u128().to_string());
+            event = event.add_attribute("com_pool_denom", comm_fee.denom.to_string());
+            event = event.add_attribute("com_pool_amount", comm_fee.amount.u128().to_string());
 
             res.messages.push(SubMsg::new(BankMsg::Send {
                 to_address: developer.to_string(),
@@ -51,10 +59,15 @@ pub fn ibc_denom_fair_burn(
         }
         None => {
             // No dev, send all to community pool.
+            event = event.add_attribute("com_pool_denom", fee.denom.to_string());
+            event = event.add_attribute("com_pool_amount", fee.amount.u128().to_string());
+
             res.messages
                 .push(SubMsg::new(create_fund_community_pool_msg(vec![fee])));
         }
     }
+
+    res.events.push(event);
     Ok(())
 }
 
