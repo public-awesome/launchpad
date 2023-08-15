@@ -277,7 +277,7 @@ where
         info: MessageInfo,
         start_time: Option<Timestamp>,
     ) -> Result<Response, ContractError> {
-        assert_minter_owner(deps.storage, &info.sender)?;
+        only_minter(deps.storage, &info.sender)?;
 
         let mut collection_info = self.collection_info.load(deps.storage)?;
         collection_info.start_trading_time = start_time;
@@ -311,7 +311,7 @@ where
         info: MessageInfo,
         nft_data: NftParams<T>,
     ) -> Result<Response, ContractError> {
-        assert_minter_owner(deps.storage, &info.sender)?;
+        only_minter(deps.storage, &info.sender)?;
         let (token_id, owner, token_uri, extension) = match nft_data {
             NftParams::NftData {
                 token_id,
@@ -426,18 +426,6 @@ pub fn share_validate(share: Decimal) -> Result<Decimal, ContractError> {
     Ok(share)
 }
 
-pub fn get_owner_minter(storage: &mut dyn Storage) -> Result<Addr, ContractError> {
-    let ownership = cw_ownable::get_ownership(storage)?;
-    match ownership.owner {
-        Some(owner_value) => Ok(owner_value),
-        None => Err(ContractError::MinterNotFound {}),
-    }
-}
-
-pub fn assert_minter_owner(storage: &mut dyn Storage, sender: &Addr) -> Result<(), ContractError> {
-    let res = cw_ownable::assert_owner(storage, sender);
-    match res {
-        Ok(_) => Ok(()),
-        Err(_) => Err(ContractError::UnauthorizedOwner {}),
-    }
+fn only_minter(storage: &mut dyn Storage, sender: &Addr) -> Result<(), ContractError> {
+    cw_ownable::assert_owner(storage, sender).map_err(ContractError::Ownership)
 }

@@ -17,6 +17,9 @@ pub enum ContractError {
     #[error("{0}")]
     Base(#[from] cw721_base::ContractError),
 
+    #[error("{0}")]
+    Ownership(#[from] cw_ownable::OwnershipError),
+
     #[error("Unauthorized")]
     Unauthorized {},
 
