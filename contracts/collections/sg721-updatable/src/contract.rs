@@ -9,7 +9,7 @@ use cosmwasm_std::{DepsMut, Env, Event, MessageInfo};
 use cw2::set_contract_version;
 use semver::Version;
 use sg721::InstantiateMsg;
-use sg721_base::msg::CollectionInfoResponse;
+use sg721_base::contract::only_minter;
 
 use crate::msg::{EnableUpdatableResponse, FrozenTokenMetadataResponse};
 use crate::state::ENABLE_UPDATABLE;
@@ -17,7 +17,6 @@ use crate::state::ENABLE_UPDATABLE;
 use cw721_base::Extension;
 use cw_utils::nonpayable;
 use sg1::checked_fair_burn;
-use sg721_base::ContractError::Unauthorized;
 use sg721_base::Sg721Contract;
 pub type Sg721UpdatableContract<'a> = Sg721Contract<'a, Extension>;
 use sg_std::Response;
@@ -54,6 +53,8 @@ pub fn execute_enable_updatable(
     _env: Env,
     info: MessageInfo,
 ) -> Result<Response, ContractError> {
+    only_minter(deps.storage, &info.sender)?;
+
     let enable_updates = ENABLE_UPDATABLE.load(deps.storage)?;
     let mut res = Response::new();
     if enable_updates {
@@ -83,12 +84,7 @@ pub fn execute_freeze_token_metadata(
     info: MessageInfo,
 ) -> Result<Response, ContractError> {
     nonpayable(&info)?;
-    // Check if sender is creator
-    let collection_info: CollectionInfoResponse =
-        Sg721UpdatableContract::default().query_collection_info(deps.as_ref())?;
-    if info.sender != collection_info.creator {
-        return Err(ContractError::Base(Unauthorized {}));
-    }
+    only_minter(deps.storage, &info.sender)?;
 
     FROZEN_TOKEN_METADATA.save(deps.storage, &true)?;
 
@@ -105,13 +101,7 @@ pub fn execute_update_token_metadata(
     token_uri: Option<String>,
 ) -> Result<Response, ContractError> {
     nonpayable(&info)?;
-    // Check if sender is creator
-    let owner = deps.api.addr_validate(info.sender.as_ref())?;
-    let collection_info: CollectionInfoResponse =
-        Sg721UpdatableContract::default().query_collection_info(deps.as_ref())?;
-    if owner != collection_info.creator {
-        return Err(ContractError::Base(Unauthorized {}));
-    }
+    only_minter(deps.storage, &info.sender)?;
 
     // Check if token metadata is frozen
     let frozen = FROZEN_TOKEN_METADATA.load(deps.storage)?;
@@ -240,6 +230,7 @@ mod tests {
     };
     use cw721::Cw721Query;
     use sg721::{CollectionInfo, InstantiateMsg};
+    use sg721_base::ContractError::Unauthorized;
     use std::marker::PhantomData;
 
     const CREATOR: &str = "creator";

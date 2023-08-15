@@ -193,15 +193,12 @@ where
         info: MessageInfo,
         collection_msg: UpdateCollectionInfoMsg<RoyaltyInfoResponse>,
     ) -> Result<Response, ContractError> {
+        only_minter(deps.storage, &info.sender)?;
+
         let mut collection = self.collection_info.load(deps.storage)?;
 
         if self.frozen_collection_info.load(deps.storage)? {
             return Err(ContractError::CollectionInfoFrozen {});
-        }
-
-        // only creator can update collection info
-        if collection.creator != info.sender {
-            return Err(ContractError::Unauthorized {});
         }
 
         collection.description = collection_msg
@@ -293,10 +290,7 @@ where
         _env: Env,
         info: MessageInfo,
     ) -> Result<Response, ContractError> {
-        let collection = self.query_collection_info(deps.as_ref())?;
-        if collection.creator != info.sender {
-            return Err(ContractError::Unauthorized {});
-        }
+        only_minter(deps.storage, &info.sender)?;
 
         let frozen = true;
         self.frozen_collection_info.save(deps.storage, &frozen)?;
@@ -312,6 +306,7 @@ where
         nft_data: NftParams<T>,
     ) -> Result<Response, ContractError> {
         only_minter(deps.storage, &info.sender)?;
+
         let (token_id, owner, token_uri, extension) = match nft_data {
             NftParams::NftData {
                 token_id,
@@ -426,6 +421,6 @@ pub fn share_validate(share: Decimal) -> Result<Decimal, ContractError> {
     Ok(share)
 }
 
-fn only_minter(storage: &mut dyn Storage, sender: &Addr) -> Result<(), ContractError> {
+pub fn only_minter(storage: &mut dyn Storage, sender: &Addr) -> Result<(), ContractError> {
     cw_ownable::assert_owner(storage, sender).map_err(ContractError::Ownership)
 }
