@@ -10,8 +10,8 @@ use base_factory::state::Extension;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    from_binary, to_binary, Addr, Binary, CosmosMsg, Deps, DepsMut, Empty, Env, MessageInfo, Reply,
-    StdResult, Timestamp, Uint128, WasmMsg,
+    ensure, from_binary, to_binary, Addr, Binary, CosmosMsg, Deps, DepsMut, Empty, Env,
+    MessageInfo, Reply, StdResult, Timestamp, Uint128, WasmMsg,
 };
 
 use cw2::set_contract_version;
@@ -115,38 +115,36 @@ pub fn execute(
         ExecuteMsg::UpdateStartTradingTime(time) => {
             execute_update_start_trading_time(deps, env, info, time)
         }
-        ExecuteMsg::ReceiveNft(msg) => execute_burn_to_mint(deps, env, info, msg),
+        ExecuteMsg::ReceiveNft(msg) => execute_burn_to_mint(env, info, msg),
     }
 }
 
 pub fn execute_burn_to_mint(
-    _deps: DepsMut,
     env: Env,
     info: MessageInfo,
     msg: Cw721ReceiveMsg,
 ) -> Result<Response, ContractError> {
-    let mut res = Response::new();
-    let burn_msg = cw721::Cw721ExecuteMsg::Burn {
-        token_id: msg.token_id,
-    };
-    let cosmos_burn_msg = CosmosMsg::Wasm(WasmMsg::Execute {
+    let burn_msg = CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: info.sender.to_string(),
-        msg: to_binary(&burn_msg)?,
+        msg: to_binary(&cw721::Cw721ExecuteMsg::Burn {
+            token_id: msg.token_id,
+        })?,
         funds: vec![],
     });
-    res = res.add_message(cosmos_burn_msg);
 
     let token_uri_msg: TokenUriMsg = from_binary(&msg.msg)?;
     let execute_mint_msg = ExecuteMsg::Mint {
         token_uri: token_uri_msg.token_uri,
     };
-    let cosmos_mint_msg = CosmosMsg::Wasm(WasmMsg::Execute {
+    let mint_msg = CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: env.contract.address.to_string(),
         msg: to_binary(&execute_mint_msg)?,
         funds: vec![],
     });
-    let res = res.add_message(cosmos_mint_msg);
-    Ok(res)
+
+    Ok(Response::new()
+        .add_attribute("action", "burn_to_mint")
+        .add_messages(vec![burn_msg, mint_msg]))
 }
 
 pub fn execute_mint_sender(
@@ -157,9 +155,10 @@ pub fn execute_mint_sender(
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
 
-    if matches!(config.mint_price, Token::NonFungible(_)) {
-        return Err(ContractError::InvalidMintPrice {});
-    }
+    ensure!(
+        config.mint_price.is_fungible(),
+        ContractError::InvalidMintPrice {}
+    );
 
     _execute_mint_sender(deps, env, info, token_uri)
 }

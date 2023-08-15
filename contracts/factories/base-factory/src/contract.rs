@@ -159,15 +159,10 @@ pub fn update_params<T, C>(
                 );
             }
             sg2::Token::NonFungible(collection) => {
-                let minter_response: Result<
-                    cw721_base::msg::MinterResponse,
-                    cosmwasm_std::StdError,
-                > = deps
+                let _: cw721_base::msg::MinterResponse = deps
                     .querier
-                    .query_wasm_smart(collection, &sg721_base::QueryMsg::Minter {});
-                if minter_response.is_err() {
-                    return Err(ContractError::InvalidCollectionAddress {});
-                }
+                    .query_wasm_smart(collection, &sg721_base::QueryMsg::Minter {})
+                    .map_err(|_| ContractError::InvalidCollectionAddress {})?;
             }
         }
         params.min_mint_price = min_mint_price;
