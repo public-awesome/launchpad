@@ -82,7 +82,6 @@ pub fn execute_create_minter(
             got: msg.init_msg.per_address_limit,
         });
     }
-    //TODO BURNMINT
     let denom_min_mint_price = params.min_mint_price.clone().denom()?;
     ensure!(
         denom_min_mint_price == msg.init_msg.mint_price.denom,
