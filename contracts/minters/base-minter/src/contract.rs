@@ -169,6 +169,7 @@ fn _check_sender_is_collection_or_contract(
     info: MessageInfo,
     collection_info: CollectionInfoResponse,
 ) -> Result<bool, ContractError> {
+    println!("sender is {:?}", info.sender);
     let sender_is_collection_or_contract =
         vec![collection_info.creator, this_contract.to_string()].contains(&info.sender.to_string());
     if !(sender_is_collection_or_contract) {
