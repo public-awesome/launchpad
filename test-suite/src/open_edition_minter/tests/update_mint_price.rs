@@ -5,7 +5,9 @@ use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use open_edition_minter::msg::{ExecuteMsg, QueryMsg};
 
 use crate::common_setup::setup_accounts_and_block::setup_block_time;
-use crate::common_setup::templates::{open_edition_minter_custom_template, DEFAULT_CUSTOM_PARAMS};
+use crate::common_setup::templates::{
+    open_edition_minter_custom_template, OpenEditionMinterCustomParams,
+};
 
 const MINT_PRICE: u128 = 100_000_000;
 
@@ -18,7 +20,7 @@ fn check_mint_price_updates() {
         Some(10),
         Some(2),
         None,
-        DEFAULT_CUSTOM_PARAMS,
+        OpenEditionMinterCustomParams::default(),
         None,
         None,
     )

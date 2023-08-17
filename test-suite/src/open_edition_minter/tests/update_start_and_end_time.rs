@@ -5,7 +5,9 @@ use sg_std::GENESIS_MINT_START_TIME;
 use open_edition_minter::msg::{EndTimeResponse, StartTimeResponse};
 use open_edition_minter::msg::{ExecuteMsg, QueryMsg};
 
-use crate::common_setup::templates::{open_edition_minter_custom_template, DEFAULT_CUSTOM_PARAMS};
+use crate::common_setup::templates::{
+    open_edition_minter_custom_template, OpenEditionMinterCustomParams,
+};
 
 #[test]
 fn check_start_end_time_updates() {
@@ -16,7 +18,7 @@ fn check_start_end_time_updates() {
         Some(10),
         Some(2),
         None,
-        DEFAULT_CUSTOM_PARAMS,
+        OpenEditionMinterCustomParams::default(),
         None,
         None,
     )

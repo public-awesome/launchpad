@@ -10,7 +10,9 @@ use sg2::tests::mock_collection_params_1;
 use crate::common_setup::setup_minter::common::constants::CREATION_FEE;
 use crate::common_setup::setup_minter::common::constants::MIN_MINT_PRICE_OPEN_EDITION;
 use crate::common_setup::setup_minter::open_edition_minter::mock_params::mock_create_minter;
-use crate::common_setup::templates::{open_edition_minter_custom_template, DEFAULT_CUSTOM_PARAMS};
+use crate::common_setup::templates::{
+    open_edition_minter_custom_template, OpenEditionMinterCustomParams,
+};
 
 #[test]
 fn frozen_factory_cannot_create_new_minters() {
@@ -21,7 +23,7 @@ fn frozen_factory_cannot_create_new_minters() {
         None,
         None,
         None,
-        DEFAULT_CUSTOM_PARAMS,
+        OpenEditionMinterCustomParams::default(),
         None,
         None,
     )

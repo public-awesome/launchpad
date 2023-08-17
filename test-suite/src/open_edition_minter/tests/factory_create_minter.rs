@@ -7,7 +7,7 @@ use sg_metadata::{Metadata, Trait};
 
 use crate::common_setup::setup_minter::common::constants::MIN_MINT_PRICE_OPEN_EDITION;
 use crate::common_setup::templates::{
-    open_edition_minter_custom_template, OpenEditionMinterCustomParams, DEFAULT_CUSTOM_PARAMS,
+    open_edition_minter_custom_template, OpenEditionMinterCustomParams,
 };
 
 #[test]
@@ -20,7 +20,7 @@ fn check_valid_create_minter() {
         Some(10),
         Some(5),
         None,
-        DEFAULT_CUSTOM_PARAMS,
+        OpenEditionMinterCustomParams::default(),
         None,
         None,
     );
@@ -38,7 +38,7 @@ fn check_invalid_create_minter_address_limit() {
         Some(10),
         Some(20),
         None,
-        DEFAULT_CUSTOM_PARAMS,
+        OpenEditionMinterCustomParams::default(),
         None,
         None,
     );
@@ -67,7 +67,7 @@ fn check_invalid_create_minter_address_limit() {
         Some(10),
         Some(0),
         None,
-        DEFAULT_CUSTOM_PARAMS,
+        OpenEditionMinterCustomParams::default(),
         None,
         None,
     );
@@ -98,7 +98,7 @@ fn check_invalid_create_minter_start_end_time() {
         Some(10),
         Some(2),
         None,
-        DEFAULT_CUSTOM_PARAMS,
+        OpenEditionMinterCustomParams::default(),
         None,
         None,
     );
@@ -121,7 +121,7 @@ fn check_invalid_create_minter_start_end_time() {
         Some(10),
         Some(2),
         None,
-        DEFAULT_CUSTOM_PARAMS,
+        OpenEditionMinterCustomParams::default(),
         None,
         None,
     );
@@ -150,7 +150,7 @@ fn check_invalid_create_minter_mint_price() {
             denom: "uinvalid".to_string(),
             amount: Uint128::new(MIN_MINT_PRICE_OPEN_EDITION),
         }),
-        DEFAULT_CUSTOM_PARAMS,
+        OpenEditionMinterCustomParams::default(),
         None,
         None,
     );
@@ -176,7 +176,7 @@ fn check_invalid_create_minter_mint_price() {
             denom: NATIVE_DENOM.to_string(),
             amount: Uint128::new(100u128),
         }),
-        DEFAULT_CUSTOM_PARAMS,
+        OpenEditionMinterCustomParams::default(),
         None,
         None,
     );
@@ -254,7 +254,7 @@ fn check_invalid_create_minter_nft_data() {
         None,
         None,
         None,
-        DEFAULT_CUSTOM_PARAMS,
+        OpenEditionMinterCustomParams::default(),
         None,
         None,
     );
@@ -281,7 +281,7 @@ fn check_invalid_create_minter_nft_data() {
         None,
         None,
         None,
-        DEFAULT_CUSTOM_PARAMS,
+        OpenEditionMinterCustomParams::default(),
         None,
         None,
     );
@@ -308,7 +308,7 @@ fn check_invalid_create_minter_nft_data() {
         None,
         None,
         None,
-        DEFAULT_CUSTOM_PARAMS,
+        OpenEditionMinterCustomParams::default(),
         None,
         None,
     );
@@ -335,7 +335,7 @@ fn check_invalid_create_minter_nft_data() {
         None,
         None,
         None,
-        DEFAULT_CUSTOM_PARAMS,
+        OpenEditionMinterCustomParams::default(),
         None,
         None,
     );

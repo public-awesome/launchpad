@@ -332,11 +332,15 @@ pub struct OpenEditionMinterCustomParams<'a> {
     pub airdrop_mint_price_amount: Option<Uint128>,
 }
 
-pub const DEFAULT_CUSTOM_PARAMS: OpenEditionMinterCustomParams = OpenEditionMinterCustomParams {
-    denom: None,
-    mint_fee_bps: None,
-    airdrop_mint_price_amount: None,
-};
+impl<'a> Default for OpenEditionMinterCustomParams<'a> {
+    fn default() -> Self {
+        OpenEditionMinterCustomParams {
+            denom: None,
+            mint_fee_bps: None,
+            airdrop_mint_price_amount: None,
+        }
+    }
+}
 
 // Custom params set to a high level function to ease the tests
 #[allow(clippy::too_many_arguments)]
