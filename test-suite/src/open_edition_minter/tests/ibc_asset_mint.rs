@@ -129,13 +129,60 @@ fn one_hundred_percent_burned_ibc_minter() {
     // for noble, seller has 0% IBC asset
     let balance = router.wrap().query_balance(creator, denom).unwrap();
     assert_eq!(balance.amount, Uint128::zero());
-    // confirm mint_price 100% sent to community pool
+    // confirm mint_price 50% sent to community pool, 50% sent to dev
     // "community_pool" address from packages/sg-multi-test/src/multi.rs
     let balance = router
         .wrap()
         .query_balance(Addr::unchecked("community_pool"), denom)
         .unwrap();
     assert_eq!(balance.amount, mint_price.amount * Decimal::percent(50));
+}
+
+#[test]
+fn zero_mint_fee() {
+    // factory needs airdrop_mint_price: 0
+    // factory needs mint_fee_bps: 0 (0%)
+
+    // allow ibc/frenz denom
+    let denom = "ibc/frenz";
+    let mint_price = coin(MIN_MINT_PRICE_OPEN_EDITION, denom.to_string());
+    let custom_params = OpenEditionMinterCustomParams {
+        denom: Some(denom),
+        mint_fee_bps: Some(0),
+        airdrop_mint_price_amount: Some(Uint128::zero()),
+    };
+    let vt = open_edition_minter_custom_template(
+        None,
+        None,
+        None,
+        Some(10),
+        Some(2),
+        Some(mint_price.clone()),
+        custom_params,
+        None,
+        None,
+    )
+    .unwrap();
+    let (mut router, _, buyer) = (vt.router, vt.accts.creator, vt.accts.buyer);
+    let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
+
+    // give the buyer some of the IBC asset
+    router
+        .sudo(SudoMsg::Bank({
+            BankSudo::Mint {
+                to_address: buyer.to_string(),
+                amount: vec![mint_price.clone()],
+            }
+        }))
+        .map_err(|err| println!("{:?}", err))
+        .ok();
+
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 100, None);
+
+    // Mint succeeds
+    let mint_msg = ExecuteMsg::Mint {};
+    let res = router.execute_contract(buyer.clone(), minter_addr, &mint_msg, &[mint_price.clone()]);
+    assert!(res.is_ok());
 }
 
 #[test]
