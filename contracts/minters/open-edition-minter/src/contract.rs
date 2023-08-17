@@ -328,20 +328,19 @@ fn _execute_mint(
                 ),
                 &mut res,
             )?;
-            // let msg =
-            //     create_fund_community_pool_msg(coins(network_fee.u128(), mint_price.clone().denom));
-            // res = res.add_message(msg);
         }
     } else {
-        checked_fair_burn(
-            &info,
-            network_fee.u128(),
-            Some(
-                deps.api
-                    .addr_validate(&factory_params.extension.dev_fee_address)?,
-            ),
-            &mut res,
-        )?;
+        if !network_fee.is_zero() {
+            checked_fair_burn(
+                &info,
+                network_fee.u128(),
+                Some(
+                    deps.api
+                        .addr_validate(&factory_params.extension.dev_fee_address)?,
+                ),
+                &mut res,
+            )?;
+        }
     }
 
     // Token ID to mint + update the config counter
