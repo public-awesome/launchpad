@@ -115,14 +115,26 @@ pub fn execute(
         ExecuteMsg::UpdateStartTradingTime(time) => {
             execute_update_start_trading_time(deps, env, info, time)
         }
-        ExecuteMsg::ReceiveNft(msg) => execute_burn_to_mint(deps, env, info, msg),
+        ExecuteMsg::ReceiveNft(msg) => call_burn_to_mint(deps, env, info, msg),
     }
 }
 
-pub fn execute_burn_to_mint(
+pub fn call_burn_to_mint(
     _deps: DepsMut,
     env: Env,
     info: MessageInfo,
+    msg: Cw721ReceiveMsg,
+) -> Result<Response, ContractError> {
+    let token_uri_msg: TokenUriMsg = from_binary(&msg.msg)?;
+    let execute_mint_msg = ExecuteMsg::Mint {
+        token_uri: token_uri_msg.token_uri,
+    };
+    Ok(Response::new())
+}
+
+pub fn execute_burn_to_mint(
+    info: MessageInfo,
+    env: Env,
     msg: Cw721ReceiveMsg,
 ) -> Result<Response, ContractError> {
     let mut res = Response::new();
@@ -136,13 +148,9 @@ pub fn execute_burn_to_mint(
     });
     res = res.add_message(cosmos_burn_msg);
 
-    let token_uri_msg: TokenUriMsg = from_binary(&msg.msg)?;
-    let execute_mint_msg = ExecuteMsg::Mint {
-        token_uri: token_uri_msg.token_uri,
-    };
     let cosmos_mint_msg = CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: env.contract.address.to_string(),
-        msg: to_binary(&execute_mint_msg)?,
+        msg: to_binary(&execute_mint_msg.into())?,
         funds: vec![],
     });
     let res = res.add_message(cosmos_mint_msg);
