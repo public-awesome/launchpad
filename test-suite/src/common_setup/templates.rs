@@ -326,20 +326,11 @@ pub fn base_minter_with_specified_sg721(
     }
 }
 
+#[derive(Default)]
 pub struct OpenEditionMinterCustomParams<'a> {
     pub denom: Option<&'a str>,
     pub mint_fee_bps: Option<u64>,
     pub airdrop_mint_price_amount: Option<Uint128>,
-}
-
-impl<'a> Default for OpenEditionMinterCustomParams<'a> {
-    fn default() -> Self {
-        OpenEditionMinterCustomParams {
-            denom: None,
-            mint_fee_bps: None,
-            airdrop_mint_price_amount: None,
-        }
-    }
 }
 
 // Custom params set to a high level function to ease the tests

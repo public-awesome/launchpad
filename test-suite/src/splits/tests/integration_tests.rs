@@ -523,7 +523,7 @@ mod tests {
                     amount: more_funds.clone(),
                 }
             }))
-            .map_err(|err| println!("{:?}", err))
+            .map_err(|err| println!("{err:?}"))
             .ok();
 
             // confirm new balance matches

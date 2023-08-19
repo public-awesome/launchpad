@@ -215,7 +215,7 @@ fn update_start_trading_time() {
         &ExecuteMsg::UpdateStartTradingTime(Some(default_start_trading_time)),
         &[],
     );
-    println!("res is {:?}", res);
+    println!("res is {res:?}");
     assert!(res.is_ok());
 
     // confirm trading start time

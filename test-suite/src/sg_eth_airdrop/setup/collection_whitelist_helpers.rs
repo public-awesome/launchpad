@@ -28,7 +28,7 @@ pub fn send_funds_to_address(app: &mut StargazeApp, target_address_str: &str, am
             amount: coins(amount, NATIVE_DENOM),
         }
     }))
-    .map_err(|err| println!("{:?}", err))
+    .map_err(|err| println!("{err:?}"))
     .ok();
 }
 
@@ -43,7 +43,7 @@ pub fn execute_mint_fail_not_on_whitelist(app: &mut StargazeApp, minter_addr: Ad
         &coins(MINT_PRICE, NATIVE_DENOM),
     );
 
-    let expected_error = format!("address not on whitelist: {}", STARGAZE_WALLET_01);
+    let expected_error = format!("address not on whitelist: {STARGAZE_WALLET_01}");
     assert_eq!(res.unwrap_err().root_cause().to_string(), expected_error);
 }
 
