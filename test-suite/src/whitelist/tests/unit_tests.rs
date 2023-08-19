@@ -222,7 +222,7 @@ fn too_many_members_check() {
 
     let mut members = vec![];
     for i in 0..MAX_MEMBERS {
-        members.push(format!("adsfsa{}", i));
+        members.push(format!("adsfsa{i}"));
     }
 
     let inner_msg = AddMembersMsg { to_add: members };
@@ -272,7 +272,7 @@ fn query_members_pagination() {
     let mut deps = mock_dependencies();
     let mut members = vec![];
     for i in 0..150 {
-        members.push(format!("stars1{}", i));
+        members.push(format!("stars1{i}"));
     }
     let msg = InstantiateMsg {
         members: members.clone(),

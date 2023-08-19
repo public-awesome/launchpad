@@ -78,13 +78,13 @@ pub fn setup_minter_contract(setup_params: MinterSetupParams) -> MinterCollectio
 
 pub fn vending_minter_code_ids(router: &mut StargazeApp) -> CodeIds {
     let minter_code_id = router.store_code(contract_vending_minter());
-    println!("minter_code_id: {}", minter_code_id);
+    println!("minter_code_id: {minter_code_id}");
 
     let factory_code_id = router.store_code(contract_vending_factory());
-    println!("factory_code_id: {}", factory_code_id);
+    println!("factory_code_id: {factory_code_id}");
 
     let sg721_code_id = router.store_code(contract_sg721_base());
-    println!("sg721_code_id: {}", sg721_code_id);
+    println!("sg721_code_id: {sg721_code_id}");
     CodeIds {
         minter_code_id,
         factory_code_id,
@@ -94,13 +94,13 @@ pub fn vending_minter_code_ids(router: &mut StargazeApp) -> CodeIds {
 
 pub fn vending_minter_updatable_code_ids(router: &mut StargazeApp) -> CodeIds {
     let minter_code_id = router.store_code(contract_vending_minter());
-    println!("minter_code_id: {}", minter_code_id);
+    println!("minter_code_id: {minter_code_id}");
 
     let factory_code_id = router.store_code(contract_vending_factory());
-    println!("factory_code_id: {}", factory_code_id);
+    println!("factory_code_id: {factory_code_id}");
 
     let sg721_code_id = router.store_code(contract_sg721_updatable());
-    println!("sg721_code_id: {}", sg721_code_id);
+    println!("sg721_code_id: {sg721_code_id}");
     CodeIds {
         minter_code_id,
         factory_code_id,

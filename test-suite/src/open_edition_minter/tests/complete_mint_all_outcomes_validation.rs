@@ -9,14 +9,26 @@ use sg4::StatusResponse;
 
 use crate::common_setup::setup_accounts_and_block::{coins_for_msg, setup_block_time};
 use crate::common_setup::setup_minter::common::constants::DEV_ADDRESS;
-use crate::common_setup::templates::open_edition_minter_custom_template;
+use crate::common_setup::templates::{
+    open_edition_minter_custom_template, OpenEditionMinterCustomParams,
+};
 
 const MINT_PRICE: u128 = 100_000_000;
 
 #[test]
 fn check_mint_revenues_distribution() {
-    let vt = open_edition_minter_custom_template(None, None, None, None, Some(3), None, None, None)
-        .unwrap();
+    let vt = open_edition_minter_custom_template(
+        None,
+        None,
+        None,
+        None,
+        Some(3),
+        None,
+        OpenEditionMinterCustomParams::default(),
+        None,
+        None,
+    )
+    .unwrap();
     let (mut router, creator, buyer) = (vt.router, vt.accts.creator, vt.accts.buyer);
     let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
     let collection_addr = vt.collection_response_vec[0].collection.clone().unwrap();
@@ -107,7 +119,7 @@ fn check_mint_revenues_distribution() {
                 amount: coins(100_000u128, "invalid".to_string()),
             }
         }))
-        .map_err(|err| println!("{:?}", err))
+        .map_err(|err| println!("{err:?}"))
         .ok();
     let mint_msg = ExecuteMsg::Mint {};
     let res = router.execute_contract(

@@ -169,7 +169,7 @@ mod validation {
                 verify_ethereum_text(deps.as_ref(), &plaintext_msg, &eth_sig_hex, &eth_address)
             }
             Err(_) => Err(StdError::InvalidHex {
-                msg: format!("Could not decode {}", eth_sig),
+                msg: format!("Could not decode {eth_sig}"),
             }),
         }
     }

@@ -14,7 +14,7 @@ use crate::common_setup::setup_minter::common::constants::{
 };
 use crate::common_setup::setup_minter::common::parse_response::build_collection_response;
 use crate::common_setup::setup_minter::open_edition_minter::mock_params::{
-    mock_create_minter, mock_params_proper,
+    mock_create_minter, mock_params_custom,
 };
 use crate::common_setup::setup_minter::open_edition_minter::setup::open_edition_minter_code_ids;
 use cosmwasm_std::{coin, coins, Coin, Timestamp, Uint128};
@@ -326,6 +326,13 @@ pub fn base_minter_with_specified_sg721(
     }
 }
 
+#[derive(Default)]
+pub struct OpenEditionMinterCustomParams<'a> {
+    pub denom: Option<&'a str>,
+    pub mint_fee_bps: Option<u64>,
+    pub airdrop_mint_price_amount: Option<Uint128>,
+}
+
 // Custom params set to a high level function to ease the tests
 #[allow(clippy::too_many_arguments)]
 pub fn open_edition_minter_custom_template(
@@ -335,6 +342,7 @@ pub fn open_edition_minter_custom_template(
     max_per_address_limit: Option<u32>,
     per_address_limit_minter: Option<u32>,
     mint_price_minter: Option<Coin>,
+    custom_params: OpenEditionMinterCustomParams,
     sg721_code: Option<Box<dyn Contract<StargazeMsgWrapper>>>,
     sg721_codeid: Option<u64>,
 ) -> Result<MinterTemplateResponse<Accounts>, anyhow::Result<AppResponse>> {
@@ -344,7 +352,7 @@ pub fn open_edition_minter_custom_template(
         open_edition_minter_code_ids(&mut app, sg721_code.unwrap_or_else(contract_sg721_base));
 
     // Factory params
-    let mut factory_params = mock_params_proper();
+    let mut factory_params = mock_params_custom(custom_params);
     factory_params.extension.max_per_address_limit =
         max_per_address_limit.unwrap_or(factory_params.extension.max_per_address_limit);
 

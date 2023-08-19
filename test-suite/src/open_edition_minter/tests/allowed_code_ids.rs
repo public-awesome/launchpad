@@ -1,4 +1,6 @@
-use crate::common_setup::templates::open_edition_minter_custom_template;
+use crate::common_setup::templates::{
+    open_edition_minter_custom_template, OpenEditionMinterCustomParams,
+};
 
 #[test]
 fn invalid_code_id() {
@@ -10,6 +12,7 @@ fn invalid_code_id() {
         Some(10),
         Some(5),
         None,
+        OpenEditionMinterCustomParams::default(),
         None,
         Some(19),
     );

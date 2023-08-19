@@ -5,15 +5,26 @@ use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use open_edition_minter::msg::{ExecuteMsg, QueryMsg};
 
 use crate::common_setup::setup_accounts_and_block::setup_block_time;
-use crate::common_setup::templates::open_edition_minter_custom_template;
+use crate::common_setup::templates::{
+    open_edition_minter_custom_template, OpenEditionMinterCustomParams,
+};
 
 const MINT_PRICE: u128 = 100_000_000;
 
 #[test]
 fn check_mint_price_updates() {
-    let vt =
-        open_edition_minter_custom_template(None, None, None, Some(10), Some(2), None, None, None)
-            .unwrap();
+    let vt = open_edition_minter_custom_template(
+        None,
+        None,
+        None,
+        Some(10),
+        Some(2),
+        None,
+        OpenEditionMinterCustomParams::default(),
+        None,
+        None,
+    )
+    .unwrap();
     let (mut router, creator, _buyer) = (vt.router, vt.accts.creator, vt.accts.buyer);
     let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
 

@@ -39,7 +39,7 @@ fn instantiate_contract(admin_account: &str, app: &mut StargazeApp) {
             amount: coins(funds_amount, NATIVE_DENOM),
         }
     }))
-    .map_err(|err| println!("{:?}", err))
+    .map_err(|err| println!("{err:?}"))
     .ok();
 
     let collection_id = app.store_code(contract_collection_whitelist());
