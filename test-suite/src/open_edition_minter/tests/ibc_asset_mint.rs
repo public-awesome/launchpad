@@ -53,7 +53,7 @@ fn check_custom_create_minter_denom() {
                 amount: vec![mint_price.clone()],
             }
         }))
-        .map_err(|err| println!("{:?}", err))
+        .map_err(|err| println!("{err:?}"))
         .ok();
 
     setup_block_time(&mut router, GENESIS_MINT_START_TIME + 100, None);
@@ -112,7 +112,7 @@ fn one_hundred_percent_burned_ibc_minter() {
                 amount: vec![mint_price.clone()],
             }
         }))
-        .map_err(|err| println!("{:?}", err))
+        .map_err(|err| println!("{err:?}"))
         .ok();
 
     setup_block_time(&mut router, GENESIS_MINT_START_TIME + 100, None);
@@ -174,14 +174,14 @@ fn zero_mint_fee() {
                 amount: vec![mint_price.clone()],
             }
         }))
-        .map_err(|err| println!("{:?}", err))
+        .map_err(|err| println!("{err:?}"))
         .ok();
 
     setup_block_time(&mut router, GENESIS_MINT_START_TIME + 100, None);
 
     // Mint succeeds
     let mint_msg = ExecuteMsg::Mint {};
-    let res = router.execute_contract(buyer.clone(), minter_addr, &mint_msg, &[mint_price.clone()]);
+    let res = router.execute_contract(buyer, minter_addr, &mint_msg, &[mint_price]);
     assert!(res.is_ok());
 }
 

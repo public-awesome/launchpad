@@ -136,7 +136,7 @@ fn check_mint() {
         &[coin(MIN_MINT_PRICE, NATIVE_DENOM)],
     );
 
-    println!("res is {:?}", res);
+    println!("res is {res:?}");
     assert!(res.is_ok());
 
     let creator_balances = router.wrap().query_all_balances(creator.clone()).unwrap();

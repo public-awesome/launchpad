@@ -119,7 +119,7 @@ fn check_mint_revenues_distribution() {
                 amount: coins(100_000u128, "invalid".to_string()),
             }
         }))
-        .map_err(|err| println!("{:?}", err))
+        .map_err(|err| println!("{err:?}"))
         .ok();
     let mint_msg = ExecuteMsg::Mint {};
     let res = router.execute_contract(

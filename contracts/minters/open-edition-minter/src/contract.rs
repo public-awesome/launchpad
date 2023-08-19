@@ -329,18 +329,16 @@ fn _execute_mint(
                 &mut res,
             )?;
         }
-    } else {
-        if !network_fee.is_zero() {
-            checked_fair_burn(
-                &info,
-                network_fee.u128(),
-                Some(
-                    deps.api
-                        .addr_validate(&factory_params.extension.dev_fee_address)?,
-                ),
-                &mut res,
-            )?;
-        }
+    } else if !network_fee.is_zero() {
+        checked_fair_burn(
+            &info,
+            network_fee.u128(),
+            Some(
+                deps.api
+                    .addr_validate(&factory_params.extension.dev_fee_address)?,
+            ),
+            &mut res,
+        )?;
     }
 
     // Token ID to mint + update the config counter

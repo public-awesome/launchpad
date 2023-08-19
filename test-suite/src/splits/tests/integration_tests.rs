@@ -75,7 +75,7 @@ mod tests {
         let flex_id = app.store_code(contract_splits());
 
         let members: Vec<Member> = (1..=MAX_GROUP_SIZE + 1)
-            .map(|i| member(format!("member{:04}", i), 1))
+            .map(|i| member(format!("member{i:04}"), 1))
             .collect();
         // members.push(member(OWNER, 1));
 

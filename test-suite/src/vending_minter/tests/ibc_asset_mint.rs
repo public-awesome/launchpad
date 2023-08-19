@@ -44,7 +44,7 @@ fn mint_with_ibc_asset() {
                 amount: mint_price.clone(),
             }
         }))
-        .map_err(|err| println!("{:?}", err))
+        .map_err(|err| println!("{err:?}"))
         .ok();
 
     setup_block_time(&mut router, GENESIS_MINT_START_TIME + 1, None);
@@ -203,7 +203,7 @@ fn wl_denom_mint() {
             amount: vec![wl_mint_price.clone()],
         }
     }))
-    .map_err(|err| println!("{:?}", err))
+    .map_err(|err| println!("{err:?}"))
     .ok();
 
     // set block time to whitelist start time
