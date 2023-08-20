@@ -1,9 +1,11 @@
 use cw721_base::state::TokenInfo;
+
+use cw721_base::{Extension, MinterResponse};
 use url::Url;
 
 use cosmwasm_std::{
-    to_binary, Addr, Binary, ContractInfoResponse, Decimal, Deps, DepsMut, Empty, Env, Event,
-    MessageInfo, StdError, StdResult, Storage, Timestamp, WasmQuery,
+    from_binary, to_binary, Addr, Binary, ContractInfoResponse, Decimal, Deps, DepsMut, Empty, Env,
+    Event, MessageInfo, StdError, StdResult, Storage, Timestamp, WasmQuery,
 };
 
 use cw721::{ContractInfoResponse as CW721ContractInfoResponse, Cw721Execute};
@@ -16,7 +18,7 @@ use sg721::{
 };
 use sg_std::Response;
 
-use crate::msg::{CollectionInfoResponse, NftParams, QueryMsg};
+use crate::msg::{self, CollectionInfoResponse, NftParams, QueryMsg};
 use crate::{ContractError, Sg721Contract};
 
 use crate::entry::{CONTRACT_NAME, CONTRACT_VERSION};
@@ -313,7 +315,16 @@ where
         info: MessageInfo,
         nft_data: NftParams<T>,
     ) -> Result<Response, ContractError> {
-        assert_minter_owner(deps.storage, &info.sender)?;
+        println!("we are in sg721 with sender {:?}", info.sender);
+        let msg = msg::QueryMsg::Minter {};
+        let minter: MinterResponse =
+            from_binary(&self.parent.query(deps.as_ref(), _env, msg.into())?)?;
+        println!("minter is {:?}", minter.minter);
+        if !(info.sender.to_string() == minter.minter.unwrap()) {
+            assert_minter_owner(deps.storage, &info.sender)?;
+        }
+        println!("made it past the checks");
+
         let (token_id, owner, token_uri, extension) = match nft_data {
             NftParams::NftData {
                 token_id,
@@ -322,7 +333,9 @@ where
                 extension,
             } => (token_id, owner, token_uri, extension),
         };
-
+        println!("owner validated is {:?}", owner);
+        let valid = deps.api.addr_validate(&owner)?;
+        println!("valid is {:?}", valid);
         // create the token
         let token = TokenInfo {
             owner: deps.api.addr_validate(&owner)?,
@@ -337,6 +350,7 @@ where
                 None => Ok(token),
             })?;
 
+        println!("before incremenet");
         self.parent.increment_tokens(deps.storage)?;
 
         let mut res = Response::new()
@@ -347,6 +361,7 @@ where
         if let Some(token_uri) = token_uri {
             res = res.add_attribute("token_uri", token_uri);
         }
+        println!("before res, res is {:?}", res);
         Ok(res)
     }
 

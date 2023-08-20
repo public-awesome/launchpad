@@ -284,7 +284,7 @@ pub fn base_minter_with_two_sg721_collections(num_tokens: u32) -> MinterTemplate
         .sudo(SudoMsg::Bank({
             BankSudo::Mint {
                 to_address: creator.to_string(),
-                amount: vec![coin(CREATION_FEE, NATIVE_DENOM)],
+                amount: vec![coin(CREATION_FEE * 2, NATIVE_DENOM)],
             }
         }))
         .map_err(|err| println!("{:?}", err))
