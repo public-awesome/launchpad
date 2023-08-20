@@ -22,7 +22,7 @@ use sg721_base::Sg721Contract;
 pub type Sg721UpdatableContract<'a> = Sg721Contract<'a, Extension>;
 use sg_std::Response;
 
-const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
+const CONTRACT_NAME: &str = "crates.io:sg721-updatable";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 const EARLIEST_COMPATIBLE_VERSION: &str = "0.16.0";
 const COMPATIBLE_CONTRACT_NAMES_FOR_MIGRATION: [&str; 4] = [
