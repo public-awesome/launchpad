@@ -1,7 +1,7 @@
 use cw721_base::state::TokenInfo;
 use cw721_base::MinterResponse;
-
 use cw721_base::{Extension, MinterResponse};
+
 use url::Url;
 
 use cosmwasm_std::{
@@ -316,11 +316,7 @@ where
         info: MessageInfo,
         nft_data: NftParams<T>,
     ) -> Result<Response, ContractError> {
-        let is_minter_caller =
-            self.check_minter_caller(deps.as_ref(), _env, info.sender.clone())?;
-        if !is_minter_caller {
-            assert_minter_owner(deps.storage, &info.sender)?;
-        }
+        assert_minter_owner(deps.storage, &info.sender)?;
         let (token_id, owner, token_uri, extension) = match nft_data {
             NftParams::NftData {
                 token_id,
@@ -329,7 +325,6 @@ where
                 extension,
             } => (token_id, owner, token_uri, extension),
         };
-        deps.api.addr_validate(&owner)?;
         // create the token
         let token = TokenInfo {
             owner: deps.api.addr_validate(&owner)?,
@@ -354,18 +349,6 @@ where
             res = res.add_attribute("token_uri", token_uri);
         }
         Ok(res)
-    }
-
-    pub fn check_minter_caller(
-        &self,
-        deps: Deps,
-        env: Env,
-        sender: Addr,
-    ) -> Result<bool, ContractError> {
-        let msg = msg::QueryMsg::Minter {};
-        let minter: MinterResponse = from_binary(&self.parent.query(deps, env, msg.into())?)?;
-        let is_minter = sender == minter.minter.unwrap();
-        Ok(is_minter)
     }
 
     pub fn query(&self, deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
@@ -434,6 +417,12 @@ where
 
         Ok(response)
     }
+
+    pub fn get_minter_owner_parent(&self, deps: Deps, env: Env) -> StdResult<MinterResponse> {
+        let msg = msg::QueryMsg::Minter {};
+        let minter: MinterResponse = from_binary(&self.parent.query(deps, env, msg.into())?)?;
+        Ok(minter)
+    }
 }
 
 pub fn share_validate(share: Decimal) -> Result<Decimal, ContractError> {
@@ -444,14 +433,6 @@ pub fn share_validate(share: Decimal) -> Result<Decimal, ContractError> {
     }
 
     Ok(share)
-}
-
-pub fn get_owner_minter(storage: &mut dyn Storage) -> Result<Addr, ContractError> {
-    let ownership = cw_ownable::get_ownership(storage)?;
-    match ownership.owner {
-        Some(owner_value) => Ok(owner_value),
-        None => Err(ContractError::MinterNotFound {}),
-    }
 }
 
 pub fn assert_minter_owner(storage: &mut dyn Storage, sender: &Addr) -> Result<(), ContractError> {

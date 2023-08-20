@@ -164,12 +164,11 @@ pub fn execute_mint_sender(
     _execute_mint_sender(deps, env, info, token_uri)
 }
 
-fn _check_sender_is_collection_or_contract(
+fn check_sender_is_collection_or_contract(
     this_contract: Addr,
     info: MessageInfo,
     collection_info: CollectionInfoResponse,
 ) -> Result<bool, ContractError> {
-    println!("sender is {:?}", info.sender);
     let sender_is_collection_or_contract =
         vec![collection_info.creator, this_contract.to_string()].contains(&info.sender.to_string());
     if !(sender_is_collection_or_contract) {
@@ -180,7 +179,7 @@ fn _check_sender_is_collection_or_contract(
     Ok(true)
 }
 
-fn _pay_mint_if_not_contract(
+fn pay_mint_if_not_contract(
     this_contract: Addr,
     info: MessageInfo,
     mint_price: Token,
@@ -224,7 +223,7 @@ fn _execute_mint_sender(
         &Sg721QueryMsg::CollectionInfo {},
     )?;
 
-    let _ = _check_sender_is_collection_or_contract(
+    check_sender_is_collection_or_contract(
         env.contract.address.clone(),
         info.clone(),
         collection_info.clone(),
@@ -241,7 +240,7 @@ fn _execute_mint_sender(
         .query_wasm_smart(config.factory, &Sg2QueryMsg::Params {})?;
     let factory_params = factory.params;
 
-    let network_fee = _pay_mint_if_not_contract(
+    let network_fee = pay_mint_if_not_contract(
         env.contract.address,
         info.clone(),
         config.mint_price,

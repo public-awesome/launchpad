@@ -55,4 +55,10 @@ pub enum ContractError {
 
     #[error("Error while migrating: ({0}) ")]
     MigrationError(String),
+
+    #[error("Contract ownership has been renounced")]
+    NoOwner,
+
+    #[error("Caller is not the contract's current owner")]
+    NotOwner,
 }
