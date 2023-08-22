@@ -129,32 +129,9 @@ pub fn call_burn_to_mint(
     let execute_mint_msg = ExecuteMsg::Mint {
         token_uri: token_uri_msg.token_uri,
     };
-    Ok(Response::new())
-}
-
-pub fn execute_burn_to_mint(
-    info: MessageInfo,
-    env: Env,
-    msg: Cw721ReceiveMsg,
-) -> Result<Response, ContractError> {
-    let mut res = Response::new();
-    let burn_msg = cw721::Cw721ExecuteMsg::Burn {
-        token_id: msg.token_id,
-    };
-    let cosmos_burn_msg = CosmosMsg::Wasm(WasmMsg::Execute {
-        contract_addr: info.sender.to_string(),
-        msg: to_binary(&burn_msg)?,
-        funds: vec![],
-    });
-    res = res.add_message(cosmos_burn_msg);
-
-    let cosmos_mint_msg = CosmosMsg::Wasm(WasmMsg::Execute {
-        contract_addr: env.contract.address.to_string(),
-        msg: to_binary(&execute_mint_msg.into())?,
-        funds: vec![],
-    });
-    let res = res.add_message(cosmos_mint_msg);
-    Ok(res)
+    let res = burn_to_mint::generate_burn_mint_response(info, env, msg, execute_mint_msg)
+        .map_err(|_| ContractError::BurnToMintError {});
+    res
 }
 
 pub fn execute_mint_sender(

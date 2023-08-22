@@ -1,6 +1,6 @@
 [package]
 name = "burn-to-mint"
-authors = ["Michael Scotto <m@noreply.publicawsome.com>"]
+authors = ["Michael Scotto <m@publicawsome.com>"]
 description = "Burn to mint utility functions"
 version = { workspace = true }
 edition = { workspace = true }

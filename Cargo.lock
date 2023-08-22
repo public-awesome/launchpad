@@ -300,6 +300,7 @@ name = "base-minter"
 version = "3.1.0"
 dependencies = [
  "base-factory",
+ "burn-to-mint",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus 1.1.0",
@@ -2322,6 +2323,7 @@ dependencies = [
 name = "open-edition-minter"
 version = "3.1.0"
 dependencies = [
+ "burn-to-mint",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus 1.1.0",
@@ -4255,6 +4257,7 @@ dependencies = [
 name = "vending-minter"
 version = "3.1.0"
 dependencies = [
+ "burn-to-mint",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus 1.1.0",

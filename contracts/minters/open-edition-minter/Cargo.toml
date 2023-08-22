@@ -44,3 +44,4 @@ thiserror               = { workspace = true }
 url                     = { workspace = true }
 open-edition-factory    = { workspace = true, features = ["library"] }
 semver                  = {workspace = true }
+burn-to-mint    = { workspace = true }
