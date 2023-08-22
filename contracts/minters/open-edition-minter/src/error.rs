@@ -116,4 +116,7 @@ pub enum ContractError {
 
     #[error("Expected fungible token, received nonfungible")]
     IncorrectFungibility {},
+
+    #[error("Burn to Mint Error")]
+    BurnToMintError {},
 }

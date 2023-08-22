@@ -245,35 +245,19 @@ pub fn execute(
             execute_update_discount_price(deps, env, info, price)
         }
         ExecuteMsg::RemoveDiscountPrice {} => execute_remove_discount_price(deps, info),
-        ExecuteMsg::ReceiveNft(msg) => execute_burn_to_mint(deps, env, info, msg),
+        ExecuteMsg::ReceiveNft(msg) => call_burn_to_mint(deps, env, info, msg),
     }
 }
 
-pub fn execute_burn_to_mint(
+pub fn call_burn_to_mint(
     _deps: DepsMut,
     env: Env,
     info: MessageInfo,
     msg: Cw721ReceiveMsg,
 ) -> Result<Response, ContractError> {
-    let mut res = Response::new();
-    let burn_msg = cw721::Cw721ExecuteMsg::Burn {
-        token_id: msg.token_id,
-    };
-    let cosmos_burn_msg = CosmosMsg::Wasm(WasmMsg::Execute {
-        contract_addr: info.sender.to_string(),
-        msg: to_binary(&burn_msg)?,
-        funds: vec![],
-    });
-    res = res.add_message(cosmos_burn_msg);
-
     let execute_mint_msg = ExecuteMsg::Mint {};
-    let cosmos_mint_msg = CosmosMsg::Wasm(WasmMsg::Execute {
-        contract_addr: env.contract.address.to_string(),
-        msg: to_binary(&execute_mint_msg)?,
-        funds: vec![],
-    });
-    let res = res.add_message(cosmos_mint_msg);
-    Ok(res)
+    burn_to_mint::generate_burn_mint_response(info, env, msg, execute_mint_msg)
+        .map_err(|_| ContractError::BurnToMintError {})
 }
 
 pub fn execute_update_discount_price(

@@ -44,3 +44,4 @@ sg721-base      = { workspace = true, features = ["library"] }
 sg-std          = { workspace = true }
 thiserror       = { workspace = true }
 url             = { workspace = true }
+burn-to-mint    = { workspace = true }

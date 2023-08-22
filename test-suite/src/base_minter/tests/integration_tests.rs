@@ -262,6 +262,7 @@ fn check_burns_tokens_when_received() {
         msg: to_binary(&token_uri_msg).unwrap(),
     };
     let res = router.execute_contract(creator, collection_addr_1.clone(), &send_nft, &[]);
+    println!("res is {:?}", res);
     assert!(res.is_ok());
 
     let num_tokens_res: cw721::NumTokensResponse = router

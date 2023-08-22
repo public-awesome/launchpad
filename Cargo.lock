@@ -300,6 +300,7 @@ name = "base-minter"
 version = "3.1.0"
 dependencies = [
  "base-factory",
+ "burn-to-mint",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus 1.1.0",
@@ -541,6 +542,30 @@ name = "bumpalo"
 version = "3.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0d261e256854913907f67ed06efbc3338dfe6179796deefc1ff763fc1aee5535"
+
+[[package]]
+name = "burn-to-mint"
+version = "3.1.0"
+dependencies = [
+ "base-factory",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus 1.1.0",
+ "cw-utils 1.0.1",
+ "cw2 1.1.0",
+ "cw721 0.18.0",
+ "cw721-base 0.18.0",
+ "schemars",
+ "serde",
+ "sg-std",
+ "sg1",
+ "sg2",
+ "sg4",
+ "sg721",
+ "sg721-base",
+ "thiserror",
+ "url",
+]
 
 [[package]]
 name = "byte-slice-cast"
@@ -2298,6 +2323,7 @@ dependencies = [
 name = "open-edition-minter"
 version = "3.1.0"
 dependencies = [
+ "burn-to-mint",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus 1.1.0",
@@ -4231,6 +4257,7 @@ dependencies = [
 name = "vending-minter"
 version = "3.1.0"
 dependencies = [
+ "burn-to-mint",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus 1.1.0",
