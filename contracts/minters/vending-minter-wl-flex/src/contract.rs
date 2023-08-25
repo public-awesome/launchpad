@@ -395,24 +395,22 @@ pub fn execute_set_whitelist(
             },
         ..
     } = config.clone();
-    if admin != info.sender {
-        return Err(ContractError::Unauthorized(
-            "Sender is not an admin".to_owned(),
-        ));
-    };
+    ensure!(
+        info.sender == admin,
+        ContractError::Unauthorized("Sender is not an admin".to_owned(),)
+    );
 
-    if env.block.time >= start_time {
-        return Err(ContractError::AlreadyStarted {});
-    }
+    ensure!(
+        env.block.time < start_time,
+        ContractError::AlreadyStarted {}
+    );
 
     if let Some(wl) = existing_whitelist {
         let res: WhitelistConfigResponse = deps
             .querier
             .query_wasm_smart(wl, &WhitelistQueryMsg::Config {})?;
 
-        if res.is_active {
-            return Err(ContractError::WhitelistAlreadyStarted {});
-        }
+        ensure!(!res.is_active, ContractError::WhitelistAlreadyStarted {});
     }
 
     let new_wl = deps.api.addr_validate(whitelist)?;
@@ -426,9 +424,7 @@ pub fn execute_set_whitelist(
         .querier
         .query_wasm_smart(new_wl, &WhitelistQueryMsg::Config {})?;
 
-    if wl_is_active {
-        return Err(ContractError::WhitelistAlreadyStarted {});
-    }
+    ensure!(!wl_is_active, ContractError::WhitelistAlreadyStarted {});
 
     // Whitelist could be free, while factory minimum is not
     let ParamsResponse {
@@ -441,12 +437,13 @@ pub fn execute_set_whitelist(
         .querier
         .query_wasm_smart(factory, &Sg2QueryMsg::Params {})?;
 
-    if factory_min_mint_price.amount > wl_mint_price.amount {
-        return Err(ContractError::InsufficientWhitelistMintPrice {
+    ensure!(
+        factory_min_mint_price.amount <= wl_mint_price.amount,
+        ContractError::InsufficientWhitelistMintPrice {
             expected: factory_min_mint_price.amount.into(),
             got: wl_mint_price.amount.into(),
-        });
-    }
+        }
+    );
 
     // Whitelist denom should match factory mint denom
     ensure!(
