@@ -13,8 +13,9 @@ use crate::validation::{check_dynamic_per_address_limit, get_three_percent_of_to
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coin, coins, to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Deps, DepsMut, Empty, Env,
-    Event, MessageInfo, Order, Reply, ReplyOn, StdError, StdResult, Timestamp, Uint128, WasmMsg,
+    coin, coins, ensure, to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Deps, DepsMut, Empty,
+    Env, Event, MessageInfo, Order, Reply, ReplyOn, StdError, StdResult, Timestamp, Uint128,
+    WasmMsg,
 };
 use cw2::set_contract_version;
 use cw721_base::Extension;
@@ -447,6 +448,15 @@ pub fn execute_set_whitelist(
             got: whitelist_mint_price,
         });
     }
+
+    // Whitelist denom should match factory mint denom
+    ensure!(
+        factory.params.min_mint_price.denom == wl_config.mint_price.denom,
+        ContractError::InvalidDenom {
+            expected: factory.params.min_mint_price.denom,
+            got: wl_config.mint_price.denom,
+        }
+    );
 
     CONFIG.save(deps.storage, &config)?;
 
