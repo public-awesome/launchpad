@@ -23,7 +23,7 @@ use rand_xoshiro::Xoshiro128PlusPlus;
 use semver::Version;
 use sg1::checked_fair_burn;
 use sg2::query::Sg2QueryMsg;
-use sg4::{Status, StatusResponse, SudoMsg};
+use sg4::{MinterConfig, Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
 use sg_std::math::U64Ext;
 use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME};
@@ -36,6 +36,7 @@ use shuffle::{fy::FisherYates, shuffler::Shuffler};
 use url::Url;
 
 use vending_factory::msg::{ParamsResponse, VendingMinterCreateMsg};
+use vending_factory::state::VendingMinterParams;
 
 pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 pub type SubMsg = cosmwasm_std::SubMsg<StargazeMsgWrapper>;
@@ -383,17 +384,28 @@ pub fn execute_set_whitelist(
 ) -> Result<Response, ContractError> {
     nonpayable(&info)?;
     let mut config = CONFIG.load(deps.storage)?;
-    if config.extension.admin != info.sender {
+    let MinterConfig {
+        factory,
+        extension:
+            ConfigExtension {
+                whitelist: existing_whitelist,
+                admin,
+                start_time,
+                ..
+            },
+        ..
+    } = config.clone();
+    if admin != info.sender {
         return Err(ContractError::Unauthorized(
             "Sender is not an admin".to_owned(),
         ));
     };
 
-    if env.block.time >= config.extension.start_time {
+    if env.block.time >= start_time {
         return Err(ContractError::AlreadyStarted {});
     }
 
-    if let Some(wl) = config.extension.whitelist {
+    if let Some(wl) = existing_whitelist {
         let res: WhitelistConfigResponse = deps
             .querier
             .query_wasm_smart(wl, &WhitelistQueryMsg::Config {})?;
@@ -406,35 +418,42 @@ pub fn execute_set_whitelist(
     let new_wl = deps.api.addr_validate(whitelist)?;
     config.extension.whitelist = Some(new_wl.clone());
     // check that the new whitelist exists
-    let wl_config: WhitelistConfigResponse = deps
+    let WhitelistConfigResponse {
+        is_active: wl_is_active,
+        mint_price: wl_mint_price,
+        ..
+    } = deps
         .querier
         .query_wasm_smart(new_wl, &WhitelistQueryMsg::Config {})?;
 
-    if wl_config.is_active {
+    if wl_is_active {
         return Err(ContractError::WhitelistAlreadyStarted {});
     }
 
     // Whitelist could be free, while factory minimum is not
-    let factory: ParamsResponse = deps
+    let ParamsResponse {
+        params:
+            VendingMinterParams {
+                min_mint_price: factory_min_mint_price,
+                ..
+            },
+    } = deps
         .querier
-        .query_wasm_smart(config.factory.clone(), &Sg2QueryMsg::Params {})?;
+        .query_wasm_smart(factory.clone(), &Sg2QueryMsg::Params {})?;
 
-    let factory_mint_price = factory.params.min_mint_price.amount.u128();
-    let whitelist_mint_price = wl_config.mint_price.amount.u128();
-
-    if factory_mint_price > whitelist_mint_price {
+    if factory_min_mint_price.amount > wl_mint_price.amount {
         return Err(ContractError::InsufficientWhitelistMintPrice {
-            expected: factory_mint_price,
-            got: whitelist_mint_price,
+            expected: factory_min_mint_price.amount.into(),
+            got: wl_mint_price.amount.into(),
         });
     }
 
     // Whitelist denom should match factory mint denom
     ensure!(
-        factory.params.min_mint_price.denom == wl_config.mint_price.denom,
+        factory_min_mint_price.denom == wl_mint_price.denom,
         ContractError::InvalidDenom {
-            expected: factory.params.min_mint_price.denom,
-            got: wl_config.mint_price.denom,
+            expected: factory_min_mint_price.denom,
+            got: wl_mint_price.denom,
         }
     );
 
