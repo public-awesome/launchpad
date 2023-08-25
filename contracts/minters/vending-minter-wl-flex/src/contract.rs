@@ -439,7 +439,7 @@ pub fn execute_set_whitelist(
             },
     } = deps
         .querier
-        .query_wasm_smart(factory.clone(), &Sg2QueryMsg::Params {})?;
+        .query_wasm_smart(factory, &Sg2QueryMsg::Params {})?;
 
     if factory_min_mint_price.amount > wl_mint_price.amount {
         return Err(ContractError::InsufficientWhitelistMintPrice {
