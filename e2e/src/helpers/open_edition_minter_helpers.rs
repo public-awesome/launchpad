@@ -111,5 +111,6 @@ pub fn create_minter_msg(
                 royalty_info: None,
             },
         },
+        allowed_burn_collections: None,
     }
 }

@@ -20,9 +20,13 @@ pub fn mock_params() -> BaseMinterParams {
     }
 }
 
-pub fn mock_create_minter(collection_params: CollectionParams) -> BaseMinterCreateMsg {
+pub fn mock_create_minter(
+    collection_params: CollectionParams,
+    allowed_burn_collections: Option<Vec<cosmwasm_std::Addr>>,
+) -> BaseMinterCreateMsg {
     BaseMinterCreateMsg {
         init_msg: None,
         collection_params,
+        allowed_burn_collections,
     }
 }

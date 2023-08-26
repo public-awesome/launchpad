@@ -48,6 +48,7 @@ pub fn mock_create_minter(
             payment_address,
         ),
         collection_params,
+        allowed_burn_collections: None,
     }
 }
 
@@ -58,6 +59,7 @@ pub fn mock_create_minter_init_msg(
     OpenEditionMinterCreateMsg {
         init_msg,
         collection_params,
+        allowed_burn_collections: None,
     }
 }
 

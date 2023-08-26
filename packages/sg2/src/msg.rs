@@ -1,5 +1,5 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::Coin;
+use cosmwasm_std::{Addr, Coin};
 use sg721::{CollectionInfo, RoyaltyInfoResponse};
 
 use crate::Token;
@@ -8,6 +8,7 @@ use crate::Token;
 pub struct CreateMinterMsg<T> {
     pub init_msg: T,
     pub collection_params: CollectionParams,
+    pub allowed_burn_collections: Option<Vec<Addr>>,
 }
 
 #[cw_serde]

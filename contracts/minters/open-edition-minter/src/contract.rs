@@ -132,6 +132,7 @@ pub fn instantiate(
             nft_data: msg.init_msg.nft_data,
         },
         mint_price: sg2::Fungible(msg.init_msg.mint_price),
+        allowed_burn_collections: None,
     };
 
     CONFIG.save(deps.storage, &config)?;

@@ -9,6 +9,7 @@ pub struct MinterConfig<T> {
     pub collection_code_id: u64,
     pub mint_price: Token,
     pub extension: T,
+    pub allowed_burn_collections: Option<Vec<Addr>>,
 }
 
 #[cw_serde]

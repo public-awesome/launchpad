@@ -78,6 +78,7 @@ fn update_code_id() {
     let mut msg = VendingMinterCreateMsg {
         init_msg,
         collection_params,
+        allowed_burn_collections: None,
     };
     msg.collection_params.info.creator = creator.to_string();
     let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);

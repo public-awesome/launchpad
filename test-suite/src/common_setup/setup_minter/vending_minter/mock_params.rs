@@ -34,6 +34,7 @@ pub fn mock_create_minter(
     VendingMinterCreateMsg {
         init_msg: mock_init_extension(splits_addr, start_time),
         collection_params,
+        allowed_burn_collections: None,
     }
 }
 
@@ -44,6 +45,7 @@ pub fn mock_create_minter_init_msg(
     VendingMinterCreateMsg {
         init_msg,
         collection_params,
+        allowed_burn_collections: None,
     }
 }
 

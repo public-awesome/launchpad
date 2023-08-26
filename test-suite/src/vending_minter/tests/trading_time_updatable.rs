@@ -104,6 +104,7 @@ fn test_invalid_start_time() {
         splits_addr: None,
         start_time: Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME - 100)),
         init_msg: None,
+        allowed_burn_collections: None,
     };
     let code_ids = vending_minter_code_ids(&mut router);
     let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
@@ -131,6 +132,7 @@ fn test_invalid_start_time() {
         splits_addr: None,
         start_time: Some(minter_start_time),
         init_msg: None,
+        allowed_burn_collections: None,
     };
     let code_ids = vending_minter_code_ids(&mut router);
     let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
@@ -158,6 +160,7 @@ fn test_invalid_start_time() {
         splits_addr: None,
         start_time: Some(minter_start_time),
         init_msg: None,
+        allowed_burn_collections: None,
     };
     let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
         &mut router,
@@ -213,6 +216,7 @@ fn invalid_trading_time_during_init() {
         splits_addr: None,
         start_time: None,
         init_msg: None,
+        allowed_burn_collections: None,
     };
     let code_ids = vending_minter_code_ids(&mut router);
     let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(

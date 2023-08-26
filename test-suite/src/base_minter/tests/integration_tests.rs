@@ -73,6 +73,7 @@ fn update_code_id() {
     let mut msg = BaseMinterCreateMsg {
         init_msg: None,
         collection_params,
+        allowed_burn_collections: None,
     };
     msg.collection_params.info.creator = creator.to_string();
     let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
@@ -282,6 +283,13 @@ fn check_mints_new_tokens_when_received() {
     let collection_addr_1 = bmt.collection_response_vec[0].collection.clone().unwrap();
     let collection_addr_2 = bmt.collection_response_vec[1].collection.clone().unwrap();
 
+    println!(
+        "collection 1: {}, collection 2: {}, minter1: {}, minter2: {}",
+        collection_addr_1.to_string(),
+        collection_addr_2.to_string(),
+        minter_addr_1.to_string(),
+        bmt.collection_response_vec[1].minter.clone().unwrap()
+    );
     let minter_addr_2 = bmt.collection_response_vec[1].minter.clone().unwrap();
 
     let token_uri = "ipfs://example".to_string();
@@ -331,6 +339,7 @@ fn check_mints_new_tokens_when_received() {
         &send_nft,
         &[coin(5_000_000_000, NATIVE_DENOM)],
     );
+    println!("res is {:?}", res);
     assert!(res.is_ok());
     let num_tokens_res: cw721::NumTokensResponse = router
         .wrap()

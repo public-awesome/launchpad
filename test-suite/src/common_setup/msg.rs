@@ -17,6 +17,7 @@ pub struct MinterSetupParams<'a> {
     pub factory_code_id: u64,
     pub sg721_code_id: u64,
     pub init_msg: Option<VendingMinterInitMsgExtension>,
+    pub allowed_burn_collections: Option<Vec<Addr>>,
 }
 pub struct MinterCollectionResponse {
     pub minter: Option<Addr>,
@@ -30,6 +31,7 @@ pub struct MinterInstantiateParams {
     pub start_time: Option<Timestamp>,
     pub splits_addr: Option<String>,
     pub init_msg: Option<VendingMinterInitMsgExtension>,
+    pub allowed_burn_collections: Option<Vec<Addr>>,
 }
 
 use cosmwasm_schema::cw_serde;

@@ -80,6 +80,7 @@ pub fn setup_minter_contract(setup_params: MinterSetupParams) -> MinterCollectio
     let sg721_code_id = setup_params.sg721_code_id;
     let minter_admin = setup_params.minter_admin;
     let collection_params = setup_params.collection_params;
+    let allowed_burn_collections = setup_params.allowed_burn_collections;
 
     let mut params = mock_params();
     params.code_id = minter_code_id;
@@ -95,7 +96,7 @@ pub fn setup_minter_contract(setup_params: MinterSetupParams) -> MinterCollectio
         )
         .unwrap();
 
-    let mut msg = mock_create_minter(collection_params);
+    let mut msg = mock_create_minter(collection_params, allowed_burn_collections);
     msg.collection_params.code_id = sg721_code_id;
     msg.collection_params.info.creator = minter_admin.to_string();
     let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
@@ -160,6 +161,9 @@ pub fn configure_base_minter(
             sg721_code_id: code_ids.sg721_code_id,
             start_time: minter_instantiate_params_vec[index].start_time,
             init_msg: minter_instantiate_params_vec[index].init_msg.clone(),
+            allowed_burn_collections: minter_instantiate_params_vec[index]
+                .allowed_burn_collections
+                .clone(),
         };
         let minter_collection_res = setup_minter_contract(setup_params);
         minter_collection_info.push(minter_collection_res);

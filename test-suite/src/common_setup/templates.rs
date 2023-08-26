@@ -10,7 +10,9 @@ use crate::common_setup::{
 use super::msg::{Accounts, CodeIds, MinterTemplateResponseCodeIds};
 use super::setup_minter::base_minter::setup::base_minter_sg721_collection_code_ids;
 use super::setup_minter::common::constants::{MINT_PRICE, MIN_MINT_PRICE};
-use super::setup_minter::common::minter_params::minter_params_all;
+use super::setup_minter::common::minter_params::{
+    minter_params_all, minter_params_allowed_burn_collections,
+};
 use super::setup_minter::open_edition_minter::setup::configure_open_edition_minter;
 use crate::common_setup::setup_accounts_and_block::CREATION_FEE;
 use crate::common_setup::setup_minter::base_minter::setup::base_minter_sg721_nt_code_ids;
@@ -18,7 +20,7 @@ use crate::common_setup::setup_minter::base_minter::setup::configure_base_minter
 use crate::common_setup::setup_minter::open_edition_minter::minter_params::minter_params_open_edition;
 use crate::common_setup::setup_minter::open_edition_minter::setup::open_edition_minter_code_ids;
 use crate::common_setup::setup_minter::vending_minter::setup::vending_minter_updatable_code_ids;
-use cosmwasm_std::{coin, Timestamp};
+use cosmwasm_std::{coin, Addr, Timestamp};
 use cw_multi_test::{AppResponse, BankSudo, SudoMsg};
 use open_edition_factory::msg::OpenEditionMinterInitMsgExtension;
 use open_edition_factory::state::ParamsExtension;
@@ -66,7 +68,7 @@ pub fn vending_minter_per_address_limit(
         whitelist: Some("invalid address".to_string()),
     };
 
-    let minter_params = minter_params_all(num_tokens, None, None, Some(init_msg));
+    let minter_params = minter_params_all(num_tokens, None, None, Some(init_msg), None);
     let code_ids = vending_minter_code_ids(&mut app);
     let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
         &mut app,
@@ -101,7 +103,7 @@ pub fn vending_minter_with_ibc_asset(
         whitelist: None,
     };
 
-    let minter_params = minter_params_all(num_tokens, None, None, Some(init_msg));
+    let minter_params = minter_params_all(num_tokens, None, None, Some(init_msg), None);
     let code_ids = vending_minter_code_ids(&mut app);
     let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
         &mut app,
@@ -293,7 +295,8 @@ pub fn base_minter_with_two_sg721_collections(num_tokens: u32) -> MinterTemplate
     let collection_params = mock_collection_params_1(Some(start_time));
     let collection_params_2 = mock_collection_two(Some(start_time));
     let minter_params = minter_params_token(num_tokens);
-    let minter_params_2 = minter_params_token(num_tokens);
+    let minter_params_2 =
+        minter_params_allowed_burn_collections(num_tokens, vec![Addr::unchecked("contract2")]);
     let code_ids = base_minter_sg721_collection_code_ids(&mut router);
     let minter_collection_response = configure_base_minter(
         &mut router,

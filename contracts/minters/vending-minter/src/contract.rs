@@ -167,6 +167,7 @@ pub fn instantiate(
             discount_price: None,
         },
         mint_price: sg2::Fungible(msg.init_msg.mint_price),
+        allowed_burn_collections: None,
     };
 
     CONFIG.save(deps.storage, &config)?;

@@ -128,6 +128,7 @@ pub fn configure_minter(
             sg721_code_id: code_ids.sg721_code_id,
             start_time: minter_instantiate_params_vec[index].start_time,
             init_msg: minter_instantiate_params_vec[index].init_msg.clone(),
+            allowed_burn_collections: None,
         };
         let minter_collection_res = setup_minter_contract(setup_params);
         minter_collection_info.push(minter_collection_res);
