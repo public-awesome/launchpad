@@ -79,6 +79,7 @@ fn frozen_factory_cannot_create_new_minters() {
         default_nft_data,
         collection_params,
         None,
+        None,
     );
     msg.collection_params.code_id = 3;
     msg.collection_params.info.creator = creator.to_string();

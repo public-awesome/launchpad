@@ -1,4 +1,4 @@
-use cosmwasm_std::{coin, Coin, Timestamp, Uint128};
+use cosmwasm_std::{coin, Addr, Coin, Timestamp, Uint128};
 use open_edition_factory::types::NftData;
 use open_edition_factory::{
     msg::{OpenEditionMinterCreateMsg, OpenEditionMinterInitMsgExtension},
@@ -37,6 +37,7 @@ pub fn mock_create_minter(
     default_nft_data: NftData,
     collection_params: CollectionParams,
     payment_address: Option<String>,
+    allowed_burn_collections: Option<Vec<Addr>>,
 ) -> OpenEditionMinterCreateMsg {
     OpenEditionMinterCreateMsg {
         init_msg: mock_init_minter_extension(
@@ -48,7 +49,7 @@ pub fn mock_create_minter(
             payment_address,
         ),
         collection_params,
-        allowed_burn_collections: None,
+        allowed_burn_collections,
     }
 }
 

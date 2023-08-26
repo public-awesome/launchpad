@@ -75,6 +75,7 @@ pub struct OpenEditionMinterSetupParams<'a> {
     pub factory_code_id: u64,
     pub sg721_code_id: u64,
     pub init_msg: Option<OpenEditionMinterInitMsgExtension>,
+    pub allowed_burn_collections: Option<Vec<Addr>>,
 }
 
 pub struct OpenEditionMinterInstantiateParams {
@@ -84,4 +85,5 @@ pub struct OpenEditionMinterInstantiateParams {
     pub nft_data: Option<NftData>,
     pub init_msg: Option<OpenEditionMinterInitMsgExtension>,
     pub params_extension: Option<ParamsExtension>,
+    pub allowed_burn_collections: Option<Vec<Addr>>,
 }

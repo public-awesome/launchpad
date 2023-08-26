@@ -117,7 +117,7 @@ pub fn instantiate(
         .start_trading_time
         .or(Some(default_start_time_with_offset));
     collection_info.start_trading_time = start_trading_time;
-
+    println!("received instantiate msg {:?}", msg);
     let config = Config {
         factory: factory.clone(),
         collection_code_id: msg.collection_params.code_id,
@@ -132,7 +132,7 @@ pub fn instantiate(
             nft_data: msg.init_msg.nft_data,
         },
         mint_price: sg2::Fungible(msg.init_msg.mint_price),
-        allowed_burn_collections: None,
+        allowed_burn_collections: msg.allowed_burn_collections,
     };
 
     CONFIG.save(deps.storage, &config)?;
@@ -267,14 +267,17 @@ pub fn execute_mint_to(
     _execute_mint(deps, env, info, action, true, Some(recipient))
 }
 
-fn _pay_mint_if_not_contract(
-    this_contract: Addr,
+fn pay_mint_if_not_burn_collection(
     info: MessageInfo,
     mint_price_with_discounts: Coin,
     config_denom: String,
+    allowed_burn_collections: Option<Vec<Addr>>,
 ) -> Result<Uint128, ContractError> {
-    let this_contract = this_contract.to_string();
-    match info.sender == this_contract {
+    println!(
+        "info.sender is {}, allowed burn collections {:?}",
+        info.sender, allowed_burn_collections
+    );
+    match burn_to_mint::sender_is_allowed_burn_collection(info.clone(), allowed_burn_collections) {
         true => Ok(Uint128::new(0)),
         false => {
             let payment = may_pay(&info, &config_denom)?;
@@ -289,16 +292,16 @@ fn _pay_mint_if_not_contract(
     }
 }
 
-fn _fairburn_if_not_contract_sender(
+fn _fairburn_if_not_burn_collection(
     deps: &DepsMut,
-    this_contract: Addr,
     info: MessageInfo,
     mint_price_with_discounts: Coin,
     mint_fee: Decimal,
     factory_params: MinterParams<open_edition_factory::state::ParamsExtension>,
+    allowed_burn_collections: Option<Vec<Addr>>,
 ) -> Result<(Response, Uint128), ContractError> {
     let mut res = Response::new();
-    match info.clone().sender == this_contract {
+    match burn_to_mint::sender_is_allowed_burn_collection(info.clone(), allowed_burn_collections) {
         true => Ok((res, Uint128::new(0))),
         false => {
             let network_fee = mint_price_with_discounts.amount * mint_fee;
@@ -319,14 +322,14 @@ fn _fairburn_if_not_contract_sender(
 
 fn _compute_seller_amount_if_not_contract_sender(
     info: MessageInfo,
-    this_contract: Addr,
     res: Response,
     mint_price_with_discounts: Coin,
     network_fee: Uint128,
     config_extension: crate::state::ConfigExtension,
+    allowed_burn_collections: Option<Vec<Addr>>,
 ) -> Result<(Response, Uint128), ContractError> {
     let mut res = res;
-    match info.sender == this_contract {
+    match burn_to_mint::sender_is_allowed_burn_collection(info.clone(), allowed_burn_collections) {
         true => Ok((res, Uint128::new(0))),
         false => {
             let seller_amount = {
@@ -376,14 +379,12 @@ fn _execute_mint(
         .map_err(|_| ContractError::IncorrectFungibility {})?;
     // Exact payment only accepted
 
-    _pay_mint_if_not_contract(
-        env.contract.address.clone(),
+    pay_mint_if_not_burn_collection(
         info.clone(),
         mint_price_with_discounts.clone(),
         config_denom,
+        config.allowed_burn_collections.clone(),
     )?;
-
-    // let mut res = Response::new();
 
     let factory: ParamsResponse = deps
         .querier
@@ -401,13 +402,13 @@ fn _execute_mint(
     } else {
         factory_params.mint_fee_bps.bps_to_decimal()
     };
-    let (mut res, network_fee) = _fairburn_if_not_contract_sender(
+    let (mut res, network_fee) = _fairburn_if_not_burn_collection(
         &deps,
-        env.contract.address.clone(),
         info.clone(),
         mint_price_with_discounts.clone(),
         mint_fee,
         factory_params,
+        config.allowed_burn_collections.clone(),
     )?;
     // Token ID to mint + update the config counter
     let token_id = increment_token_index(deps.storage)?.to_string();
@@ -442,11 +443,11 @@ fn _execute_mint(
 
     let (res, seller_amount) = _compute_seller_amount_if_not_contract_sender(
         info.clone(),
-        env.contract.address,
         res,
         mint_price_with_discounts.clone(),
         network_fee,
         config.extension,
+        config.allowed_burn_collections,
     )?;
 
     Ok(res

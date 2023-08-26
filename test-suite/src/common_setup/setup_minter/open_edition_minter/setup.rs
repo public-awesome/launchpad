@@ -59,7 +59,11 @@ pub fn setup_open_edition_minter_contract(
     let end_time = setup_params.end_time;
     let init_msg = setup_params.init_msg.clone();
     let nft_data = setup_params.init_msg.unwrap().nft_data;
-
+    let allowed_burn_collections = setup_params.allowed_burn_collections;
+    println!(
+        "allowed burn collections test {:?}",
+        allowed_burn_collections
+    );
     let mut params = mock_params_proper();
     params.code_id = minter_code_id;
 
@@ -85,6 +89,7 @@ pub fn setup_open_edition_minter_contract(
         nft_data.clone(),
         collection_params,
         None,
+        allowed_burn_collections,
     );
     msg.init_msg = build_init_msg(
         init_msg,
@@ -97,6 +102,7 @@ pub fn setup_open_edition_minter_contract(
     );
     msg.collection_params.code_id = sg721_code_id;
     msg.collection_params.info.creator = minter_admin.to_string();
+
     let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
     let msg = Sg2ExecuteMsg::CreateMinter(msg);
 
@@ -188,6 +194,9 @@ pub fn configure_open_edition_minter(
                 .unwrap(),
             init_msg: minter_instantiate_params_vec[index].init_msg.clone(),
             end_time: minter_instantiate_params_vec[index].end_time.to_owned(),
+            allowed_burn_collections: minter_instantiate_params_vec[index]
+                .allowed_burn_collections
+                .clone(),
         };
         let minter_collection_res = setup_open_edition_minter_contract(setup_params);
         minter_collection_info.push(minter_collection_res);

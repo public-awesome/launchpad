@@ -1,4 +1,4 @@
-use cosmwasm_std::{Coin, Timestamp, Uint128};
+use cosmwasm_std::{Addr, Coin, Timestamp, Uint128};
 use open_edition_factory::{
     msg::OpenEditionMinterInitMsgExtension,
     state::ParamsExtension,
@@ -18,6 +18,7 @@ pub fn minter_params_open_edition(
     start_time: Option<Timestamp>,
     end_time: Option<Timestamp>,
     nft_data: Option<NftData>,
+    allowed_burn_collections: Option<Vec<Addr>>,
 ) -> OpenEditionMinterInstantiateParams {
     let start_time = start_time.unwrap_or(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 100));
     let end_time = end_time.unwrap_or(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000));
@@ -38,6 +39,7 @@ pub fn minter_params_open_edition(
         ),
         init_msg: Some(init_msg),
         params_extension: Some(params_extension),
+        allowed_burn_collections,
     }
 }
 
