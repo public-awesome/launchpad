@@ -188,7 +188,7 @@ pub fn execute(
             execute_update_per_address_limit(deps, env, info, per_address_limit)
         }
         ExecuteMsg::MintTo { recipient } => execute_mint_to(deps, env, info, recipient),
-        ExecuteMsg::ReceiveNft(msg) => call_burn_to_mint(deps, env, info, msg),
+        ExecuteMsg::ReceiveNft(msg) => burn_and_mint(deps, env, info, msg),
     }
 }
 
@@ -681,16 +681,17 @@ pub fn execute_update_per_address_limit(
         .add_attribute("limit", per_address_limit.to_string()))
 }
 
-pub fn call_burn_to_mint(
-    _deps: DepsMut,
+pub fn burn_and_mint(
+    deps: DepsMut,
     env: Env,
     info: MessageInfo,
     msg: Cw721ReceiveMsg,
 ) -> Result<Response, ContractError> {
-    let execute_mint_msg = ExecuteMsg::Mint {};
-    burn_to_mint::generate_burn_mint_response(info, env, msg, execute_mint_msg)
-        .map_err(|_| ContractError::BurnToMintError {})
+    let res = burn_to_mint::generate_burn_msg(info.clone(), msg.clone())?;
+    let mint_res = execute_mint_sender(deps, env, info)?;
+    Ok(mint_res.add_submessages(res.messages))
 }
+
 // if admin_no_fee => no fee,
 // else if in whitelist => whitelist price
 // else => config unit price

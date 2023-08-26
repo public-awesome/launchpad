@@ -125,7 +125,7 @@ pub fn burn_and_mint(
     info: MessageInfo,
     msg: Cw721ReceiveMsg,
 ) -> Result<Response, ContractError> {
-    let res = generate_burn_msg(info.clone(), msg.clone())?;
+    let res = burn_to_mint::generate_burn_msg(info.clone(), msg.clone())?;
     let token_uri_msg: TokenUriMsg = from_binary(&msg.msg)?;
     let mint_res = _execute_mint_sender(deps, info, token_uri_msg.token_uri)?;
     Ok(mint_res.add_submessages(res.messages))
@@ -145,31 +145,14 @@ pub fn execute_mint_sender(
     _execute_mint_sender(deps, info, token_uri)
 }
 
-fn check_sender_creator_or_allowed_burn_collection(
-    info: MessageInfo,
-    creator_addr: Addr,
-    allowed_burn_collections: Option<Vec<Addr>>,
-) -> Result<bool, ContractError> {
-    let mut allowed_senders = vec![creator_addr];
-    if allowed_burn_collections.is_some() {
-        allowed_senders.append(&mut allowed_burn_collections.unwrap());
-    };
-    if !allowed_senders.contains(&info.sender) {
-        return Err(ContractError::Unauthorized(
-            "Sender is not sg721 creator".to_owned(),
-        ));
-    }
-    Ok(true)
-}
-
-fn pay_mint_if_not_contract(
-    this_contract: Addr,
+fn pay_mint_if_not_burn_collection(
     info: MessageInfo,
     mint_price: Token,
     factory_params: MinterParams<Option<Empty>>,
+    allowed_burn_collections: Option<Vec<Addr>>,
 ) -> Result<Uint128, ContractError> {
     let mut res = Response::new();
-    match info.clone().sender == this_contract {
+    match burn_to_mint::sender_is_allowed_burn_collection(info.clone(), allowed_burn_collections) {
         true => Ok(0_u128.into()),
         false => {
             let funds_sent = must_pay(&info, NATIVE_DENOM)?;
@@ -205,10 +188,10 @@ fn _execute_mint_sender(
         &Sg721QueryMsg::CollectionInfo {},
     )?;
 
-    check_sender_creator_or_allowed_burn_collection(
+    burn_to_mint::check_sender_creator_or_allowed_burn_collection(
         info.clone(),
         deps.api.addr_validate(&collection_info.creator)?,
-        config.allowed_burn_collections,
+        config.allowed_burn_collections.clone(),
     )?;
 
     let parsed_token_uri = Url::parse(&token_uri)?;
@@ -223,13 +206,12 @@ fn _execute_mint_sender(
     let factory_params = factory.params;
 
     //TODO CHECK FOR ALLOWED CONTRACTS
-    // let network_fee = pay_mint_if_not_contract(
-    //     env.contract.address,
-    //     info.clone(),
-    //     config.mint_price,
-    //     factory_params,
-    // )?;
-    let network_fee: Uint128 = 0_u128.into();
+    let network_fee = pay_mint_if_not_burn_collection(
+        info.clone(),
+        config.mint_price,
+        factory_params,
+        config.allowed_burn_collections,
+    )?;
     // Create mint msgs
     let mint_msg = Sg721ExecuteMsg::<Extension, Empty>::Mint {
         token_id: increment_token_index(deps.storage)?.to_string(),
@@ -363,21 +345,4 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractE
         }
         Err(_) => Err(ContractError::InstantiateSg721Error {}),
     }
-}
-
-pub fn generate_burn_msg(
-    info: MessageInfo,
-    msg: Cw721ReceiveMsg,
-) -> Result<Response, ContractError> {
-    let burn_msg = cw721::Cw721ExecuteMsg::Burn {
-        token_id: msg.token_id,
-    };
-    let cosmos_burn_msg = CosmosMsg::Wasm(WasmMsg::Execute {
-        contract_addr: info.sender.to_string(),
-        msg: to_binary(&burn_msg)?,
-        funds: vec![],
-    });
-    let mut res = Response::new();
-    res = res.add_message(cosmos_burn_msg);
-    Ok(res)
 }

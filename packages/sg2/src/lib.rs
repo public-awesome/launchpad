@@ -7,7 +7,6 @@ pub mod query;
 pub mod tests;
 
 pub type CodeId = u64;
-use cosmwasm_std::Addr;
 pub use Token::{Fungible, NonFungible};
 
 #[cw_serde]

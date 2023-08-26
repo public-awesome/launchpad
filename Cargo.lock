@@ -2323,6 +2323,7 @@ dependencies = [
 name = "open-edition-minter"
 version = "3.1.0"
 dependencies = [
+ "base-minter",
  "burn-to-mint",
  "cosmwasm-schema",
  "cosmwasm-std",

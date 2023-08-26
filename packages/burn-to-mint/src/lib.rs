@@ -1,4 +1,4 @@
-use cosmwasm_std::StdError;
+use cosmwasm_std::{Addr, StdError};
 pub mod msg;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::{to_binary, CosmosMsg, Env, MessageInfo, WasmMsg};
@@ -31,4 +31,45 @@ pub fn generate_burn_mint_response<T: Serialize>(
     });
     let res = res.add_message(cosmos_mint_msg);
     Ok(res)
+}
+
+pub fn generate_burn_msg(info: MessageInfo, msg: Cw721ReceiveMsg) -> Result<Response, StdError> {
+    let burn_msg = cw721::Cw721ExecuteMsg::Burn {
+        token_id: msg.token_id,
+    };
+    let cosmos_burn_msg = CosmosMsg::Wasm(WasmMsg::Execute {
+        contract_addr: info.sender.to_string(),
+        msg: to_binary(&burn_msg)?,
+        funds: vec![],
+    });
+    let mut res = Response::new();
+    res = res.add_message(cosmos_burn_msg);
+    Ok(res)
+}
+
+pub fn check_sender_creator_or_allowed_burn_collection(
+    info: MessageInfo,
+    creator_addr: Addr,
+    allowed_burn_collections: Option<Vec<Addr>>,
+) -> Result<bool, StdError> {
+    let mut allowed_senders = vec![creator_addr];
+    if allowed_burn_collections.is_some() {
+        allowed_senders.append(&mut allowed_burn_collections.unwrap());
+    };
+    if !allowed_senders.contains(&info.sender) {
+        return Err(StdError::GenericErr {
+            msg: "Sender is not sg721 creator".to_string(),
+        });
+    }
+    Ok(true)
+}
+
+pub fn sender_is_allowed_burn_collection(
+    info: MessageInfo,
+    allowed_burn_collections: Option<Vec<Addr>>,
+) -> bool {
+    if allowed_burn_collections.is_some() {
+        return allowed_burn_collections.unwrap().contains(&info.sender);
+    };
+    return false;
 }
