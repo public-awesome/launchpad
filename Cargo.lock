@@ -3328,6 +3328,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "sg-whitelist-merkletree"
+version = "3.1.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus 1.1.0",
+ "cw-utils 1.0.1",
+ "cw2 1.1.0",
+ "rust_decimal",
+ "schemars",
+ "serde",
+ "sg-std",
+ "sg1",
+ "thiserror",
+]
+
+[[package]]
 name = "sg1"
 version = "3.1.0"
 dependencies = [
