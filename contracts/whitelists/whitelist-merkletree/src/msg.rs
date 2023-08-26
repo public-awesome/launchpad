@@ -53,7 +53,7 @@ pub enum QueryMsg {
     #[returns(IsActiveResponse)]
     IsActive {},
     #[returns(HasMemberResponse)]
-    HasMember { member: String },
+    HasMember { member: String, proof: Vec<String> },
     #[returns(ConfigResponse)]
     Config {},
     #[returns(AdminListResponse)]
@@ -63,6 +63,8 @@ pub enum QueryMsg {
         sender: String,
         msg: CosmosMsg<Empty>,
     },
+    #[returns(MerkleRootResponse)]
+    MerkleRoot {}
 }
 
 #[cw_serde]
@@ -106,6 +108,11 @@ pub struct ConfigResponse {
     pub end_time: Timestamp,
     pub mint_price: Coin,
     pub is_active: bool,
+}
+
+#[cw_serde]
+pub struct MerkleRootResponse {
+    pub merkle_root: String,
 }
 
 #[cw_serde]

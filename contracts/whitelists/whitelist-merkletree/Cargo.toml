@@ -37,3 +37,5 @@ serde           = { workspace = true }
 sg1             = { workspace = true }
 sg-std          = { workspace = true }
 thiserror       = { workspace = true }
+sha256 = "1.4.0"
+hex = "0.4.3"

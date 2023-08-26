@@ -2,19 +2,19 @@ use crate::admin::{
     can_execute, execute_freeze, execute_update_admins, query_admin_list, query_can_execute,
 };
 use crate::error::ContractError;
+use crate::helpers::crypto::{verify_merkle_root, valid_hash_string};
 use crate::helpers::validators::map_validate;
 use crate::msg::{
     ConfigResponse, ExecuteMsg, HasEndedResponse, HasMemberResponse,
-    HasStartedResponse, InstantiateMsg, IsActiveResponse, QueryMsg,
+    HasStartedResponse, InstantiateMsg, IsActiveResponse, QueryMsg, MerkleRootResponse,
 };
 use crate::state::{AdminList, Config, ADMIN_LIST, CONFIG, MERKLE_ROOT};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult, StdError, Timestamp};
 use cw2::set_contract_version;
-use sg_std::{Response, GENESIS_MINT_START_TIME, NATIVE_DENOM};
+use sg_std::{Response, GENESIS_MINT_START_TIME};
 use cw_utils::nonpayable;
-
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sg-whitelist-flex";
@@ -36,6 +36,8 @@ pub fn instantiate(
     nonpayable(&info)?;
 
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+
+    verify_merkle_root(&msg.merkle_root)?;
 
     MERKLE_ROOT.save(deps.storage, &msg.merkle_root)?;
 
@@ -165,10 +167,11 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::HasStarted {} => to_binary(&query_has_started(deps, env)?),
         QueryMsg::HasEnded {} => to_binary(&query_has_ended(deps, env)?),
         QueryMsg::IsActive {} => to_binary(&query_is_active(deps, env)?),
-        QueryMsg::HasMember { member } => to_binary(&query_has_member(deps, member)?),
+        QueryMsg::HasMember { member , proof} => to_binary(&query_has_member(deps, member, proof)?),
         QueryMsg::Config {} => to_binary(&query_config(deps, env)?),
         QueryMsg::AdminList {} => to_binary(&query_admin_list(deps)?),
         QueryMsg::CanExecute { sender, .. } => to_binary(&query_can_execute(deps, &sender)?),
+        QueryMsg::MerkleRoot {} => to_binary(&query_merkle_root(deps)?),
     }
 }
 
@@ -194,11 +197,39 @@ fn query_is_active(deps: Deps, env: Env) -> StdResult<IsActiveResponse> {
 }
 
 
-pub fn query_has_member(deps: Deps, member: String) -> StdResult<HasMemberResponse> {
-    let _addr = deps.api.addr_validate(&member)?;
-    Ok(HasMemberResponse {
-        has_member: true // WHITELIST.has(deps.storage, addr),
-    })
+pub fn query_has_member(
+    deps: Deps, 
+    member: String,
+    proof: Vec<String>,
+) -> StdResult<HasMemberResponse> {
+
+    let merkle_root = MERKLE_ROOT.load(deps.storage)?;
+
+    deps.api.addr_validate(&member)?;
+
+    let member_hash = sha256::digest(&member);
+
+    let hash = proof.into_iter().try_fold(member_hash, |hash, p| {
+
+        valid_hash_string(&p)?;
+
+        let mut hashes = [hash, p];
+        hashes.sort_unstable();
+
+        sha256::digest(&hashes.concat())
+            .try_into()
+            .map_err(|_| StdError::GenericErr { msg: "Error parsing merkle proof".to_string() })
+    });
+
+    if hash.is_err() {
+        return Err(cosmwasm_std::StdError::GenericErr {
+            msg: "Invalid Merkle Proof".to_string(),
+        });
+    }
+    let hash = hash.unwrap();
+    
+    return Ok(HasMemberResponse { has_member: merkle_root == hash });
+
 }
 
 pub fn query_config(deps: Deps, env: Env) -> StdResult<ConfigResponse> {
@@ -211,6 +242,8 @@ pub fn query_config(deps: Deps, env: Env) -> StdResult<ConfigResponse> {
     })
 }
 
-pub fn not_supported() -> StdResult<()> {
-    Err(StdError::generic_err("Not supported"))
+pub fn query_merkle_root(deps: Deps) -> StdResult<MerkleRootResponse> {
+    Ok(MerkleRootResponse { 
+        merkle_root: MERKLE_ROOT.load(deps.storage)? 
+    })
 }

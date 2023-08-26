@@ -52,4 +52,7 @@ pub enum ContractError {
 
     #[error("UnauthorizedAdmin")]
     UnauthorizedAdmin {},
+
+    #[error("InvalidHashString: {0}")]
+    InvalidHashString(String),
 }
