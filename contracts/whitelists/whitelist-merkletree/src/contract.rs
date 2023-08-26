@@ -214,22 +214,13 @@ pub fn query_has_member(
 
     let merkle_root = MERKLE_ROOT.load(deps.storage)?;
 
-    println!("merkle_root {:?}", merkle_root);
-    println!("");
-
-
     let member_init_hash_slice = Sha256::hash(member.as_bytes());
-
 
     let hash = proof_hashes
         .into_iter()
         .try_fold(member_init_hash_slice, 
             |accum_hash_slice, new_proof_hashstring| {
                 valid_hash_string(&new_proof_hashstring)?;
-
-                println!("accum_hash_slice {:?}", hex::encode(accum_hash_slice));
-                println!("new_proof_hashstring {:?}", new_proof_hashstring);
-                println!("");
 
                 let mut hashe_slices = [
                     accum_hash_slice, 

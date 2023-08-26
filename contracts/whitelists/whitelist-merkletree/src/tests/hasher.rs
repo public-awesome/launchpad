@@ -3,6 +3,8 @@ use rs_merkle::{algorithms::Sha256, Hasher};
 #[derive(Clone)]
 pub struct SortingSha256Hasher {}
 
+// Default Sha256 doesn't sort left and right which make it impossible to
+// compare on the contract side without extra payload
 impl Hasher for SortingSha256Hasher {
     type Hash = [u8; 32];
 
@@ -14,6 +16,7 @@ impl Hasher for SortingSha256Hasher {
                 let mut both = vec![left, right_node];
                 both.sort_unstable();
 
+                // TODO: Optimize this
                 let mut concatenated: Vec<u8> = (*both[0]).into();
                 concatenated.append(&mut (*both[1]).into());
 
