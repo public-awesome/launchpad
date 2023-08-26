@@ -5,19 +5,13 @@ use crate::error::ContractError;
 use crate::helpers::validators::map_validate;
 use crate::msg::{
     ConfigResponse, ExecuteMsg, HasEndedResponse, HasMemberResponse,
-    HasStartedResponse, InstantiateMsg, IsActiveResponse, Member, MembersResponse, QueryMsg,
+    HasStartedResponse, InstantiateMsg, IsActiveResponse, QueryMsg,
 };
-use crate::state::{AdminList, Config, ADMIN_LIST, CONFIG, WHITELIST};
+use crate::state::{AdminList, Config, ADMIN_LIST, CONFIG, MERKLE_ROOT};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{ensure, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult};
-use cosmwasm_std::{Order, Timestamp};
+use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult, StdError, Timestamp};
 use cw2::set_contract_version;
-use cw_storage_plus::Bound;
-use cw_utils::{may_pay, maybe_addr, must_pay};
-use rust_decimal::prelude::ToPrimitive;
-use rust_decimal::Decimal;
-use sg1::checked_fair_burn;
 use sg_std::{Response, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use cw_utils::nonpayable;
 
@@ -27,13 +21,9 @@ const CONTRACT_NAME: &str = "crates.io:sg-whitelist-flex";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 // contract governance params
-pub const MAX_MEMBERS: u32 = 5000;
 pub const PRICE_PER_1000_MEMBERS: u128 = 100_000_000;
 pub const MIN_MINT_PRICE: u128 = 0;
 
-// queries
-const PAGINATION_DEFAULT_LIMIT: u32 = 25;
-const PAGINATION_MAX_LIMIT: u32 = 100;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -47,15 +37,12 @@ pub fn instantiate(
 
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
-    if msg.mint_price.denom != NATIVE_DENOM {
-        return Err(ContractError::InvalidDenom(msg.mint_price.denom));
-    }
+    MERKLE_ROOT.save(deps.storage, &msg.merkle_root)?;
 
     let config = Config {
         start_time: msg.start_time,
         end_time: msg.end_time,
         mint_price: msg.mint_price,
-        member_limit: msg.member_limit,
     };
 
     CONFIG.save(deps.storage, &config)?;
@@ -106,9 +93,6 @@ pub fn execute(
     match msg {
         ExecuteMsg::UpdateStartTime(time) => execute_update_start_time(deps, env, info, time),
         ExecuteMsg::UpdateEndTime(time) => execute_update_end_time(deps, env, info, time),
-        ExecuteMsg::IncreaseMemberLimit(member_limit) => {
-            execute_increase_member_limit(deps, info, member_limit)
-        }
         ExecuteMsg::UpdateAdmins { admins } => execute_update_admins(deps, env, info, admins),
         ExecuteMsg::Freeze {} => execute_freeze(deps, env, info),
     }
@@ -157,8 +141,6 @@ pub fn execute_update_end_time(
     let mut config = CONFIG.load(deps.storage)?;
     can_execute(&deps, info.sender.clone())?;
 
-    // if whitelist already started don't allow updating end_time unless
-    // it is to reduce it
     if env.block.time >= config.start_time && end_time > config.end_time {
         return Err(ContractError::AlreadyStarted {});
     }
@@ -176,61 +158,14 @@ pub fn execute_update_end_time(
 }
 
 
-/// Increase member limit. Must include a fee if crossing 1000, 2000, etc member limit.
-pub fn execute_increase_member_limit(
-    deps: DepsMut,
-    info: MessageInfo,
-    member_limit: u32,
-) -> Result<Response, ContractError> {
-    let mut config = CONFIG.load(deps.storage)?;
-    if config.member_limit >= member_limit || member_limit > MAX_MEMBERS {
-        return Err(ContractError::InvalidMemberLimit {
-            min: config.member_limit,
-            max: MAX_MEMBERS,
-            got: member_limit,
-        });
-    }
-
-    // if new limit crosses 1,000 members, requires upgrade fee. Otherwise,  upgrade.
-    let old_limit = Decimal::new(config.member_limit.into(), 3).ceil();
-    let new_limit = Decimal::new(member_limit.into(), 3).ceil();
-    let upgrade_fee: u128 = if new_limit > old_limit {
-        (new_limit - old_limit).to_u128().unwrap() * PRICE_PER_1000_MEMBERS
-    } else {
-        0
-    };
-    let payment = may_pay(&info, NATIVE_DENOM)?;
-    if payment.u128() != upgrade_fee {
-        return Err(ContractError::IncorrectCreationFee(
-            payment.u128(),
-            upgrade_fee,
-        ));
-    }
-
-    let mut res = Response::new();
-    if upgrade_fee > 0 {
-        checked_fair_burn(&info, upgrade_fee, None, &mut res)?
-    }
-
-    config.member_limit = member_limit;
-    CONFIG.save(deps.storage, &config)?;
-    Ok(res
-        .add_attribute("action", "increase_member_limit")
-        .add_attribute("member_limit", member_limit.to_string()))
-}
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::Members { start_after, limit } => {
-            to_binary(&query_members(deps, start_after, limit)?)
-        }
-
         QueryMsg::HasStarted {} => to_binary(&query_has_started(deps, env)?),
         QueryMsg::HasEnded {} => to_binary(&query_has_ended(deps, env)?),
         QueryMsg::IsActive {} => to_binary(&query_is_active(deps, env)?),
         QueryMsg::HasMember { member } => to_binary(&query_has_member(deps, member)?),
-        QueryMsg::Member { member } => to_binary(&query_member(deps, member)?),
         QueryMsg::Config {} => to_binary(&query_config(deps, env)?),
         QueryMsg::AdminList {} => to_binary(&query_admin_list(deps)?),
         QueryMsg::CanExecute { sender, .. } => to_binary(&query_can_execute(deps, &sender)?),
@@ -258,55 +193,24 @@ fn query_is_active(deps: Deps, env: Env) -> StdResult<IsActiveResponse> {
     })
 }
 
-pub fn query_members(
-    deps: Deps,
-    start_after: Option<String>,
-    limit: Option<u32>,
-) -> StdResult<MembersResponse> {
-    let limit = limit
-        .unwrap_or(PAGINATION_DEFAULT_LIMIT)
-        .min(PAGINATION_MAX_LIMIT) as usize;
-    let start_addr = maybe_addr(deps.api, start_after)?;
-    let start = start_addr.map(Bound::exclusive);
-    let members = WHITELIST
-        .range(deps.storage, start, None, Order::Ascending)
-        .take(limit)
-        .map(|res| {
-            res.map(|(addr, mint_count)| Member {
-                address: addr.into_string(),
-                mint_count,
-            })
-        })
-        .map(Result::unwrap)
-        .collect::<Vec<_>>();
-
-    Ok(MembersResponse { members })
-}
 
 pub fn query_has_member(deps: Deps, member: String) -> StdResult<HasMemberResponse> {
-    let addr = deps.api.addr_validate(&member)?;
-
+    let _addr = deps.api.addr_validate(&member)?;
     Ok(HasMemberResponse {
-        has_member: WHITELIST.has(deps.storage, addr),
-    })
-}
-
-pub fn query_member(deps: Deps, member: String) -> StdResult<Member> {
-    let addr = deps.api.addr_validate(&member)?;
-    let mint_count = WHITELIST.load(deps.storage, addr.clone())?;
-    Ok(Member {
-        address: addr.into_string(),
-        mint_count,
+        has_member: true // WHITELIST.has(deps.storage, addr),
     })
 }
 
 pub fn query_config(deps: Deps, env: Env) -> StdResult<ConfigResponse> {
     let config = CONFIG.load(deps.storage)?;
     Ok(ConfigResponse {
-        member_limit: config.member_limit,
         start_time: config.start_time,
         end_time: config.end_time,
         mint_price: config.mint_price,
         is_active: (env.block.time >= config.start_time) && (env.block.time < config.end_time),
     })
+}
+
+pub fn not_supported() -> StdResult<()> {
+    Err(StdError::generic_err("Not supported"))
 }

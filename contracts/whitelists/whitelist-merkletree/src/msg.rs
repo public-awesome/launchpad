@@ -14,7 +14,6 @@ pub struct InstantiateMsg {
     pub start_time: Timestamp,
     pub end_time: Timestamp,
     pub mint_price: Coin,
-    pub member_limit: u32,
 
     pub admins: Vec<String>,
     pub admins_mutable: bool,
@@ -24,7 +23,6 @@ pub struct InstantiateMsg {
 pub enum ExecuteMsg {
     UpdateStartTime(Timestamp),
     UpdateEndTime(Timestamp),
-    IncreaseMemberLimit(u32),
     UpdateAdmins { admins: Vec<String> },
     Freeze {},
 }
@@ -54,15 +52,8 @@ pub enum QueryMsg {
     HasEnded {},
     #[returns(IsActiveResponse)]
     IsActive {},
-    #[returns(MembersResponse)]
-    Members {
-        start_after: Option<String>,
-        limit: Option<u32>,
-    },
     #[returns(HasMemberResponse)]
     HasMember { member: String },
-    #[returns(MemberResponse)]
-    Member { member: String },
     #[returns(ConfigResponse)]
     Config {},
     #[returns(AdminListResponse)]
@@ -111,7 +102,6 @@ pub struct MintPriceResponse {
 
 #[cw_serde]
 pub struct ConfigResponse {
-    pub member_limit: u32,
     pub start_time: Timestamp,
     pub end_time: Timestamp,
     pub mint_price: Coin,

@@ -14,9 +14,6 @@ pub enum ContractError {
     #[error("AlreadyStarted")]
     AlreadyStarted {},
 
-    #[error("DuplicateMember: {0}")]
-    DuplicateMember(String),
-
     #[error("InvalidDenom: {0}")]
     InvalidDenom(String),
 
@@ -28,9 +25,6 @@ pub enum ContractError {
 
     #[error("InvalidEndTime {0} > {1}")]
     InvalidEndTime(Timestamp, Timestamp),
-
-    #[error("InvalidWhaleCap {0} > {1}")]
-    InvalidWhaleCap(u32, u32),
 
     #[error("MembersExceeded: {expected} got {actual}")]
     MembersExceeded { expected: u32, actual: u32 },
