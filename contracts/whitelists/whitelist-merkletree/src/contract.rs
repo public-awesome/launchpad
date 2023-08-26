@@ -2,7 +2,7 @@ use crate::admin::{
     can_execute, execute_freeze, execute_update_admins, query_admin_list, query_can_execute,
 };
 use crate::error::ContractError;
-use crate::helpers::crypto::{verify_merkle_root, valid_hash_string};
+use crate::helpers::crypto::{verify_merkle_root, valid_hash_string, string_to_byte_slice};
 use crate::helpers::validators::map_validate;
 use crate::msg::{
     ConfigResponse, ExecuteMsg, HasEndedResponse, HasMemberResponse,
@@ -13,8 +13,12 @@ use crate::state::{AdminList, Config, ADMIN_LIST, CONFIG, MERKLE_ROOT};
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult, StdError, Timestamp};
 use cw2::set_contract_version;
-use sg_std::{Response, GENESIS_MINT_START_TIME};
+use rs_merkle::MerkleProof;
+use sg_std::{Response, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use cw_utils::nonpayable;
+
+use rs_merkle::{algorithms::Sha256, Hasher};
+
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sg-whitelist-flex";
@@ -32,28 +36,13 @@ pub fn instantiate(
     info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
-    
     nonpayable(&info)?;
-
+    verify_merkle_root(&msg.merkle_root)?;
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
-    verify_merkle_root(&msg.merkle_root)?;
-
-    MERKLE_ROOT.save(deps.storage, &msg.merkle_root)?;
-
-    let config = Config {
-        start_time: msg.start_time,
-        end_time: msg.end_time,
-        mint_price: msg.mint_price,
-    };
-
-    CONFIG.save(deps.storage, &config)?;
-
-    let admin_config = AdminList {
-        admins: map_validate(deps.api, &msg.admins)?,
-        mutable: msg.admins_mutable,
-    };
-    ADMIN_LIST.save(deps.storage, &admin_config)?;
+    if msg.mint_price.denom != NATIVE_DENOM {
+        return Err(ContractError::InvalidDenom(msg.mint_price.denom));
+    }
 
     if msg.start_time > msg.end_time {
         return Err(ContractError::InvalidStartTime(
@@ -76,6 +65,24 @@ pub fn instantiate(
             genesis_start_time,
         ));
     }
+
+
+    MERKLE_ROOT.save(deps.storage, &msg.merkle_root)?;
+
+    let config = Config {
+        start_time: msg.start_time,
+        end_time: msg.end_time,
+        mint_price: msg.mint_price,
+    };
+
+    CONFIG.save(deps.storage, &config)?;
+
+    let admin_config = AdminList {
+        admins: map_validate(deps.api, &msg.admins)?,
+        mutable: msg.admins_mutable,
+    };
+    ADMIN_LIST.save(deps.storage, &admin_config)?;
+
 
     Ok(Response::new()
         .add_attribute("action", "instantiate")
@@ -167,7 +174,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::HasStarted {} => to_binary(&query_has_started(deps, env)?),
         QueryMsg::HasEnded {} => to_binary(&query_has_ended(deps, env)?),
         QueryMsg::IsActive {} => to_binary(&query_is_active(deps, env)?),
-        QueryMsg::HasMember { member , proof} => to_binary(&query_has_member(deps, member, proof)?),
+        QueryMsg::HasMember { member , proof_hashes} => to_binary(&query_has_member(deps, member, proof_hashes)?),
         QueryMsg::Config {} => to_binary(&query_config(deps, env)?),
         QueryMsg::AdminList {} => to_binary(&query_admin_list(deps)?),
         QueryMsg::CanExecute { sender, .. } => to_binary(&query_can_execute(deps, &sender)?),
@@ -200,35 +207,51 @@ fn query_is_active(deps: Deps, env: Env) -> StdResult<IsActiveResponse> {
 pub fn query_has_member(
     deps: Deps, 
     member: String,
-    proof: Vec<String>,
+    proof_hashes: Vec<String>,
 ) -> StdResult<HasMemberResponse> {
-
-    let merkle_root = MERKLE_ROOT.load(deps.storage)?;
 
     deps.api.addr_validate(&member)?;
 
-    let member_hash = sha256::digest(&member);
+    let merkle_root = MERKLE_ROOT.load(deps.storage)?;
 
-    let hash = proof.into_iter().try_fold(member_hash, |hash, p| {
+    println!("merkle_root {:?}", merkle_root);
+    println!("");
 
-        valid_hash_string(&p)?;
 
-        let mut hashes = [hash, p];
-        hashes.sort_unstable();
+    let member_init_hash_slice = Sha256::hash(member.as_bytes());
 
-        sha256::digest(&hashes.concat())
-            .try_into()
-            .map_err(|_| StdError::GenericErr { msg: "Error parsing merkle proof".to_string() })
+
+    let hash = proof_hashes
+        .into_iter()
+        .try_fold(member_init_hash_slice, 
+            |accum_hash_slice, new_proof_hashstring| {
+                valid_hash_string(&new_proof_hashstring)?;
+
+                println!("accum_hash_slice {:?}", hex::encode(accum_hash_slice));
+                println!("new_proof_hashstring {:?}", new_proof_hashstring);
+                println!("");
+
+                let mut hashe_slices = [
+                    accum_hash_slice, 
+                    string_to_byte_slice(&new_proof_hashstring)?
+                ];
+                hashe_slices.sort_unstable();
+
+                Sha256::hash(&hashe_slices.concat())
+                    .try_into()
+                    .map_err(|_| StdError::GenericErr { msg: "Error parsing merkle proof".to_string() })
     });
+
 
     if hash.is_err() {
         return Err(cosmwasm_std::StdError::GenericErr {
             msg: "Invalid Merkle Proof".to_string(),
         });
     }
-    let hash = hash.unwrap();
-    
-    return Ok(HasMemberResponse { has_member: merkle_root == hash });
+
+    println!("hash {:?}", hex::encode(hash.as_ref().clone().unwrap()));
+
+    return Ok(HasMemberResponse { has_member: merkle_root == hex::encode(hash.unwrap()) });
 
 }
 

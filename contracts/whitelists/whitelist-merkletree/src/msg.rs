@@ -53,7 +53,7 @@ pub enum QueryMsg {
     #[returns(IsActiveResponse)]
     IsActive {},
     #[returns(HasMemberResponse)]
-    HasMember { member: String, proof: Vec<String> },
+    HasMember { member: String, proof_hashes: Vec<String> },
     #[returns(ConfigResponse)]
     Config {},
     #[returns(AdminListResponse)]
