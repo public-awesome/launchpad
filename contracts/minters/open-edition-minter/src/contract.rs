@@ -266,25 +266,19 @@ pub fn execute_mint_to(
     _execute_mint(deps, info, action, true, Some(recipient))
 }
 
-fn pay_mint_if_not_burn_collection(
+fn pay_mint(
     info: MessageInfo,
     mint_price_with_discounts: Coin,
     config_denom: String,
-    allowed_burn_collections: Option<Vec<Addr>>,
 ) -> Result<Uint128, ContractError> {
-    match burn_to_mint::sender_is_allowed_burn_collection(info.clone(), allowed_burn_collections) {
-        true => Ok(Uint128::new(0)),
-        false => {
-            let payment = may_pay(&info, &config_denom)?;
-            if payment != mint_price_with_discounts.amount {
-                return Err(ContractError::IncorrectPaymentAmount(
-                    coin(payment.u128(), &config_denom),
-                    mint_price_with_discounts,
-                ));
-            }
-            Ok(payment)
-        }
+    let payment = may_pay(&info, &config_denom)?;
+    if payment != mint_price_with_discounts.amount {
+        return Err(ContractError::IncorrectPaymentAmount(
+            coin(payment.u128(), &config_denom),
+            mint_price_with_discounts,
+        ));
     }
+    Ok(payment)
 }
 
 fn pay_fairburn(
@@ -334,6 +328,7 @@ fn compute_seller_amount(
     };
     Ok((res, seller_amount))
 }
+
 // Generalize checks and mint message creation
 // mint -> _execute_mint(recipient: None, token_id: None)
 // mint_to(recipient: "friend") -> _execute_mint(Some(recipient), token_id: None)
@@ -361,12 +356,16 @@ fn _execute_mint(
         .map_err(|_| ContractError::IncorrectFungibility {})?;
     // Exact payment only accepted
 
-    pay_mint_if_not_burn_collection(
+    if !burn_to_mint::sender_is_allowed_burn_collection(
         info.clone(),
-        mint_price_with_discounts.clone(),
-        config_denom,
         config.allowed_burn_collections.clone(),
-    )?;
+    ) {
+        pay_mint(
+            info.clone(),
+            mint_price_with_discounts.clone(),
+            config_denom,
+        )?;
+    };
 
     let factory: ParamsResponse = deps
         .querier

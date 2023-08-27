@@ -10,6 +10,15 @@
     "mint_price"
   ],
   "properties": {
+    "allowed_burn_collections": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "$ref": "#/definitions/Addr"
+      }
+    },
     "collection_code_id": {
       "type": "integer",
       "format": "uint64",

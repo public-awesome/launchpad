@@ -131,32 +131,26 @@ pub fn burn_and_mint(
     Ok(mint_res.add_submessages(res.messages))
 }
 
-fn pay_mint_if_not_burn_collection(
+fn pay_mint(
     info: MessageInfo,
     mint_price: Token,
     factory_params: MinterParams<Option<Empty>>,
-    allowed_burn_collections: Option<Vec<Addr>>,
 ) -> Result<Uint128, ContractError> {
     let mut res = Response::new();
-    match burn_to_mint::sender_is_allowed_burn_collection(info.clone(), allowed_burn_collections) {
-        true => Ok(0_u128.into()),
-        false => {
-            let funds_sent = must_pay(&info, NATIVE_DENOM)?;
-            // Create network fee msgs
-            let mint_fee_percent = factory_params.mint_fee_bps.bps_to_decimal();
-            let network_fee = match mint_price {
-                sg2::Token::Fungible(coin) => coin.amount * mint_fee_percent,
-                sg2::Token::NonFungible(_) => Uint128::new(0),
-            };
-            // TODO: NFTs don't have a fee
-            // For the base 1/1 minter, the entire mint price should be Fair Burned
-            if network_fee != funds_sent {
-                return Err(ContractError::InvalidMintPrice {});
-            }
-            checked_fair_burn(&info, network_fee.u128(), None, &mut res)?;
-            Ok(network_fee)
-        }
+    let funds_sent = must_pay(&info, NATIVE_DENOM)?;
+    // Create network fee msgs
+    let mint_fee_percent = factory_params.mint_fee_bps.bps_to_decimal();
+    let network_fee = match mint_price {
+        sg2::Token::Fungible(coin) => coin.amount * mint_fee_percent,
+        sg2::Token::NonFungible(_) => Uint128::new(0),
+    };
+    // TODO: NFTs don't have a fee
+    // For the base 1/1 minter, the entire mint price should be Fair Burned
+    if network_fee != funds_sent {
+        return Err(ContractError::InvalidMintPrice {});
     }
+    checked_fair_burn(&info, network_fee.u128(), None, &mut res)?;
+    Ok(network_fee)
 }
 
 fn execute_mint_sender(
@@ -191,13 +185,13 @@ fn execute_mint_sender(
         .query_wasm_smart(config.factory, &Sg2QueryMsg::Params {})?;
     let factory_params = factory.params;
 
-    //TODO CHECK FOR ALLOWED CONTRACTS
-    let network_fee = pay_mint_if_not_burn_collection(
+    let network_fee = match burn_to_mint::sender_is_allowed_burn_collection(
         info.clone(),
-        config.mint_price,
-        factory_params,
         config.allowed_burn_collections,
-    )?;
+    ) {
+        true => 0_u128.into(),
+        false => pay_mint(info.clone(), config.mint_price, factory_params)?,
+    };
     // Create mint msgs
     let mint_msg = Sg721ExecuteMsg::<Extension, Empty>::Mint {
         token_id: increment_token_index(deps.storage)?.to_string(),
