@@ -287,64 +287,52 @@ fn pay_mint_if_not_burn_collection(
     }
 }
 
-fn fairburn_if_not_burn_collection(
+fn pay_fairburn(
     deps: &DepsMut,
     info: MessageInfo,
     mint_price_with_discounts: Coin,
     mint_fee: Decimal,
     factory_params: MinterParams<open_edition_factory::state::ParamsExtension>,
-    allowed_burn_collections: Option<Vec<Addr>>,
 ) -> Result<(Response, Uint128), ContractError> {
     let mut res = Response::new();
-    match burn_to_mint::sender_is_allowed_burn_collection(info.clone(), allowed_burn_collections) {
-        true => Ok((res, Uint128::new(0))),
-        false => {
-            let network_fee = mint_price_with_discounts.amount * mint_fee;
-            // This is for the network fee msg
-            checked_fair_burn(
-                &info,
-                network_fee.u128(),
-                Some(
-                    deps.api
-                        .addr_validate(&factory_params.extension.dev_fee_address)?,
-                ),
-                &mut res,
-            )?;
-            Ok((res, network_fee))
-        }
-    }
+    let network_fee = mint_price_with_discounts.amount * mint_fee;
+    // This is for the network fee msg
+    checked_fair_burn(
+        &info,
+        network_fee.u128(),
+        Some(
+            deps.api
+                .addr_validate(&factory_params.extension.dev_fee_address)?,
+        ),
+        &mut res,
+    )?;
+    Ok((res, network_fee))
 }
 
-fn _compute_seller_amount_if_not_contract_sender(
-    info: MessageInfo,
+fn compute_seller_amount(
     res: Response,
     mint_price_with_discounts: Coin,
     network_fee: Uint128,
     config_extension: crate::state::ConfigExtension,
-    allowed_burn_collections: Option<Vec<Addr>>,
 ) -> Result<(Response, Uint128), ContractError> {
     let mut res = res;
-    match burn_to_mint::sender_is_allowed_burn_collection(info, allowed_burn_collections) {
-        true => Ok((res, Uint128::new(0))),
-        false => {
-            let seller_amount = {
-                // the net amount is mint price - network fee (mint free + dev fee)
-                let amount = mint_price_with_discounts.amount.checked_sub(network_fee)?;
-                let payment_address = config_extension.payment_address;
-                let seller = config_extension.admin;
-                // Sending 0 coins fails, so only send if amount is non-zero
-                if !amount.is_zero() {
-                    let msg = BankMsg::Send {
-                        to_address: payment_address.unwrap_or(seller).to_string(),
-                        amount: vec![coin(amount.u128(), mint_price_with_discounts.denom)],
-                    };
-                    res = res.add_message(msg);
-                }
-                amount
+
+    let seller_amount = {
+        // the net amount is mint price - network fee (mint free + dev fee)
+        let amount = mint_price_with_discounts.amount.checked_sub(network_fee)?;
+        let payment_address = config_extension.payment_address;
+        let seller = config_extension.admin;
+        // Sending 0 coins fails, so only send if amount is non-zero
+        if !amount.is_zero() {
+            let msg = BankMsg::Send {
+                to_address: payment_address.unwrap_or(seller).to_string(),
+                amount: vec![coin(amount.u128(), mint_price_with_discounts.denom)],
             };
-            Ok((res, seller_amount))
+            res = res.add_message(msg);
         }
-    }
+        amount
+    };
+    Ok((res, seller_amount))
 }
 // Generalize checks and mint message creation
 // mint -> _execute_mint(recipient: None, token_id: None)
@@ -396,14 +384,21 @@ fn _execute_mint(
     } else {
         factory_params.mint_fee_bps.bps_to_decimal()
     };
-    let (mut res, network_fee) = fairburn_if_not_burn_collection(
-        &deps,
+
+    let (mut res, network_fee) = match burn_to_mint::sender_is_allowed_burn_collection(
         info.clone(),
-        mint_price_with_discounts.clone(),
-        mint_fee,
-        factory_params,
         config.allowed_burn_collections.clone(),
-    )?;
+    ) {
+        true => (Response::new(), Uint128::new(0)),
+        false => pay_fairburn(
+            &deps,
+            info.clone(),
+            mint_price_with_discounts.clone(),
+            mint_fee,
+            factory_params,
+        )?,
+    };
+    // let (mut res, network_fee) =
     // Token ID to mint + update the config counter
     let token_id = increment_token_index(deps.storage)?.to_string();
 
@@ -435,14 +430,18 @@ fn _execute_mint(
         },
     )?;
 
-    let (res, seller_amount) = _compute_seller_amount_if_not_contract_sender(
+    let (res, seller_amount) = match burn_to_mint::sender_is_allowed_burn_collection(
         info.clone(),
-        res,
-        mint_price_with_discounts.clone(),
-        network_fee,
-        config.extension,
         config.allowed_burn_collections,
-    )?;
+    ) {
+        true => (res, Uint128::new(0)),
+        false => compute_seller_amount(
+            res,
+            mint_price_with_discounts.clone(),
+            network_fee,
+            config.extension,
+        )?,
+    };
 
     Ok(res
         .add_attribute("action", action)

@@ -617,34 +617,27 @@ fn pay_mint_if_not_contract(
     }
 }
 
-fn compute_seller_amount_if_not_contract_sender(
-    info: MessageInfo,
+fn compute_seller_amount(
     mut res: Response,
     mint_price_with_discounts: Coin,
     network_fee: Uint128,
     config_extension: crate::state::ConfigExtension,
-    allowed_burn_collections: Option<Vec<Addr>>,
 ) -> Result<(Response, Uint128), ContractError> {
-    match burn_to_mint::sender_is_allowed_burn_collection(info, allowed_burn_collections) {
-        true => Ok((res, Uint128::new(0))),
-        false => {
-            let seller_amount = {
-                let amount = mint_price_with_discounts.amount - network_fee;
-                let payment_address = config_extension.payment_address;
-                let seller = config_extension.admin;
-                // Sending 0 coins fails, so only send if amount is non-zero
-                if !amount.is_zero() {
-                    let msg = BankMsg::Send {
-                        to_address: payment_address.unwrap_or(seller).to_string(),
-                        amount: vec![coin(amount.u128(), mint_price_with_discounts.denom)],
-                    };
-                    res = res.add_message(msg);
-                }
-                amount
+    let seller_amount = {
+        let amount = mint_price_with_discounts.amount - network_fee;
+        let payment_address = config_extension.payment_address;
+        let seller = config_extension.admin;
+        // Sending 0 coins fails, so only send if amount is non-zero
+        if !amount.is_zero() {
+            let msg = BankMsg::Send {
+                to_address: payment_address.unwrap_or(seller).to_string(),
+                amount: vec![coin(amount.u128(), mint_price_with_discounts.denom)],
             };
-            Ok((res, seller_amount))
+            res = res.add_message(msg);
         }
-    }
+        amount
+    };
+    Ok((res, seller_amount))
 }
 
 // Generalize checks and mint message creation
@@ -779,14 +772,18 @@ fn _execute_mint(
     let new_mint_count = mint_count(deps.as_ref(), &info)? + 1;
     MINTER_ADDRS.save(deps.storage, &info.sender, &new_mint_count)?;
 
-    let (res, seller_amount) = compute_seller_amount_if_not_contract_sender(
+    let (res, seller_amount) = match burn_to_mint::sender_is_allowed_burn_collection(
         info.clone(),
-        res,
-        mint_price_with_discounts.clone(),
-        network_fee,
-        config.extension,
         config.allowed_burn_collections,
-    )?;
+    ) {
+        true => (res, Uint128::new(0)),
+        false => compute_seller_amount(
+            res,
+            mint_price_with_discounts.clone(),
+            network_fee,
+            config.extension,
+        )?,
+    };
 
     Ok(res
         .add_attribute("action", action)
