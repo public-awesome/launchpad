@@ -127,22 +127,8 @@ pub fn burn_and_mint(
 ) -> Result<Response, ContractError> {
     let res = burn_to_mint::generate_burn_msg(info.clone(), msg.clone())?;
     let token_uri_msg: TokenUriMsg = from_binary(&msg.msg)?;
-    let mint_res = _execute_mint_sender(deps, info, token_uri_msg.token_uri)?;
+    let mint_res = execute_mint_sender(deps, info, token_uri_msg.token_uri)?;
     Ok(mint_res.add_submessages(res.messages))
-}
-
-pub fn execute_mint_sender(
-    deps: DepsMut,
-    info: MessageInfo,
-    token_uri: String,
-) -> Result<Response, ContractError> {
-    let config = CONFIG.load(deps.storage)?;
-
-    if matches!(config.mint_price, Token::NonFungible(_)) {
-        return Err(ContractError::InvalidMintPrice {});
-    }
-
-    _execute_mint_sender(deps, info, token_uri)
 }
 
 fn pay_mint_if_not_burn_collection(
@@ -173,7 +159,7 @@ fn pay_mint_if_not_burn_collection(
     }
 }
 
-fn _execute_mint_sender(
+fn execute_mint_sender(
     deps: DepsMut,
     info: MessageInfo,
     token_uri: String,
