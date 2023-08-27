@@ -64,7 +64,7 @@ fn frozen_factory_cannot_create_new_minters() {
 
     // creating new minter throws error
     let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
-    let mut msg = mock_create_minter(None, mock_collection_params(), Some(start_time));
+    let mut msg = mock_create_minter(None, mock_collection_params(), Some(start_time), None);
     msg.init_msg = build_init_msg(None, msg.clone(), num_tokens);
     msg.collection_params.info.creator = creator.to_string();
     let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);

@@ -29,6 +29,7 @@ pub fn mock_init_minter_extension(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn mock_create_minter(
     start_time: Option<Timestamp>,
     end_time: Option<Timestamp>,

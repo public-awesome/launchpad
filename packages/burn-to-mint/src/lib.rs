@@ -53,8 +53,8 @@ pub fn check_sender_creator_or_allowed_burn_collection(
     allowed_burn_collections: Option<Vec<Addr>>,
 ) -> Result<bool, StdError> {
     let mut allowed_senders = vec![creator_addr];
-    if allowed_burn_collections.is_some() {
-        allowed_senders.append(&mut allowed_burn_collections.unwrap());
+    if let Some(mut allowed_burn_collections) = allowed_burn_collections {
+        allowed_senders.append(&mut allowed_burn_collections);
     };
     if !allowed_senders.contains(&info.sender) {
         return Err(StdError::GenericErr {
@@ -68,8 +68,8 @@ pub fn sender_is_allowed_burn_collection(
     info: MessageInfo,
     allowed_burn_collections: Option<Vec<Addr>>,
 ) -> bool {
-    if allowed_burn_collections.is_some() {
-        return allowed_burn_collections.unwrap().contains(&info.sender);
+    if let Some(allowed_burn_collections) = allowed_burn_collections {
+        return allowed_burn_collections.contains(&info.sender);
     };
-    return false;
+    false
 }

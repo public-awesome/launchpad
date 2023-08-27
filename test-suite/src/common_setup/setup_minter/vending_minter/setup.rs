@@ -47,6 +47,7 @@ pub fn setup_minter_contract(setup_params: MinterSetupParams) -> MinterCollectio
     let collection_params = setup_params.collection_params;
     let start_time = setup_params.start_time;
     let init_msg = setup_params.init_msg;
+    let allowed_burn_collections = setup_params.allowed_burn_collections;
 
     let mint_denom: Option<String> = init_msg
         .as_ref()
@@ -65,7 +66,12 @@ pub fn setup_minter_contract(setup_params: MinterSetupParams) -> MinterCollectio
             None,
         )
         .unwrap();
-    let mut msg = mock_create_minter(splits_addr, collection_params, start_time);
+    let mut msg = mock_create_minter(
+        splits_addr,
+        collection_params,
+        start_time,
+        allowed_burn_collections,
+    );
     msg.init_msg = build_init_msg(init_msg, msg.clone(), num_tokens);
     msg.collection_params.code_id = sg721_code_id;
     msg.collection_params.info.creator = minter_admin.to_string();
@@ -128,7 +134,9 @@ pub fn configure_minter(
             sg721_code_id: code_ids.sg721_code_id,
             start_time: minter_instantiate_params_vec[index].start_time,
             init_msg: minter_instantiate_params_vec[index].init_msg.clone(),
-            allowed_burn_collections: None,
+            allowed_burn_collections: minter_instantiate_params_vec[index]
+                .allowed_burn_collections
+                .clone(),
         };
         let minter_collection_res = setup_minter_contract(setup_params);
         minter_collection_info.push(minter_collection_res);

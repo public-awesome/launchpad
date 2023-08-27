@@ -4,7 +4,7 @@ use crate::common_setup::setup_minter::base_minter::mock_params::mock_params;
 use crate::common_setup::setup_minter::common::constants::MIN_MINT_PRICE;
 use crate::common_setup::templates::{
     base_minter_with_sg721, base_minter_with_sg721nt, base_minter_with_specified_sg721,
-    base_minter_with_two_sg721_collections,
+    base_minter_with_two_sg721_collections_burn_mint,
 };
 use base_factory::msg::{BaseMinterCreateMsg, BaseUpdateParamsMsg, SudoMsg};
 
@@ -228,7 +228,8 @@ fn update_start_trading_time() {
 
 #[test]
 fn check_burns_tokens_when_received() {
-    let bmt = base_minter_with_two_sg721_collections(2);
+    let allowed_collections_vec = vec![Addr::unchecked("contract2".to_string())];
+    let bmt = base_minter_with_two_sg721_collections_burn_mint(2, allowed_collections_vec);
     let (mut router, creator) = (bmt.router, bmt.accts.creator);
     let minter_addr_1 = bmt.collection_response_vec[0].minter.clone().unwrap();
     let collection_addr_1 = bmt.collection_response_vec[0].collection.clone().unwrap();
@@ -263,7 +264,6 @@ fn check_burns_tokens_when_received() {
         msg: to_binary(&token_uri_msg).unwrap(),
     };
     let res = router.execute_contract(creator, collection_addr_1.clone(), &send_nft, &[]);
-    println!("res is {:?}", res);
     assert!(res.is_ok());
 
     let num_tokens_res: cw721::NumTokensResponse = router
@@ -277,19 +277,12 @@ fn check_burns_tokens_when_received() {
 
 #[test]
 fn check_mints_new_tokens_when_received() {
-    let bmt = base_minter_with_two_sg721_collections(2);
+    let allowed_collections_vec = vec![Addr::unchecked("contract2".to_string())];
+    let bmt = base_minter_with_two_sg721_collections_burn_mint(2, allowed_collections_vec);
     let (mut router, creator) = (bmt.router, bmt.accts.creator);
     let minter_addr_1 = bmt.collection_response_vec[0].minter.clone().unwrap();
     let collection_addr_1 = bmt.collection_response_vec[0].collection.clone().unwrap();
     let collection_addr_2 = bmt.collection_response_vec[1].collection.clone().unwrap();
-
-    println!(
-        "collection 1: {}, collection 2: {}, minter1: {}, minter2: {}",
-        collection_addr_1.to_string(),
-        collection_addr_2.to_string(),
-        minter_addr_1.to_string(),
-        bmt.collection_response_vec[1].minter.clone().unwrap()
-    );
     let minter_addr_2 = bmt.collection_response_vec[1].minter.clone().unwrap();
 
     let token_uri = "ipfs://example".to_string();
@@ -339,7 +332,6 @@ fn check_mints_new_tokens_when_received() {
         &send_nft,
         &[coin(5_000_000_000, NATIVE_DENOM)],
     );
-    println!("res is {:?}", res);
     assert!(res.is_ok());
     let num_tokens_res: cw721::NumTokensResponse = router
         .wrap()

@@ -1,3 +1,4 @@
+use cosmwasm_std::Addr;
 use cosmwasm_std::{coin, to_binary, Coin, Uint128};
 use cw721::{Cw721ExecuteMsg, Cw721QueryMsg};
 use cw_multi_test::Executor;
@@ -12,7 +13,7 @@ use crate::common_setup::{
         common::constants::DEV_ADDRESS,
         open_edition_minter::minter_params::{default_nft_data, init_msg},
     },
-    templates::open_edition_minter_with_two_sg721_collections,
+    templates::open_edition_minter_with_two_sg721_collections_burn_mint,
 };
 
 #[test]
@@ -34,7 +35,13 @@ fn check_burns_tokens_when_received() {
         None,
         None,
     );
-    let vt = open_edition_minter_with_two_sg721_collections(params_extension, init_msg).unwrap();
+    let allowed_collections = vec![Addr::unchecked("contract2")];
+    let vt = open_edition_minter_with_two_sg721_collections_burn_mint(
+        params_extension,
+        init_msg,
+        allowed_collections,
+    )
+    .unwrap();
     let (mut router, creator) = (vt.router, vt.accts.creator);
     let minter_addr_1 = vt.collection_response_vec[0].minter.clone().unwrap();
     let collection_addr_1 = vt.collection_response_vec[0].collection.clone().unwrap();
@@ -99,7 +106,13 @@ fn check_mints_new_tokens_when_received() {
         None,
         None,
     );
-    let vt = open_edition_minter_with_two_sg721_collections(params_extension, init_msg).unwrap();
+    let allowed_collections = vec![Addr::unchecked("contract2")];
+    let vt = open_edition_minter_with_two_sg721_collections_burn_mint(
+        params_extension,
+        init_msg,
+        allowed_collections,
+    )
+    .unwrap();
     let (mut router, creator) = (vt.router, vt.accts.creator);
     let minter_addr_1 = vt.collection_response_vec[0].minter.clone().unwrap();
     let collection_addr_1 = vt.collection_response_vec[0].collection.clone().unwrap();

@@ -278,42 +278,9 @@ pub fn base_minter_with_sg721nt(num_tokens: u32) -> MinterTemplateResponse<Accou
     }
 }
 
-pub fn base_minter_with_two_sg721_collections(num_tokens: u32) -> MinterTemplateResponse<Accounts> {
-    let mut router = custom_mock_app();
-    let (creator, buyer) = setup_accounts(&mut router);
-
-    router
-        .sudo(SudoMsg::Bank({
-            BankSudo::Mint {
-                to_address: creator.to_string(),
-                amount: vec![coin(CREATION_FEE * 2, NATIVE_DENOM)],
-            }
-        }))
-        .map_err(|err| println!("{:?}", err))
-        .ok();
-    let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
-    let collection_params = mock_collection_params_1(Some(start_time));
-    let collection_params_2 = mock_collection_two(Some(start_time));
-    let minter_params = minter_params_token(num_tokens);
-    let minter_params_2 =
-        minter_params_allowed_burn_collections(num_tokens, vec![Addr::unchecked("contract2")]);
-    let code_ids = base_minter_sg721_collection_code_ids(&mut router);
-    let minter_collection_response = configure_base_minter(
-        &mut router,
-        creator.clone(),
-        vec![collection_params, collection_params_2],
-        vec![minter_params, minter_params_2],
-        code_ids,
-    );
-    MinterTemplateResponse {
-        router,
-        collection_response_vec: minter_collection_response,
-        accts: Accounts { creator, buyer },
-    }
-}
-
-pub fn vending_minter_with_two_sg721_collections(
+pub fn base_minter_with_two_sg721_collections_burn_mint(
     num_tokens: u32,
+    allowed_contracts: Vec<Addr>,
 ) -> MinterTemplateResponse<Accounts> {
     let mut router = custom_mock_app();
     let (creator, buyer) = setup_accounts(&mut router);
@@ -331,7 +298,43 @@ pub fn vending_minter_with_two_sg721_collections(
     let collection_params = mock_collection_params_1(Some(start_time));
     let collection_params_2 = mock_collection_two(Some(start_time));
     let minter_params = minter_params_token(num_tokens);
-    let minter_params_2 = minter_params_token(num_tokens);
+    let minter_params_2 = minter_params_allowed_burn_collections(num_tokens, allowed_contracts);
+    let code_ids = base_minter_sg721_collection_code_ids(&mut router);
+    let minter_collection_response = configure_base_minter(
+        &mut router,
+        creator.clone(),
+        vec![collection_params, collection_params_2],
+        vec![minter_params, minter_params_2],
+        code_ids,
+    );
+    MinterTemplateResponse {
+        router,
+        collection_response_vec: minter_collection_response,
+        accts: Accounts { creator, buyer },
+    }
+}
+
+pub fn vending_minter_with_two_sg721_collections_burn_mint(
+    num_tokens: u32,
+    allowed_contracts: Vec<Addr>,
+) -> MinterTemplateResponse<Accounts> {
+    let mut router = custom_mock_app();
+    let (creator, buyer) = setup_accounts(&mut router);
+
+    router
+        .sudo(SudoMsg::Bank({
+            BankSudo::Mint {
+                to_address: creator.to_string(),
+                amount: vec![coin(CREATION_FEE * 2, NATIVE_DENOM)],
+            }
+        }))
+        .map_err(|err| println!("{:?}", err))
+        .ok();
+    let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
+    let collection_params = mock_collection_params_1(Some(start_time));
+    let collection_params_2 = mock_collection_two(Some(start_time));
+    let minter_params = minter_params_token(num_tokens);
+    let minter_params_2 = minter_params_allowed_burn_collections(num_tokens, allowed_contracts);
     let code_ids = vending_minter_code_ids(&mut router);
     let minter_collection_response = configure_minter(
         &mut router,
@@ -546,9 +549,10 @@ pub fn vending_minter_template_with_code_ids_template(
     }
 }
 
-pub fn open_edition_minter_with_two_sg721_collections(
+pub fn open_edition_minter_with_two_sg721_collections_burn_mint(
     params_extension: ParamsExtension,
     init_msg: OpenEditionMinterInitMsgExtension,
+    allowed_contracts: Vec<Addr>,
 ) -> Result<MinterTemplateResponse<Accounts>, anyhow::Result<AppResponse>> {
     let mut router = custom_mock_app();
     let (creator, buyer) = setup_accounts(&mut router);
@@ -578,7 +582,7 @@ pub fn open_edition_minter_with_two_sg721_collections(
         None,
         None,
         None,
-        Some(vec![Addr::unchecked("contract2")]),
+        Some(allowed_contracts),
     );
     let code_ids = open_edition_minter_code_ids(&mut router);
     let minter_collection_response = configure_open_edition_minter(

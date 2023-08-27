@@ -117,7 +117,6 @@ pub fn instantiate(
         .start_trading_time
         .or(Some(default_start_time_with_offset));
     collection_info.start_trading_time = start_trading_time;
-    println!("received instantiate msg {:?}", msg);
     let config = Config {
         factory: factory.clone(),
         collection_code_id: msg.collection_params.code_id,
@@ -240,7 +239,7 @@ pub fn execute_mint_sender(
     {
         return Err(ContractError::MaxPerAddressLimitExceeded {});
     }
-    _execute_mint(deps, env, info, action, false, None)
+    _execute_mint(deps, info, action, false, None)
 }
 
 pub fn execute_mint_to(
@@ -264,7 +263,7 @@ pub fn execute_mint_to(
         return Err(ContractError::AfterMintEndTime {});
     }
 
-    _execute_mint(deps, env, info, action, true, Some(recipient))
+    _execute_mint(deps, info, action, true, Some(recipient))
 }
 
 fn pay_mint_if_not_burn_collection(
@@ -273,10 +272,6 @@ fn pay_mint_if_not_burn_collection(
     config_denom: String,
     allowed_burn_collections: Option<Vec<Addr>>,
 ) -> Result<Uint128, ContractError> {
-    println!(
-        "info.sender is {}, allowed burn collections {:?}",
-        info.sender, allowed_burn_collections
-    );
     match burn_to_mint::sender_is_allowed_burn_collection(info.clone(), allowed_burn_collections) {
         true => Ok(Uint128::new(0)),
         false => {
@@ -292,7 +287,7 @@ fn pay_mint_if_not_burn_collection(
     }
 }
 
-fn _fairburn_if_not_burn_collection(
+fn fairburn_if_not_burn_collection(
     deps: &DepsMut,
     info: MessageInfo,
     mint_price_with_discounts: Coin,
@@ -329,7 +324,7 @@ fn _compute_seller_amount_if_not_contract_sender(
     allowed_burn_collections: Option<Vec<Addr>>,
 ) -> Result<(Response, Uint128), ContractError> {
     let mut res = res;
-    match burn_to_mint::sender_is_allowed_burn_collection(info.clone(), allowed_burn_collections) {
+    match burn_to_mint::sender_is_allowed_burn_collection(info, allowed_burn_collections) {
         true => Ok((res, Uint128::new(0))),
         false => {
             let seller_amount = {
@@ -356,7 +351,6 @@ fn _compute_seller_amount_if_not_contract_sender(
 // mint_to(recipient: "friend") -> _execute_mint(Some(recipient), token_id: None)
 fn _execute_mint(
     deps: DepsMut,
-    env: Env,
     info: MessageInfo,
     action: &str,
     is_admin: bool,
@@ -402,7 +396,7 @@ fn _execute_mint(
     } else {
         factory_params.mint_fee_bps.bps_to_decimal()
     };
-    let (mut res, network_fee) = _fairburn_if_not_burn_collection(
+    let (mut res, network_fee) = fairburn_if_not_burn_collection(
         &deps,
         info.clone(),
         mint_price_with_discounts.clone(),
@@ -688,7 +682,7 @@ pub fn burn_and_mint(
     info: MessageInfo,
     msg: Cw721ReceiveMsg,
 ) -> Result<Response, ContractError> {
-    let res = burn_to_mint::generate_burn_msg(info.clone(), msg.clone())?;
+    let res = burn_to_mint::generate_burn_msg(info.clone(), msg)?;
     let mint_res = execute_mint_sender(deps, env, info)?;
     Ok(mint_res.add_submessages(res.messages))
 }

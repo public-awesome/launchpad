@@ -1,3 +1,4 @@
+use cosmwasm_std::Addr;
 use cosmwasm_std::{coin, to_binary};
 use cw721::{Cw721ExecuteMsg, Cw721QueryMsg};
 use cw_multi_test::Executor;
@@ -6,11 +7,12 @@ use sg_std::GENESIS_MINT_START_TIME;
 use sg_std::NATIVE_DENOM;
 
 use crate::common_setup::setup_accounts_and_block::setup_block_time;
-use crate::common_setup::templates::vending_minter_with_two_sg721_collections;
+use crate::common_setup::templates::vending_minter_with_two_sg721_collections_burn_mint;
 
 #[test]
 fn check_burns_tokens_when_received() {
-    let vt = vending_minter_with_two_sg721_collections(1);
+    let allowed_burn_collections = vec![Addr::unchecked("contract2")];
+    let vt = vending_minter_with_two_sg721_collections_burn_mint(1, allowed_burn_collections);
     let (mut router, creator) = (vt.router, vt.accts.creator);
     let minter_addr_1 = vt.collection_response_vec[0].minter.clone().unwrap();
     let collection_addr_1 = vt.collection_response_vec[0].collection.clone().unwrap();
@@ -58,7 +60,8 @@ fn check_burns_tokens_when_received() {
 
 #[test]
 fn check_mints_new_tokens_when_received() {
-    let vt = vending_minter_with_two_sg721_collections(1);
+    let allowed_burn_collections = vec![Addr::unchecked("contract2")];
+    let vt = vending_minter_with_two_sg721_collections_burn_mint(1, allowed_burn_collections);
     let (mut router, creator) = (vt.router, vt.accts.creator);
     let minter_addr_1 = vt.collection_response_vec[0].minter.clone().unwrap();
     let collection_addr_1 = vt.collection_response_vec[0].collection.clone().unwrap();
@@ -105,6 +108,7 @@ fn check_mints_new_tokens_when_received() {
         &send_nft,
         &[coin(mint_price, NATIVE_DENOM)],
     );
+    println!("res is {:?}", res);
     assert!(res.is_ok());
     let num_tokens_res: cw721::NumTokensResponse = router
         .wrap()

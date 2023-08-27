@@ -63,7 +63,7 @@ mod tests {
         let sg721_id = app.store_code(contract_sg721_base());
 
         let collection_params = mock_collection_params();
-        let mut m = mock_create_minter(None, collection_params, None);
+        let mut m = mock_create_minter(None, collection_params, None, None);
         m.collection_params.code_id = sg721_id;
         let msg = ExecuteMsg::CreateMinter(m);
 
@@ -817,7 +817,7 @@ mod tests {
             let sg721_id = app.store_code(contract_sg721_updatable());
 
             let collection_params = mock_collection_params();
-            let mut m = mock_create_minter(None, collection_params, None);
+            let mut m = mock_create_minter(None, collection_params, None, None);
             m.collection_params.code_id = sg721_id;
             let msg = ExecuteMsg::CreateMinter(m);
 

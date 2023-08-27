@@ -1,4 +1,4 @@
-use cosmwasm_std::{coin, Timestamp};
+use cosmwasm_std::{coin, Addr, Timestamp};
 use sg2::msg::CollectionParams;
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use vending_factory::{
@@ -30,11 +30,12 @@ pub fn mock_create_minter(
     splits_addr: Option<String>,
     collection_params: CollectionParams,
     start_time: Option<Timestamp>,
+    allowed_burn_collections: Option<Vec<Addr>>,
 ) -> VendingMinterCreateMsg {
     VendingMinterCreateMsg {
         init_msg: mock_init_extension(splits_addr, start_time),
         collection_params,
-        allowed_burn_collections: None,
+        allowed_burn_collections,
     }
 }
 
