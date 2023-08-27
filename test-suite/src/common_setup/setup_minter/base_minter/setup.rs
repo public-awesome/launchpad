@@ -26,13 +26,13 @@ use crate::common_setup::setup_minter::common::constants::CREATION_FEE;
 
 pub fn base_minter_sg721_nt_code_ids(router: &mut StargazeApp) -> CodeIds {
     let minter_code_id = router.store_code(contract_base_minter());
-    println!("base_minter_code_id: {}", minter_code_id);
+    println!("base_minter_code_id: {minter_code_id}");
 
     let factory_code_id = router.store_code(contract_base_factory());
-    println!("base_factory_code_id: {}", factory_code_id);
+    println!("base_factory_code_id: {factory_code_id}");
 
     let sg721_code_id = router.store_code(contract_nt_collection());
-    println!("sg721nt_code_id: {}", sg721_code_id);
+    println!("sg721nt_code_id: {sg721_code_id}");
     CodeIds {
         minter_code_id,
         factory_code_id,
@@ -42,13 +42,13 @@ pub fn base_minter_sg721_nt_code_ids(router: &mut StargazeApp) -> CodeIds {
 
 pub fn base_minter_sg721_collection_code_ids(router: &mut StargazeApp) -> CodeIds {
     let minter_code_id = router.store_code(contract_base_minter());
-    println!("base_minter_code_id: {}", minter_code_id);
+    println!("base_minter_code_id: {minter_code_id}");
 
     let factory_code_id = router.store_code(contract_base_factory());
-    println!("base_factory_code_id: {}", factory_code_id);
+    println!("base_factory_code_id: {factory_code_id}");
 
     let sg721_code_id = router.store_code(contract_sg721_base());
-    println!("sg721_code_id: {}", sg721_code_id);
+    println!("sg721_code_id: {sg721_code_id}");
     CodeIds {
         minter_code_id,
         factory_code_id,

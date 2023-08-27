@@ -59,7 +59,7 @@ fn frozen_factory_cannot_create_new_minters() {
                 amount: coins(CREATION_FEE - 2_000_000_000, NATIVE_DENOM),
             }
         }))
-        .map_err(|err| println!("{:?}", err))
+        .map_err(|err| println!("{err:?}"))
         .ok();
 
     // creating new minter throws error

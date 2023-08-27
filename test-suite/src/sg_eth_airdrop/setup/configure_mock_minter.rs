@@ -19,11 +19,11 @@ use crate::sg_eth_airdrop::setup::mock_whitelist_contract::mock_whitelist;
 fn configure_mock_minter(app: &mut StargazeApp, creator: Addr) {
     let minter_code_id = app.store_code(mock_minter());
 
-    println!("minter_code_id: {}", minter_code_id);
+    println!("minter_code_id: {minter_code_id}");
     let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
 
     let factory_code_id = app.store_code(contract_vending_factory());
-    println!("factory_code_id: {}", factory_code_id);
+    println!("factory_code_id: {factory_code_id}");
 
     let mut params = mock_params(None);
     params.code_id = minter_code_id;

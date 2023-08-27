@@ -9,12 +9,12 @@ use cw721::Cw721ReceiveMsg;
 use cw_utils::{may_pay, maybe_addr, nonpayable, parse_reply_instantiate_data};
 use semver::Version;
 use sg_std::math::U64Ext;
-use sg_std::StargazeMsgWrapper;
+use sg_std::{StargazeMsgWrapper, NATIVE_DENOM};
 use url::Url;
 
 use open_edition_factory::msg::{OpenEditionMinterCreateMsg, ParamsResponse};
 use open_edition_factory::types::NftMetadataType;
-use sg1::checked_fair_burn;
+use sg1::{checked_fair_burn, ibc_denom_fair_burn};
 use sg2::query::Sg2QueryMsg;
 use sg2::{MinterParams, Token};
 use sg4::{Status, StatusResponse, SudoMsg};
@@ -290,16 +290,30 @@ fn pay_fairburn(
 ) -> Result<(Response, Uint128), ContractError> {
     let mut res = Response::new();
     let network_fee = mint_price_with_discounts.amount * mint_fee;
-    // This is for the network fee msg
-    checked_fair_burn(
-        &info,
-        network_fee.u128(),
-        Some(
-            deps.api
-                .addr_validate(&factory_params.extension.dev_fee_address)?,
-        ),
-        &mut res,
-    )?;
+    if mint_price_with_discounts.denom != NATIVE_DENOM {
+        // only send non-zero amounts
+        // send portion to dev addr
+        if !network_fee.is_zero() {
+            ibc_denom_fair_burn(
+                coin(network_fee.u128(), mint_price_with_discounts.denom),
+                Some(
+                    deps.api
+                        .addr_validate(&factory_params.extension.dev_fee_address)?,
+                ),
+                &mut res,
+            )?;
+        }
+    } else if !network_fee.is_zero() {
+        checked_fair_burn(
+            &info,
+            network_fee.u128(),
+            Some(
+                deps.api
+                    .addr_validate(&factory_params.extension.dev_fee_address)?,
+            ),
+            &mut res,
+        )?;
+    }
     Ok((res, network_fee))
 }
 

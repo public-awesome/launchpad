@@ -60,7 +60,6 @@ pub fn execute_enable_updatable(
         return Err(ContractError::AlreadyEnableUpdatable {});
     }
 
-    // TODO add check if sender is contract admin
     // Check if sender is creator
     let collection_info: CollectionInfoResponse =
         Sg721UpdatableContract::default().query_collection_info(deps.as_ref())?;
@@ -265,7 +264,7 @@ mod tests {
                 Ok(v) => v,
                 Err(e) => {
                     return SystemResult::Err(SystemError::InvalidRequest {
-                        error: format!("Parsing query request: {}", e),
+                        error: format!("Parsing query request: {e}"),
                         request: bin_request.into(),
                     })
                 }

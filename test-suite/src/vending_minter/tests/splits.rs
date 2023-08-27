@@ -32,7 +32,7 @@ pub fn member<T: Into<String>>(addr: T, weight: u64) -> Member {
 #[track_caller]
 fn instantiate_splits(app: &mut StargazeApp, group_addr: Addr) -> Addr {
     let splits_id = app.store_code(contract_splits());
-    println!("splits_id: {}", splits_id);
+    println!("splits_id: {splits_id}");
     let msg = sg_splits::msg::InstantiateMsg {
         group: Group::Cw4Address(group_addr.to_string()),
         admin: None,

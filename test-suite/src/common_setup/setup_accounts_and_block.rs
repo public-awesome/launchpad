@@ -15,7 +15,7 @@ pub const INITIAL_BALANCE: u128 = 2_000_000_000;
 // uploads code and returns address of group contract
 pub fn instantiate_group(app: &mut StargazeApp, members: Vec<Member>) -> Addr {
     let group_id = app.store_code(contract_group());
-    println!("group_id: {}", group_id);
+    println!("group_id: {group_id}");
     let msg = cw4_group::msg::InstantiateMsg {
         admin: Some(OWNER.into()),
         members,
@@ -42,7 +42,7 @@ pub fn setup_accounts(router: &mut StargazeApp) -> (Addr, Addr) {
                 amount: creator_funds.clone(),
             }
         }))
-        .map_err(|err| println!("{:?}", err))
+        .map_err(|err| println!("{err:?}"))
         .ok();
 
     router
@@ -52,7 +52,7 @@ pub fn setup_accounts(router: &mut StargazeApp) -> (Addr, Addr) {
                 amount: buyer_funds.clone(),
             }
         }))
-        .map_err(|err| println!("{:?}", err))
+        .map_err(|err| println!("{err:?}"))
         .ok();
 
     router
@@ -62,7 +62,7 @@ pub fn setup_accounts(router: &mut StargazeApp) -> (Addr, Addr) {
                 amount: dev_funds,
             }
         }))
-        .map_err(|err| println!("{:?}", err))
+        .map_err(|err| println!("{err:?}"))
         .ok();
 
     // Check native balances

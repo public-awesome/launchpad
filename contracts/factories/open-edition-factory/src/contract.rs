@@ -1,6 +1,8 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult, WasmMsg};
+use cosmwasm_std::{
+    ensure, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult, WasmMsg,
+};
 use cw2::set_contract_version;
 use sg_std::{Response, NATIVE_DENOM};
 
@@ -31,8 +33,19 @@ pub fn instantiate(
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+    let params = msg.params;
 
-    SUDO_PARAMS.save(deps.storage, &msg.params)?;
+    ensure!(
+        params.extension.airdrop_mint_price.denom == params.clone().min_mint_price.denom()?,
+        BaseContractError::InvalidDenom {}
+    );
+
+    ensure!(
+        params.creation_fee.denom == NATIVE_DENOM,
+        BaseContractError::InvalidDenom {}
+    );
+
+    SUDO_PARAMS.save(deps.storage, &params)?;
 
     Ok(Response::new())
 }
@@ -73,6 +86,7 @@ pub fn execute_create_minter(
         &params,
     )?;
 
+    // <<<<<<< HEAD
     if NATIVE_DENOM != msg.init_msg.mint_price.denom {
         return Err(ContractError::BaseError(BaseContractError::InvalidDenom {}));
     }
@@ -83,6 +97,20 @@ pub fn execute_create_minter(
             got: msg.init_msg.mint_price.amount.into(),
         });
     }
+    // =======
+    //     ensure!(
+    //         params.min_mint_price.denom == msg.init_msg.mint_price.denom,
+    //         BaseContractError::InvalidDenom {}
+    //     );
+
+    //     ensure!(
+    //         params.min_mint_price.amount <= msg.init_msg.mint_price.amount,
+    //         ContractError::InsufficientMintPrice {
+    //             expected: params.min_mint_price.amount.u128(),
+    // >>>>>>> main
+    //             got: msg.init_msg.mint_price.amount.into(),
+    //         }
+    // );
 
     let wasm_msg = WasmMsg::Instantiate {
         admin: Some(info.sender.to_string()),

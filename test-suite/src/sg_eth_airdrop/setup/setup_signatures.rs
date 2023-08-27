@@ -23,7 +23,7 @@ pub fn get_wallet_and_sig(
         .unwrap()
         .to_string();
     let eth_address = wallet.address();
-    let eth_addr_str = format!("{:?}", eth_address);
+    let eth_addr_str = format!("{eth_address:?}");
     (wallet, eth_sig_str, eth_address, eth_addr_str)
 }
 

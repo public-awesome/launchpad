@@ -121,7 +121,7 @@ mod tests {
                 Ok(v) => v,
                 Err(e) => {
                     return SystemResult::Err(SystemError::InvalidRequest {
-                        error: format!("Parsing query request: {}", e),
+                        error: format!("Parsing query request: {e}"),
                         request: bin_request.into(),
                     })
                 }

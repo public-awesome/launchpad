@@ -1,6 +1,8 @@
-use cosmwasm_std::{coins, Addr, BankMsg, Decimal, Event, MessageInfo, Uint128};
+use cosmwasm_std::{coin, coins, Addr, BankMsg, Coin, Decimal, Event, MessageInfo, Uint128};
 use cw_utils::{may_pay, PaymentError};
-use sg_std::{create_fund_fairburn_pool_msg, Response, SubMsg, NATIVE_DENOM};
+use sg_std::{
+    create_fund_community_pool_msg, create_fund_fairburn_pool_msg, Response, SubMsg, NATIVE_DENOM,
+};
 use thiserror::Error;
 
 // governance parameters
@@ -23,6 +25,49 @@ pub fn checked_fair_burn(
         fair_burn(fee, developer, res);
     }
 
+    Ok(())
+}
+
+/// IBC assets go to community pool and dev
+/// 7/29/23 temporary fix until we switch to using fairburn contract
+pub fn ibc_denom_fair_burn(
+    fee: Coin,
+    developer: Option<Addr>,
+    res: &mut Response,
+) -> Result<(), FeeError> {
+    let mut event = Event::new("ibc-fair-burn");
+
+    match &developer {
+        Some(developer) => {
+            // Calculate the fees. 50% to dev, 50% to community pool
+            let dev_fee = (fee.amount.mul_ceil(Decimal::percent(FEE_BURN_PERCENT))).u128();
+            let dev_coin = coins(dev_fee, fee.denom.to_string());
+            let comm_fee = coin(fee.amount.u128() - dev_fee, fee.denom.to_string());
+
+            event = event.add_attribute("dev_addr", developer.to_string());
+            event = event.add_attribute("dev_denom", fee.denom.to_string());
+            event = event.add_attribute("dev_amount", fee.amount.u128().to_string());
+            event = event.add_attribute("com_pool_denom", comm_fee.denom.to_string());
+            event = event.add_attribute("com_pool_amount", comm_fee.amount.u128().to_string());
+
+            res.messages.push(SubMsg::new(BankMsg::Send {
+                to_address: developer.to_string(),
+                amount: dev_coin,
+            }));
+            res.messages
+                .push(SubMsg::new(create_fund_community_pool_msg(vec![comm_fee])));
+        }
+        None => {
+            // No dev, send all to community pool.
+            event = event.add_attribute("com_pool_denom", fee.denom.to_string());
+            event = event.add_attribute("com_pool_amount", fee.amount.u128().to_string());
+
+            res.messages
+                .push(SubMsg::new(create_fund_community_pool_msg(vec![fee])));
+        }
+    }
+
+    res.events.push(event);
     Ok(())
 }
 

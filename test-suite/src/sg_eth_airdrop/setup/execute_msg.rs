@@ -28,7 +28,7 @@ pub fn instantiate_contract(params: InstantiateParams) -> Result<cosmwasm_std::A
                 amount: coins(params.funds_amount, NATIVE_DENOM),
             }
         }))
-        .map_err(|err| println!("{:?}", err))
+        .map_err(|err| println!("{err:?}"))
         .ok();
 
     let sg_eth_id = params.app.store_code(contract_eth_airdrop());

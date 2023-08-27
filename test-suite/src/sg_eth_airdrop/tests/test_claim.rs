@@ -221,7 +221,7 @@ fn test_invalid_eth_sig_claim() {
         stargaze_wallet_01,
         airdrop_contract,
     );
-    assert_eq!(res, format!("Address {} is not eligible", eth_addr_str));
+    assert_eq!(res, format!("Address {eth_addr_str} is not eligible"));
 }
 
 #[test]
@@ -276,10 +276,7 @@ fn test_can_not_claim_twice() {
         stargaze_wallet_01,
         airdrop_contract,
     );
-    let expected_error = format!(
-        "Address {} has already claimed all available mints",
-        eth_addr_str
-    );
+    let expected_error = format!("Address {eth_addr_str} has already claimed all available mints");
     assert_eq!(res, expected_error);
 }
 
@@ -390,10 +387,7 @@ fn test_claim_twice_receive_funds_once() {
         stargaze_wallet_01.clone(),
         airdrop_contract,
     );
-    let expected_error = format!(
-        "Address {} has already claimed all available mints",
-        eth_addr_str
-    );
+    let expected_error = format!("Address {eth_addr_str} has already claimed all available mints");
     assert_eq!(res, expected_error);
     let balances = app.wrap().query_all_balances(stargaze_wallet_01).unwrap();
     let expected_balance = [Coin {
@@ -445,7 +439,7 @@ fn test_ineligible_does_not_receive_funds() {
         stargaze_wallet_02.clone(),
         airdrop_contract,
     );
-    let expected_error = format!("Address {} is not eligible", eth_addr_str_2);
+    let expected_error = format!("Address {eth_addr_str_2} is not eligible");
     assert_eq!(res, expected_error);
     let balances = app.wrap().query_all_balances(stargaze_wallet_02).unwrap();
     let expected_balance = [];
@@ -463,7 +457,7 @@ fn test_one_eth_claim_two_stargaze_addresses_invalid() {
         .unwrap()
         .to_string();
     let eth_address = wallet_1.address();
-    let eth_addr_str_1 = format!("{:?}", eth_address);
+    let eth_addr_str_1 = format!("{eth_address:?}");
 
     let mut app = custom_mock_app();
     configure_mock_minter_with_mock_whitelist(&mut app);
@@ -517,10 +511,8 @@ fn test_one_eth_claim_two_stargaze_addresses_invalid() {
         eth_address: eth_addr_str_1.clone(),
         eth_sig: eth_sig_str_2,
     };
-    let expected_error = format!(
-        "Address {} has already claimed all available mints",
-        eth_addr_str_1
-    );
+    let expected_error =
+        format!("Address {eth_addr_str_1} has already claimed all available mints");
     let res_2 = execute_contract_error_with_msg(
         claim_message,
         &mut app,

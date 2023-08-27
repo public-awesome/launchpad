@@ -114,9 +114,14 @@ pub fn create_minter_msg(
 
 // gen_users will create `num_users` random SigningKeys
 // and then transfer `init_balance` of funds to each of them.
-pub fn gen_users(chain: &mut Chain, num_users: u32, init_balance: u128) -> Vec<SigningKey> {
+pub fn gen_users(
+    chain: &mut Chain,
+    num_users: u32,
+    init_balance: u128,
+    denom: Option<&String>,
+) -> Vec<SigningKey> {
     let prefix = &chain.cfg.orc_cfg.chain_cfg.prefix;
-    let denom = &chain.cfg.orc_cfg.chain_cfg.denom;
+    let base_denom = &chain.cfg.orc_cfg.chain_cfg.denom;
     let from_user = &chain.cfg.users[1];
 
     let mut users = vec![];
@@ -126,13 +131,21 @@ pub fn gen_users(chain: &mut Chain, num_users: u32, init_balance: u128) -> Vec<S
 
     let mut reqs = vec![];
     for user in &users {
+        let mut amounts = vec![OrcCoin {
+            amount: init_balance,
+            denom: base_denom.parse().unwrap(),
+        }];
+        // add extra denom if specified
+        if let Some(denom) = denom {
+            amounts.push(OrcCoin {
+                amount: init_balance,
+                denom: denom.parse().unwrap(),
+            });
+        }
         reqs.push(SendRequest {
             from: from_user.account.address.parse().unwrap(),
             to: user.to_addr(prefix).unwrap(),
-            amounts: vec![OrcCoin {
-                amount: init_balance,
-                denom: denom.parse().unwrap(),
-            }],
+            amounts,
         });
     }
 
