@@ -696,7 +696,7 @@ pub fn burn_and_mint(
 ) -> Result<Response, ContractError> {
     let res = burn_to_mint::generate_burn_msg(info.clone(), msg)?;
     let mint_res = execute_mint_sender(deps, env, info)?;
-    Ok(mint_res.add_submessages(res.messages))
+    Ok(res.add_submessages(mint_res.messages))
 }
 
 // if admin_no_fee => no fee,

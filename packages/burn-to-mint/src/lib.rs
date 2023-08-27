@@ -34,6 +34,7 @@ pub fn generate_burn_mint_response<T: Serialize>(
 }
 
 pub fn generate_burn_msg(info: MessageInfo, msg: Cw721ReceiveMsg) -> Result<Response, StdError> {
+    let res = Response::new();
     let burn_msg = cw721::Cw721ExecuteMsg::Burn {
         token_id: msg.token_id,
     };
@@ -42,9 +43,7 @@ pub fn generate_burn_msg(info: MessageInfo, msg: Cw721ReceiveMsg) -> Result<Resp
         msg: to_binary(&burn_msg)?,
         funds: vec![],
     });
-    let mut res = Response::new();
-    res = res.add_message(cosmos_burn_msg);
-    Ok(res)
+    Ok(res.add_message(cosmos_burn_msg))
 }
 
 pub fn check_sender_creator_or_allowed_burn_collection(

@@ -119,7 +119,6 @@ pub fn execute(
         ExecuteMsg::ReceiveNft(msg) => burn_and_mint(deps, info, msg),
     }
 }
-
 pub fn burn_and_mint(
     deps: DepsMut,
     info: MessageInfo,
@@ -128,7 +127,7 @@ pub fn burn_and_mint(
     let res = burn_to_mint::generate_burn_msg(info.clone(), msg.clone())?;
     let token_uri_msg: TokenUriMsg = from_binary(&msg.msg)?;
     let mint_res = execute_mint_sender(deps, info, token_uri_msg.token_uri)?;
-    Ok(mint_res.add_submessages(res.messages))
+    Ok(res.add_submessages(mint_res.messages))
 }
 
 fn pay_mint(
