@@ -33,16 +33,23 @@ pub fn generate_burn_mint_response<T: Serialize>(
     Ok(res)
 }
 
-pub fn generate_burn_msg(info: MessageInfo, msg: Cw721ReceiveMsg) -> Result<Response, StdError> {
+pub fn generate_burn_msg(
+    info: MessageInfo,
+    msg: Cw721ReceiveMsg,
+    contract_addr: Addr,
+) -> Result<Response, StdError> {
     let res = Response::new();
     let burn_msg = cw721::Cw721ExecuteMsg::Burn {
-        token_id: msg.token_id,
+        token_id: msg.token_id.clone(),
     };
     let cosmos_burn_msg = CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: info.sender.to_string(),
         msg: to_binary(&burn_msg)?,
         funds: vec![],
     });
+    let res = res.add_attribute("sender", info.sender);
+    let res = res.add_attribute("token_id", msg.token_id);
+    let res = res.add_attribute("contract_address", contract_addr);
     Ok(res.add_message(cosmos_burn_msg))
 }
 

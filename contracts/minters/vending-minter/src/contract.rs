@@ -256,7 +256,7 @@ pub fn burn_and_mint(
     info: MessageInfo,
     msg: Cw721ReceiveMsg,
 ) -> Result<Response, ContractError> {
-    let res = burn_to_mint::generate_burn_msg(info.clone(), msg)?;
+    let res = burn_to_mint::generate_burn_msg(info.clone(), msg, env.contract.address.clone())?;
     let mint_res = execute_mint_sender(deps, env, info)?;
     Ok(res.add_submessages(mint_res.messages))
 }

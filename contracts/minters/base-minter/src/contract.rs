@@ -116,15 +116,16 @@ pub fn execute(
         ExecuteMsg::UpdateStartTradingTime(time) => {
             execute_update_start_trading_time(deps, env, info, time)
         }
-        ExecuteMsg::ReceiveNft(msg) => burn_and_mint(deps, info, msg),
+        ExecuteMsg::ReceiveNft(msg) => burn_and_mint(deps, env, info, msg),
     }
 }
 pub fn burn_and_mint(
     deps: DepsMut,
+    env: Env,
     info: MessageInfo,
     msg: Cw721ReceiveMsg,
 ) -> Result<Response, ContractError> {
-    let res = burn_to_mint::generate_burn_msg(info.clone(), msg.clone())?;
+    let res = burn_to_mint::generate_burn_msg(info.clone(), msg.clone(), env.contract.address)?;
     let token_uri_msg: TokenUriMsg = from_binary(&msg.msg)?;
     let mint_res = execute_mint_sender(deps, info, token_uri_msg.token_uri)?;
     Ok(res.add_submessages(mint_res.messages))
