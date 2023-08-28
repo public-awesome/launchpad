@@ -96,7 +96,7 @@ fn check_mint_revenues_distribution() {
     );
     assert_eq!(
         res.err().unwrap().source().unwrap().to_string(),
-        "IncorrectPaymentAmount 100ustars != 100000000ustars"
+        "Generic error: IncorrectPaymentAmount 100ustars != 100000000ustars"
     );
 
     // Invalid price
@@ -109,7 +109,7 @@ fn check_mint_revenues_distribution() {
     );
     assert_eq!(
         res.err().unwrap().source().unwrap().to_string(),
-        "IncorrectPaymentAmount 200000000ustars != 100000000ustars"
+        "Generic error: IncorrectPaymentAmount 200000000ustars != 100000000ustars"
     );
 
     // Invalid price
@@ -117,7 +117,7 @@ fn check_mint_revenues_distribution() {
     let res = router.execute_contract(buyer.clone(), minter_addr.clone(), &mint_msg, &[]);
     assert_eq!(
         res.err().unwrap().source().unwrap().to_string(),
-        "IncorrectPaymentAmount 0ustars != 100000000ustars"
+        "Generic error: IncorrectPaymentAmount 0ustars != 100000000ustars"
     );
 
     // Invalid denom
@@ -139,7 +139,7 @@ fn check_mint_revenues_distribution() {
     );
     assert_eq!(
         res.err().unwrap().source().unwrap().to_string(),
-        "Received unsupported denom 'invalid'"
+        "Generic error: Received unsupported denom 'invalid'"
     );
 
     for _i in 1..=2 {

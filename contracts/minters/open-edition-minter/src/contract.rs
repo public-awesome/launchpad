@@ -1,12 +1,12 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coin, to_binary, Addr, BankMsg, Binary, Coin, Decimal, Deps, DepsMut, Empty, Env, MessageInfo,
-    Order, Reply, ReplyOn, StdError, StdResult, Timestamp, Uint128, WasmMsg,
+    coin, to_binary, Addr, Binary, Coin, Decimal, Deps, DepsMut, Empty, Env, MessageInfo, Order,
+    Reply, ReplyOn, StdError, StdResult, Timestamp, Uint128, WasmMsg,
 };
 use cw2::set_contract_version;
 use cw721::Cw721ReceiveMsg;
-use cw_utils::{may_pay, maybe_addr, nonpayable, parse_reply_instantiate_data};
+use cw_utils::{maybe_addr, nonpayable, parse_reply_instantiate_data};
 use semver::Version;
 use sg_std::math::U64Ext;
 use sg_std::{StargazeMsgWrapper, NATIVE_DENOM};
@@ -266,21 +266,6 @@ pub fn execute_mint_to(
     _execute_mint(deps, info, action, true, Some(recipient))
 }
 
-fn pay_mint(
-    info: MessageInfo,
-    mint_price_with_discounts: Coin,
-    config_denom: String,
-) -> Result<Uint128, ContractError> {
-    let payment = may_pay(&info, &config_denom)?;
-    if payment != mint_price_with_discounts.amount {
-        return Err(ContractError::IncorrectPaymentAmount(
-            coin(payment.u128(), &config_denom),
-            mint_price_with_discounts,
-        ));
-    }
-    Ok(payment)
-}
-
 fn pay_fairburn(
     deps: &DepsMut,
     info: MessageInfo,
@@ -317,32 +302,6 @@ fn pay_fairburn(
     Ok((res, network_fee))
 }
 
-fn compute_seller_amount(
-    res: Response,
-    mint_price_with_discounts: Coin,
-    network_fee: Uint128,
-    config_extension: crate::state::ConfigExtension,
-) -> Result<(Response, Uint128), ContractError> {
-    let mut res = res;
-
-    let seller_amount = {
-        // the net amount is mint price - network fee (mint free + dev fee)
-        let amount = mint_price_with_discounts.amount.checked_sub(network_fee)?;
-        let payment_address = config_extension.payment_address;
-        let seller = config_extension.admin;
-        // Sending 0 coins fails, so only send if amount is non-zero
-        if !amount.is_zero() {
-            let msg = BankMsg::Send {
-                to_address: payment_address.unwrap_or(seller).to_string(),
-                amount: vec![coin(amount.u128(), mint_price_with_discounts.denom)],
-            };
-            res = res.add_message(msg);
-        }
-        amount
-    };
-    Ok((res, seller_amount))
-}
-
 // Generalize checks and mint message creation
 // mint -> _execute_mint(recipient: None, token_id: None)
 // mint_to(recipient: "friend") -> _execute_mint(Some(recipient), token_id: None)
@@ -374,7 +333,7 @@ fn _execute_mint(
         info.clone(),
         config.allowed_burn_collections.clone(),
     ) {
-        pay_mint(
+        sg_controllers::pay_mint(
             info.clone(),
             mint_price_with_discounts.clone(),
             config_denom,
@@ -448,11 +407,12 @@ fn _execute_mint(
         config.allowed_burn_collections,
     ) {
         true => (res, Uint128::new(0)),
-        false => compute_seller_amount(
+        false => sg_controllers::compute_seller_amount(
             res,
             mint_price_with_discounts.clone(),
             network_fee,
-            config.extension,
+            config.extension.payment_address,
+            config.extension.admin,
         )?,
     };
 

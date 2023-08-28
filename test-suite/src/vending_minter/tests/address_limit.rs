@@ -432,11 +432,11 @@ fn mint_for_token_id_addr() {
         )
         .unwrap_err();
     assert_eq!(
-        ContractError::IncorrectPaymentAmount(
+        format!(
+            "Generic error: IncorrectPaymentAmount {} != {}",
             coin(ADMIN_MINT_PRICE + 1, NATIVE_DENOM.to_string()),
             coin(ADMIN_MINT_PRICE, NATIVE_DENOM.to_string())
-        )
-        .to_string(),
+        ),
         err.source().unwrap().to_string()
     );
 

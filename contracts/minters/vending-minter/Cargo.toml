@@ -53,3 +53,4 @@ url             = { workspace = true }
 vending-factory = { workspace = true, features = ["library"] }
 semver          = {workspace = true  }
 burn-to-mint    = { workspace = true }
+sg-controllers  = { workspace = true }
