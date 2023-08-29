@@ -64,7 +64,12 @@ pub fn setup_open_edition_minter_contract(
         "allowed burn collections test {:?}",
         allowed_burn_collections
     );
+    let custom_params = setup_params.custom_params;
+
     let mut params = mock_params_proper();
+    if custom_params.is_some() {
+        params = custom_params.unwrap();
+    }
     params.code_id = minter_code_id;
 
     let factory_addr = router.instantiate_contract(
@@ -105,8 +110,9 @@ pub fn setup_open_edition_minter_contract(
 
     let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
     let msg = Sg2ExecuteMsg::CreateMinter(msg);
-
+    println!("before the creaiton of minter");
     let res = router.execute_contract(minter_admin, factory_addr.clone(), &msg, &creation_fee);
+    println!("after creation of minter");
     build_collection_response(res, factory_addr)
 }
 
@@ -197,6 +203,7 @@ pub fn configure_open_edition_minter(
             allowed_burn_collections: minter_instantiate_params_vec[index]
                 .allowed_burn_collections
                 .clone(),
+            custom_params: minter_instantiate_params_vec[index].custom_params.clone(),
         };
         let minter_collection_res = setup_open_edition_minter_contract(setup_params);
         minter_collection_info.push(minter_collection_res);

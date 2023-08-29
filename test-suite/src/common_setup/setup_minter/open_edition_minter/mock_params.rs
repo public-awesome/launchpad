@@ -5,8 +5,10 @@ use open_edition_factory::{
     state::{OpenEditionMinterParams, ParamsExtension},
 };
 use sg2::msg::CollectionParams;
+use sg2::Token;
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
+use crate::common_setup::msg::OpenEditionMinterCustomParams;
 use crate::common_setup::setup_minter::common::constants::{
     CREATION_FEE, DEV_ADDRESS, MINT_FEE_FAIR_BURN, MIN_MINT_PRICE_OPEN_EDITION,
 };
@@ -81,6 +83,57 @@ pub fn mock_params_proper() -> OpenEditionMinterParams {
                 denom: NATIVE_DENOM.to_string(),
                 amount: Uint128::new(100_000_000u128),
             },
+            dev_fee_address: DEV_ADDRESS.to_string(),
+        },
+    }
+}
+// Pass custom params to change minter values
+pub fn mock_params_custom(custom_params: OpenEditionMinterCustomParams) -> OpenEditionMinterParams {
+    let denom = custom_params.denom.unwrap_or(NATIVE_DENOM);
+    let mint_fee_bps = custom_params.mint_fee_bps.unwrap_or(MINT_FEE_FAIR_BURN);
+    let airdrop_mint_price_amount = custom_params
+        .airdrop_mint_price_amount
+        .unwrap_or(Uint128::new(MIN_MINT_PRICE_OPEN_EDITION));
+    OpenEditionMinterParams {
+        code_id: 1,
+        allowed_sg721_code_ids: vec![1, 3, 5, 6],
+        frozen: false,
+        creation_fee: coin(CREATION_FEE, NATIVE_DENOM),
+        min_mint_price: sg2::Fungible(coin(MIN_MINT_PRICE_OPEN_EDITION, denom)),
+        mint_fee_bps,
+        max_trading_offset_secs: 60 * 60 * 24 * 7,
+        extension: ParamsExtension {
+            max_per_address_limit: 10,
+            airdrop_mint_fee_bps: 100,
+            airdrop_mint_price: Coin {
+                denom: denom.to_string(),
+                amount: airdrop_mint_price_amount,
+            },
+            dev_fee_address: DEV_ADDRESS.to_string(),
+        },
+    }
+}
+
+pub fn mock_params_custom_min_mint_price(
+    min_mint_price: Token,
+    airdrop_mint_price: Coin,
+) -> OpenEditionMinterParams {
+    println!(
+        "mock_params_custom_min_mint_price received min mintn price: {:?}",
+        min_mint_price
+    );
+    OpenEditionMinterParams {
+        code_id: 1,
+        allowed_sg721_code_ids: vec![1, 3, 5, 6],
+        frozen: false,
+        creation_fee: coin(CREATION_FEE, NATIVE_DENOM),
+        min_mint_price,
+        mint_fee_bps: MINT_FEE_FAIR_BURN,
+        max_trading_offset_secs: 60 * 60 * 24 * 7,
+        extension: ParamsExtension {
+            max_per_address_limit: 10,
+            airdrop_mint_fee_bps: 100,
+            airdrop_mint_price,
             dev_fee_address: DEV_ADDRESS.to_string(),
         },
     }

@@ -34,17 +34,23 @@ pub fn instantiate(
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
     let params = msg.params;
-
+    println!("before airdrop price denom check");
+    println!(
+        "params.extension.airdrop_mint_price.denom {},params.clone().min_mint_price.denom() {:?}",
+        params.extension.airdrop_mint_price.denom,
+        params.clone().min_mint_price.denom()
+    );
     ensure!(
         params.extension.airdrop_mint_price.denom == params.clone().min_mint_price.denom()?,
         BaseContractError::InvalidDenom {}
     );
 
+    println!("before creation fee denom price check");
     ensure!(
         params.creation_fee.denom == NATIVE_DENOM,
         BaseContractError::InvalidDenom {}
     );
-
+    println!("aftger creation fee denom check");
     SUDO_PARAMS.save(deps.storage, &params)?;
 
     Ok(Response::new())
@@ -85,11 +91,17 @@ pub fn execute_create_minter(
         deps.as_ref(),
         &params,
     )?;
-
-    // <<<<<<< HEAD
-    if NATIVE_DENOM != msg.init_msg.mint_price.denom {
-        return Err(ContractError::BaseError(BaseContractError::InvalidDenom {}));
-    }
+    println!("before the invalid denom");
+    println!(
+        " params.min_mint_price.clone().denom(): {} msg.init_msg.mint_price.denom {}",
+        params.min_mint_price.clone().denom()?,
+        msg.init_msg.mint_price.denom
+    );
+    ensure!(
+        params.min_mint_price.clone().denom()? == msg.init_msg.mint_price.denom,
+        BaseContractError::InvalidDenom {}
+    );
+    println!("after the invalid dneom");
     let min_mint_price = params.min_mint_price.amount()?;
     if min_mint_price > msg.init_msg.mint_price.amount {
         return Err(ContractError::InsufficientMintPrice {

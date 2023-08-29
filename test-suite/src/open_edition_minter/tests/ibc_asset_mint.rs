@@ -1,79 +1,86 @@
-// use base_factory::ContractError as BaseContractError;
-// use cosmwasm_std::{coin, coins, Addr, Decimal, Uint128};
-// use cw_multi_test::{BankSudo, Executor, SudoMsg};
-// use open_edition_factory::types::{NftData, NftMetadataType};
-// use open_edition_minter::msg::ExecuteMsg;
-// use sg2::{msg::Sg2ExecuteMsg, tests::mock_collection_params};
-// use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
+use base_factory::ContractError as BaseContractError;
+use cosmwasm_std::{coin, coins, Addr, Coin, Decimal, Uint128};
+use cw_multi_test::{BankSudo, Executor, SudoMsg};
+use open_edition_factory::{
+    state::ParamsExtension,
+    types::{NftData, NftMetadataType},
+};
+use open_edition_minter::msg::ExecuteMsg;
+use sg2::{msg::Sg2ExecuteMsg, tests::mock_collection_params};
+use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
-// use crate::common_setup::{
-//     contract_boxes::{contract_sg721_base, custom_mock_app},
-//     setup_accounts_and_block::{setup_accounts, setup_block_time},
-//     setup_minter::{
-//         common::constants::{CREATION_FEE, MIN_MINT_PRICE_OPEN_EDITION},
-//         open_edition_minter::{
-//             mock_params::{
-//                 mock_create_minter_init_msg, mock_init_minter_extension, mock_params_custom,
-//             },
-//             setup::open_edition_minter_code_ids,
-//         },
-//     },
-//     templates::{open_edition_minter_custom_template, OpenEditionMinterCustomParams},
-// };
+use crate::common_setup::{
+    contract_boxes::{contract_sg721_base, custom_mock_app},
+    msg::OpenEditionMinterCustomParams,
+    setup_accounts_and_block::{setup_accounts, setup_block_time},
+    setup_minter::{
+        common::constants::{CREATION_FEE, DEV_ADDRESS, MIN_MINT_PRICE_OPEN_EDITION},
+        open_edition_minter::{
+            minter_params::{default_nft_data, init_msg},
+            mock_params::{
+                mock_create_minter_init_msg, mock_init_minter_extension, mock_params_custom,
+            },
+            setup::open_edition_minter_code_ids,
+        },
+    },
+    templates::{open_edition_minter_custom_template, open_edition_minter_ibc_template},
+};
 
-// #[test]
-// fn check_custom_create_minter_denom() {
-//     // allow ibc/frenz denom
-//     let denom = "ibc/frenz";
-//     let mint_price = coin(MIN_MINT_PRICE_OPEN_EDITION, denom.to_string());
-//     let custom_params = OpenEditionMinterCustomParams {
-//         denom: Some(denom),
-//         ..OpenEditionMinterCustomParams::default()
-//     };
-//     let vt = open_edition_minter_custom_template(
-//         None,
-//         None,
-//         None,
-//         Some(10),
-//         Some(2),
-//         Some(mint_price.clone()),
-//         custom_params,
-//         None,
-//         None,
-//     )
-//     .unwrap();
-//     let (mut router, creator, buyer) = (vt.router, vt.accts.creator, vt.accts.buyer);
-//     let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
+#[test]
+fn check_custom_create_minter_denom() {
+    // allow ibc/frenz denom
+    let denom = "ibc/frenz";
+    let mint_price = coin(MIN_MINT_PRICE_OPEN_EDITION, denom.to_string());
+    let params_extension = ParamsExtension {
+        max_per_address_limit: 10,
+        airdrop_mint_fee_bps: 100,
+        airdrop_mint_price: Coin {
+            denom: denom.to_string(),
+            amount: Uint128::new(100_000_000u128),
+        },
+        dev_fee_address: DEV_ADDRESS.to_string(),
+    };
+    let per_address_limit_minter = Some(2);
+    let init_msg = init_msg(
+        default_nft_data(),
+        per_address_limit_minter,
+        None,
+        None,
+        Some(mint_price.clone()),
+    );
 
-//     // give the buyer some of the IBC asset
-//     router
-//         .sudo(SudoMsg::Bank({
-//             BankSudo::Mint {
-//                 to_address: buyer.to_string(),
-//                 amount: vec![mint_price.clone()],
-//             }
-//         }))
-//         .map_err(|err| println!("{err:?}"))
-//         .ok();
+    let vt = open_edition_minter_ibc_template(params_extension, init_msg).unwrap();
 
-//     setup_block_time(&mut router, GENESIS_MINT_START_TIME + 100, None);
+    let (mut router, creator, buyer) = (vt.router, vt.accts.creator, vt.accts.buyer);
+    let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
+    // give the buyer some of the IBC asset
+    router
+        .sudo(SudoMsg::Bank({
+            BankSudo::Mint {
+                to_address: buyer.to_string(),
+                amount: vec![mint_price.clone()],
+            }
+        }))
+        .map_err(|err| println!("{err:?}"))
+        .ok();
 
-//     // Mint succeeds
-//     let mint_msg = ExecuteMsg::Mint {};
-//     let res = router.execute_contract(buyer.clone(), minter_addr, &mint_msg, &[mint_price.clone()]);
-//     assert!(res.is_ok());
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 100, None);
+    //     // Mint succeeds
+    let mint_msg = ExecuteMsg::Mint {};
+    let res = router.execute_contract(buyer.clone(), minter_addr, &mint_msg, &[mint_price.clone()]);
+    assert!(res.is_ok());
 
-//     // confirm balances
-//     // confirm buyer IBC assets spent
-//     let balance = router.wrap().query_balance(buyer, denom).unwrap();
-//     assert_eq!(balance.amount, Uint128::zero());
-//     // TODO only for noble, seller has 90% IBC asset
-//     let network_fee = mint_price.amount * Decimal::percent(10);
-//     let seller_amount = mint_price.amount.checked_sub(network_fee).unwrap();
-//     let balance = router.wrap().query_balance(creator, denom).unwrap();
-//     assert_eq!(balance.amount, seller_amount);
-//     // all mint goes to fairburn_pool confirmed in e2e test
-// }
+    // confirm balances
+    // confirm buyer IBC assets spent
+    let balance = router.wrap().query_balance(buyer, denom).unwrap();
+    assert_eq!(balance.amount, Uint128::zero());
+    // TODO only for noble, seller has 90% IBC asset
+    let network_fee = mint_price.amount * Decimal::percent(10);
+    let seller_amount = mint_price.amount.checked_sub(network_fee).unwrap();
+    let balance = router.wrap().query_balance(creator, denom).unwrap();
+    assert_eq!(balance.amount, seller_amount);
+    // all mint goes to fairburn_pool confirmed in e2e test
+}
 
 // #[test]
 // fn one_hundred_percent_burned_ibc_minter() {

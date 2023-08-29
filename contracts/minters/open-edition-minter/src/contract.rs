@@ -47,6 +47,10 @@ pub fn instantiate(
     info: MessageInfo,
     mut msg: OpenEditionMinterCreateMsg,
 ) -> Result<Response, ContractError> {
+    println!(
+        "in instantiate received mint price: {:?}",
+        msg.init_msg.mint_price
+    );
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
     let factory = info.sender.clone();
@@ -130,7 +134,7 @@ pub fn instantiate(
             end_time: msg.init_msg.end_time,
             nft_data: msg.init_msg.nft_data,
         },
-        mint_price: sg2::Fungible(msg.init_msg.mint_price),
+        mint_price: sg2::Fungible(msg.init_msg.mint_price.clone()),
         allowed_burn_collections: msg.allowed_burn_collections,
     };
 
