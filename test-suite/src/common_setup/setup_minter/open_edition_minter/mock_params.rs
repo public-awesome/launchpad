@@ -118,10 +118,6 @@ pub fn mock_params_custom_min_mint_price(
     min_mint_price: Token,
     airdrop_mint_price: Coin,
 ) -> OpenEditionMinterParams {
-    println!(
-        "mock_params_custom_min_mint_price received min mintn price: {:?}",
-        min_mint_price
-    );
     OpenEditionMinterParams {
         code_id: 1,
         allowed_sg721_code_ids: vec![1, 3, 5, 6],

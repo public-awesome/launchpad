@@ -60,16 +60,13 @@ pub fn setup_open_edition_minter_contract(
     let init_msg = setup_params.init_msg.clone();
     let nft_data = setup_params.init_msg.unwrap().nft_data;
     let allowed_burn_collections = setup_params.allowed_burn_collections;
-    println!(
-        "allowed burn collections test {:?}",
-        allowed_burn_collections
-    );
+
     let custom_params = setup_params.custom_params;
 
     let mut params = mock_params_proper();
-    if custom_params.is_some() {
-        params = custom_params.unwrap();
-    }
+    if let Some(custom_params) = custom_params {
+        params = custom_params;
+    };
     params.code_id = minter_code_id;
 
     let factory_addr = router.instantiate_contract(
@@ -82,8 +79,6 @@ pub fn setup_open_edition_minter_contract(
         "factory",
         None,
     );
-
-    let factory_addr = factory_addr.unwrap();
     let min_mint_price = params.min_mint_price.clone().amount().unwrap();
     let denom = params.min_mint_price.denom().unwrap();
     let mut msg = mock_create_minter(
@@ -110,10 +105,18 @@ pub fn setup_open_edition_minter_contract(
 
     let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
     let msg = Sg2ExecuteMsg::CreateMinter(msg);
-    println!("before the creaiton of minter");
-    let res = router.execute_contract(minter_admin, factory_addr.clone(), &msg, &creation_fee);
-    println!("after creation of minter");
-    build_collection_response(res, factory_addr)
+    match factory_addr {
+        Ok(addr) => {
+            let res = router.execute_contract(minter_admin, addr.clone(), &msg, &creation_fee);
+            build_collection_response(res, addr)
+        }
+        Err(e) => MinterCollectionResponse {
+            minter: None,
+            collection: None,
+            factory: None,
+            error: Some(e),
+        },
+    }
 }
 
 pub fn open_edition_minter_code_ids(router: &mut StargazeApp) -> CodeIds {

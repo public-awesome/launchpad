@@ -7,13 +7,12 @@ use crate::common_setup::{
     setup_minter::vending_minter::setup::{configure_minter, vending_minter_code_ids},
 };
 
-use super::msg::{Accounts, CodeIds, MinterTemplateResponseCodeIds, OpenEditionMinterCustomParams};
+use super::msg::{Accounts, CodeIds, MinterTemplateResponseCodeIds};
 use super::setup_minter::base_minter::setup::base_minter_sg721_collection_code_ids;
 use super::setup_minter::common::constants::{MINT_PRICE, MIN_MINT_PRICE};
 use super::setup_minter::common::minter_params::{
     minter_params_all, minter_params_allowed_burn_collections,
 };
-use super::setup_minter::open_edition_minter::mock_params::mock_params_custom_min_mint_price;
 use super::setup_minter::open_edition_minter::setup::configure_open_edition_minter;
 use crate::common_setup::setup_accounts_and_block::CREATION_FEE;
 use crate::common_setup::setup_minter::base_minter::setup::base_minter_sg721_nt_code_ids;
@@ -21,10 +20,10 @@ use crate::common_setup::setup_minter::base_minter::setup::configure_base_minter
 use crate::common_setup::setup_minter::open_edition_minter::minter_params::minter_params_open_edition;
 use crate::common_setup::setup_minter::open_edition_minter::setup::open_edition_minter_code_ids;
 use crate::common_setup::setup_minter::vending_minter::setup::vending_minter_updatable_code_ids;
-use cosmwasm_std::{coin, Addr, Coin, Timestamp};
+use cosmwasm_std::{coin, Addr, Timestamp};
 use cw_multi_test::{AppResponse, BankSudo, SudoMsg};
 use open_edition_factory::msg::OpenEditionMinterInitMsgExtension;
-use open_edition_factory::state::ParamsExtension;
+use open_edition_factory::state::{OpenEditionMinterParams, ParamsExtension};
 use open_edition_factory::types::NftData;
 use sg2::tests::{mock_collection_params_1, mock_collection_two};
 use sg_multi_test::StargazeApp;
@@ -623,15 +622,12 @@ pub fn open_edition_minter_with_two_sg721_collections_burn_mint(
 pub fn open_edition_minter_ibc_template(
     params_extension: ParamsExtension,
     init_msg: OpenEditionMinterInitMsgExtension,
+    custom_minter_params: OpenEditionMinterParams,
 ) -> Result<MinterTemplateResponseCodeIds<Accounts>, anyhow::Result<AppResponse>> {
     let mut app = custom_mock_app();
     let (creator, buyer) = setup_accounts(&mut app);
     let code_ids = open_edition_minter_code_ids(&mut app);
     let collection_params = mock_collection_params_1(None);
-    let custom_minter_params = mock_params_custom_min_mint_price(
-        sg2::Fungible(init_msg.clone().mint_price),
-        params_extension.airdrop_mint_price.clone(),
-    );
     let minter_params = minter_params_open_edition(
         params_extension,
         init_msg,
@@ -656,3 +652,38 @@ pub fn open_edition_minter_ibc_template(
         code_ids,
     })
 }
+
+// pub fn open_edition_minter_ibc_template_custom_code_ids(
+//     params_extension: ParamsExtension,
+//     init_msg: OpenEditionMinterInitMsgExtension,
+//     custom_minter_params: OpenEditionMinterParams,
+//     code_ids: CodeIds,
+// ) -> Result<MinterTemplateResponseCodeIds<Accounts>, anyhow::Result<AppResponse>> {
+//     let mut app = custom_mock_app();
+//     let (creator, buyer) = setup_accounts(&mut app);
+//     let collection_params = mock_collection_params_1(None);
+//     let code_ids = open_edition_minter_code_ids(&mut app);
+//     let minter_params = minter_params_open_edition(
+//         params_extension,
+//         init_msg,
+//         None,
+//         None,
+//         None,
+//         None,
+//         Some(custom_minter_params),
+//     );
+
+//     let minter_collection_response = configure_open_edition_minter(
+//         &mut app,
+//         creator.clone(),
+//         vec![collection_params],
+//         vec![minter_params],
+//         code_ids.clone(),
+//     );
+//     Ok(MinterTemplateResponseCodeIds {
+//         router: app,
+//         collection_response_vec: minter_collection_response,
+//         accts: Accounts { creator, buyer },
+//         code_ids,
+//     })
+// }

@@ -47,10 +47,6 @@ pub fn instantiate(
     info: MessageInfo,
     mut msg: OpenEditionMinterCreateMsg,
 ) -> Result<Response, ContractError> {
-    println!(
-        "in instantiate received mint price: {:?}",
-        msg.init_msg.mint_price
-    );
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
     let factory = info.sender.clone();
