@@ -382,7 +382,7 @@ fn _execute_mint(
         if !amount.is_zero() {
             let msg = BankMsg::Send {
                 to_address: payment_address.unwrap_or(seller).to_string(),
-                amount: vec![coin(amount.u128(), mint_price.denom)],
+                amount: vec![coin(amount.u128(), mint_price.clone().denom)],
             };
             res = res.add_message(msg);
         }
@@ -394,9 +394,15 @@ fn _execute_mint(
         .add_attribute("sender", info.sender)
         .add_attribute("recipient", recipient_addr)
         .add_attribute("token_id", token_id)
-        .add_attribute("network_fee", network_fee.to_string())
-        .add_attribute("mint_price", mint_price.amount)
-        .add_attribute("seller_amount", seller_amount))
+        .add_attribute(
+            "network_fee",
+            coin(network_fee.into(), mint_price.clone().denom).to_string(),
+        )
+        .add_attribute("mint_price", mint_price.to_string())
+        .add_attribute(
+            "seller_amount",
+            coin(seller_amount.into(), mint_price.denom).to_string(),
+        ))
 }
 
 pub fn execute_update_mint_price(
@@ -443,7 +449,7 @@ pub fn execute_update_mint_price(
     Ok(Response::new()
         .add_attribute("action", "update_mint_price")
         .add_attribute("sender", info.sender)
-        .add_attribute("mint_price", price.to_string()))
+        .add_attribute("mint_price", config.mint_price.to_string()))
 }
 
 pub fn execute_update_start_time(
