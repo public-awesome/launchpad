@@ -20,10 +20,15 @@ pub fn generate_burn_msg(
         msg: to_binary(&burn_msg)?,
         funds: vec![],
     });
-    let res = res.add_attribute("sender", info.sender);
-    let res = res.add_attribute("token_id", msg.token_id);
-    let res = res.add_attribute("contract_address", contract_addr);
-    Ok(res.add_message(cosmos_burn_msg))
+    // let res = res.add_attribute("sender", info.sender);
+    // let res = res.add_attribute("token_id", msg.token_id);
+    // let res = res.add_attribute("contract_address", contract_addr);
+    // Ok(res.add_message(cosmos_burn_msg))
+    Ok(res
+        .add_attribute("sender", info.sender)
+        .add_attribute("token_id", msg.token_id)
+        .add_attribute("contract_address", contract_addr)
+        .add_message(cosmos_burn_msg))
 }
 
 pub fn check_sender_creator_or_allowed_burn_collection(
