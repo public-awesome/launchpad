@@ -10,7 +10,7 @@ use crate::common_setup::{
     contract_boxes::{contract_sg721_base, custom_mock_app},
     setup_accounts_and_block::{setup_accounts, setup_block_time},
     setup_minter::{
-        common::constants::{CREATION_FEE, MIN_MINT_PRICE_OPEN_EDITION},
+        common::constants::{CREATION_FEE, FOUNDATION, MIN_MINT_PRICE_OPEN_EDITION},
         open_edition_minter::{
             mock_params::{
                 mock_create_minter_init_msg, mock_init_minter_extension, mock_params_custom,
@@ -133,7 +133,7 @@ fn one_hundred_percent_burned_ibc_minter() {
     // "community_pool" address from packages/sg-multi-test/src/multi.rs
     let balance = router
         .wrap()
-        .query_balance(Addr::unchecked("community_pool"), denom)
+        .query_balance(Addr::unchecked(FOUNDATION), denom)
         .unwrap();
     assert_eq!(balance.amount, mint_price.amount * Decimal::percent(50));
 }
