@@ -242,7 +242,7 @@ fn test_open_edition_exec_functions(chain: &mut Chain) {
     let res = chain.orc.execute(
         "minter",
         "minter_exec_mint_token_err",
-        &vending_minter::msg::ExecuteMsg::Mint {},
+        &vending_minter::msg::ExecuteMsg::Mint { proof_hashes: None },
         &users[0],
         vec![OrcCoin {
             amount: MINT_PRICE,
@@ -265,7 +265,7 @@ fn test_open_edition_exec_functions(chain: &mut Chain) {
     let res = chain.orc.execute(
         "minter",
         "minter_exec_mint_token_err",
-        &vending_minter::msg::ExecuteMsg::Mint {},
+        &vending_minter::msg::ExecuteMsg::Mint { proof_hashes: None },
         &chain.cfg.users[1].key,
         vec![OrcCoin {
             amount: MINT_PRICE,

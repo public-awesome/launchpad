@@ -151,7 +151,7 @@ fn test_create_minter(chain: &mut Chain) {
             total_mints += 1;
             reqs.push(ExecReq {
                 contract_name: "minter".to_string(),
-                msg: Box::new(vending_minter::msg::ExecuteMsg::Mint {}),
+                msg: Box::new(vending_minter::msg::ExecuteMsg::Mint { proof_hashes: None }),
                 funds: vec![OrcCoin {
                     amount: MINT_PRICE,
                     denom: denom.parse().unwrap(),
@@ -200,7 +200,7 @@ fn test_create_minter(chain: &mut Chain) {
     let res = chain.orc.execute(
         "minter",
         "minter_exec_mint_token_err",
-        &vending_minter::msg::ExecuteMsg::Mint {},
+        &vending_minter::msg::ExecuteMsg::Mint { proof_hashes: None },
         &chain.cfg.users[1].key,
         vec![OrcCoin {
             amount: MINT_PRICE,
@@ -301,7 +301,7 @@ fn test_start_trading_time(chain: &mut Chain) {
             total_mints += 1;
             reqs.push(ExecReq {
                 contract_name: "minter".to_string(),
-                msg: Box::new(vending_minter::msg::ExecuteMsg::Mint {}),
+                msg: Box::new(vending_minter::msg::ExecuteMsg::Mint { proof_hashes: None }),
                 funds: vec![OrcCoin {
                     amount: MINT_PRICE,
                     denom: denom.parse().unwrap(),
