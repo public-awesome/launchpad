@@ -29,6 +29,8 @@ mod tests {
     fn setup_contract(deps: DepsMut, merkle_root: Option<String>) {
         let msg = InstantiateMsg {
             merkle_root: merkle_root.unwrap_or(MERKLE_ROOT.to_string()),
+            merkle_tree_uri: None,
+            per_address_limit: 1,
             start_time: GENESIS_START_TIME,
             end_time: END_TIME,
             mint_price: coin(UNIT_AMOUNT, NATIVE_DENOM),
@@ -69,6 +71,8 @@ mod tests {
             // invalid merkle root (non hex)
             InstantiateMsg {
                 merkle_root: NON_HEX_MERKLE_ROOT.to_string(),
+                merkle_tree_uri: None,
+                per_address_limit: 1,
                 start_time: GENESIS_START_TIME,
                 end_time: END_TIME,
                 mint_price: coin(1, NATIVE_DENOM),
@@ -79,6 +83,8 @@ mod tests {
             // invalid merkle root (non 32 bytes)
             InstantiateMsg {
                 merkle_root: NON_32BYTES_MERKLE_ROOT.to_string(),
+                merkle_tree_uri: None,
+                per_address_limit: 1,
                 start_time: GENESIS_START_TIME,
                 end_time: END_TIME,
                 mint_price: coin(1, NATIVE_DENOM),
@@ -89,6 +95,8 @@ mod tests {
             // invalid mint price denom
             InstantiateMsg {
                 merkle_root: MERKLE_ROOT.to_string(),
+                merkle_tree_uri: None,
+                per_address_limit: 1,
                 start_time: GENESIS_START_TIME,
                 end_time: END_TIME,
                 mint_price: coin(UNIT_AMOUNT, "not_ustars"),
@@ -99,6 +107,8 @@ mod tests {
             // invalid admin address (MockApi only) (too short)
             InstantiateMsg {
                 merkle_root: MERKLE_ROOT.to_string(),
+                merkle_tree_uri: None,
+                per_address_limit: 1,
                 start_time: GENESIS_START_TIME,
                 end_time: END_TIME,
                 mint_price: coin(UNIT_AMOUNT, NATIVE_DENOM),
@@ -109,6 +119,8 @@ mod tests {
             // invalid start time (after end time)
             InstantiateMsg {
                 merkle_root: MERKLE_ROOT.to_string(),
+                merkle_tree_uri: None,
+                per_address_limit: 1,
                 start_time: END_TIME.plus_nanos(1u64),
                 end_time: END_TIME,
                 mint_price: coin(UNIT_AMOUNT, NATIVE_DENOM),
@@ -119,6 +131,8 @@ mod tests {
             // invalid start time (before genesis mint start time)
             InstantiateMsg {
                 merkle_root: MERKLE_ROOT.to_string(),
+                merkle_tree_uri: None,
+                per_address_limit: 1,
                 start_time: GENESIS_START_TIME.minus_nanos(1u64),
                 end_time: END_TIME,
                 mint_price: coin(UNIT_AMOUNT, NATIVE_DENOM),
@@ -129,6 +143,8 @@ mod tests {
             // invalid start time (before current block time)
             InstantiateMsg {
                 merkle_root: MERKLE_ROOT.to_string(),
+                merkle_tree_uri: None,
+                per_address_limit: 1,
                 start_time: env.block.time.minus_nanos(1u64),
                 end_time: END_TIME,
                 mint_price: coin(UNIT_AMOUNT, NATIVE_DENOM),

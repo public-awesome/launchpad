@@ -3421,6 +3421,7 @@ dependencies = [
  "sg1",
  "sha256",
  "thiserror",
+ "url",
 ]
 
 [[package]]

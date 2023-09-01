@@ -10,7 +10,9 @@ pub struct Member {
 #[cw_serde]
 pub struct InstantiateMsg {
     pub merkle_root: String,
+    pub merkle_tree_uri: Option<String>,
 
+    pub per_address_limit: u32,
     pub start_time: Timestamp,
     pub end_time: Timestamp,
     pub mint_price: Coin,
@@ -65,7 +67,9 @@ pub enum QueryMsg {
         msg: CosmosMsg<Empty>,
     },
     #[returns(MerkleRootResponse)]
-    MerkleRoot {}
+    MerkleRoot {},
+    #[returns(MerkleTreeURIResponse)]
+    MerkleTreeURI {}
 }
 
 
@@ -111,6 +115,11 @@ pub struct ConfigResponse {
 #[cw_serde]
 pub struct MerkleRootResponse {
     pub merkle_root: String,
+}
+
+#[cw_serde]
+pub struct MerkleTreeURIResponse {
+    pub merkle_tree_uri: Option<String>,
 }
 
 #[cw_serde]

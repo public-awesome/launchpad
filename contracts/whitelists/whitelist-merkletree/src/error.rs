@@ -26,14 +26,8 @@ pub enum ContractError {
     #[error("InvalidEndTime {0} > {1}")]
     InvalidEndTime(Timestamp, Timestamp),
 
-    #[error("MembersExceeded: {expected} got {actual}")]
-    MembersExceeded { expected: u32, actual: u32 },
-
-    #[error("Exceeded whale cap")]
-    ExceededWhaleCap {},
-
-    #[error("Invalid member limit. min: {min}, max: {max}, got: {got}")]
-    InvalidMemberLimit { min: u32, max: u32, got: u32 },
+    #[error("Invalid merkle tree URI (must be an IPFS URI)")]
+    InvalidMerkleTreeURI {},
 
     #[error("Max minting limit per address exceeded")]
     MaxPerAddressLimitExceeded {},

@@ -534,7 +534,6 @@ fn is_public_mint(deps: Deps, info: &MessageInfo, proof_hashes: Option<Vec<Strin
 
 
 fn is_merkle_tree_wl(wl_config_res: &WhitelistConfigResponse) -> bool {
-    wl_config_res.per_address_limit == 1 &&
     wl_config_res.member_limit == 0 &&
     wl_config_res.num_members == 0
 }

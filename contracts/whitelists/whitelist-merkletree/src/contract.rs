@@ -6,9 +6,9 @@ use crate::helpers::crypto::{verify_merkle_root, valid_hash_string, string_to_by
 use crate::helpers::validators::map_validate;
 use crate::msg::{
     ConfigResponse, ExecuteMsg, HasEndedResponse, HasMemberResponse,
-    HasStartedResponse, InstantiateMsg, IsActiveResponse, QueryMsg, MerkleRootResponse,
+    HasStartedResponse, InstantiateMsg, IsActiveResponse, QueryMsg, MerkleRootResponse, MerkleTreeURIResponse,
 };
-use crate::state::{AdminList, Config, ADMIN_LIST, CONFIG, MERKLE_ROOT};
+use crate::state::{AdminList, Config, ADMIN_LIST, CONFIG, MERKLE_ROOT, MERKLE_TREE_URI};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult, StdError, Timestamp};
@@ -17,6 +17,7 @@ use sg_std::{Response, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use cw_utils::nonpayable;
 
 use rs_merkle::{algorithms::Sha256, Hasher};
+use url::Url;
 
 
 // version info for migration info
@@ -65,13 +66,13 @@ pub fn instantiate(
         ));
     }
 
-
     MERKLE_ROOT.save(deps.storage, &msg.merkle_root)?;
 
     let config = Config {
         start_time: msg.start_time,
         end_time: msg.end_time,
         mint_price: msg.mint_price,
+        per_address_limit: msg.per_address_limit,
     };
 
     CONFIG.save(deps.storage, &config)?;
@@ -81,7 +82,8 @@ pub fn instantiate(
         mutable: msg.admins_mutable,
     };
     ADMIN_LIST.save(deps.storage, &admin_config)?;
-
+    
+    store_tree_uri(deps, msg.merkle_tree_uri)?;
 
     Ok(Response::new()
         .add_attribute("action", "instantiate")
@@ -165,6 +167,22 @@ pub fn execute_update_end_time(
         .add_attribute("sender", info.sender))
 }
 
+fn store_tree_uri(
+    deps: DepsMut,
+    tree_uri: Option<String>
+) -> Result<(), ContractError> {
+    if tree_uri.is_some() {
+        let parsed_token_uri = Url::parse(&tree_uri.as_ref().unwrap())
+                    .map_err(|_| ContractError::InvalidMerkleTreeURI {})?;
+
+        if parsed_token_uri.scheme() != "ipfs" {
+            return Err(ContractError::InvalidMerkleTreeURI {});
+        }
+
+        MERKLE_TREE_URI.save(deps.storage, &tree_uri.unwrap())?
+    }
+    Ok(())
+}
 
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -178,6 +196,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::AdminList {} => to_binary(&query_admin_list(deps)?),
         QueryMsg::CanExecute { sender, .. } => to_binary(&query_can_execute(deps, &sender)?),
         QueryMsg::MerkleRoot {} => to_binary(&query_merkle_root(deps)?),
+        QueryMsg::MerkleTreeURI {} => to_binary(&query_merkle_tree_uri(deps)?)
     }
 }
 
@@ -215,7 +234,7 @@ pub fn query_has_member(
 
     let member_init_hash_slice = Sha256::hash(member.as_bytes());
 
-    let hash = proof_hashes
+    let final_hash = proof_hashes
         .into_iter()
         .try_fold(member_init_hash_slice, 
             |accum_hash_slice, new_proof_hashstring| {
@@ -233,24 +252,22 @@ pub fn query_has_member(
     });
 
 
-    if hash.is_err() {
+    if final_hash.is_err() {
         return Err(cosmwasm_std::StdError::GenericErr {
             msg: "Invalid Merkle Proof".to_string(),
         });
     }
 
-    println!("hash {:?}", hex::encode(hash.as_ref().clone().unwrap()));
-
-    return Ok(HasMemberResponse { has_member: merkle_root == hex::encode(hash.unwrap()) });
+    return Ok(HasMemberResponse { has_member: merkle_root == hex::encode(final_hash.unwrap()) });
 
 }
 
 pub fn query_config(deps: Deps, env: Env) -> StdResult<ConfigResponse> {
     let config = CONFIG.load(deps.storage)?;
     Ok(ConfigResponse {
-        member_limit: 0,
         num_members: 0,
-        per_address_limit: 1,
+        member_limit: 0,
+        per_address_limit: config.per_address_limit,
         start_time: config.start_time,
         end_time: config.end_time,
         mint_price: config.mint_price,
@@ -261,5 +278,11 @@ pub fn query_config(deps: Deps, env: Env) -> StdResult<ConfigResponse> {
 pub fn query_merkle_root(deps: Deps) -> StdResult<MerkleRootResponse> {
     Ok(MerkleRootResponse { 
         merkle_root: MERKLE_ROOT.load(deps.storage)? 
+    })
+}
+
+pub fn query_merkle_tree_uri(deps: Deps) -> StdResult<MerkleTreeURIResponse> {
+    Ok(MerkleTreeURIResponse { 
+        merkle_tree_uri: MERKLE_TREE_URI.may_load(deps.storage)?
     })
 }
