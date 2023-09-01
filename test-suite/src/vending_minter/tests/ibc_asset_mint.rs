@@ -50,7 +50,7 @@ fn mint_with_ibc_asset() {
     setup_block_time(&mut router, GENESIS_MINT_START_TIME + 1, None);
 
     // Mint succeeds
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof_hashes: None };
     let res = router.execute_contract(buyer, minter_addr, &mint_msg, &mint_price);
     assert!(res.is_ok());
 }
@@ -210,7 +210,7 @@ fn wl_denom_mint() {
     setup_block_time(&mut app, GENESIS_MINT_START_TIME + 101, None);
 
     // Whitelist mint succeeds
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof_hashes: None };
     let res = app.execute_contract(buyer, minter_addr, &mint_msg, &[wl_mint_price]);
     assert!(res.is_ok());
 }

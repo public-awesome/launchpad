@@ -74,7 +74,7 @@ fn check_per_address_limit() {
     assert!(res.is_ok());
 
     // First mint succeeds
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof_hashes: None };
     let res = router.execute_contract(
         buyer.clone(),
         minter_addr.clone(),
@@ -85,7 +85,7 @@ fn check_per_address_limit() {
     assert!(res.is_ok());
 
     // Second mint fails from exceeding per address limit
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof_hashes: None };
     let res = router.execute_contract(
         buyer,
         minter_addr,
@@ -123,7 +123,8 @@ fn check_per_address_limit_3_percent() {
     assert!(res.is_ok());
 
     for _ in 0..6 {
-        let mint_msg = ExecuteMsg::Mint {};
+        let mint_msg = ExecuteMsg::Mint { proof_hashes: None };
+
         let res = router.execute_contract(
             buyer.clone(),
             minter_addr.clone(),
@@ -134,7 +135,7 @@ fn check_per_address_limit_3_percent() {
     }
 
     // Second mint fails from exceeding per address limit
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof_hashes: None };
     let res = router.execute_contract(
         buyer,
         minter_addr,
@@ -200,7 +201,7 @@ fn check_3_percent_round_up() {
     assert!(res.is_ok());
 
     for _ in 0..7 {
-        let mint_msg = ExecuteMsg::Mint {};
+        let mint_msg = ExecuteMsg::Mint { proof_hashes: None };
         let res = router.execute_contract(
             buyer.clone(),
             minter_addr.clone(),
@@ -211,7 +212,7 @@ fn check_3_percent_round_up() {
     }
 
     // Second mint fails from exceeding per address limit
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof_hashes: None };
     let res = router.execute_contract(
         buyer,
         minter_addr,
@@ -338,7 +339,7 @@ fn mint_for_token_id_addr() {
     // Test token id already sold
     // 1. random mint token_id
     // 2. mint_for same token_id
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof_hashes: None };
     let res = router.execute_contract(
         buyer.clone(),
         minter_addr.clone(),

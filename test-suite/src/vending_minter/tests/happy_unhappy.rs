@@ -102,7 +102,7 @@ fn happy_path() {
     setup_block_time(&mut router, GENESIS_MINT_START_TIME + 1, None);
 
     // Fail with incorrect tokens
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof_hashes: None };
     let err = router.execute_contract(
         buyer.clone(),
         minter_addr.clone(),
@@ -112,7 +112,7 @@ fn happy_path() {
     assert!(err.is_err());
 
     // Succeeds if funds are sent
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof_hashes: None };
     let res = router.execute_contract(
         buyer.clone(),
         minter_addr.clone(),
@@ -219,7 +219,7 @@ fn happy_path() {
     assert_eq!(res.owner, buyer.to_string());
 
     // Errors if sold out
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof_hashes: None };
     let res = router.execute_contract(
         buyer.clone(),
         minter_addr.clone(),
@@ -267,7 +267,7 @@ fn unhappy_path() {
     let (mut router, _, buyer) = (vt.router, vt.accts.creator, vt.accts.buyer);
     let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
     // Fails if too little funds are sent
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof_hashes: None };
     let res = router.execute_contract(
         buyer.clone(),
         minter_addr.clone(),
@@ -277,7 +277,7 @@ fn unhappy_path() {
     assert!(res.is_err());
 
     // Fails if too many funds are sent
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof_hashes: None };
     let res = router.execute_contract(
         buyer.clone(),
         minter_addr.clone(),
@@ -287,7 +287,7 @@ fn unhappy_path() {
     assert!(res.is_err());
 
     // Fails wrong denom is sent
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof_hashes: None };
     let res = router.execute_contract(buyer, minter_addr, &mint_msg, &coins(MINT_PRICE, "uatom"));
     assert!(res.is_err());
 }

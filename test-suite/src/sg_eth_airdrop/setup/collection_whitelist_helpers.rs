@@ -35,7 +35,7 @@ pub fn send_funds_to_address(app: &mut StargazeApp, target_address_str: &str, am
 pub fn execute_mint_fail_not_on_whitelist(app: &mut StargazeApp, minter_addr: Addr) {
     //before mintlist add, fail
     let stargaze_wallet_01 = Addr::unchecked(STARGAZE_WALLET_01);
-    let mint_msg = vending_minter::msg::ExecuteMsg::Mint {};
+    let mint_msg = vending_minter::msg::ExecuteMsg::Mint { proof_hashes: None };
     let res = app.execute_contract(
         stargaze_wallet_01,
         minter_addr,
@@ -63,7 +63,7 @@ pub fn execute_airdrop_claim(
 
 pub fn execute_mint_success(app: &mut StargazeApp, sender: Addr, minter_addr: Addr) {
     //execute the mint
-    let mint_msg = vending_minter::msg::ExecuteMsg::Mint {};
+    let mint_msg = vending_minter::msg::ExecuteMsg::Mint { proof_hashes: None };
     let res = app.execute_contract(
         sender,
         minter_addr,
