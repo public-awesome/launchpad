@@ -4,10 +4,11 @@ use cw721_base::ExecuteMsg as Cw721ExecuteMsg;
 use cw_multi_test::Executor;
 use sg2::tests::mock_collection_params_1;
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
+use sg_whitelist_mtree::tests::test_helpers::tree_from_vec;
 
 use crate::common_setup::msg::MinterCollectionResponse;
 use crate::common_setup::setup_accounts_and_block::coins_for_msg;
-use crate::common_setup::setup_whitelist_merkletree::setup_whitelist_contract;
+use crate::common_setup::setup_whitelist_merkletree::setup_whitelist_mtree_contract;
 use crate::common_setup::setup_minter::common::minter_params::minter_params_token;
 use crate::common_setup::setup_minter::vending_minter::setup::{
     configure_minter, vending_minter_code_ids,
@@ -26,7 +27,7 @@ const WHITELIST_AMOUNT: u128 = 66_000_000;
 
 
 #[test]
-fn whitelist_mint_count_query() {
+fn works_with_regular_whitelist() {
     let mut router = custom_mock_app();
     let (creator, buyer) = setup_accounts(&mut router);
     let num_tokens = 10;
@@ -44,8 +45,23 @@ fn whitelist_mint_count_query() {
     let minter_addr = minter_collection_response[0].minter.clone().unwrap();
     let collection_addr = minter_collection_response[0].collection.clone().unwrap();
 
-    let whitelist_addr = setup_whitelist_contract(&mut router, &creator, None, None, "".to_string());
+    let addresses = vec![
+        buyer.to_string(),
+        "another_address".to_string(),
+    ];
+
+    let tree = tree_from_vec(&addresses);
+    let root = tree.root_hex().unwrap();
+
+    let whitelist_addr = setup_whitelist_mtree_contract(&mut router, &creator, None, None, root);
     const EXPIRATION_TIME: Timestamp = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000);
+
+
+    let set_whitelist_msg = vending_minter::msg::ExecuteMsg::SetWhitelist {
+        whitelist: whitelist_addr.to_string(),
+    };
+    let res = router.execute_contract(creator.clone(), minter_addr.clone(), &set_whitelist_msg, &[]);
+    assert!(res.is_ok());
 
     // Set block to before genesis mint start time
     setup_block_time(&mut router, GENESIS_MINT_START_TIME - 1000, None);
@@ -59,12 +75,21 @@ fn whitelist_mint_count_query() {
     assert!(res.is_ok());
 
 
-
-
     setup_block_time(&mut router, GENESIS_MINT_START_TIME, Some(10));
 
-    // Mint succeeds
+    // Can't mint without proofs
     let mint_msg = ExecuteMsg::Mint { proof_hashes: None };
+    let res = router.execute_contract(
+        buyer.clone(),
+        minter_addr.clone(),
+        &mint_msg,
+        &coins(WHITELIST_AMOUNT, NATIVE_DENOM),
+    );
+    assert!(res.is_err());
+
+    let proof_hashes = tree.proof(&[0]).proof_hashes_hex();
+
+    let mint_msg = ExecuteMsg::Mint { proof_hashes: Some(proof_hashes.clone()) };
     let res = router.execute_contract(
         buyer.clone(),
         minter_addr.clone(),
@@ -87,7 +112,7 @@ fn whitelist_mint_count_query() {
     assert_eq!(res.address, buyer.to_string());
 
     // Mint fails, over whitelist per address limit
-    let mint_msg = ExecuteMsg::Mint { proof_hashes: None };
+    let mint_msg = ExecuteMsg::Mint { proof_hashes: Some(proof_hashes) };
     let err = router
         .execute_contract(
             buyer.clone(),
@@ -204,3 +229,4 @@ fn whitelist_mint_count_query() {
     assert_eq!(res.count, 3);
     assert_eq!(res.address, buyer.to_string());
 }
+

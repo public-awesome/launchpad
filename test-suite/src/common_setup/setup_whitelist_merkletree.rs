@@ -9,7 +9,7 @@ use crate::common_setup::contract_boxes::contract_whitelist_merkletree;
 pub const WHITELIST_AMOUNT: u128 = 66_000_000;
 const WL_PER_ADDRESS_LIMIT: u32 = 1;
 
-pub fn setup_whitelist_contract(
+pub fn setup_whitelist_mtree_contract(
     router: &mut StargazeApp,
     creator: &Addr,
     whitelist_code_id: Option<u64>,
@@ -28,7 +28,7 @@ pub fn setup_whitelist_contract(
 
     let msg = WhitelistInstantiateMsg {
         start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME + 100),
-        end_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10000000),
+        end_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000_000),
         mint_price: coin(WHITELIST_AMOUNT, denom),
         per_address_limit: WL_PER_ADDRESS_LIMIT,
         admins: vec![creator.to_string()],

@@ -2,10 +2,10 @@
 mod tests {
     use cosmwasm_std::{Addr, Timestamp, coin};
     use cw_multi_test::Executor;
-    use rs_merkle::{MerkleTree, algorithms::Sha256, Hasher};
+    use rs_merkle::MerkleTree;
     use sg_multi_test::StargazeApp;
     use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
-    use sg_whitelist_mtree::tests::hasher::SortingSha256Hasher;
+    use sg_whitelist_mtree::tests::{hasher::SortingSha256Hasher, test_helpers::tree_from_vec};
     use sg_whitelist_mtree::msg::*;
 
     use crate::common_setup::contract_boxes::{contract_whitelist_merkletree, custom_mock_app};
@@ -39,15 +39,6 @@ mod tests {
 
     fn get_init_address_single_list() -> Vec<String> {
         vec!["onlyone".to_string()]
-    }
-
-    fn tree_from_vec(leaves: &Vec<String>) -> Tree {
-        let leaves: Vec<[u8; 32]> = leaves
-            .iter()
-            .map(|x| Sha256::hash(x.as_bytes()))
-            .collect();
-
-        Tree::from_leaves(&leaves)
     }
 
     pub fn instantiate_with_root(

@@ -195,7 +195,7 @@ mod tests {
     fn query_membership() {
         let mut deps = mock_dependencies();
 
-        let tree = get_merkle_tree_simple();
+        let tree = get_merkle_tree_simple(None);
         let root = tree.root_hex();
 
         setup_contract(deps.as_mut(), root.clone());
