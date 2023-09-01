@@ -10,3 +10,4 @@ mod trading_time_updatable;
 mod updatable;
 mod whitelist;
 mod zero_mint_price;
+mod whitelist_merkleree;
