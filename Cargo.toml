@@ -55,9 +55,9 @@ open-edition-factory = { version = "3.1.0", path = "contracts/factories/open-edi
 open-edition-minter  = { version = "3.1.0", path = "contracts/minters/open-edition-minter" }
 whitelist-immutable  = { version = "3.1.0", path = "contracts/whitelists/whitelist-immutable" }
 sg-whitelist-flex    = { version = "3.1.0", path = "contracts/whitelists/whitelist-flex" }
+sg-whitelist-mtree   = { version = "3.1.0", path = "contracts/whitelists/whitelist-merkletree" }
 ethereum-verify      = { version = "3.1.0", path = "packages/ethereum-verify" }
 sg-eth-airdrop       = { version = "3.1.0", path = "contracts/sg-eth-airdrop" }
-test-suite           = { version = "3.1.0", path = "test-suite" }
 semver               = "1"
 cw-ownable           = "0.5.1"
 
@@ -126,10 +126,6 @@ codegen-units = 1
 incremental   = false
 
 [profile.release.package.ethereum-verify]
-codegen-units = 1
-incremental   = false
-
-[profile.release.package.test-suite]
 codegen-units = 1
 incremental   = false
 

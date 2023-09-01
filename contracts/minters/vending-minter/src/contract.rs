@@ -33,6 +33,7 @@ use sg_std::{
 use sg_whitelist::msg::{
     ConfigResponse as WhitelistConfigResponse, HasMemberResponse, QueryMsg as WhitelistQueryMsg,
 };
+use sg_whitelist_mtree::msg::QueryMsg as WhitelistMtreeQueryMsg;
 use sha2::{Digest, Sha256};
 use shuffle::{fy::FisherYates, shuffler::Shuffler};
 use url::Url;
@@ -219,7 +220,7 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
-        ExecuteMsg::Mint {} => execute_mint_sender(deps, env, info),
+        ExecuteMsg::Mint { proof_hashes } => execute_mint_sender(deps, env, info, proof_hashes),
         ExecuteMsg::Purge {} => execute_purge(deps, env, info),
         ExecuteMsg::UpdateMintPrice { price } => execute_update_mint_price(deps, env, info, price),
         ExecuteMsg::UpdateStartTime(time) => execute_update_start_time(deps, env, info, time),
@@ -459,13 +460,14 @@ pub fn execute_mint_sender(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
+    proof_hashes: Option<Vec<String>>,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
     let action = "mint_sender";
 
     // If there is no active whitelist right now, check public mint
     // Check if after start_time
-    if is_public_mint(deps.as_ref(), &info)? && (env.block.time < config.extension.start_time) {
+    if is_public_mint(deps.as_ref(), &info, proof_hashes)? && (env.block.time < config.extension.start_time) {
         return Err(ContractError::BeforeMintStartTime {});
     }
 
@@ -480,7 +482,7 @@ pub fn execute_mint_sender(
 
 // Check if a whitelist exists and not ended
 // Sender has to be whitelisted to mint
-fn is_public_mint(deps: Deps, info: &MessageInfo) -> Result<bool, ContractError> {
+fn is_public_mint(deps: Deps, info: &MessageInfo, proof_hashes: Option<Vec<String>>) -> Result<bool, ContractError> {
     let config = CONFIG.load(deps.storage)?;
 
     // If there is no whitelist, there's only a public mint
@@ -498,12 +500,23 @@ fn is_public_mint(deps: Deps, info: &MessageInfo) -> Result<bool, ContractError>
         return Ok(true);
     }
 
-    let res: HasMemberResponse = deps.querier.query_wasm_smart(
-        whitelist,
-        &WhitelistQueryMsg::HasMember {
-            member: info.sender.to_string(),
-        },
-    )?;
+    let res: HasMemberResponse = if is_merkle_tree_wl(&wl_config) && proof_hashes.is_some() {
+        deps.querier.query_wasm_smart(
+            whitelist,
+            &WhitelistMtreeQueryMsg::HasMember {
+                member: info.sender.to_string(),
+                proof_hashes: proof_hashes.unwrap(),
+            },
+        )?
+    } else {
+        deps.querier.query_wasm_smart(
+            whitelist,
+            &WhitelistQueryMsg::HasMember {
+                member: info.sender.to_string(),
+            },
+        )?
+    };
+
     if !res.has_member {
         return Err(ContractError::NotWhitelisted {
             addr: info.sender.to_string(),
@@ -518,6 +531,14 @@ fn is_public_mint(deps: Deps, info: &MessageInfo) -> Result<bool, ContractError>
 
     Ok(false)
 }
+
+
+fn is_merkle_tree_wl(wl_config_res: &WhitelistConfigResponse) -> bool {
+    wl_config_res.per_address_limit == 1 &&
+    wl_config_res.member_limit == 0 &&
+    wl_config_res.num_members == 0
+}
+
 
 pub fn execute_mint_to(
     deps: DepsMut,

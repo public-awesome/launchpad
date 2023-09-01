@@ -13,7 +13,6 @@ use crate::state::{AdminList, Config, ADMIN_LIST, CONFIG, MERKLE_ROOT};
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult, StdError, Timestamp};
 use cw2::set_contract_version;
-use rs_merkle::MerkleProof;
 use sg_std::{Response, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use cw_utils::nonpayable;
 
@@ -249,6 +248,9 @@ pub fn query_has_member(
 pub fn query_config(deps: Deps, env: Env) -> StdResult<ConfigResponse> {
     let config = CONFIG.load(deps.storage)?;
     Ok(ConfigResponse {
+        member_limit: 0,
+        num_members: 0,
+        per_address_limit: 1,
         start_time: config.start_time,
         end_time: config.end_time,
         mint_price: config.mint_price,

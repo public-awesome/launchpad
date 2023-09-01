@@ -1,5 +1,5 @@
 [package]
-name        = "sg-whitelist-merkletree"
+name        = "sg-whitelist-mtree"
 authors     = ["Martin Mo Kromsten <kromsten@pm.me>"]
 description = "Stargaze Merkle Tree Whitelist Contract"
 version     = { workspace = true }

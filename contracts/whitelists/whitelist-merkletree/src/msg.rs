@@ -19,6 +19,7 @@ pub struct InstantiateMsg {
     pub admins_mutable: bool,
 }
 
+
 #[cw_serde]
 pub enum ExecuteMsg {
     UpdateStartTime(Timestamp),
@@ -67,20 +68,12 @@ pub enum QueryMsg {
     MerkleRoot {}
 }
 
-#[cw_serde]
-pub struct MembersResponse {
-    pub members: Vec<Member>,
-}
 
 #[cw_serde]
 pub struct HasMemberResponse {
     pub has_member: bool,
 }
 
-#[cw_serde]
-pub struct MemberResponse {
-    pub member: Member,
-}
 
 #[cw_serde]
 pub struct HasEndedResponse {
@@ -102,13 +95,18 @@ pub struct MintPriceResponse {
     pub mint_price: Coin,
 }
 
+
 #[cw_serde]
 pub struct ConfigResponse {
+    pub num_members: u32,
+    pub per_address_limit: u32,
+    pub member_limit: u32,
     pub start_time: Timestamp,
     pub end_time: Timestamp,
     pub mint_price: Coin,
     pub is_active: bool,
 }
+
 
 #[cw_serde]
 pub struct MerkleRootResponse {

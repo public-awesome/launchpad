@@ -12,7 +12,6 @@ mod tests {
         coin,
         testing::{mock_dependencies, mock_env, mock_info}, Timestamp, DepsMut, Env, BlockInfo,
     };
-    use rs_merkle::MerkleProof;
     use sg_std::{NATIVE_DENOM, GENESIS_MINT_START_TIME};
 
     const ADMIN: &str = "admin";
