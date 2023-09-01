@@ -34,17 +34,14 @@ pub fn instantiate(
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
     let params = msg.params;
-
     ensure!(
-        params.extension.airdrop_mint_price.denom == params.min_mint_price.denom,
+        params.extension.airdrop_mint_price.denom == params.clone().min_mint_price.denom()?,
         BaseContractError::InvalidDenom {}
     );
-
     ensure!(
         params.creation_fee.denom == NATIVE_DENOM,
         BaseContractError::InvalidDenom {}
     );
-
     SUDO_PARAMS.save(deps.storage, &params)?;
 
     Ok(Response::new())
@@ -85,19 +82,31 @@ pub fn execute_create_minter(
         deps.as_ref(),
         &params,
     )?;
-
     ensure!(
-        params.min_mint_price.denom == msg.init_msg.mint_price.denom,
+        params.min_mint_price.clone().denom()? == msg.init_msg.mint_price.denom,
         BaseContractError::InvalidDenom {}
     );
-
-    ensure!(
-        params.min_mint_price.amount <= msg.init_msg.mint_price.amount,
-        ContractError::InsufficientMintPrice {
-            expected: params.min_mint_price.amount.u128(),
+    let min_mint_price = params.min_mint_price.amount()?;
+    if min_mint_price > msg.init_msg.mint_price.amount {
+        return Err(ContractError::InsufficientMintPrice {
+            expected: min_mint_price.into(),
             got: msg.init_msg.mint_price.amount.into(),
-        }
-    );
+        });
+    }
+    // =======
+    //     ensure!(
+    //         params.min_mint_price.denom == msg.init_msg.mint_price.denom,
+    //         BaseContractError::InvalidDenom {}
+    //     );
+
+    //     ensure!(
+    //         params.min_mint_price.amount <= msg.init_msg.mint_price.amount,
+    //         ContractError::InsufficientMintPrice {
+    //             expected: params.min_mint_price.amount.u128(),
+    // >>>>>>> main
+    //             got: msg.init_msg.mint_price.amount.into(),
+    //         }
+    // );
 
     let wasm_msg = WasmMsg::Instantiate {
         admin: Some(info.sender.to_string()),
@@ -127,7 +136,7 @@ pub fn sudo_update_params(
 ) -> Result<Response, ContractError> {
     let mut params = SUDO_PARAMS.load(deps.storage)?;
 
-    update_params(&mut params, param_msg.clone())?;
+    update_params(&mut params, param_msg.clone(), deps.as_ref())?;
 
     params.extension.dev_fee_address = param_msg
         .extension

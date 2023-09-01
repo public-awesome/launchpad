@@ -17,7 +17,6 @@ use crate::msg::{
     ParamsResponse, SudoMsg,
 };
 use crate::state::SUDO_PARAMS;
-
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sg-base-factory";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -123,7 +122,7 @@ pub fn sudo_update_params(
 ) -> Result<Response, ContractError> {
     let mut params = SUDO_PARAMS.load(deps.storage)?;
 
-    update_params(&mut params, param_msg)?;
+    update_params(&mut params, param_msg, deps.as_ref())?;
 
     SUDO_PARAMS.save(deps.storage, &params)?;
 
@@ -134,6 +133,7 @@ pub fn sudo_update_params(
 pub fn update_params<T, C>(
     params: &mut MinterParams<C>,
     param_msg: UpdateMinterParamsMsg<T>,
+    deps: Deps,
 ) -> Result<(), ContractError> {
     params.code_id = param_msg.code_id.unwrap_or(params.code_id);
 
@@ -149,13 +149,27 @@ pub fn update_params<T, C>(
         );
         params.creation_fee = creation_fee;
     }
-
     if let Some(min_mint_price) = param_msg.min_mint_price {
-        ensure_eq!(
-            &min_mint_price.denom,
-            &NATIVE_DENOM,
-            ContractError::InvalidDenom {}
-        );
+        match min_mint_price.clone() {
+            sg2::Token::Fungible(mint_price) => {
+                ensure_eq!(
+                    &mint_price.denom,
+                    &NATIVE_DENOM,
+                    ContractError::InvalidDenom {}
+                );
+            }
+            sg2::Token::NonFungible(collection) => {
+                let minter_response: Result<
+                    cw721_base::msg::MinterResponse,
+                    cosmwasm_std::StdError,
+                > = deps
+                    .querier
+                    .query_wasm_smart(collection, &sg721_base::QueryMsg::Minter {});
+                if minter_response.is_err() {
+                    return Err(ContractError::InvalidCollectionAddress {});
+                }
+            }
+        }
         params.min_mint_price = min_mint_price;
     }
 

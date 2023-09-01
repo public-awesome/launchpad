@@ -3,6 +3,7 @@ use cw_utils::PaymentError;
 use sg1::FeeError;
 use thiserror::Error;
 use url::ParseError;
+
 #[derive(Error, Debug, PartialEq)]
 pub enum ContractError {
     #[error("{0}")]
@@ -103,4 +104,10 @@ pub enum ContractError {
 
     #[error("Multiply Fraction Error")]
     CheckedMultiplyFractionError {},
+
+    #[error("Expected fungible token, received nonfungible")]
+    IncorrectFungibility {},
+
+    #[error("Burn to Mint Error")]
+    BurnToMintError {},
 }

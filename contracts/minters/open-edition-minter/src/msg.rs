@@ -1,6 +1,7 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, Coin, Timestamp};
 
+use cw721::Cw721ReceiveMsg;
 use open_edition_factory::types::NftData;
 use open_edition_factory::{msg::OpenEditionMinterCreateMsg, state::OpenEditionMinterParams};
 
@@ -27,6 +28,7 @@ pub enum ExecuteMsg {
     MintTo {
         recipient: String,
     },
+    ReceiveNft(Cw721ReceiveMsg),
 }
 
 #[cw_serde]
@@ -85,4 +87,9 @@ pub struct MintCountResponse {
 #[cw_serde]
 pub struct TotalMintCountResponse {
     pub count: u32,
+}
+
+#[cw_serde]
+pub struct TokenUriMsg {
+    pub token_uri: String,
 }

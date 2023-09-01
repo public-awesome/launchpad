@@ -51,7 +51,7 @@ fn invalid_whitelist_instantiate() {
         whitelist: Some("invalid address".to_string()),
     };
 
-    let minter_params = minter_params_all(num_tokens, None, None, Some(init_msg));
+    let minter_params = minter_params_all(num_tokens, None, None, Some(init_msg), None);
     let code_ids = vending_minter_code_ids(&mut router);
     let minter_collection_response = configure_minter(
         &mut router,

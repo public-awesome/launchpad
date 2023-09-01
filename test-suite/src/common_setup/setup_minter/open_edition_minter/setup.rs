@@ -1,22 +1,24 @@
 use crate::common_setup::contract_boxes::{
-    contract_open_edition_factory, contract_open_edition_minter,
+    contract_open_edition_factory, contract_open_edition_minter, contract_sg721_base,
 };
 use crate::common_setup::msg::{
     MinterCollectionResponse, OpenEditionMinterInstantiateParams, OpenEditionMinterSetupParams,
 };
 use crate::common_setup::setup_minter::common::parse_response::build_collection_response;
-use crate::common_setup::templates::OpenEditionMinterCustomParams;
-use cosmwasm_std::{coins, Addr, Coin, Timestamp};
-use cw_multi_test::{Contract, Executor};
-use open_edition_factory::msg::OpenEditionMinterInitMsgExtension;
+use anyhow::Error;
+use cosmwasm_std::{coin, coins, to_binary, Addr, Coin, Timestamp};
+use cw_multi_test::{AppResponse, Executor};
+use open_edition_factory::msg::{
+    OpenEditionMinterInitMsgExtension, OpenEditionUpdateParamsExtension, OpenEditionUpdateParamsMsg,
+};
 use open_edition_factory::types::NftData;
 use sg2::msg::{CollectionParams, Sg2ExecuteMsg};
 use sg_multi_test::StargazeApp;
-use sg_std::{StargazeMsgWrapper, NATIVE_DENOM};
+use sg_std::NATIVE_DENOM;
 
 use crate::common_setup::msg::CodeIds;
 use crate::common_setup::setup_minter::open_edition_minter::mock_params::{
-    mock_create_minter, mock_init_minter_extension, mock_params_custom,
+    mock_create_minter, mock_init_minter_extension, mock_params_proper,
 };
 
 use crate::common_setup::setup_minter::common::constants::CREATION_FEE;
@@ -57,13 +59,14 @@ pub fn setup_open_edition_minter_contract(
     let end_time = setup_params.end_time;
     let init_msg = setup_params.init_msg.clone();
     let nft_data = setup_params.init_msg.unwrap().nft_data;
+    let allowed_burn_collections = setup_params.allowed_burn_collections;
 
-    let custom_params = OpenEditionMinterCustomParams {
-        denom: None,
-        mint_fee_bps: None,
-        airdrop_mint_price_amount: None,
+    let custom_params = setup_params.custom_params;
+
+    let mut params = mock_params_proper();
+    if let Some(custom_params) = custom_params {
+        params = custom_params;
     };
-    let mut params = mock_params_custom(custom_params);
     params.code_id = minter_code_id;
 
     let factory_addr = router.instantiate_contract(
@@ -76,16 +79,17 @@ pub fn setup_open_edition_minter_contract(
         "factory",
         None,
     );
-
-    let factory_addr = factory_addr.unwrap();
+    let min_mint_price = params.min_mint_price.clone().amount().unwrap();
+    let denom = params.min_mint_price.denom().unwrap();
     let mut msg = mock_create_minter(
         start_time,
         end_time,
-        Some(params.min_mint_price.clone()),
+        Some(coin(min_mint_price.u128(), denom.clone())),
         Some(params.extension.max_per_address_limit),
         nft_data.clone(),
         collection_params,
         None,
+        allowed_burn_collections,
     );
     msg.init_msg = build_init_msg(
         init_msg,
@@ -93,33 +97,83 @@ pub fn setup_open_edition_minter_contract(
         end_time,
         Some(params.extension.max_per_address_limit),
         nft_data,
-        Some(params.min_mint_price),
+        Some(coin(min_mint_price.u128(), denom)),
         None,
     );
     msg.collection_params.code_id = sg721_code_id;
     msg.collection_params.info.creator = minter_admin.to_string();
+
     let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
     let msg = Sg2ExecuteMsg::CreateMinter(msg);
-
-    let res = router.execute_contract(minter_admin, factory_addr.clone(), &msg, &creation_fee);
-    build_collection_response(res, factory_addr)
+    match factory_addr {
+        Ok(addr) => {
+            let res = router.execute_contract(minter_admin, addr.clone(), &msg, &creation_fee);
+            build_collection_response(res, addr)
+        }
+        Err(e) => MinterCollectionResponse {
+            minter: None,
+            collection: None,
+            factory: None,
+            error: Some(e),
+        },
+    }
 }
 
-pub fn open_edition_minter_code_ids(
-    router: &mut StargazeApp,
-    sg721_code: Box<dyn Contract<StargazeMsgWrapper>>,
-) -> CodeIds {
+pub fn open_edition_minter_code_ids(router: &mut StargazeApp) -> CodeIds {
     let minter_code_id = router.store_code(contract_open_edition_minter());
 
     let factory_code_id = router.store_code(contract_open_edition_factory());
 
-    let sg721_code_id = router.store_code(sg721_code);
+    let sg721_code_id = router.store_code(contract_sg721_base());
 
     CodeIds {
         minter_code_id,
         factory_code_id,
         sg721_code_id,
     }
+}
+
+pub fn sudo_update_params(
+    app: &mut StargazeApp,
+    collection_responses: &Vec<MinterCollectionResponse>,
+    code_ids: CodeIds,
+    update_msg: Option<OpenEditionUpdateParamsMsg>,
+) -> Vec<Result<AppResponse, anyhow::Error>> {
+    let mut sudo_responses: Vec<Result<AppResponse, Error>> = vec![];
+    for collection_response in collection_responses {
+        let collection = collection_response.collection.clone();
+        let collection = collection.unwrap_or(Addr::unchecked("fake"));
+
+        let update_msg = match update_msg.clone() {
+            Some(some_update_message) => some_update_message,
+            None => OpenEditionUpdateParamsMsg {
+                code_id: Some(code_ids.sg721_code_id),
+                add_sg721_code_ids: None,
+                rm_sg721_code_ids: None,
+                frozen: None,
+                creation_fee: Some(coin(0, NATIVE_DENOM)),
+                min_mint_price: Some(sg2::NonFungible(collection.to_string())),
+                mint_fee_bps: None,
+                max_trading_offset_secs: Some(100),
+                extension: OpenEditionUpdateParamsExtension {
+                    min_mint_price: None,
+                    dev_fee_address: None,
+                    max_per_address_limit: None,
+                    airdrop_mint_price: None,
+                    airdrop_mint_fee_bps: None,
+                },
+            },
+        };
+        let sudo_update_msg =
+            open_edition_factory::msg::SudoMsg::UpdateParams(Box::new(update_msg));
+
+        let sudo_res = app.sudo(cw_multi_test::SudoMsg::Wasm(cw_multi_test::WasmSudo {
+            contract_addr: collection_response.factory.clone().unwrap(),
+            msg: to_binary(&sudo_update_msg).unwrap(),
+        }));
+        sudo_responses.push(sudo_res);
+    }
+    sudo_responses
 }
 
 pub fn configure_open_edition_minter(
@@ -149,6 +203,10 @@ pub fn configure_open_edition_minter(
                 .unwrap(),
             init_msg: minter_instantiate_params_vec[index].init_msg.clone(),
             end_time: minter_instantiate_params_vec[index].end_time.to_owned(),
+            allowed_burn_collections: minter_instantiate_params_vec[index]
+                .allowed_burn_collections
+                .clone(),
+            custom_params: minter_instantiate_params_vec[index].custom_params.clone(),
         };
         let minter_collection_res = setup_open_edition_minter_contract(setup_params);
         minter_collection_info.push(minter_collection_res);

@@ -36,10 +36,14 @@ serde                   = { workspace = true }
 sg1                     = { workspace = true }
 sg2                     = { workspace = true }
 sg4                     = { workspace = true }
+cw721                   = { workspace = true }
 sg721                   = { workspace = true }
 sg-std                  = { workspace = true }
 sg-metadata             = { workspace = true }
 thiserror               = { workspace = true }
 url                     = { workspace = true }
 open-edition-factory    = { workspace = true, features = ["library"] }
-semver                  = {workspace = true }
+semver                  = { workspace = true }
+burn-to-mint            = { workspace = true }
+base-minter             = { workspace = true }
+sg-controllers          = { workspace = true }

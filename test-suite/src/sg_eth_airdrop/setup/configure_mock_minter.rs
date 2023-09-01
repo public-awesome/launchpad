@@ -40,7 +40,7 @@ fn configure_mock_minter(app: &mut StargazeApp, creator: Addr) {
         .unwrap();
     let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
     let collection_params = mock_collection_params_1(Some(start_time));
-    let msg = mock_create_minter(None, collection_params, None);
+    let msg = mock_create_minter(None, collection_params, None, None);
     let msg = Sg2ExecuteMsg::CreateMinter(msg);
     let res = app.execute_contract(creator, factory_addr, &msg, &creation_fee);
     assert!(res.is_ok());

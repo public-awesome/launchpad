@@ -1,11 +1,12 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coin, to_binary, Addr, BankMsg, Binary, Coin, Deps, DepsMut, Empty, Env, MessageInfo, Order,
-    Reply, ReplyOn, StdError, StdResult, Timestamp, WasmMsg,
+    coin, to_binary, Addr, Binary, Coin, Decimal, Deps, DepsMut, Empty, Env, MessageInfo, Order,
+    Reply, ReplyOn, StdError, StdResult, Timestamp, Uint128, WasmMsg,
 };
 use cw2::set_contract_version;
-use cw_utils::{may_pay, maybe_addr, nonpayable, parse_reply_instantiate_data};
+use cw721::Cw721ReceiveMsg;
+use cw_utils::{maybe_addr, nonpayable, parse_reply_instantiate_data};
 use semver::Version;
 use sg_std::math::U64Ext;
 use sg_std::{StargazeMsgWrapper, NATIVE_DENOM};
@@ -15,6 +16,7 @@ use open_edition_factory::msg::{OpenEditionMinterCreateMsg, ParamsResponse};
 use open_edition_factory::types::NftMetadataType;
 use sg1::{checked_fair_burn, ibc_denom_fair_burn};
 use sg2::query::Sg2QueryMsg;
+use sg2::{MinterParams, Token};
 use sg4::{Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
 
@@ -115,7 +117,6 @@ pub fn instantiate(
         .start_trading_time
         .or(Some(default_start_time_with_offset));
     collection_info.start_trading_time = start_trading_time;
-
     let config = Config {
         factory: factory.clone(),
         collection_code_id: msg.collection_params.code_id,
@@ -129,7 +130,8 @@ pub fn instantiate(
             end_time: msg.init_msg.end_time,
             nft_data: msg.init_msg.nft_data,
         },
-        mint_price: msg.init_msg.mint_price,
+        mint_price: sg2::Fungible(msg.init_msg.mint_price.clone()),
+        allowed_burn_collections: msg.allowed_burn_collections,
     };
 
     CONFIG.save(deps.storage, &config)?;
@@ -185,6 +187,7 @@ pub fn execute(
             execute_update_per_address_limit(deps, env, info, per_address_limit)
         }
         ExecuteMsg::MintTo { recipient } => execute_mint_to(deps, env, info, recipient),
+        ExecuteMsg::ReceiveNft(msg) => burn_and_mint(deps, env, info, msg),
     }
 }
 
@@ -236,8 +239,7 @@ pub fn execute_mint_sender(
     {
         return Err(ContractError::MaxPerAddressLimitExceeded {});
     }
-
-    _execute_mint(deps, env, info, action, false, None)
+    _execute_mint(deps, info, action, false, None)
 }
 
 pub fn execute_mint_to(
@@ -261,67 +263,24 @@ pub fn execute_mint_to(
         return Err(ContractError::AfterMintEndTime {});
     }
 
-    _execute_mint(deps, env, info, action, true, Some(recipient))
+    _execute_mint(deps, info, action, true, Some(recipient))
 }
 
-// Generalize checks and mint message creation
-// mint -> _execute_mint(recipient: None, token_id: None)
-// mint_to(recipient: "friend") -> _execute_mint(Some(recipient), token_id: None)
-fn _execute_mint(
-    deps: DepsMut,
-    _env: Env,
+fn pay_fairburn(
+    deps: &DepsMut,
     info: MessageInfo,
-    action: &str,
-    is_admin: bool,
-    recipient: Option<Addr>,
-) -> Result<Response, ContractError> {
-    let config = CONFIG.load(deps.storage)?;
-
-    let sg721_address = SG721_ADDRESS.load(deps.storage)?;
-
-    let recipient_addr = match recipient {
-        Some(some_recipient) => some_recipient,
-        None => info.sender.clone(),
-    };
-
-    let mint_price: Coin = mint_price(deps.as_ref(), is_admin)?;
-    // Exact payment only accepted
-    let payment = may_pay(&info, &config.mint_price.denom)?;
-    if payment != mint_price.amount {
-        return Err(ContractError::IncorrectPaymentAmount(
-            coin(payment.u128(), &config.mint_price.denom),
-            mint_price,
-        ));
-    }
-
+    mint_price_with_discounts: Coin,
+    mint_fee: Decimal,
+    factory_params: MinterParams<open_edition_factory::state::ParamsExtension>,
+) -> Result<(Response, Uint128), ContractError> {
     let mut res = Response::new();
-
-    let factory: ParamsResponse = deps
-        .querier
-        .query_wasm_smart(config.factory, &Sg2QueryMsg::Params {})?;
-    let factory_params = factory.params;
-
-    // Create fee msgs
-    // Metadata Storage fees -> minting fee will be enabled for on-chain metadata mints
-    // dev fees are intrinsic in the mint fee (assuming a 50% share)
-    let mint_fee = if is_admin {
-        factory_params
-            .extension
-            .airdrop_mint_fee_bps
-            .bps_to_decimal()
-    } else {
-        factory_params.mint_fee_bps.bps_to_decimal()
-    };
-    let network_fee = mint_price.amount * mint_fee;
-
-    // This is for the network fee msg
-    // send non-native fees to community pool
-    if mint_price.denom != NATIVE_DENOM {
+    let network_fee = mint_price_with_discounts.amount * mint_fee;
+    if mint_price_with_discounts.denom != NATIVE_DENOM {
         // only send non-zero amounts
         // send portion to dev addr
         if !network_fee.is_zero() {
             ibc_denom_fair_burn(
-                coin(network_fee.u128(), mint_price.denom.to_string()),
+                coin(network_fee.u128(), mint_price_with_discounts.denom),
                 Some(
                     deps.api
                         .addr_validate(&factory_params.extension.dev_fee_address)?,
@@ -340,7 +299,78 @@ fn _execute_mint(
             &mut res,
         )?;
     }
+    Ok((res, network_fee))
+}
 
+// Generalize checks and mint message creation
+// mint -> _execute_mint(recipient: None, token_id: None)
+// mint_to(recipient: "friend") -> _execute_mint(Some(recipient), token_id: None)
+fn _execute_mint(
+    deps: DepsMut,
+    info: MessageInfo,
+    action: &str,
+    is_admin: bool,
+    recipient: Option<Addr>,
+) -> Result<Response, ContractError> {
+    let config = CONFIG.load(deps.storage)?;
+
+    let sg721_address = SG721_ADDRESS.load(deps.storage)?;
+
+    let recipient_addr = match recipient {
+        Some(some_recipient) => some_recipient,
+        None => info.sender.clone(),
+    };
+
+    let mint_price_with_discounts: Coin = mint_price(deps.as_ref(), is_admin)?;
+    let config_denom = config
+        .mint_price
+        .clone()
+        .denom()
+        .map_err(|_| ContractError::IncorrectFungibility {})?;
+    // Exact payment only accepted
+
+    if !burn_to_mint::sender_is_allowed_burn_collection(
+        info.clone(),
+        config.allowed_burn_collections.clone(),
+    ) {
+        sg_controllers::pay_mint(
+            info.clone(),
+            mint_price_with_discounts.clone(),
+            config_denom,
+        )?;
+    };
+
+    let factory: ParamsResponse = deps
+        .querier
+        .query_wasm_smart(config.factory, &Sg2QueryMsg::Params {})?;
+    let factory_params = factory.params;
+
+    // Create fee msgs
+    // Metadata Storage fees -> minting fee will be enabled for on-chain metadata mints
+    // dev fees are intrinsic in the mint fee (assuming a 50% share)
+    let mint_fee = if is_admin {
+        factory_params
+            .extension
+            .airdrop_mint_fee_bps
+            .bps_to_decimal()
+    } else {
+        factory_params.mint_fee_bps.bps_to_decimal()
+    };
+
+    let (mut res, network_fee) = match burn_to_mint::sender_is_allowed_burn_collection(
+        info.clone(),
+        config.allowed_burn_collections.clone(),
+    ) {
+        true => (Response::new(), Uint128::new(0)),
+        false => pay_fairburn(
+            &deps,
+            info.clone(),
+            mint_price_with_discounts.clone(),
+            mint_fee,
+            factory_params,
+        )?,
+    };
+    // let (mut res, network_fee) =
     // Token ID to mint + update the config counter
     let token_id = increment_token_index(deps.storage)?.to_string();
 
@@ -350,16 +380,15 @@ fn _execute_mint(
         token_id.clone(),
         recipient_addr.clone(),
         match config.extension.nft_data.nft_data_type {
-            NftMetadataType::OnChainMetadata => config.extension.nft_data.extension,
+            NftMetadataType::OnChainMetadata => config.extension.clone().nft_data.extension,
             NftMetadataType::OffChainMetadata => None,
         },
         match config.extension.nft_data.nft_data_type {
             NftMetadataType::OnChainMetadata => None,
-            NftMetadataType::OffChainMetadata => config.extension.nft_data.token_uri,
+            NftMetadataType::OffChainMetadata => config.extension.clone().nft_data.token_uri,
         },
     )?;
     res = res.add_message(msg);
-
     // Save the new mint count for the sender's address
     let new_mint_count = mint_count_per_addr(deps.as_ref(), &info)? + 1;
     MINTER_ADDRS.save(deps.storage, &info.sender, &new_mint_count)?;
@@ -373,20 +402,18 @@ fn _execute_mint(
         },
     )?;
 
-    let seller_amount = {
-        // the net amount is mint price - network fee (mint free + dev fee)
-        let amount = mint_price.amount.checked_sub(network_fee)?;
-        let payment_address = config.extension.payment_address;
-        let seller = config.extension.admin;
-        // Sending 0 coins fails, so only send if amount is non-zero
-        if !amount.is_zero() {
-            let msg = BankMsg::Send {
-                to_address: payment_address.unwrap_or(seller).to_string(),
-                amount: vec![coin(amount.u128(), mint_price.denom)],
-            };
-            res = res.add_message(msg);
-        }
-        amount
+    let (res, seller_amount) = match burn_to_mint::sender_is_allowed_burn_collection(
+        info.clone(),
+        config.allowed_burn_collections,
+    ) {
+        true => (res, Uint128::new(0)),
+        false => sg_controllers::compute_seller_amount(
+            res,
+            mint_price_with_discounts.clone(),
+            network_fee,
+            config.extension.payment_address,
+            config.extension.admin,
+        )?,
     };
 
     Ok(res
@@ -395,7 +422,7 @@ fn _execute_mint(
         .add_attribute("recipient", recipient_addr)
         .add_attribute("token_id", token_id)
         .add_attribute("network_fee", network_fee.to_string())
-        .add_attribute("mint_price", mint_price.amount)
+        .add_attribute("mint_price", mint_price_with_discounts.amount)
         .add_attribute("seller_amount", seller_amount))
 }
 
@@ -418,10 +445,12 @@ pub fn execute_update_mint_price(
         return Err(ContractError::AfterMintEndTime {});
     }
 
+    let config_mint_price = config.mint_price.clone().amount()?.u128();
+
     // If current time is after the stored start_time, only allow lowering price
-    if env.block.time >= config.extension.start_time && price >= config.mint_price.amount.u128() {
+    if env.block.time >= config.extension.start_time && price >= config_mint_price {
         return Err(ContractError::UpdatedMintPriceTooHigh {
-            allowed: config.mint_price.amount.u128(),
+            allowed: config_mint_price,
             updated: price,
         });
     }
@@ -431,15 +460,18 @@ pub fn execute_update_mint_price(
         .query_wasm_smart(config.clone().factory, &Sg2QueryMsg::Params {})?;
     let factory_params = factory.params;
 
-    if factory_params.min_mint_price.amount.u128() > price {
+    let min_mint_price = factory_params.min_mint_price.amount()?;
+
+    if min_mint_price.u128() > price {
         return Err(ContractError::InsufficientMintPrice {
-            expected: factory_params.min_mint_price.amount.u128(),
+            expected: min_mint_price.u128(),
             got: price,
         });
     }
 
-    config.mint_price = coin(price, config.mint_price.denom);
+    config.mint_price = Token::new_fungible_token(price, config.mint_price.clone().denom()?);
     CONFIG.save(deps.storage, &config)?;
+
     Ok(Response::new()
         .add_attribute("action", "update_mint_price")
         .add_attribute("sender", info.sender)
@@ -616,12 +648,25 @@ pub fn execute_update_per_address_limit(
         .add_attribute("limit", per_address_limit.to_string()))
 }
 
+pub fn burn_and_mint(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    msg: Cw721ReceiveMsg,
+) -> Result<Response, ContractError> {
+    let res = burn_to_mint::generate_burn_msg(info.clone(), msg, env.contract.address.clone())?;
+    let mint_res = execute_mint_sender(deps, env, info)?;
+    Ok(res.add_submessages(mint_res.messages))
+}
+
 // if admin_no_fee => no fee,
 // else if in whitelist => whitelist price
 // else => config unit price
 pub fn mint_price(deps: Deps, is_admin: bool) -> Result<Coin, StdError> {
     let config = CONFIG.load(deps.storage)?;
 
+    let config_mint_price = config.mint_price.clone().amount()?;
+    let config_denom = config.mint_price.denom()?;
     if is_admin {
         let factory: ParamsResponse = deps
             .querier
@@ -629,10 +674,10 @@ pub fn mint_price(deps: Deps, is_admin: bool) -> Result<Coin, StdError> {
         let factory_params = factory.params;
         Ok(coin(
             factory_params.extension.airdrop_mint_price.amount.u128(),
-            config.mint_price.denom,
+            config_denom,
         ))
     } else {
-        Ok(config.mint_price)
+        Ok(coin(config_mint_price.u128(), config_denom))
     }
 }
 
@@ -685,6 +730,9 @@ fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
     let config = CONFIG.load(deps.storage)?;
     let sg721_address = SG721_ADDRESS.load(deps.storage)?;
 
+    let config_mint_price = config.mint_price.clone().amount()?;
+    let config_denom = config.mint_price.denom()?;
+
     Ok(ConfigResponse {
         admin: config.extension.admin.to_string(),
         nft_data: config.extension.nft_data,
@@ -694,7 +742,7 @@ fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
         sg721_address: sg721_address.to_string(),
         sg721_code_id: config.collection_code_id,
         start_time: config.extension.start_time,
-        mint_price: config.mint_price,
+        mint_price: coin(config_mint_price.u128(), config_denom),
         factory: config.factory.to_string(),
     })
 }
@@ -740,16 +788,18 @@ fn query_mint_price(deps: Deps) -> StdResult<MintPriceResponse> {
         .querier
         .query_wasm_smart(config.factory, &Sg2QueryMsg::Params {})?;
 
+    let config_mint_price = config.mint_price.clone().amount()?;
+    let config_denom = config.mint_price.denom()?;
+
     let factory_params = factory.params;
 
     let current_price = mint_price(deps, false)?;
-    let public_price = config.mint_price.clone();
     let airdrop_price = coin(
         factory_params.extension.airdrop_mint_price.amount.u128(),
-        config.mint_price.denom,
+        config_denom.clone(),
     );
     Ok(MintPriceResponse {
-        public_price,
+        public_price: coin(config_mint_price.u128(), config_denom),
         airdrop_price,
         current_price,
     })

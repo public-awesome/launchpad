@@ -28,4 +28,10 @@ pub enum ContractError {
 
     #[error("InvalidCollectionCodeId {code_id}")]
     InvalidCollectionCodeId { code_id: u64 },
+
+    #[error("InvalidCollectionAddress")]
+    InvalidCollectionAddress {},
+
+    #[error("NoMinterForNonfungibleToken")]
+    NoMinterForNonfungibleToken {},
 }

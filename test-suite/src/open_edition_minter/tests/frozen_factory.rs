@@ -1,5 +1,6 @@
 use cosmwasm_std::{coins, Coin, Timestamp, Uint128};
 use cw_multi_test::{BankSudo, Executor, SudoMsg};
+use open_edition_factory::state::ParamsExtension;
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
 use open_edition_factory::msg::{OpenEditionUpdateParamsExtension, OpenEditionUpdateParamsMsg};
@@ -7,27 +8,28 @@ use open_edition_factory::types::{NftData, NftMetadataType};
 use sg2::msg::Sg2ExecuteMsg;
 use sg2::tests::mock_collection_params_1;
 
-use crate::common_setup::setup_minter::common::constants::CREATION_FEE;
 use crate::common_setup::setup_minter::common::constants::MIN_MINT_PRICE_OPEN_EDITION;
-use crate::common_setup::setup_minter::open_edition_minter::mock_params::mock_create_minter;
-use crate::common_setup::templates::{
-    open_edition_minter_custom_template, OpenEditionMinterCustomParams,
+use crate::common_setup::setup_minter::common::constants::{CREATION_FEE, DEV_ADDRESS};
+use crate::common_setup::setup_minter::open_edition_minter::minter_params::{
+    default_nft_data, init_msg,
 };
+use crate::common_setup::setup_minter::open_edition_minter::mock_params::mock_create_minter;
+use crate::common_setup::templates::open_edition_minter_custom_template;
 
 #[test]
 fn frozen_factory_cannot_create_new_minters() {
-    let vt = open_edition_minter_custom_template(
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        OpenEditionMinterCustomParams::default(),
-        None,
-        None,
-    )
-    .unwrap();
+    let params_extension = ParamsExtension {
+        max_per_address_limit: 10,
+        airdrop_mint_fee_bps: 100,
+        airdrop_mint_price: Coin {
+            denom: NATIVE_DENOM.to_string(),
+            amount: Uint128::new(100_000_000u128),
+        },
+        dev_fee_address: DEV_ADDRESS.to_string(),
+    };
+    let init_msg = init_msg(default_nft_data(), None, None, None, None);
+    let vt = open_edition_minter_custom_template(params_extension, init_msg).unwrap();
+
     let (mut router, creator, _buyer) = (vt.router, vt.accts.creator, vt.accts.buyer);
     let _minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
     let factory_addr = vt.collection_response_vec[0].factory.clone().unwrap();
@@ -49,6 +51,7 @@ fn frozen_factory_cannot_create_new_minters() {
             dev_fee_address: None,
         },
     };
+
     let sudo_msg = open_edition_factory::msg::SudoMsg::UpdateParams(Box::new(update_msg));
     let _res = router.wasm_sudo(factory_addr.clone(), &sudo_msg);
 
@@ -76,6 +79,7 @@ fn frozen_factory_cannot_create_new_minters() {
         default_nft_data,
         collection_params,
         None,
+        None,
     );
     msg.collection_params.code_id = 3;
     msg.collection_params.info.creator = creator.to_string();
@@ -88,7 +92,7 @@ fn frozen_factory_cannot_create_new_minters() {
                 amount: coins(CREATION_FEE, NATIVE_DENOM),
             }
         }))
-        .map_err(|err| println!("{err:?}"))
+        .map_err(|err| println!("{:?}", err))
         .ok();
     let res = router.execute_contract(creator, factory_addr, &msg, &creation_fee);
     assert_eq!(

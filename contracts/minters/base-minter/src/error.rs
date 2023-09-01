@@ -41,4 +41,7 @@ pub enum ContractError {
 
     #[error("InvalidStartTradingTime {0} < {1}")]
     InvalidStartTradingTime(Timestamp, Timestamp),
+
+    #[error("Burn to Mint Error")]
+    BurnToMintError {},
 }

@@ -10,6 +10,15 @@
     "mint_price"
   ],
   "properties": {
+    "allowed_burn_collections": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "$ref": "#/definitions/Addr"
+      }
+    },
     "collection_code_id": {
       "type": "integer",
       "format": "uint64",
@@ -22,7 +31,7 @@
       "$ref": "#/definitions/Addr"
     },
     "mint_price": {
-      "$ref": "#/definitions/Coin"
+      "$ref": "#/definitions/Token"
     }
   },
   "additionalProperties": false,
@@ -199,6 +208,34 @@
       "allOf": [
         {
           "$ref": "#/definitions/Uint64"
+        }
+      ]
+    },
+    "Token": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "fungible"
+          ],
+          "properties": {
+            "fungible": {
+              "$ref": "#/definitions/Coin"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "non_fungible"
+          ],
+          "properties": {
+            "non_fungible": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
         }
       ]
     },

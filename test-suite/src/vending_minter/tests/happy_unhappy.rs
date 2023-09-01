@@ -36,7 +36,7 @@ fn initialization() {
 
     let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
     let collection_params = mock_collection_params_1(Some(start_time));
-    let mut msg = mock_create_minter(None, collection_params.clone(), None);
+    let mut msg = mock_create_minter(None, collection_params.clone(), None, None);
     msg.init_msg.num_tokens = 100;
     msg.collection_params.code_id = 1;
     msg.collection_params.info.creator = info.sender.to_string();
@@ -51,7 +51,7 @@ fn initialization() {
     let wrong_denom = "uosmo";
     let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
     // let mut msg = minter_init();
-    let mut msg = mock_create_minter(None, collection_params.clone(), None);
+    let mut msg = mock_create_minter(None, collection_params.clone(), None, None);
     // msg.init_msg.mint_price = 100;
     msg.init_msg.mint_price = coin(MINT_PRICE, wrong_denom);
 
@@ -59,7 +59,7 @@ fn initialization() {
 
     // Insufficient mint price returns error
     let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
-    let mut msg = mock_create_minter(None, collection_params.clone(), None);
+    let mut msg = mock_create_minter(None, collection_params.clone(), None, None);
     msg.init_msg.mint_price = coin(1, NATIVE_DENOM);
 
     instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
@@ -67,7 +67,7 @@ fn initialization() {
     // Over max token limit
     let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
     // let mut msg = minter_init();
-    let mut msg = mock_create_minter(None, collection_params.clone(), None);
+    let mut msg = mock_create_minter(None, collection_params.clone(), None, None);
     msg.init_msg.mint_price = coin(MINT_PRICE, NATIVE_DENOM);
     msg.init_msg.num_tokens = MAX_TOKEN_LIMIT + 1;
 
@@ -76,7 +76,7 @@ fn initialization() {
     // Under min token limit
     let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
     // let mut msg = minter_init();
-    let mut msg = mock_create_minter(None, collection_params, None);
+    let mut msg = mock_create_minter(None, collection_params, None, None);
     msg.init_msg.num_tokens = 0;
 
     instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
@@ -86,9 +86,9 @@ fn initialization() {
 fn happy_path() {
     let vt = vending_minter_template(2);
     let (mut router, creator, buyer) = (vt.router, vt.accts.creator, vt.accts.buyer);
+
     let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
     let collection_addr = vt.collection_response_vec[0].collection.clone().unwrap();
-
     // Default start time genesis mint time
     let res: StartTimeResponse = router
         .wrap()

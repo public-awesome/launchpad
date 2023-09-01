@@ -1,4 +1,4 @@
-use cosmwasm_std::{coin, Timestamp};
+use cosmwasm_std::{coin, Addr, Timestamp};
 use sg2::msg::CollectionParams;
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use vending_factory::{
@@ -30,10 +30,12 @@ pub fn mock_create_minter(
     splits_addr: Option<String>,
     collection_params: CollectionParams,
     start_time: Option<Timestamp>,
+    allowed_burn_collections: Option<Vec<Addr>>,
 ) -> VendingMinterCreateMsg {
     VendingMinterCreateMsg {
         init_msg: mock_init_extension(splits_addr, start_time),
         collection_params,
+        allowed_burn_collections,
     }
 }
 
@@ -44,6 +46,7 @@ pub fn mock_create_minter_init_msg(
     VendingMinterCreateMsg {
         init_msg,
         collection_params,
+        allowed_burn_collections: None,
     }
 }
 
@@ -53,10 +56,10 @@ pub fn mock_params(mint_denom: Option<String>) -> VendingMinterParams {
         allowed_sg721_code_ids: vec![1, 3, 5, 6],
         frozen: false,
         creation_fee: coin(CREATION_FEE, NATIVE_DENOM),
-        min_mint_price: coin(
+        min_mint_price: sg2::Fungible(coin(
             MIN_MINT_PRICE,
             mint_denom.unwrap_or_else(|| NATIVE_DENOM.to_string()),
-        ),
+        )),
         mint_fee_bps: MINT_FEE_FAIR_BURN,
         max_trading_offset_secs: 60 * 60 * 24 * 7,
         extension: ParamsExtension {

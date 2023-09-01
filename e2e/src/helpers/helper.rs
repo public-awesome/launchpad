@@ -44,10 +44,10 @@ pub fn instantiate_factory(
                     amount: Uint128::new(CREATION_FEE),
                     denom: denom.to_string(),
                 },
-                min_mint_price: Coin {
+                min_mint_price: sg2::Fungible(Coin {
                     amount: Uint128::new(50),
                     denom: denom.to_string(),
-                },
+                }),
                 mint_fee_bps: 1000, // 10%
                 max_trading_offset_secs: (60 * 60) * 24,
                 extension: ParamsExtension {
@@ -108,6 +108,7 @@ pub fn create_minter_msg(
                 royalty_info: None,
             },
         },
+        allowed_burn_collections: None,
     }
 }
 

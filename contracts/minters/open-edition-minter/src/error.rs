@@ -54,7 +54,6 @@ pub enum ContractError {
 
     #[error("Minimum network mint price {expected} got {got}")]
     InsufficientMintPrice { expected: u128, got: u128 },
-
     #[error("Minimum whitelist mint price {expected} got {got}")]
     InsufficientWhitelistMintPrice { expected: u128, got: u128 },
 
@@ -114,4 +113,10 @@ pub enum ContractError {
 
     #[error("Multiply Fraction Error")]
     CheckedMultiplyFractionError {},
+
+    #[error("Expected fungible token, received nonfungible")]
+    IncorrectFungibility {},
+
+    #[error("Burn to Mint Error")]
+    BurnToMintError {},
 }

@@ -1,11 +1,14 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::Coin;
+use cosmwasm_std::{Addr, Coin};
 use sg721::{CollectionInfo, RoyaltyInfoResponse};
+
+use crate::Token;
 
 #[cw_serde]
 pub struct CreateMinterMsg<T> {
     pub init_msg: T,
     pub collection_params: CollectionParams,
+    pub allowed_burn_collections: Option<Vec<Addr>>,
 }
 
 #[cw_serde]
@@ -26,7 +29,7 @@ pub struct UpdateMinterParamsMsg<T> {
     pub rm_sg721_code_ids: Option<Vec<u64>>,
     pub frozen: Option<bool>,
     pub creation_fee: Option<Coin>,
-    pub min_mint_price: Option<Coin>,
+    pub min_mint_price: Option<Token>,
     pub mint_fee_bps: Option<u64>,
     pub max_trading_offset_secs: Option<u64>,
     pub extension: T,

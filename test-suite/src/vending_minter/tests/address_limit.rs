@@ -314,6 +314,7 @@ fn mint_for_token_id_addr() {
     let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
     let collection_addr = vt.collection_response_vec[0].collection.clone().unwrap();
     setup_block_time(&mut router, GENESIS_MINT_START_TIME, None);
+
     // Try mint_for, test unauthorized
     let mint_for_msg = ExecuteMsg::MintFor {
         token_id: 1,
@@ -431,11 +432,11 @@ fn mint_for_token_id_addr() {
         )
         .unwrap_err();
     assert_eq!(
-        ContractError::IncorrectPaymentAmount(
+        format!(
+            "Generic error: IncorrectPaymentAmount {} != {}",
             coin(ADMIN_MINT_PRICE + 1, NATIVE_DENOM.to_string()),
             coin(ADMIN_MINT_PRICE, NATIVE_DENOM.to_string())
-        )
-        .to_string(),
+        ),
         err.source().unwrap().to_string()
     );
 

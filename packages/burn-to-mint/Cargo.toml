@@ -1,0 +1,40 @@
+[package]
+name = "burn-to-mint"
+authors = ["Michael Scotto <m@publicawsome.com>"]
+description = "Burn to mint utility functions"
+version = { workspace = true }
+edition = { workspace = true }
+homepage = { workspace = true }
+repository = { workspace = true }
+license = { workspace = true }
+
+exclude = [
+    # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
+    "contract.wasm",
+    "hash.txt",
+]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+cosmwasm-schema = { workspace = true }
+cosmwasm-std = { workspace = true, features = ["staking"] }
+base-factory    = { workspace = true }
+cw2             = { workspace = true }
+cw721           = { workspace = true }
+cw721-base      = { workspace = true, features = ["library"] }
+cw-storage-plus = { workspace = true }
+cw-utils        = { workspace = true }
+schemars        = { workspace = true }
+serde           = { workspace = true }
+sg1             = { workspace = true }
+sg2             = { workspace = true }
+sg4             = { workspace = true }
+sg721           = { workspace = true }
+sg721-base      = { workspace = true, features = ["library"] }
+sg-std          = { workspace = true }
+thiserror       = { workspace = true }
+url             = { workspace = true }

@@ -38,7 +38,7 @@ fn zero_mint_price() {
         whitelist: Some("invalid address".to_string()),
     };
 
-    let minter_params = minter_params_all(num_tokens, None, None, Some(init_msg));
+    let minter_params = minter_params_all(num_tokens, None, None, Some(init_msg), None);
     let code_ids = vending_minter_code_ids(&mut app);
 
     let setup_params: MinterSetupParams = MinterSetupParams {
@@ -52,6 +52,7 @@ fn zero_mint_price() {
         sg721_code_id: code_ids.sg721_code_id,
         start_time: minter_params.start_time,
         init_msg: minter_params.init_msg,
+        allowed_burn_collections: None,
     };
 
     let minter_code_id = setup_params.minter_code_id;
@@ -62,7 +63,7 @@ fn zero_mint_price() {
 
     let mut params = mock_params(None);
     params.code_id = minter_code_id;
-    params.min_mint_price = coin(MINT_PRICE, NATIVE_DENOM);
+    params.min_mint_price = sg2::Fungible(coin(MINT_PRICE, NATIVE_DENOM));
 
     let factory_addr = router
         .instantiate_contract(
@@ -128,7 +129,7 @@ fn zero_wl_mint_price() {
         whitelist: Some("invalid address".to_string()),
     };
 
-    let minter_params = minter_params_all(num_tokens, None, None, Some(init_msg));
+    let minter_params = minter_params_all(num_tokens, None, None, Some(init_msg), None);
     let code_ids = vending_minter_code_ids(&mut app);
 
     let setup_params: MinterSetupParams = MinterSetupParams {
@@ -142,6 +143,7 @@ fn zero_wl_mint_price() {
         sg721_code_id: code_ids.sg721_code_id,
         start_time: minter_params.start_time,
         init_msg: minter_params.init_msg,
+        allowed_burn_collections: None,
     };
 
     let minter_code_id = setup_params.minter_code_id;
@@ -152,7 +154,7 @@ fn zero_wl_mint_price() {
 
     let mut params = mock_params(None);
     params.code_id = minter_code_id;
-    params.min_mint_price = coin(MINT_PRICE, NATIVE_DENOM);
+    params.min_mint_price = sg2::Fungible(coin(MINT_PRICE, NATIVE_DENOM));
 
     let factory_addr = router
         .instantiate_contract(
@@ -225,7 +227,7 @@ fn zero_wl_mint_errs_with_min_mint_factory() {
         whitelist: None,
     };
 
-    let minter_params = minter_params_all(num_tokens, None, None, Some(init_msg));
+    let minter_params = minter_params_all(num_tokens, None, None, Some(init_msg), None);
     let code_ids = vending_minter_code_ids(&mut app);
 
     let setup_params: MinterSetupParams = MinterSetupParams {
@@ -239,6 +241,7 @@ fn zero_wl_mint_errs_with_min_mint_factory() {
         sg721_code_id: code_ids.sg721_code_id,
         start_time: minter_params.start_time,
         init_msg: minter_params.init_msg,
+        allowed_burn_collections: None,
     };
 
     let minter_code_id = setup_params.minter_code_id;
@@ -249,7 +252,7 @@ fn zero_wl_mint_errs_with_min_mint_factory() {
 
     let mut params = mock_params(None);
     params.code_id = minter_code_id;
-    params.min_mint_price = coin(min_mint_price, NATIVE_DENOM);
+    params.min_mint_price = sg2::Fungible(coin(min_mint_price, NATIVE_DENOM));
 
     let factory_addr = router
         .instantiate_contract(

@@ -82,15 +82,16 @@ pub fn execute_create_minter(
             got: msg.init_msg.per_address_limit,
         });
     }
-
+    let denom_min_mint_price = params.min_mint_price.clone().denom()?;
     ensure!(
-        params.min_mint_price.denom == msg.init_msg.mint_price.denom,
+        denom_min_mint_price == msg.init_msg.mint_price.denom,
         ContractError::DenomMismatch {}
     );
 
-    if params.min_mint_price.amount > msg.init_msg.mint_price.amount {
+    let params_min_mint_price = params.min_mint_price.amount()?;
+    if params_min_mint_price > msg.init_msg.mint_price.amount {
         return Err(ContractError::InsufficientMintPrice {
-            expected: params.min_mint_price.amount.u128(),
+            expected: params_min_mint_price.into(),
             got: msg.init_msg.mint_price.amount.into(),
         });
     }
@@ -123,7 +124,7 @@ pub fn sudo_update_params(
 ) -> Result<Response, ContractError> {
     let mut params = SUDO_PARAMS.load(deps.storage)?;
 
-    update_params(&mut params, param_msg.clone())?;
+    update_params(&mut params, param_msg.clone(), deps.as_ref())?;
 
     params.extension.max_token_limit = param_msg
         .extension

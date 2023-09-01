@@ -1,9 +1,11 @@
 use cw721_base::state::TokenInfo;
+use cw721_base::MinterResponse;
+
 use url::Url;
 
 use cosmwasm_std::{
-    to_binary, Addr, Binary, ContractInfoResponse, Decimal, Deps, DepsMut, Empty, Env, Event,
-    MessageInfo, StdError, StdResult, Storage, Timestamp, WasmQuery,
+    from_binary, to_binary, Addr, Binary, ContractInfoResponse, Decimal, Deps, DepsMut, Empty, Env,
+    Event, MessageInfo, StdError, StdResult, Storage, Timestamp, WasmQuery,
 };
 
 use cw721::{ContractInfoResponse as CW721ContractInfoResponse, Cw721Execute};
@@ -16,7 +18,7 @@ use sg721::{
 };
 use sg_std::Response;
 
-use crate::msg::{CollectionInfoResponse, NftParams, QueryMsg};
+use crate::msg::{self, CollectionInfoResponse, NftParams, QueryMsg};
 use crate::{ContractError, Sg721Contract};
 
 use crate::entry::{CONTRACT_NAME, CONTRACT_VERSION};
@@ -322,7 +324,6 @@ where
                 extension,
             } => (token_id, owner, token_uri, extension),
         };
-
         // create the token
         let token = TokenInfo {
             owner: deps.api.addr_validate(&owner)?,
@@ -336,7 +337,6 @@ where
                 Some(_) => Err(ContractError::Claimed {}),
                 None => Ok(token),
             })?;
-
         self.parent.increment_tokens(deps.storage)?;
 
         let mut res = Response::new()
@@ -416,6 +416,12 @@ where
 
         Ok(response)
     }
+
+    pub fn get_minter_owner_parent(&self, deps: Deps, env: Env) -> StdResult<MinterResponse> {
+        let msg = msg::QueryMsg::Minter {};
+        let minter: MinterResponse = from_binary(&self.parent.query(deps, env, msg.into())?)?;
+        Ok(minter)
+    }
 }
 
 pub fn share_validate(share: Decimal) -> Result<Decimal, ContractError> {
@@ -426,14 +432,6 @@ pub fn share_validate(share: Decimal) -> Result<Decimal, ContractError> {
     }
 
     Ok(share)
-}
-
-pub fn get_owner_minter(storage: &mut dyn Storage) -> Result<Addr, ContractError> {
-    let ownership = cw_ownable::get_ownership(storage)?;
-    match ownership.owner {
-        Some(owner_value) => Ok(owner_value),
-        None => Err(ContractError::MinterNotFound {}),
-    }
 }
 
 pub fn assert_minter_owner(storage: &mut dyn Storage, sender: &Addr) -> Result<(), ContractError> {

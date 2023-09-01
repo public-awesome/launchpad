@@ -58,7 +58,8 @@ impl OpenEditionMinterInitMsgExtension {
             ));
         }
 
-        if init_msg.mint_price.amount < params.min_mint_price.amount {
+        let min_mint_price = params.min_mint_price.clone().amount()?;
+        if init_msg.mint_price.amount < min_mint_price {
             return Err(ContractError::InvalidMintPrice {});
         }
 
