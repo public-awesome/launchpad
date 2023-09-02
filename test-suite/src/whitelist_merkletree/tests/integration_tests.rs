@@ -5,8 +5,11 @@ mod tests {
     use rs_merkle::MerkleTree;
     use sg_multi_test::StargazeApp;
     use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
-    use sg_whitelist_mtree::tests::{hasher::SortingSha256Hasher, test_helpers::tree_from_vec};
-    use sg_whitelist_mtree::msg::*;
+    
+    use whitelist_mtree::{
+        tests::{hasher::SortingSha256Hasher, test_helpers::tree_from_vec},
+        msg::*
+    };
 
     use crate::common_setup::contract_boxes::{contract_whitelist_merkletree, custom_mock_app};
 

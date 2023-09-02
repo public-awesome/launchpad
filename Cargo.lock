@@ -3403,28 +3403,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "sg-whitelist-mtree"
-version = "3.1.0"
-dependencies = [
- "cosmwasm-schema",
- "cosmwasm-std",
- "cw-storage-plus 1.1.0",
- "cw-utils 1.0.1",
- "cw2 1.1.0",
- "hex",
- "rs_merkle",
- "rust_decimal",
- "schemars",
- "serde",
- "serde_json",
- "sg-std",
- "sg1",
- "sha256",
- "thiserror",
- "url",
-]
-
-[[package]]
 name = "sg1"
 version = "3.1.0"
 dependencies = [
@@ -3595,19 +3573,6 @@ dependencies = [
  "cfg-if",
  "cpufeatures",
  "digest 0.10.6",
-]
-
-[[package]]
-name = "sha256"
-version = "1.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7895c8ae88588ccead14ff438b939b0c569cd619116f14b4d13fdff7b8333386"
-dependencies = [
- "async-trait",
- "bytes",
- "hex",
- "sha2 0.10.6",
- "tokio",
 ]
 
 [[package]]
@@ -3943,7 +3908,6 @@ dependencies = [
  "sg-splits",
  "sg-std",
  "sg-whitelist",
- "sg-whitelist-mtree",
  "sg1",
  "sg2",
  "sg4",
@@ -3958,6 +3922,7 @@ dependencies = [
  "vending-factory",
  "vending-minter",
  "whitelist-immutable",
+ "whitelist-mtree",
 ]
 
 [[package]]
@@ -4373,7 +4338,6 @@ dependencies = [
  "serde",
  "sg-std",
  "sg-whitelist",
- "sg-whitelist-mtree",
  "sg1",
  "sg2",
  "sg4",
@@ -4383,6 +4347,7 @@ dependencies = [
  "thiserror",
  "url",
  "vending-factory",
+ "whitelist-mtree",
 ]
 
 [[package]]
@@ -4563,6 +4528,27 @@ dependencies = [
  "sg-std",
  "sg-whitelist",
  "thiserror",
+]
+
+[[package]]
+name = "whitelist-mtree"
+version = "3.1.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus 1.1.0",
+ "cw-utils 1.0.1",
+ "cw2 1.1.0",
+ "hex",
+ "rs_merkle",
+ "rust_decimal",
+ "schemars",
+ "serde",
+ "serde_json",
+ "sg-std",
+ "sg1",
+ "thiserror",
+ "url",
 ]
 
 [[package]]

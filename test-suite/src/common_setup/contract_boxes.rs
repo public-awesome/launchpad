@@ -143,9 +143,9 @@ pub fn contract_whitelist_immutable() -> Box<dyn Contract<StargazeMsgWrapper>> {
 
 pub fn contract_whitelist_merkletree() -> Box<dyn Contract<StargazeMsgWrapper>> {
     let contract = ContractWrapper::new(
-        sg_whitelist_mtree::contract::execute,
-        sg_whitelist_mtree::contract::instantiate,
-        sg_whitelist_mtree::contract::query,
+        whitelist_mtree::contract::execute,
+        whitelist_mtree::contract::instantiate,
+        whitelist_mtree::contract::query,
     );
     Box::new(contract)
 }

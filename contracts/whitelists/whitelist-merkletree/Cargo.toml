@@ -1,5 +1,5 @@
 [package]
-name        = "sg-whitelist-mtree"
+name        = "whitelist-mtree"
 authors     = ["Martin Mo Kromsten <kromsten@pm.me>"]
 description = "Stargaze Merkle Tree Whitelist Contract"
 version     = { workspace = true }
@@ -38,8 +38,7 @@ sg1             = { workspace = true }
 sg-std          = { workspace = true }
 thiserror       = { workspace = true }
 url             = { workspace = true }
-sha256 = "1.4.0"
 hex = "0.4.3"
-rs_merkle = "1.4.1"
 serde_json = "1.0.105"
+rs_merkle = { version = "1.4.1", default-features = false }
 

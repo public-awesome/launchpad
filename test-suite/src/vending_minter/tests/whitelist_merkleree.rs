@@ -4,7 +4,6 @@ use cw721_base::ExecuteMsg as Cw721ExecuteMsg;
 use cw_multi_test::Executor;
 use sg2::tests::mock_collection_params_1;
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
-use sg_whitelist_mtree::tests::test_helpers::tree_from_vec;
 
 use crate::common_setup::msg::MinterCollectionResponse;
 use crate::common_setup::setup_accounts_and_block::coins_for_msg;
@@ -20,7 +19,10 @@ use crate::common_setup::{
 use vending_minter::msg::{MintCountResponse, QueryMsg, ExecuteMsg};
 use vending_minter::ContractError;
 
-use sg_whitelist_mtree::msg::ExecuteMsg as WhitelistExecuteMsg;
+use whitelist_mtree::{
+    tests::test_helpers::tree_from_vec,
+    msg::ExecuteMsg as WhitelistExecuteMsg
+};
 
 const MINT_PRICE: u128 = 100_000_000;
 const WHITELIST_AMOUNT: u128 = 66_000_000;

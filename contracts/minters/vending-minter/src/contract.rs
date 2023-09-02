@@ -33,7 +33,7 @@ use sg_std::{
 use sg_whitelist::msg::{
     ConfigResponse as WhitelistConfigResponse, HasMemberResponse, QueryMsg as WhitelistQueryMsg,
 };
-use sg_whitelist_mtree::msg::QueryMsg as WhitelistMtreeQueryMsg;
+use whitelist_mtree::msg::QueryMsg as WhitelistMtreeQueryMsg;
 use sha2::{Digest, Sha256};
 use shuffle::{fy::FisherYates, shuffler::Shuffler};
 use url::Url;
