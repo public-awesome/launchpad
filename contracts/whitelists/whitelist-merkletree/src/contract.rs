@@ -21,7 +21,7 @@ use url::Url;
 
 
 // version info for migration info
-const CONTRACT_NAME: &str = "crates.io:sg-whitelist-flex";
+const CONTRACT_NAME: &str = "crates.io:whitelist-merkletree";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 // contract governance params

@@ -238,4 +238,5 @@ mod tests {
         let proof = vec!["x".to_string(), "x".to_string()];
         let _ = query_has_member(deps.as_ref(), user.sender.to_string(), proof).unwrap_err();
     }
+
 }

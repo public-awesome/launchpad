@@ -12,10 +12,10 @@ pub struct InstantiateMsg {
     pub merkle_root: String,
     pub merkle_tree_uri: Option<String>,
 
-    pub per_address_limit: u32,
     pub start_time: Timestamp,
     pub end_time: Timestamp,
     pub mint_price: Coin,
+    pub per_address_limit: u32,
 
     pub admins: Vec<String>,
     pub admins_mutable: bool,

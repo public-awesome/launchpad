@@ -4,8 +4,17 @@ use rs_merkle::{MerkleTree, algorithms::Sha256, Hasher};
 use super::hasher::SortingSha256Hasher;
 
 
-pub fn tree_from_vec(leaves: &Vec<String>) -> MerkleTree::<SortingSha256Hasher> {
-    let leaves: Vec<[u8; 32]> = leaves
+
+fn text_from_file(path: &str) -> String {
+    let mut file = File::open(path).unwrap();
+    let mut data = String::new();
+    file.read_to_string(&mut data).unwrap();
+    data
+}
+
+
+fn hash_and_build_tree(serialized: &Vec<String>) -> MerkleTree::<SortingSha256Hasher> {
+    let leaves: Vec<[u8; 32]> = serialized
         .iter()
         .map(|x| Sha256::hash(x.as_bytes()))
         .collect();
@@ -13,17 +22,41 @@ pub fn tree_from_vec(leaves: &Vec<String>) -> MerkleTree::<SortingSha256Hasher> 
     MerkleTree::<SortingSha256Hasher>::from_leaves(&leaves)
 }
 
-pub fn get_merkle_tree_simple(path_prefix: Option<String>) -> MerkleTree::<SortingSha256Hasher> {
-    let path = path_prefix.unwrap_or_default() + "src/tests/data/whitelist_simple.json";
-    let mut file = File::open(path).unwrap();
-    let mut data = String::new();
-    file.read_to_string(&mut data).unwrap();
-    let serialized: Vec<String> = serde_json::from_str(data.as_str()).unwrap();
-    let leaves: Vec<[u8; 32]> = serialized
-        .iter()
-        .map(|x| Sha256::hash(x.as_bytes()))
+pub fn tree_from_file(path: &str) -> MerkleTree::<SortingSha256Hasher> {
+    let data = text_from_file(path);
+
+    let serialized: Vec<String> = data
+        .split("\n")
+        .map(|x| x.to_string())
+        .filter(|s| !s.is_empty() && s.len() > 1)
         .collect();
 
-    let merkle_tree = MerkleTree::<SortingSha256Hasher>::from_leaves(&leaves);
-    merkle_tree
+    hash_and_build_tree(&serialized)
+}
+
+pub fn get_merkle_tree_simple(path_prefix: Option<String>) -> MerkleTree::<SortingSha256Hasher> {
+    let path = path_prefix.unwrap_or_default() + "src/tests/data/whitelist_simple.txt";
+    tree_from_file(path.as_str())
+}
+
+pub fn get_merkle_tree_medium() -> MerkleTree<SortingSha256Hasher> {
+    let path = "src/tests/data/whitelist_medium.txt";
+    tree_from_file(path)
+}
+
+pub fn get_merkle_tree_large() -> MerkleTree<SortingSha256Hasher> {
+    let path = "src/tests/data/whitelist_medium.txt";
+    let data = text_from_file(path);
+
+    let mut serialized: Vec<String> = data
+        .split("\n")
+        .map(|x| x.to_string())
+        .filter(|s| !s.is_empty() && s.len() > 1)
+        .collect();
+
+    for _ in 0..5 {
+        serialized.extend(serialized.clone());
+    }
+
+    hash_and_build_tree(&serialized)
 }
