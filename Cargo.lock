@@ -308,6 +308,7 @@ dependencies = [
  "schemars",
  "serde",
  "sg-controllers",
+ "sg-mint-hooks",
  "sg-std",
  "sg1",
  "sg2",

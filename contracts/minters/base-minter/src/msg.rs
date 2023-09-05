@@ -2,6 +2,7 @@ use base_factory::{msg::BaseMinterCreateMsg, state::BaseMinterParams};
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{to_binary, Binary, Empty, StdResult, Timestamp};
 use sg4::MinterConfigResponse;
+use sg_mint_hooks::sg_mint_hooks_execute;
 
 #[cw_serde]
 pub struct InstantiateMsg {
@@ -9,11 +10,11 @@ pub struct InstantiateMsg {
     pub params: BaseMinterParams,
 }
 
+#[sg_mint_hooks_execute]
 #[cw_serde]
 pub enum ExecuteMsg {
     Mint { token_uri: String },
     UpdateStartTradingTime(Option<Timestamp>),
-    AddPreMintHook { hook: String },
 }
 
 pub type ConfigResponse = MinterConfigResponse<Empty>;

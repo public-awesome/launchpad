@@ -1,7 +1,7 @@
 use cosmwasm_std::{StdError, Timestamp};
 use cw_utils::{ParseReplyError, PaymentError};
 use sg1::FeeError;
-use sg_controllers::HookError;
+use sg_mint_hooks::MintHookError;
 use thiserror::Error;
 use url::ParseError;
 
@@ -23,7 +23,7 @@ pub enum ContractError {
     Unauthorized(String),
 
     #[error("{0}")]
-    Hook(#[from] HookError),
+    MintHook(#[from] MintHookError),
 
     #[error("{0}")]
     ParseReply(#[from] ParseReplyError),

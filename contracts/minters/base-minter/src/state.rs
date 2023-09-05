@@ -1,7 +1,6 @@
 use cosmwasm_std::{Addr, Empty, StdResult, Storage};
 use cw_storage_plus::Item;
 use sg4::{MinterConfig, Status};
-use sg_controllers::Hooks;
 
 pub type Config = MinterConfig<Empty>;
 
@@ -22,5 +21,3 @@ pub fn increment_token_index(store: &mut dyn Storage) -> StdResult<u64> {
     TOKEN_INDEX.save(store, &val)?;
     Ok(val)
 }
-
-pub const PREMINT_HOOKS: Hooks = Hooks::new("premint-hooks");

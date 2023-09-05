@@ -1,8 +1,6 @@
 use crate::error::ContractError;
-use crate::msg::{ConfigResponse, ExecuteMsg, PreMintHookMsg};
-use crate::state::{
-    increment_token_index, Config, COLLECTION_ADDRESS, CONFIG, PREMINT_HOOKS, STATUS,
-};
+use crate::msg::{ConfigResponse, ExecuteMsg};
+use crate::state::{increment_token_index, Config, COLLECTION_ADDRESS, CONFIG, STATUS};
 
 use base_factory::msg::{BaseMinterCreateMsg, ParamsResponse};
 
@@ -22,6 +20,10 @@ use sg2::query::Sg2QueryMsg;
 use sg4::{QueryMsg, Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
 use sg721_base::msg::{CollectionInfoResponse, QueryMsg as Sg721QueryMsg};
+use sg_mint_hooks::{
+    add_postmint_hook, add_premint_hook, handle_reply, prepare_postmint_hooks,
+    prepare_premint_hooks,
+};
 use sg_std::math::U64Ext;
 use sg_std::{Response, SubMsg, NATIVE_DENOM};
 use url::Url;
@@ -114,40 +116,10 @@ pub fn execute(
         ExecuteMsg::UpdateStartTradingTime(time) => {
             execute_update_start_trading_time(deps, env, info, time)
         }
-        ExecuteMsg::AddPreMintHook { hook } => add_premint_hook(deps, hook),
+        // TODO: gate these with `only_minter()`
+        ExecuteMsg::AddPreMintHook { hook } => add_premint_hook(deps, hook).map_err(|e| e.into()),
+        ExecuteMsg::AddPostMintHook { hook } => add_postmint_hook(deps, hook).map_err(|e| e.into()),
     }
-}
-
-pub fn add_premint_hook(deps: DepsMut, hook: String) -> Result<Response, ContractError> {
-    PREMINT_HOOKS.add_hook(deps.storage, deps.api.addr_validate(&hook)?)?;
-
-    let res = Response::new()
-        .add_attribute("action", "add_premint_hook")
-        .add_attribute("hook", hook);
-    Ok(res)
-}
-
-fn prepare_premint_hook(
-    deps: Deps,
-    collection: Addr,
-    token_id: Option<String>,
-    buyer: String,
-) -> StdResult<Vec<SubMsg>> {
-    let submsgs = PREMINT_HOOKS.prepare_hooks(deps.storage, |h| {
-        let msg = PreMintHookMsg {
-            collection: collection.to_string(),
-            token_id: token_id.clone(),
-            buyer: buyer.clone(),
-        };
-        let execute = WasmMsg::Execute {
-            contract_addr: h.to_string(),
-            msg: msg.into_binary()?,
-            funds: vec![],
-        };
-        Ok(SubMsg::reply_on_error(execute, PREMINT_HOOK_REPLY_ID))
-    })?;
-
-    Ok(submsgs)
 }
 
 pub fn execute_mint_sender(
@@ -195,7 +167,14 @@ pub fn execute_mint_sender(
 
     let token_id = increment_token_index(deps.storage)?.to_string();
 
-    prepare_premint_hook(
+    let premint_hooks = prepare_premint_hooks(
+        deps.as_ref(),
+        collection.clone(),
+        Some(token_id.clone()),
+        info.sender.to_string(),
+    )?;
+
+    let postmint_hooks = prepare_postmint_hooks(
         deps.as_ref(),
         collection.clone(),
         Some(token_id.clone()),
@@ -209,12 +188,14 @@ pub fn execute_mint_sender(
         token_uri: Some(token_uri.clone()),
         extension: None,
     };
-    let msg = CosmosMsg::Wasm(WasmMsg::Execute {
+    let mint = CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: collection.to_string(),
         msg: to_binary(&mint_msg)?,
         funds: vec![],
     });
-    res = res.add_message(msg);
+    res = res.add_submessages(premint_hooks);
+    res = res.add_submessage(mint);
+    res = res.add_submessages(postmint_hooks);
 
     Ok(res
         .add_attribute("action", "mint")
@@ -299,6 +280,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::Config {} => to_binary(&query_config(deps)?),
         QueryMsg::Status {} => to_binary(&query_status(deps)?),
     }
+    // TODO: add mint-hook queries
 }
 
 fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
@@ -319,6 +301,8 @@ pub fn query_status(deps: Deps) -> StdResult<StatusResponse> {
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
+    handle_reply(msg.id)?;
+
     match msg.id {
         INSTANTIATE_SG721_REPLY_ID => {
             let res = parse_reply_instantiate_data(msg)?;
@@ -327,8 +311,6 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractE
             Ok(Response::new()
                 .add_attribute("action", "instantiate_sg721")
                 .add_attribute("collection_address", collection_address))
-        }
-        PREMINT_HOOK_REPLY_ID => Err(ContractError::HookFailed {}),
-        _ => Err(ContractError::InvalidReplyID {}),
+        } // _ => Err(ContractError::InvalidReplyID {}),
     }
 }

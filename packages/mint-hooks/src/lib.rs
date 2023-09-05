@@ -3,6 +3,9 @@ use cosmwasm_std::{to_binary, Addr, Binary, Deps, DepsMut, StdError, StdResult, 
 use sg_controllers::{HookError, Hooks};
 use sg_std::{Response, SubMsg};
 
+// re-export the proc macros
+pub use sg_mint_hooks_derive::{sg_mint_hooks_execute, sg_mint_hooks_query};
+
 pub const PREMINT_HOOKS: Hooks = Hooks::new("premint-hooks");
 pub const POSTMINT_HOOKS: Hooks = Hooks::new("postmint-hooks");
 
@@ -38,7 +41,7 @@ pub enum PreMintExecuteHookMsg {
     PreMintHook(PreMintHookMsg),
 }
 
-pub fn add_premint_hook(deps: DepsMut, hook: String) -> Result<Response, HookError> {
+pub fn add_premint_hook(deps: DepsMut, hook: String) -> Result<Response, MintHookError> {
     PREMINT_HOOKS.add_hook(deps.storage, deps.api.addr_validate(&hook)?)?;
 
     let res = Response::new()
@@ -47,7 +50,7 @@ pub fn add_premint_hook(deps: DepsMut, hook: String) -> Result<Response, HookErr
     Ok(res)
 }
 
-pub fn prepare_premint_hook(
+pub fn prepare_premint_hooks(
     deps: Deps,
     collection: Addr,
     token_id: Option<String>,
@@ -85,6 +88,9 @@ pub enum MintHookError {
     #[error("{0}")]
     Std(#[from] StdError),
 
+    #[error("{0}")]
+    Hook(#[from] HookError),
+
     #[error("pre-mint hook failed")]
     PreMintHookFailed {},
 
@@ -121,7 +127,7 @@ pub enum PostMintExecuteHookMsg {
     PostMintHook(PostMintHookMsg),
 }
 
-pub fn add_postmint_hook(deps: DepsMut, hook: String) -> Result<Response, HookError> {
+pub fn add_postmint_hook(deps: DepsMut, hook: String) -> Result<Response, MintHookError> {
     POSTMINT_HOOKS.add_hook(deps.storage, deps.api.addr_validate(&hook)?)?;
 
     let res = Response::new()
@@ -130,7 +136,7 @@ pub fn add_postmint_hook(deps: DepsMut, hook: String) -> Result<Response, HookEr
     Ok(res)
 }
 
-pub fn prepare_postmint_hook(
+pub fn prepare_postmint_hooks(
     deps: Deps,
     collection: Addr,
     token_id: Option<String>,

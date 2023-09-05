@@ -42,6 +42,7 @@ sg721-nt             = { version = "3.1.0", path = "contracts/collections/sg721-
 sg721-updatable      = { version = "3.1.0", path = "contracts/collections/sg721-updatable" }
 sg-controllers       = { version = "3.1.0", path = "packages/controllers" }
 sg-metadata          = { version = "3.1.0", path = "packages/sg-metadata" }
+sg-mint-hooks        = { version = "3.1.0", path = "packages/mint-hooks" }
 sg-multi-test        = { version = "3.1.0" }
 sg-splits            = { version = "3.1.0", path = "contracts/splits" }
 sg-std               = { version = "3.1.0" }
