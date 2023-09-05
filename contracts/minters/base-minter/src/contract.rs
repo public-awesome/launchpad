@@ -1,5 +1,5 @@
 use crate::error::ContractError;
-use crate::msg::{ConfigResponse, ExecuteMsg};
+use crate::msg::{ConfigResponse, ExecuteMsg, QueryMsg};
 use crate::state::{increment_token_index, Config, COLLECTION_ADDRESS, CONFIG, STATUS};
 
 use base_factory::msg::{BaseMinterCreateMsg, ParamsResponse};
@@ -17,13 +17,12 @@ use cw_utils::{must_pay, nonpayable, parse_reply_instantiate_data};
 
 use sg1::checked_fair_burn;
 use sg2::query::Sg2QueryMsg;
-use sg4::{QueryMsg, Status, StatusResponse, SudoMsg};
+use sg4::{Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
 use sg721_base::msg::{CollectionInfoResponse, QueryMsg as Sg721QueryMsg};
-use sg_mint_hooks::{
-    add_postmint_hook, add_premint_hook, handle_reply, prepare_postmint_hooks,
-    prepare_premint_hooks,
-};
+use sg_mint_hooks::handle_reply;
+use sg_mint_hooks::post::{add_postmint_hook, prepare_postmint_hooks};
+use sg_mint_hooks::pre::{add_premint_hook, prepare_premint_hooks};
 use sg_std::math::U64Ext;
 use sg_std::{Response, SubMsg, NATIVE_DENOM};
 use url::Url;
@@ -281,8 +280,9 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::Config {} => to_binary(&query_config(deps)?),
         QueryMsg::Status {} => to_binary(&query_status(deps)?),
+        QueryMsg::PreMintHooks {} => sg_mint_hooks::pre::query_premint_hooks(deps),
+        QueryMsg::PostMintHooks {} => sg_mint_hooks::post::query_postmint_hooks(deps),
     }
-    // TODO: add mint-hook queries
 }
 
 fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
