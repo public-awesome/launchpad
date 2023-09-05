@@ -307,8 +307,6 @@ dependencies = [
  "cw721-base 0.18.0",
  "schemars",
  "serde",
- "sg-controllers",
- "sg-mint-hooks",
  "sg-std",
  "sg1",
  "sg2",

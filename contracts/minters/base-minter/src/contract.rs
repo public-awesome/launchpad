@@ -1,5 +1,5 @@
 use crate::error::ContractError;
-use crate::msg::{ConfigResponse, ExecuteMsg, QueryMsg};
+use crate::msg::{ConfigResponse, ExecuteMsg};
 use crate::state::{increment_token_index, Config, COLLECTION_ADDRESS, CONFIG, STATUS};
 
 use base_factory::msg::{BaseMinterCreateMsg, ParamsResponse};
@@ -8,8 +8,8 @@ use base_factory::state::Extension;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Addr, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Reply, StdResult, Timestamp,
-    WasmMsg,
+    to_binary, Addr, Binary, CosmosMsg, Deps, DepsMut, Empty, Env, MessageInfo, Reply, StdResult,
+    Timestamp, WasmMsg,
 };
 
 use cw2::set_contract_version;
@@ -17,21 +17,16 @@ use cw_utils::{must_pay, nonpayable, parse_reply_instantiate_data};
 
 use sg1::checked_fair_burn;
 use sg2::query::Sg2QueryMsg;
-use sg4::{Status, StatusResponse, SudoMsg};
+use sg4::{QueryMsg, Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
 use sg721_base::msg::{CollectionInfoResponse, QueryMsg as Sg721QueryMsg};
-use sg_mint_hooks::handle_reply;
-use sg_mint_hooks::post::{add_postmint_hook, prepare_postmint_hooks};
-use sg_mint_hooks::pre::{add_premint_hook, prepare_premint_hooks};
 use sg_std::math::U64Ext;
 use sg_std::{Response, SubMsg, NATIVE_DENOM};
 use url::Url;
 
 const CONTRACT_NAME: &str = "crates.io:sg-base-minter";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
-
 const INSTANTIATE_SG721_REPLY_ID: u64 = 1;
-const MINT_REPLY_ID: u64 = 2;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -116,9 +111,6 @@ pub fn execute(
         ExecuteMsg::UpdateStartTradingTime(time) => {
             execute_update_start_trading_time(deps, env, info, time)
         }
-        // TODO: gate these with `only_minter()`
-        ExecuteMsg::AddPreMintHook { hook } => add_premint_hook(deps, hook).map_err(|e| e.into()),
-        ExecuteMsg::AddPostMintHook { hook } => add_postmint_hook(deps, hook).map_err(|e| e.into()),
     }
 }
 
@@ -128,13 +120,14 @@ pub fn execute_mint_sender(
     token_uri: String,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
-    let collection = COLLECTION_ADDRESS.load(deps.storage)?;
+    let collection_address = COLLECTION_ADDRESS.load(deps.storage)?;
 
     // This is a 1:1 minter, minted at min_mint_price
     // Should mint and then list on the marketplace for secondary sales
-    let collection_info: CollectionInfoResponse = deps
-        .querier
-        .query_wasm_smart(collection.clone(), &Sg721QueryMsg::CollectionInfo {})?;
+    let collection_info: CollectionInfoResponse = deps.querier.query_wasm_smart(
+        collection_address.clone(),
+        &Sg721QueryMsg::CollectionInfo {},
+    )?;
     // allow only sg721 creator address to mint
     if collection_info.creator != info.sender {
         return Err(ContractError::Unauthorized(
@@ -165,38 +158,19 @@ pub fn execute_mint_sender(
     }
     checked_fair_burn(&info, network_fee.u128(), None, &mut res)?;
 
-    let token_id = increment_token_index(deps.storage)?.to_string();
-
-    let premint_hooks = prepare_premint_hooks(
-        deps.as_ref(),
-        collection.clone(),
-        Some(token_id.clone()),
-        info.sender.to_string(),
-    )?;
-
-    let postmint_hooks = prepare_postmint_hooks(
-        deps.as_ref(),
-        collection.clone(),
-        Some(token_id.clone()),
-        info.sender.to_string(),
-    )?;
-
     // Create mint msgs
     let mint_msg = Sg721ExecuteMsg::<Extension, Empty>::Mint {
-        token_id,
+        token_id: increment_token_index(deps.storage)?.to_string(),
         owner: info.sender.to_string(),
         token_uri: Some(token_uri.clone()),
         extension: None,
     };
-    let mint_exec = WasmMsg::Execute {
-        contract_addr: collection.to_string(),
+    let msg = CosmosMsg::Wasm(WasmMsg::Execute {
+        contract_addr: collection_address.to_string(),
         msg: to_binary(&mint_msg)?,
         funds: vec![],
-    };
-
-    res = res.add_submessages(premint_hooks);
-    res = res.add_submessage(SubMsg::reply_on_error(mint_exec, MINT_REPLY_ID));
-    res = res.add_submessages(postmint_hooks);
+    });
+    res = res.add_message(msg);
 
     Ok(res
         .add_attribute("action", "mint")
@@ -280,8 +254,6 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::Config {} => to_binary(&query_config(deps)?),
         QueryMsg::Status {} => to_binary(&query_status(deps)?),
-        QueryMsg::PreMintHooks {} => sg_mint_hooks::pre::query_premint_hooks(deps),
-        QueryMsg::PostMintHooks {} => sg_mint_hooks::post::query_postmint_hooks(deps),
     }
 }
 
@@ -301,20 +273,22 @@ pub fn query_status(deps: Deps) -> StdResult<StatusResponse> {
     Ok(StatusResponse { status })
 }
 
+// Reply callback triggered from sg721 contract instantiation in instantiate()
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
-    handle_reply(msg.id)?;
+    if msg.id != INSTANTIATE_SG721_REPLY_ID {
+        return Err(ContractError::InvalidReplyID {});
+    }
 
-    match msg.id {
-        INSTANTIATE_SG721_REPLY_ID => {
-            let res = parse_reply_instantiate_data(msg)?;
+    let reply = parse_reply_instantiate_data(msg);
+    match reply {
+        Ok(res) => {
             let collection_address = res.contract_address;
             COLLECTION_ADDRESS.save(deps.storage, &Addr::unchecked(collection_address.clone()))?;
-            Ok(Response::new()
-                .add_attribute("action", "instantiate_sg721")
-                .add_attribute("collection_address", collection_address))
+            Ok(Response::default()
+                .add_attribute("action", "instantiate_sg721_reply")
+                .add_attribute("sg721_address", collection_address))
         }
-        MINT_REPLY_ID => Err(ContractError::MintFailed {}),
-        _ => Err(ContractError::InvalidReplyID {}),
+        Err(_) => Err(ContractError::InstantiateSg721Error {}),
     }
 }
