@@ -112,7 +112,6 @@ pub mod pre {
 pub mod post {
     use cosmwasm_schema::cw_serde;
     use cosmwasm_std::{to_binary, Addr, Binary, Deps, DepsMut, StdResult, WasmMsg};
-    use sg_controllers::HooksResponse;
     use sg_std::{Response, SubMsg};
 
     use crate::{MintHookError, POSTMINT_HOOKS, POSTMINT_HOOK_REPLY_ID};
