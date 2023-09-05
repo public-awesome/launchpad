@@ -73,14 +73,14 @@ pub fn prepare_premint_hooks(
     Ok(submsgs)
 }
 
-pub fn handle_reply(reply_id: u64) -> Result<Response, MintHookError> {
+pub fn handle_reply(reply_id: u64) -> Result<(), MintHookError> {
     match reply_id {
         PREMINT_HOOK_REPLY_ID => return Err(MintHookError::PreMintHookFailed {}),
         POSTMINT_HOOK_REPLY_ID => return Err(MintHookError::PostMintHookFailed {}),
         _ => (),
     };
 
-    Ok(Response::new())
+    Ok(())
 }
 
 #[derive(thiserror::Error, Debug, PartialEq)]

@@ -8,8 +8,8 @@ use base_factory::state::Extension;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Addr, Binary, CosmosMsg, Deps, DepsMut, Empty, Env, MessageInfo, Reply, StdResult,
-    Timestamp, WasmMsg,
+    to_binary, Addr, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Reply, StdResult, Timestamp,
+    WasmMsg,
 };
 
 use cw2::set_contract_version;
@@ -30,8 +30,9 @@ use url::Url;
 
 const CONTRACT_NAME: &str = "crates.io:sg-base-minter";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
+
 const INSTANTIATE_SG721_REPLY_ID: u64 = 1;
-const PREMINT_HOOK_REPLY_ID: u64 = 2;
+const MINT_REPLY_ID: u64 = 2;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -188,13 +189,14 @@ pub fn execute_mint_sender(
         token_uri: Some(token_uri.clone()),
         extension: None,
     };
-    let mint = CosmosMsg::Wasm(WasmMsg::Execute {
+    let mint_exec = WasmMsg::Execute {
         contract_addr: collection.to_string(),
         msg: to_binary(&mint_msg)?,
         funds: vec![],
-    });
+    };
+
     res = res.add_submessages(premint_hooks);
-    res = res.add_submessage(mint);
+    res = res.add_submessage(SubMsg::reply_on_error(mint_exec, MINT_REPLY_ID));
     res = res.add_submessages(postmint_hooks);
 
     Ok(res
@@ -311,6 +313,8 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractE
             Ok(Response::new()
                 .add_attribute("action", "instantiate_sg721")
                 .add_attribute("collection_address", collection_address))
-        } // _ => Err(ContractError::InvalidReplyID {}),
+        }
+        MINT_REPLY_ID => Err(ContractError::MintFailed {}),
+        _ => Err(ContractError::InvalidReplyID {}),
     }
 }

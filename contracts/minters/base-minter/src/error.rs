@@ -43,6 +43,9 @@ pub enum ContractError {
     #[error("Hook failed")]
     HookFailed {},
 
+    #[error("Mint failed")]
+    MintFailed {},
+
     #[error("InvalidDenom {expected} got {got}")]
     InvalidDenom { expected: String, got: String },
 
