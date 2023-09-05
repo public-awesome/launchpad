@@ -1,6 +1,8 @@
 use crate::error::ContractError;
-use crate::msg::{ConfigResponse, ExecuteMsg};
-use crate::state::{increment_token_index, Config, COLLECTION_ADDRESS, CONFIG, STATUS};
+use crate::msg::{ConfigResponse, ExecuteMsg, PreMintHookMsg};
+use crate::state::{
+    increment_token_index, Config, COLLECTION_ADDRESS, CONFIG, PREMINT_HOOKS, STATUS,
+};
 
 use base_factory::msg::{BaseMinterCreateMsg, ParamsResponse};
 
@@ -27,6 +29,7 @@ use url::Url;
 const CONTRACT_NAME: &str = "crates.io:sg-base-minter";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 const INSTANTIATE_SG721_REPLY_ID: u64 = 1;
+const PREMINT_HOOK_REPLY_ID: u64 = 2;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -111,7 +114,40 @@ pub fn execute(
         ExecuteMsg::UpdateStartTradingTime(time) => {
             execute_update_start_trading_time(deps, env, info, time)
         }
+        ExecuteMsg::AddPreMintHook { hook } => add_premint_hook(deps, hook),
     }
+}
+
+pub fn add_premint_hook(deps: DepsMut, hook: String) -> Result<Response, ContractError> {
+    PREMINT_HOOKS.add_hook(deps.storage, deps.api.addr_validate(&hook)?)?;
+
+    let res = Response::new()
+        .add_attribute("action", "add_premint_hook")
+        .add_attribute("hook", hook);
+    Ok(res)
+}
+
+fn prepare_premint_hook(
+    deps: Deps,
+    collection: Addr,
+    token_id: Option<String>,
+    buyer: String,
+) -> StdResult<Vec<SubMsg>> {
+    let submsgs = PREMINT_HOOKS.prepare_hooks(deps.storage, |h| {
+        let msg = PreMintHookMsg {
+            collection: collection.to_string(),
+            token_id: token_id.clone(),
+            buyer: buyer.clone(),
+        };
+        let execute = WasmMsg::Execute {
+            contract_addr: h.to_string(),
+            msg: msg.into_binary()?,
+            funds: vec![],
+        };
+        Ok(SubMsg::reply_on_error(execute, PREMINT_HOOK_REPLY_ID))
+    })?;
+
+    Ok(submsgs)
 }
 
 pub fn execute_mint_sender(
@@ -120,14 +156,13 @@ pub fn execute_mint_sender(
     token_uri: String,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
-    let collection_address = COLLECTION_ADDRESS.load(deps.storage)?;
+    let collection = COLLECTION_ADDRESS.load(deps.storage)?;
 
     // This is a 1:1 minter, minted at min_mint_price
     // Should mint and then list on the marketplace for secondary sales
-    let collection_info: CollectionInfoResponse = deps.querier.query_wasm_smart(
-        collection_address.clone(),
-        &Sg721QueryMsg::CollectionInfo {},
-    )?;
+    let collection_info: CollectionInfoResponse = deps
+        .querier
+        .query_wasm_smart(collection.clone(), &Sg721QueryMsg::CollectionInfo {})?;
     // allow only sg721 creator address to mint
     if collection_info.creator != info.sender {
         return Err(ContractError::Unauthorized(
@@ -158,15 +193,24 @@ pub fn execute_mint_sender(
     }
     checked_fair_burn(&info, network_fee.u128(), None, &mut res)?;
 
+    let token_id = increment_token_index(deps.storage)?.to_string();
+
+    prepare_premint_hook(
+        deps.as_ref(),
+        collection.clone(),
+        Some(token_id.clone()),
+        info.sender.to_string(),
+    )?;
+
     // Create mint msgs
     let mint_msg = Sg721ExecuteMsg::<Extension, Empty>::Mint {
-        token_id: increment_token_index(deps.storage)?.to_string(),
+        token_id,
         owner: info.sender.to_string(),
         token_uri: Some(token_uri.clone()),
         extension: None,
     };
     let msg = CosmosMsg::Wasm(WasmMsg::Execute {
-        contract_addr: collection_address.to_string(),
+        contract_addr: collection.to_string(),
         msg: to_binary(&mint_msg)?,
         funds: vec![],
     });
@@ -273,22 +317,18 @@ pub fn query_status(deps: Deps) -> StdResult<StatusResponse> {
     Ok(StatusResponse { status })
 }
 
-// Reply callback triggered from sg721 contract instantiation in instantiate()
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
-    if msg.id != INSTANTIATE_SG721_REPLY_ID {
-        return Err(ContractError::InvalidReplyID {});
-    }
-
-    let reply = parse_reply_instantiate_data(msg);
-    match reply {
-        Ok(res) => {
+    match msg.id {
+        INSTANTIATE_SG721_REPLY_ID => {
+            let res = parse_reply_instantiate_data(msg)?;
             let collection_address = res.contract_address;
             COLLECTION_ADDRESS.save(deps.storage, &Addr::unchecked(collection_address.clone()))?;
-            Ok(Response::default()
-                .add_attribute("action", "instantiate_sg721_reply")
-                .add_attribute("sg721_address", collection_address))
+            Ok(Response::new()
+                .add_attribute("action", "instantiate_sg721")
+                .add_attribute("collection_address", collection_address))
         }
-        Err(_) => Err(ContractError::InstantiateSg721Error {}),
+        PREMINT_HOOK_REPLY_ID => Err(ContractError::HookFailed {}),
+        _ => Err(ContractError::InvalidReplyID {}),
     }
 }

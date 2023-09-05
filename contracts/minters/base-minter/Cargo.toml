@@ -36,6 +36,7 @@ cw-storage-plus = { workspace = true }
 cw-utils        = { workspace = true }
 schemars        = { workspace = true }
 serde           = { workspace = true }
+sg-controllers  = { workspace = true }
 sg1             = { workspace = true }
 sg2             = { workspace = true }
 sg4             = { workspace = true }

@@ -1,6 +1,7 @@
 use cosmwasm_std::{StdError, Timestamp};
-use cw_utils::PaymentError;
+use cw_utils::{ParseReplyError, PaymentError};
 use sg1::FeeError;
+use sg_controllers::HookError;
 use thiserror::Error;
 use url::ParseError;
 
@@ -21,6 +22,12 @@ pub enum ContractError {
     #[error("Unauthorized: {0}")]
     Unauthorized(String),
 
+    #[error("{0}")]
+    Hook(#[from] HookError),
+
+    #[error("{0}")]
+    ParseReply(#[from] ParseReplyError),
+
     #[error("UpdateStatus")]
     UpdateStatus {},
 
@@ -32,6 +39,9 @@ pub enum ContractError {
 
     #[error("Invalid reply ID")]
     InvalidReplyID {},
+
+    #[error("Hook failed")]
+    HookFailed {},
 
     #[error("InvalidDenom {expected} got {got}")]
     InvalidDenom { expected: String, got: String },
