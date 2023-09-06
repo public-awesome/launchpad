@@ -118,9 +118,9 @@ pub fn sg_mint_hooks_execute(metadata: TokenStream, input: TokenStream) -> Token
 /// #[cw_serde]
 /// #[derive(QueryResponses)]
 /// enum QueryMsg {
-///     #[returns(Vec<String>)]
+///     #[returns(HooksResponse)]
 ///     PreMintHooks {},
-///     #[returns(Vec<String>)]
+///     #[returns(HooksResponse)]
 ///     PostMintHooks {},
 ///     #[returns(FooResponse)]
 ///     Foo {},
@@ -137,9 +137,9 @@ pub fn sg_mint_hooks_query(metadata: TokenStream, input: TokenStream) -> TokenSt
         input,
         quote! {
             enum Right {
-                #[returns(Vec<String>)]
+                #[returns(HooksResponse)]
                 PreMintHooks {},
-                #[returns(Vec<String>)]
+                #[returns(HooksResponse)]
                 PostMintHooks {},
             }
         }
