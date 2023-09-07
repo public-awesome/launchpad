@@ -1,24 +1,22 @@
 use crate::error::ContractError;
-use crate::state::FROZEN_TOKEN_METADATA;
-use cosmwasm_std::{Empty, StdError, Uint128};
-
-use cosmwasm_std::{Deps, StdResult};
-
-#[cfg(not(feature = "library"))]
-use cosmwasm_std::{DepsMut, Env, Event, MessageInfo};
-use cw2::set_contract_version;
-use semver::Version;
-use sg721::InstantiateMsg;
-use sg721_base::contract::only_minter;
-
 use crate::msg::{EnableUpdatableResponse, FrozenTokenMetadataResponse};
 use crate::state::ENABLE_UPDATABLE;
-
+use crate::state::FROZEN_TOKEN_METADATA;
+use cosmwasm_std::{Deps, StdResult};
+#[cfg(not(feature = "library"))]
+use cosmwasm_std::{DepsMut, Env, Event, MessageInfo};
+use cosmwasm_std::{Empty, StdError, Uint128};
+use cw2::set_contract_version;
 use cw721_base::Extension;
 use cw_utils::nonpayable;
+use semver::Version;
 use sg1::checked_fair_burn;
+use sg721::InstantiateMsg;
+use sg721_base::contract::only_minter;
+use sg721_base::msg::CollectionInfoResponse;
 use sg721_base::Sg721Contract;
 pub type Sg721UpdatableContract<'a> = Sg721Contract<'a, Extension>;
+use sg721_base::ContractError::Unauthorized;
 use sg_std::Response;
 
 const CONTRACT_NAME: &str = "crates.io:sg721-updatable";
