@@ -3247,6 +3247,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "sg-mint-hooks"
+version = "3.1.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus 1.1.0",
+ "schemars",
+ "serde",
+ "sg-controllers",
+ "sg-mint-hooks-derive",
+ "sg-std",
+ "thiserror",
+]
+
+[[package]]
+name = "sg-mint-hooks-derive"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "sg-controllers",
+ "syn",
+]
+
+[[package]]
 name = "sg-multi-test"
 version = "3.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

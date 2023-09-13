@@ -1,0 +1,20 @@
+[package]
+name        = "sg-mint-hooks"
+authors     = ["Shane Vitarana <s@users.noreply.publicawesome.com>"]
+description = "Mint hooks to allow extending minting contracts"
+version     = { workspace = true }
+edition     = { workspace = true }
+homepage    = { workspace = true }
+repository  = { workspace = true }
+license     = { workspace = true }
+
+[dependencies]
+cosmwasm-schema      = { workspace = true }
+cosmwasm-std         = { workspace = true }
+cw-storage-plus      = { workspace = true }
+schemars             = { workspace = true }
+serde                = { workspace = true }
+sg-controllers       = { workspace = true }
+sg-std               = { workspace = true }
+thiserror            = { workspace = true }
+sg-mint-hooks-derive = { path = "./derive", version = "0.1.0" }
