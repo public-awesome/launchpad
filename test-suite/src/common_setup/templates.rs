@@ -554,38 +554,3 @@ pub fn open_edition_minter_ibc_template(
         code_ids,
     })
 }
-
-// pub fn open_edition_minter_ibc_template_custom_code_ids(
-//     params_extension: ParamsExtension,
-//     init_msg: OpenEditionMinterInitMsgExtension,
-//     custom_minter_params: OpenEditionMinterParams,
-//     code_ids: CodeIds,
-// ) -> Result<MinterTemplateResponseCodeIds<Accounts>, anyhow::Result<AppResponse>> {
-//     let mut app = custom_mock_app();
-//     let (creator, buyer) = setup_accounts(&mut app);
-//     let collection_params = mock_collection_params_1(None);
-//     let code_ids = open_edition_minter_code_ids(&mut app);
-//     let minter_params = minter_params_open_edition(
-//         params_extension,
-//         init_msg,
-//         None,
-//         None,
-//         None,
-//         None,
-//         Some(custom_minter_params),
-//     );
-
-//     let minter_collection_response = configure_open_edition_minter(
-//         &mut app,
-//         creator.clone(),
-//         vec![collection_params],
-//         vec![minter_params],
-//         code_ids.clone(),
-//     );
-//     Ok(MinterTemplateResponseCodeIds {
-//         router: app,
-//         collection_response_vec: minter_collection_response,
-//         accts: Accounts { creator, buyer },
-//         code_ids,
-//     })
-// }

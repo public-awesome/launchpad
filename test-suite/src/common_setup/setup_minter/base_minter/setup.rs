@@ -4,8 +4,14 @@ use crate::common_setup::contract_boxes::contract_nt_collection;
 use crate::common_setup::contract_boxes::contract_sg721_base;
 use crate::common_setup::msg::MinterCollectionResponse;
 use crate::common_setup::msg::MinterSetupParams;
+use crate::common_setup::setup_minter::common::constants::MIN_MINT_PRICE;
 use crate::common_setup::setup_minter::common::parse_response::build_collection_response;
+use cosmwasm_std::coin;
+use cosmwasm_std::to_binary;
+use cosmwasm_std::Coin;
+use cosmwasm_std::Empty;
 use cosmwasm_std::{coins, Addr};
+use cw_multi_test::AppResponse;
 use cw_multi_test::Executor;
 use sg2::msg::{CollectionParams, Sg2ExecuteMsg};
 use sg_multi_test::StargazeApp;
@@ -80,6 +86,42 @@ pub fn setup_minter_contract(setup_params: MinterSetupParams) -> MinterCollectio
 
     let res = router.execute_contract(minter_admin, factory_addr.clone(), &msg, &creation_fee);
     build_collection_response(res, factory_addr)
+}
+
+pub fn sudo_update_params(
+    app: &mut StargazeApp,
+    collection_responses: &Vec<MinterCollectionResponse>,
+    code_ids: CodeIds,
+    update_msg: Option<sg2::msg::UpdateMinterParamsMsg<Empty>>,
+) -> Vec<Result<AppResponse, anyhow::Error>> {
+    let mut sudo_responses: Vec<Result<AppResponse, anyhow::Error>> = vec![];
+    for collection_response in collection_responses {
+        let update_msg = match update_msg.clone() {
+            Some(some_update_message) => some_update_message,
+            None => sg2::msg::UpdateMinterParamsMsg {
+                code_id: Some(code_ids.sg721_code_id),
+                add_sg721_code_ids: None,
+                rm_sg721_code_ids: None,
+                frozen: None,
+                creation_fee: Some(coin(0, NATIVE_DENOM)),
+                min_mint_price: Some(Coin {
+                    amount: MIN_MINT_PRICE.into(),
+                    denom: NATIVE_DENOM.into(),
+                }),
+                mint_fee_bps: None,
+                max_trading_offset_secs: Some(100),
+                extension: Empty {},
+            },
+        };
+        let sudo_update_msg = base_factory::msg::SudoMsg::UpdateParams(Box::new(update_msg));
+
+        let sudo_res = app.sudo(cw_multi_test::SudoMsg::Wasm(cw_multi_test::WasmSudo {
+            contract_addr: collection_response.factory.clone().unwrap(),
+            msg: to_binary(&sudo_update_msg).unwrap(),
+        }));
+        sudo_responses.push(sudo_res);
+    }
+    sudo_responses
 }
 
 pub fn configure_base_minter(
