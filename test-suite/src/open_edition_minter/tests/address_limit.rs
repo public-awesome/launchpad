@@ -1,31 +1,41 @@
-use cosmwasm_std::coins;
+use cosmwasm_std::{coins, Coin, Uint128};
 use cw_multi_test::Executor;
+use open_edition_factory::state::ParamsExtension;
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
 use open_edition_minter::msg::ConfigResponse;
 use open_edition_minter::msg::{ExecuteMsg, QueryMsg};
 
 use crate::common_setup::setup_accounts_and_block::setup_block_time;
-use crate::common_setup::templates::{
-    open_edition_minter_custom_template, OpenEditionMinterCustomParams,
+use crate::common_setup::setup_minter::common::constants::DEV_ADDRESS;
+use crate::common_setup::setup_minter::open_edition_minter::minter_params::{
+    default_nft_data, init_msg,
 };
+use crate::common_setup::templates::open_edition_minter_custom_template;
 
 const MINT_PRICE: u128 = 100_000_000;
 
 #[test]
 fn check_per_address_limit() {
-    let vt = open_edition_minter_custom_template(
+    let params_extension = ParamsExtension {
+        max_per_address_limit: 10,
+        airdrop_mint_fee_bps: 100,
+        airdrop_mint_price: Coin {
+            denom: NATIVE_DENOM.to_string(),
+            amount: Uint128::new(100_000_000u128),
+        },
+        dev_fee_address: DEV_ADDRESS.to_string(),
+    };
+    let per_address_limit_minter = Some(2);
+    let init_msg = init_msg(
+        default_nft_data(),
+        per_address_limit_minter,
         None,
         None,
         None,
-        Some(10),
-        Some(2),
-        None,
-        OpenEditionMinterCustomParams::default(),
-        None,
-        None,
-    )
-    .unwrap();
+    );
+    let vt = open_edition_minter_custom_template(params_extension, init_msg).unwrap();
+
     let (mut router, creator, buyer) = (vt.router, vt.accts.creator, vt.accts.buyer);
     let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
     // Set to a valid mint time
