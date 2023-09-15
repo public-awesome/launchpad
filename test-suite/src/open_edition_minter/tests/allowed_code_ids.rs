@@ -1,32 +1,50 @@
-use crate::common_setup::templates::{
-    open_edition_minter_custom_template, OpenEditionMinterCustomParams,
+use cosmwasm_std::{Coin, Uint128};
+use open_edition_factory::state::ParamsExtension;
+use sg_std::NATIVE_DENOM;
+
+use crate::common_setup::{
+    contract_boxes::custom_mock_app,
+    setup_minter::{
+        common::constants::DEV_ADDRESS,
+        open_edition_minter::{
+            minter_params::{default_nft_data, init_msg},
+            setup::open_edition_minter_code_ids,
+        },
+    },
+    templates::open_edition_minter_custom_code_ids,
 };
 
 #[test]
 fn invalid_code_id() {
-    // Set an invalid code id for the nft contract
-    let vt = open_edition_minter_custom_template(
+    let params_extension = ParamsExtension {
+        max_per_address_limit: 10,
+        airdrop_mint_fee_bps: 100,
+        airdrop_mint_price: Coin {
+            denom: NATIVE_DENOM.to_string(),
+            amount: Uint128::new(100_000_000u128),
+        },
+        dev_fee_address: DEV_ADDRESS.to_string(),
+    };
+    let per_address_limit_minter = Some(2);
+    let init_msg = init_msg(
+        default_nft_data(),
+        per_address_limit_minter,
         None,
         None,
         None,
-        Some(10),
-        Some(5),
-        None,
-        OpenEditionMinterCustomParams::default(),
-        None,
-        Some(19),
     );
+    let mut app = custom_mock_app();
+    let mut code_ids = open_edition_minter_code_ids(&mut app);
+    code_ids.sg721_code_id = 19;
+    let vt =
+        open_edition_minter_custom_code_ids(app, params_extension, init_msg, code_ids).unwrap();
     assert_eq!(
-        vt.err()
+        vt.collection_response_vec[0]
+            .error
+            .as_ref()
             .unwrap()
-            .err()
-            .unwrap()
-            .source()
-            .unwrap()
+            .root_cause()
             .to_string(),
         "InvalidCollectionCodeId 19".to_string()
     );
-
-    // All the other tests related to Sudo params of the factory contract are tested in the factory
-    // tests
 }

@@ -1,24 +1,22 @@
 use base_factory::ContractError as BaseContractError;
-use cosmwasm_std::{coin, coins, Addr, Decimal, Uint128};
+use cosmwasm_std::{coin, Addr, Coin, Decimal, Uint128};
 use cw_multi_test::{BankSudo, Executor, SudoMsg};
-use open_edition_factory::types::{NftData, NftMetadataType};
+use open_edition_factory::{
+    state::{OpenEditionMinterParams, ParamsExtension},
+    types::{NftData, NftMetadataType},
+};
 use open_edition_minter::msg::ExecuteMsg;
-use sg2::{msg::Sg2ExecuteMsg, tests::mock_collection_params};
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
 use crate::common_setup::{
-    contract_boxes::{contract_sg721_base, custom_mock_app},
-    setup_accounts_and_block::{setup_accounts, setup_block_time},
+    setup_accounts_and_block::setup_block_time,
     setup_minter::{
-        common::constants::{CREATION_FEE, MIN_MINT_PRICE_OPEN_EDITION},
-        open_edition_minter::{
-            mock_params::{
-                mock_create_minter_init_msg, mock_init_minter_extension, mock_params_custom,
-            },
-            setup::open_edition_minter_code_ids,
+        common::constants::{
+            CREATION_FEE, DEV_ADDRESS, MINT_FEE_FAIR_BURN, MIN_MINT_PRICE_OPEN_EDITION,
         },
+        open_edition_minter::minter_params::{default_nft_data, init_msg},
     },
-    templates::{open_edition_minter_custom_template, OpenEditionMinterCustomParams},
+    templates::open_edition_minter_ibc_template,
 };
 
 #[test]
@@ -26,25 +24,43 @@ fn check_custom_create_minter_denom() {
     // allow ibc/frenz denom
     let denom = "ibc/frenz";
     let mint_price = coin(MIN_MINT_PRICE_OPEN_EDITION, denom.to_string());
-    let custom_params = OpenEditionMinterCustomParams {
-        denom: Some(denom),
-        ..OpenEditionMinterCustomParams::default()
+    let params_extension = ParamsExtension {
+        max_per_address_limit: 10,
+        airdrop_mint_fee_bps: 100,
+        airdrop_mint_price: Coin {
+            denom: denom.to_string(),
+            amount: Uint128::new(100_000_000u128),
+        },
+        dev_fee_address: DEV_ADDRESS.to_string(),
     };
-    let vt = open_edition_minter_custom_template(
+    let per_address_limit_minter = Some(2);
+    let init_msg = init_msg(
+        default_nft_data(),
+        per_address_limit_minter,
         None,
         None,
-        None,
-        Some(10),
-        Some(2),
         Some(mint_price.clone()),
-        custom_params,
-        None,
-        None,
-    )
-    .unwrap();
+    );
+    let custom_minter_params = OpenEditionMinterParams {
+        code_id: 1,
+        allowed_sg721_code_ids: vec![1, 3, 5, 6],
+        frozen: false,
+        creation_fee: coin(CREATION_FEE, NATIVE_DENOM),
+        min_mint_price: init_msg.mint_price.clone(),
+        mint_fee_bps: MINT_FEE_FAIR_BURN,
+        max_trading_offset_secs: 60 * 60 * 24 * 7,
+        extension: ParamsExtension {
+            max_per_address_limit: 10,
+            airdrop_mint_fee_bps: 100,
+            dev_fee_address: DEV_ADDRESS.to_string(),
+            airdrop_mint_price: params_extension.airdrop_mint_price.clone(),
+        },
+    };
+    let vt =
+        open_edition_minter_ibc_template(params_extension, init_msg, custom_minter_params).unwrap();
+
     let (mut router, creator, buyer) = (vt.router, vt.accts.creator, vt.accts.buyer);
     let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
-
     // give the buyer some of the IBC asset
     router
         .sudo(SudoMsg::Bank({
@@ -57,8 +73,7 @@ fn check_custom_create_minter_denom() {
         .ok();
 
     setup_block_time(&mut router, GENESIS_MINT_START_TIME + 100, None);
-
-    // Mint succeeds
+    //     // Mint succeeds
     let mint_msg = ExecuteMsg::Mint {};
     let res = router.execute_contract(buyer.clone(), minter_addr, &mint_msg, &[mint_price.clone()]);
     assert!(res.is_ok());
@@ -84,23 +99,41 @@ fn one_hundred_percent_burned_ibc_minter() {
     // allow ibc/frenz denom
     let denom = "ibc/frenz";
     let mint_price = coin(MIN_MINT_PRICE_OPEN_EDITION, denom.to_string());
-    let custom_params = OpenEditionMinterCustomParams {
-        denom: Some(denom),
-        mint_fee_bps: Some(10000),
-        airdrop_mint_price_amount: Some(Uint128::zero()),
+    let params_extension = ParamsExtension {
+        max_per_address_limit: 10,
+        airdrop_mint_fee_bps: 100,
+        airdrop_mint_price: Coin {
+            denom: denom.to_string(),
+            amount: Uint128::new(100_000_000u128),
+        },
+        dev_fee_address: DEV_ADDRESS.to_string(),
     };
-    let vt = open_edition_minter_custom_template(
+    let per_address_limit_minter = Some(2);
+    let init_msg = init_msg(
+        default_nft_data(),
+        per_address_limit_minter,
         None,
         None,
-        None,
-        Some(10),
-        Some(2),
         Some(mint_price.clone()),
-        custom_params,
-        None,
-        None,
-    )
-    .unwrap();
+    );
+
+    let custom_minter_params = OpenEditionMinterParams {
+        code_id: 1,
+        allowed_sg721_code_ids: vec![1, 3, 5, 6],
+        frozen: false,
+        creation_fee: coin(CREATION_FEE, NATIVE_DENOM),
+        min_mint_price: init_msg.mint_price.clone(),
+        mint_fee_bps: 10000,
+        max_trading_offset_secs: 60 * 60 * 24 * 7,
+        extension: ParamsExtension {
+            max_per_address_limit: 10,
+            airdrop_mint_fee_bps: 100,
+            dev_fee_address: DEV_ADDRESS.to_string(),
+            airdrop_mint_price: params_extension.airdrop_mint_price.clone(),
+        },
+    };
+    let vt =
+        open_edition_minter_ibc_template(params_extension, init_msg, custom_minter_params).unwrap();
     let (mut router, creator, buyer) = (vt.router, vt.accts.creator, vt.accts.buyer);
     let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
 
@@ -146,23 +179,42 @@ fn zero_mint_fee() {
     // allow ibc/frenz denom
     let denom = "ibc/frenz";
     let mint_price = coin(MIN_MINT_PRICE_OPEN_EDITION, denom.to_string());
-    let custom_params = OpenEditionMinterCustomParams {
-        denom: Some(denom),
-        mint_fee_bps: Some(0),
-        airdrop_mint_price_amount: Some(Uint128::zero()),
+
+    let params_extension = ParamsExtension {
+        max_per_address_limit: 10,
+        airdrop_mint_fee_bps: 100,
+        airdrop_mint_price: Coin {
+            denom: denom.to_string(),
+            amount: Uint128::new(100_000_000u128),
+        },
+        dev_fee_address: DEV_ADDRESS.to_string(),
     };
-    let vt = open_edition_minter_custom_template(
+    let per_address_limit_minter = Some(2);
+    let init_msg = init_msg(
+        default_nft_data(),
+        per_address_limit_minter,
         None,
         None,
-        None,
-        Some(10),
-        Some(2),
         Some(mint_price.clone()),
-        custom_params,
-        None,
-        None,
-    )
-    .unwrap();
+    );
+
+    let custom_minter_params = OpenEditionMinterParams {
+        code_id: 1,
+        allowed_sg721_code_ids: vec![1, 3, 5, 6],
+        frozen: false,
+        creation_fee: coin(CREATION_FEE, NATIVE_DENOM),
+        min_mint_price: init_msg.mint_price.clone(),
+        mint_fee_bps: 0,
+        max_trading_offset_secs: 60 * 60 * 24 * 7,
+        extension: ParamsExtension {
+            max_per_address_limit: 10,
+            airdrop_mint_fee_bps: 100,
+            dev_fee_address: DEV_ADDRESS.to_string(),
+            airdrop_mint_price: params_extension.airdrop_mint_price.clone(),
+        },
+    };
+    let vt =
+        open_edition_minter_ibc_template(params_extension, init_msg, custom_minter_params).unwrap();
     let (mut router, _, buyer) = (vt.router, vt.accts.creator, vt.accts.buyer);
     let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
 
@@ -189,50 +241,54 @@ fn zero_mint_fee() {
 fn denom_mismatch_creating_minter() {
     // create factory w NATIVE_DENOM, then try creating a minter w different denom
     let denom = "ibc/asset";
-    let mut app = custom_mock_app();
-    let (creator, _) = setup_accounts(&mut app);
-
     let mint_price = coin(MIN_MINT_PRICE_OPEN_EDITION, denom.to_string());
+    let mismatch_denom = coin(MIN_MINT_PRICE_OPEN_EDITION, NATIVE_DENOM);
     let nft_data = NftData {
         nft_data_type: NftMetadataType::OffChainMetadata,
         token_uri: Some("ipfs://1234".to_string()),
         extension: None,
     };
-    let code_ids = open_edition_minter_code_ids(&mut app, contract_sg721_base());
 
-    let minter_code_id = code_ids.minter_code_id;
-    let factory_code_id = code_ids.factory_code_id;
-    let sg721_code_id = code_ids.sg721_code_id;
-    let minter_admin = creator;
-
-    let mut params = mock_params_custom(OpenEditionMinterCustomParams::default());
-    params.code_id = minter_code_id;
-
-    let factory_addr = app
-        .instantiate_contract(
-            factory_code_id,
-            minter_admin.clone(),
-            &open_edition_factory::msg::InstantiateMsg { params },
-            &[],
-            "factory",
-            None,
-        )
-        .unwrap();
-
-    let mut init_msg =
-        mock_init_minter_extension(None, None, None, Some(mint_price.clone()), nft_data, None);
-    init_msg.mint_price = mint_price;
-    let mut msg = mock_create_minter_init_msg(mock_collection_params(), init_msg);
-    msg.collection_params.code_id = sg721_code_id;
-    msg.collection_params.info.creator = minter_admin.to_string();
-    let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
-    let msg = Sg2ExecuteMsg::CreateMinter(msg);
-
-    let err = app
-        .execute_contract(minter_admin, factory_addr, &msg, &creation_fee)
-        .unwrap_err();
-    assert_eq!(
-        err.source().unwrap().to_string(),
-        BaseContractError::InvalidDenom {}.to_string()
+    let params_extension = ParamsExtension {
+        max_per_address_limit: 10,
+        airdrop_mint_fee_bps: 100,
+        airdrop_mint_price: Coin {
+            denom: mint_price.to_string(),
+            amount: Uint128::new(100_000_000u128),
+        },
+        dev_fee_address: DEV_ADDRESS.to_string(),
+    };
+    let per_address_limit_minter = Some(2);
+    let init_msg = init_msg(
+        nft_data,
+        per_address_limit_minter,
+        None,
+        None,
+        Some(mint_price.clone()),
     );
+    let custom_minter_params = OpenEditionMinterParams {
+        code_id: 1,
+        allowed_sg721_code_ids: vec![1, 2, 3, 5, 6],
+        frozen: false,
+        creation_fee: coin(CREATION_FEE, NATIVE_DENOM),
+        min_mint_price: mint_price,
+        mint_fee_bps: MINT_FEE_FAIR_BURN,
+        max_trading_offset_secs: 60 * 60 * 24 * 7,
+        extension: ParamsExtension {
+            max_per_address_limit: 10,
+            airdrop_mint_fee_bps: 100,
+            dev_fee_address: DEV_ADDRESS.to_string(),
+            airdrop_mint_price: mismatch_denom,
+        },
+    };
+
+    let vt =
+        open_edition_minter_ibc_template(params_extension, init_msg, custom_minter_params).unwrap();
+    let err = vt.collection_response_vec[0]
+        .error
+        .as_ref()
+        .unwrap()
+        .root_cause()
+        .to_string();
+    assert_eq!(err, BaseContractError::InvalidDenom {}.to_string());
 }
