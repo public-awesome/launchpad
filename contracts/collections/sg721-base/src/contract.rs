@@ -246,14 +246,12 @@ where
 
                     if share_delta > Decimal::percent(MAX_SHARE_DELTA_PCT) {
                         return Err(ContractError::InvalidRoyalties(format!(
-                            "Share increase cannot be greater than {}%",
-                            MAX_SHARE_DELTA_PCT
+                            "Share increase cannot be greater than {MAX_SHARE_DELTA_PCT}%"
                         )));
                     }
                     if new_royalty_info.share > Decimal::percent(MAX_ROYALTY_SHARE_PCT) {
                         return Err(ContractError::InvalidRoyalties(format!(
-                            "Share cannot be greater than {}%",
-                            MAX_ROYALTY_SHARE_PCT
+                            "Share cannot be greater than {MAX_ROYALTY_SHARE_PCT}%"
                         )));
                     }
                 }

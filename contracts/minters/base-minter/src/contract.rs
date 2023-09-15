@@ -1,5 +1,5 @@
 use crate::error::ContractError;
-use crate::msg::{ConfigResponse, ExecuteMsg};
+use crate::msg::{ConfigResponse, ExecuteMsg, QueryMsg};
 use crate::state::{increment_token_index, Config, COLLECTION_ADDRESS, CONFIG, STATUS};
 
 use base_factory::msg::{BaseMinterCreateMsg, ParamsResponse};
@@ -8,16 +8,17 @@ use base_factory::state::Extension;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Addr, Binary, CosmosMsg, Deps, DepsMut, Empty, Env, MessageInfo, Reply, StdResult,
-    Timestamp, WasmMsg,
+    to_binary, Addr, Binary, BlockInfo, CosmosMsg, Deps, DepsMut, Empty, Env, MessageInfo, Reply,
+    StdResult, Timestamp, WasmMsg,
 };
 
 use cw2::set_contract_version;
+use cw_ownable::Action;
 use cw_utils::{must_pay, nonpayable, parse_reply_instantiate_data};
 
 use sg1::checked_fair_burn;
 use sg2::query::Sg2QueryMsg;
-use sg4::{QueryMsg, Status, StatusResponse, SudoMsg};
+use sg4::{Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
 use sg721_base::msg::{CollectionInfoResponse, QueryMsg as Sg721QueryMsg};
 use sg_std::math::U64Ext;
@@ -49,6 +50,7 @@ pub fn instantiate(
         .query_wasm_smart(factory.clone(), &Sg2QueryMsg::Params {})?;
 
     let config = Config {
+        owner: deps.api.addr_validate(&msg.owner)?,
         factory: factory.clone(),
         collection_code_id: msg.collection_params.code_id,
         // assume the mint price is the minimum mint price
@@ -111,7 +113,22 @@ pub fn execute(
         ExecuteMsg::UpdateStartTradingTime(time) => {
             execute_update_start_trading_time(deps, env, info, time)
         }
+        ExecuteMsg::UpdateOwnership(action) => {
+            update_ownership(deps, &env.block, &info.sender, action)
+        }
     }
+}
+
+pub fn update_ownership(
+    deps: DepsMut,
+    block: &BlockInfo,
+    sender: &Addr,
+    action: Action,
+) -> Result<Response, ContractError> {
+    let ownership = cw_ownable::update_ownership(deps, block, sender, action)
+        .map_err(ContractError::Ownership)?;
+
+    Ok(Response::new().add_attributes(ownership.into_attributes()))
 }
 
 pub fn execute_mint_sender(
@@ -188,15 +205,7 @@ pub fn execute_update_start_trading_time(
     nonpayable(&info)?;
     let sg721_contract_addr = COLLECTION_ADDRESS.load(deps.storage)?;
 
-    let collection_info: CollectionInfoResponse = deps.querier.query_wasm_smart(
-        sg721_contract_addr.clone(),
-        &Sg721QueryMsg::CollectionInfo {},
-    )?;
-    if info.sender != collection_info.creator {
-        return Err(ContractError::Unauthorized(
-            "Sender is not creator".to_owned(),
-        ));
-    }
+    cw_ownable::assert_owner(deps.storage, &info.sender)?;
 
     // add custom rules here
     if let Some(start_time) = start_time {
@@ -254,6 +263,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::Config {} => to_binary(&query_config(deps)?),
         QueryMsg::Status {} => to_binary(&query_status(deps)?),
+        QueryMsg::Ownership {} => to_binary(&cw_ownable::get_ownership(deps.storage)?),
     }
 }
 

@@ -4,6 +4,7 @@ use sg721::{CollectionInfo, RoyaltyInfoResponse};
 
 #[cw_serde]
 pub struct CreateMinterMsg<T> {
+    pub owner: String,
     pub init_msg: T,
     pub collection_params: CollectionParams,
 }

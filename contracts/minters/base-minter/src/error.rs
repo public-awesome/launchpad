@@ -21,6 +21,9 @@ pub enum ContractError {
     #[error("Unauthorized: {0}")]
     Unauthorized(String),
 
+    #[error("{0}")]
+    Ownership(#[from] cw_ownable::OwnershipError),
+
     #[error("UpdateStatus")]
     UpdateStatus {},
 

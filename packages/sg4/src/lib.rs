@@ -4,6 +4,7 @@ use cosmwasm_std::{Addr, Coin};
 /// Saved in every minter
 #[cw_serde]
 pub struct MinterConfig<T> {
+    pub owner: Addr,
     pub factory: Addr,
     pub collection_code_id: u64,
     pub mint_price: Coin,
