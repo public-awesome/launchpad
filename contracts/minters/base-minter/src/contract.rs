@@ -1,26 +1,21 @@
 use crate::error::ContractError;
 use crate::msg::{ConfigResponse, ExecuteMsg};
 use crate::state::{increment_token_index, Config, COLLECTION_ADDRESS, CONFIG, STATUS};
-
 use base_factory::msg::{BaseMinterCreateMsg, ParamsResponse};
-
 use base_factory::state::Extension;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Addr, Binary, CosmosMsg, Deps, DepsMut, Empty, Env, MessageInfo, Reply, StdResult,
-    Timestamp, WasmMsg,
+    to_binary, Addr, Binary, CosmosMsg, Decimal, Deps, DepsMut, Empty, Env, MessageInfo, Reply,
+    StdResult, Timestamp, WasmMsg,
 };
-
 use cw2::set_contract_version;
 use cw_utils::{must_pay, nonpayable, parse_reply_instantiate_data};
-
 use sg1::checked_fair_burn;
 use sg2::query::Sg2QueryMsg;
 use sg4::{QueryMsg, Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
 use sg721_base::msg::{CollectionInfoResponse, QueryMsg as Sg721QueryMsg};
-use sg_std::math::U64Ext;
 use sg_std::{Response, SubMsg, NATIVE_DENOM};
 use url::Url;
 
@@ -150,7 +145,7 @@ pub fn execute_mint_sender(
     let funds_sent = must_pay(&info, NATIVE_DENOM)?;
 
     // Create network fee msgs
-    let mint_fee_percent = factory_params.mint_fee_bps.bps_to_decimal();
+    let mint_fee_percent = Decimal::bps(factory_params.mint_fee_bps);
     let network_fee = config.mint_price.amount * mint_fee_percent;
     // For the base 1/1 minter, the entire mint price should be Fair Burned
     if network_fee != funds_sent {

@@ -45,7 +45,7 @@ sg-metadata          = { version = "3.1.0", path = "packages/sg-metadata" }
 sg-mint-hooks        = { version = "3.1.0", path = "packages/mint-hooks" }
 sg-multi-test        = { version = "3.1.0" }
 sg-splits            = { version = "3.1.0", path = "contracts/splits" }
-sg-std               = { version = "3.1.0" }
+sg-std               = { version = "3.2.0" }
 sg-whitelist         = { version = "3.1.0", path = "contracts/whitelists/whitelist" }
 thiserror            = "1.0.31"
 url                  = "2.2.2"

@@ -1,5 +1,3 @@
-use std::convert::TryInto;
-
 use crate::error::ContractError;
 use crate::msg::{
     ConfigResponse, ExecuteMsg, MintCountResponse, MintPriceResponse, MintableNumTokensResponse,
@@ -12,8 +10,9 @@ use crate::state::{
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coin, ensure, to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Deps, DepsMut, Empty, Env,
-    Event, MessageInfo, Order, Reply, ReplyOn, StdError, StdResult, Timestamp, Uint128, WasmMsg,
+    coin, ensure, to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut, Empty,
+    Env, Event, MessageInfo, Order, Reply, ReplyOn, StdError, StdResult, Timestamp, Uint128,
+    WasmMsg,
 };
 use cw2::set_contract_version;
 use cw721_base::Extension;
@@ -25,7 +24,6 @@ use sg1::checked_fair_burn;
 use sg2::query::Sg2QueryMsg;
 use sg4::{MinterConfig, Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
-use sg_std::math::U64Ext;
 use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME};
 use sg_whitelist_flex::msg::{
     ConfigResponse as WhitelistConfigResponse, HasMemberResponse, Member,
@@ -33,6 +31,7 @@ use sg_whitelist_flex::msg::{
 };
 use sha2::{Digest, Sha256};
 use shuffle::{fy::FisherYates, shuffler::Shuffler};
+use std::convert::TryInto;
 use url::Url;
 
 use vending_factory::msg::{ParamsResponse, VendingMinterCreateMsg};
@@ -637,12 +636,9 @@ fn _execute_mint(
 
     // Create network fee msgs
     let mint_fee = if is_admin {
-        factory_params
-            .extension
-            .airdrop_mint_fee_bps
-            .bps_to_decimal()
+        Decimal::bps(factory_params.extension.airdrop_mint_fee_bps)
     } else {
-        factory_params.mint_fee_bps.bps_to_decimal()
+        Decimal::bps(factory_params.mint_fee_bps)
     };
     let network_fee = mint_price.amount * mint_fee;
     checked_fair_burn(&info, network_fee.u128(), None, &mut res)?;
