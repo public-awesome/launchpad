@@ -1,23 +1,3 @@
-#[cfg(not(feature = "library"))]
-use cosmwasm_std::entry_point;
-use cosmwasm_std::{
-    coin, to_binary, Addr, BankMsg, Binary, Coin, Deps, DepsMut, Empty, Env, MessageInfo, Order,
-    Reply, ReplyOn, StdError, StdResult, Timestamp, WasmMsg,
-};
-use cw2::set_contract_version;
-use cw_utils::{may_pay, maybe_addr, nonpayable, parse_reply_instantiate_data};
-use semver::Version;
-use sg_std::math::U64Ext;
-use sg_std::{StargazeMsgWrapper, NATIVE_DENOM};
-use url::Url;
-
-use open_edition_factory::msg::{OpenEditionMinterCreateMsg, ParamsResponse};
-use open_edition_factory::types::NftMetadataType;
-use sg1::{checked_fair_burn, ibc_denom_fair_burn};
-use sg2::query::Sg2QueryMsg;
-use sg4::{Status, StatusResponse, SudoMsg};
-use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
-
 use crate::error::ContractError;
 use crate::helpers::mint_nft_msg;
 use crate::msg::{
@@ -28,6 +8,23 @@ use crate::state::{
     increment_token_index, Config, ConfigExtension, CONFIG, MINTER_ADDRS, SG721_ADDRESS, STATUS,
     TOTAL_MINT_COUNT,
 };
+#[cfg(not(feature = "library"))]
+use cosmwasm_std::entry_point;
+use cosmwasm_std::{
+    coin, to_binary, Addr, BankMsg, Binary, Coin, Decimal, Deps, DepsMut, Empty, Env, MessageInfo,
+    Order, Reply, ReplyOn, StdError, StdResult, Timestamp, WasmMsg,
+};
+use cw2::set_contract_version;
+use cw_utils::{may_pay, maybe_addr, nonpayable, parse_reply_instantiate_data};
+use open_edition_factory::msg::{OpenEditionMinterCreateMsg, ParamsResponse};
+use open_edition_factory::types::NftMetadataType;
+use semver::Version;
+use sg1::{checked_fair_burn, ibc_denom_fair_burn};
+use sg2::query::Sg2QueryMsg;
+use sg4::{Status, StatusResponse, SudoMsg};
+use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
+use sg_std::{StargazeMsgWrapper, NATIVE_DENOM};
+use url::Url;
 
 pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 pub type SubMsg = cosmwasm_std::SubMsg<StargazeMsgWrapper>;
@@ -305,12 +302,9 @@ fn _execute_mint(
     // Metadata Storage fees -> minting fee will be enabled for on-chain metadata mints
     // dev fees are intrinsic in the mint fee (assuming a 50% share)
     let mint_fee = if is_admin {
-        factory_params
-            .extension
-            .airdrop_mint_fee_bps
-            .bps_to_decimal()
+        Decimal::bps(factory_params.extension.airdrop_mint_fee_bps)
     } else {
-        factory_params.mint_fee_bps.bps_to_decimal()
+        Decimal::bps(factory_params.mint_fee_bps)
     };
     let network_fee = mint_price.amount * mint_fee;
 
