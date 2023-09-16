@@ -492,7 +492,7 @@ pub fn open_edition_minter_with_two_sg721_collections_burn_mint(
                 amount: vec![coin(CREATION_FEE * 2, NATIVE_DENOM)],
             }
         }))
-        .map_err(|err| println!("{:?}", err))
+        .map_err(|err| println!("{err:?}"))
         .ok();
     let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
     let collection_params = mock_collection_params_1(Some(start_time));

@@ -91,7 +91,7 @@ fn frozen_factory_cannot_create_new_minters() {
                 amount: coins(CREATION_FEE, NATIVE_DENOM),
             }
         }))
-        .map_err(|err| println!("{:?}", err))
+        .map_err(|err| println!("{err:?}"))
         .ok();
     let res = router.execute_contract(creator, factory_addr, &msg, &creation_fee);
     assert_eq!(
