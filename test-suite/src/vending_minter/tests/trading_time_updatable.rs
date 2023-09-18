@@ -38,7 +38,7 @@ fn before_start_time() {
     assert!(res.is_err());
 
     // Buyer can't mint before start_time
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof_hashes: None };
     let res = router.execute_contract(
         buyer.clone(),
         minter_addr.clone(),
@@ -61,7 +61,7 @@ fn before_start_time() {
     setup_block_time(&mut router, GENESIS_MINT_START_TIME + 10_000_000, None);
 
     // Mint succeeds
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof_hashes: None };
     let res = router.execute_contract(
         buyer,
         minter_addr,

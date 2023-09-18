@@ -86,7 +86,7 @@ fn mint_and_split() {
     let minter_addr = minter_collection_response[0].minter.clone().unwrap();
     setup_block_time(&mut app, GENESIS_MINT_START_TIME + 1, None);
 
-    let mint_msg = vending_minter::msg::ExecuteMsg::Mint {};
+    let mint_msg = vending_minter::msg::ExecuteMsg::Mint { proof_hashes: None };
     let res = app.execute_contract(
         buyer,
         minter_addr,

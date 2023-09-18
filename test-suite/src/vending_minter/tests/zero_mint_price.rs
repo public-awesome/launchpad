@@ -91,7 +91,7 @@ fn zero_mint_price() {
     // Mint succeeds
     let minter_addr = Addr::unchecked("contract1");
     let sg721 = Addr::unchecked("contract2");
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof_hashes: None };
     let res = router.execute_contract(buyer.clone(), minter_addr, &mint_msg, &[]);
     assert!(res.is_ok());
 
@@ -201,7 +201,7 @@ fn zero_wl_mint_price() {
     setup_block_time(router, GENESIS_MINT_START_TIME + 100, None);
 
     // mint succeeds
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof_hashes: None };
     let res = router.execute_contract(buyer, minter_addr, &mint_msg, &[]);
     assert!(res.is_ok());
 }

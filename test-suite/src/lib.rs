@@ -22,3 +22,5 @@ mod vending_minter;
 mod whitelist;
 #[cfg(test)]
 mod whitelist_immutable;
+#[cfg(test)]
+mod whitelist_merkletree;

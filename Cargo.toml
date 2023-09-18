@@ -59,6 +59,8 @@ sg-whitelist-flex    = { version = "3.2.9", path = "contracts/whitelists/whiteli
 ethereum-verify      = { version = "3.2.9", path = "packages/ethereum-verify" }
 sg-eth-airdrop       = { version = "3.2.9", path = "contracts/sg-eth-airdrop" }
 test-suite           = { version = "3.2.9", path = "test-suite" }
+whitelist-mtree      = { version = "3.2.9", path = "contracts/whitelists/whitelist-merkletree" }
+
 semver               = "1"
 cw-ownable           = "0.5.1"
 
@@ -127,10 +129,6 @@ codegen-units = 1
 incremental   = false
 
 [profile.release.package.ethereum-verify]
-codegen-units = 1
-incremental   = false
-
-[profile.release.package.test-suite]
 codegen-units = 1
 incremental   = false
 

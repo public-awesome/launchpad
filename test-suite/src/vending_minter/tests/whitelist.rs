@@ -202,7 +202,7 @@ fn whitelist_mint_count_query() {
     setup_block_time(&mut router, GENESIS_MINT_START_TIME, Some(10));
 
     // Mint succeeds
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof_hashes: None };
     let res = router.execute_contract(
         buyer.clone(),
         minter_addr.clone(),
@@ -225,7 +225,7 @@ fn whitelist_mint_count_query() {
     assert_eq!(res.address, buyer.to_string());
 
     // Mint fails, over whitelist per address limit
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof_hashes: None };
     let err = router
         .execute_contract(
             buyer.clone(),
@@ -243,7 +243,7 @@ fn whitelist_mint_count_query() {
     setup_block_time(&mut router, GENESIS_MINT_START_TIME + 20_000, Some(11));
 
     // Public mint succeeds
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof_hashes: None };
     let res = router.execute_contract(
         buyer.clone(),
         minter_addr.clone(),
@@ -292,7 +292,7 @@ fn whitelist_mint_count_query() {
     assert!(res.is_ok());
 
     // Mint succeeds
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof_hashes: None };
     let res = router.execute_contract(
         buyer.clone(),
         minter_addr.clone(),
@@ -315,7 +315,7 @@ fn whitelist_mint_count_query() {
     assert_eq!(res.address, buyer.to_string());
 
     // Mint fails
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof_hashes: None };
     let err = router
         .execute_contract(
             buyer.clone(),
@@ -445,7 +445,7 @@ fn whitelist_access_len_add_remove_expiration() {
     );
 
     // Mint fails, buyer is not on whitelist
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof_hashes: None };
     let res = router.execute_contract(
         buyer.clone(),
         minter_addr.clone(),
@@ -463,7 +463,7 @@ fn whitelist_access_len_add_remove_expiration() {
     assert!(res.is_ok());
 
     // Mint fails, not whitelist price
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof_hashes: None };
     router
         .execute_contract(
             buyer.clone(),
@@ -495,7 +495,7 @@ fn whitelist_access_len_add_remove_expiration() {
     );
 
     // Mint succeeds with whitelist price
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof_hashes: None };
     let res = router.execute_contract(
         buyer.clone(),
         minter_addr.clone(),
@@ -505,7 +505,7 @@ fn whitelist_access_len_add_remove_expiration() {
     assert!(res.is_ok());
 
     // Mint fails, over whitelist per address limit
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof_hashes: None };
     let err = router
         .execute_contract(
             buyer.clone(),
@@ -533,7 +533,7 @@ fn whitelist_access_len_add_remove_expiration() {
     assert!(res.is_ok());
 
     // Mint fails, buyer exceeded per address limit
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof_hashes: None };
     let err = router
         .execute_contract(
             buyer.clone(),
@@ -554,7 +554,7 @@ fn whitelist_access_len_add_remove_expiration() {
     assert!(res.is_ok());
 
     // Mint fails
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof_hashes: None };
     let res = router.execute_contract(
         buyer,
         minter_addr,

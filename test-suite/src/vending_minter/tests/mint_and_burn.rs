@@ -70,7 +70,7 @@ fn update_mint_price() {
     assert!(res.is_ok());
 
     // Mint succeeds
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof_hashes: None };
     let res = router.execute_contract(
         buyer,
         minter_addr,
@@ -185,7 +185,7 @@ fn update_discount_mint_price() {
     );
 
     // Mint succeeds at discount price
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof_hashes: None };
     let res = router.execute_contract(
         buyer,
         minter_addr.clone(),
@@ -237,7 +237,7 @@ fn burn_remaining() {
     setup_block_time(&mut router, GENESIS_MINT_START_TIME + 1, None);
 
     // Succeeds if funds are sent
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof_hashes: None };
     let res = router.execute_contract(
         buyer.clone(),
         minter_addr.clone(),
@@ -323,7 +323,7 @@ fn burn_remaining() {
     );
 
     // Errors if sold out
-    let mint_msg = ExecuteMsg::Mint {};
+    let mint_msg = ExecuteMsg::Mint { proof_hashes: None };
     let res = router.execute_contract(
         buyer,
         minter_addr.clone(),

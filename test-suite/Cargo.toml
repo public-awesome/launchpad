@@ -55,12 +55,14 @@ open-edition-factory     = { workspace = true, features = ["library"] }
 open-edition-minter      = { workspace = true, features = ["library"] }
 sg-whitelist        = { workspace = true, features = ["library"] }
 vending-factory     = { workspace = true, features = ["library"] }
+whitelist-mtree     = { workspace = true, features = ["library"] }
 vending-minter      = { workspace = true, features = ["library"] }
 base-factory        = { workspace = true }
 base-minter         = { workspace = true }
 sg721-nt            = { workspace = true }
 sg-controllers      = { workspace = true }
 cw-ownable = "0.5.1"
+rs_merkle = { version = "1.4.1", default-features = false }
 
 [dev-dependencies]
 serde           = { workspace = true }
