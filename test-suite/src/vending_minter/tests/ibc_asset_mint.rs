@@ -169,6 +169,33 @@ fn wl_denom_mint() {
     assert!(res.is_ok());
     let minter_addr = Addr::unchecked("contract1");
 
+    // Try to set whitelist with different denom
+    // setup whitelist with custom denom
+    let different_denom = "ibc/otherdenom";
+    let whitelist_addr = setup_whitelist_contract(&mut app, &creator, None, Some(different_denom));
+    // add buyer to whitelist
+    let add_to_whitelist_msg = WhitelistExecuteMsg::AddMembers(AddMembersMsg {
+        to_add: vec![buyer.to_string()],
+    });
+    let res = app.execute_contract(
+        creator.clone(),
+        whitelist_addr.clone(),
+        &add_to_whitelist_msg,
+        &[],
+    );
+    assert!(res.is_ok());
+    // set whitelist in minter contract
+    let set_whitelist_msg = ExecuteMsg::SetWhitelist {
+        whitelist: whitelist_addr.to_string(),
+    };
+    let res = app.execute_contract(
+        creator.clone(),
+        minter_addr.clone(),
+        &set_whitelist_msg,
+        &[],
+    );
+    assert!(res.is_err());
+
     // setup whitelist with custom denom
     let whitelist_addr = setup_whitelist_contract(&mut app, &creator, None, Some(denom));
     // add buyer to whitelist

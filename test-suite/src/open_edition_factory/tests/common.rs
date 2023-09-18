@@ -1,6 +1,5 @@
 use crate::common_setup::contract_boxes::{contract_open_edition_factory, custom_mock_app};
-use crate::common_setup::setup_minter::open_edition_minter::mock_params::mock_params_custom;
-use crate::common_setup::templates::OpenEditionMinterCustomParams;
+use crate::common_setup::setup_minter::open_edition_minter::mock_params::mock_params_proper;
 use cosmwasm_std::Addr;
 use cw_multi_test::Executor;
 use open_edition_factory::helpers::FactoryContract;
@@ -14,7 +13,7 @@ pub fn proper_instantiate() -> (StargazeApp, FactoryContract) {
     let factory_id = app.store_code(contract_open_edition_factory());
     let minter_id = 2;
 
-    let mut params = mock_params_custom(OpenEditionMinterCustomParams::default());
+    let mut params = mock_params_proper();
     params.code_id = minter_id;
 
     let factory_contract_addr = app

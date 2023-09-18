@@ -7,7 +7,7 @@ mod tests {
     use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
     
     use whitelist_mtree::{
-        tests::{hasher::SortingSha256Hasher, test_helpers::tree_from_vec},
+        tests::{hasher::SortingSha256Hasher, test_helpers::hash_and_build_tree},
         msg::*
     };
 
@@ -114,7 +114,7 @@ mod tests {
         let mut app = custom_mock_app();
         let addrs = get_init_address_list_1();
         let per_address_limit = 1;
-        let tree: Tree = tree_from_vec(&addrs);
+        let tree: Tree = hash_and_build_tree(&addrs);
         let wl_addr = instantiate_with_root(&mut app, per_address_limit, tree.root_hex().unwrap());
         
         let addr_to_check = addrs[0].clone();
@@ -132,7 +132,7 @@ mod tests {
         let addrs = get_init_address_list_2();
         let per_address_limit = 99;
         
-        let tree: Tree = tree_from_vec(&addrs);
+        let tree: Tree = hash_and_build_tree(&addrs);
         let wl_addr = instantiate_with_root(&mut app, per_address_limit, tree.root_hex().unwrap());
         let addr_to_check = addrs[1].clone();
 
@@ -150,7 +150,7 @@ mod tests {
         let addrs = get_init_address_single_list();
         let per_address_limit = 5;
 
-        let tree: Tree = tree_from_vec(&addrs);
+        let tree: Tree = hash_and_build_tree(&addrs);
         let wl_addr = instantiate_with_root(&mut app, per_address_limit, tree.root_hex().unwrap());
         
         let addr_to_check = addrs[0].clone();

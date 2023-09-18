@@ -13,7 +13,7 @@ fn text_from_file(path: &str) -> String {
 }
 
 
-fn hash_and_build_tree(serialized: &Vec<String>) -> MerkleTree::<SortingSha256Hasher> {
+pub fn hash_and_build_tree(serialized: &Vec<String>) -> MerkleTree::<SortingSha256Hasher> {
     let leaves: Vec<[u8; 32]> = serialized
         .iter()
         .map(|x| Sha256::hash(x.as_bytes()))

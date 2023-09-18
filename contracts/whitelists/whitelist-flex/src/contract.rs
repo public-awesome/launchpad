@@ -51,10 +51,6 @@ pub fn instantiate(
         });
     }
 
-    if msg.mint_price.denom != NATIVE_DENOM {
-        return Err(ContractError::InvalidDenom(msg.mint_price.denom));
-    }
-
     let creation_fee = Decimal::new(msg.member_limit.into(), 3)
         .ceil()
         .to_u128()

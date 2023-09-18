@@ -20,7 +20,7 @@ use vending_minter::msg::{MintCountResponse, QueryMsg, ExecuteMsg};
 use vending_minter::ContractError;
 
 use whitelist_mtree::{
-    tests::test_helpers::tree_from_vec,
+    tests::test_helpers::hash_and_build_tree,
     msg::ExecuteMsg as WhitelistExecuteMsg
 };
 
@@ -52,7 +52,7 @@ fn works_with_regular_whitelist() {
         "another_address".to_string(),
     ];
 
-    let tree = tree_from_vec(&addresses);
+    let tree = hash_and_build_tree(&addresses);
     let root = tree.root_hex().unwrap();
 
     let whitelist_addr = setup_whitelist_mtree_contract(&mut router, &creator, None, None, root);

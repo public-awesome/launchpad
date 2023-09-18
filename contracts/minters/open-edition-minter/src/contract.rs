@@ -1,23 +1,3 @@
-#[cfg(not(feature = "library"))]
-use cosmwasm_std::entry_point;
-use cosmwasm_std::{
-    coin, to_binary, Addr, BankMsg, Binary, Coin, Deps, DepsMut, Empty, Env, MessageInfo, Order,
-    Reply, ReplyOn, StdError, StdResult, Timestamp, WasmMsg,
-};
-use cw2::set_contract_version;
-use cw_utils::{may_pay, maybe_addr, nonpayable, parse_reply_instantiate_data};
-use semver::Version;
-use sg_std::math::U64Ext;
-use sg_std::{StargazeMsgWrapper, NATIVE_DENOM};
-use url::Url;
-
-use open_edition_factory::msg::{OpenEditionMinterCreateMsg, ParamsResponse};
-use open_edition_factory::types::NftMetadataType;
-use sg1::{checked_fair_burn, ibc_denom_fair_burn};
-use sg2::query::Sg2QueryMsg;
-use sg4::{Status, StatusResponse, SudoMsg};
-use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
-
 use crate::error::ContractError;
 use crate::helpers::mint_nft_msg;
 use crate::msg::{
@@ -28,6 +8,23 @@ use crate::state::{
     increment_token_index, Config, ConfigExtension, CONFIG, MINTER_ADDRS, SG721_ADDRESS, STATUS,
     TOTAL_MINT_COUNT,
 };
+#[cfg(not(feature = "library"))]
+use cosmwasm_std::entry_point;
+use cosmwasm_std::{
+    coin, to_binary, Addr, BankMsg, Binary, Coin, Decimal, Deps, DepsMut, Empty, Env, MessageInfo,
+    Order, Reply, ReplyOn, StdError, StdResult, Timestamp, WasmMsg,
+};
+use cw2::set_contract_version;
+use cw_utils::{may_pay, maybe_addr, nonpayable, parse_reply_instantiate_data};
+use open_edition_factory::msg::{OpenEditionMinterCreateMsg, ParamsResponse};
+use open_edition_factory::types::NftMetadataType;
+use semver::Version;
+use sg1::{checked_fair_burn, ibc_denom_fair_burn};
+use sg2::query::Sg2QueryMsg;
+use sg4::{Status, StatusResponse, SudoMsg};
+use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
+use sg_std::{StargazeMsgWrapper, NATIVE_DENOM};
+use url::Url;
 
 pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 pub type SubMsg = cosmwasm_std::SubMsg<StargazeMsgWrapper>;
@@ -305,12 +302,9 @@ fn _execute_mint(
     // Metadata Storage fees -> minting fee will be enabled for on-chain metadata mints
     // dev fees are intrinsic in the mint fee (assuming a 50% share)
     let mint_fee = if is_admin {
-        factory_params
-            .extension
-            .airdrop_mint_fee_bps
-            .bps_to_decimal()
+        Decimal::bps(factory_params.extension.airdrop_mint_fee_bps)
     } else {
-        factory_params.mint_fee_bps.bps_to_decimal()
+        Decimal::bps(factory_params.mint_fee_bps)
     };
     let network_fee = mint_price.amount * mint_fee;
 
@@ -382,7 +376,7 @@ fn _execute_mint(
         if !amount.is_zero() {
             let msg = BankMsg::Send {
                 to_address: payment_address.unwrap_or(seller).to_string(),
-                amount: vec![coin(amount.u128(), mint_price.denom)],
+                amount: vec![coin(amount.u128(), mint_price.clone().denom)],
             };
             res = res.add_message(msg);
         }
@@ -394,9 +388,15 @@ fn _execute_mint(
         .add_attribute("sender", info.sender)
         .add_attribute("recipient", recipient_addr)
         .add_attribute("token_id", token_id)
-        .add_attribute("network_fee", network_fee.to_string())
-        .add_attribute("mint_price", mint_price.amount)
-        .add_attribute("seller_amount", seller_amount))
+        .add_attribute(
+            "network_fee",
+            coin(network_fee.into(), mint_price.clone().denom).to_string(),
+        )
+        .add_attribute("mint_price", mint_price.to_string())
+        .add_attribute(
+            "seller_amount",
+            coin(seller_amount.into(), mint_price.denom).to_string(),
+        ))
 }
 
 pub fn execute_update_mint_price(
@@ -443,7 +443,7 @@ pub fn execute_update_mint_price(
     Ok(Response::new()
         .add_attribute("action", "update_mint_price")
         .add_attribute("sender", info.sender)
-        .add_attribute("mint_price", price.to_string()))
+        .add_attribute("mint_price", config.mint_price.to_string()))
 }
 
 pub fn execute_update_start_time(
