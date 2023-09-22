@@ -172,12 +172,8 @@ fn store_tree_uri(
     tree_uri: Option<String>
 ) -> Result<(), ContractError> {
     if tree_uri.is_some() {
-        let parsed_token_uri = Url::parse(&tree_uri.as_ref().unwrap())
+        Url::parse(&tree_uri.as_ref().unwrap())
                     .map_err(|_| ContractError::InvalidMerkleTreeURI {})?;
-
-        if parsed_token_uri.scheme() != "ipfs" {
-            return Err(ContractError::InvalidMerkleTreeURI {});
-        }
 
         MERKLE_TREE_URI.save(deps.storage, &tree_uri.unwrap())?
     }
