@@ -1,5 +1,7 @@
-use crate::common_setup::setup_collection_whitelist::WHITELIST_AMOUNT;
-use cosmwasm_std::{coin, coins, Addr};
+use crate::common_setup::{
+    setup_collection_whitelist::WHITELIST_AMOUNT, setup_minter::common::constants::FOUNDATION,
+};
+use cosmwasm_std::{coin, coins, Addr, Decimal, Uint128};
 use cw_multi_test::{BankSudo, Executor, SudoMsg};
 use sg2::{msg::Sg2ExecuteMsg, tests::mock_collection_params};
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
@@ -124,7 +126,7 @@ fn wl_denom_mismatch() {
         err.source().unwrap().to_string(),
         MinterContractError::InvalidDenom {
             expected: NATIVE_DENOM.to_string(),
-            got: denom.to_string()
+            got: denom.to_string(),
         }
         .to_string()
     );
@@ -238,6 +240,24 @@ fn wl_denom_mint() {
 
     // Whitelist mint succeeds
     let mint_msg = ExecuteMsg::Mint {};
-    let res = app.execute_contract(buyer, minter_addr, &mint_msg, &[wl_mint_price]);
+    let res = app.execute_contract(
+        buyer.clone(),
+        minter_addr,
+        &mint_msg,
+        &[wl_mint_price.clone()],
+    );
     assert!(res.is_ok());
+
+    // confirm balances
+    // confirm buyer IBC assets spent
+    let balance = app.wrap().query_balance(buyer, denom).unwrap();
+    assert_eq!(balance.amount, Uint128::zero());
+    // for seller should get 90% of IBC asset
+    let balance = app.wrap().query_balance(creator, denom).unwrap();
+    assert_eq!(balance.amount, wl_mint_price.amount * Decimal::percent(90));
+    let balance = app
+        .wrap()
+        .query_balance(Addr::unchecked(FOUNDATION), denom)
+        .unwrap();
+    assert_eq!(balance.amount, wl_mint_price.amount * Decimal::percent(10));
 }

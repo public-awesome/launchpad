@@ -1,12 +1,11 @@
 use cosmwasm_std::{coin, coins, Addr, BankMsg, Coin, Decimal, Event, MessageInfo, Uint128};
 use cw_utils::{may_pay, PaymentError};
-use sg_std::{
-    create_fund_community_pool_msg, create_fund_fairburn_pool_msg, Response, SubMsg, NATIVE_DENOM,
-};
+use sg_std::{create_fund_fairburn_pool_msg, Response, SubMsg, NATIVE_DENOM};
 use thiserror::Error;
 
 // governance parameters
 const FEE_BURN_PERCENT: u64 = 50;
+const FOUNDATION: &str = "stars1xqz6xujjyz0r9uzn7srasle5uynmpa0zkjr5l8";
 
 /// Burn and distribute fees and return an error if the fee is not enough
 pub fn checked_fair_burn(
@@ -39,31 +38,31 @@ pub fn ibc_denom_fair_burn(
 
     match &developer {
         Some(developer) => {
-            // Calculate the fees. 50% to dev, 50% to community pool
+            // Calculate the fees. 50% to dev, 50% to foundation
             let dev_fee = (fee.amount.mul_ceil(Decimal::percent(FEE_BURN_PERCENT))).u128();
-            let dev_coin = coins(dev_fee, fee.denom.to_string());
-            let comm_fee = coin(fee.amount.u128() - dev_fee, fee.denom.to_string());
+            let dev_coin = coin(dev_fee, fee.denom.to_string());
+            let foundation_coin = coin(fee.amount.u128() - dev_fee, fee.denom);
 
             event = event.add_attribute("dev_addr", developer.to_string());
-            event = event.add_attribute("dev_denom", fee.denom.to_string());
-            event = event.add_attribute("dev_amount", fee.amount.u128().to_string());
-            event = event.add_attribute("com_pool_denom", comm_fee.denom.to_string());
-            event = event.add_attribute("com_pool_amount", comm_fee.amount.u128().to_string());
+            event = event.add_attribute("dev_coin", dev_coin.to_string());
+            event = event.add_attribute("foundation_coin", foundation_coin.to_string());
 
             res.messages.push(SubMsg::new(BankMsg::Send {
                 to_address: developer.to_string(),
-                amount: dev_coin,
+                amount: vec![dev_coin],
             }));
-            res.messages
-                .push(SubMsg::new(create_fund_community_pool_msg(vec![comm_fee])));
+            res.messages.push(SubMsg::new(BankMsg::Send {
+                to_address: FOUNDATION.to_string(),
+                amount: vec![foundation_coin],
+            }));
         }
         None => {
-            // No dev, send all to community pool.
-            event = event.add_attribute("com_pool_denom", fee.denom.to_string());
-            event = event.add_attribute("com_pool_amount", fee.amount.u128().to_string());
-
-            res.messages
-                .push(SubMsg::new(create_fund_community_pool_msg(vec![fee])));
+            // No dev, send all to foundation.
+            event = event.add_attribute("foundation_coin", fee.to_string());
+            res.messages.push(SubMsg::new(BankMsg::Send {
+                to_address: FOUNDATION.to_string(),
+                amount: vec![fee],
+            }));
         }
     }
 
