@@ -14,6 +14,9 @@ pub enum ContractError {
     #[error("AlreadyStarted")]
     AlreadyStarted {},
 
+    #[error("AlreadyEnded")]
+    AlreadyEnded {},
+
     #[error("InvalidDenom: {0}")]
     InvalidDenom(String),
 

@@ -3,6 +3,7 @@ use crate::admin::{
 };
 use crate::error::ContractError;
 use crate::helpers::crypto::{verify_merkle_root, valid_hash_string, string_to_byte_slice};
+use crate::helpers::utils::verify_tree_uri;
 use crate::helpers::validators::map_validate;
 use crate::msg::{
     ConfigResponse, ExecuteMsg, HasEndedResponse, HasMemberResponse,
@@ -17,7 +18,6 @@ use sg_std::{Response, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use cw_utils::nonpayable;
 
 use rs_merkle::{algorithms::Sha256, Hasher};
-use url::Url;
 
 
 // version info for migration info
@@ -38,6 +38,7 @@ pub fn instantiate(
 ) -> Result<Response, ContractError> {
     nonpayable(&info)?;
     verify_merkle_root(&msg.merkle_root)?;
+    verify_tree_uri(&msg.merkle_tree_uri)?;
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
     if msg.mint_price.denom != NATIVE_DENOM {
@@ -66,7 +67,6 @@ pub fn instantiate(
         ));
     }
 
-    MERKLE_ROOT.save(deps.storage, &msg.merkle_root)?;
 
     let config = Config {
         start_time: msg.start_time,
@@ -75,21 +75,26 @@ pub fn instantiate(
         per_address_limit: msg.per_address_limit,
     };
 
-    CONFIG.save(deps.storage, &config)?;
 
     let admin_config = AdminList {
         admins: map_validate(deps.api, &msg.admins)?,
         mutable: msg.admins_mutable,
     };
+
+    MERKLE_ROOT.save(deps.storage, &msg.merkle_root)?;
     ADMIN_LIST.save(deps.storage, &admin_config)?;
+    CONFIG.save(deps.storage, &config)?;
     
-    store_tree_uri(deps, msg.merkle_tree_uri)?;
 
     Ok(Response::new()
         .add_attribute("action", "instantiate")
         .add_attribute("contract_name", CONTRACT_NAME)
         .add_attribute("contract_version", CONTRACT_VERSION)
-        .add_attribute("sender", info.sender))
+        .add_attribute("merkle_root", msg.merkle_root)
+        .add_attribute("merkle_tree_uri", msg.merkle_tree_uri.unwrap_or(String::default()))
+        .add_attribute("sender", info.sender)
+    )
+        
 }
 
 
@@ -107,6 +112,32 @@ pub fn execute(
         ExecuteMsg::Freeze {} => execute_freeze(deps, env, info),
     }
 }
+
+pub fn execute_update_merkle_tree(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    merkle_root: String,
+    merkle_tree_uri: Option<String>,
+) -> Result<Response, ContractError> {
+    let config = CONFIG.load(deps.storage)?;
+    can_execute(&deps, info.sender.clone())?;
+    verify_merkle_root(&merkle_root)?;
+    verify_tree_uri(&merkle_tree_uri)?;
+
+    if env.block.time < config.end_time {
+        return Err(ContractError::AlreadyEnded {});
+    }
+
+    MERKLE_ROOT.save(deps.storage, &merkle_root)?;
+
+    Ok(Response::new()
+        .add_attribute("action", "update_merkle_tree")
+        .add_attribute("merkle_root", merkle_root)
+        .add_attribute("merkle_tree_uri", merkle_tree_uri.unwrap_or(String::default()))
+        .add_attribute("sender", info.sender))
+}
+
 
 pub fn execute_update_start_time(
     deps: DepsMut,
@@ -142,6 +173,7 @@ pub fn execute_update_start_time(
 }
 
 
+
 pub fn execute_update_end_time(
     deps: DepsMut,
     env: Env,
@@ -167,18 +199,7 @@ pub fn execute_update_end_time(
         .add_attribute("sender", info.sender))
 }
 
-fn store_tree_uri(
-    deps: DepsMut,
-    tree_uri: Option<String>
-) -> Result<(), ContractError> {
-    if tree_uri.is_some() {
-        Url::parse(&tree_uri.as_ref().unwrap())
-                    .map_err(|_| ContractError::InvalidMerkleTreeURI {})?;
 
-        MERKLE_TREE_URI.save(deps.storage, &tree_uri.unwrap())?
-    }
-    Ok(())
-}
 
 
 #[cfg_attr(not(feature = "library"), entry_point)]
