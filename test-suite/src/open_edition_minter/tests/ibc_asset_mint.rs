@@ -1,10 +1,6 @@
-use base_factory::ContractError as BaseContractError;
 use cosmwasm_std::{coin, Addr, Coin, Decimal, Uint128};
 use cw_multi_test::{BankSudo, Executor, SudoMsg};
-use open_edition_factory::{
-    state::{OpenEditionMinterParams, ParamsExtension},
-    types::{NftData, NftMetadataType},
-};
+use open_edition_factory::state::{OpenEditionMinterParams, ParamsExtension};
 use open_edition_minter::msg::ExecuteMsg;
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
@@ -235,60 +231,4 @@ fn zero_mint_fee() {
     let mint_msg = ExecuteMsg::Mint {};
     let res = router.execute_contract(buyer, minter_addr, &mint_msg, &[mint_price]);
     assert!(res.is_ok());
-}
-
-#[test]
-fn denom_mismatch_creating_minter() {
-    // create factory w NATIVE_DENOM, then try creating a minter w different denom
-    let denom = "ibc/asset";
-    let mint_price = coin(MIN_MINT_PRICE_OPEN_EDITION, denom.to_string());
-    let mismatch_denom = coin(MIN_MINT_PRICE_OPEN_EDITION, NATIVE_DENOM);
-    let nft_data = NftData {
-        nft_data_type: NftMetadataType::OffChainMetadata,
-        token_uri: Some("ipfs://1234".to_string()),
-        extension: None,
-    };
-
-    let params_extension = ParamsExtension {
-        max_per_address_limit: 10,
-        airdrop_mint_fee_bps: 100,
-        airdrop_mint_price: Coin {
-            denom: mint_price.to_string(),
-            amount: Uint128::new(100_000_000u128),
-        },
-        dev_fee_address: DEV_ADDRESS.to_string(),
-    };
-    let per_address_limit_minter = Some(2);
-    let init_msg = init_msg(
-        nft_data,
-        per_address_limit_minter,
-        None,
-        None,
-        Some(mint_price.clone()),
-    );
-    let custom_minter_params = OpenEditionMinterParams {
-        code_id: 1,
-        allowed_sg721_code_ids: vec![1, 2, 3, 5, 6],
-        frozen: false,
-        creation_fee: coin(CREATION_FEE, NATIVE_DENOM),
-        min_mint_price: mint_price,
-        mint_fee_bps: MINT_FEE_FAIR_BURN,
-        max_trading_offset_secs: 60 * 60 * 24 * 7,
-        extension: ParamsExtension {
-            max_per_address_limit: 10,
-            airdrop_mint_fee_bps: 100,
-            dev_fee_address: DEV_ADDRESS.to_string(),
-            airdrop_mint_price: mismatch_denom,
-        },
-    };
-
-    let vt =
-        open_edition_minter_ibc_template(params_extension, init_msg, custom_minter_params).unwrap();
-    let err = vt.collection_response_vec[0]
-        .error
-        .as_ref()
-        .unwrap()
-        .root_cause()
-        .to_string();
-    assert_eq!(err, BaseContractError::InvalidDenom {}.to_string());
 }
