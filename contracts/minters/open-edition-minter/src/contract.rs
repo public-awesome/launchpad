@@ -283,7 +283,7 @@ fn _execute_mint(
 
     let mint_price: Coin = mint_price(deps.as_ref(), is_admin)?;
     // Exact payment only accepted
-    let payment = may_pay(&info, &config.mint_price.denom)?;
+    let payment = may_pay(&info, &mint_price.denom)?;
     if payment != mint_price.amount {
         return Err(ContractError::IncorrectPaymentAmount(
             coin(payment.u128(), &config.mint_price.denom),
@@ -629,7 +629,7 @@ pub fn mint_price(deps: Deps, is_admin: bool) -> Result<Coin, StdError> {
         let factory_params = factory.params;
         Ok(coin(
             factory_params.extension.airdrop_mint_price.amount.u128(),
-            config.mint_price.denom,
+            factory_params.extension.airdrop_mint_price.denom,
         ))
     } else {
         Ok(config.mint_price)
