@@ -98,6 +98,9 @@ where
         Ok(Response::new()
             .add_attribute("action", "instantiate")
             .add_attribute("collection_name", info.name)
+            .add_attribute("collection_symbol", info.symbol)
+            .add_attribute("collection_creator", collection_info.creator)
+            .add_attribute("minter", msg.minter)
             .add_attribute("image", image.to_string()))
     }
 
