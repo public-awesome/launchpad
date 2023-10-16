@@ -36,11 +36,6 @@ pub fn instantiate(
     let params = msg.params;
 
     ensure!(
-        params.extension.airdrop_mint_price.denom == params.min_mint_price.denom,
-        BaseContractError::InvalidDenom {}
-    );
-
-    ensure!(
         params.creation_fee.denom == NATIVE_DENOM,
         BaseContractError::InvalidDenom {}
     );

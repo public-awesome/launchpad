@@ -11,8 +11,8 @@ use crate::validation::{check_dynamic_per_address_limit, get_three_percent_of_to
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coin, coins, ensure, to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut,
-    Empty, Env, Event, MessageInfo, Order, Reply, ReplyOn, StdError, StdResult, Timestamp, Uint128,
+    coin, ensure, to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut, Empty,
+    Env, Event, MessageInfo, Order, Reply, ReplyOn, StdError, StdResult, Timestamp, Uint128,
     WasmMsg,
 };
 use cw2::set_contract_version;
@@ -21,13 +21,11 @@ use cw_utils::{may_pay, maybe_addr, nonpayable, parse_reply_instantiate_data};
 use rand_core::{RngCore, SeedableRng};
 use rand_xoshiro::Xoshiro128PlusPlus;
 use semver::Version;
-use sg1::checked_fair_burn;
+use sg1::{checked_fair_burn, ibc_denom_fair_burn};
 use sg2::query::Sg2QueryMsg;
 use sg4::{MinterConfig, Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
-use sg_std::{
-    create_fund_community_pool_msg, StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM,
-};
+use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use sg_whitelist::msg::{
     ConfigResponse as WhitelistConfigResponse, HasMemberResponse, QueryMsg as WhitelistQueryMsg,
 };
@@ -647,7 +645,7 @@ fn _execute_mint(
 
     let mint_price: Coin = mint_price(deps.as_ref(), is_admin)?;
     // Exact payment only accepted
-    let payment = may_pay(&info, &config.mint_price.denom)?;
+    let payment = may_pay(&info, &mint_price.denom)?;
     if payment != mint_price.amount {
         return Err(ContractError::IncorrectPaymentAmount(
             coin(payment.u128(), &config.mint_price.denom),
@@ -675,9 +673,11 @@ fn _execute_mint(
     if mint_price.denom != NATIVE_DENOM {
         // only send non-zero amounts
         if !network_fee.is_zero() {
-            let msg =
-                create_fund_community_pool_msg(coins(network_fee.u128(), mint_price.clone().denom));
-            res = res.add_message(msg);
+            ibc_denom_fair_burn(
+                coin(network_fee.u128(), mint_price.clone().denom),
+                None,
+                &mut res,
+            )?;
         }
     } else {
         checked_fair_burn(&info, network_fee.u128(), None, &mut res)?;
@@ -1065,7 +1065,7 @@ pub fn mint_price(deps: Deps, is_admin: bool) -> Result<Coin, StdError> {
     if is_admin {
         return Ok(coin(
             factory_params.extension.airdrop_mint_price.amount.u128(),
-            config.mint_price.denom,
+            factory_params.extension.airdrop_mint_price.denom,
         ));
     }
 
