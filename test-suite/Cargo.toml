@@ -62,6 +62,10 @@ sg721-nt            = { workspace = true }
 sg-controllers      = { workspace = true }
 cw-ownable = "0.5.1"
 
+vending-minter-merkle-wl  = { workspace = true, features = ["library"] }
+whitelist-mtree           = { workspace = true, features = ["library"] }
+rs_merkle                 = { version = "1.4.1", default-features = false }
+
 [dev-dependencies]
 serde           = { workspace = true }
 thiserror       = { workspace = true }
