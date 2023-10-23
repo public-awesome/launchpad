@@ -39,7 +39,7 @@ mod tests {
         let info = mock_info(ADMIN, &[]);
         let res = instantiate(deps, mock_env(), info, msg).unwrap();
         assert_eq!(0, res.messages.len());
-        assert_eq!(6, res.attributes.len());
+        assert_eq!(5, res.attributes.len());
 
     }
 

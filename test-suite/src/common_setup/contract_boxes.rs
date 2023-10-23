@@ -64,6 +64,7 @@ pub fn contract_collection_whitelist() -> Box<dyn Contract<StargazeMsgWrapper>> 
     Box::new(contract)
 }
 
+
 pub fn contract_open_edition_minter() -> Box<dyn Contract<StargazeMsgWrapper>> {
     let contract = ContractWrapper::new(
         open_edition_minter::contract::execute,

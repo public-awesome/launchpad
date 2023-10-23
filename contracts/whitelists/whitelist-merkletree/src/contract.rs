@@ -87,7 +87,6 @@ pub fn instantiate(
     
     let tree_url = msg.merkle_tree_uri.unwrap_or(String::default());
 
-
     let mut attrs = Vec::with_capacity(6);
     
     attrs.push(("action", "update_merkle_tree"));
@@ -142,7 +141,6 @@ pub fn execute_update_merkle_tree(
     attrs.push(("merkle_root", merkle_root));
     if let Some(uri) = merkle_tree_uri { attrs.push(("merkle_tree_uri", uri)); }
     attrs.push(("sender", info.sender.to_string()));
-
 
     Ok(Response::new().add_attributes(attrs))
 }
