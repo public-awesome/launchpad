@@ -88,8 +88,8 @@ pub enum ContractError {
     #[error("Instantiate sg721 error")]
     InstantiateSg721Error {},
 
-    #[error("Invalid base token URI (must be an IPFS URI)")]
-    InvalidBaseTokenURI {},
+    #[error("Invalid base token URI (must be an {expected_scheme} URI)")]
+    InvalidBaseTokenURI { expected_scheme: String },
 
     #[error("address not on whitelist: {addr}")]
     NotWhitelisted { addr: String },

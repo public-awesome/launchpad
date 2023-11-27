@@ -27,8 +27,8 @@ pub enum ContractError {
     #[error("InvalidMintPrice")]
     InvalidMintPrice {},
 
-    #[error("InvalidTokenURI")]
-    InvalidTokenURI {},
+    #[error("InvalidTokenURI (must be an {expected_scheme} URI)")]
+    InvalidTokenURI { expected_scheme: String },
 
     #[error("Invalid reply ID")]
     InvalidReplyID {},

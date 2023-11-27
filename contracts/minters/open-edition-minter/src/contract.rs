@@ -21,6 +21,7 @@ use open_edition_factory::types::NftMetadataType;
 use semver::Version;
 use sg1::{checked_fair_burn, ibc_denom_fair_burn};
 use sg2::query::Sg2QueryMsg;
+use sg2::UriScheme;
 use sg4::{Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
 use sg_std::{StargazeMsgWrapper, NATIVE_DENOM};
@@ -56,6 +57,11 @@ pub fn instantiate(
     // set default status so it can be queried without failing
     STATUS.save(deps.storage, &Status::default())?;
 
+    let uri_scheme = factory_params
+        .uri_scheme
+        .unwrap_or(UriScheme::Ipfs)
+        .to_string();
+
     match msg.init_msg.nft_data.nft_data_type {
         // If off-chain metadata -> Sanitize base token uri
         NftMetadataType::OffChainMetadata => {
@@ -65,10 +71,19 @@ pub fn instantiate(
                 .token_uri
                 .as_ref()
                 .map(|uri| uri.trim().to_string())
-                .map_or_else(|| Err(ContractError::InvalidBaseTokenURI {}), Ok)?;
+                .map_or_else(
+                    || {
+                        Err(ContractError::InvalidBaseTokenURI {
+                            expected_scheme: uri_scheme.clone(),
+                        })
+                    },
+                    Ok,
+                )?;
 
-            if Url::parse(&base_token_uri)?.scheme() != "ipfs" {
-                return Err(ContractError::InvalidBaseTokenURI {});
+            if Url::parse(&base_token_uri)?.scheme() != uri_scheme {
+                return Err(ContractError::InvalidBaseTokenURI {
+                    expected_scheme: uri_scheme,
+                });
             }
 
             msg.init_msg.nft_data.token_uri = Some(base_token_uri);
@@ -127,6 +142,7 @@ pub fn instantiate(
             nft_data: msg.init_msg.nft_data,
         },
         mint_price: msg.init_msg.mint_price,
+        uri_scheme,
     };
 
     CONFIG.save(deps.storage, &config)?;

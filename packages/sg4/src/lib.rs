@@ -7,6 +7,7 @@ pub struct MinterConfig<T> {
     pub factory: Addr,
     pub collection_code_id: u64,
     pub mint_price: Coin,
+    pub uri_scheme: String,
     pub extension: T,
 }
 

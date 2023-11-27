@@ -22,6 +22,7 @@ use rand_xoshiro::Xoshiro128PlusPlus;
 use semver::Version;
 use sg1::{checked_fair_burn, ibc_denom_fair_burn};
 use sg2::query::Sg2QueryMsg;
+use sg2::UriScheme;
 use sg4::{MinterConfig, Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
 use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
@@ -72,14 +73,20 @@ pub fn instantiate(
     // set default status so it can be queried without failing
     STATUS.save(deps.storage, &Status::default())?;
 
+    let uri_scheme = factory_params
+        .uri_scheme
+        .unwrap_or(UriScheme::Ipfs)
+        .to_string();
+
     // sanitize base token uri
-    let mut base_token_uri = msg.init_msg.base_token_uri.trim().to_string();
-    // Check that base_token_uri is a valid IPFS uri
-    let parsed_token_uri = Url::parse(&base_token_uri)?;
-    if parsed_token_uri.scheme() != "ipfs" {
-        return Err(ContractError::InvalidBaseTokenURI {});
+    let url = Url::parse(&msg.init_msg.base_token_uri.trim().to_string())?;
+    if url.scheme() != uri_scheme {
+        return Err(ContractError::InvalidBaseTokenURI {
+            expected_scheme: uri_scheme,
+        });
     }
-    base_token_uri = parsed_token_uri.to_string();
+
+    let base_token_uri = url.to_string();
 
     let genesis_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
     // If start time is before genesis time return error
@@ -147,6 +154,7 @@ pub fn instantiate(
             discount_price: None,
         },
         mint_price: msg.init_msg.mint_price,
+        uri_scheme,
     };
 
     CONFIG.save(deps.storage, &config)?;
