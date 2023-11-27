@@ -13,7 +13,6 @@ use cw2::set_contract_version;
 use cw_utils::{must_pay, nonpayable, parse_reply_instantiate_data};
 use sg1::checked_fair_burn;
 use sg2::query::Sg2QueryMsg;
-use sg2::UriScheme;
 use sg4::{QueryMsg, Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
 use sg721_base::msg::{CollectionInfoResponse, QueryMsg as Sg721QueryMsg};
@@ -53,7 +52,7 @@ pub fn instantiate(
         uri_scheme: factory_params
             .params
             .uri_scheme
-            .unwrap_or(UriScheme::Ipfs)
+            .unwrap_or("ipfs".to_owned())
             .to_string(),
         extension: Empty {},
     };
@@ -122,7 +121,7 @@ pub fn execute_mint_sender(
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
     let collection_address = COLLECTION_ADDRESS.load(deps.storage)?;
-    let token_uri = token_uri.trim();
+    let token_uri = token_uri.trim().to_owned();
 
     // This is a 1:1 minter, minted at min_mint_price
     // Should mint and then list on the marketplace for secondary sales

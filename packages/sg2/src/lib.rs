@@ -1,5 +1,3 @@
-use core::fmt;
-
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::Coin;
 
@@ -20,21 +18,6 @@ pub struct MinterParams<T> {
     pub min_mint_price: Coin,
     pub mint_fee_bps: u64,
     pub max_trading_offset_secs: u64,
-    pub uri_scheme: Option<UriScheme>,
+    pub uri_scheme: Option<String>,
     pub extension: T,
-}
-
-#[cw_serde]
-pub enum UriScheme {
-    Https,
-    Ipfs,
-}
-
-impl fmt::Display for UriScheme {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Ipfs => write!(f, "ipfs"),
-            Self::Https => write!(f, "https"),
-        }
-    }
 }

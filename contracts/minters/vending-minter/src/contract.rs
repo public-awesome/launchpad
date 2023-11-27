@@ -23,7 +23,6 @@ use rand_xoshiro::Xoshiro128PlusPlus;
 use semver::Version;
 use sg1::{checked_fair_burn, ibc_denom_fair_burn};
 use sg2::query::Sg2QueryMsg;
-use sg2::UriScheme;
 use sg4::{MinterConfig, Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
 use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
@@ -90,7 +89,7 @@ pub fn instantiate(
 
     let uri_scheme = factory_params
         .uri_scheme
-        .unwrap_or(UriScheme::Ipfs)
+        .unwrap_or("ipfs".to_owned())
         .to_string();
 
     // sanitize base token uri

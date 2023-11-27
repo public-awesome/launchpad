@@ -59,6 +59,7 @@ pub fn mock_params(mint_denom: Option<String>) -> VendingMinterParams {
         ),
         mint_fee_bps: MINT_FEE_FAIR_BURN,
         max_trading_offset_secs: 60 * 60 * 24 * 7,
+        uri_scheme: Some("ipfs".to_owned()),
         extension: ParamsExtension {
             max_token_limit: MAX_TOKEN_LIMIT,
             max_per_address_limit: MAX_PER_ADDRESS_LIMIT,

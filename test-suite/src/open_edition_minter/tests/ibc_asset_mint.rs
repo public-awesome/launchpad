@@ -45,6 +45,7 @@ fn check_custom_create_minter_denom() {
         min_mint_price: init_msg.mint_price.clone(),
         mint_fee_bps: MINT_FEE_FAIR_BURN,
         max_trading_offset_secs: 60 * 60 * 24 * 7,
+        uri_scheme: Some("ipfs".to_owned()),
         extension: ParamsExtension {
             max_per_address_limit: 10,
             airdrop_mint_fee_bps: 100,
@@ -121,6 +122,7 @@ fn one_hundred_percent_burned_ibc_minter() {
         min_mint_price: init_msg.mint_price.clone(),
         mint_fee_bps: 10000,
         max_trading_offset_secs: 60 * 60 * 24 * 7,
+        uri_scheme: Some("ipfs".to_owned()),
         extension: ParamsExtension {
             max_per_address_limit: 10,
             airdrop_mint_fee_bps: 100,
@@ -202,6 +204,7 @@ fn zero_mint_fee() {
         min_mint_price: init_msg.mint_price.clone(),
         mint_fee_bps: 0,
         max_trading_offset_secs: 60 * 60 * 24 * 7,
+        uri_scheme: Some("ipfs".to_owned()),
         extension: ParamsExtension {
             max_per_address_limit: 10,
             airdrop_mint_fee_bps: 100,
