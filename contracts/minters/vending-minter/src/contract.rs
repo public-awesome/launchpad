@@ -243,11 +243,11 @@ pub fn execute(
         }
         ExecuteMsg::RemoveDiscountPrice {} => execute_remove_discount_price(deps, info),
         ExecuteMsg::AddPreMintHook { hook } => {
-            // TODO: need to admin gate..
+            only_admin(deps.as_ref(), &info)?;
             add_premint_hook(deps, hook).map_err(ContractError::from)
         }
         ExecuteMsg::AddPostMintHook { hook } => {
-            // TODO: need to admin gate..
+            only_admin(deps.as_ref(), &info)?;
             add_postmint_hook(deps, hook).map_err(ContractError::from)
         }
     }
@@ -260,12 +260,10 @@ pub fn execute_update_discount_price(
     price: u128,
 ) -> Result<Response, ContractError> {
     nonpayable(&info)?;
+    only_admin(deps.as_ref(), &info)?;
+
     let mut config = CONFIG.load(deps.storage)?;
-    if info.sender != config.extension.admin {
-        return Err(ContractError::Unauthorized(
-            "Sender is not an admin".to_owned(),
-        ));
-    }
+
     if env.block.time < config.extension.start_time {
         return Err(ContractError::BeforeMintStartTime {});
     }
@@ -304,12 +302,9 @@ pub fn execute_remove_discount_price(
     info: MessageInfo,
 ) -> Result<Response, ContractError> {
     nonpayable(&info)?;
+    only_admin(deps.as_ref(), &info)?;
+
     let mut config = CONFIG.load(deps.storage)?;
-    if info.sender != config.extension.admin {
-        return Err(ContractError::Unauthorized(
-            "Sender is not an admin".to_owned(),
-        ));
-    }
     config.extension.discount_price = None;
     CONFIG.save(deps.storage, &config)?;
 
@@ -401,22 +396,19 @@ pub fn execute_set_whitelist(
     whitelist: &str,
 ) -> Result<Response, ContractError> {
     nonpayable(&info)?;
+    only_admin(deps.as_ref(), &info)?;
+
     let mut config = CONFIG.load(deps.storage)?;
     let MinterConfig {
         factory,
         extension:
             ConfigExtension {
                 whitelist: existing_whitelist,
-                admin,
                 start_time,
                 ..
             },
         ..
     } = config.clone();
-    ensure!(
-        admin == info.sender,
-        ContractError::Unauthorized("Sender is not an admin".to_owned())
-    );
 
     ensure!(
         env.block.time < start_time,
@@ -557,16 +549,10 @@ pub fn execute_mint_to(
     info: MessageInfo,
     recipient: String,
 ) -> Result<Response, ContractError> {
-    let recipient = deps.api.addr_validate(&recipient)?;
-    let config = CONFIG.load(deps.storage)?;
-    let action = "mint_to";
+    only_admin(deps.as_ref(), &info)?;
 
-    // Check only admin
-    if info.sender != config.extension.admin {
-        return Err(ContractError::Unauthorized(
-            "Sender is not an admin".to_owned(),
-        ));
-    }
+    let recipient = deps.api.addr_validate(&recipient)?;
+    let action = "mint_to";
 
     _execute_mint(deps, env, info, action, true, Some(recipient), None)
 }
@@ -578,16 +564,10 @@ pub fn execute_mint_for(
     token_id: u32,
     recipient: String,
 ) -> Result<Response, ContractError> {
-    let recipient = deps.api.addr_validate(&recipient)?;
-    let config = CONFIG.load(deps.storage)?;
-    let action = "mint_for";
+    only_admin(deps.as_ref(), &info)?;
 
-    // Check only admin
-    if info.sender != config.extension.admin {
-        return Err(ContractError::Unauthorized(
-            "Sender is not an admin".to_owned(),
-        ));
-    }
+    let recipient = deps.api.addr_validate(&recipient)?;
+    let action = "mint_for";
 
     _execute_mint(
         deps,
@@ -824,12 +804,9 @@ pub fn execute_update_mint_price(
     price: u128,
 ) -> Result<Response, ContractError> {
     nonpayable(&info)?;
+    only_admin(deps.as_ref(), &info)?;
+
     let mut config = CONFIG.load(deps.storage)?;
-    if info.sender != config.extension.admin {
-        return Err(ContractError::Unauthorized(
-            "Sender is not an admin".to_owned(),
-        ));
-    }
     // If current time is after the stored start time, only allow lowering price
     if env.block.time >= config.extension.start_time && price >= config.mint_price.amount.u128() {
         return Err(ContractError::UpdatedMintPriceTooHigh {
@@ -865,12 +842,9 @@ pub fn execute_update_start_time(
     start_time: Timestamp,
 ) -> Result<Response, ContractError> {
     nonpayable(&info)?;
+    only_admin(deps.as_ref(), &info)?;
+
     let mut config = CONFIG.load(deps.storage)?;
-    if info.sender != config.extension.admin {
-        return Err(ContractError::Unauthorized(
-            "Sender is not an admin".to_owned(),
-        ));
-    }
     // If current time is after the stored start time return error
     if env.block.time >= config.extension.start_time {
         return Err(ContractError::AlreadyStarted {});
@@ -902,14 +876,10 @@ pub fn execute_update_start_trading_time(
     start_time: Option<Timestamp>,
 ) -> Result<Response, ContractError> {
     nonpayable(&info)?;
+    only_admin(deps.as_ref(), &info)?;
+
     let config = CONFIG.load(deps.storage)?;
     let sg721_contract_addr = SG721_ADDRESS.load(deps.storage)?;
-
-    if info.sender != config.extension.admin {
-        return Err(ContractError::Unauthorized(
-            "Sender is not an admin".to_owned(),
-        ));
-    }
 
     // add custom rules here
     let factory_params: ParamsResponse = deps
@@ -958,12 +928,9 @@ pub fn execute_update_per_address_limit(
     per_address_limit: u32,
 ) -> Result<Response, ContractError> {
     nonpayable(&info)?;
+    only_admin(deps.as_ref(), &info)?;
+
     let mut config = CONFIG.load(deps.storage)?;
-    if info.sender != config.extension.admin {
-        return Err(ContractError::Unauthorized(
-            "Sender is not an admin".to_owned(),
-        ));
-    }
 
     let factory: ParamsResponse = deps
         .querier
@@ -1009,13 +976,7 @@ pub fn execute_burn_remaining(
     info: MessageInfo,
 ) -> Result<Response, ContractError> {
     nonpayable(&info)?;
-    let config = CONFIG.load(deps.storage)?;
-    // Check only admin
-    if info.sender != config.extension.admin {
-        return Err(ContractError::Unauthorized(
-            "Sender is not an admin".to_owned(),
-        ));
-    }
+    only_admin(deps.as_ref(), &info)?;
 
     // check mint not sold out
     let mintable_num_tokens = MINTABLE_NUM_TOKENS.load(deps.storage)?;
@@ -1096,6 +1057,14 @@ pub fn display_max_mintable_tokens(
     }
     let three_percent = get_three_percent_of_tokens(num_tokens)?.u128();
     Ok(three_percent as u32)
+}
+
+fn only_admin(deps: Deps, info: &MessageInfo) -> Result<(), ContractError> {
+    ensure!(
+        CONFIG.load(deps.storage)?.extension.admin == info.sender,
+        ContractError::Unauthorized("Sender is not an admin".to_owned())
+    );
+    Ok(())
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
