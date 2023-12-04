@@ -1,5 +1,6 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Coin, Timestamp};
+use sg_mint_hooks::sg_mint_hooks_execute;
 use vending_factory::{msg::VendingMinterCreateMsg, state::VendingMinterParams};
 
 #[cw_serde]
@@ -8,6 +9,7 @@ pub struct InstantiateMsg {
     pub params: VendingMinterParams,
 }
 
+#[sg_mint_hooks_execute]
 #[cw_serde]
 pub enum ExecuteMsg {
     Mint {},

@@ -1,8 +1,10 @@
 use cosmwasm_std::{Coin, StdError, Timestamp};
 use cw_utils::PaymentError;
 use sg1::FeeError;
+use sg_mint_hooks::MintHookError;
 use thiserror::Error;
 use url::ParseError;
+
 #[derive(Error, Debug, PartialEq)]
 pub enum ContractError {
     #[error("{0}")]
@@ -16,6 +18,9 @@ pub enum ContractError {
 
     #[error("{0}")]
     Fee(#[from] FeeError),
+
+    #[error("{0}")]
+    MintHook(#[from] MintHookError),
 
     #[error("Unauthorized: {0}")]
     Unauthorized(String),
