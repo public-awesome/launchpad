@@ -1,7 +1,8 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Coin, Timestamp};
 use sg4::StatusResponse;
-use sg_mint_hooks::{sg_mint_hooks_execute, sg_mint_hooks_query, HooksResponse};
+use sg_controllers::HooksResponse;
+use sg_mint_hooks::{sg_mint_hooks_execute, sg_mint_hooks_query};
 use vending_factory::{msg::VendingMinterCreateMsg, state::VendingMinterParams};
 
 #[cw_serde]
