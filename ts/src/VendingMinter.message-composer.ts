@@ -50,6 +50,16 @@ export interface VendingMinterMessage {
     price: number;
   }, funds?: Coin[]) => MsgExecuteContractEncodeObject;
   removeDiscountPrice: (funds?: Coin[]) => MsgExecuteContractEncodeObject;
+  addPreMintHook: ({
+    hook
+  }: {
+    hook: string;
+  }, funds?: Coin[]) => MsgExecuteContractEncodeObject;
+  addPostMintHook: ({
+    hook
+  }: {
+    hook: string;
+  }, funds?: Coin[]) => MsgExecuteContractEncodeObject;
 }
 export class VendingMinterMessageComposer implements VendingMinterMessage {
   sender: string;
@@ -71,6 +81,8 @@ export class VendingMinterMessageComposer implements VendingMinterMessage {
     this.burnRemaining = this.burnRemaining.bind(this);
     this.updateDiscountPrice = this.updateDiscountPrice.bind(this);
     this.removeDiscountPrice = this.removeDiscountPrice.bind(this);
+    this.addPreMintHook = this.addPreMintHook.bind(this);
+    this.addPostMintHook = this.addPostMintHook.bind(this);
   }
 
   mint = (funds?: Coin[]): MsgExecuteContractEncodeObject => {
@@ -276,6 +288,44 @@ export class VendingMinterMessageComposer implements VendingMinterMessage {
         contract: this.contractAddress,
         msg: toUtf8(JSON.stringify({
           remove_discount_price: {}
+        })),
+        funds
+      })
+    };
+  };
+  addPreMintHook = ({
+    hook
+  }: {
+    hook: string;
+  }, funds?: Coin[]): MsgExecuteContractEncodeObject => {
+    return {
+      typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
+      value: MsgExecuteContract.fromPartial({
+        sender: this.sender,
+        contract: this.contractAddress,
+        msg: toUtf8(JSON.stringify({
+          add_pre_mint_hook: {
+            hook
+          }
+        })),
+        funds
+      })
+    };
+  };
+  addPostMintHook = ({
+    hook
+  }: {
+    hook: string;
+  }, funds?: Coin[]): MsgExecuteContractEncodeObject => {
+    return {
+      typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
+      value: MsgExecuteContract.fromPartial({
+        sender: this.sender,
+        contract: this.contractAddress,
+        msg: toUtf8(JSON.stringify({
+          add_post_mint_hook: {
+            hook
+          }
         })),
         funds
       })

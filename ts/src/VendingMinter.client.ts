@@ -19,6 +19,8 @@ export interface VendingMinterReadOnlyInterface {
     address: string;
   }) => Promise<MintCountResponse>;
   status: () => Promise<StatusResponse>;
+  preMintHooks: () => Promise<PreMintHooksResponse>;
+  postMintHooks: () => Promise<PostMintHooksResponse>;
 }
 export class VendingMinterQueryClient implements VendingMinterReadOnlyInterface {
   client: CosmWasmClient;
@@ -33,6 +35,8 @@ export class VendingMinterQueryClient implements VendingMinterReadOnlyInterface 
     this.mintPrice = this.mintPrice.bind(this);
     this.mintCount = this.mintCount.bind(this);
     this.status = this.status.bind(this);
+    this.preMintHooks = this.preMintHooks.bind(this);
+    this.postMintHooks = this.postMintHooks.bind(this);
   }
 
   config = async (): Promise<ConfigResponse> => {
@@ -69,6 +73,16 @@ export class VendingMinterQueryClient implements VendingMinterReadOnlyInterface 
   status = async (): Promise<StatusResponse> => {
     return this.client.queryContractSmart(this.contractAddress, {
       status: {}
+    });
+  };
+  preMintHooks = async (): Promise<PreMintHooksResponse> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      pre_mint_hooks: {}
+    });
+  };
+  postMintHooks = async (): Promise<PostMintHooksResponse> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      post_mint_hooks: {}
     });
   };
 }
@@ -114,6 +128,16 @@ export interface VendingMinterInterface extends VendingMinterReadOnlyInterface {
     price: number;
   }, fee?: number | StdFee | "auto", memo?: string, funds?: Coin[]) => Promise<ExecuteResult>;
   removeDiscountPrice: (fee?: number | StdFee | "auto", memo?: string, funds?: Coin[]) => Promise<ExecuteResult>;
+  addPreMintHook: ({
+    hook
+  }: {
+    hook: string;
+  }, fee?: number | StdFee | "auto", memo?: string, funds?: Coin[]) => Promise<ExecuteResult>;
+  addPostMintHook: ({
+    hook
+  }: {
+    hook: string;
+  }, fee?: number | StdFee | "auto", memo?: string, funds?: Coin[]) => Promise<ExecuteResult>;
 }
 export class VendingMinterClient extends VendingMinterQueryClient implements VendingMinterInterface {
   client: SigningCosmWasmClient;
@@ -138,6 +162,8 @@ export class VendingMinterClient extends VendingMinterQueryClient implements Ven
     this.burnRemaining = this.burnRemaining.bind(this);
     this.updateDiscountPrice = this.updateDiscountPrice.bind(this);
     this.removeDiscountPrice = this.removeDiscountPrice.bind(this);
+    this.addPreMintHook = this.addPreMintHook.bind(this);
+    this.addPostMintHook = this.addPostMintHook.bind(this);
   }
 
   mint = async (fee: number | StdFee | "auto" = "auto", memo?: string, funds?: Coin[]): Promise<ExecuteResult> => {
@@ -242,6 +268,28 @@ export class VendingMinterClient extends VendingMinterQueryClient implements Ven
   removeDiscountPrice = async (fee: number | StdFee | "auto" = "auto", memo?: string, funds?: Coin[]): Promise<ExecuteResult> => {
     return await this.client.execute(this.sender, this.contractAddress, {
       remove_discount_price: {}
+    }, fee, memo, funds);
+  };
+  addPreMintHook = async ({
+    hook
+  }: {
+    hook: string;
+  }, fee: number | StdFee | "auto" = "auto", memo?: string, funds?: Coin[]): Promise<ExecuteResult> => {
+    return await this.client.execute(this.sender, this.contractAddress, {
+      add_pre_mint_hook: {
+        hook
+      }
+    }, fee, memo, funds);
+  };
+  addPostMintHook = async ({
+    hook
+  }: {
+    hook: string;
+  }, fee: number | StdFee | "auto" = "auto", memo?: string, funds?: Coin[]): Promise<ExecuteResult> => {
+    return await this.client.execute(this.sender, this.contractAddress, {
+      add_post_mint_hook: {
+        hook
+      }
     }, fee, memo, funds);
   };
 }
