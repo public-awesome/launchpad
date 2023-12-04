@@ -64,6 +64,14 @@ export type ExecuteMsg = {
   };
 } | {
   remove_discount_price: {};
+} | {
+  add_pre_mint_hook: {
+    hook: string;
+  };
+} | {
+  add_post_mint_hook: {
+    hook: string;
+  };
 };
 export type Decimal = string;
 export interface InstantiateMsg {
@@ -164,6 +172,10 @@ export type QueryMsg = {
   };
 } | {
   status: {};
+} | {
+  pre_mint_hooks: {};
+} | {
+  post_mint_hooks: {};
 };
 export interface StartTimeResponse {
   start_time: string;

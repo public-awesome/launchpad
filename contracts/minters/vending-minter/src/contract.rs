@@ -699,7 +699,7 @@ fn _execute_mint(
 
     let postmint_hooks = prepare_postmint_hooks(
         deps.as_ref(),
-        sg721_address.clone(),
+        sg721_address,
         Some(mintable_token_mapping.token_id.to_string()),
         info.sender.to_string(),
     )?;

@@ -87,6 +87,32 @@
         }
       },
       "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "pre_mint_hooks"
+      ],
+      "properties": {
+        "pre_mint_hooks": {
+          "type": "object",
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "post_mint_hooks"
+      ],
+      "properties": {
+        "post_mint_hooks": {
+          "type": "object",
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
     }
   ]
 }
