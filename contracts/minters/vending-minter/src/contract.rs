@@ -25,8 +25,8 @@ use sg1::{checked_fair_burn, ibc_denom_fair_burn};
 use sg2::query::Sg2QueryMsg;
 use sg4::{MinterConfig, Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
-use sg_mint_hooks::post::add_postmint_hook;
-use sg_mint_hooks::pre::add_premint_hook;
+use sg_mint_hooks::post::{add_postmint_hook, prepare_postmint_hooks};
+use sg_mint_hooks::pre::{add_premint_hook, prepare_premint_hooks};
 use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use sg_whitelist::msg::{
     ConfigResponse as WhitelistConfigResponse, HasMemberResponse, QueryMsg as WhitelistQueryMsg,
@@ -674,6 +674,14 @@ fn _execute_mint(
         None => random_mintable_token_mapping(deps.as_ref(), env, info.sender.clone())?,
     };
 
+    let premint_hooks = prepare_premint_hooks(
+        deps.as_ref(),
+        sg721_address.clone(),
+        Some(mintable_token_mapping.token_id.to_string()),
+        info.sender.to_string(),
+    )?;
+    res = res.add_submessages(premint_hooks);
+
     // Create mint msgs
     let mint_msg = Sg721ExecuteMsg::<Extension, Empty>::Mint {
         token_id: mintable_token_mapping.token_id.to_string(),
@@ -1189,6 +1197,8 @@ fn query_mint_price(deps: Deps) -> StdResult<MintPriceResponse> {
 // Reply callback triggered from cw721 contract instantiation
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
+    sg_mint_hooks::handle_reply(msg.id)?;
+
     if msg.id != INSTANTIATE_SG721_REPLY_ID {
         return Err(ContractError::InvalidReplyID {});
     }
