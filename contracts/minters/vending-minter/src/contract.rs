@@ -1118,6 +1118,8 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::MintableNumTokens {} => to_binary(&query_mintable_num_tokens(deps)?),
         QueryMsg::MintPrice {} => to_binary(&query_mint_price(deps)?),
         QueryMsg::MintCount { address } => to_binary(&query_mint_count(deps, address)?),
+        QueryMsg::PreMintHooks {} => to_binary(&sg_mint_hooks::pre::query_premint_hooks(deps)?),
+        QueryMsg::PostMintHooks {} => to_binary(&sg_mint_hooks::post::query_postmint_hooks(deps)?),
     }
 }
 
