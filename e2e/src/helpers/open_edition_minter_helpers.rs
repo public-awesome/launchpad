@@ -54,6 +54,7 @@ pub fn instantiate_factory(
                 },
                 mint_fee_bps: 1000, // 10%
                 max_trading_offset_secs: (60 * 60) * 24,
+                uri_scheme: None,
                 extension: ParamsExtension {
                     max_per_address_limit: 50,
                     airdrop_mint_fee_bps: 0,
