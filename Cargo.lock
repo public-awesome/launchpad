@@ -4241,7 +4241,7 @@ checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 
 [[package]]
 name = "token-vault"
-version = "3.3.0"
+version = "3.5.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -4639,6 +4639,37 @@ dependencies = [
  "url",
  "vending-factory",
  "whitelist-mtree",
+]
+
+[[package]]
+name = "vending-minter-tv"
+version = "3.5.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus 1.1.0",
+ "cw-utils 1.0.1",
+ "cw2 1.1.0",
+ "cw721 0.18.0",
+ "cw721-base 0.18.0",
+ "rand_core 0.6.4",
+ "rand_xoshiro",
+ "schemars",
+ "semver",
+ "serde",
+ "sg-controllers",
+ "sg-mint-hooks",
+ "sg-std",
+ "sg-whitelist",
+ "sg1",
+ "sg2",
+ "sg4",
+ "sg721",
+ "sha2 0.10.7",
+ "shuffle",
+ "thiserror",
+ "url",
+ "vending-factory",
 ]
 
 [[package]]
