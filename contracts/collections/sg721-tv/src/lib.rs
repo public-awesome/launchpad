@@ -93,8 +93,8 @@ mod tests {
 
     use cosmwasm_std::testing::{mock_env, mock_info, MockApi, MockQuerier, MockStorage};
     use cosmwasm_std::{
-        from_slice, to_binary, ContractInfoResponse, ContractResult, Empty, OwnedDeps, Querier,
-        QuerierResult, QueryRequest, SystemError, SystemResult, WasmQuery,
+        from_slice, to_binary, Addr, ContractInfoResponse, ContractResult, Empty, OwnedDeps,
+        Querier, QuerierResult, QueryRequest, SystemError, SystemResult, WasmQuery,
     };
     use cw721::Cw721Query;
     use sg721::{CollectionInfo, ExecuteMsg, InstantiateMsg};
@@ -177,7 +177,7 @@ mod tests {
         // mint token
         let token_id = "Enterprise";
         let extension = Metadata {
-            balance: "cw-vesting".to_string(),
+            balance: Addr::unchecked("cw-vesting"),
         };
         let mint_msg = ExecuteMsg::Mint {
             token_id: token_id.to_string(),

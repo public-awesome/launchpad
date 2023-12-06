@@ -21,7 +21,6 @@ pub struct VaultInfo {
 pub struct InstantiateMsg {
     pub create_msg: VendingMinterCreateMsg,
     pub params: VendingMinterParams,
-    // pub token_balance: Coin,
     pub vault_info: VaultInfo,
 }
 

@@ -1,7 +1,7 @@
 use crate::error::ContractError;
 use crate::msg::{
     ConfigResponse, ExecuteMsg, InstantiateMsg, MintCountResponse, MintPriceResponse,
-    MintableNumTokensResponse, QueryMsg, StartTimeResponse,
+    MintableNumTokensResponse, QueryMsg, StartTimeResponse, VaultInfo,
 };
 use crate::state::{
     Config, ConfigExtension, CONFIG, MINTABLE_NUM_TOKENS, MINTABLE_TOKEN_POSITIONS, MINTER_ADDRS,
@@ -16,6 +16,7 @@ use cosmwasm_std::{
     Timestamp, Uint128, WasmMsg,
 };
 use cw2::set_contract_version;
+use cw721::ContractInfoResponse;
 use cw_utils::{may_pay, maybe_addr, nonpayable, parse_reply_instantiate_data};
 use rand_core::{RngCore, SeedableRng};
 use rand_xoshiro::Xoshiro128PlusPlus;
@@ -24,9 +25,10 @@ use sg1::{checked_fair_burn, ibc_denom_fair_burn};
 use sg2::query::Sg2QueryMsg;
 use sg4::{MinterConfig, Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
+use sg721_tv::QueryMsg as Sg721TVQueryMsg;
 use sg_mint_hooks::post::{add_postmint_hook, prepare_postmint_hooks};
 use sg_mint_hooks::pre::{add_premint_hook, prepare_premint_hooks};
-use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
+use sg_std::{CosmosMsg, StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use sg_token_vault::Metadata;
 use sg_whitelist::msg::{
     ConfigResponse as WhitelistConfigResponse, HasMemberResponse, QueryMsg as WhitelistQueryMsg,
@@ -677,59 +679,32 @@ fn _execute_mint(
         None => random_mintable_token_mapping(deps.as_ref(), env.clone(), info.sender.clone())?,
     };
 
-    // TODO: query sg721 collection to get vesting title from collection info
-    let title = "Stargaze Evolution 4, #42".to_string();
+    let token_id = mintable_token_mapping.token_id.to_string();
 
-    let vesting_init = cw_vesting::msg::InstantiateMsg {
-        owner: None,
-        recipient: recipient_addr.to_string(),
-        title: title + " Vault",
-        description: None,
-        total: config.extension.vault_info.token_balance.amount,
-        denom: cw_vesting::UncheckedDenom::Native(
-            config.extension.vault_info.token_balance.clone().denom,
-        ),
-        schedule: config.extension.vault_info.vesting_schedule,
-        start_time: None,
-        vesting_duration_seconds: config.extension.vault_info.vesting_duration_seconds,
-        unbonding_duration_seconds: config.extension.vault_info.unbonding_duration_seconds,
-    };
-    let canonical_creator = deps.api.addr_canonicalize(env.contract.address.as_str())?;
-    let vesting_code_id = config.extension.vault_info.vesting_code_id;
-    let checksum = deps.querier.query_wasm_code_info(vesting_code_id)?.checksum;
-    let salt_raw = sg721_address.to_string() + "/" + &mintable_token_mapping.token_id.to_string();
-    let vesting_addr_raw =
-        instantiate2_address(&checksum, &canonical_creator, salt_raw.as_bytes())?;
-    let vesting_addr = deps.api.addr_humanize(&vesting_addr_raw)?;
+    let (vesting_addr, vesting_msg) = init_vesting(
+        deps.as_ref(),
+        &env.contract.address.to_string(),
+        sg721_address.to_string(),
+        token_id,
+        config.extension.vault_info,
+        recipient_addr.to_string(),
+    )?;
+    res = res.add_message(vesting_msg);
 
-    let vesting_msg = WasmMsg::Instantiate2 {
-        admin: None,
-        code_id: vesting_code_id,
-        label: "Vesting".to_string(),
-        msg: to_binary(&vesting_init)?,
-        funds: vec![config.extension.vault_info.token_balance],
-        salt: to_binary(&salt_raw)?,
-    };
-    res = res.add_message(CosmosMsg::Wasm(vesting_msg));
-
-    // Create mint msgs
     let mint_msg = Sg721ExecuteMsg::<Metadata, Empty>::Mint {
-        token_id: mintable_token_mapping.token_id.to_string(),
+        token_id: token_id.clone(),
         owner: recipient_addr.to_string(),
-        token_uri: Some(format!(
-            "{}/{}",
-            config.extension.base_token_uri, mintable_token_mapping.token_id
-        )),
+        token_uri: Some(format!("{}/{}", config.extension.base_token_uri, token_id)),
         extension: Metadata {
             balance: vesting_addr,
         },
     };
 
-    let msg = CosmosMsg::Wasm(WasmMsg::Execute {
+    let msg = WasmMsg::Execute {
         contract_addr: sg721_address.to_string(),
         msg: to_binary(&mint_msg)?,
         funds: vec![],
-    });
+    };
     res = res.add_message(msg);
 
     // Remove mintable token position from map
@@ -762,7 +737,7 @@ fn _execute_mint(
         .add_attribute("action", action)
         .add_attribute("sender", info.sender)
         .add_attribute("recipient", recipient_addr)
-        .add_attribute("token_id", mintable_token_mapping.token_id.to_string())
+        .add_attribute("token_id", token_id)
         .add_attribute(
             "network_fee",
             coin(network_fee.u128(), mint_price.clone().denom).to_string(),
@@ -772,6 +747,60 @@ fn _execute_mint(
             "seller_amount",
             coin(seller_amount.u128(), mint_price.denom).to_string(),
         ))
+}
+
+fn init_vesting(
+    deps: Deps,
+    contract_address: &str,
+    collection: String,
+    token_id: String,
+    vault_info: VaultInfo,
+    recipient: String,
+) -> Result<(Addr, WasmMsg), ContractError> {
+    let contract_info: ContractInfoResponse = deps
+        .querier
+        .query_wasm_smart(collection, &Sg721TVQueryMsg::ContractInfo {})?;
+
+    let title = contract_info.name + " #" + &token_id;
+
+    let VaultInfo {
+        token_balance,
+        vesting_schedule,
+        vesting_duration_seconds,
+        unbonding_duration_seconds,
+        vesting_code_id,
+    } = vault_info;
+
+    let vesting_init = cw_vesting::msg::InstantiateMsg {
+        owner: None,
+        recipient,
+        title: title + " Vault",
+        description: None,
+        total: token_balance.amount,
+        denom: cw_vesting::UncheckedDenom::Native(token_balance.clone().denom),
+        schedule: vesting_schedule,
+        start_time: None,
+        vesting_duration_seconds,
+        unbonding_duration_seconds,
+    };
+
+    let canonical_creator = deps.api.addr_canonicalize(contract_address)?;
+    let checksum = deps.querier.query_wasm_code_info(vesting_code_id)?.checksum;
+    let salt_raw = collection + "/" + &token_id;
+    let vesting_addr_raw =
+        instantiate2_address(&checksum, &canonical_creator, salt_raw.as_bytes())?;
+    let vesting_addr = deps.api.addr_humanize(&vesting_addr_raw)?;
+
+    let vesting_msg = WasmMsg::Instantiate2 {
+        admin: None,
+        code_id: vesting_code_id,
+        label: "Token-vault Vesting".to_string(),
+        msg: to_binary(&vesting_init)?,
+        funds: vec![token_balance],
+        salt: to_binary(&salt_raw)?,
+    };
+
+    Ok((vesting_addr, vesting_msg))
 }
 
 fn random_token_list(
