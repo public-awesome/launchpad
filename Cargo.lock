@@ -3603,6 +3603,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "sg-token-vault"
+version = "3.3.0"
+dependencies = [
+ "cosmwasm-schema",
+ "schemars",
+ "serde",
+]
+
+[[package]]
 name = "sg-whitelist"
 version = "3.5.0"
 dependencies = [
@@ -3736,6 +3745,24 @@ dependencies = [
  "schemars",
  "serde",
  "sg-std",
+ "sg721",
+ "sg721-base",
+]
+
+[[package]]
+name = "sg721-tv"
+version = "3.3.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-ownable",
+ "cw2 1.1.0",
+ "cw721 0.18.0",
+ "cw721-base 0.18.0",
+ "schemars",
+ "serde",
+ "sg-std",
+ "sg-token-vault",
  "sg721",
  "sg721-base",
 ]
