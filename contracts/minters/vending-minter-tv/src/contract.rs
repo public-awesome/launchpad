@@ -677,14 +677,6 @@ fn _execute_mint(
         None => random_mintable_token_mapping(deps.as_ref(), env.clone(), info.sender.clone())?,
     };
 
-    let premint_hooks = prepare_premint_hooks(
-        deps.as_ref(),
-        sg721_address.clone(),
-        Some(mintable_token_mapping.token_id.to_string()),
-        info.sender.to_string(),
-    )?;
-    res = res.add_submessages(premint_hooks);
-
     // TODO: query sg721 collection to get vesting title from collection info
     let title = "Stargaze Evolution 4, #42".to_string();
 
@@ -739,14 +731,6 @@ fn _execute_mint(
         funds: vec![],
     });
     res = res.add_message(msg);
-
-    let postmint_hooks = prepare_postmint_hooks(
-        deps.as_ref(),
-        sg721_address,
-        Some(mintable_token_mapping.token_id.to_string()),
-        info.sender.to_string(),
-    )?;
-    res = res.add_submessages(postmint_hooks);
 
     // Remove mintable token position from map
     MINTABLE_TOKEN_POSITIONS.remove(deps.storage, mintable_token_mapping.position);
