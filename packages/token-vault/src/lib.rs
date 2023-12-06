@@ -1,7 +1,7 @@
 use cosmwasm_schema::cw_serde;
+use cosmwasm_std::{Addr, Storage};
 
 #[cw_serde]
 pub struct Metadata {
-    /// cw-vesting contract
-    pub balance: String,
+    pub balance: Addr,
 }

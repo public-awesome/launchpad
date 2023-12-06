@@ -9,6 +9,7 @@ use vending_factory::{msg::VendingMinterCreateMsg, state::VendingMinterParams};
 pub struct InstantiateMsg {
     pub create_msg: VendingMinterCreateMsg,
     pub params: VendingMinterParams,
+    pub token_balance: Coin,
 }
 
 #[sg_mint_hooks_execute]

@@ -1,4 +1,4 @@
-use cosmwasm_std::{Coin, StdError, Timestamp};
+use cosmwasm_std::{Coin, Instantiate2AddressError, StdError, Timestamp};
 use cw_utils::PaymentError;
 use sg1::FeeError;
 use sg_mint_hooks::MintHookError;
@@ -21,6 +21,9 @@ pub enum ContractError {
 
     #[error("{0}")]
     MintHook(#[from] MintHookError),
+
+    #[error("{0}")]
+    Instantiate2AddressError(#[from] Instantiate2AddressError),
 
     #[error("Unauthorized: {0}")]
     Unauthorized(String),

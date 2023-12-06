@@ -51,3 +51,6 @@ vending-factory = { workspace = true, features = ["library"] }
 semver          = { workspace = true }
 sg-mint-hooks   = { workspace = true }
 sg-controllers  = { workspace = true }
+sg721-tv        = { workspace = true }
+sg-token-vault  = { workspace = true }
+cw-vesting      = "2.2.0"

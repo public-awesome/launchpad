@@ -20,6 +20,7 @@ exclude = [
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
+cosmwasm-std    = { workspace = true }
 cosmwasm-schema = { workspace = true }
 schemars        = { workspace = true }
 serde           = { workspace = true }

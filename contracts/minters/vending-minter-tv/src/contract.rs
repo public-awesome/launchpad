@@ -1,7 +1,7 @@
 use crate::error::ContractError;
 use crate::msg::{
-    ConfigResponse, ExecuteMsg, MintCountResponse, MintPriceResponse, MintableNumTokensResponse,
-    QueryMsg, StartTimeResponse,
+    ConfigResponse, ExecuteMsg, InstantiateMsg, MintCountResponse, MintPriceResponse,
+    MintableNumTokensResponse, QueryMsg, StartTimeResponse,
 };
 use crate::state::{
     Config, ConfigExtension, CONFIG, MINTABLE_NUM_TOKENS, MINTABLE_TOKEN_POSITIONS, MINTER_ADDRS,
@@ -11,12 +11,11 @@ use crate::validation::{check_dynamic_per_address_limit, get_three_percent_of_to
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coin, ensure, to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut, Empty,
-    Env, Event, MessageInfo, Order, Reply, ReplyOn, StdError, StdResult, Timestamp, Uint128,
-    WasmMsg,
+    coin, ensure, instantiate2_address, to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Decimal,
+    Deps, DepsMut, Empty, Env, Event, MessageInfo, Order, Reply, ReplyOn, StdError, StdResult,
+    Timestamp, Uint128, WasmMsg,
 };
 use cw2::set_contract_version;
-use cw721_base::Extension;
 use cw_utils::{may_pay, maybe_addr, nonpayable, parse_reply_instantiate_data};
 use rand_core::{RngCore, SeedableRng};
 use rand_xoshiro::Xoshiro128PlusPlus;
@@ -28,6 +27,7 @@ use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg
 use sg_mint_hooks::post::{add_postmint_hook, prepare_postmint_hooks};
 use sg_mint_hooks::pre::{add_premint_hook, prepare_premint_hooks};
 use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
+use sg_token_vault::Metadata;
 use sg_whitelist::msg::{
     ConfigResponse as WhitelistConfigResponse, HasMemberResponse, QueryMsg as WhitelistQueryMsg,
 };
@@ -35,7 +35,7 @@ use sha2::{Digest, Sha256};
 use shuffle::{fy::FisherYates, shuffler::Shuffler};
 use std::convert::TryInto;
 use url::Url;
-use vending_factory::msg::{ParamsResponse, VendingMinterCreateMsg};
+use vending_factory::msg::ParamsResponse;
 use vending_factory::state::VendingMinterParams;
 
 pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
@@ -57,7 +57,7 @@ pub fn instantiate(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    msg: VendingMinterCreateMsg,
+    msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
@@ -74,23 +74,23 @@ pub fn instantiate(
     STATUS.save(deps.storage, &Status::default())?;
 
     if !check_dynamic_per_address_limit(
-        msg.init_msg.per_address_limit,
-        msg.init_msg.num_tokens,
+        msg.create_msg.init_msg.per_address_limit,
+        msg.create_msg.init_msg.num_tokens,
         factory_params.extension.max_per_address_limit,
     )? {
         return Err(ContractError::InvalidPerAddressLimit {
             max: display_max_mintable_tokens(
-                msg.init_msg.per_address_limit,
-                msg.init_msg.num_tokens,
+                msg.create_msg.init_msg.per_address_limit,
+                msg.create_msg.init_msg.num_tokens,
                 factory_params.extension.max_per_address_limit,
             )?,
             min: 1,
-            got: msg.init_msg.per_address_limit,
+            got: msg.create_msg.init_msg.per_address_limit,
         });
     }
 
     // sanitize base token uri
-    let mut base_token_uri = msg.init_msg.base_token_uri.trim().to_string();
+    let mut base_token_uri = msg.create_msg.init_msg.base_token_uri.trim().to_string();
     // Check that base_token_uri is a valid IPFS uri
     let parsed_token_uri = Url::parse(&base_token_uri)?;
     if parsed_token_uri.scheme() != "ipfs" {
@@ -100,20 +100,21 @@ pub fn instantiate(
 
     let genesis_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
     // If start time is before genesis time return error
-    if msg.init_msg.start_time < genesis_time {
+    if msg.create_msg.init_msg.start_time < genesis_time {
         return Err(ContractError::BeforeGenesisTime {});
     }
 
     // If current time is beyond the provided start time return error
-    if env.block.time > msg.init_msg.start_time {
+    if env.block.time > msg.create_msg.init_msg.start_time {
         return Err(ContractError::InvalidStartTime(
-            msg.init_msg.start_time,
+            msg.create_msg.init_msg.start_time,
             env.block.time,
         ));
     }
 
     // Validate address for the optional whitelist contract
     let whitelist_addr = msg
+        .create_msg
         .init_msg
         .whitelist
         .and_then(|w| deps.api.addr_validate(w.as_str()).ok());
@@ -129,10 +130,10 @@ pub fn instantiate(
     }
 
     // Use default start trading time if not provided
-    let mut collection_info = msg.collection_params.info.clone();
+    let mut collection_info = msg.create_msg.collection_params.info.clone();
     let offset = factory_params.max_trading_offset_secs;
-    let default_start_time_with_offset = msg.init_msg.start_time.plus_seconds(offset);
-    if let Some(start_trading_time) = msg.collection_params.info.start_trading_time {
+    let default_start_time_with_offset = msg.create_msg.init_msg.start_time.plus_seconds(offset);
+    if let Some(start_trading_time) = msg.create_msg.collection_params.info.start_trading_time {
         // If trading start time > start_time + offset, return error
         if start_trading_time > default_start_time_with_offset {
             return Err(ContractError::InvalidStartTradingTime(
@@ -142,6 +143,7 @@ pub fn instantiate(
         }
     }
     let start_trading_time = msg
+        .create_msg
         .collection_params
         .info
         .start_trading_time
@@ -150,30 +152,31 @@ pub fn instantiate(
 
     let config = Config {
         factory: factory.clone(),
-        collection_code_id: msg.collection_params.code_id,
+        collection_code_id: msg.create_msg.collection_params.code_id,
         extension: ConfigExtension {
             admin: deps
                 .api
-                .addr_validate(&msg.collection_params.info.creator)?,
-            payment_address: maybe_addr(deps.api, msg.init_msg.payment_address)?,
+                .addr_validate(&msg.create_msg.collection_params.info.creator)?,
+            payment_address: maybe_addr(deps.api, msg.create_msg.init_msg.payment_address)?,
             base_token_uri,
-            num_tokens: msg.init_msg.num_tokens,
-            per_address_limit: msg.init_msg.per_address_limit,
+            num_tokens: msg.create_msg.init_msg.num_tokens,
+            per_address_limit: msg.create_msg.init_msg.per_address_limit,
             whitelist: whitelist_addr,
-            start_time: msg.init_msg.start_time,
+            start_time: msg.create_msg.init_msg.start_time,
             discount_price: None,
+            token_balance: msg.token_balance,
         },
-        mint_price: msg.init_msg.mint_price,
+        mint_price: msg.create_msg.init_msg.mint_price,
     };
 
     CONFIG.save(deps.storage, &config)?;
-    MINTABLE_NUM_TOKENS.save(deps.storage, &msg.init_msg.num_tokens)?;
+    MINTABLE_NUM_TOKENS.save(deps.storage, &msg.create_msg.init_msg.num_tokens)?;
 
     let token_ids = random_token_list(
         &env,
         deps.api
-            .addr_validate(&msg.collection_params.info.creator)?,
-        (1..=msg.init_msg.num_tokens).collect::<Vec<u32>>(),
+            .addr_validate(&msg.create_msg.collection_params.info.creator)?,
+        (1..=msg.create_msg.init_msg.num_tokens).collect::<Vec<u32>>(),
     )?;
     // Save mintable token ids map
     let mut token_position = 1;
@@ -185,16 +188,16 @@ pub fn instantiate(
     // Submessage to instantiate sg721 contract
     let submsg = SubMsg {
         msg: WasmMsg::Instantiate {
-            code_id: msg.collection_params.code_id,
+            code_id: msg.create_msg.collection_params.code_id,
             msg: to_binary(&Sg721InstantiateMsg {
-                name: msg.collection_params.name.clone(),
-                symbol: msg.collection_params.symbol,
+                name: msg.create_msg.collection_params.name.clone(),
+                symbol: msg.create_msg.collection_params.symbol,
                 minter: env.contract.address.to_string(),
                 collection_info,
             })?,
             funds: info.funds,
             admin: Some(config.extension.admin.to_string()),
-            label: format!("SG721-{}", msg.collection_params.name.trim()),
+            label: format!("SG721-{}", msg.create_msg.collection_params.name.trim()),
         }
         .into(),
         id: INSTANTIATE_SG721_REPLY_ID,
@@ -671,7 +674,7 @@ fn _execute_mint(
             }
             TokenPositionMapping { position, token_id }
         }
-        None => random_mintable_token_mapping(deps.as_ref(), env, info.sender.clone())?,
+        None => random_mintable_token_mapping(deps.as_ref(), env.clone(), info.sender.clone())?,
     };
 
     let premint_hooks = prepare_premint_hooks(
@@ -682,16 +685,41 @@ fn _execute_mint(
     )?;
     res = res.add_submessages(premint_hooks);
 
+    // TODO: intantiate2 cw-vesting
+    let vesting_init = cw_vesting::msg::InstantiateMsg {
+        owner: None,
+        recipient: recipient_addr.to_string(),
+        title: "tv-vest".to_string(),
+        description: None,
+        total: config.extension.token_balance.amount,
+        denom: cw_vesting::UncheckedDenom::Native(config.extension.token_balance.denom),
+        schedule: cw_vesting::vesting::Schedule::SaturatingLinear,
+        start_time: None, // starts when contract is instantiated
+        vesting_duration_seconds: 3 * 365 * 24 * 60 * 60,
+        unbonding_duration_seconds: 14 * 24 * 60 * 60,
+    };
+    let canonical_creator = deps.api.addr_canonicalize(env.contract.address.as_str())?;
+    let vesting_code_id = 5;
+    let checksum = deps.querier.query_wasm_code_info(vesting_code_id)?.checksum;
+    let salt = sg721_address.to_string() + "/" + &mintable_token_mapping.token_id.to_string();
+    let vesting_addr_raw = instantiate2_address(&checksum, &canonical_creator, salt.as_bytes())?;
+    let vesting_addr = deps.api.addr_humanize(&vesting_addr_raw)?;
+
+    // TODO: fund cw-vesting in reply callback
+
     // Create mint msgs
-    let mint_msg = Sg721ExecuteMsg::<Extension, Empty>::Mint {
+    let mint_msg = Sg721ExecuteMsg::<Metadata, Empty>::Mint {
         token_id: mintable_token_mapping.token_id.to_string(),
         owner: recipient_addr.to_string(),
         token_uri: Some(format!(
             "{}/{}",
             config.extension.base_token_uri, mintable_token_mapping.token_id
         )),
-        extension: None,
+        extension: Metadata {
+            balance: vesting_addr,
+        },
     };
+
     let msg = CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: sg721_address.to_string(),
         msg: to_binary(&mint_msg)?,

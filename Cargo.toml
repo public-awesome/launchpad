@@ -17,6 +17,15 @@ homepage   = "https://stargaze.zone"
 repository = "https://github.com/public-awesome/launchpad"
 license    = "Apache-2.0"
 
+# features = [
+#     "staking",
+#     "stargate",
+#     "ibc3",
+#     "cosmwasm_1_1",
+#     "cosmwasm_1_2",
+#     "cosmwasm_1_3",
+# ]
+
 [workspace.dependencies]
 base-factory    = { version = "3.5.0", path = "contracts/factories/base-factory" }
 base-minter     = { version = "3.5.0", path = "contracts/minters/base-minter" }

@@ -13,6 +13,7 @@ pub struct ConfigExtension {
     pub start_time: Timestamp,
     pub per_address_limit: u32,
     pub discount_price: Option<Coin>,
+    pub token_balance: Coin, // the amount to fund each NFT
 }
 pub type Config = MinterConfig<ConfigExtension>;
 
