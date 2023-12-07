@@ -27,7 +27,7 @@ pub enum ExecuteMsg {
     MintTo {
         recipient: String,
     },
-    BurnRemaining {}
+    BurnRemaining {},
 }
 
 #[cw_serde]
@@ -39,7 +39,7 @@ pub enum QueryMsg {
     MintCount { address: String },
     TotalMintCount {},
     Status {},
-    MintableNumTokens {}
+    MintableNumTokens {},
 }
 
 #[cw_serde]

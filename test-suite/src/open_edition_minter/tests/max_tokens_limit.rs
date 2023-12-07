@@ -1,4 +1,4 @@
-use cosmwasm_std::{coins, Coin, Uint128, Timestamp};
+use cosmwasm_std::{coins, Coin, Timestamp, Uint128};
 use cw_multi_test::Executor;
 use open_edition_factory::state::ParamsExtension;
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
@@ -52,7 +52,11 @@ fn check_max_tokens_limit_init() {
     assert!(vt.is_ok());
 
     let response = vt.unwrap();
-    let (mut router, creator, buyer) = (response.router, response.accts.creator, response.accts.buyer);
+    let (mut router, creator, buyer) = (
+        response.router,
+        response.accts.creator,
+        response.accts.buyer,
+    );
     let minter_addr = response.collection_response_vec[0].minter.clone().unwrap();
     // Set to a valid mint time
     setup_block_time(&mut router, GENESIS_MINT_START_TIME + 101, None);
@@ -84,8 +88,5 @@ fn check_max_tokens_limit_init() {
         &mint_msg,
         &coins(MINT_PRICE, NATIVE_DENOM),
     );
-    assert_eq!(
-        res.err().unwrap().source().unwrap().to_string(),
-        "Sold out"
-    );
+    assert_eq!(res.err().unwrap().source().unwrap().to_string(), "Sold out");
 }

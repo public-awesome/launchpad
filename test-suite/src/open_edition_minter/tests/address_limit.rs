@@ -1,4 +1,4 @@
-use cosmwasm_std::{coins, Coin, Uint128, Timestamp};
+use cosmwasm_std::{coins, Coin, Timestamp, Uint128};
 use cw_multi_test::Executor;
 use open_edition_factory::state::ParamsExtension;
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};

@@ -2,7 +2,9 @@ use cosmwasm_std::{Coin, Timestamp, Uint128};
 use open_edition_factory::state::ParamsExtension;
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
-use crate::common_setup::setup_minter::common::constants::{DEV_ADDRESS, MAX_TOKEN_LIMIT, MIN_MINT_PRICE_OPEN_EDITION};
+use crate::common_setup::setup_minter::common::constants::{
+    DEV_ADDRESS, MAX_TOKEN_LIMIT, MIN_MINT_PRICE_OPEN_EDITION,
+};
 use crate::common_setup::setup_minter::open_edition_minter::minter_params::{
     default_nft_data, init_msg,
 };

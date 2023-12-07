@@ -28,7 +28,14 @@ fn frozen_factory_cannot_create_new_minters() {
         },
         dev_fee_address: DEV_ADDRESS.to_string(),
     };
-    let init_msg = init_msg(default_nft_data(), None, None, Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)), None, None);
+    let init_msg = init_msg(
+        default_nft_data(),
+        None,
+        None,
+        Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
+        None,
+        None,
+    );
     let vt = open_edition_minter_custom_template(params_extension, init_msg).unwrap();
 
     let (mut router, creator, _buyer) = (vt.router, vt.accts.creator, vt.accts.buyer);

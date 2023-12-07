@@ -1,4 +1,4 @@
-use cosmwasm_std::{coin, Addr, Coin, Decimal, Uint128, Timestamp};
+use cosmwasm_std::{coin, Addr, Coin, Decimal, Timestamp, Uint128};
 use cw_multi_test::{BankSudo, Executor, SudoMsg};
 use open_edition_factory::state::{OpenEditionMinterParams, ParamsExtension};
 use open_edition_minter::msg::ExecuteMsg;

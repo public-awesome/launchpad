@@ -8,7 +8,9 @@ use sg2::msg::CollectionParams;
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
 use crate::common_setup::msg::OpenEditionMinterCustomParams;
-use crate::common_setup::setup_minter::common::constants::{CREATION_FEE, DEV_ADDRESS, MINT_FEE_FAIR_BURN, MIN_MINT_PRICE_OPEN_EDITION, MAX_TOKEN_LIMIT};
+use crate::common_setup::setup_minter::common::constants::{
+    CREATION_FEE, DEV_ADDRESS, MAX_TOKEN_LIMIT, MINT_FEE_FAIR_BURN, MIN_MINT_PRICE_OPEN_EDITION,
+};
 
 pub fn mock_init_minter_extension(
     start_time: Option<Timestamp>,

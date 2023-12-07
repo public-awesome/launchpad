@@ -4,7 +4,10 @@ use cw_multi_test::{BankSudo, Executor, SudoMsg};
 use open_edition_factory::state::ParamsExtension;
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
-use open_edition_minter::msg::{ConfigResponse, EndTimeResponse, ExecuteMsg, MintableNumTokensResponse, MintCountResponse, MintPriceResponse, QueryMsg, StartTimeResponse, TotalMintCountResponse};
+use open_edition_minter::msg::{
+    ConfigResponse, EndTimeResponse, ExecuteMsg, MintCountResponse, MintPriceResponse,
+    MintableNumTokensResponse, QueryMsg, StartTimeResponse, TotalMintCountResponse,
+};
 use sg4::StatusResponse;
 
 use crate::common_setup::setup_accounts_and_block::{coins_for_msg, setup_block_time};
@@ -16,10 +19,7 @@ use crate::common_setup::templates::open_edition_minter_custom_template;
 
 const MINT_PRICE: u128 = 100_000_000;
 
-fn check_mint_revenues_distribution(
-    num_tokens: Option<u32>,
-    end_minter_time: Option<Timestamp>)
-{
+fn check_mint_revenues_distribution(num_tokens: Option<u32>, end_minter_time: Option<Timestamp>) {
     let params_extension = ParamsExtension {
         max_token_limit: 10,
         max_per_address_limit: 10,
@@ -69,7 +69,6 @@ fn check_mint_revenues_distribution(
         Timestamp::from_nanos(GENESIS_MINT_START_TIME + 100).to_string()
     );
 
-
     // Query End Time
     // We know it is GENESIS_MINT_START_TIME + 10_000
     let query_end_time_msg: QueryMsg = QueryMsg::EndTime {};
@@ -83,10 +82,7 @@ fn check_mint_revenues_distribution(
             Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000).to_string())
         );
     } else {
-        assert_eq!(
-            res.end_time,
-            None
-        );
+        assert_eq!(res.end_time, None);
     }
 
     // Query the Max Tokens or End Time depending on which test is executed
@@ -404,10 +400,7 @@ fn check_mint_revenues_distribution(
             "Minting has ended"
         );
     } else {
-        assert_eq!(
-            res.err().unwrap().source().unwrap().to_string(),
-            "Sold out"
-        );
+        assert_eq!(res.err().unwrap().source().unwrap().to_string(), "Sold out");
     }
 
     // Can purge after sold out
@@ -432,14 +425,11 @@ fn check_mint_revenues_distribution(
 fn check_mint_revenues_distribution_without_end_time() {
     check_mint_revenues_distribution(
         None,
-        Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000))
+        Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
     )
 }
 
 #[test]
 fn check_mint_revenues_distribution_with_end_time() {
-    check_mint_revenues_distribution(
-        Some(5u32),
-        None
-    )
+    check_mint_revenues_distribution(Some(5u32), None)
 }

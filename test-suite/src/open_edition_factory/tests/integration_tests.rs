@@ -2,11 +2,11 @@
 mod tests {
 
     mod init {
+        use crate::common_setup::setup_minter::common::constants::MAX_TOKEN_LIMIT;
         use crate::open_edition_factory::tests::common::proper_instantiate;
         use open_edition_factory::msg::{
             OpenEditionUpdateParamsExtension, OpenEditionUpdateParamsMsg, ParamsResponse, SudoMsg,
         };
-        use crate::common_setup::setup_minter::common::constants::MAX_TOKEN_LIMIT;
         // Assumption: CreateMinter method is validated at the minter level
 
         #[test]

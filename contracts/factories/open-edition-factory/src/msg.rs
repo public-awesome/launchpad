@@ -65,10 +65,7 @@ impl OpenEditionMinterInitMsgExtension {
         // Optional: not time limited
         if let Some(end_time) = init_msg.end_time {
             if end_time <= init_msg.start_time {
-                return Err(ContractError::InvalidEndTime(
-                    init_msg.start_time,
-                    end_time,
-                ));
+                return Err(ContractError::InvalidEndTime(init_msg.start_time, end_time));
             }
         }
 

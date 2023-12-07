@@ -1,10 +1,19 @@
 use crate::error::ContractError;
 use crate::helpers::mint_nft_msg;
-use crate::msg::{ConfigResponse, EndTimeResponse, ExecuteMsg, MintableNumTokensResponse, MintCountResponse, MintPriceResponse, QueryMsg, StartTimeResponse, TotalMintCountResponse};
-use crate::state::{increment_token_index, Config, ConfigExtension, CONFIG, MINTER_ADDRS, SG721_ADDRESS, STATUS, TOTAL_MINT_COUNT, MINTABLE_NUM_TOKENS};
+use crate::msg::{
+    ConfigResponse, EndTimeResponse, ExecuteMsg, MintCountResponse, MintPriceResponse,
+    MintableNumTokensResponse, QueryMsg, StartTimeResponse, TotalMintCountResponse,
+};
+use crate::state::{
+    increment_token_index, Config, ConfigExtension, CONFIG, MINTABLE_NUM_TOKENS, MINTER_ADDRS,
+    SG721_ADDRESS, STATUS, TOTAL_MINT_COUNT,
+};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{coin, to_binary, Addr, BankMsg, Binary, Coin, Deps, DepsMut, Empty, Env, MessageInfo, Order, Reply, ReplyOn, StdError, StdResult, Timestamp, WasmMsg, Event, Decimal};
+use cosmwasm_std::{
+    coin, to_binary, Addr, BankMsg, Binary, Coin, Decimal, Deps, DepsMut, Empty, Env, Event,
+    MessageInfo, Order, Reply, ReplyOn, StdError, StdResult, Timestamp, WasmMsg,
+};
 use cw2::set_contract_version;
 use cw_utils::{may_pay, maybe_addr, nonpayable, parse_reply_instantiate_data};
 use open_edition_factory::msg::{OpenEditionMinterCreateMsg, ParamsResponse};
@@ -83,7 +92,6 @@ pub fn instantiate(
 
     // Validations/Check at the factory level:
     // - Mint price, # of tokens / address, Start & End time, Max Tokens
-
 
     // Use default start trading time if not provided
     let mut collection_info = msg.collection_params.info.clone();
@@ -497,10 +505,7 @@ pub fn execute_update_start_time(
     // If the new start_time is after end_time return error
     if let Some(end_time) = config.extension.end_time {
         if start_time > end_time {
-            return Err(ContractError::InvalidStartTime(
-                end_time,
-                start_time,
-            ));
+            return Err(ContractError::InvalidStartTime(end_time, start_time));
         }
     }
 
