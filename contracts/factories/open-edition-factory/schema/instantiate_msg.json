@@ -86,7 +86,8 @@
         "airdrop_mint_fee_bps",
         "airdrop_mint_price",
         "dev_fee_address",
-        "max_per_address_limit"
+        "max_per_address_limit",
+        "max_token_limit"
       ],
       "properties": {
         "airdrop_mint_fee_bps": {
@@ -101,6 +102,11 @@
           "type": "string"
         },
         "max_per_address_limit": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "max_token_limit": {
           "type": "integer",
           "format": "uint32",
           "minimum": 0.0
