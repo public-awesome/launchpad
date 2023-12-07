@@ -16,9 +16,10 @@ pub struct InstantiateMsg {
 pub struct OpenEditionMinterInitMsgExtension {
     pub nft_data: NftData,
     pub start_time: Timestamp,
-    pub end_time: Timestamp,
+    pub end_time: Option<Timestamp>,
     pub mint_price: Coin,
     pub per_address_limit: u32,
+    pub num_tokens: Option<u32>,
     // If not the admin/init
     pub payment_address: Option<String>,
 }
@@ -32,6 +33,16 @@ impl OpenEditionMinterInitMsgExtension {
     ) -> Result<Self, ContractError> {
         // Validation of the Minter Params -> need to be in-line with the factory
         init_msg.nft_data = NftData::validate(init_msg.nft_data)?;
+
+        // Optional: can have a max mint amount
+        if let Some(max_num_tokens) = init_msg.num_tokens {
+            if max_num_tokens == 0 || max_num_tokens > params.extension.max_token_limit {
+                return Err(ContractError::InvalidNumTokens {
+                    min: 1,
+                    max: params.extension.max_token_limit,
+                });
+            }
+        }
 
         let max = params.extension.max_per_address_limit;
         let min = 1;
@@ -51,11 +62,20 @@ impl OpenEditionMinterInitMsgExtension {
             ));
         }
 
-        if init_msg.end_time <= init_msg.start_time {
-            return Err(ContractError::InvalidEndTime(
-                init_msg.start_time,
-                init_msg.end_time,
-            ));
+        // Optional: not time limited
+        if let Some(end_time) = init_msg.end_time {
+            if end_time <= init_msg.start_time {
+                return Err(ContractError::InvalidEndTime(
+                    init_msg.start_time,
+                    end_time,
+                ));
+            }
+        }
+
+        // Need to validate the end time and number of tokens are not both None
+        // At least 1 constraint is required
+        if init_msg.end_time.is_none() && init_msg.num_tokens.is_none() {
+            return Err(ContractError::LimitOfTimeOrNumTokensRequired {});
         }
 
         if init_msg.mint_price.amount < params.min_mint_price.amount {
@@ -68,6 +88,7 @@ impl OpenEditionMinterInitMsgExtension {
             end_time: init_msg.end_time,
             mint_price: init_msg.mint_price,
             per_address_limit,
+            num_tokens: init_msg.num_tokens,
             payment_address: init_msg.payment_address,
         })
     }
@@ -85,6 +106,7 @@ pub enum SudoMsg {
 /// Message for params so they can be updated individually by governance
 #[cw_serde]
 pub struct OpenEditionUpdateParamsExtension {
+    pub max_token_limit: Option<u32>,
     pub max_per_address_limit: Option<u32>,
     pub min_mint_price: Option<Coin>,
     pub airdrop_mint_fee_bps: Option<u64>,

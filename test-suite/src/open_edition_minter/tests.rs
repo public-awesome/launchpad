@@ -6,3 +6,4 @@ mod frozen_factory;
 mod ibc_asset_mint;
 mod update_mint_price;
 mod update_start_and_end_time;
+mod max_tokens_limit;

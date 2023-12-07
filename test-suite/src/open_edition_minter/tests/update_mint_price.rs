@@ -1,4 +1,4 @@
-use cosmwasm_std::{Coin, Uint128};
+use cosmwasm_std::{Coin, Timestamp, Uint128};
 use cw_multi_test::Executor;
 use open_edition_factory::state::ParamsExtension;
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
@@ -17,6 +17,7 @@ const MINT_PRICE: u128 = 100_000_000;
 #[test]
 fn check_mint_price_updates() {
     let params_extension = ParamsExtension {
+        max_token_limit: 10,
         max_per_address_limit: 10,
         airdrop_mint_fee_bps: 100,
         airdrop_mint_price: Coin {
@@ -30,6 +31,7 @@ fn check_mint_price_updates() {
         default_nft_data(),
         per_address_limit_minter,
         None,
+        Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
         None,
         None,
     );

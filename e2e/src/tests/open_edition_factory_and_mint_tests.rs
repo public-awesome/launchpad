@@ -46,7 +46,7 @@ fn test_create_minter(chain: &mut Chain) {
     instantiate_factory(chain, user_addr.clone(), dev.account.address, &user.key).unwrap();
 
     let start_time = latest_block_time(chain).plus_seconds(10);
-    let end_time = latest_block_time(chain).plus_seconds(60);
+    let end_time = Some(latest_block_time(chain).plus_seconds(60));
 
     let valid_minter_msg = Sg2ExecuteMsg::CreateMinter(create_minter_msg(
         chain,
@@ -55,6 +55,7 @@ fn test_create_minter(chain: &mut Chain) {
         MAX_TOKENS,
         start_time,
         end_time,
+        Some(1_000u32),
         None,
         NftData {
             nft_data_type: NftMetadataType::OffChainMetadata,
@@ -102,6 +103,7 @@ fn test_create_minter(chain: &mut Chain) {
         MAX_TOKENS,
         start_time,
         end_time,
+        Some(1_000u32),
         None,
         NftData {
             nft_data_type: NftMetadataType::OffChainMetadata,
@@ -133,6 +135,7 @@ fn test_create_minter(chain: &mut Chain) {
         MAX_TOKENS,
         start_time,
         end_time,
+        Some(1_000u32),
         None,
         NftData {
             nft_data_type: NftMetadataType::OffChainMetadata,
@@ -174,6 +177,7 @@ fn test_create_minter(chain: &mut Chain) {
         MAX_TOKENS,
         start_time,
         end_time,
+        Some(1_000u32),
         None,
         NftData {
             nft_data_type: NftMetadataType::OnChainMetadata,
@@ -350,7 +354,7 @@ fn test_start_trading_time(chain: &mut Chain) {
     .unwrap();
 
     let start_time = latest_block_time(chain).plus_seconds(5);
-    let end_time = latest_block_time(chain).plus_seconds(60);
+    let end_time = Some(latest_block_time(chain).plus_seconds(60));
 
     // The default offset is 1 day -> 86400
     let invalid_minter_msg = Sg2ExecuteMsg::CreateMinter(create_minter_msg(
@@ -360,6 +364,7 @@ fn test_start_trading_time(chain: &mut Chain) {
         MAX_TOKENS,
         start_time,
         end_time,
+        Some(1_000u32),
         Some(start_time.plus_seconds(100_000)),
         NftData {
             nft_data_type: NftMetadataType::OffChainMetadata,
@@ -392,6 +397,7 @@ fn test_start_trading_time(chain: &mut Chain) {
         MAX_TOKENS,
         start_time,
         end_time,
+        Some(1_000u32),
         Some(start_time.plus_seconds(80_400)),
         NftData {
             nft_data_type: NftMetadataType::OffChainMetadata,

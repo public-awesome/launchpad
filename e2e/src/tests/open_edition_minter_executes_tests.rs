@@ -37,7 +37,7 @@ fn test_open_edition_exec_functions(chain: &mut Chain) {
     .unwrap();
 
     let start_time = latest_block_time(chain).plus_seconds(10);
-    let end_time = latest_block_time(chain).plus_seconds(60);
+    let end_time = Some(latest_block_time(chain).plus_seconds(60));
 
     let valid_minter_msg = Sg2ExecuteMsg::CreateMinter(create_minter_msg(
         chain,
@@ -46,6 +46,7 @@ fn test_open_edition_exec_functions(chain: &mut Chain) {
         MAX_TOKENS,
         start_time,
         end_time,
+        None,
         None,
         NftData {
             nft_data_type: NftMetadataType::OffChainMetadata,

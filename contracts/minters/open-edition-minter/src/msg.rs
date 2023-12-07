@@ -27,6 +27,7 @@ pub enum ExecuteMsg {
     MintTo {
         recipient: String,
     },
+    BurnRemaining {}
 }
 
 #[cw_serde]
@@ -38,6 +39,7 @@ pub enum QueryMsg {
     MintCount { address: String },
     TotalMintCount {},
     Status {},
+    MintableNumTokens {}
 }
 
 #[cw_serde]
@@ -46,7 +48,8 @@ pub struct ConfigResponse {
     pub nft_data: NftData,
     pub payment_address: Option<Addr>,
     pub per_address_limit: u32,
-    pub end_time: Timestamp,
+    pub num_tokens: Option<u32>,
+    pub end_time: Option<Timestamp>,
     pub sg721_address: String,
     pub sg721_code_id: u64,
     pub start_time: Timestamp,
@@ -56,7 +59,7 @@ pub struct ConfigResponse {
 
 #[cw_serde]
 pub struct MintableNumTokensResponse {
-    pub count: u32,
+    pub count: Option<u32>,
 }
 
 #[cw_serde]
@@ -66,7 +69,7 @@ pub struct StartTimeResponse {
 
 #[cw_serde]
 pub struct EndTimeResponse {
-    pub end_time: String,
+    pub end_time: Option<String>,
 }
 
 #[cw_serde]

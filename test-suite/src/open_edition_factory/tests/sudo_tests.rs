@@ -5,15 +5,16 @@ use crate::common_setup::setup_minter::open_edition_minter::minter_params::{
 use crate::common_setup::setup_minter::open_edition_minter::setup::sudo_update_params;
 use crate::common_setup::templates::open_edition_minter_custom_template;
 use base_factory::msg::ParamsResponse;
-use cosmwasm_std::{coin, Coin, Uint128};
+use cosmwasm_std::{coin, Coin, Timestamp, Uint128};
 use open_edition_factory::msg::OpenEditionUpdateParamsExtension;
 use open_edition_factory::state::ParamsExtension;
 use sg2::query::Sg2QueryMsg::Params;
-use sg_std::NATIVE_DENOM;
+use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
 #[test]
 fn happy_path_with_params_update() {
     let params_extension = ParamsExtension {
+        max_token_limit: 10,
         max_per_address_limit: 10,
         airdrop_mint_fee_bps: 100,
         airdrop_mint_price: Coin {
@@ -27,6 +28,7 @@ fn happy_path_with_params_update() {
         default_nft_data(),
         per_address_limit_minter,
         None,
+        Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
         None,
         None,
     );
@@ -38,6 +40,7 @@ fn happy_path_with_params_update() {
 #[test]
 fn sudo_params_update_creation_fee() {
     let params_extension = ParamsExtension {
+        max_token_limit: 10,
         max_per_address_limit: 10,
         airdrop_mint_fee_bps: 100,
         airdrop_mint_price: Coin {
@@ -51,6 +54,7 @@ fn sudo_params_update_creation_fee() {
         default_nft_data(),
         per_address_limit_minter,
         None,
+        Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
         None,
         None,
     );
@@ -69,6 +73,7 @@ fn sudo_params_update_creation_fee() {
         mint_fee_bps: None,
         max_trading_offset_secs: Some(100),
         extension: OpenEditionUpdateParamsExtension {
+            max_token_limit: None,
             min_mint_price: Some(coin(10, NATIVE_DENOM)),
             max_per_address_limit: None,
             airdrop_mint_price: None,

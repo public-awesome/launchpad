@@ -1,6 +1,6 @@
-use cosmwasm_std::{Coin, Uint128};
+use cosmwasm_std::{Coin, Uint128, Timestamp};
 use open_edition_factory::state::ParamsExtension;
-use sg_std::NATIVE_DENOM;
+use sg_std::{NATIVE_DENOM, GENESIS_MINT_START_TIME};
 
 use crate::common_setup::{
     contract_boxes::custom_mock_app,
@@ -17,6 +17,7 @@ use crate::common_setup::{
 #[test]
 fn invalid_code_id() {
     let params_extension = ParamsExtension {
+        max_token_limit: 10,
         max_per_address_limit: 10,
         airdrop_mint_fee_bps: 100,
         airdrop_mint_price: Coin {
@@ -30,6 +31,7 @@ fn invalid_code_id() {
         default_nft_data(),
         per_address_limit_minter,
         None,
+        Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
         None,
         None,
     );
