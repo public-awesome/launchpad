@@ -2,8 +2,6 @@ use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Coin, Timestamp};
 use cw_vesting::vesting::Schedule;
 use sg4::StatusResponse;
-use sg_controllers::HooksResponse;
-use sg_mint_hooks::{sg_mint_hooks_execute, sg_mint_hooks_query};
 use vending_factory::{msg::VendingMinterCreateMsg, state::VendingMinterParams};
 
 // vesting_duration_seconds: 3 * 365 * 24 * 60 * 60,
@@ -24,7 +22,6 @@ pub struct InstantiateMsg {
     pub vault_info: VaultInfo,
 }
 
-#[sg_mint_hooks_execute]
 #[cw_serde]
 pub enum ExecuteMsg {
     Mint {},
@@ -56,7 +53,6 @@ pub enum ExecuteMsg {
     RemoveDiscountPrice {},
 }
 
-#[sg_mint_hooks_query]
 #[cw_serde]
 #[derive(QueryResponses)]
 pub enum QueryMsg {

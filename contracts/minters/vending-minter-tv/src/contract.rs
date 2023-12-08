@@ -11,9 +11,9 @@ use crate::validation::{check_dynamic_per_address_limit, get_three_percent_of_to
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coin, ensure, instantiate2_address, to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Decimal,
-    Deps, DepsMut, Empty, Env, Event, MessageInfo, Order, Reply, ReplyOn, StdError, StdResult,
-    Timestamp, Uint128, WasmMsg,
+    coin, ensure, instantiate2_address, to_binary, Addr, BankMsg, Binary, Coin, Decimal, Deps,
+    DepsMut, Empty, Env, Event, MessageInfo, Order, Reply, ReplyOn, StdError, StdResult, Timestamp,
+    Uint128, WasmMsg,
 };
 use cw2::set_contract_version;
 use cw721::ContractInfoResponse;
@@ -26,9 +26,7 @@ use sg2::query::Sg2QueryMsg;
 use sg4::{MinterConfig, Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
 use sg721_tv::QueryMsg as Sg721TVQueryMsg;
-use sg_mint_hooks::post::{add_postmint_hook, prepare_postmint_hooks};
-use sg_mint_hooks::pre::{add_premint_hook, prepare_premint_hooks};
-use sg_std::{CosmosMsg, StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
+use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use sg_token_vault::Metadata;
 use sg_whitelist::msg::{
     ConfigResponse as WhitelistConfigResponse, HasMemberResponse, QueryMsg as WhitelistQueryMsg,
@@ -247,14 +245,6 @@ pub fn execute(
             execute_update_discount_price(deps, env, info, price)
         }
         ExecuteMsg::RemoveDiscountPrice {} => execute_remove_discount_price(deps, info),
-        ExecuteMsg::AddPreMintHook { hook } => {
-            only_admin(deps.as_ref(), &info)?;
-            add_premint_hook(deps, hook).map_err(ContractError::from)
-        }
-        ExecuteMsg::AddPostMintHook { hook } => {
-            only_admin(deps.as_ref(), &info)?;
-            add_postmint_hook(deps, hook).map_err(ContractError::from)
-        }
     }
 }
 
@@ -679,12 +669,12 @@ fn _execute_mint(
         None => random_mintable_token_mapping(deps.as_ref(), env.clone(), info.sender.clone())?,
     };
 
-    let token_id = mintable_token_mapping.token_id.to_string();
+    let token_id = &mintable_token_mapping.token_id.to_string();
 
     let (vesting_addr, vesting_msg) = init_vesting(
         deps.as_ref(),
-        &env.contract.address.to_string(),
-        sg721_address.to_string(),
+        env.contract.address.as_ref(),
+        sg721_address.as_str(),
         token_id,
         config.extension.vault_info,
         recipient_addr.to_string(),
@@ -692,7 +682,7 @@ fn _execute_mint(
     res = res.add_message(vesting_msg);
 
     let mint_msg = Sg721ExecuteMsg::<Metadata, Empty>::Mint {
-        token_id: token_id.clone(),
+        token_id: token_id.to_string(),
         owner: recipient_addr.to_string(),
         token_uri: Some(format!("{}/{}", config.extension.base_token_uri, token_id)),
         extension: Metadata {
@@ -752,8 +742,8 @@ fn _execute_mint(
 fn init_vesting(
     deps: Deps,
     contract_address: &str,
-    collection: String,
-    token_id: String,
+    collection: &str,
+    token_id: &str,
     vault_info: VaultInfo,
     recipient: String,
 ) -> Result<(Addr, WasmMsg), ContractError> {
@@ -761,7 +751,7 @@ fn init_vesting(
         .querier
         .query_wasm_smart(collection, &Sg721TVQueryMsg::ContractInfo {})?;
 
-    let title = contract_info.name + " #" + &token_id;
+    let title = contract_info.name + " #" + token_id;
 
     let VaultInfo {
         token_balance,
@@ -786,7 +776,7 @@ fn init_vesting(
 
     let canonical_creator = deps.api.addr_canonicalize(contract_address)?;
     let checksum = deps.querier.query_wasm_code_info(vesting_code_id)?.checksum;
-    let salt_raw = collection + "/" + &token_id;
+    let salt_raw = collection.to_owned() + "/" + token_id;
     let vesting_addr_raw =
         instantiate2_address(&checksum, &canonical_creator, salt_raw.as_bytes())?;
     let vesting_addr = deps.api.addr_humanize(&vesting_addr_raw)?;
@@ -1174,8 +1164,6 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::MintableNumTokens {} => to_binary(&query_mintable_num_tokens(deps)?),
         QueryMsg::MintPrice {} => to_binary(&query_mint_price(deps)?),
         QueryMsg::MintCount { address } => to_binary(&query_mint_count(deps, address)?),
-        QueryMsg::PreMintHooks {} => to_binary(&sg_mint_hooks::pre::query_premint_hooks(deps)?),
-        QueryMsg::PostMintHooks {} => to_binary(&sg_mint_hooks::post::query_postmint_hooks(deps)?),
     }
 }
 
