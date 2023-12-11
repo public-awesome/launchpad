@@ -734,10 +734,10 @@ fn _execute_mint(
             "network_fee",
             coin(network_fee.u128(), mint_price.clone().denom).to_string(),
         )
-        .add_attribute("mint_price", mint_price.clone().to_string())
+        .add_attribute("mint_price", mint_price.to_string())
         .add_attribute(
             "seller_amount",
-            coin(seller_amount.u128(), mint_price.clone().denom).to_string(),
+            coin(seller_amount.u128(), mint_price.denom).to_string(),
         ))
 }
 
