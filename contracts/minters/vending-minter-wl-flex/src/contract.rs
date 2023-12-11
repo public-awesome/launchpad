@@ -716,7 +716,7 @@ fn _execute_mint(
         if !amount.is_zero() {
             let msg = BankMsg::Send {
                 to_address: payment_address.unwrap_or(seller).to_string(),
-                amount: vec![coin(amount.u128(), mint_price.denom)],
+                amount: vec![coin(amount.u128(), mint_price.clone().denom)],
             };
             res = res.add_message(msg);
         }
