@@ -1540,7 +1540,8 @@ fn test_update_none_royalties() {
         err.source().unwrap().to_string(),
         sg721_updatable::ContractError::InvalidRoyalties(format!(
             "Share percentage cannot be greater than 10%"
-        )).to_string()
+        ))
+        .to_string()
     );
 
     let update_royalty_msg: Sg721UpdatableExecuteMsg<Extension> =
@@ -1549,14 +1550,12 @@ fn test_update_none_royalties() {
             share_bps: 400,
         };
 
-    let res = router
-        .execute_contract(
-            creator.clone(),
-            Addr::unchecked(sg71_address.clone()),
-            &update_royalty_msg,
-            &[],
-        );
-
+    let res = router.execute_contract(
+        creator.clone(),
+        Addr::unchecked(sg71_address.clone()),
+        &update_royalty_msg,
+        &[],
+    );
 
     let err = res.unwrap_err();
 
@@ -1564,7 +1563,8 @@ fn test_update_none_royalties() {
         err.source().unwrap().to_string(),
         sg721_updatable::ContractError::InvalidRoyalties(format!(
             "Share increase cannot be greater than 2%"
-        )).to_string()
+        ))
+        .to_string()
     );
 
     let update_royalty_msg: Sg721UpdatableExecuteMsg<Extension> =
@@ -1612,13 +1612,12 @@ fn test_update_none_royalties() {
 
     setup_block_time(&mut router, GENESIS_MINT_START_TIME + 86400000000000);
 
-    let res = router
-        .execute_contract(
-            creator.clone(),
-            Addr::unchecked(sg71_address.clone()),
-            &update_royalty_msg,
-            &[],
-        );
+    let res = router.execute_contract(
+        creator.clone(),
+        Addr::unchecked(sg71_address.clone()),
+        &update_royalty_msg,
+        &[],
+    );
 
     let err = res.unwrap_err();
 
@@ -1626,7 +1625,8 @@ fn test_update_none_royalties() {
         err.source().unwrap().to_string(),
         sg721_updatable::ContractError::InvalidRoyalties(format!(
             "Share increase cannot be greater than 2%"
-        )).to_string()
+        ))
+        .to_string()
     );
 
     let update_royalty_msg: Sg721UpdatableExecuteMsg<Extension> =
@@ -1635,12 +1635,14 @@ fn test_update_none_royalties() {
             share_bps: 200,
         };
 
-    let res = router.execute_contract(
-        creator.clone(),
-        Addr::unchecked(sg71_address.clone()),
-        &update_royalty_msg,
-        &[],
-    ).unwrap();
+    let res = router
+        .execute_contract(
+            creator.clone(),
+            Addr::unchecked(sg71_address.clone()),
+            &update_royalty_msg,
+            &[],
+        )
+        .unwrap();
 
     assert_eq!(res.events[1].attributes[0].key, "_contract_addr");
     assert_eq!(res.events[1].attributes[0].value, "contract1");
@@ -1748,7 +1750,8 @@ fn test_update_royalties() {
         err.source().unwrap().to_string(),
         sg721_updatable::ContractError::InvalidRoyalties(format!(
             "Share percentage cannot be greater than 10%"
-        )).to_string()
+        ))
+        .to_string()
     );
 
     let update_royalty_msg: sg721_updatable::msg::ExecuteMsg<Extension> =
@@ -1964,13 +1967,12 @@ fn try_migrate() {
 
     let sg721_base_address = config.sg721_address;
 
-    let res = router
-        .migrate_contract(
-            creator,
-            Addr::unchecked(sg721_base_address.clone()),
-            &Empty {},
-            sg721_code_id,
-        );
+    let res = router.migrate_contract(
+        creator,
+        Addr::unchecked(sg721_base_address.clone()),
+        &Empty {},
+        sg721_code_id,
+    );
 
     assert!(res.is_ok());
 }

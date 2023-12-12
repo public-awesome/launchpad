@@ -151,12 +151,14 @@ pub fn execute_update_royalty_info(
     let share = Decimal::percent(share_bps) / Uint128::from(100u128);
     let max_share_limit = Decimal::percent(MAX_ROYALTY_SHARE_BPS) / Uint128::from(100u128);
     let max_share_delta = Decimal::percent(MAX_ROYALTY_SHARE_DELTA_BPS) / Uint128::from(100u128);
-    ensure!(share <= max_share_limit,
+    ensure!(
+        share <= max_share_limit,
         // multiply by 100 to get the percentage for error message
         ContractError::InvalidRoyalties(format!(
-            "Share percentage cannot be greater than {}%", max_share_limit * Uint128::from(100u128)
-        )));
-
+            "Share percentage cannot be greater than {}%",
+            max_share_limit * Uint128::from(100u128)
+        ))
+    );
 
     let updated_at = ROYALTY_UPDATED_AT.load(deps.storage)?;
 
@@ -173,7 +175,8 @@ pub fn execute_update_royalty_info(
             ensure!(
                 share_delta <= max_share_delta,
                 ContractError::InvalidRoyalties(format!(
-                    "Share increase cannot be greater than {}%", max_share_delta * Uint128::from(100u128)
+                    "Share increase cannot be greater than {}%",
+                    max_share_delta * Uint128::from(100u128)
                 ))
             );
         }
@@ -181,7 +184,8 @@ pub fn execute_update_royalty_info(
         ensure!(
             share <= max_share_delta,
             ContractError::InvalidRoyalties(format!(
-                "Share increase cannot be greater than {}%", max_share_delta * Uint128::from(100u128)
+                "Share increase cannot be greater than {}%",
+                max_share_delta * Uint128::from(100u128)
             ))
         );
     }
