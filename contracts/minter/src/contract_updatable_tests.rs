@@ -1538,9 +1538,9 @@ fn test_update_none_royalties() {
 
     assert_eq!(
         err.source().unwrap().to_string(),
-        sg721_updatable::ContractError::InvalidRoyalties(format!(
-            "Share percentage cannot be greater than 10%"
-        ))
+        sg721_updatable::ContractError::InvalidRoyalties(
+            "Share percentage cannot be greater than 10%".to_string()
+        )
         .to_string()
     );
 
@@ -1561,9 +1561,9 @@ fn test_update_none_royalties() {
 
     assert_eq!(
         err.source().unwrap().to_string(),
-        sg721_updatable::ContractError::InvalidRoyalties(format!(
-            "Share increase cannot be greater than 2%"
-        ))
+        sg721_updatable::ContractError::InvalidRoyalties(
+            "Share increase cannot be greater than 2%".to_string()
+        )
         .to_string()
     );
 
@@ -1623,9 +1623,9 @@ fn test_update_none_royalties() {
 
     assert_eq!(
         err.source().unwrap().to_string(),
-        sg721_updatable::ContractError::InvalidRoyalties(format!(
-            "Share increase cannot be greater than 2%"
-        ))
+        sg721_updatable::ContractError::InvalidRoyalties(
+            "Share increase cannot be greater than 2%".to_string()
+        )
         .to_string()
     );
 
@@ -1748,9 +1748,9 @@ fn test_update_royalties() {
 
     assert_eq!(
         err.source().unwrap().to_string(),
-        sg721_updatable::ContractError::InvalidRoyalties(format!(
-            "Share percentage cannot be greater than 10%"
-        ))
+        sg721_updatable::ContractError::InvalidRoyalties(
+            "Share percentage cannot be greater than 10%".to_string()
+        )
         .to_string()
     );
 
@@ -1969,7 +1969,7 @@ fn try_migrate() {
 
     let res = router.migrate_contract(
         creator,
-        Addr::unchecked(sg721_base_address.clone()),
+        Addr::unchecked(sg721_base_address),
         &Empty {},
         sg721_code_id,
     );
