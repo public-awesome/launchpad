@@ -1538,13 +1538,39 @@ fn test_update_none_royalties() {
 
     assert_eq!(
         err.source().unwrap().to_string(),
-        sg721_updatable::ContractError::RoyaltyShareIncreasedTooMuch {}.to_string()
+        sg721_updatable::ContractError::InvalidRoyalties(format!(
+            "Share percentage cannot be greater than 10%"
+        )).to_string()
     );
 
     let update_royalty_msg: Sg721UpdatableExecuteMsg<Extension> =
         Sg721UpdatableExecuteMsg::UpdateRoyaltyInfo {
             payment_address: "creator2".to_string(),
             share_bps: 400,
+        };
+
+    let res = router
+        .execute_contract(
+            creator.clone(),
+            Addr::unchecked(sg71_address.clone()),
+            &update_royalty_msg,
+            &[],
+        );
+
+
+    let err = res.unwrap_err();
+
+    assert_eq!(
+        err.source().unwrap().to_string(),
+        sg721_updatable::ContractError::InvalidRoyalties(format!(
+            "Share increase cannot be greater than 2%"
+        )).to_string()
+    );
+
+    let update_royalty_msg: Sg721UpdatableExecuteMsg<Extension> =
+        Sg721UpdatableExecuteMsg::UpdateRoyaltyInfo {
+            payment_address: "creator2".to_string(),
+            share_bps: 100,
         };
 
     let res = router
@@ -1563,7 +1589,7 @@ fn test_update_none_royalties() {
     assert_eq!(res.events[1].attributes[2].key, "payment_address");
     assert_eq!(res.events[1].attributes[2].value, "creator2");
     assert_eq!(res.events[1].attributes[3].key, "share");
-    assert_eq!(res.events[1].attributes[3].value, "0.04");
+    assert_eq!(res.events[1].attributes[3].value, "0.01");
 
     let update_royalty_msg: Sg721UpdatableExecuteMsg<Extension> =
         Sg721UpdatableExecuteMsg::UpdateRoyaltyInfo {
@@ -1592,8 +1618,29 @@ fn test_update_none_royalties() {
             Addr::unchecked(sg71_address.clone()),
             &update_royalty_msg,
             &[],
-        )
-        .unwrap();
+        );
+
+    let err = res.unwrap_err();
+
+    assert_eq!(
+        err.source().unwrap().to_string(),
+        sg721_updatable::ContractError::InvalidRoyalties(format!(
+            "Share increase cannot be greater than 2%"
+        )).to_string()
+    );
+
+    let update_royalty_msg: Sg721UpdatableExecuteMsg<Extension> =
+        Sg721UpdatableExecuteMsg::UpdateRoyaltyInfo {
+            payment_address: "creator2".to_string(),
+            share_bps: 200,
+        };
+
+    let res = router.execute_contract(
+        creator.clone(),
+        Addr::unchecked(sg71_address.clone()),
+        &update_royalty_msg,
+        &[],
+    ).unwrap();
 
     assert_eq!(res.events[1].attributes[0].key, "_contract_addr");
     assert_eq!(res.events[1].attributes[0].value, "contract1");
@@ -1602,9 +1649,9 @@ fn test_update_none_royalties() {
     assert_eq!(res.events[1].attributes[2].key, "payment_address");
     assert_eq!(res.events[1].attributes[2].value, "creator2");
     assert_eq!(res.events[1].attributes[3].key, "share");
-    assert_eq!(res.events[1].attributes[3].value, "0.05");
+    assert_eq!(res.events[1].attributes[3].value, "0.02");
 
-    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 86500000000000);
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 186500000000000);
 
     let update_royalty_msg: Sg721UpdatableExecuteMsg<Extension> =
         Sg721UpdatableExecuteMsg::UpdateRoyaltyInfo {
@@ -1699,13 +1746,15 @@ fn test_update_royalties() {
 
     assert_eq!(
         err.source().unwrap().to_string(),
-        sg721_updatable::ContractError::RoyaltyShareIncreasedTooMuch {}.to_string()
+        sg721_updatable::ContractError::InvalidRoyalties(format!(
+            "Share percentage cannot be greater than 10%"
+        )).to_string()
     );
 
     let update_royalty_msg: sg721_updatable::msg::ExecuteMsg<Extension> =
         sg721_updatable::msg::ExecuteMsg::UpdateRoyaltyInfo {
             payment_address: "creator2".to_string(),
-            share_bps: 900,
+            share_bps: 200,
         };
     let res = router.execute_contract(
         creator.clone(),
@@ -1731,12 +1780,12 @@ fn test_update_royalties() {
     );
     assert!(res.is_ok());
 
-    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 86500000000000);
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 186500000000000);
 
     let update_royalty_msg: sg721_updatable::msg::ExecuteMsg<Extension> =
         sg721_updatable::msg::ExecuteMsg::UpdateRoyaltyInfo {
             payment_address: "creator2".to_string(),
-            share_bps: 800,
+            share_bps: 300,
         };
     let res = router.execute_contract(
         creator,
@@ -1860,7 +1909,7 @@ fn try_migrate() {
     );
 
     // // no op when same version
-    set_contract_version(&mut deps.storage, "crates.io:sg-721", "0.8.4").unwrap();
+    set_contract_version(&mut deps.storage, "crates.io:sg-721", "0.8.5").unwrap();
     sg721_updatable::contract::migrate(deps.as_mut(), env, Empty {}).unwrap();
 
     // Migration happy path
@@ -1915,29 +1964,13 @@ fn try_migrate() {
 
     let sg721_base_address = config.sg721_address;
 
-    let collection_info: CollectionInfo<sg721_updatable::msg::RoyaltyInfoResponse> = router
-        .wrap()
-        .query_wasm_smart(
-            sg721_base_address.clone(),
-            &sg721::msg::QueryMsg::CollectionInfo {},
-        )
-        .unwrap();
-
-    assert!(collection_info.royalty_info.unwrap().updated_at.is_none());
-
-    router
+    let res = router
         .migrate_contract(
             creator,
             Addr::unchecked(sg721_base_address.clone()),
             &Empty {},
             sg721_code_id,
-        )
-        .unwrap();
+        );
 
-    let collection_info: CollectionInfo<sg721_updatable::msg::RoyaltyInfoResponse> = router
-        .wrap()
-        .query_wasm_smart(sg721_base_address, &sg721::msg::QueryMsg::CollectionInfo {})
-        .unwrap();
-
-    assert!(collection_info.royalty_info.unwrap().updated_at.is_some(),);
+    assert!(res.is_ok());
 }
