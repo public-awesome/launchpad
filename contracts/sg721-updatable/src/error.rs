@@ -30,16 +30,13 @@ pub enum ContractError {
     #[error("Approval not found for: {spender}")]
     ApprovalNotFound { spender: String },
 
-    #[error("Invalid Royalties")]
-    InvalidRoyalties {},
-
     #[error("Description too long")]
     DescriptionTooLong {},
 
-    #[error("Royalty share percentage cannot exceed 10%")]
-    RoyaltyShareIncreasedTooMuch {},
+    #[error("InvalidRoyalties: {0}")]
+    InvalidRoyalties(String),
 
-    #[error("Royalty share percentage can only be increased a day after the last update")]
+    #[error("Royalty share percentage can only be altered a day after the last update")]
     RoyaltyUpdateTooSoon {},
 
     #[error("Royalty Info invalid")]

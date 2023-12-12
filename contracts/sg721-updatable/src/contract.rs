@@ -3,8 +3,8 @@ use semver::Version;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Binary, Decimal, Deps, DepsMut, Empty, Env, Event, MessageInfo, StdError, StdResult,
-    Uint128,
+    ensure, to_binary, Binary, Decimal, Deps, DepsMut, Empty, Env, Event, MessageInfo, StdError,
+    StdResult, Uint128,
 };
 use cw2::set_contract_version;
 use cw_utils::{nonpayable, Expiration, DAY};
@@ -18,7 +18,9 @@ use url::Url;
 use crate::msg::{
     CollectionInfoResponse, ExecuteMsg, InstantiateMsg, QueryMsg, RoyaltyInfoResponse,
 };
-use crate::state::{CollectionInfo, RoyaltyInfo, COLLECTION_INFO, FROZEN_TOKEN_METADATA};
+use crate::state::{
+    CollectionInfo, RoyaltyInfo, COLLECTION_INFO, FROZEN_TOKEN_METADATA, ROYALTY_UPDATED_AT,
+};
 
 // version info for migration info
 const COMPATIBLE_MIGRATION_CONTRACT_NAME: &str = "crates.io:sg-721";
@@ -27,6 +29,7 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 const CREATION_FEE: u128 = 1_000_000_000;
 const MAX_ROYALTY_SHARE_BPS: u64 = 1_000;
+const MAX_ROYALTY_SHARE_DELTA_BPS: u64 = 200;
 
 // Disable instantiation for production build
 #[cfg(target = "wasm32-unknown-unknown")]
@@ -81,7 +84,6 @@ pub fn instantiate(
         Some(royalty_info) => Some(RoyaltyInfo {
             payment_address: deps.api.addr_validate(&royalty_info.payment_address)?,
             share: royalty_info.share_validate()?,
-            updated_at: Some(env.block.time),
         }),
         None => None,
     };
@@ -97,6 +99,7 @@ pub fn instantiate(
     };
 
     FROZEN_TOKEN_METADATA.save(deps.storage, &false)?;
+    ROYALTY_UPDATED_AT.save(deps.storage, &env.block.time)?;
     COLLECTION_INFO.save(deps.storage, &collection_info)?;
 
     Ok(Response::default()
@@ -147,40 +150,55 @@ pub fn execute_update_royalty_info(
     let payment_addr = deps.api.addr_validate(&payment_address)?;
     let share = Decimal::percent(share_bps) / Uint128::from(100u128);
     let max_share_limit = Decimal::percent(MAX_ROYALTY_SHARE_BPS) / Uint128::from(100u128);
+    let max_share_delta = Decimal::percent(MAX_ROYALTY_SHARE_DELTA_BPS) / Uint128::from(100u128);
+    ensure!(share <= max_share_limit,
+        // multiply by 100 to get the percentage for error message
+        ContractError::InvalidRoyalties(format!(
+            "Share percentage cannot be greater than {}%", max_share_limit * Uint128::from(100u128)
+        )));
 
-    if share > max_share_limit {
-        return Err(ContractError::RoyaltyShareIncreasedTooMuch {});
-    }
 
-    let current_royalty_info = collection_info.royalty_info;
+    let updated_at = ROYALTY_UPDATED_AT.load(deps.storage)?;
 
-    if let Some(curr_royalty_info) = current_royalty_info {
-        let updated_at = match curr_royalty_info.updated_at {
-            Some(updated_at) => updated_at,
-            // If current royalty info updated_at is None, it might be an older version that has not been migrated properly.
-            None => return Err(ContractError::RoyaltyInfoInvalid {}),
-        };
-
-        // make sure the update time is after 24 hours
+    if let Some(old_royalty_info) = collection_info.royalty_info {
+        // make sure the update time is at least 24 hours after the last one
         let end = (Expiration::AtTime(updated_at) + DAY)?;
-        let update_too_soon = !end.is_expired(&env.block);
-
-        if share > curr_royalty_info.share && update_too_soon {
-            return Err(ContractError::RoyaltyUpdateTooSoon {});
+        ensure!(
+            end.is_expired(&env.block),
+            ContractError::RoyaltyUpdateTooSoon {}
+        );
+        // Make sure the share is not increased more than MAX_ROYALTY_SHARE_DELTA_BPS at a time
+        if share > old_royalty_info.share {
+            let share_delta = share - old_royalty_info.share;
+            ensure!(
+                share_delta <= max_share_delta,
+                ContractError::InvalidRoyalties(format!(
+                    "Share increase cannot be greater than {}%", max_share_delta * Uint128::from(100u128)
+                ))
+            );
         }
+    } else {
+        ensure!(
+            share <= max_share_delta,
+            ContractError::InvalidRoyalties(format!(
+                "Share increase cannot be greater than {}%", max_share_delta * Uint128::from(100u128)
+            ))
+        );
     }
+
     collection_info.royalty_info = Some(RoyaltyInfo {
         payment_address: payment_addr,
         share,
-        updated_at: Some(env.block.time),
     });
 
     COLLECTION_INFO.save(deps.storage, &collection_info)?;
+    ROYALTY_UPDATED_AT.save(deps.storage, &env.block.time)?;
 
     let event = Event::new("update_royalty_info")
         .add_attribute("sender", info.sender)
         .add_attribute("payment_address", payment_address)
-        .add_attribute("share", share.to_string());
+        .add_attribute("share", share.to_string())
+        .add_attribute("updated_at", env.block.time.to_string());
     Ok(Response::new().add_event(event))
 }
 
@@ -256,7 +274,6 @@ fn query_config(deps: Deps) -> StdResult<CollectionInfoResponse> {
         Some(royalty_info) => Some(RoyaltyInfoResponse {
             payment_address: royalty_info.payment_address.to_string(),
             share: royalty_info.share,
-            updated_at: royalty_info.updated_at,
         }),
         None => None,
     };
@@ -295,19 +312,8 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, Contra
     }
 
     FROZEN_TOKEN_METADATA.save(deps.storage, &false)?;
-
-    let mut collection_info = COLLECTION_INFO.load(deps.storage)?;
-    let current_royalty_info = collection_info.royalty_info;
-    if let Some(royalty_info) = current_royalty_info {
-        let new_royalty_info = RoyaltyInfo {
-            payment_address: royalty_info.payment_address,
-            share: royalty_info.share,
-            // setting updated_at to 1 day ago to make updating royalties possible right after a migration
-            updated_at: Some(_env.block.time.minus_seconds(86400)),
-        };
-        collection_info.royalty_info = Some(new_royalty_info);
-        COLLECTION_INFO.save(deps.storage, &collection_info)?;
-    }
+    // setting updated_at to 1 day ago to make updating royalties possible right after a migration
+    ROYALTY_UPDATED_AT.save(deps.storage, &_env.block.time.minus_seconds(86400))?;
     // set new contract version
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
     Ok(Response::new())
@@ -375,7 +381,6 @@ mod tests {
                 royalty_info: Some(RoyaltyInfoResponse {
                     payment_address: creator.clone(),
                     share: Decimal::percent(10),
-                    updated_at: None,
                 }),
             },
         };
@@ -392,7 +397,6 @@ mod tests {
             Some(RoyaltyInfoResponse {
                 payment_address: creator,
                 share: Decimal::percent(10),
-                updated_at: Some(mock_env().block.time),
             }),
             value.royalty_info
         );
