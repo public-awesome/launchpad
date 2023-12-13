@@ -292,7 +292,7 @@ fn query_config(deps: Deps) -> StdResult<CollectionInfoResponse> {
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
+pub fn migrate(deps: DepsMut, env: Env, _msg: Empty) -> Result<Response, ContractError> {
     let current_version = cw2::get_contract_version(deps.storage)?;
     if ![CONTRACT_NAME, COMPATIBLE_MIGRATION_CONTRACT_NAME]
         .contains(&current_version.contract.as_str())
@@ -317,7 +317,7 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, Contra
 
     FROZEN_TOKEN_METADATA.save(deps.storage, &false)?;
     // setting updated_at to 1 day ago to make updating royalties possible right after a migration
-    ROYALTY_UPDATED_AT.save(deps.storage, &_env.block.time.minus_seconds(86400))?;
+    ROYALTY_UPDATED_AT.save(deps.storage, &env.block.time.minus_seconds(86400))?;
     // set new contract version
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
     Ok(Response::new())
