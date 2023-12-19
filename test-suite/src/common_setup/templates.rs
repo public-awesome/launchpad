@@ -40,6 +40,7 @@ pub fn vending_minter_template(num_tokens: u32) -> MinterTemplateResponse<Accoun
         vec![collection_params],
         vec![minter_params],
         code_ids,
+        None,
     );
     MinterTemplateResponse {
         router: app,
@@ -74,6 +75,7 @@ pub fn vending_minter_per_address_limit(
         vec![collection_params],
         vec![minter_params],
         code_ids,
+        None,
     );
     MinterTemplateResponse {
         router: app,
@@ -109,6 +111,7 @@ pub fn vending_minter_with_ibc_asset(
         vec![collection_params],
         vec![minter_params],
         code_ids,
+        None,
     );
     MinterTemplateResponse {
         router: app,
@@ -132,6 +135,7 @@ pub fn vending_minter_with_start_time(
         vec![collection_params],
         vec![minter_params],
         code_ids,
+        None,
     );
     MinterTemplateResponse {
         router: app,
@@ -155,6 +159,7 @@ pub fn vending_minter_with_app(
         vec![collection_params],
         vec![minter_params],
         code_ids,
+        None,
     );
     MinterTemplateResponse {
         router: app,
@@ -180,6 +185,7 @@ pub fn vending_minter_with_specified_sg721(
         vec![collection_params],
         vec![minter_params],
         code_ids,
+        None,
     );
     MinterTemplateResponse {
         router: app,
@@ -201,6 +207,7 @@ pub fn vending_minter_with_sg721_updatable(num_tokens: u32) -> MinterTemplateRes
         vec![collection_params],
         vec![minter_params],
         code_ids,
+        None,
     );
     MinterTemplateResponse {
         router: app,
@@ -224,6 +231,7 @@ pub fn vending_minter_updatable_with_app(
         vec![collection_params],
         vec![minter_params],
         code_ids,
+        None,
     );
     MinterTemplateResponse {
         router: app,
@@ -247,6 +255,7 @@ pub fn vending_minter_with_updatable_and_start_time(
         vec![collection_params],
         vec![minter_params],
         code_ids,
+        None,
     );
     MinterTemplateResponse {
         router: app,
@@ -268,6 +277,7 @@ pub fn base_minter_with_sg721nt(num_tokens: u32) -> MinterTemplateResponse<Accou
         vec![collection_params],
         vec![minter_params],
         code_ids,
+        None,
     );
     MinterTemplateResponse {
         router,
@@ -289,6 +299,7 @@ pub fn base_minter_with_sg721(num_tokens: u32) -> MinterTemplateResponse<Account
         vec![collection_params],
         vec![minter_params],
         code_ids,
+        None,
     );
     MinterTemplateResponse {
         router,
@@ -314,6 +325,7 @@ pub fn base_minter_with_specified_sg721(
         vec![collection_params],
         vec![minter_params],
         code_ids,
+        None,
     );
     MinterTemplateResponse {
         router,
@@ -331,7 +343,7 @@ pub fn open_edition_minter_custom_template(
     let code_ids = open_edition_minter_code_ids(&mut app);
     let collection_params = mock_collection_params_1(None);
     let minter_params =
-        minter_params_open_edition(params_extension, init_msg, None, None, None, None);
+        minter_params_open_edition(params_extension, init_msg, None, None, None, None, None);
 
     let minter_collection_response = configure_open_edition_minter(
         &mut app,
@@ -339,6 +351,7 @@ pub fn open_edition_minter_custom_template(
         vec![collection_params],
         vec![minter_params],
         code_ids.clone(),
+        None,
     );
     println!(
         "minter collection response is {:?}",
@@ -361,8 +374,15 @@ pub fn open_edition_minter_nft_data(
     let (creator, buyer) = setup_accounts(&mut app);
     let code_ids = open_edition_minter_code_ids(&mut app);
     let collection_params = mock_collection_params_1(None);
-    let minter_params =
-        minter_params_open_edition(params_extension, init_msg, None, None, Some(nft_data), None);
+    let minter_params = minter_params_open_edition(
+        params_extension,
+        init_msg,
+        None,
+        None,
+        Some(nft_data),
+        None,
+        None,
+    );
 
     let minter_collection_response = configure_open_edition_minter(
         &mut app,
@@ -370,6 +390,7 @@ pub fn open_edition_minter_nft_data(
         vec![collection_params],
         vec![minter_params],
         code_ids,
+        None,
     );
     Ok(MinterTemplateResponse {
         router: app,
@@ -388,8 +409,15 @@ pub fn open_edition_minter_start_and_end_time(
     let (creator, buyer) = setup_accounts(&mut app);
     let code_ids = open_edition_minter_code_ids(&mut app);
     let collection_params = mock_collection_params_1(None);
-    let minter_params =
-        minter_params_open_edition(params_extension, init_msg, start_time, end_time, None, None);
+    let minter_params = minter_params_open_edition(
+        params_extension,
+        init_msg,
+        start_time,
+        end_time,
+        None,
+        None,
+        None,
+    );
 
     let minter_collection_response = configure_open_edition_minter(
         &mut app,
@@ -397,6 +425,7 @@ pub fn open_edition_minter_start_and_end_time(
         vec![collection_params],
         vec![minter_params],
         code_ids,
+        None,
     );
     Ok(MinterTemplateResponse {
         router: app,
@@ -415,7 +444,7 @@ pub fn open_edition_minter_custom_code_ids(
     let (creator, buyer) = setup_accounts(&mut app);
     let collection_params = mock_collection_params_1(None);
     let minter_params =
-        minter_params_open_edition(params_extension, init_msg, None, None, None, None);
+        minter_params_open_edition(params_extension, init_msg, None, None, None, None, None);
 
     let minter_collection_response = configure_open_edition_minter(
         &mut app,
@@ -423,6 +452,41 @@ pub fn open_edition_minter_custom_code_ids(
         vec![collection_params],
         vec![minter_params],
         code_ids,
+        None,
+    );
+    Ok(MinterTemplateResponse {
+        router: app,
+        collection_response_vec: minter_collection_response,
+        accts: Accounts { creator, buyer },
+    })
+}
+
+pub fn open_edition_minter_custom_uri_scheme(
+    params_extension: ParamsExtension,
+    init_msg: OpenEditionMinterInitMsgExtension,
+    uri_scheme: Option<String>,
+) -> Result<MinterTemplateResponse<Accounts>, anyhow::Result<AppResponse>> {
+    let mut app = custom_mock_app();
+    let (creator, buyer) = setup_accounts(&mut app);
+    let collection_params = mock_collection_params_1(None);
+    let code_ids = open_edition_minter_code_ids(&mut app);
+    let minter_params = minter_params_open_edition(
+        params_extension,
+        init_msg,
+        None,
+        None,
+        None,
+        uri_scheme.clone(),
+        None,
+    );
+
+    let minter_collection_response = configure_open_edition_minter(
+        &mut app,
+        creator.clone(),
+        vec![collection_params],
+        vec![minter_params],
+        code_ids,
+        uri_scheme,
     );
     Ok(MinterTemplateResponse {
         router: app,
@@ -446,6 +510,7 @@ pub fn base_minter_with_sudo_update_params_template(
         vec![collection_params],
         vec![minter_params],
         code_ids.clone(),
+        None,
     );
     MinterTemplateResponseCodeIds {
         router: app,
@@ -470,6 +535,7 @@ pub fn vending_minter_template_with_code_ids_template(
         vec![collection_params],
         vec![minter_params],
         code_ids.clone(),
+        None,
     );
     MinterTemplateResponseCodeIds {
         router: app,
@@ -504,9 +570,10 @@ pub fn open_edition_minter_with_two_sg721_collections_burn_mint(
         None,
         None,
         None,
+        None,
     );
     let minter_params_2 =
-        minter_params_open_edition(params_extension, init_msg, None, None, None, None);
+        minter_params_open_edition(params_extension, init_msg, None, None, None, None, None);
     let code_ids = open_edition_minter_code_ids(&mut router);
     let minter_collection_response = configure_open_edition_minter(
         &mut router,
@@ -514,6 +581,7 @@ pub fn open_edition_minter_with_two_sg721_collections_burn_mint(
         vec![collection_params, collection_params_2],
         vec![minter_params, minter_params_2],
         code_ids,
+        None,
     );
     Ok(MinterTemplateResponse {
         router,
@@ -537,6 +605,7 @@ pub fn open_edition_minter_ibc_template(
         None,
         None,
         None,
+        None,
         Some(custom_minter_params),
     );
 
@@ -546,6 +615,7 @@ pub fn open_edition_minter_ibc_template(
         vec![collection_params],
         vec![minter_params],
         code_ids.clone(),
+        None,
     );
     Ok(MinterTemplateResponseCodeIds {
         router: app,

@@ -18,6 +18,7 @@ pub struct MinterSetupParams<'a> {
     pub factory_code_id: u64,
     pub sg721_code_id: u64,
     pub init_msg: Option<VendingMinterInitMsgExtension>,
+    pub uri_scheme: Option<String>,
 }
 pub struct MinterCollectionResponse {
     pub minter: Option<Addr>,
@@ -73,6 +74,7 @@ pub struct OpenEditionMinterSetupParams<'a> {
     pub minter_code_id: u64,
     pub factory_code_id: u64,
     pub sg721_code_id: u64,
+    pub uri_scheme: Option<String>,
     pub init_msg: Option<OpenEditionMinterInitMsgExtension>,
     pub custom_params: Option<OpenEditionMinterParams>,
 }
@@ -92,4 +94,5 @@ pub struct OpenEditionMinterCustomParams<'a> {
     pub denom: Option<&'a str>,
     pub mint_fee_bps: Option<u64>,
     pub airdrop_mint_price_amount: Option<Uint128>,
+    pub uri_scheme: Option<String>,
 }

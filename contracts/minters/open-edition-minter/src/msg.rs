@@ -52,6 +52,7 @@ pub struct ConfigResponse {
     pub start_time: Timestamp,
     pub mint_price: Coin,
     pub factory: String,
+    pub uri_scheme: String,
 }
 
 #[cw_serde]

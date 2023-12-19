@@ -106,6 +106,7 @@ fn test_invalid_start_time() {
         vec![collection_params.clone()],
         vec![minter_params],
         code_ids,
+        None,
     );
 
     let err = minter_collection_response[0]
@@ -133,6 +134,7 @@ fn test_invalid_start_time() {
         vec![collection_params.clone()],
         vec![minter_params],
         code_ids.clone(),
+        None,
     );
 
     let err = minter_collection_response[0]
@@ -159,6 +161,7 @@ fn test_invalid_start_time() {
         vec![collection_params],
         vec![minter_params],
         code_ids,
+        None,
     );
     let minter_addr = minter_collection_response[0].minter.clone().unwrap();
     assert_eq!(minter_addr.to_string(), "contract3");
@@ -215,6 +218,7 @@ fn invalid_trading_time_during_init() {
         vec![collection_params],
         vec![minter_params],
         code_ids,
+        None,
     );
     let err = minter_collection_response[0].error.as_deref();
     let expected_error = ContractError::InvalidStartTradingTime(

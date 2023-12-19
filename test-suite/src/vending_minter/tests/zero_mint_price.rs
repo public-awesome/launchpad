@@ -52,6 +52,7 @@ fn zero_mint_price() {
         sg721_code_id: code_ids.sg721_code_id,
         start_time: minter_params.start_time,
         init_msg: minter_params.init_msg,
+        uri_scheme: None,
     };
 
     let minter_code_id = setup_params.minter_code_id;
@@ -142,6 +143,7 @@ fn zero_wl_mint_price() {
         sg721_code_id: code_ids.sg721_code_id,
         start_time: minter_params.start_time,
         init_msg: minter_params.init_msg,
+        uri_scheme: None,
     };
 
     let minter_code_id = setup_params.minter_code_id;
@@ -239,6 +241,7 @@ fn zero_wl_mint_errs_with_min_mint_factory() {
         sg721_code_id: code_ids.sg721_code_id,
         start_time: minter_params.start_time,
         init_msg: minter_params.init_msg,
+        uri_scheme: None,
     };
 
     let minter_code_id = setup_params.minter_code_id;

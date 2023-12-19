@@ -82,6 +82,7 @@ fn mint_and_split() {
         vec![collection_params],
         vec![minter_params],
         code_ids,
+        None,
     );
     let minter_addr = minter_collection_response[0].minter.clone().unwrap();
     setup_block_time(&mut app, GENESIS_MINT_START_TIME + 1, None);

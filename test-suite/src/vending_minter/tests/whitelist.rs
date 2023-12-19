@@ -59,6 +59,7 @@ fn invalid_whitelist_instantiate() {
         vec![collection_params],
         vec![minter_params],
         code_ids,
+        None,
     );
     let err = minter_collection_response[0].error.as_ref();
 
@@ -149,6 +150,7 @@ fn whitelist_mint_count_query() {
         vec![collection_params],
         vec![minter_params],
         code_ids,
+        None,
     );
     let minter_addr = minter_collection_response[0].minter.clone().unwrap();
     let collection_addr = minter_collection_response[0].collection.clone().unwrap();
@@ -358,6 +360,7 @@ fn whitelist_already_started() {
         vec![collection_params],
         vec![minter_params],
         code_ids,
+        None,
     );
     let minter_addr = minter_collection_response[0].minter.clone().unwrap();
     let whitelist_addr = setup_whitelist_contract(&mut router, &creator, None, None);
@@ -393,6 +396,7 @@ fn whitelist_can_update_before_start() {
         vec![collection_params],
         vec![minter_params],
         code_ids,
+        None,
     );
     let minter_addr = minter_collection_response[0].minter.clone().unwrap();
     let whitelist_addr = setup_whitelist_contract(&mut router, &creator, None, None);
@@ -433,6 +437,7 @@ fn whitelist_access_len_add_remove_expiration() {
         vec![collection_params],
         vec![minter_params],
         code_ids,
+        None,
     );
     let minter_addr = minter_collection_response[0].minter.clone().unwrap();
     let sg721_addr = minter_collection_response[0].collection.clone().unwrap();

@@ -711,6 +711,7 @@ fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
         start_time: config.extension.start_time,
         mint_price: config.mint_price,
         factory: config.factory.to_string(),
+        uri_scheme: config.uri_scheme,
     })
 }
 

@@ -60,6 +60,7 @@ pub fn setup_open_edition_minter_contract(
     let end_time = setup_params.end_time;
     let init_msg = setup_params.init_msg.clone();
     let nft_data = setup_params.init_msg.unwrap().nft_data;
+    let uri_scheme = setup_params.uri_scheme;
 
     let custom_params = setup_params.custom_params;
 
@@ -68,6 +69,7 @@ pub fn setup_open_edition_minter_contract(
         params = custom_params;
     };
     params.code_id = minter_code_id;
+    params.uri_scheme = uri_scheme;
 
     let factory_addr = router.instantiate_contract(
         factory_code_id,
@@ -181,6 +183,7 @@ pub fn configure_open_edition_minter(
     collection_params_vec: Vec<CollectionParams>,
     minter_instantiate_params_vec: Vec<OpenEditionMinterInstantiateParams>,
     code_ids: CodeIds,
+    uri_scheme: Option<String>,
 ) -> Vec<MinterCollectionResponse> {
     let mut minter_collection_info: Vec<MinterCollectionResponse> = vec![];
     for (index, collection_param) in collection_params_vec.iter().enumerate() {
@@ -203,6 +206,7 @@ pub fn configure_open_edition_minter(
             init_msg: minter_instantiate_params_vec[index].init_msg.clone(),
             end_time: minter_instantiate_params_vec[index].end_time.to_owned(),
             custom_params: minter_instantiate_params_vec[index].custom_params.clone(),
+            uri_scheme: uri_scheme.clone(),
         };
         let minter_collection_res = setup_open_edition_minter_contract(setup_params);
         minter_collection_info.push(minter_collection_res);

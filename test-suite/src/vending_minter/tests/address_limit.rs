@@ -265,6 +265,7 @@ fn check_invalid_update_per_address_limit() {
         vec![collection_params],
         vec![minter_params],
         code_ids,
+        None,
     );
     let err = minter_collection_response[0].error.as_ref();
     assert!(err.is_none());

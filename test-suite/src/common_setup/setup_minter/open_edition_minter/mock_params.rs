@@ -87,6 +87,7 @@ pub fn mock_params_proper() -> OpenEditionMinterParams {
 // Pass custom params to change minter values
 pub fn mock_params_custom(custom_params: OpenEditionMinterCustomParams) -> OpenEditionMinterParams {
     let denom = custom_params.denom.unwrap_or(NATIVE_DENOM);
+    let uri_scheme = custom_params.uri_scheme.clone();
     let mint_fee_bps = custom_params.mint_fee_bps.unwrap_or(MINT_FEE_FAIR_BURN);
     let airdrop_mint_price_amount = custom_params
         .airdrop_mint_price_amount
@@ -99,7 +100,7 @@ pub fn mock_params_custom(custom_params: OpenEditionMinterCustomParams) -> OpenE
         min_mint_price: coin(MIN_MINT_PRICE_OPEN_EDITION, denom),
         mint_fee_bps,
         max_trading_offset_secs: 60 * 60 * 24 * 7,
-        uri_scheme: Some("ipfs".to_owned()),
+        uri_scheme,
         extension: ParamsExtension {
             max_per_address_limit: 10,
             airdrop_mint_fee_bps: 100,

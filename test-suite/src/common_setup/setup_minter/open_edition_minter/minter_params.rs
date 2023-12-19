@@ -18,25 +18,25 @@ pub fn minter_params_open_edition(
     start_time: Option<Timestamp>,
     end_time: Option<Timestamp>,
     nft_data: Option<NftData>,
+    uri_scheme: Option<String>,
     custom_params: Option<OpenEditionMinterParams>,
 ) -> OpenEditionMinterInstantiateParams {
     let start_time = start_time.unwrap_or(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 100));
     let end_time = end_time.unwrap_or(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000));
+    let uri_scheme = uri_scheme.unwrap_or("ipfs".to_owned());
 
     OpenEditionMinterInstantiateParams {
         start_time: Some(start_time),
         end_time: Some(end_time),
         per_address_limit: Some(init_msg.per_address_limit),
-        nft_data: Some(
-            nft_data.unwrap_or(NftData {
-                nft_data_type: NftMetadataType::OffChainMetadata,
-                extension: None,
-                token_uri: Some(
-                    "ipfs://bafybeiavall5udkxkdtdm4djezoxrmfc6o5fn2ug3ymrlvibvwmwydgrkm/1.jpg"
-                        .to_string(),
-                ),
-            }),
-        ),
+        nft_data: Some(nft_data.unwrap_or(NftData {
+            nft_data_type: NftMetadataType::OffChainMetadata,
+            extension: None,
+            token_uri: Some(format!(
+                "{}://bafybeiavall5udkxkdtdm4djezoxrmfc6o5fn2ug3ymrlvibvwmwydgrkm/1.jpg",
+                uri_scheme
+            )),
+        })),
         init_msg: Some(init_msg),
         params_extension: Some(params_extension),
         custom_params,
@@ -50,6 +50,17 @@ pub fn default_nft_data() -> NftData {
         token_uri: Some(
             "ipfs://bafybeiavall5udkxkdtdm4djezoxrmfc6o5fn2ug3ymrlvibvwmwydgrkm/1.jpg".to_string(),
         ),
+    }
+}
+
+pub fn nft_data_with_uri_scheme(uri_scheme: String) -> NftData {
+    NftData {
+        nft_data_type: NftMetadataType::OffChainMetadata,
+        extension: None,
+        token_uri: Some(format!(
+            "{}://bafybeiavall5udkxkdtdm4djezoxrmfc6o5fn2ug3ymrlvibvwmwydgrkm/1.jpg",
+            uri_scheme
+        )),
     }
 }
 
