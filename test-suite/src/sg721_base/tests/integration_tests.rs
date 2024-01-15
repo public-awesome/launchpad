@@ -426,10 +426,10 @@ mod tests {
             );
 
             // raise royalty_info by 2% succeeds
-            let royalty_info: Option<RoyaltyInfoResponse> = Some(RoyaltyInfoResponse {
+            let royalty_info: RoyaltyInfoResponse = RoyaltyInfoResponse {
                 payment_address: creator.to_string(),
                 share: Decimal::percent(9),
-            });
+            };
             let res = app.execute_contract(
                 creator.clone(),
                 contract.clone(),
@@ -440,7 +440,7 @@ mod tests {
                         image: Some(params.info.image.clone()),
                         external_link: Some(params.info.external_link.clone()),
                         explicit_content: None,
-                        royalty_info: Some(royalty_info.clone()),
+                        royalty_info: Some(Some(royalty_info.clone())),
                     },
                 },
                 &[],
@@ -451,7 +451,7 @@ mod tests {
                 .wrap()
                 .query_wasm_smart(contract.clone(), &QueryMsg::CollectionInfo {})
                 .unwrap();
-            assert_eq!(res.royalty_info.unwrap(), royalty_info.unwrap());
+            assert_eq!(res.royalty_info.unwrap(), royalty_info);
 
             // update explicit content with new creator
             let res = app.execute_contract(
