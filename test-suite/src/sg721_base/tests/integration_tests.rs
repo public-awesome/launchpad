@@ -279,6 +279,7 @@ mod tests {
                 contract,
                 &Sg721ExecuteMsg::<Empty, Empty>::UpdateCollectionInfo {
                     collection_info: UpdateCollectionInfoMsg {
+                        creator: None,
                         description: None,
                         image: None,
                         external_link: None,
@@ -290,6 +291,7 @@ mod tests {
             );
             assert!(res.is_err());
         }
+
         #[test]
         fn update_collection_info() {
             // customize params so external_link is None
@@ -313,6 +315,7 @@ mod tests {
             let (mut app, contract) = custom_proper_instantiate(custom_create_minter_msg);
 
             let creator = Addr::unchecked("creator".to_string());
+            let new_creator = Addr::unchecked("new_creator".to_string());
 
             // succeeds
             let res = app.execute_contract(
@@ -320,6 +323,7 @@ mod tests {
                 contract.clone(),
                 &Sg721ExecuteMsg::<Empty, Empty>::UpdateCollectionInfo {
                     collection_info: UpdateCollectionInfoMsg {
+                        creator: None,
                         description: Some(params.info.description.clone()),
                         image: Some(params.info.image.clone()),
                         external_link: Some(params.info.external_link.clone()),
@@ -341,6 +345,7 @@ mod tests {
                 contract.clone(),
                 &Sg721ExecuteMsg::<Empty, Empty>::UpdateCollectionInfo {
                     collection_info: UpdateCollectionInfoMsg {
+                        creator: None,
                         description: Some(params.info.description.clone()),
                         image: Some(params.info.image.clone()),
                         external_link: Some(params.info.external_link.clone()),
@@ -374,6 +379,7 @@ mod tests {
                 contract.clone(),
                 &Sg721ExecuteMsg::<Empty, Empty>::UpdateCollectionInfo {
                     collection_info: UpdateCollectionInfoMsg {
+                        creator: None,
                         description: Some(params.info.description.clone()),
                         image: Some(params.info.image.clone()),
                         external_link: Some(params.info.external_link.clone()),
@@ -401,6 +407,7 @@ mod tests {
                 contract.clone(),
                 &Sg721ExecuteMsg::<Empty, Empty>::UpdateCollectionInfo {
                     collection_info: UpdateCollectionInfoMsg {
+                        creator: None,
                         description: Some(params.info.description.clone()),
                         image: Some(params.info.image.clone()),
                         external_link: Some(params.info.external_link.clone()),
@@ -428,6 +435,7 @@ mod tests {
                 contract.clone(),
                 &Sg721ExecuteMsg::<Empty, Empty>::UpdateCollectionInfo {
                     collection_info: UpdateCollectionInfoMsg {
+                        creator: None,
                         description: Some(params.info.description.clone()),
                         image: Some(params.info.image.clone()),
                         external_link: Some(params.info.external_link.clone()),
@@ -445,12 +453,13 @@ mod tests {
                 .unwrap();
             assert_eq!(res.royalty_info.unwrap(), royalty_info.unwrap());
 
-            // update explicit content
+            // update explicit content with new creator
             let res = app.execute_contract(
                 creator.clone(),
                 contract.clone(),
                 &Sg721ExecuteMsg::<Empty, Empty>::UpdateCollectionInfo {
                     collection_info: UpdateCollectionInfoMsg {
+                        creator: Some(new_creator.to_string()),
                         description: Some(params.info.description.clone()),
                         image: Some(params.info.image.clone()),
                         external_link: Some(params.info.external_link.clone()),
@@ -479,7 +488,7 @@ mod tests {
             assert!(res.is_err());
             // freeze collection to prevent further updates
             let res = app.execute_contract(
-                creator.clone(),
+                new_creator.clone(),
                 contract.clone(),
                 &Sg721ExecuteMsg::<Empty, Empty>::FreezeCollectionInfo {},
                 &[],
@@ -488,10 +497,11 @@ mod tests {
 
             // trying to update collection after frozen should throw err
             let res = app.execute_contract(
-                creator,
+                new_creator,
                 contract,
                 &Sg721ExecuteMsg::<Empty, Empty>::UpdateCollectionInfo {
                     collection_info: UpdateCollectionInfoMsg {
+                        creator: None,
                         description: Some(params.info.description.clone()),
                         image: Some(params.info.image.clone()),
                         external_link: Some(params.info.external_link),
