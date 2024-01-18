@@ -16,8 +16,8 @@ pub struct CollectionInfo<T> {
 pub struct RoyaltyInfo {
     pub payment_address: Addr,
     pub share: Decimal,
-    pub updated_at: Option<Timestamp>,
 }
 
 pub const FROZEN_TOKEN_METADATA: Item<bool> = Item::new("frozen_token_metadata");
 pub const COLLECTION_INFO: Item<CollectionInfo<RoyaltyInfo>> = Item::new("collection_info");
+pub const ROYALTY_UPDATED_AT: Item<Timestamp> = Item::new("royalty_updated_at");

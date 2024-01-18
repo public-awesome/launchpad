@@ -1,6 +1,6 @@
 [package]
 name    = "sg721-updatable"
-version = "0.8.4"
+version = "0.8.5"
 authors = ["John Y <j@noreply.publicawesome.com>"]
 edition = "2018"
 
