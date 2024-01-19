@@ -1,6 +1,6 @@
 #!/bin/bash
 set -eux
-git checkout -b release-$1
+# git checkout -b release-$1
 PROJECT_PATH=$(pwd)
 version=$(grep "version" ./Cargo.toml | head -1 | cut -d '"' -f 2)
 echo "Current version: $version"

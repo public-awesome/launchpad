@@ -456,6 +456,12 @@
     "UpdateCollectionInfoMsg_for_RoyaltyInfoResponse": {
       "type": "object",
       "properties": {
+        "creator": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "description": {
           "type": [
             "string",
