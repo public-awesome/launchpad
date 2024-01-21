@@ -95,11 +95,10 @@ pub fn fair_burn(sender: String, fee: u128, developer: Option<Addr>, res: &mut R
         event = event.add_attribute("dev", dev.to_string());
         event = event.add_attribute("dev_amount", Uint128::from(remainder).to_string());
     } else {
-        let msg_fund_fairburn_pool = CosmosMsg::Stargate {
-            type_url: "/publicawesome.stargaze.alloc.v1beta1.MsgFundFairburnPool".to_string(),
-            value: encode_msg_fund_fairburn_pool(sender, &coin(remainder, NATIVE_DENOM)).into(),
-        };
-        res.messages.push(SubMsg::new(msg_fund_fairburn_pool));
+        res.messages.push(SubMsg::new(create_fund_fairburn_pool_msg(
+            sender,
+            &coin(remainder, NATIVE_DENOM),
+        )));
         event = event.add_attribute("dist_amount", Uint128::from(remainder).to_string());
     }
 
