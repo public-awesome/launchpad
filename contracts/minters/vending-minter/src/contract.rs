@@ -55,9 +55,9 @@ pub fn bucket_get(storage: &dyn Storage, bucket: u16) -> Option<HexBinary> {
     let key = bucket_key(bucket);
     storage.get(&key).map(Into::into)
 }
-pub fn bucket_set(storage: &mut dyn Storage, bucket: u16, randomness: &HexBinary) {
+pub fn bucket_set(storage: &mut dyn Storage, bucket: u16, array: &HexBinary) {
     let key = bucket_key(bucket);
-    storage.set(&key, randomness);
+    storage.set(&key, array);
 }
 // no serde
 fn bucket_key(bucket: u16) -> [u8; 5] {

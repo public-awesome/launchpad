@@ -28,7 +28,7 @@ cw4                  = "1.1.0"
 cw4-group            = "1.1.0"
 cw721                = "0.18.0"
 cw721-base           = "0.18.0"
-cw-multi-test        = "0.16.2"
+cw-multi-test        = "0.18.0"
 cw-storage-plus      = "1.1.0"
 cw-utils             = "1.0.1"
 schemars             = "0.8.11"
@@ -61,6 +61,7 @@ sg-eth-airdrop       = { version = "3.4.0", path = "contracts/sg-eth-airdrop" }
 test-suite           = { version = "3.4.0", path = "test-suite" }
 semver               = "1"
 cw-ownable           = "0.5.1"
+anybuf               = "0.3.0"
 
 [profile.release.package.sg721]
 codegen-units = 1

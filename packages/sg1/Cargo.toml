@@ -9,8 +9,9 @@ repository  = { workspace = true }
 license     = { workspace = true }
 
 [dependencies]
-cosmwasm-std    = { workspace = true }
-cw-utils        = { workspace = true }
-serde           = { workspace = true }
-sg-std          = { workspace = true }
-thiserror       = { workspace = true }
+cosmwasm-std = { workspace = true, features = ["stargate"] }
+cw-utils     = { workspace = true }
+serde        = { workspace = true }
+sg-std       = { workspace = true }
+thiserror    = { workspace = true }
+anybuf       = { workspace = true }
