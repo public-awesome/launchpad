@@ -6,6 +6,11 @@ Mints are in random order. The entire collection is shuffled on instantiation. E
 
 ## TODO
 
-- [ ] Unit tests
+- [x] Unit tests
 - [ ] Integration tests
 - [ ] e2e tests
+
+
+## Notes
+
+Cannot have unit tests for this minter since the `instantiate` function checks that the contract is instantiated from a factory. Therefore we start with integration / multi tests.
