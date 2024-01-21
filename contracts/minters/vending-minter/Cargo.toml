@@ -30,7 +30,7 @@ library = []
 
 [dependencies]
 cosmwasm-schema = { workspace = true }
-cosmwasm-std    = { workspace = true }
+cosmwasm-std    = { workspace = true, features = ["cosmwasm_1_4"] }
 cw2             = { workspace = true }
 cw721           = { workspace = true }
 cw721-base      = { workspace = true, features = ["library"] }
@@ -51,4 +51,4 @@ sg-whitelist    = { workspace = true, features = ["library"] }
 thiserror       = { workspace = true }
 url             = { workspace = true }
 vending-factory = { workspace = true, features = ["library"] }
-semver           = {workspace = true  }
+semver          = { workspace = true }

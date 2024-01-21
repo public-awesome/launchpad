@@ -20,8 +20,8 @@ license    = "Apache-2.0"
 [workspace.dependencies]
 base-factory         = { version = "3.4.0", path = "contracts/factories/base-factory" }
 base-minter          = { version = "3.4.0", path = "contracts/minters/base-minter" }
-cosmwasm-schema      = "1.2.1"
-cosmwasm-std         = "1.2.1"
+cosmwasm-schema      = "1.5.0"
+cosmwasm-std         = "1.5.0"
 cw-controllers       = "1.1.0"
 cw2                  = "1.1.0"
 cw4                  = "1.1.0"

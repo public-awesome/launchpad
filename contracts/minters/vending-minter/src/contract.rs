@@ -11,8 +11,8 @@ use crate::validation::{check_dynamic_per_address_limit, get_three_percent_of_to
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coin, ensure, to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut, Empty,
-    Env, Event, MessageInfo, Order, Reply, ReplyOn, StdError, StdResult, Timestamp, Uint128,
+    coin, ensure, to_json_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut,
+    Empty, Env, Event, MessageInfo, Order, Reply, ReplyOn, StdError, StdResult, Timestamp, Uint128,
     WasmMsg,
 };
 use cw2::set_contract_version;
@@ -49,6 +49,26 @@ const CONTRACT_NAME: &str = "crates.io:sg-minter";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 const INSTANTIATE_SG721_REPLY_ID: u64 = 1;
+
+use cosmwasm_std::{HexBinary, Storage};
+pub fn bucket_get(storage: &dyn Storage, bucket: u16) -> Option<HexBinary> {
+    let key = bucket_key(bucket);
+    storage.get(&key).map(Into::into)
+}
+pub fn bucket_set(storage: &mut dyn Storage, bucket: u16, randomness: &HexBinary) {
+    let key = bucket_key(bucket);
+    storage.set(&key, randomness);
+}
+// no serde
+fn bucket_key(bucket: u16) -> [u8; 5] {
+    let bytes = bucket.to_be_bytes();
+    [
+        7,    // BELL
+        b'v', // vending minter
+        b'b', // buckets
+        bytes[0], bytes[1],
+    ]
+}
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -184,7 +204,7 @@ pub fn instantiate(
     let submsg = SubMsg {
         msg: WasmMsg::Instantiate {
             code_id: msg.collection_params.code_id,
-            msg: to_binary(&Sg721InstantiateMsg {
+            msg: to_json_binary(&Sg721InstantiateMsg {
                 name: msg.collection_params.name.clone(),
                 symbol: msg.collection_params.symbol,
                 minter: env.contract.address.to_string(),
@@ -696,7 +716,7 @@ fn _execute_mint(
     };
     let msg = CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: sg721_address.to_string(),
-        msg: to_binary(&mint_msg)?,
+        msg: to_json_binary(&mint_msg)?,
         funds: vec![],
     });
     res = res.add_message(msg);
@@ -929,7 +949,7 @@ pub fn execute_update_start_trading_time(
     // execute sg721 contract
     let msg = WasmMsg::Execute {
         contract_addr: sg721_contract_addr.to_string(),
-        msg: to_binary(&Sg721ExecuteMsg::<Empty, Empty>::UpdateStartTradingTime(
+        msg: to_json_binary(&Sg721ExecuteMsg::<Empty, Empty>::UpdateStartTradingTime(
             start_time,
         ))?,
         funds: vec![],
@@ -1119,12 +1139,12 @@ pub fn update_status(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::Config {} => to_binary(&query_config(deps)?),
-        QueryMsg::Status {} => to_binary(&query_status(deps)?),
-        QueryMsg::StartTime {} => to_binary(&query_start_time(deps)?),
-        QueryMsg::MintableNumTokens {} => to_binary(&query_mintable_num_tokens(deps)?),
-        QueryMsg::MintPrice {} => to_binary(&query_mint_price(deps)?),
-        QueryMsg::MintCount { address } => to_binary(&query_mint_count(deps, address)?),
+        QueryMsg::Config {} => to_json_binary(&query_config(deps)?),
+        QueryMsg::Status {} => to_json_binary(&query_status(deps)?),
+        QueryMsg::StartTime {} => to_json_binary(&query_start_time(deps)?),
+        QueryMsg::MintableNumTokens {} => to_json_binary(&query_mintable_num_tokens(deps)?),
+        QueryMsg::MintPrice {} => to_json_binary(&query_mint_price(deps)?),
+        QueryMsg::MintCount { address } => to_json_binary(&query_mint_count(deps, address)?),
     }
 }
 
