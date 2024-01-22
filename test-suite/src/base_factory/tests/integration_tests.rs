@@ -5,12 +5,11 @@ mod tests {
     use base_factory::helpers::FactoryContract;
     use base_factory::msg::InstantiateMsg;
     use cosmwasm_std::Addr;
-    use cw_multi_test::Executor;
-    use sg_multi_test::StargazeApp;
+    use cw_multi_test::{App, Executor};
 
     const GOVERNANCE: &str = "governance";
 
-    fn proper_instantiate() -> (StargazeApp, FactoryContract) {
+    fn proper_instantiate() -> (App, FactoryContract) {
         let mut app = custom_mock_app();
         let factory_id = app.store_code(contract_base_factory());
         let minter_id = 2;

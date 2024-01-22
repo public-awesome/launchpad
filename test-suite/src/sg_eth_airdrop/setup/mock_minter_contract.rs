@@ -1,10 +1,11 @@
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_json_binary, Binary, Coin, Deps, DepsMut, Env, MessageInfo, StdResult, Timestamp,
+    to_json_binary, Binary, Coin, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult,
+    Timestamp,
 };
 use cw_multi_test::{Contract, ContractWrapper};
 use sg_eth_airdrop::error::ContractError;
-use sg_std::{Response, StargazeMsgWrapper};
+
 use vending_factory::msg::VendingMinterCreateMsg;
 use vending_minter::msg::{ExecuteMsg, QueryMsg};
 
@@ -66,7 +67,7 @@ fn query_config() -> ConfigResponse {
     }
 }
 
-pub fn mock_minter() -> Box<dyn Contract<StargazeMsgWrapper>> {
+pub fn mock_minter() -> Box<dyn Contract<Empty>> {
     let contract = ContractWrapper::new(execute, instantiate, query);
     Box::new(contract)
 }

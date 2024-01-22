@@ -7,10 +7,9 @@ use crate::common_setup::msg::MinterSetupParams;
 use crate::common_setup::setup_minter::base_minter::mock_params::MIN_MINT_PRICE;
 use crate::common_setup::setup_minter::common::parse_response::build_collection_response;
 use cosmwasm_std::{coin, coins, to_json_binary, Addr};
-use cw_multi_test::{AppResponse, Executor};
+use cw_multi_test::{App, AppResponse, Executor};
 use sg2::msg::CreateMinterMsg;
 use sg2::msg::{CollectionParams, Sg2ExecuteMsg};
-use sg_multi_test::StargazeApp;
 use sg_std::NATIVE_DENOM;
 use vending_factory::msg::{VendingMinterInitMsgExtension, VendingUpdateParamsExtension};
 
@@ -77,7 +76,7 @@ pub fn setup_minter_contract(setup_params: MinterSetupParams) -> MinterCollectio
     build_collection_response(res, factory_addr)
 }
 
-pub fn vending_minter_code_ids(router: &mut StargazeApp) -> CodeIds {
+pub fn vending_minter_code_ids(router: &mut App) -> CodeIds {
     let minter_code_id = router.store_code(contract_vending_minter());
     println!("minter_code_id: {minter_code_id}");
 
@@ -93,7 +92,7 @@ pub fn vending_minter_code_ids(router: &mut StargazeApp) -> CodeIds {
     }
 }
 
-pub fn vending_minter_updatable_code_ids(router: &mut StargazeApp) -> CodeIds {
+pub fn vending_minter_updatable_code_ids(router: &mut App) -> CodeIds {
     let minter_code_id = router.store_code(contract_vending_minter());
     println!("minter_code_id: {minter_code_id}");
 
@@ -110,7 +109,7 @@ pub fn vending_minter_updatable_code_ids(router: &mut StargazeApp) -> CodeIds {
 }
 
 pub fn configure_minter(
-    app: &mut StargazeApp,
+    app: &mut App,
     minter_admin: Addr,
     collection_params_vec: Vec<CollectionParams>,
     minter_instantiate_params_vec: Vec<MinterInstantiateParams>,
@@ -137,7 +136,7 @@ pub fn configure_minter(
 }
 
 pub fn sudo_update_params(
-    app: &mut StargazeApp,
+    app: &mut App,
     collection_responses: &Vec<MinterCollectionResponse>,
     code_ids: CodeIds,
     update_msg: Option<sg2::msg::UpdateMinterParamsMsg<VendingUpdateParamsExtension>>,

@@ -9,9 +9,9 @@ use async_std::task;
 use cosmwasm_std::{Addr, Attribute, Coin, Uint128};
 use sg_eth_airdrop::msg::{ExecuteMsg, QueryMsg};
 
+use cw_multi_test::App;
 use ethers_core::rand::thread_rng;
 use ethers_signers::{LocalWallet, Signer};
-use sg_multi_test::StargazeApp;
 
 use crate::sg_eth_airdrop::constants::claim_constants::{
     CONFIG_PLAINTEXT, MOCK_AIRDROP_ADDR_STR, MOCK_MINTER_ADDR_STR, NATIVE_DENOM, OWNER,
@@ -24,7 +24,7 @@ use crate::sg_eth_airdrop::setup::execute_msg::{
 
 use sg_eth_airdrop::contract::INSTANTIATION_FEE;
 
-fn query_minter_as_expected(app: &mut StargazeApp, airdrop_contract: Addr, minter_addr: Addr) {
+fn query_minter_as_expected(app: &mut App, airdrop_contract: Addr, minter_addr: Addr) {
     let query_msg = QueryMsg::GetMinter {};
     let result: Addr = app
         .wrap()

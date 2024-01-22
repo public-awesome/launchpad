@@ -8,13 +8,13 @@ use crate::common_setup::setup_minter::base_minter::mock_params::MIN_MINT_PRICE;
 use crate::common_setup::setup_minter::common::parse_response::build_collection_response;
 use anyhow::Error;
 use cosmwasm_std::{coin, coins, to_json_binary, Addr, Coin, Timestamp};
-use cw_multi_test::{AppResponse, Executor};
+use cw_multi_test::{App, AppResponse, Executor};
 use open_edition_factory::msg::{
     OpenEditionMinterInitMsgExtension, OpenEditionUpdateParamsExtension, OpenEditionUpdateParamsMsg,
 };
 use open_edition_factory::types::NftData;
 use sg2::msg::{CollectionParams, Sg2ExecuteMsg};
-use sg_multi_test::StargazeApp;
+
 use sg_std::NATIVE_DENOM;
 
 use crate::common_setup::msg::CodeIds;
@@ -118,7 +118,7 @@ pub fn setup_open_edition_minter_contract(
     }
 }
 
-pub fn open_edition_minter_code_ids(router: &mut StargazeApp) -> CodeIds {
+pub fn open_edition_minter_code_ids(router: &mut App) -> CodeIds {
     let minter_code_id = router.store_code(contract_open_edition_minter());
 
     let factory_code_id = router.store_code(contract_open_edition_factory());
@@ -133,7 +133,7 @@ pub fn open_edition_minter_code_ids(router: &mut StargazeApp) -> CodeIds {
 }
 
 pub fn sudo_update_params(
-    app: &mut StargazeApp,
+    app: &mut App,
     collection_responses: &Vec<MinterCollectionResponse>,
     code_ids: CodeIds,
     update_msg: Option<OpenEditionUpdateParamsMsg>,
@@ -176,7 +176,7 @@ pub fn sudo_update_params(
 }
 
 pub fn configure_open_edition_minter(
-    app: &mut StargazeApp,
+    app: &mut App,
     minter_admin: Addr,
     collection_params_vec: Vec<CollectionParams>,
     minter_instantiate_params_vec: Vec<OpenEditionMinterInstantiateParams>,
