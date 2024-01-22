@@ -31,7 +31,7 @@ workflows:
 jobs:
   contract_sg721_base:
     docker:
-      - image: rust:1.69.0
+      - image: rust:1.70.0
     working_directory: ~/project/contracts/collections/sg721-base
     steps:
       - checkout:
@@ -41,7 +41,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-sg721-rust:1.69.0-{{ checksum "~/project/Cargo.lock" }}
+            - cargocache-sg721-rust:1.70.0-{{ checksum "~/project/Cargo.lock" }}
       - run:
           name: Unit Tests
           environment:
@@ -63,11 +63,11 @@ jobs:
           paths:
             - /usr/local/cargo/registry
             - target
-          key: cargocache-sg721-rust:1.69.0-{{ checksum "~/project/Cargo.lock" }}
+          key: cargocache-sg721-rust:1.70.0-{{ checksum "~/project/Cargo.lock" }}
 
   contract_sg721_nt:
     docker:
-      - image: rust:1.69.0
+      - image: rust:1.70.0
     working_directory: ~/project/contracts/collections/sg721-nt
     steps:
       - checkout:
@@ -77,7 +77,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-sg721-nt-rust:1.69.0-{{ checksum "~/project/Cargo.lock" }}
+            - cargocache-sg721-nt-rust:1.70.0-{{ checksum "~/project/Cargo.lock" }}
       - run:
           name: Unit Tests
           environment:
@@ -99,11 +99,11 @@ jobs:
           paths:
             - /usr/local/cargo/registry
             - target
-          key: cargocache-sg721-nt-rust:1.69.0-{{ checksum "~/project/Cargo.lock" }}
+          key: cargocache-sg721-nt-rust:1.70.0-{{ checksum "~/project/Cargo.lock" }}
 
   contract_base_factory:
     docker:
-      - image: rust:1.69.0
+      - image: rust:1.70.0
     working_directory: ~/project/contracts/factories/base-factory
     steps:
       - checkout:
@@ -113,7 +113,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-base-factory-rust:1.69.0-{{ checksum "~/project/Cargo.lock" }}
+            - cargocache-base-factory-rust:1.70.0-{{ checksum "~/project/Cargo.lock" }}
       - run:
           name: Unit Tests
           environment:
@@ -135,11 +135,11 @@ jobs:
           paths:
             - /usr/local/cargo/registry
             - target
-          key: cargocache-base-factory-rust:1.69.0-{{ checksum "~/project/Cargo.lock" }}
+          key: cargocache-base-factory-rust:1.70.0-{{ checksum "~/project/Cargo.lock" }}
 
   contract_base_minter:
     docker:
-      - image: rust:1.69.0
+      - image: rust:1.70.0
     working_directory: ~/project/contracts/minters/base-minter
     steps:
       - checkout:
@@ -149,7 +149,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-base-minter-rust:1.69.0-{{ checksum "~/project/Cargo.lock" }}
+            - cargocache-base-minter-rust:1.70.0-{{ checksum "~/project/Cargo.lock" }}
       - run:
           name: Unit Tests
           environment:
@@ -171,11 +171,11 @@ jobs:
           paths:
             - /usr/local/cargo/registry
             - target
-          key: cargocache-base-minter-rust:1.69.0-{{ checksum "~/project/Cargo.lock" }}
+          key: cargocache-base-minter-rust:1.70.0-{{ checksum "~/project/Cargo.lock" }}
 
   contract_vending_factory:
     docker:
-      - image: rust:1.69.0
+      - image: rust:1.70.0
     working_directory: ~/project/contracts/factories/vending-factory
     steps:
       - checkout:
@@ -185,7 +185,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-vending-factory-rust:1.69.0-{{ checksum "~/project/Cargo.lock" }}
+            - cargocache-vending-factory-rust:1.70.0-{{ checksum "~/project/Cargo.lock" }}
       - run:
           name: Unit Tests
           environment:
@@ -207,11 +207,11 @@ jobs:
           paths:
             - /usr/local/cargo/registry
             - target
-          key: cargocache-vending-factory-rust:1.69.0-{{ checksum "~/project/Cargo.lock" }}
+          key: cargocache-vending-factory-rust:1.70.0-{{ checksum "~/project/Cargo.lock" }}
 
   contract_vending_minter:
     docker:
-      - image: rust:1.69.0
+      - image: rust:1.70.0
     working_directory: ~/project/contracts/minters/vending-minter
     steps:
       - checkout:
@@ -221,7 +221,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-vending-minter-rust:1.69.0-{{ checksum "~/project/Cargo.lock" }}
+            - cargocache-vending-minter-rust:1.70.0-{{ checksum "~/project/Cargo.lock" }}
       - run:
           name: Unit Tests
           environment:
@@ -243,11 +243,11 @@ jobs:
           paths:
             - /usr/local/cargo/registry
             - target
-          key: cargocache-vending-minter-rust:1.69.0-{{ checksum "~/project/Cargo.lock" }}
+          key: cargocache-vending-minter-rust:1.70.0-{{ checksum "~/project/Cargo.lock" }}
 
   contract_open_edition_factory:
     docker:
-      - image: rust:1.69.0
+      - image: rust:1.70.0
     working_directory: ~/project/contracts/factories/open-edition-factory
     steps:
       - checkout:
@@ -257,7 +257,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-open-edition-factory-rust:1.69.0-{{ checksum "~/project/Cargo.lock" }}
+            - cargocache-open-edition-factory-rust:1.70.0-{{ checksum "~/project/Cargo.lock" }}
       - run:
           name: Unit Tests
           environment:
@@ -279,11 +279,11 @@ jobs:
           paths:
             - /usr/local/cargo/registry
             - target
-          key: cargocache-open-edition-factory-rust:1.69.0-{{ checksum "~/project/Cargo.lock" }}
+          key: cargocache-open-edition-factory-rust:1.70.0-{{ checksum "~/project/Cargo.lock" }}
 
   contract_open_edition_minter:
     docker:
-      - image: rust:1.69.0
+      - image: rust:1.70.0
     working_directory: ~/project/contracts/minters/open-edition-minter
     steps:
       - checkout:
@@ -293,7 +293,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-open-edition-minter-rust:1.69.0-{{ checksum "~/project/Cargo.lock" }}
+            - cargocache-open-edition-minter-rust:1.70.0-{{ checksum "~/project/Cargo.lock" }}
       - run:
           name: Unit Tests
           environment:
@@ -315,11 +315,11 @@ jobs:
           paths:
             - /usr/local/cargo/registry
             - target
-          key: cargocache-open-edition-minter-rust:1.69.0-{{ checksum "~/project/Cargo.lock" }}
+          key: cargocache-open-edition-minter-rust:1.70.0-{{ checksum "~/project/Cargo.lock" }}
 
   contract_whitelist:
     docker:
-      - image: rust:1.69.0
+      - image: rust:1.70.0
     working_directory: ~/project/contracts/whitelists/whitelist
     steps:
       - checkout:
@@ -329,7 +329,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-whitelist-rust:1.69.0-{{ checksum "~/project/Cargo.lock" }}
+            - cargocache-whitelist-rust:1.70.0-{{ checksum "~/project/Cargo.lock" }}
       - run:
           name: Unit Tests
           environment:
@@ -351,10 +351,10 @@ jobs:
           paths:
             - /usr/local/cargo/registry
             - target
-          key: cargocache-whitelist-rust:1.69.0-{{ checksum "~/project/Cargo.lock" }}
+          key: cargocache-whitelist-rust:1.70.0-{{ checksum "~/project/Cargo.lock" }}
   test-suite:
     docker:
-      - image: rust:1.69.0
+      - image: rust:1.70.0
     working_directory: ~/project/test-suite
     steps:
       - checkout:
@@ -364,7 +364,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-test-suite-rust:1.69.0-{{ checksum "~/project/Cargo.lock" }}
+            - cargocache-test-suite-rust:1.70.0-{{ checksum "~/project/Cargo.lock" }}
       - run:
           name: Unit Tests
           environment:
@@ -374,11 +374,11 @@ jobs:
           paths:
             - /usr/local/cargo/registry
             - target
-          key: cargocache-test-suite-rust:1.69.0-{{ checksum "~/project/Cargo.lock" }}
+          key: cargocache-test-suite-rust:1.70.0-{{ checksum "~/project/Cargo.lock" }}
 
   package_sg_std:
     docker:
-      - image: rust:1.69.0
+      - image: rust:1.70.0
     working_directory: ~/project/package/sg-std
     steps:
       - checkout:
@@ -388,7 +388,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-sg-std-rust:1.69.0-{{ checksum "~/project/Cargo.lock" }}
+            - cargocache-sg-std-rust:1.70.0-{{ checksum "~/project/Cargo.lock" }}
       - run:
           name: Unit Tests
           environment:
@@ -398,11 +398,11 @@ jobs:
           paths:
             - /usr/local/cargo/registry
             - target
-          key: cargocache-sg-std-rust:1.69.0-{{ checksum "~/project/Cargo.lock" }}
+          key: cargocache-sg-std-rust:1.70.0-{{ checksum "~/project/Cargo.lock" }}
 
   package_sg_utils:
     docker:
-      - image: rust:1.69.0
+      - image: rust:1.70.0
     working_directory: ~/project/package/sg-utils
     steps:
       - checkout:
@@ -412,7 +412,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-sg-utils-rust:1.69.0-{{ checksum "~/project/Cargo.lock" }}
+            - cargocache-sg-utils-rust:1.70.0-{{ checksum "~/project/Cargo.lock" }}
       - run:
           name: Unit Tests
           environment:
@@ -422,11 +422,11 @@ jobs:
           paths:
             - /usr/local/cargo/registry
             - target
-          key: cargocache-sg-utils-rust:1.69.0-{{ checksum "~/project/Cargo.lock" }}
+          key: cargocache-sg-utils-rust:1.70.0-{{ checksum "~/project/Cargo.lock" }}
 
   sg-eth-airdrop:
     docker:
-      - image: rust:1.69.0
+      - image: rust:1.70.0
     working_directory: ~/project/contracts/sg-eth-airdrop
     steps:
       - checkout:
@@ -436,7 +436,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-sg-eth-airdrop-rust:1.69.0-{{ checksum "~/project/Cargo.lock" }}
+            - cargocache-sg-eth-airdrop-rust:1.70.0-{{ checksum "~/project/Cargo.lock" }}
       - run:
           name: Unit Tests
           environment:
@@ -458,11 +458,11 @@ jobs:
           paths:
             - /usr/local/cargo/registry
             - target
-          key: cargocache-sg-eth-airdrop-rust:1.69.0-{{ checksum "~/project/Cargo.lock" }}
+          key: cargocache-sg-eth-airdrop-rust:1.70.0-{{ checksum "~/project/Cargo.lock" }}
 
   lint:
     docker:
-      - image: rust:1.69.0
+      - image: rust:1.70.0
     steps:
       - checkout
       - run:
@@ -470,7 +470,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
       - restore_cache:
           keys:
-            - cargocache-v2-lint-rust:1.69.0-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-lint-rust:1.70.0-{{ checksum "Cargo.lock" }}
       - run:
           name: Add rustfmt component
           command: rustup component add rustfmt
@@ -489,7 +489,7 @@ jobs:
             - target/debug/.fingerprint
             - target/debug/build
             - target/debug/deps
-          key: cargocache-v2-lint-rust:1.69.0-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-lint-rust:1.70.0-{{ checksum "Cargo.lock" }}
 
   # This runs one time on the top level to ensure all contracts compile properly into wasm.
   # We don't run the wasm build per contract build, and then reuse a lot of the same dependencies, so this speeds up CI time
@@ -497,7 +497,7 @@ jobs:
   # We also sanity-check the resultant wasm files.
   wasm-build:
     docker:
-      - image: rust:1.69.0
+      - image: rust:1.70.0
     steps:
       - checkout:
           path: ~/project
