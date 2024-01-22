@@ -37,7 +37,7 @@ pub fn handle_reply(reply_id: u64) -> Result<(), MintHookError> {
 
 pub mod pre {
     use cosmwasm_schema::cw_serde;
-    use cosmwasm_std::{to_binary, Addr, Binary, Deps, DepsMut, StdResult, WasmMsg};
+    use cosmwasm_std::{to_json_binary, Addr, Binary, Deps, DepsMut, StdResult, WasmMsg};
     use sg_std::{Response, SubMsg};
 
     use crate::{MintHookError, PREMINT_HOOKS, PREMINT_HOOK_REPLY_ID};
@@ -59,9 +59,9 @@ pub mod pre {
         }
 
         /// serializes the message
-        pub fn into_binary(self) -> StdResult<Binary> {
+        pub fn into_json_binary(self) -> StdResult<Binary> {
             let msg = PreMintExecuteHookMsg::PreMintHook(self);
-            to_binary(&msg)
+            to_json_binary(&msg)
         }
     }
 
@@ -81,7 +81,7 @@ pub mod pre {
     }
 
     pub fn query_premint_hooks(deps: Deps) -> StdResult<Binary> {
-        to_binary(&PREMINT_HOOKS.query_hooks(deps)?)
+        to_json_binary(&PREMINT_HOOKS.query_hooks(deps)?)
     }
 
     pub fn prepare_premint_hooks(
@@ -98,7 +98,7 @@ pub mod pre {
             };
             let execute = WasmMsg::Execute {
                 contract_addr: h.to_string(),
-                msg: msg.into_binary()?,
+                msg: msg.into_json_binary()?,
                 funds: vec![],
             };
             Ok(SubMsg::reply_on_error(execute, PREMINT_HOOK_REPLY_ID))
@@ -110,7 +110,7 @@ pub mod pre {
 
 pub mod post {
     use cosmwasm_schema::cw_serde;
-    use cosmwasm_std::{to_binary, Addr, Binary, Deps, DepsMut, StdResult, WasmMsg};
+    use cosmwasm_std::{to_json_binary, Addr, Binary, Deps, DepsMut, StdResult, WasmMsg};
     use sg_std::{Response, SubMsg};
 
     use crate::{MintHookError, POSTMINT_HOOKS, POSTMINT_HOOK_REPLY_ID};
@@ -132,9 +132,9 @@ pub mod post {
         }
 
         /// serializes the message
-        pub fn into_binary(self) -> StdResult<Binary> {
+        pub fn into_json_binary(self) -> StdResult<Binary> {
             let msg = PostMintExecuteHookMsg::PostMintHook(self);
-            to_binary(&msg)
+            to_json_binary(&msg)
         }
     }
 
@@ -154,7 +154,7 @@ pub mod post {
     }
 
     pub fn query_postmint_hooks(deps: Deps) -> StdResult<Binary> {
-        to_binary(&POSTMINT_HOOKS.query_hooks(deps)?)
+        to_json_binary(&POSTMINT_HOOKS.query_hooks(deps)?)
     }
 
     pub fn prepare_postmint_hooks(
@@ -171,7 +171,7 @@ pub mod post {
             };
             let execute = WasmMsg::Execute {
                 contract_addr: h.to_string(),
-                msg: msg.into_binary()?,
+                msg: msg.into_json_binary()?,
                 funds: vec![],
             };
             Ok(SubMsg::reply_on_error(execute, POSTMINT_HOOK_REPLY_ID))

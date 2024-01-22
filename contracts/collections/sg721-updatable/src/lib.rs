@@ -18,11 +18,9 @@ pub mod entry {
         },
         msg::ExecuteMsg,
     };
-    use cosmwasm_std::{entry_point, to_binary, Empty};
-    use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, StdResult};
+    use cosmwasm_std::{entry_point, to_json_binary, Empty};
+    use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
     use cw721_base::Extension;
-
-    use sg_std::Response;
 
     #[entry_point]
     pub fn instantiate(
@@ -57,9 +55,9 @@ pub mod entry {
     #[entry_point]
     pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         match msg {
-            QueryMsg::EnableUpdatable {} => to_binary(&query_enable_updatable(deps)?),
-            QueryMsg::EnableUpdatableFee {} => to_binary(&query_enable_updatable_fee()?),
-            QueryMsg::FreezeTokenMetadata {} => to_binary(&query_frozen_token_metadata(deps)?),
+            QueryMsg::EnableUpdatable {} => to_json_binary(&query_enable_updatable(deps)?),
+            QueryMsg::EnableUpdatableFee {} => to_json_binary(&query_enable_updatable_fee()?),
+            QueryMsg::FreezeTokenMetadata {} => to_json_binary(&query_frozen_token_metadata(deps)?),
             _ => Sg721UpdatableContract::default().query(deps, env, msg.into()),
         }
     }

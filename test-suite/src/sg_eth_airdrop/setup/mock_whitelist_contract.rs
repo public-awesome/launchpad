@@ -1,5 +1,5 @@
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult};
+use cosmwasm_std::{to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult};
 use cw_multi_test::{Contract, ContractWrapper};
 use sg_eth_airdrop::error::ContractError;
 use sg_std::{Response, StargazeMsgWrapper};
@@ -31,7 +31,7 @@ pub fn execute(
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(_deps: Deps, _env: Env, _msg: QueryMsg) -> StdResult<Binary> {
-    to_binary("mock")
+    to_json_binary("mock")
 }
 
 fn execute_add_members() -> Result<Response, ContractError> {

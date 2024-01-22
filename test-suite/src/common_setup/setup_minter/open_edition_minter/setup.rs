@@ -7,7 +7,7 @@ use crate::common_setup::msg::{
 use crate::common_setup::setup_minter::base_minter::mock_params::MIN_MINT_PRICE;
 use crate::common_setup::setup_minter::common::parse_response::build_collection_response;
 use anyhow::Error;
-use cosmwasm_std::{coin, coins, to_binary, Addr, Coin, Timestamp};
+use cosmwasm_std::{coin, coins, to_json_binary, Addr, Coin, Timestamp};
 use cw_multi_test::{AppResponse, Executor};
 use open_edition_factory::msg::{
     OpenEditionMinterInitMsgExtension, OpenEditionUpdateParamsExtension, OpenEditionUpdateParamsMsg,
@@ -168,7 +168,7 @@ pub fn sudo_update_params(
 
         let sudo_res = app.sudo(cw_multi_test::SudoMsg::Wasm(cw_multi_test::WasmSudo {
             contract_addr: collection_response.factory.clone().unwrap(),
-            msg: to_binary(&sudo_update_msg).unwrap(),
+            msg: to_json_binary(&sudo_update_msg).unwrap(),
         }));
         sudo_responses.push(sudo_res);
     }

@@ -1,6 +1,6 @@
 use crate::error::ContractError;
 use crate::state::FROZEN_TOKEN_METADATA;
-use cosmwasm_std::{Empty, StdError, Uint128};
+use cosmwasm_std::{Empty, Response, StdError, Uint128};
 
 use cosmwasm_std::{Deps, StdResult};
 
@@ -20,7 +20,6 @@ use sg1::checked_fair_burn;
 use sg721_base::ContractError::Unauthorized;
 use sg721_base::Sg721Contract;
 pub type Sg721UpdatableContract<'a> = Sg721Contract<'a, Extension>;
-use sg_std::Response;
 
 const CONTRACT_NAME: &str = "crates.io:sg721-updatable";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -235,7 +234,7 @@ mod tests {
     use crate::msg::ExecuteMsg;
     use cosmwasm_std::testing::{mock_env, mock_info, MockApi, MockQuerier, MockStorage};
     use cosmwasm_std::{
-        from_slice, to_binary, ContractInfoResponse, ContractResult, Empty, OwnedDeps, Querier,
+        from_json, to_json_binary, ContractInfoResponse, ContractResult, Empty, OwnedDeps, Querier,
         QuerierResult, QueryRequest, SystemError, SystemResult, WasmQuery,
     };
     use cw721::Cw721Query;
@@ -260,7 +259,7 @@ mod tests {
 
     impl Querier for CustomMockQuerier {
         fn raw_query(&self, bin_request: &[u8]) -> QuerierResult {
-            let request: QueryRequest<Empty> = match from_slice(bin_request) {
+            let request: QueryRequest<Empty> = match from_json(bin_request) {
                 Ok(v) => v,
                 Err(e) => {
                     return SystemResult::Err(SystemError::InvalidRequest {
@@ -281,7 +280,7 @@ mod tests {
                     let mut response = ContractInfoResponse::default();
                     response.code_id = 1;
                     response.creator = CREATOR.to_string();
-                    SystemResult::Ok(ContractResult::Ok(to_binary(&response).unwrap()))
+                    SystemResult::Ok(ContractResult::Ok(to_json_binary(&response).unwrap()))
                 }
                 _ => self.base.handle_query(request),
             }

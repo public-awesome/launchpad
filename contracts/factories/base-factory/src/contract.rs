@@ -1,7 +1,8 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    ensure, ensure_eq, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult, WasmMsg,
+    ensure, ensure_eq, to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response,
+    StdResult, WasmMsg,
 };
 use cw2::set_contract_version;
 use cw_utils::must_pay;
@@ -9,7 +10,7 @@ use sg1::checked_fair_burn;
 use sg2::msg::UpdateMinterParamsMsg;
 use sg2::query::{AllowedCollectionCodeIdResponse, AllowedCollectionCodeIdsResponse, Sg2QueryMsg};
 use sg2::MinterParams;
-use sg_std::{Response, NATIVE_DENOM};
+use sg_std::NATIVE_DENOM;
 
 use crate::error::ContractError;
 use crate::msg::{
@@ -67,7 +68,7 @@ pub fn execute_create_minter(
     let msg = WasmMsg::Instantiate {
         admin: Some(info.sender.to_string()),
         code_id: params.code_id,
-        msg: to_binary(&msg)?,
+        msg: to_json_binary(&msg)?,
         funds: vec![],
         label: format!(
             "Minter-{}-{}",
@@ -184,12 +185,12 @@ pub fn update_params<T, C>(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: Sg2QueryMsg) -> StdResult<Binary> {
     match msg {
-        Sg2QueryMsg::Params {} => to_binary(&query_params(deps)?),
+        Sg2QueryMsg::Params {} => to_json_binary(&query_params(deps)?),
         Sg2QueryMsg::AllowedCollectionCodeIds {} => {
-            to_binary(&query_allowed_collection_code_ids(deps)?)
+            to_json_binary(&query_allowed_collection_code_ids(deps)?)
         }
         Sg2QueryMsg::AllowedCollectionCodeId(code_id) => {
-            to_binary(&query_allowed_collection_code_id(deps, code_id)?)
+            to_json_binary(&query_allowed_collection_code_id(deps, code_id)?)
         }
     }
 }

@@ -6,8 +6,8 @@ use base_factory::state::Extension;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Addr, Binary, CosmosMsg, Decimal, Deps, DepsMut, Empty, Env, MessageInfo, Reply,
-    StdResult, Timestamp, WasmMsg,
+    to_json_binary, Addr, Binary, CosmosMsg, Decimal, Deps, DepsMut, Empty, Env, MessageInfo,
+    Reply, Response, StdResult, SubMsg, Timestamp, WasmMsg,
 };
 use cw2::set_contract_version;
 use cw_utils::{must_pay, nonpayable, parse_reply_instantiate_data};
@@ -16,7 +16,7 @@ use sg2::query::Sg2QueryMsg;
 use sg4::{QueryMsg, Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
 use sg721_base::msg::{CollectionInfoResponse, QueryMsg as Sg721QueryMsg};
-use sg_std::{Response, SubMsg, NATIVE_DENOM};
+use sg_std::NATIVE_DENOM;
 use url::Url;
 
 const CONTRACT_NAME: &str = "crates.io:sg-base-minter";
@@ -66,7 +66,7 @@ pub fn instantiate(
 
     let wasm_msg = WasmMsg::Instantiate {
         code_id: msg.collection_params.code_id,
-        msg: to_binary(&Sg721InstantiateMsg {
+        msg: to_json_binary(&Sg721InstantiateMsg {
             name: msg.collection_params.name.clone(),
             symbol: msg.collection_params.symbol,
             minter: env.contract.address.to_string(),
@@ -162,7 +162,7 @@ pub fn execute_mint_sender(
     };
     let msg = CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: collection_address.to_string(),
-        msg: to_binary(&mint_msg)?,
+        msg: to_json_binary(&mint_msg)?,
         funds: vec![],
     });
     res = res.add_message(msg);
@@ -206,7 +206,9 @@ pub fn execute_update_start_trading_time(
     // execute sg721 contract
     let msg = WasmMsg::Execute {
         contract_addr: sg721_contract_addr.to_string(),
-        msg: to_binary(&Sg721ExecuteMsg::<Extension, Empty>::UpdateStartTradingTime(start_time))?,
+        msg: to_json_binary(
+            &Sg721ExecuteMsg::<Extension, Empty>::UpdateStartTradingTime(start_time),
+        )?,
         funds: vec![],
     };
 
@@ -247,8 +249,8 @@ pub fn update_status(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::Config {} => to_binary(&query_config(deps)?),
-        QueryMsg::Status {} => to_binary(&query_status(deps)?),
+        QueryMsg::Config {} => to_json_binary(&query_config(deps)?),
+        QueryMsg::Status {} => to_json_binary(&query_status(deps)?),
     }
 }
 

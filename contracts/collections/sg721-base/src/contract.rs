@@ -2,8 +2,8 @@ use cw721_base::state::TokenInfo;
 use url::Url;
 
 use cosmwasm_std::{
-    to_binary, Addr, Binary, ContractInfoResponse, Decimal, Deps, DepsMut, Empty, Env, Event,
-    MessageInfo, StdError, StdResult, Storage, Timestamp, WasmQuery,
+    to_json_binary, Addr, Binary, ContractInfoResponse, Decimal, Deps, DepsMut, Empty, Env, Event,
+    MessageInfo, Response, StdError, StdResult, Storage, Timestamp, WasmQuery,
 };
 
 use cw721::{ContractInfoResponse as CW721ContractInfoResponse, Cw721Execute};
@@ -14,7 +14,6 @@ use sg721::{
     CollectionInfo, ExecuteMsg, InstantiateMsg, RoyaltyInfo, RoyaltyInfoResponse,
     UpdateCollectionInfoMsg,
 };
-use sg_std::Response;
 
 use crate::msg::{CollectionInfoResponse, NftParams, QueryMsg};
 use crate::{ContractError, Sg721Contract};
@@ -358,7 +357,7 @@ where
 
     pub fn query(&self, deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         match msg {
-            QueryMsg::CollectionInfo {} => to_binary(&self.query_collection_info(deps)?),
+            QueryMsg::CollectionInfo {} => to_json_binary(&self.query_collection_info(deps)?),
             _ => self.parent.query(deps, env, msg.into()),
         }
     }
