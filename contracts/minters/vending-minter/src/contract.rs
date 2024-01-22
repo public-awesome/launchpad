@@ -47,26 +47,6 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 const INSTANTIATE_SG721_REPLY_ID: u64 = 1;
 
-use cosmwasm_std::{HexBinary, Storage};
-pub fn bucket_get(storage: &dyn Storage, bucket: u16) -> Option<HexBinary> {
-    let key = bucket_key(bucket);
-    storage.get(&key).map(Into::into)
-}
-pub fn bucket_set(storage: &mut dyn Storage, bucket: u16, array: &HexBinary) {
-    let key = bucket_key(bucket);
-    storage.set(&key, array);
-}
-// no serde
-fn bucket_key(bucket: u16) -> [u8; 5] {
-    let bytes = bucket.to_be_bytes();
-    [
-        7,    // BELL
-        b'v', // vending minter
-        b'b', // buckets
-        bytes[0], bytes[1],
-    ]
-}
-
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
