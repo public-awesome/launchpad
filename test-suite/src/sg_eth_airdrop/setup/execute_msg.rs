@@ -1,13 +1,13 @@
 use crate::sg_eth_airdrop::constants::claim_constants::OWNER;
 use crate::sg_eth_airdrop::constants::collection_constants::WHITELIST_AMOUNT;
 use crate::{
-    common_setup::contract_boxes::{contract_eth_airdrop, contract_whitelist_immutable},
+    common_setup::contract_boxes::{contract_eth_airdrop, contract_whitelist_immutable, App},
     sg_eth_airdrop::setup::test_msgs::InstantiateParams,
 };
 use anyhow::Error as anyhow_error;
 use cosmwasm_std::{coins, Addr};
 use cw_multi_test::error::Error;
-use cw_multi_test::{App, AppResponse, BankSudo, Executor, SudoMsg};
+use cw_multi_test::{AppResponse, BankSudo, Executor, SudoMsg};
 use eyre::Result;
 use sg_eth_airdrop::msg::{ExecuteMsg, InstantiateMsg};
 

@@ -1,5 +1,5 @@
 use crate::common_setup::{
-    contract_boxes::{contract_splits, custom_mock_app},
+    contract_boxes::{contract_splits, custom_mock_app, App},
     msg::MinterCollectionResponse,
     setup_accounts_and_block::{instantiate_group, setup_accounts, setup_block_time},
     setup_minter::{
@@ -9,7 +9,7 @@ use crate::common_setup::{
 };
 use cosmwasm_std::{coins, Addr, Coin, Timestamp};
 use cw4::Member;
-use cw_multi_test::{next_block, App, Executor};
+use cw_multi_test::{next_block, Executor};
 use sg2::tests::mock_collection_params_1;
 
 use sg_splits::msg::{ExecuteMsg as SplitsExecuteMsg, Group};

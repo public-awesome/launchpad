@@ -1,10 +1,11 @@
 use cosmwasm_std::{coin, Addr, Timestamp};
-use cw_multi_test::{App, Executor};
+use cw_multi_test::Executor;
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use sg_whitelist::msg::InstantiateMsg as WhitelistInstantiateMsg;
 
 use crate::common_setup::{
-    contract_boxes::contract_collection_whitelist, setup_accounts_and_block::setup_block_time,
+    contract_boxes::{contract_collection_whitelist, App},
+    setup_accounts_and_block::setup_block_time,
 };
 
 pub const WHITELIST_AMOUNT: u128 = 66_000_000;

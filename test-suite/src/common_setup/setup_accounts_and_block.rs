@@ -1,9 +1,9 @@
 use cosmwasm_std::{coins, Addr, Coin, Timestamp, Uint128};
 use cw4::Member;
-use cw_multi_test::{App, BankSudo, Executor, SudoMsg};
+use cw_multi_test::{BankSudo, Executor, SudoMsg};
 use sg_std::NATIVE_DENOM;
 
-use crate::common_setup::contract_boxes::contract_group;
+use crate::common_setup::contract_boxes::{contract_group, App};
 use crate::common_setup::setup_minter::common::constants::DEV_ADDRESS;
 
 const OWNER: &str = "admin0001";

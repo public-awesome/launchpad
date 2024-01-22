@@ -136,7 +136,6 @@ fn check_mint() {
         &[coin(MIN_MINT_PRICE, NATIVE_DENOM)],
     );
 
-    println!("res is {res:?}");
     assert!(res.is_ok());
 
     let creator_balances = router.wrap().query_all_balances(creator.clone()).unwrap();
@@ -215,7 +214,7 @@ fn update_start_trading_time() {
         &ExecuteMsg::UpdateStartTradingTime(Some(default_start_trading_time)),
         &[],
     );
-    println!("res is {res:?}");
+
     assert!(res.is_ok());
 
     // confirm trading start time

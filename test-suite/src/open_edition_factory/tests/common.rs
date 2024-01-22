@@ -1,7 +1,7 @@
-use crate::common_setup::contract_boxes::{contract_open_edition_factory, custom_mock_app};
+use crate::common_setup::contract_boxes::{contract_open_edition_factory, custom_mock_app, App};
 use crate::common_setup::setup_minter::open_edition_minter::mock_params::mock_params_proper;
 use cosmwasm_std::Addr;
-use cw_multi_test::{App, Executor};
+use cw_multi_test::Executor;
 use open_edition_factory::helpers::FactoryContract;
 use open_edition_factory::msg::InstantiateMsg;
 

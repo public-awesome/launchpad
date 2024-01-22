@@ -1,9 +1,10 @@
 #[cfg(test)]
 mod tests {
+    use crate::common_setup::contract_boxes::App;
     use anyhow::Error;
     use cosmwasm_std::{coin, Addr};
     use cw721::NumTokensResponse;
-    use cw_multi_test::{App, AppResponse, BankSudo, Executor, SudoMsg};
+    use cw_multi_test::{AppResponse, BankSudo, Executor, SudoMsg};
     use sg2::msg::CreateMinterMsg;
     use sg2::tests::mock_collection_params;
     use sg721::ExecuteMsg as Sg721ExecuteMsg;
@@ -803,9 +804,10 @@ mod tests {
     }
 
     mod sg721_mutable {
+        use crate::common_setup::contract_boxes::App;
         use cosmwasm_std::{coin, Addr};
         use cw721::NumTokensResponse;
-        use cw_multi_test::{App, BankSudo, Executor, SudoMsg};
+        use cw_multi_test::{BankSudo, Executor, SudoMsg};
         use sg2::tests::mock_collection_params;
         use sg721_updatable::msg::QueryMsg;
 

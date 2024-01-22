@@ -1,7 +1,7 @@
-use crate::common_setup::contract_boxes::contract_base_factory;
 use crate::common_setup::contract_boxes::contract_base_minter;
 use crate::common_setup::contract_boxes::contract_nt_collection;
 use crate::common_setup::contract_boxes::contract_sg721_base;
+use crate::common_setup::contract_boxes::{contract_base_factory, App};
 use crate::common_setup::msg::MinterCollectionResponse;
 use crate::common_setup::msg::MinterSetupParams;
 use crate::common_setup::setup_minter::common::constants::MIN_MINT_PRICE;
@@ -11,8 +11,8 @@ use cosmwasm_std::to_json_binary;
 use cosmwasm_std::Coin;
 use cosmwasm_std::Empty;
 use cosmwasm_std::{coins, Addr};
+use cw_multi_test::AppResponse;
 use cw_multi_test::Executor;
-use cw_multi_test::{App, AppResponse};
 use sg2::msg::{CollectionParams, Sg2ExecuteMsg};
 use sg_std::NATIVE_DENOM;
 

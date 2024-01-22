@@ -1,13 +1,13 @@
 use crate::common_setup::contract_boxes::{
     contract_sg721_base, contract_sg721_updatable, contract_vending_factory,
-    contract_vending_minter,
+    contract_vending_minter, App,
 };
 use crate::common_setup::msg::MinterCollectionResponse;
 use crate::common_setup::msg::MinterSetupParams;
 use crate::common_setup::setup_minter::base_minter::mock_params::MIN_MINT_PRICE;
 use crate::common_setup::setup_minter::common::parse_response::build_collection_response;
 use cosmwasm_std::{coin, coins, to_json_binary, Addr};
-use cw_multi_test::{App, AppResponse, Executor};
+use cw_multi_test::{AppResponse, Executor};
 use sg2::msg::CreateMinterMsg;
 use sg2::msg::{CollectionParams, Sg2ExecuteMsg};
 use sg_std::NATIVE_DENOM;

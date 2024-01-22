@@ -1,5 +1,5 @@
 use crate::common_setup::contract_boxes::{
-    contract_open_edition_factory, contract_open_edition_minter, contract_sg721_base,
+    contract_open_edition_factory, contract_open_edition_minter, contract_sg721_base, App,
 };
 use crate::common_setup::msg::{
     MinterCollectionResponse, OpenEditionMinterInstantiateParams, OpenEditionMinterSetupParams,
@@ -8,7 +8,7 @@ use crate::common_setup::setup_minter::base_minter::mock_params::MIN_MINT_PRICE;
 use crate::common_setup::setup_minter::common::parse_response::build_collection_response;
 use anyhow::Error;
 use cosmwasm_std::{coin, coins, to_json_binary, Addr, Coin, Timestamp};
-use cw_multi_test::{App, AppResponse, Executor};
+use cw_multi_test::{AppResponse, Executor};
 use open_edition_factory::msg::{
     OpenEditionMinterInitMsgExtension, OpenEditionUpdateParamsExtension, OpenEditionUpdateParamsMsg,
 };

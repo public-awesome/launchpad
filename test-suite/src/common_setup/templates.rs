@@ -1,4 +1,4 @@
-use crate::common_setup::contract_boxes::custom_mock_app;
+use crate::common_setup::contract_boxes::{custom_mock_app, App};
 use crate::common_setup::msg::MinterTemplateResponse;
 use crate::common_setup::{
     msg::MinterCollectionResponse,
@@ -19,7 +19,7 @@ use crate::common_setup::setup_minter::open_edition_minter::minter_params::minte
 use crate::common_setup::setup_minter::open_edition_minter::setup::open_edition_minter_code_ids;
 use crate::common_setup::setup_minter::vending_minter::setup::vending_minter_updatable_code_ids;
 use cosmwasm_std::{coin, Timestamp};
-use cw_multi_test::{App, AppResponse, BankSudo, SudoMsg};
+use cw_multi_test::{AppResponse, BankSudo, SudoMsg};
 use open_edition_factory::msg::OpenEditionMinterInitMsgExtension;
 use open_edition_factory::state::{OpenEditionMinterParams, ParamsExtension};
 use open_edition_factory::types::NftData;

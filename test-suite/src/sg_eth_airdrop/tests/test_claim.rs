@@ -1,4 +1,4 @@
-use crate::common_setup::contract_boxes::custom_mock_app;
+use crate::common_setup::contract_boxes::{custom_mock_app, App};
 use crate::sg_eth_airdrop::constants::collection_constants::WHITELIST_AMOUNT;
 use crate::sg_eth_airdrop::setup::configure_mock_minter::configure_mock_minter_with_mock_whitelist;
 use crate::sg_eth_airdrop::setup::setup_signatures::{
@@ -9,7 +9,6 @@ use async_std::task;
 use cosmwasm_std::{Addr, Attribute, Coin, Uint128};
 use sg_eth_airdrop::msg::{ExecuteMsg, QueryMsg};
 
-use cw_multi_test::App;
 use ethers_core::rand::thread_rng;
 use ethers_signers::{LocalWallet, Signer};
 
@@ -176,7 +175,7 @@ fn test_valid_eth_sig_claim() {
     .unwrap();
     let expected_attributes = [
         Attribute {
-            key: "_contract_addr".to_string(),
+            key: "_contract_address".to_string(),
             value: airdrop_contract.to_string(),
         },
         Attribute {
@@ -261,7 +260,7 @@ fn test_can_not_claim_twice() {
 
     let expected_attributes = [
         Attribute {
-            key: "_contract_addr".to_string(),
+            key: "_contract_address".to_string(),
             value: airdrop_contract.to_string(),
         },
         Attribute {
@@ -491,7 +490,7 @@ fn test_one_eth_claim_two_stargaze_addresses_invalid() {
 
     let expected_attributes = [
         Attribute {
-            key: "_contract_addr".to_string(),
+            key: "_contract_address".to_string(),
             value: airdrop_contract.to_string(),
         },
         Attribute {

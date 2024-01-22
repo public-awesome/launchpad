@@ -1,8 +1,28 @@
+use cosmwasm_std::testing::{MockApi, MockStorage};
 use cosmwasm_std::Empty;
-use cw_multi_test::{App, Contract, ContractWrapper};
+use cw_multi_test::{
+    no_init, AppBuilder, BankKeeper, Contract, ContractWrapper, DistributionKeeper, FailingModule,
+    GovFailingModule, IbcFailingModule, StakeKeeper, WasmKeeper,
+};
+
+use crate::common_setup::keeper::StargazeKeeper;
+pub type App<ExecC = Empty, QueryC = Empty> = cw_multi_test::App<
+    BankKeeper,
+    MockApi,
+    MockStorage,
+    FailingModule<ExecC, QueryC, Empty>,
+    WasmKeeper<ExecC, QueryC>,
+    StakeKeeper,
+    DistributionKeeper,
+    IbcFailingModule,
+    GovFailingModule,
+    StargazeKeeper,
+>;
 
 pub fn custom_mock_app() -> App {
-    App::default()
+    AppBuilder::new()
+        .with_stargate(StargazeKeeper)
+        .build(no_init)
 }
 
 pub fn contract_vending_factory() -> Box<dyn Contract<Empty>> {

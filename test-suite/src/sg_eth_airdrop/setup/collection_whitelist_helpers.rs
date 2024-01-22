@@ -1,9 +1,10 @@
 use crate::sg_eth_airdrop::constants::claim_constants::{NATIVE_DENOM, STARGAZE_WALLET_01};
 use crate::sg_eth_airdrop::constants::collection_constants::{MINT_PRICE, WHITELIST_AMOUNT};
 
+use crate::common_setup::contract_boxes::App;
 use crate::sg_eth_airdrop::setup::execute_msg::execute_contract_with_msg;
 use cosmwasm_std::{coins, Addr};
-use cw_multi_test::{App, BankSudo, Executor, SudoMsg};
+use cw_multi_test::{BankSudo, Executor, SudoMsg};
 
 extern crate whitelist_immutable;
 

@@ -14,7 +14,7 @@ pub fn parse_factory_response(res: &AppResponse) -> (Addr, Addr) {
     for vector in vector_of_attribute_vectors {
         let contract_addr = vector
             .iter()
-            .filter(|a| a.key == "_contract_addr")
+            .filter(|a| a.key == "_contract_address")
             .map(|e| e.value.clone())
             .collect::<Vec<_>>();
         contract_addrs = [contract_addrs.clone(), contract_addr].concat();

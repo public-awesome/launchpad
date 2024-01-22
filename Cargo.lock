@@ -4057,6 +4057,7 @@ dependencies = [
 name = "test-suite"
 version = "3.4.0"
 dependencies = [
+ "anybuf",
  "anyhow",
  "async-std",
  "base-factory",

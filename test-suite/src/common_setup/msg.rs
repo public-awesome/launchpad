@@ -1,8 +1,8 @@
 use anyhow::Error;
 use cosmwasm_std::{Addr, Timestamp};
 
+use contract_boxes::App;
 use cosmwasm_std::Uint128;
-use cw_multi_test::App;
 use open_edition_factory::state::{OpenEditionMinterParams, ParamsExtension};
 use sg2::msg::CollectionParams;
 use vending_factory::msg::VendingMinterInitMsgExtension;
@@ -36,6 +36,8 @@ pub struct MinterInstantiateParams {
 use cosmwasm_schema::cw_serde;
 use open_edition_factory::msg::OpenEditionMinterInitMsgExtension;
 use open_edition_factory::types::NftData;
+
+use super::contract_boxes;
 
 #[cw_serde]
 pub struct CodeIds {

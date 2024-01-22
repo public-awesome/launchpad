@@ -1,11 +1,11 @@
 #[cfg(test)]
 mod tests {
     use cosmwasm_std::Addr;
-    use cw_multi_test::{App, Executor};
+    use cw_multi_test::Executor;
     use whitelist_immutable::msg::*;
     use whitelist_immutable::{helpers::WhitelistImmutableContract, state::Config};
 
-    use crate::common_setup::contract_boxes::{contract_whitelist_immutable, custom_mock_app};
+    use crate::common_setup::contract_boxes::{contract_whitelist_immutable, custom_mock_app, App};
 
     const CREATOR: &str = "creator";
 

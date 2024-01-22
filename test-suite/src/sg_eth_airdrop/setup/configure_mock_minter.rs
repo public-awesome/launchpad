@@ -1,14 +1,14 @@
 use crate::common_setup::setup_accounts_and_block::setup_accounts;
 use crate::common_setup::setup_collection_whitelist::setup_whitelist_contract;
 
-use crate::common_setup::contract_boxes::contract_vending_factory;
+use crate::common_setup::contract_boxes::{contract_vending_factory, App};
 use crate::common_setup::setup_minter::vending_minter::mock_params::{
     mock_create_minter, mock_params,
 };
 use crate::sg_eth_airdrop::constants::collection_constants::CREATION_FEE;
 use crate::sg_eth_airdrop::setup::mock_minter_contract::mock_minter;
 use cosmwasm_std::{coins, Addr, Timestamp};
-use cw_multi_test::{App, Executor};
+use cw_multi_test::Executor;
 use sg2::msg::Sg2ExecuteMsg;
 use sg2::tests::mock_collection_params_1;
 
