@@ -39,7 +39,7 @@ impl Stargate for StargazeKeeper {
                 let amount = decoded_amount.string(2).unwrap();
                 let msg = BankMsg::Send {
                     to_address: "fairburn_pool".to_owned(),
-                    amount: coins(amount.parse::<u128>()?.into(), denom),
+                    amount: coins(amount.parse::<u128>()?, denom),
                 }
                 .into();
                 let resp = router.execute(api, storage, block, sender, msg);

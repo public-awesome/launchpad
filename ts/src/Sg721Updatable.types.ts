@@ -128,6 +128,7 @@ export type ExecuteMsgForNullable_EmptyAndEmpty = {
 };
 export type Binary = string;
 export interface UpdateCollectionInfoMsgForRoyaltyInfoResponse {
+  creator?: string | null;
   description?: string | null;
   explicit_content?: boolean | null;
   external_link?: string | null;
