@@ -59,7 +59,7 @@ pub fn execute_contract_with_msg(
     app: &mut App,
     user: Addr,
     target_address: Addr,
-) -> Result<AppResponse, Error> {
+) -> Result<AppResponse, Box<Error>> {
     let result = app.execute_contract(user, target_address, &msg, &[]);
     Ok(result.unwrap())
 }
