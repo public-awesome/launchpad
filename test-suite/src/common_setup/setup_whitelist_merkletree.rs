@@ -14,7 +14,7 @@ pub fn setup_whitelist_mtree_contract(
     creator: &Addr,
     whitelist_code_id: Option<u64>,
     denom: Option<&str>,
-    merkle_root: String
+    merkle_root: String,
 ) -> Addr {
     let whitelist_code_id = match whitelist_code_id {
         Some(value) => value,
@@ -25,7 +25,6 @@ pub fn setup_whitelist_mtree_contract(
         None => NATIVE_DENOM,
     };
 
-
     let msg = WhitelistInstantiateMsg {
         start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME + 100),
         end_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000_000),
@@ -34,7 +33,7 @@ pub fn setup_whitelist_mtree_contract(
         admins: vec![creator.to_string()],
         admins_mutable: true,
         merkle_root,
-        merkle_tree_uri: None
+        merkle_tree_uri: None,
     };
     router
         .instantiate_contract(
