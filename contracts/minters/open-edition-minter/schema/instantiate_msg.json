@@ -294,7 +294,6 @@
     "OpenEditionMinterInitMsgExtension": {
       "type": "object",
       "required": [
-        "end_time",
         "mint_price",
         "nft_data",
         "per_address_limit",
@@ -302,13 +301,28 @@
       ],
       "properties": {
         "end_time": {
-          "$ref": "#/definitions/Timestamp"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Timestamp"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "mint_price": {
           "$ref": "#/definitions/Coin"
         },
         "nft_data": {
           "$ref": "#/definitions/NftData"
+        },
+        "num_tokens": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint32",
+          "minimum": 0.0
         },
         "payment_address": {
           "type": [
@@ -333,7 +347,8 @@
         "airdrop_mint_fee_bps",
         "airdrop_mint_price",
         "dev_fee_address",
-        "max_per_address_limit"
+        "max_per_address_limit",
+        "max_token_limit"
       ],
       "properties": {
         "airdrop_mint_fee_bps": {
@@ -348,6 +363,11 @@
           "type": "string"
         },
         "max_per_address_limit": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "max_token_limit": {
           "type": "integer",
           "format": "uint32",
           "minimum": 0.0

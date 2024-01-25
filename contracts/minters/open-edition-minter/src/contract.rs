@@ -1,18 +1,18 @@
 use crate::error::ContractError;
 use crate::helpers::mint_nft_msg;
 use crate::msg::{
-    ConfigResponse, EndTimeResponse, ExecuteMsg, MintCountResponse, MintPriceResponse, QueryMsg,
-    StartTimeResponse, TotalMintCountResponse,
+    ConfigResponse, EndTimeResponse, ExecuteMsg, MintCountResponse, MintPriceResponse,
+    MintableNumTokensResponse, QueryMsg, StartTimeResponse, TotalMintCountResponse,
 };
 use crate::state::{
-    increment_token_index, Config, ConfigExtension, CONFIG, MINTER_ADDRS, SG721_ADDRESS, STATUS,
-    TOTAL_MINT_COUNT,
+    increment_token_index, Config, ConfigExtension, CONFIG, MINTABLE_NUM_TOKENS, MINTER_ADDRS,
+    SG721_ADDRESS, STATUS, TOTAL_MINT_COUNT,
 };
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coin, to_binary, Addr, BankMsg, Binary, Coin, Decimal, Deps, DepsMut, Empty, Env, MessageInfo,
-    Order, Reply, ReplyOn, StdError, StdResult, Timestamp, WasmMsg,
+    coin, to_binary, Addr, BankMsg, Binary, Coin, Decimal, Deps, DepsMut, Empty, Env, Event,
+    MessageInfo, Order, Reply, ReplyOn, StdError, StdResult, Timestamp, WasmMsg,
 };
 use cw2::set_contract_version;
 use cw_utils::{may_pay, maybe_addr, nonpayable, parse_reply_instantiate_data};
@@ -91,7 +91,7 @@ pub fn instantiate(
     }
 
     // Validations/Check at the factory level:
-    // - Mint price, # of tokens / address, Start & End time
+    // - Mint price, # of tokens / address, Start & End time, Max Tokens
 
     // Use default start trading time if not provided
     let mut collection_info = msg.collection_params.info.clone();
@@ -125,6 +125,7 @@ pub fn instantiate(
             start_time: msg.init_msg.start_time,
             end_time: msg.init_msg.end_time,
             nft_data: msg.init_msg.nft_data,
+            num_tokens: msg.init_msg.num_tokens,
         },
         mint_price: msg.init_msg.mint_price,
     };
@@ -133,6 +134,11 @@ pub fn instantiate(
 
     // Init the minted tokens count
     TOTAL_MINT_COUNT.save(deps.storage, &0)?;
+
+    // Max token count (optional)
+    if let Some(max_num_tokens) = msg.init_msg.num_tokens {
+        MINTABLE_NUM_TOKENS.save(deps.storage, &max_num_tokens)?;
+    }
 
     // Submessage to instantiate sg721 contract
     let submsg = SubMsg {
@@ -182,6 +188,7 @@ pub fn execute(
             execute_update_per_address_limit(deps, env, info, per_address_limit)
         }
         ExecuteMsg::MintTo { recipient } => execute_mint_to(deps, env, info, recipient),
+        ExecuteMsg::BurnRemaining {} => execute_burn_remaining(deps, env, info),
     }
 }
 
@@ -193,10 +200,20 @@ pub fn execute_purge(
     info: MessageInfo,
 ) -> Result<Response, ContractError> {
     nonpayable(&info)?;
-    // Check if mint has ended
+    // check if sold out (optional)
+    let mintable_num_tokens = MINTABLE_NUM_TOKENS.may_load(deps.storage)?;
+    if let Some(mintable_nb_tokens) = mintable_num_tokens {
+        if mintable_nb_tokens != 0 {
+            return Err(ContractError::NotSoldOut {});
+        }
+    }
+
+    // Check if mint has ended (optional)
     let end_time = CONFIG.load(deps.storage)?.extension.end_time;
-    if env.block.time <= end_time {
-        return Err(ContractError::MintingHasNotYetEnded {});
+    if let Some(end_time_u) = end_time {
+        if env.block.time <= end_time_u {
+            return Err(ContractError::MintingHasNotYetEnded {});
+        }
     }
 
     let keys = MINTER_ADDRS
@@ -220,12 +237,14 @@ pub fn execute_mint_sender(
     let config = CONFIG.load(deps.storage)?;
     let action = "mint_sender";
 
-    // Check if after start_time and before end time
+    // Check start and end time (if not optional)
     if env.block.time < config.extension.start_time {
         return Err(ContractError::BeforeMintStartTime {});
     }
-    if env.block.time >= config.extension.end_time {
-        return Err(ContractError::AfterMintEndTime {});
+    if let Some(end_time) = config.extension.end_time {
+        if env.block.time >= end_time {
+            return Err(ContractError::AfterMintEndTime {});
+        }
     }
 
     // Check if already minted max per address limit
@@ -254,8 +273,10 @@ pub fn execute_mint_to(
         ));
     }
 
-    if env.block.time >= config.extension.end_time {
-        return Err(ContractError::AfterMintEndTime {});
+    if let Some(end_time) = config.extension.end_time {
+        if env.block.time >= end_time {
+            return Err(ContractError::AfterMintEndTime {});
+        }
     }
 
     _execute_mint(deps, env, info, action, true, Some(recipient))
@@ -272,6 +293,12 @@ fn _execute_mint(
     is_admin: bool,
     recipient: Option<Addr>,
 ) -> Result<Response, ContractError> {
+    let mintable_num_tokens = MINTABLE_NUM_TOKENS.may_load(deps.storage)?;
+    if let Some(mintable_nb_tokens) = mintable_num_tokens {
+        if mintable_nb_tokens == 0 {
+            return Err(ContractError::SoldOut {});
+        }
+    }
     let config = CONFIG.load(deps.storage)?;
 
     let sg721_address = SG721_ADDRESS.load(deps.storage)?;
@@ -367,6 +394,11 @@ fn _execute_mint(
         },
     )?;
 
+    // Update mintable count (optional)
+    if let Some(mintable_nb_tokens) = mintable_num_tokens {
+        MINTABLE_NUM_TOKENS.save(deps.storage, &(mintable_nb_tokens - 1))?;
+    }
+
     let seller_amount = {
         // the net amount is mint price - network fee (mint free + dev fee)
         let amount = mint_price.amount.checked_sub(network_fee)?;
@@ -413,9 +445,10 @@ pub fn execute_update_mint_price(
         ));
     }
 
-    // If we are after the end_time return error
-    if env.block.time >= config.extension.end_time {
-        return Err(ContractError::AfterMintEndTime {});
+    if let Some(end_time) = config.extension.end_time {
+        if env.block.time >= end_time {
+            return Err(ContractError::AfterMintEndTime {});
+        }
     }
 
     // If current time is after the stored start_time, only allow lowering price
@@ -470,11 +503,10 @@ pub fn execute_update_start_time(
     }
 
     // If the new start_time is after end_time return error
-    if start_time > config.extension.end_time {
-        return Err(ContractError::InvalidStartTime(
-            config.extension.end_time,
-            start_time,
-        ));
+    if let Some(end_time) = config.extension.end_time {
+        if start_time > end_time {
+            return Err(ContractError::InvalidStartTime(end_time, start_time));
+        }
     }
 
     config.extension.start_time = start_time;
@@ -499,8 +531,13 @@ pub fn execute_update_end_time(
         ));
     }
     // If current time is after the stored end time return error
-    if env.block.time >= config.extension.end_time {
-        return Err(ContractError::AlreadyStarted {});
+    if let Some(end_time_u) = config.extension.end_time {
+        if env.block.time >= end_time_u {
+            return Err(ContractError::AfterMintEndTime {});
+        }
+    } else {
+        // Cant define a end time if it was not initially defined to have one
+        return Err(ContractError::NoEndTimeInitiallyDefined {});
     }
 
     // If current time already passed the new end_time return error
@@ -516,7 +553,7 @@ pub fn execute_update_end_time(
         ));
     }
 
-    config.extension.end_time = end_time;
+    config.extension.end_time = Some(end_time);
     CONFIG.save(deps.storage, &config)?;
     Ok(Response::new()
         .add_attribute("action", "update_end_time")
@@ -636,6 +673,47 @@ pub fn mint_price(deps: Deps, is_admin: bool) -> Result<Coin, StdError> {
     }
 }
 
+pub fn execute_burn_remaining(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+) -> Result<Response, ContractError> {
+    nonpayable(&info)?;
+    let config = CONFIG.load(deps.storage)?;
+    // Check only admin
+    if info.sender != config.extension.admin {
+        return Err(ContractError::Unauthorized(
+            "Sender is not an admin".to_owned(),
+        ));
+    }
+
+    // check mint if still time to mint
+    if let Some(end_time) = config.extension.end_time {
+        if env.block.time <= end_time {
+            return Err(ContractError::MintingHasNotYetEnded {});
+        }
+    }
+
+    // check mint not sold out
+    let mintable_num_tokens = MINTABLE_NUM_TOKENS.may_load(deps.storage)?;
+    if let Some(mintable_nb_tokens) = mintable_num_tokens {
+        if mintable_nb_tokens == 0 {
+            return Err(ContractError::SoldOut {});
+        }
+    }
+
+    // Decrement mintable num tokens
+    if mintable_num_tokens.is_some() {
+        MINTABLE_NUM_TOKENS.save(deps.storage, &0)?;
+    }
+
+    let event = Event::new("burn-remaining")
+        .add_attribute("sender", info.sender)
+        .add_attribute("tokens_burned", mintable_num_tokens.unwrap().to_string())
+        .add_attribute("minter", env.contract.address.to_string());
+    Ok(Response::new().add_event(event))
+}
+
 fn mint_count_per_addr(deps: Deps, info: &MessageInfo) -> Result<u32, StdError> {
     let mint_count = (MINTER_ADDRS.key(&info.sender).may_load(deps.storage)?).unwrap_or(0);
     Ok(mint_count)
@@ -678,6 +756,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::MintPrice {} => to_binary(&query_mint_price(deps)?),
         QueryMsg::MintCount { address } => to_binary(&query_mint_count_per_address(deps, address)?),
         QueryMsg::TotalMintCount {} => to_binary(&query_mint_count(deps)?),
+        QueryMsg::MintableNumTokens {} => to_binary(&query_mintable_num_tokens(deps)?),
     }
 }
 
@@ -690,6 +769,7 @@ fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
         nft_data: config.extension.nft_data,
         payment_address: config.extension.payment_address,
         per_address_limit: config.extension.per_address_limit,
+        num_tokens: config.extension.num_tokens,
         end_time: config.extension.end_time,
         sg721_address: sg721_address.to_string(),
         sg721_code_id: config.collection_code_id,
@@ -719,6 +799,11 @@ fn query_mint_count(deps: Deps) -> StdResult<TotalMintCountResponse> {
     Ok(TotalMintCountResponse { count: mint_count })
 }
 
+fn query_mintable_num_tokens(deps: Deps) -> StdResult<MintableNumTokensResponse> {
+    let count = MINTABLE_NUM_TOKENS.may_load(deps.storage)?;
+    Ok(MintableNumTokensResponse { count })
+}
+
 fn query_start_time(deps: Deps) -> StdResult<StartTimeResponse> {
     let config = CONFIG.load(deps.storage)?;
     Ok(StartTimeResponse {
@@ -728,9 +813,15 @@ fn query_start_time(deps: Deps) -> StdResult<StartTimeResponse> {
 
 fn query_end_time(deps: Deps) -> StdResult<EndTimeResponse> {
     let config = CONFIG.load(deps.storage)?;
-    Ok(EndTimeResponse {
-        end_time: config.extension.end_time.to_string(),
-    })
+    let end_time_response = config
+        .extension
+        .end_time
+        .map(|end_time| EndTimeResponse {
+            end_time: Some(end_time.to_string()),
+        })
+        .unwrap_or(EndTimeResponse { end_time: None });
+
+    Ok(end_time_response)
 }
 
 fn query_mint_price(deps: Deps) -> StdResult<MintPriceResponse> {

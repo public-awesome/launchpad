@@ -124,6 +124,11 @@ pub fn sudo_update_params(
 
     update_params(&mut params, param_msg.clone())?;
 
+    params.extension.max_token_limit = param_msg
+        .extension
+        .max_token_limit
+        .unwrap_or(params.extension.max_token_limit);
+
     params.extension.dev_fee_address = param_msg
         .extension
         .dev_fee_address

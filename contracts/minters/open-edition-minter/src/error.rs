@@ -46,6 +46,9 @@ pub enum ContractError {
     #[error("Sold out")]
     SoldOut {},
 
+    #[error("Not Sold out")]
+    NotSoldOut {},
+
     #[error("MintingHasNotYetEnded")]
     MintingHasNotYetEnded {},
 
@@ -96,6 +99,9 @@ pub enum ContractError {
 
     #[error("Minting has not started yet")]
     BeforeMintStartTime {},
+
+    #[error("No End Time Initially Defined")]
+    NoEndTimeInitiallyDefined {},
 
     #[error("Minting has ended")]
     AfterMintEndTime {},

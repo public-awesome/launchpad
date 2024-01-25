@@ -50,7 +50,6 @@
       "type": "object",
       "required": [
         "admin",
-        "end_time",
         "nft_data",
         "per_address_limit",
         "start_time"
@@ -60,10 +59,25 @@
           "$ref": "#/definitions/Addr"
         },
         "end_time": {
-          "$ref": "#/definitions/Timestamp"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Timestamp"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "nft_data": {
           "$ref": "#/definitions/NftData"
+        },
+        "num_tokens": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint32",
+          "minimum": 0.0
         },
         "payment_address": {
           "anyOf": [

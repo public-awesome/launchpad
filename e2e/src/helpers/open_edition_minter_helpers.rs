@@ -55,6 +55,7 @@ pub fn instantiate_factory(
                 mint_fee_bps: 1000, // 10%
                 max_trading_offset_secs: (60 * 60) * 24,
                 extension: ParamsExtension {
+                    max_token_limit: 1_000u32,
                     max_per_address_limit: 50,
                     airdrop_mint_fee_bps: 0,
                     airdrop_mint_price: Coin {
@@ -79,7 +80,8 @@ pub fn create_minter_msg(
     creator_addr: String,
     limit: u32,
     start_time: Timestamp,
-    end_time: Timestamp,
+    end_time: Option<Timestamp>,
+    num_tokens: Option<u32>,
     start_trading_time: Option<Timestamp>,
     nft_data: NftData,
 ) -> CreateMinterMsg<OpenEditionMinterInitMsgExtension> {
@@ -96,6 +98,7 @@ pub fn create_minter_msg(
             },
             per_address_limit: limit,
             end_time,
+            num_tokens,
         },
         collection_params: CollectionParams {
             code_id: code_id.unwrap_or_else(|| chain.orc.contract_map.code_id(SG721_NAME).unwrap()),

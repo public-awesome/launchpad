@@ -138,6 +138,19 @@
         }
       },
       "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "burn_remaining"
+      ],
+      "properties": {
+        "burn_remaining": {
+          "type": "object",
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
     }
   ],
   "definitions": {

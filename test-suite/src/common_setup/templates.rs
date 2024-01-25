@@ -331,7 +331,7 @@ pub fn open_edition_minter_custom_template(
     let code_ids = open_edition_minter_code_ids(&mut app);
     let collection_params = mock_collection_params_1(None);
     let minter_params =
-        minter_params_open_edition(params_extension, init_msg, None, None, None, None);
+        minter_params_open_edition(params_extension, init_msg, None, None, None, None, None);
 
     let minter_collection_response = configure_open_edition_minter(
         &mut app,
@@ -361,8 +361,15 @@ pub fn open_edition_minter_nft_data(
     let (creator, buyer) = setup_accounts(&mut app);
     let code_ids = open_edition_minter_code_ids(&mut app);
     let collection_params = mock_collection_params_1(None);
-    let minter_params =
-        minter_params_open_edition(params_extension, init_msg, None, None, Some(nft_data), None);
+    let minter_params = minter_params_open_edition(
+        params_extension,
+        init_msg,
+        None,
+        None,
+        None,
+        Some(nft_data),
+        None,
+    );
 
     let minter_collection_response = configure_open_edition_minter(
         &mut app,
@@ -388,8 +395,15 @@ pub fn open_edition_minter_start_and_end_time(
     let (creator, buyer) = setup_accounts(&mut app);
     let code_ids = open_edition_minter_code_ids(&mut app);
     let collection_params = mock_collection_params_1(None);
-    let minter_params =
-        minter_params_open_edition(params_extension, init_msg, start_time, end_time, None, None);
+    let minter_params = minter_params_open_edition(
+        params_extension,
+        init_msg,
+        start_time,
+        end_time,
+        None,
+        None,
+        None,
+    );
 
     let minter_collection_response = configure_open_edition_minter(
         &mut app,
@@ -415,7 +429,7 @@ pub fn open_edition_minter_custom_code_ids(
     let (creator, buyer) = setup_accounts(&mut app);
     let collection_params = mock_collection_params_1(None);
     let minter_params =
-        minter_params_open_edition(params_extension, init_msg, None, None, None, None);
+        minter_params_open_edition(params_extension, init_msg, None, None, None, None, None);
 
     let minter_collection_response = configure_open_edition_minter(
         &mut app,
@@ -504,9 +518,10 @@ pub fn open_edition_minter_with_two_sg721_collections_burn_mint(
         None,
         None,
         None,
+        None,
     );
     let minter_params_2 =
-        minter_params_open_edition(params_extension, init_msg, None, None, None, None);
+        minter_params_open_edition(params_extension, init_msg, None, None, None, None, None);
     let code_ids = open_edition_minter_code_ids(&mut router);
     let minter_collection_response = configure_open_edition_minter(
         &mut router,
@@ -534,6 +549,7 @@ pub fn open_edition_minter_ibc_template(
     let minter_params = minter_params_open_edition(
         params_extension,
         init_msg,
+        None,
         None,
         None,
         None,
