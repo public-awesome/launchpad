@@ -64,6 +64,7 @@ pub fn contract_collection_whitelist() -> Box<dyn Contract<StargazeMsgWrapper>> 
     Box::new(contract)
 }
 
+
 pub fn contract_open_edition_minter() -> Box<dyn Contract<StargazeMsgWrapper>> {
     let contract = ContractWrapper::new(
         open_edition_minter::contract::execute,
@@ -136,6 +137,15 @@ pub fn contract_whitelist_immutable() -> Box<dyn Contract<StargazeMsgWrapper>> {
         whitelist_immutable::contract::execute,
         whitelist_immutable::contract::instantiate,
         whitelist_immutable::contract::query,
+    );
+    Box::new(contract)
+}
+
+pub fn contract_whitelist_merkletree() -> Box<dyn Contract<StargazeMsgWrapper>> {
+    let contract = ContractWrapper::new(
+        whitelist_mtree::contract::execute,
+        whitelist_mtree::contract::instantiate,
+        whitelist_mtree::contract::query,
     );
     Box::new(contract)
 }

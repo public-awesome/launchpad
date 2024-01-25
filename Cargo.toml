@@ -50,6 +50,9 @@ sg-whitelist         = { version = "3.4.0", path = "contracts/whitelists/whiteli
 thiserror            = "1.0.31"
 url                  = "2.2.2"
 sha2                 = { version = "0.10.2", default-features = false }
+
+whitelist-mtree             = { version = "3.4.0", path = "contracts/whitelists/whitelist-merkletree" }
+vending-minter-merkle-wl    = { version = "3.4.0", path = "contracts/minters/vending-minter-merkle-wl" }
 vending-factory      = { version = "3.4.0", path = "contracts/factories/vending-factory" }
 vending-minter       = { version = "3.4.0", path = "contracts/minters/vending-minter" }
 open-edition-factory = { version = "3.4.0", path = "contracts/factories/open-edition-factory" }
@@ -59,6 +62,7 @@ sg-whitelist-flex    = { version = "3.4.0", path = "contracts/whitelists/whiteli
 ethereum-verify      = { version = "3.4.0", path = "packages/ethereum-verify" }
 sg-eth-airdrop       = { version = "3.4.0", path = "contracts/sg-eth-airdrop" }
 test-suite           = { version = "3.4.0", path = "test-suite" }
+
 semver               = "1"
 cw-ownable           = "0.5.1"
 
@@ -127,10 +131,6 @@ codegen-units = 1
 incremental   = false
 
 [profile.release.package.ethereum-verify]
-codegen-units = 1
-incremental   = false
-
-[profile.release.package.test-suite]
 codegen-units = 1
 incremental   = false
 
