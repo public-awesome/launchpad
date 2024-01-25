@@ -89,6 +89,7 @@ pub struct UpdateCollectionInfoMsg<T> {
     pub external_link: Option<Option<String>>,
     pub explicit_content: Option<bool>,
     pub royalty_info: Option<Option<T>>,
+    pub creator: Option<String>,
 }
 
 #[cw_serde]

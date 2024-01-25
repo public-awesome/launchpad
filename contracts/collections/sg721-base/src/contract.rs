@@ -207,6 +207,11 @@ where
             return Err(ContractError::Unauthorized {});
         }
 
+        if let Some(new_creator) = collection_msg.creator {
+            deps.api.addr_validate(&new_creator)?;
+            collection.creator = new_creator;
+        }
+
         collection.description = collection_msg
             .description
             .unwrap_or_else(|| collection.description.to_string());
