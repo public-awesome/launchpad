@@ -262,12 +262,7 @@ pub fn query_has_member(
                 string_to_byte_slice(&new_proof_hashstring)?,
             ];
             hashe_slices.sort_unstable();
-
-            Sha256::hash(&hashe_slices.concat())
-                .try_into()
-                .map_err(|_| StdError::GenericErr {
-                    msg: "Error parsing merkle proof".to_string(),
-                })
+            Result::<[u8; 32], StdError>::Ok(Sha256::hash(&hashe_slices.concat()))
         },
     );
 

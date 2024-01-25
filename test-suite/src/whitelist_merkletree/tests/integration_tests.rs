@@ -1,24 +1,23 @@
 #[cfg(test)]
 mod tests {
-    use cosmwasm_std::{Addr, Timestamp, coin};
+    use cosmwasm_std::{coin, Addr, Timestamp};
     use cw_multi_test::Executor;
     use rs_merkle::MerkleTree;
     use sg_multi_test::StargazeApp;
     use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
-    
+
     use whitelist_mtree::{
+        msg::*,
         tests::{hasher::SortingSha256Hasher, test_helpers::hash_and_build_tree},
-        msg::*
     };
 
     use crate::common_setup::contract_boxes::{contract_whitelist_merkletree, custom_mock_app};
 
-    type Tree = MerkleTree::<SortingSha256Hasher>;
+    type Tree = MerkleTree<SortingSha256Hasher>;
 
     const CREATOR: &str = "creator";
     const START_TIME: Timestamp = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
     const END_TIME: Timestamp = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 1000);
-    
 
     fn get_init_address_list_1() -> Vec<String> {
         vec![
@@ -47,7 +46,7 @@ mod tests {
     pub fn instantiate_with_root(
         app: &mut StargazeApp,
         per_address_limit: u32,
-        merkle_root: String
+        merkle_root: String,
     ) -> Addr {
         let msg = InstantiateMsg {
             admins: vec![],
@@ -57,7 +56,7 @@ mod tests {
             mint_price: coin(1000000u128, NATIVE_DENOM),
             per_address_limit,
             merkle_root,
-            merkle_tree_uri: None
+            merkle_tree_uri: None,
         };
         let wl_id = app.store_code(contract_whitelist_merkletree());
         app.instantiate_contract(
@@ -71,31 +70,29 @@ mod tests {
         .unwrap()
     }
 
-
-
     pub fn query_admin_list(app: &mut StargazeApp, wl_addr: Addr) {
         let res: AdminListResponse = app
             .wrap()
-            .query_wasm_smart(wl_addr, &QueryMsg::AdminList {  })
+            .query_wasm_smart(wl_addr, &QueryMsg::AdminList {})
             .unwrap();
         assert_eq!(res.admins.len(), 0);
-        assert_eq!(res.mutable, false)
+        assert!(!res.mutable)
     }
 
     pub fn query_includes_address(
-        app: &mut StargazeApp, 
-        wl_addr: Addr, 
+        app: &mut StargazeApp,
+        wl_addr: Addr,
         addr_to_check: String,
-        proof_hashes: Vec<String>
+        proof_hashes: Vec<String>,
     ) {
         let res: HasMemberResponse = app
             .wrap()
             .query_wasm_smart(
                 wl_addr,
-                &QueryMsg::HasMember { 
-                    member: addr_to_check.to_string(), 
-                    proof_hashes 
-                }
+                &QueryMsg::HasMember {
+                    member: addr_to_check.to_string(),
+                    proof_hashes,
+                },
             )
             .unwrap();
         assert!(res.has_member);
@@ -116,9 +113,9 @@ mod tests {
         let per_address_limit = 1;
         let tree: Tree = hash_and_build_tree(&addrs);
         let wl_addr = instantiate_with_root(&mut app, per_address_limit, tree.root_hex().unwrap());
-        
+
         let addr_to_check = addrs[0].clone();
-        let proof = tree.proof(&vec![0]);
+        let proof = tree.proof(&[0]);
         let proof_hashes = proof.proof_hashes_hex();
 
         query_includes_address(&mut app, wl_addr.clone(), addr_to_check, proof_hashes);
@@ -131,12 +128,12 @@ mod tests {
         let mut app = custom_mock_app();
         let addrs = get_init_address_list_2();
         let per_address_limit = 99;
-        
+
         let tree: Tree = hash_and_build_tree(&addrs);
         let wl_addr = instantiate_with_root(&mut app, per_address_limit, tree.root_hex().unwrap());
         let addr_to_check = addrs[1].clone();
 
-        let proof = tree.proof(&vec![1]);
+        let proof = tree.proof(&[1]);
         let proof_hashes = proof.proof_hashes_hex();
 
         query_admin_list(&mut app, wl_addr.clone());
@@ -152,16 +149,14 @@ mod tests {
 
         let tree: Tree = hash_and_build_tree(&addrs);
         let wl_addr = instantiate_with_root(&mut app, per_address_limit, tree.root_hex().unwrap());
-        
+
         let addr_to_check = addrs[0].clone();
         query_admin_list(&mut app, wl_addr.clone());
 
-        let proof = tree.proof(&vec![0]);
+        let proof = tree.proof(&[0]);
         let proof_hashes = proof.proof_hashes_hex();
 
         query_includes_address(&mut app, wl_addr.clone(), addr_to_check, proof_hashes);
         query_per_address_limit(&mut app, wl_addr, per_address_limit)
     }
-
-
 }
