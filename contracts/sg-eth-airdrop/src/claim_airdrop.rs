@@ -26,6 +26,7 @@ pub fn claim_airdrop(
         eth_sig,
         config.clone(),
     )?;
+
     let res = claim_and_whitelist_add(&deps, info, config.airdrop_amount)?;
     increment_local_mint_count_for_address(deps, eth_address)?;
 
