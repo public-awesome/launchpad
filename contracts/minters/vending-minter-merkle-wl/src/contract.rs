@@ -29,13 +29,13 @@ use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use sg_whitelist::msg::{
     ConfigResponse as WhitelistConfigResponse, HasMemberResponse, QueryMsg as WhitelistQueryMsg,
 };
-use whitelist_mtree::msg::QueryMsg as WhitelistMtreeQueryMsg;
 use sha2::{Digest, Sha256};
 use shuffle::{fy::FisherYates, shuffler::Shuffler};
 use std::convert::TryInto;
 use url::Url;
 use vending_factory::msg::{ParamsResponse, VendingMinterCreateMsg};
 use vending_factory::state::VendingMinterParams;
+use whitelist_mtree::msg::QueryMsg as WhitelistMtreeQueryMsg;
 
 pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 pub type SubMsg = cosmwasm_std::SubMsg<StargazeMsgWrapper>;
@@ -489,7 +489,9 @@ pub fn execute_mint_sender(
 
     // If there is no active whitelist right now, check public mint
     // Check if after start_time
-    if is_public_mint(deps.as_ref(), &info, proof_hashes)? && (env.block.time < config.extension.start_time) {
+    if is_public_mint(deps.as_ref(), &info, proof_hashes)?
+        && (env.block.time < config.extension.start_time)
+    {
         return Err(ContractError::BeforeMintStartTime {});
     }
 
@@ -504,7 +506,11 @@ pub fn execute_mint_sender(
 
 // Check if a whitelist exists and not ended
 // Sender has to be whitelisted to mint
-fn is_public_mint(deps: Deps, info: &MessageInfo, proof_hashes: Option<Vec<String>>) -> Result<bool, ContractError> {
+fn is_public_mint(
+    deps: Deps,
+    info: &MessageInfo,
+    proof_hashes: Option<Vec<String>>,
+) -> Result<bool, ContractError> {
     let config = CONFIG.load(deps.storage)?;
 
     // If there is no whitelist, there's only a public mint
@@ -554,12 +560,9 @@ fn is_public_mint(deps: Deps, info: &MessageInfo, proof_hashes: Option<Vec<Strin
     Ok(false)
 }
 
-
 fn is_merkle_tree_wl(wl_config_res: &WhitelistConfigResponse) -> bool {
-    wl_config_res.member_limit == 0 &&
-    wl_config_res.num_members == 0
+    wl_config_res.member_limit == 0 && wl_config_res.num_members == 0
 }
-
 
 pub fn execute_mint_to(
     deps: DepsMut,

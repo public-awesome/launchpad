@@ -4597,7 +4597,7 @@ dependencies = [
 
 [[package]]
 name = "vending-minter-merkle-wl"
-version = "3.3.0"
+version = "3.4.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -4805,7 +4805,7 @@ dependencies = [
 
 [[package]]
 name = "whitelist-mtree"
-version = "3.3.0"
+version = "3.4.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",

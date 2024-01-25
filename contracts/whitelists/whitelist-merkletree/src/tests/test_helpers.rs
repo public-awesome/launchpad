@@ -1,9 +1,7 @@
+use rs_merkle::{algorithms::Sha256, Hasher, MerkleTree};
 use std::{fs::File, io::Read};
-use rs_merkle::{MerkleTree, algorithms::Sha256, Hasher};
 
 use super::hasher::SortingSha256Hasher;
-
-
 
 fn text_from_file(path: &str) -> String {
     let mut file = File::open(path).unwrap();
@@ -12,8 +10,7 @@ fn text_from_file(path: &str) -> String {
     data
 }
 
-
-pub fn hash_and_build_tree(serialized: &Vec<String>) -> MerkleTree::<SortingSha256Hasher> {
+pub fn hash_and_build_tree(serialized: &[String]) -> MerkleTree<SortingSha256Hasher> {
     let leaves: Vec<[u8; 32]> = serialized
         .iter()
         .map(|x| Sha256::hash(x.as_bytes()))
@@ -22,11 +19,11 @@ pub fn hash_and_build_tree(serialized: &Vec<String>) -> MerkleTree::<SortingSha2
     MerkleTree::<SortingSha256Hasher>::from_leaves(&leaves)
 }
 
-pub fn tree_from_file(path: &str) -> MerkleTree::<SortingSha256Hasher> {
+pub fn tree_from_file(path: &str) -> MerkleTree<SortingSha256Hasher> {
     let data = text_from_file(path);
 
     let serialized: Vec<String> = data
-        .split("\n")
+        .split('\n')
         .map(|x| x.to_string())
         .filter(|s| !s.is_empty() && s.len() > 1)
         .collect();
@@ -34,7 +31,7 @@ pub fn tree_from_file(path: &str) -> MerkleTree::<SortingSha256Hasher> {
     hash_and_build_tree(&serialized)
 }
 
-pub fn get_merkle_tree_simple(path_prefix: Option<String>) -> MerkleTree::<SortingSha256Hasher> {
+pub fn get_merkle_tree_simple(path_prefix: Option<String>) -> MerkleTree<SortingSha256Hasher> {
     let path = path_prefix.unwrap_or_default() + "src/tests/data/whitelist_simple.txt";
     tree_from_file(path.as_str())
 }
@@ -49,7 +46,7 @@ pub fn get_merkle_tree_large() -> MerkleTree<SortingSha256Hasher> {
     let data = text_from_file(path);
 
     let mut serialized: Vec<String> = data
-        .split("\n")
+        .split('\n')
         .map(|x| x.to_string())
         .filter(|s| !s.is_empty() && s.len() > 1)
         .collect();
