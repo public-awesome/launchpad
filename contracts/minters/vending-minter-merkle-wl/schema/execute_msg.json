@@ -10,6 +10,17 @@
       "properties": {
         "mint": {
           "type": "object",
+          "properties": {
+            "proof_hashes": {
+              "type": [
+                "array",
+                "null"
+              ],
+              "items": {
+                "type": "string"
+              }
+            }
+          },
           "additionalProperties": false
         }
       },

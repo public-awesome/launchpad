@@ -9,11 +9,9 @@ impl Hasher for SortingSha256Hasher {
     type Hash = [u8; 32];
 
     fn concat_and_hash(left: &Self::Hash, right: Option<&Self::Hash>) -> Self::Hash {
-
         match right {
             Some(right_node) => {
-
-                let mut both = vec![left, right_node];
+                let mut both = [left, right_node];
                 both.sort_unstable();
 
                 // TODO: Optimize this

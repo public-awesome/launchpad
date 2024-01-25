@@ -2,23 +2,24 @@ use crate::admin::{
     can_execute, execute_freeze, execute_update_admins, query_admin_list, query_can_execute,
 };
 use crate::error::ContractError;
-use crate::helpers::crypto::{verify_merkle_root, valid_hash_string, string_to_byte_slice};
+use crate::helpers::crypto::{string_to_byte_slice, valid_hash_string, verify_merkle_root};
 use crate::helpers::utils::verify_tree_uri;
 use crate::helpers::validators::map_validate;
 use crate::msg::{
-    ConfigResponse, ExecuteMsg, HasEndedResponse, HasMemberResponse,
-    HasStartedResponse, InstantiateMsg, IsActiveResponse, QueryMsg, MerkleRootResponse, MerkleTreeURIResponse,
+    ConfigResponse, ExecuteMsg, HasEndedResponse, HasMemberResponse, HasStartedResponse,
+    InstantiateMsg, IsActiveResponse, MerkleRootResponse, MerkleTreeURIResponse, QueryMsg,
 };
 use crate::state::{AdminList, Config, ADMIN_LIST, CONFIG, MERKLE_ROOT, MERKLE_TREE_URI};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult, StdError, Timestamp};
+use cosmwasm_std::{
+    to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdError, StdResult, Timestamp,
+};
 use cw2::set_contract_version;
-use sg_std::{Response, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use cw_utils::nonpayable;
+use sg_std::{Response, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
 use rs_merkle::{algorithms::Sha256, Hasher};
-
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:whitelist-merkletree";
@@ -27,7 +28,6 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 // contract governance params
 pub const PRICE_PER_1000_MEMBERS: u128 = 100_000_000;
 pub const MIN_MINT_PRICE: u128 = 0;
-
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -67,14 +67,12 @@ pub fn instantiate(
         ));
     }
 
-
     let config = Config {
         start_time: msg.start_time,
         end_time: msg.end_time,
         mint_price: msg.mint_price,
         per_address_limit: msg.per_address_limit,
     };
-
 
     let admin_config = AdminList {
         admins: map_validate(deps.api, &msg.admins)?,
@@ -84,22 +82,22 @@ pub fn instantiate(
     MERKLE_ROOT.save(deps.storage, &msg.merkle_root)?;
     ADMIN_LIST.save(deps.storage, &admin_config)?;
     CONFIG.save(deps.storage, &config)?;
-    
-    let tree_url = msg.merkle_tree_uri.unwrap_or(String::default());
+
+    let tree_url = msg.merkle_tree_uri.unwrap_or_default();
 
     let mut attrs = Vec::with_capacity(6);
-    
+
     attrs.push(("action", "update_merkle_tree"));
     attrs.push(("merkle_root", &msg.merkle_root));
     attrs.push(("contract_name", CONTRACT_NAME));
     attrs.push(("contract_version", CONTRACT_VERSION));
-    if tree_url.len() > 0 {  attrs.push(("merkle_tree_uri", &tree_url)); }
+    if !tree_url.is_empty() {
+        attrs.push(("merkle_tree_uri", &tree_url));
+    }
     attrs.push(("sender", info.sender.as_str()));
 
     Ok(Response::new().add_attributes(attrs))
-        
 }
-
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
@@ -134,17 +132,17 @@ pub fn execute_update_merkle_tree(
 
     MERKLE_ROOT.save(deps.storage, &merkle_root)?;
 
-
     let mut attrs = Vec::with_capacity(4);
-    
+
     attrs.push(("action", String::from("update_merkle_tree")));
     attrs.push(("merkle_root", merkle_root));
-    if let Some(uri) = merkle_tree_uri { attrs.push(("merkle_tree_uri", uri)); }
+    if let Some(uri) = merkle_tree_uri {
+        attrs.push(("merkle_tree_uri", uri));
+    }
     attrs.push(("sender", info.sender.to_string()));
 
     Ok(Response::new().add_attributes(attrs))
 }
-
 
 pub fn execute_update_start_time(
     deps: DepsMut,
@@ -179,8 +177,6 @@ pub fn execute_update_start_time(
         .add_attribute("sender", info.sender))
 }
 
-
-
 pub fn execute_update_end_time(
     deps: DepsMut,
     env: Env,
@@ -206,21 +202,21 @@ pub fn execute_update_end_time(
         .add_attribute("sender", info.sender))
 }
 
-
-
-
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::HasStarted {} => to_binary(&query_has_started(deps, env)?),
         QueryMsg::HasEnded {} => to_binary(&query_has_ended(deps, env)?),
         QueryMsg::IsActive {} => to_binary(&query_is_active(deps, env)?),
-        QueryMsg::HasMember { member , proof_hashes} => to_binary(&query_has_member(deps, member, proof_hashes)?),
+        QueryMsg::HasMember {
+            member,
+            proof_hashes,
+        } => to_binary(&query_has_member(deps, member, proof_hashes)?),
         QueryMsg::Config {} => to_binary(&query_config(deps, env)?),
         QueryMsg::AdminList {} => to_binary(&query_admin_list(deps)?),
         QueryMsg::CanExecute { sender, .. } => to_binary(&query_can_execute(deps, &sender)?),
         QueryMsg::MerkleRoot {} => to_binary(&query_merkle_root(deps)?),
-        QueryMsg::MerkleTreeURI {} => to_binary(&query_merkle_tree_uri(deps)?)
+        QueryMsg::MerkleTreeURI {} => to_binary(&query_merkle_tree_uri(deps)?),
     }
 }
 
@@ -245,36 +241,35 @@ fn query_is_active(deps: Deps, env: Env) -> StdResult<IsActiveResponse> {
     })
 }
 
-
 pub fn query_has_member(
-    deps: Deps, 
+    deps: Deps,
     member: String,
     proof_hashes: Vec<String>,
 ) -> StdResult<HasMemberResponse> {
-
     deps.api.addr_validate(&member)?;
 
     let merkle_root = MERKLE_ROOT.load(deps.storage)?;
 
     let member_init_hash_slice = Sha256::hash(member.as_bytes());
 
-    let final_hash = proof_hashes
-        .into_iter()
-        .try_fold(member_init_hash_slice, 
-            |accum_hash_slice, new_proof_hashstring| {
-                valid_hash_string(&new_proof_hashstring)?;
+    let final_hash = proof_hashes.into_iter().try_fold(
+        member_init_hash_slice,
+        |accum_hash_slice, new_proof_hashstring| {
+            valid_hash_string(&new_proof_hashstring)?;
 
-                let mut hashe_slices = [
-                    accum_hash_slice, 
-                    string_to_byte_slice(&new_proof_hashstring)?
-                ];
-                hashe_slices.sort_unstable();
+            let mut hashe_slices = [
+                accum_hash_slice,
+                string_to_byte_slice(&new_proof_hashstring)?,
+            ];
+            hashe_slices.sort_unstable();
 
-                Sha256::hash(&hashe_slices.concat())
-                    .try_into()
-                    .map_err(|_| StdError::GenericErr { msg: "Error parsing merkle proof".to_string() })
-    });
-
+            Sha256::hash(&hashe_slices.concat())
+                .try_into()
+                .map_err(|_| StdError::GenericErr {
+                    msg: "Error parsing merkle proof".to_string(),
+                })
+        },
+    );
 
     if final_hash.is_err() {
         return Err(cosmwasm_std::StdError::GenericErr {
@@ -282,8 +277,9 @@ pub fn query_has_member(
         });
     }
 
-    return Ok(HasMemberResponse { has_member: merkle_root == hex::encode(final_hash.unwrap()) });
-
+    Ok(HasMemberResponse {
+        has_member: merkle_root == hex::encode(final_hash.unwrap()),
+    })
 }
 
 pub fn query_config(deps: Deps, env: Env) -> StdResult<ConfigResponse> {
@@ -300,13 +296,13 @@ pub fn query_config(deps: Deps, env: Env) -> StdResult<ConfigResponse> {
 }
 
 pub fn query_merkle_root(deps: Deps) -> StdResult<MerkleRootResponse> {
-    Ok(MerkleRootResponse { 
-        merkle_root: MERKLE_ROOT.load(deps.storage)? 
+    Ok(MerkleRootResponse {
+        merkle_root: MERKLE_ROOT.load(deps.storage)?,
     })
 }
 
 pub fn query_merkle_tree_uri(deps: Deps) -> StdResult<MerkleTreeURIResponse> {
-    Ok(MerkleTreeURIResponse { 
-        merkle_tree_uri: MERKLE_TREE_URI.may_load(deps.storage)?
+    Ok(MerkleTreeURIResponse {
+        merkle_tree_uri: MERKLE_TREE_URI.may_load(deps.storage)?,
     })
 }

@@ -1,6 +1,6 @@
 {
   "contract_name": "whitelist-mtree",
-  "contract_version": "3.1.0",
+  "contract_version": "3.4.0",
   "idl_version": "1.0.0",
   "instantiate": {
     "$schema": "http://json-schema.org/draft-07/schema#",
@@ -513,7 +513,7 @@
                     }
                   },
                   "label": {
-                    "description": "A human-readbale label for the contract",
+                    "description": "A human-readable label for the contract.\n\nValid values should: - not be empty - not be bigger than 128 bytes (or some chain-specific limit) - not start / end with whitespace",
                     "type": "string"
                   },
                   "msg": {
