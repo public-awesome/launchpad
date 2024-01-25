@@ -455,7 +455,7 @@ mod tests {
 
             // update explicit content with new creator
             let res = app.execute_contract(
-                creator.clone(),
+                creator,
                 contract.clone(),
                 &Sg721ExecuteMsg::<Empty, Empty>::UpdateCollectionInfo {
                     collection_info: UpdateCollectionInfoMsg {

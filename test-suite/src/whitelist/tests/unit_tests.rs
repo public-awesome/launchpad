@@ -199,11 +199,14 @@ fn update_members() {
     let msg = ExecuteMsg::AddMembers(add_msg);
     let info = mock_info(ADMIN, &[]);
     let res = execute(deps.as_mut(), mock_env(), info.clone(), msg.clone()).unwrap();
-    assert_eq!(res.attributes.len(), 2);
+    assert_eq!(res.attributes.len(), 4);
     let res = query_members(deps.as_ref(), None, None).unwrap();
     assert_eq!(res.members.len(), 2);
 
-    execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap_err();
+    // adding duplicate members should succeed
+    execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
+    let res = query_members(deps.as_ref(), None, None).unwrap();
+    assert_eq!(res.members.len(), 2);
 
     let remove_msg = RemoveMembersMsg {
         to_remove: vec!["adsfsa1".to_string()],
@@ -422,11 +425,13 @@ fn add_members_with_specified_admin(admin: &str) {
     let msg = ExecuteMsg::AddMembers(add_msg);
     let info = mock_info(admin, &[]);
     let res = execute(deps.as_mut(), mock_env(), info.clone(), msg.clone()).unwrap();
-    assert_eq!(res.attributes.len(), 2);
+    assert_eq!(res.attributes.len(), 4);
     let res = query_members(deps.as_ref(), None, None).unwrap();
     assert_eq!(res.members.len(), 2);
 
-    execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap_err();
+    execute(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
+    let res = query_members(deps.as_ref(), None, None).unwrap();
+    assert_eq!(res.members.len(), 2);
 
     let remove_msg = RemoveMembersMsg {
         to_remove: vec!["adsfsa1".to_string()],
