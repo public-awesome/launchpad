@@ -1,6 +1,7 @@
-use crate::query::query_collection_whitelist;
-use crate::state::ADDRS_TO_MINT_COUNT;
-use crate::{state::CONFIG, ContractError};
+use crate::rekt_airdrop::error::ContractError;
+use crate::rekt_airdrop::query::query_collection_whitelist;
+use crate::rekt_airdrop::state::ADDRS_TO_MINT_COUNT;
+use crate::rekt_airdrop::state::CONFIG;
 use build_messages::claim_and_whitelist_add;
 use cosmwasm_std::DepsMut;
 use cosmwasm_std::{coins, Addr, BankMsg, StdResult};
@@ -88,7 +89,7 @@ mod validation {
     use cosmwasm_std::StdError;
     use ethereum_verify::verify_ethereum_text;
 
-    use crate::{
+    use crate::rekt_airdrop::{
         query::{query_airdrop_is_eligible, query_per_address_limit},
         state::Config,
     };

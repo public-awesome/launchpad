@@ -1,4 +1,4 @@
-use crate::{msg::QueryMsg, state::CONFIG, ContractError};
+use crate::rekt_airdrop::{error::ContractError, msg::QueryMsg, state::CONFIG};
 use cosmwasm_std::{entry_point, to_binary, Binary};
 use cosmwasm_std::{Addr, Env};
 use cosmwasm_std::{Deps, DepsMut, StdResult};

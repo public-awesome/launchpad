@@ -12,11 +12,11 @@ use crate::sg_eth_airdrop::setup::execute_msg::instantiate_contract;
 use crate::sg_eth_airdrop::setup::setup_signatures::{get_msg_plaintext, get_wallet_and_sig};
 use crate::sg_eth_airdrop::setup::test_msgs::InstantiateParams;
 use cosmwasm_std::Addr;
-use sg_eth_airdrop::msg::QueryMsg;
+use sg_eth_airdrop::rekt_airdrop::msg::QueryMsg;
 use sg_std::GENESIS_MINT_START_TIME;
 extern crate whitelist_immutable;
 use crate::common_setup::templates::vending_minter_template;
-use sg_eth_airdrop::contract::INSTANTIATION_FEE;
+use sg_eth_airdrop::rekt_airdrop::contract::INSTANTIATION_FEE;
 
 #[test]
 fn test_set_minter_contract_success() {

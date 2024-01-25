@@ -54,7 +54,7 @@ pub fn execute_airdrop_claim(
     target_wallet: Addr,
     airdrop_contract: Addr,
 ) {
-    let claim_message = sg_eth_airdrop::msg::ExecuteMsg::ClaimAirdrop {
+    let claim_message = sg_eth_airdrop::rekt_airdrop::msg::ExecuteMsg::ClaimAirdrop {
         eth_address: eth_addr_str,
         eth_sig: eth_sig_str,
     };

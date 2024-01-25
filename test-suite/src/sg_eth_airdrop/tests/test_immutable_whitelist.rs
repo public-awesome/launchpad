@@ -8,8 +8,8 @@ use crate::sg_eth_airdrop::setup::execute_msg::instantiate_contract;
 use crate::sg_eth_airdrop::setup::test_msgs::InstantiateParams;
 
 use cosmwasm_std::Addr;
-use sg_eth_airdrop::contract::INSTANTIATION_FEE;
-use sg_eth_airdrop::msg::QueryMsg;
+use sg_eth_airdrop::rekt_airdrop::contract::INSTANTIATION_FEE;
+use sg_eth_airdrop::rekt_airdrop::msg::QueryMsg;
 use whitelist_immutable::helpers::WhitelistImmutableContract;
 
 #[test]
