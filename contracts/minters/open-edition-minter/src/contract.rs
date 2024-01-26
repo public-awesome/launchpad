@@ -66,8 +66,9 @@ pub fn instantiate(
                 .as_ref()
                 .map(|uri| uri.trim().to_string())
                 .map_or_else(|| Err(ContractError::InvalidBaseTokenURI {}), Ok)?;
-
-            if Url::parse(&base_token_uri)?.scheme() != "ipfs" {
+            // Token URI must be a valid URL (ipfs, https, etc.)
+            let res = Url::parse(&base_token_uri);
+            if res.is_err() {
                 return Err(ContractError::InvalidBaseTokenURI {});
             }
 
