@@ -25,8 +25,12 @@ sleep 10
 cd contracts/whitelists/whitelist-immutable && cargo publish && cd ../../..
 sleep 15
 cd contracts/whitelists/whitelist-flex && cargo publish && cd ../../..
-sleep 10
+sleep 15
+cd contracts/whitelists/whitelist-merkletree && cargo publish && cd ../../..
+sleep 15
 cd contracts/minters/vending-minter-wl-flex && cargo publish && cd ../../..
+sleep 15
+cd contracts/minters/vending-minter-merkle-wl && cargo publish && cd ../../..
 
 cd contracts/sg-eth-airdrop && cargo publish && cd ../..
 sleep 15
