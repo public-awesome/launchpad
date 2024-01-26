@@ -131,10 +131,7 @@ pub fn execute_mint_sender(
     };
 
     // Token URI must be a valid URL (ipfs, https, etc.)
-    let res = Url::parse(&token_uri);
-    if res.is_err() {
-        return Err(ContractError::InvalidTokenURI {});
-    }
+    Url::parse(&token_uri).map_err(|_| ContractError::InvalidTokenURI {})?;
 
     let mut res = Response::new();
 
