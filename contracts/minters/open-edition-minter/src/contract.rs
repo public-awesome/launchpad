@@ -67,11 +67,7 @@ pub fn instantiate(
                 .map(|uri| uri.trim().to_string())
                 .map_or_else(|| Err(ContractError::InvalidBaseTokenURI {}), Ok)?;
             // Token URI must be a valid URL (ipfs, https, etc.)
-            let res = Url::parse(&base_token_uri);
-            if res.is_err() {
-                return Err(ContractError::InvalidBaseTokenURI {});
-            }
-
+            Url::parse(&base_token_uri).map_err(|_| ContractError::InvalidBaseTokenURI {})?;
             msg.init_msg.nft_data.token_uri = Some(base_token_uri);
         }
         // If on-chain metadata -> make sure that the image data is a valid URL
