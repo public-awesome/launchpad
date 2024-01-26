@@ -74,11 +74,11 @@ pub fn instantiate(
 
     // sanitize base token uri
     let mut base_token_uri = msg.init_msg.base_token_uri.trim().to_string();
-    // Check that base_token_uri is a valid IPFS uri
-    let parsed_token_uri = Url::parse(&base_token_uri)?;
-    if parsed_token_uri.scheme() != "ipfs" {
+
+    // Token URI must be a valid URL (ipfs, https, etc.)
+    let Ok(parsed_token_uri) = Url::parse(&base_token_uri) else {
         return Err(ContractError::InvalidBaseTokenURI {});
-    }
+    };
     base_token_uri = parsed_token_uri.to_string();
 
     let genesis_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);

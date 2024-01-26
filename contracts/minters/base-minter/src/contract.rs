@@ -130,8 +130,9 @@ pub fn execute_mint_sender(
         ));
     };
 
-    let parsed_token_uri = Url::parse(&token_uri)?;
-    if parsed_token_uri.scheme() != "ipfs" {
+    // Token URI must be a valid URL (ipfs, https, etc.)
+    let res = Url::parse(&token_uri);
+    if res.is_err() {
         return Err(ContractError::InvalidTokenURI {});
     }
 
