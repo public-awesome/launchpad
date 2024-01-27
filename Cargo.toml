@@ -49,9 +49,11 @@ sg721           = { version = "3.5.0", path = "packages/sg721" }
 sg721-base      = { version = "3.5.0", path = "contracts/collections/sg721-base" }
 sg721-nt        = { version = "3.5.0", path = "contracts/collections/sg721-nt" }
 sg721-updatable = { version = "3.5.0", path = "contracts/collections/sg721-updatable" }
+sg721-tv = { version = "3.5.0", path = "contracts/collections/sg721-tv" }
 sg-controllers  = { version = "3.5.0", path = "packages/controllers" }
 sg-metadata     = { version = "3.5.0", path = "packages/sg-metadata" }
 sg-mint-hooks   = { version = "3.5.0", path = "packages/mint-hooks" }
+sg-token-vault = { version = "3.5.0", path = "packages/token-vault" }
 sg-multi-test   = { version = "3.1.0" }
 sg-splits       = { version = "3.5.0", path = "contracts/splits" }
 sg-std          = { version = "3.2.0" }

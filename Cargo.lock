@@ -1114,6 +1114,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "cw-paginate-storage"
+version = "2.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8693baa8dc275f86c5b4f6b86702994e859ac1657e19c5cbcb55d295592a5c04"
+dependencies = [
+ "cosmwasm-std",
+ "cosmwasm-storage",
+ "cw-storage-plus 1.1.0",
+ "serde",
+]
+
+[[package]]
+name = "cw-stake-tracker"
+version = "2.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "17e99ea9ba0d79da91fa5fa61869d8f8e3d4303cde5ad9341f1b0cb0706b6df0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-wormhole",
+]
+
+[[package]]
 name = "cw-storage-plus"
 version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3673,7 +3696,7 @@ dependencies = [
 
 [[package]]
 name = "sg-token-vault"
-version = "3.3.0"
+version = "3.5.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -3821,7 +3844,7 @@ dependencies = [
 
 [[package]]
 name = "sg721-tv"
-version = "3.3.0"
+version = "3.5.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -4337,20 +4360,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 
 [[package]]
-name = "token-vault"
-version = "3.5.0"
-dependencies = [
- "cosmwasm-schema",
- "cosmwasm-std",
- "cw-storage-plus 1.1.0",
- "cw-utils 1.0.1",
- "schemars",
- "serde",
- "sg721",
- "thiserror",
-]
-
-[[package]]
 name = "tokio"
 version = "1.32.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4765,6 +4774,7 @@ dependencies = [
  "sg2",
  "sg4",
  "sg721",
+ "sg721-tv",
  "sha2 0.10.7",
  "shuffle",
  "test-suite",
