@@ -3,6 +3,7 @@ use cw_multi_test::Executor;
 use sg2::tests::mock_collection_params_1;
 use sg_multi_test::StargazeApp;
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
+use test_suite::common_setup::setup_accounts_and_block::setup_accounts;
 use test_suite::common_setup::setup_minter::{
     common::constants::CREATION_FEE, vending_minter::mock_params::mock_init_extension,
 };
@@ -26,12 +27,12 @@ fn proper_initialization() {
 
     let mut app = custom_mock_app();
     let factory_code_id = app.store_code(contract_vending_factory());
-    let minter_admin = Addr::unchecked("minter-admin");
+    let (creator, buyer) = setup_accounts(&mut app);
 
     let factory_addr = app
         .instantiate_contract(
             factory_code_id,
-            minter_admin.clone(),
+            creator.clone(),
             &vending_factory::msg::InstantiateMsg { params },
             &[],
             "factory",
@@ -60,9 +61,7 @@ fn proper_initialization() {
 
     let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
 
-    // TODO: need to add funds to admin
-
-    let res = app.execute_contract(minter_admin, factory_addr.clone(), &msg, &creation_fee);
+    let res = app.execute_contract(creator, factory_addr.clone(), &msg, &creation_fee);
 
     assert!(res.is_ok())
 }
