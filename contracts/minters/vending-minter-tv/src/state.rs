@@ -2,8 +2,9 @@ use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, Coin, Timestamp};
 use cw_storage_plus::{Item, Map};
 use sg4::{MinterConfig, Status};
+use vending_factory::msg::VaultInfo;
 
-use crate::msg::VaultInfo;
+// use crate::msg::VaultInfo;
 
 #[cw_serde]
 pub struct ConfigExtension {

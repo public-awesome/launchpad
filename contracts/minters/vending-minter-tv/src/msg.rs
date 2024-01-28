@@ -2,24 +2,23 @@ use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Coin, Timestamp};
 use cw_vesting::vesting::Schedule;
 use sg4::StatusResponse;
-use vending_factory::{msg::VendingMinterCreateMsg, state::VendingMinterParams};
+use vending_factory::{msg::TokenVaultVendingMinterCreateMsg, state::VendingMinterParams};
 
-// vesting_duration_seconds: 3 * 365 * 24 * 60 * 60,
-// unbonding_duration_seconds: 14 * 24 * 60 * 60,
-#[cw_serde]
-pub struct VaultInfo {
-    pub token_balance: Coin,
-    pub vesting_schedule: Schedule,
-    pub vesting_duration_seconds: u64,
-    pub unbonding_duration_seconds: u64,
-    pub vesting_code_id: u64,
-}
+// // vesting_duration_seconds: 3 * 365 * 24 * 60 * 60,
+// // unbonding_duration_seconds: 14 * 24 * 60 * 60,
+// #[cw_serde]
+// pub struct VaultInfo {
+//     pub token_balance: Coin,
+//     pub vesting_schedule: Schedule,
+//     pub vesting_duration_seconds: u64,
+//     pub unbonding_duration_seconds: u64,
+//     pub vesting_code_id: u64,
+// }
 
 #[cw_serde]
 pub struct InstantiateMsg {
-    pub create_msg: VendingMinterCreateMsg,
+    pub create_msg: TokenVaultVendingMinterCreateMsg,
     pub params: VendingMinterParams,
-    // pub vault_info: VaultInfo,
 }
 
 #[cw_serde]

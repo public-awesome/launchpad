@@ -2,7 +2,7 @@ use crate::state::VendingMinterParams;
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Coin, Timestamp};
 use cw_vesting::vesting::Schedule;
-use sg2::msg::{CreateMinterMsg, Sg2ExecuteMsg, UpdateMinterParamsMsg};
+use sg2::msg::{CreateMinterMsg, UpdateMinterParamsMsg};
 
 #[cw_serde]
 pub struct InstantiateMsg {

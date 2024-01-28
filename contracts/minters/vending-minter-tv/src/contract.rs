@@ -1,7 +1,7 @@
 use crate::error::ContractError;
 use crate::msg::{
     ConfigResponse, ExecuteMsg, InstantiateMsg, MintCountResponse, MintPriceResponse,
-    MintableNumTokensResponse, QueryMsg, StartTimeResponse, VaultInfo,
+    MintableNumTokensResponse, QueryMsg, StartTimeResponse,
 };
 use crate::state::{
     Config, ConfigExtension, CONFIG, MINTABLE_NUM_TOKENS, MINTABLE_TOKEN_POSITIONS, MINTER_ADDRS,
@@ -35,7 +35,7 @@ use sha2::{Digest, Sha256};
 use shuffle::{fy::FisherYates, shuffler::Shuffler};
 use std::convert::TryInto;
 use url::Url;
-use vending_factory::msg::ParamsResponse;
+use vending_factory::msg::{ParamsResponse, VaultInfo};
 use vending_factory::state::VendingMinterParams;
 
 pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
@@ -74,23 +74,29 @@ pub fn instantiate(
     STATUS.save(deps.storage, &Status::default())?;
 
     if !check_dynamic_per_address_limit(
-        msg.create_msg.init_msg.per_address_limit,
-        msg.create_msg.init_msg.num_tokens,
+        msg.create_msg.init_msg.base.per_address_limit,
+        msg.create_msg.init_msg.base.num_tokens,
         factory_params.extension.max_per_address_limit,
     )? {
         return Err(ContractError::InvalidPerAddressLimit {
             max: display_max_mintable_tokens(
-                msg.create_msg.init_msg.per_address_limit,
-                msg.create_msg.init_msg.num_tokens,
+                msg.create_msg.init_msg.base.per_address_limit,
+                msg.create_msg.init_msg.base.num_tokens,
                 factory_params.extension.max_per_address_limit,
             )?,
             min: 1,
-            got: msg.create_msg.init_msg.per_address_limit,
+            got: msg.create_msg.init_msg.base.per_address_limit,
         });
     }
 
     // sanitize base token uri
-    let mut base_token_uri = msg.create_msg.init_msg.base_token_uri.trim().to_string();
+    let mut base_token_uri = msg
+        .create_msg
+        .init_msg
+        .base
+        .base_token_uri
+        .trim()
+        .to_string();
     // Check that base_token_uri is a valid IPFS uri
     let parsed_token_uri = Url::parse(&base_token_uri)?;
     if parsed_token_uri.scheme() != "ipfs" {
@@ -100,14 +106,14 @@ pub fn instantiate(
 
     let genesis_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
     // If start time is before genesis time return error
-    if msg.create_msg.init_msg.start_time < genesis_time {
+    if msg.create_msg.init_msg.base.start_time < genesis_time {
         return Err(ContractError::BeforeGenesisTime {});
     }
 
     // If current time is beyond the provided start time return error
-    if env.block.time > msg.create_msg.init_msg.start_time {
+    if env.block.time > msg.create_msg.init_msg.base.start_time {
         return Err(ContractError::InvalidStartTime(
-            msg.create_msg.init_msg.start_time,
+            msg.create_msg.init_msg.base.start_time,
             env.block.time,
         ));
     }
@@ -116,6 +122,7 @@ pub fn instantiate(
     let whitelist_addr = msg
         .create_msg
         .init_msg
+        .base
         .whitelist
         .and_then(|w| deps.api.addr_validate(w.as_str()).ok());
 
@@ -132,7 +139,8 @@ pub fn instantiate(
     // Use default start trading time if not provided
     let mut collection_info = msg.create_msg.collection_params.info.clone();
     let offset = factory_params.max_trading_offset_secs;
-    let default_start_time_with_offset = msg.create_msg.init_msg.start_time.plus_seconds(offset);
+    let default_start_time_with_offset =
+        msg.create_msg.init_msg.base.start_time.plus_seconds(offset);
     if let Some(start_trading_time) = msg.create_msg.collection_params.info.start_trading_time {
         // If trading start time > start_time + offset, return error
         if start_trading_time > default_start_time_with_offset {
@@ -157,26 +165,26 @@ pub fn instantiate(
             admin: deps
                 .api
                 .addr_validate(&msg.create_msg.collection_params.info.creator)?,
-            payment_address: maybe_addr(deps.api, msg.create_msg.init_msg.payment_address)?,
+            payment_address: maybe_addr(deps.api, msg.create_msg.init_msg.base.payment_address)?,
             base_token_uri,
-            num_tokens: msg.create_msg.init_msg.num_tokens,
-            per_address_limit: msg.create_msg.init_msg.per_address_limit,
+            num_tokens: msg.create_msg.init_msg.base.num_tokens,
+            per_address_limit: msg.create_msg.init_msg.base.per_address_limit,
             whitelist: whitelist_addr,
-            start_time: msg.create_msg.init_msg.start_time,
+            start_time: msg.create_msg.init_msg.base.start_time,
             discount_price: None,
-            vault_info: msg.vault_info,
+            vault_info: msg.create_msg.init_msg.vault_info,
         },
-        mint_price: msg.create_msg.init_msg.mint_price,
+        mint_price: msg.create_msg.init_msg.base.mint_price,
     };
 
     CONFIG.save(deps.storage, &config)?;
-    MINTABLE_NUM_TOKENS.save(deps.storage, &msg.create_msg.init_msg.num_tokens)?;
+    MINTABLE_NUM_TOKENS.save(deps.storage, &msg.create_msg.init_msg.base.num_tokens)?;
 
     let token_ids = random_token_list(
         &env,
         deps.api
             .addr_validate(&msg.create_msg.collection_params.info.creator)?,
-        (1..=msg.create_msg.init_msg.num_tokens).collect::<Vec<u32>>(),
+        (1..=msg.create_msg.init_msg.base.num_tokens).collect::<Vec<u32>>(),
     )?;
     // Save mintable token ids map
     let mut token_position = 1;
