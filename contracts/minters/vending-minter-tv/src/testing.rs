@@ -10,6 +10,7 @@ use sg2::tests::mock_collection_params_1;
 use sg_multi_test::StargazeApp;
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use test_suite::common_setup::{
+    contract_boxes::contract_vending_factory,
     setup_accounts_and_block::INITIAL_BALANCE,
     setup_minter::vending_minter::mock_params::{mock_create_minter, mock_params},
 };
@@ -37,7 +38,7 @@ fn proper_initialization() {
     };
 
     let mut app = custom_mock_app();
-    let factory_code_id = 8;
+    let factory_code_id = app.store_code(contract_vending_factory());
     let minter_admin = Addr::unchecked("minter-admin");
 
     let factory_addr = app
