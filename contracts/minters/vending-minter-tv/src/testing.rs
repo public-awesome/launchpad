@@ -20,12 +20,8 @@ pub fn custom_mock_app() -> StargazeApp {
 
 #[test]
 fn proper_initialization() {
-    // let mut deps = mock_dependencies_with_balance(&coins(2, "token"));
-
     let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
     let collection_params = mock_collection_params_1(Some(start_time));
-
-    // let create_msg = mock_create_minter(None, collection_params.clone(), None);
     let params = mock_params(None);
 
     let mut app = custom_mock_app();
@@ -63,6 +59,8 @@ fn proper_initialization() {
     let msg = vending_factory::msg::ExecuteMsg::CreateTokenVaultMinter(create_minter_msg);
 
     let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
+
+    // TODO: need to add funds to admin
 
     let res = app.execute_contract(minter_admin, factory_addr.clone(), &msg, &creation_fee);
 
