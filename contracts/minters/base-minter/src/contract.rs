@@ -11,7 +11,7 @@ use cosmwasm_std::{
 };
 use cw2::set_contract_version;
 use cw_utils::{must_pay, nonpayable, parse_reply_instantiate_data};
-use sg1::checked_fair_burn;
+use sg1::checked_fair_burn_old;
 use sg2::query::Sg2QueryMsg;
 use sg4::{QueryMsg, Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
@@ -149,7 +149,7 @@ pub fn execute_mint_sender(
     if network_fee != funds_sent {
         return Err(ContractError::InvalidMintPrice {});
     }
-    checked_fair_burn(&info, network_fee.u128(), None, &mut res)?;
+    checked_fair_burn_old(&info, network_fee.u128(), None, &mut res)?;
 
     // Create mint msgs
     let mint_msg = Sg721ExecuteMsg::<Extension, Empty>::Mint {

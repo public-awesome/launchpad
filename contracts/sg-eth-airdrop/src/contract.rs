@@ -7,7 +7,7 @@ use crate::state::CONFIG;
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{DepsMut, Env, MessageInfo};
 use cw2::set_contract_version;
-use sg1::fair_burn;
+use sg1::fair_burn_old;
 use sg_std::Response;
 
 use build_message::{state_config, whitelist_instantiate};
@@ -27,7 +27,7 @@ pub fn instantiate(
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
     validate_instantiation_params(info.clone(), msg.clone())?;
     let mut res = Response::new();
-    fair_burn(INSTANTIATION_FEE, None, &mut res);
+    fair_burn_old(INSTANTIATION_FEE, None, &mut res);
     let cfg = state_config(deps.as_ref(), info.clone(), msg.clone())?;
     CONFIG.save(deps.storage, &cfg)?;
     Ok(res

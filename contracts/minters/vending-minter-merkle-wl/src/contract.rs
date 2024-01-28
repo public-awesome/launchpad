@@ -21,7 +21,7 @@ use cw_utils::{may_pay, maybe_addr, nonpayable, parse_reply_instantiate_data};
 use rand_core::{RngCore, SeedableRng};
 use rand_xoshiro::Xoshiro128PlusPlus;
 use semver::Version;
-use sg1::{checked_fair_burn, ibc_denom_fair_burn};
+use sg1::{checked_fair_burn_old, ibc_denom_fair_burn_old};
 use sg2::query::Sg2QueryMsg;
 use sg4::{MinterConfig, Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
@@ -352,7 +352,7 @@ pub fn execute_shuffle(
     let factory_params = factory.params;
 
     // Check exact shuffle fee payment included in message
-    checked_fair_burn(
+    checked_fair_burn_old(
         &info,
         factory_params.extension.shuffle_fee.amount.u128(),
         None,
@@ -674,14 +674,14 @@ fn _execute_mint(
     if mint_price.denom != NATIVE_DENOM {
         // only send non-zero amounts
         if !network_fee.is_zero() {
-            ibc_denom_fair_burn(
+            ibc_denom_fair_burn_old(
                 coin(network_fee.u128(), mint_price.clone().denom),
                 None,
                 &mut res,
             )?;
         }
     } else {
-        checked_fair_burn(&info, network_fee.u128(), None, &mut res)?;
+        checked_fair_burn_old(&info, network_fee.u128(), None, &mut res)?;
     }
 
     let mintable_token_mapping = match token_id {

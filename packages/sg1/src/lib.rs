@@ -1,11 +1,35 @@
-use cosmwasm_std::{coin, coins, Addr, BankMsg, Coin, Decimal, Event, MessageInfo, Uint128};
+use cosmwasm_std::{
+    coin, coins, Addr, BankMsg, Coin, Decimal, Event, MessageInfo, Response, SubMsg, Uint128,
+};
 use cw_utils::{may_pay, PaymentError};
-use sg_std::{create_fund_fairburn_pool_msg, Response, SubMsg, NATIVE_DENOM};
+use sg_std::{
+    create_fund_fairburn_pool_msg, Response as SgResponse, SubMsg as SgSubMsg, NATIVE_DENOM,
+};
 use thiserror::Error;
 
 // governance parameters
 const FEE_BURN_PERCENT: u64 = 50;
 const FOUNDATION: &str = "stars1xqz6xujjyz0r9uzn7srasle5uynmpa0zkjr5l8";
+
+/// Burn and distribute fees and return an error if the fee is not enough
+pub fn checked_fair_burn_old(
+    info: &MessageInfo,
+    fee: u128,
+    developer: Option<Addr>,
+    res: &mut SgResponse,
+) -> Result<(), FeeError> {
+    // Use may_pay because fees could be 0. Add check to avoid transferring 0 funds
+    let payment = may_pay(info, NATIVE_DENOM)?;
+    if payment.u128() < fee {
+        return Err(FeeError::InsufficientFee(fee, payment.u128()));
+    };
+
+    if payment.u128() != 0u128 {
+        fair_burn_old(fee, developer, res);
+    }
+
+    Ok(())
+}
 
 /// Burn and distribute fees and return an error if the fee is not enough
 pub fn checked_fair_burn(
@@ -24,6 +48,49 @@ pub fn checked_fair_burn(
         fair_burn(fee, developer, res);
     }
 
+    Ok(())
+}
+
+/// IBC assets go to community pool and dev
+/// 7/29/23 temporary fix until we switch to using fairburn contract
+pub fn ibc_denom_fair_burn_old(
+    fee: Coin,
+    developer: Option<Addr>,
+    res: &mut SgResponse,
+) -> Result<(), FeeError> {
+    let mut event = Event::new("ibc-fair-burn");
+
+    match &developer {
+        Some(developer) => {
+            // Calculate the fees. 50% to dev, 50% to foundation
+            let dev_fee = (fee.amount.mul_ceil(Decimal::percent(FEE_BURN_PERCENT))).u128();
+            let dev_coin = coin(dev_fee, fee.denom.to_string());
+            let foundation_coin = coin(fee.amount.u128() - dev_fee, fee.denom);
+
+            event = event.add_attribute("dev_addr", developer.to_string());
+            event = event.add_attribute("dev_coin", dev_coin.to_string());
+            event = event.add_attribute("foundation_coin", foundation_coin.to_string());
+
+            res.messages.push(SubMsg::new(BankMsg::Send {
+                to_address: developer.to_string(),
+                amount: vec![dev_coin],
+            }));
+            res.messages.push(SubMsg::new(BankMsg::Send {
+                to_address: FOUNDATION.to_string(),
+                amount: vec![foundation_coin],
+            }));
+        }
+        None => {
+            // No dev, send all to foundation.
+            event = event.add_attribute("foundation_coin", fee.to_string());
+            res.messages.push(SubMsg::new(BankMsg::Send {
+                to_address: FOUNDATION.to_string(),
+                amount: vec![fee],
+            }));
+        }
+    }
+
+    res.events.push(event);
     Ok(())
 }
 
@@ -71,7 +138,7 @@ pub fn ibc_denom_fair_burn(
 }
 
 /// Burn and distribute fees, assuming the right fee is passed in
-pub fn fair_burn(fee: u128, developer: Option<Addr>, res: &mut Response) {
+pub fn fair_burn_old(fee: u128, developer: Option<Addr>, res: &mut SgResponse) {
     let mut event = Event::new("fair-burn");
 
     // calculate the fair burn fee
@@ -103,6 +170,39 @@ pub fn fair_burn(fee: u128, developer: Option<Addr>, res: &mut Response) {
     res.events.push(event);
 }
 
+/// Burn and distribute fees, assuming the right fee is passed in
+pub fn fair_burn(fee: u128, developer: Option<Addr>, res: &mut Response) {
+    let mut event = Event::new("fair-burn");
+
+    // calculate the fair burn fee
+    let burn_fee = (Uint128::from(fee) * Decimal::percent(FEE_BURN_PERCENT)).u128();
+    let burn_coin = coins(burn_fee, NATIVE_DENOM);
+    res.messages
+        .push(SubMsg::new(BankMsg::Burn { amount: burn_coin }));
+    event = event.add_attribute("burn_amount", Uint128::from(burn_fee).to_string());
+
+    // send remainder to developer or community pool
+    let remainder = fee - burn_fee;
+
+    if let Some(dev) = developer {
+        res.messages.push(SubMsg::new(BankMsg::Send {
+            to_address: dev.to_string(),
+            amount: coins(remainder, NATIVE_DENOM),
+        }));
+        event = event.add_attribute("dev", dev.to_string());
+        event = event.add_attribute("dev_amount", Uint128::from(remainder).to_string());
+    } else {
+        // res.messages
+        //     .push(SubMsg::new(create_fund_fairburn_pool_msg(coins(
+        //         remainder,
+        //         NATIVE_DENOM,
+        //     ))));
+        event = event.add_attribute("dist_amount", Uint128::from(remainder).to_string());
+    }
+
+    res.events.push(event);
+}
+
 #[derive(Error, Debug, PartialEq, Eq)]
 pub enum FeeError {
     #[error("Insufficient fee: expected {0}, got {1}")]
@@ -117,13 +217,13 @@ mod tests {
     use cosmwasm_std::{coins, Addr, BankMsg};
     use sg_std::{create_fund_fairburn_pool_msg, Response, NATIVE_DENOM};
 
-    use crate::{fair_burn, SubMsg};
+    use crate::{fair_burn_old, SubMsg};
 
     #[test]
     fn check_fair_burn_no_dev_rewards() {
         let mut res = Response::new();
 
-        fair_burn(9u128, None, &mut res);
+        fair_burn_old(9u128, None, &mut res);
         let burn_msg = SubMsg::new(BankMsg::Burn {
             amount: coins(4, "ustars".to_string()),
         });
@@ -137,7 +237,7 @@ mod tests {
     fn check_fair_burn_with_dev_rewards() {
         let mut res = Response::new();
 
-        fair_burn(9u128, Some(Addr::unchecked("geordi")), &mut res);
+        fair_burn_old(9u128, Some(Addr::unchecked("geordi")), &mut res);
         let bank_msg = SubMsg::new(BankMsg::Send {
             to_address: "geordi".to_string(),
             amount: coins(5, NATIVE_DENOM),
@@ -154,7 +254,7 @@ mod tests {
     fn check_fair_burn_with_dev_rewards_different_amount() {
         let mut res = Response::new();
 
-        fair_burn(1420u128, Some(Addr::unchecked("geordi")), &mut res);
+        fair_burn_old(1420u128, Some(Addr::unchecked("geordi")), &mut res);
         let bank_msg = SubMsg::new(BankMsg::Send {
             to_address: "geordi".to_string(),
             amount: coins(710, NATIVE_DENOM),

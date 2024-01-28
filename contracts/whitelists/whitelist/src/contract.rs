@@ -18,7 +18,7 @@ use cw_storage_plus::Bound;
 use cw_utils::{may_pay, maybe_addr, must_pay};
 use rust_decimal::prelude::ToPrimitive;
 use rust_decimal::Decimal;
-use sg1::checked_fair_burn;
+use sg1::checked_fair_burn_old;
 use sg_std::{Response, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
 // version info for migration info
@@ -122,7 +122,7 @@ pub fn instantiate(
     }
 
     let mut res = Response::new();
-    checked_fair_burn(&info, creation_fee, None, &mut res)?;
+    checked_fair_burn_old(&info, creation_fee, None, &mut res)?;
 
     if config.member_limit < config.num_members {
         return Err(ContractError::MembersExceeded {
@@ -348,7 +348,7 @@ pub fn execute_increase_member_limit(
 
     let mut res = Response::new();
     if upgrade_fee > 0 {
-        checked_fair_burn(&info, upgrade_fee, None, &mut res)?
+        checked_fair_burn_old(&info, upgrade_fee, None, &mut res)?
     }
 
     config.member_limit = member_limit;

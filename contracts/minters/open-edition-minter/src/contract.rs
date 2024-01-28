@@ -19,7 +19,7 @@ use cw_utils::{may_pay, maybe_addr, nonpayable, parse_reply_instantiate_data};
 use open_edition_factory::msg::{OpenEditionMinterCreateMsg, ParamsResponse};
 use open_edition_factory::types::NftMetadataType;
 use semver::Version;
-use sg1::{checked_fair_burn, ibc_denom_fair_burn};
+use sg1::{checked_fair_burn_old, ibc_denom_fair_burn_old};
 use sg2::query::Sg2QueryMsg;
 use sg4::{Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
@@ -338,7 +338,7 @@ fn _execute_mint(
         // only send non-zero amounts
         // send portion to dev addr
         if !network_fee.is_zero() {
-            ibc_denom_fair_burn(
+            ibc_denom_fair_burn_old(
                 coin(network_fee.u128(), mint_price.denom.to_string()),
                 Some(
                     deps.api
@@ -348,7 +348,7 @@ fn _execute_mint(
             )?;
         }
     } else if !network_fee.is_zero() {
-        checked_fair_burn(
+        checked_fair_burn_old(
             &info,
             network_fee.u128(),
             Some(

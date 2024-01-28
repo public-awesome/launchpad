@@ -7,7 +7,7 @@ use cosmwasm_std::{
 };
 use cw2::set_contract_version;
 use cw_utils::must_pay;
-use sg1::checked_fair_burn;
+use sg1::checked_fair_burn_old;
 use sg2::query::{AllowedCollectionCodeIdResponse, AllowedCollectionCodeIdsResponse, Sg2QueryMsg};
 use sg_std::{Response, NATIVE_DENOM};
 
@@ -65,7 +65,7 @@ pub fn execute_create_minter(
     must_not_be_frozen(&params)?;
 
     let mut res = Response::new();
-    checked_fair_burn(&info, params.creation_fee.amount.u128(), None, &mut res)?;
+    checked_fair_burn_old(&info, params.creation_fee.amount.u128(), None, &mut res)?;
 
     // Check the number of tokens is more than zero and less than the max limit
     if msg.init_msg.num_tokens == 0 || msg.init_msg.num_tokens > params.extension.max_token_limit {
@@ -124,7 +124,7 @@ pub fn execute_create_token_vault_minter(
     must_not_be_frozen(&params)?;
 
     let mut res = Response::new();
-    checked_fair_burn(&info, params.creation_fee.amount.u128(), None, &mut res)?;
+    checked_fair_burn_old(&info, params.creation_fee.amount.u128(), None, &mut res)?;
 
     // Check the number of tokens is more than zero and less than the max limit
     if msg.init_msg.base.num_tokens == 0

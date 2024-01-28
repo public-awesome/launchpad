@@ -5,7 +5,7 @@ use cosmwasm_std::{
 };
 use cw2::set_contract_version;
 use cw_utils::must_pay;
-use sg1::checked_fair_burn;
+use sg1::checked_fair_burn_old;
 use sg2::msg::UpdateMinterParamsMsg;
 use sg2::query::{AllowedCollectionCodeIdResponse, AllowedCollectionCodeIdsResponse, Sg2QueryMsg};
 use sg2::MinterParams;
@@ -62,7 +62,7 @@ pub fn execute_create_minter(
     must_not_be_frozen(&params)?;
 
     let mut res = Response::new();
-    checked_fair_burn(&info, params.creation_fee.amount.u128(), None, &mut res)?;
+    checked_fair_burn_old(&info, params.creation_fee.amount.u128(), None, &mut res)?;
 
     let msg = WasmMsg::Instantiate {
         admin: Some(info.sender.to_string()),

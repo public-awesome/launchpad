@@ -16,7 +16,7 @@ use crate::state::ENABLE_UPDATABLE;
 
 use cw721_base::Extension;
 use cw_utils::nonpayable;
-use sg1::checked_fair_burn;
+use sg1::checked_fair_burn_old;
 use sg721_base::ContractError::Unauthorized;
 use sg721_base::Sg721Contract;
 pub type Sg721UpdatableContract<'a> = Sg721Contract<'a, Extension>;
@@ -68,7 +68,7 @@ pub fn execute_enable_updatable(
     }
 
     // Check fee matches enable updatable fee and add fairburn msg
-    checked_fair_burn(&info, ENABLE_UPDATABLE_FEE, None, &mut res)?;
+    checked_fair_burn_old(&info, ENABLE_UPDATABLE_FEE, None, &mut res)?;
 
     ENABLE_UPDATABLE.save(deps.storage, &true)?;
 
