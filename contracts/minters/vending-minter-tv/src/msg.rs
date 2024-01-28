@@ -19,7 +19,7 @@ pub struct VaultInfo {
 pub struct InstantiateMsg {
     pub create_msg: VendingMinterCreateMsg,
     pub params: VendingMinterParams,
-    pub vault_info: VaultInfo,
+    // pub vault_info: VaultInfo,
 }
 
 #[cw_serde]

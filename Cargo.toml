@@ -40,6 +40,8 @@ cw721-base      = "0.18.0"
 cw-multi-test   = "0.16.2"
 cw-storage-plus = "1.1.0"
 cw-utils        = "1.0.1"
+cw-vesting      = "2.2.0"
+
 schemars        = "0.8.11"
 serde           = { version = "1.0.145", default-features = false, features = ["derive"] }
 sg1             = { version = "3.5.0", path = "packages/sg1" }

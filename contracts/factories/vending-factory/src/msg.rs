@@ -1,8 +1,8 @@
+use crate::state::VendingMinterParams;
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Coin, Timestamp};
+use cw_vesting::vesting::Schedule;
 use sg2::msg::{CreateMinterMsg, Sg2ExecuteMsg, UpdateMinterParamsMsg};
-
-use crate::state::VendingMinterParams;
 
 #[cw_serde]
 pub struct InstantiateMsg {
@@ -21,7 +21,32 @@ pub struct VendingMinterInitMsgExtension {
 }
 pub type VendingMinterCreateMsg = CreateMinterMsg<VendingMinterInitMsgExtension>;
 
-pub type ExecuteMsg = Sg2ExecuteMsg<VendingMinterInitMsgExtension>;
+// vesting_duration_seconds: 3 * 365 * 24 * 60 * 60,
+// unbonding_duration_seconds: 14 * 24 * 60 * 60,
+#[cw_serde]
+pub struct VaultInfo {
+    pub token_balance: Coin,
+    pub vesting_schedule: Schedule,
+    pub vesting_duration_seconds: u64,
+    pub unbonding_duration_seconds: u64,
+    pub vesting_code_id: u64,
+}
+
+#[cw_serde]
+pub struct TokenVaultVendingMinterInitMsgExtension {
+    pub base: VendingMinterInitMsgExtension,
+    pub vault_info: VaultInfo,
+}
+pub type TokenVaultVendingMinterCreateMsg =
+    CreateMinterMsg<TokenVaultVendingMinterInitMsgExtension>;
+
+// pub type ExecuteMsg = Sg2ExecuteMsg<VendingMinterInitMsgExtension>;
+
+#[cw_serde]
+pub enum ExecuteMsg {
+    CreateMinter(VendingMinterCreateMsg),
+    CreateTokenVaultMinter(TokenVaultVendingMinterCreateMsg),
+}
 
 #[cw_serde]
 pub enum SudoMsg {

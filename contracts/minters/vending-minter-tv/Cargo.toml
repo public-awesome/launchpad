@@ -53,7 +53,7 @@ sg-mint-hooks   = { workspace = true }
 sg-controllers  = { workspace = true }
 sg721-tv        = { workspace = true }
 sg-token-vault  = { workspace = true }
-cw-vesting      = "2.2.0"
+cw-vesting      = { workspace = true }
 
 [dev-dependencies]
 test-suite = { workspace = true }
