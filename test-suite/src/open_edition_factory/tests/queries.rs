@@ -81,6 +81,10 @@ mod tests {
                 res.params.extension.dev_fee_address,
                 params.extension.dev_fee_address
             );
+            assert_eq!(
+                res.params.extension.max_token_limit,
+                params.extension.max_token_limit
+            );
         }
 
         #[test]

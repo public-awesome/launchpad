@@ -506,7 +506,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-wasm-rust-no-wasm:1.67.1-{{ checksum "~/project/Cargo.lock" }}
+            - cargocache-wasm-rust-no-wasm:1.73.0-{{ checksum "~/project/Cargo.lock" }}
       - run:
           name: Add wasm32 target
           command: rustup target add wasm32-unknown-unknown
@@ -553,7 +553,7 @@ jobs:
             - /target/debug
             - /target/release
             - /target/tarpaulin
-          key: cargocache-wasm-rust-no-wasm:1.67.1-{{ checksum "~/project/Cargo.lock" }}
+          key: cargocache-wasm-rust-no-wasm:1.73.0-{{ checksum "~/project/Cargo.lock" }}
       - run:
           name: Check wasm contracts
           command: |

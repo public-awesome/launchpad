@@ -17,16 +17,17 @@ pub fn minter_params_open_edition(
     init_msg: OpenEditionMinterInitMsgExtension,
     start_time: Option<Timestamp>,
     end_time: Option<Timestamp>,
+    num_tokens: Option<u32>,
     nft_data: Option<NftData>,
     custom_params: Option<OpenEditionMinterParams>,
 ) -> OpenEditionMinterInstantiateParams {
     let start_time = start_time.unwrap_or(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 100));
-    let end_time = end_time.unwrap_or(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000));
 
     OpenEditionMinterInstantiateParams {
         start_time: Some(start_time),
-        end_time: Some(end_time),
+        end_time,
         per_address_limit: Some(init_msg.per_address_limit),
+        num_tokens,
         nft_data: Some(
             nft_data.unwrap_or(NftData {
                 nft_data_type: NftMetadataType::OffChainMetadata,
@@ -58,18 +59,19 @@ pub fn init_msg(
     per_address_limit_minter: Option<u32>,
     start_time: Option<Timestamp>,
     end_time: Option<Timestamp>,
+    num_tokens: Option<u32>,
     mint_price: Option<Coin>,
 ) -> OpenEditionMinterInitMsgExtension {
     let start_time = start_time.unwrap_or(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 100));
-    let end_time = end_time.unwrap_or(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000));
     let mint_price = mint_price.unwrap_or(Coin {
         denom: NATIVE_DENOM.to_string(),
         amount: Uint128::new(MIN_MINT_PRICE_OPEN_EDITION),
     });
     mock_init_minter_extension(
         Some(start_time),
-        Some(end_time),
+        end_time,
         per_address_limit_minter,
+        num_tokens,
         Some(mint_price),
         nft_data,
         None,

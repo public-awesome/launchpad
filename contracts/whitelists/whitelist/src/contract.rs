@@ -237,7 +237,7 @@ pub fn execute_add_members(
     // remove duplicate members
     msg.to_add.sort_unstable();
     msg.to_add.dedup();
-
+    let mut members_added = 0;
     for add in msg.to_add.into_iter() {
         if config.num_members >= config.member_limit {
             return Err(ContractError::MembersExceeded {
@@ -246,9 +246,11 @@ pub fn execute_add_members(
             });
         }
         let addr = deps.api.addr_validate(&add)?;
+        // if already whitelisted, skip it
         if WHITELIST.has(deps.storage, addr.clone()) {
-            return Err(ContractError::DuplicateMember(addr.to_string()));
+            continue;
         }
+        members_added += 1;
         WHITELIST.save(deps.storage, addr, &true)?;
         config.num_members += 1;
     }
@@ -257,6 +259,8 @@ pub fn execute_add_members(
 
     Ok(Response::new()
         .add_attribute("action", "add_members")
+        .add_attribute("num_members", config.num_members.to_string())
+        .add_attribute("members_added", members_added.to_string())
         .add_attribute("sender", info.sender))
 }
 

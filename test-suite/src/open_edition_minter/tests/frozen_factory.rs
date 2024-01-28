@@ -19,6 +19,7 @@ use crate::common_setup::templates::open_edition_minter_custom_template;
 #[test]
 fn frozen_factory_cannot_create_new_minters() {
     let params_extension = ParamsExtension {
+        max_token_limit: 10,
         max_per_address_limit: 10,
         airdrop_mint_fee_bps: 100,
         airdrop_mint_price: Coin {
@@ -27,7 +28,14 @@ fn frozen_factory_cannot_create_new_minters() {
         },
         dev_fee_address: DEV_ADDRESS.to_string(),
     };
-    let init_msg = init_msg(default_nft_data(), None, None, None, None);
+    let init_msg = init_msg(
+        default_nft_data(),
+        None,
+        None,
+        Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
+        None,
+        None,
+    );
     let vt = open_edition_minter_custom_template(params_extension, init_msg).unwrap();
 
     let (mut router, creator, _buyer) = (vt.router, vt.accts.creator, vt.accts.buyer);
@@ -44,6 +52,7 @@ fn frozen_factory_cannot_create_new_minters() {
         mint_fee_bps: None,
         max_trading_offset_secs: None,
         extension: OpenEditionUpdateParamsExtension {
+            max_token_limit: None,
             max_per_address_limit: None,
             min_mint_price: None,
             airdrop_mint_fee_bps: None,
@@ -76,6 +85,7 @@ fn frozen_factory_cannot_create_new_minters() {
         Some(end_time),
         mint_price,
         per_address_limit_minter,
+        None,
         default_nft_data,
         collection_params,
         None,

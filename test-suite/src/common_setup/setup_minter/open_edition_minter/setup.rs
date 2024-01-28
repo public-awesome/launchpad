@@ -24,10 +24,12 @@ use crate::common_setup::setup_minter::open_edition_minter::mock_params::{
 
 use crate::common_setup::setup_minter::common::constants::CREATION_FEE;
 
+#[allow(clippy::too_many_arguments)]
 pub fn build_init_msg(
     init_msg: Option<OpenEditionMinterInitMsgExtension>,
     start_time: Option<Timestamp>,
     end_time: Option<Timestamp>,
+    num_tokens: Option<u32>,
     per_address_limit_minter: Option<u32>,
     nft_data: NftData,
     mint_price: Option<Coin>,
@@ -39,6 +41,7 @@ pub fn build_init_msg(
             start_time,
             end_time,
             per_address_limit_minter,
+            num_tokens,
             mint_price,
             nft_data,
             payment_address,
@@ -86,6 +89,7 @@ pub fn setup_open_edition_minter_contract(
         end_time,
         Some(coin(min_mint_price.u128(), denom.clone())),
         Some(params.extension.max_per_address_limit),
+        None,
         nft_data.clone(),
         collection_params,
         None,
@@ -94,6 +98,7 @@ pub fn setup_open_edition_minter_contract(
         init_msg,
         start_time,
         end_time,
+        Some(params.extension.max_token_limit),
         Some(params.extension.max_per_address_limit),
         nft_data,
         Some(coin(min_mint_price.u128(), denom)),
@@ -158,6 +163,7 @@ pub fn sudo_update_params(
                     min_mint_price: None,
                     dev_fee_address: None,
                     max_per_address_limit: None,
+                    max_token_limit: None,
                     airdrop_mint_price: None,
                     airdrop_mint_fee_bps: None,
                 },
@@ -202,6 +208,7 @@ pub fn configure_open_edition_minter(
                 .unwrap(),
             init_msg: minter_instantiate_params_vec[index].init_msg.clone(),
             end_time: minter_instantiate_params_vec[index].end_time.to_owned(),
+            num_tokens: minter_instantiate_params_vec[index].num_tokens.to_owned(),
             custom_params: minter_instantiate_params_vec[index].custom_params.clone(),
         };
         let minter_collection_res = setup_open_edition_minter_contract(setup_params);

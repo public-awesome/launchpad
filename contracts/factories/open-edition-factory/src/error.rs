@@ -25,6 +25,9 @@ pub enum ContractError {
     #[error("Unauthorized")]
     Unauthorized {},
 
+    #[error("LimitOfTimeOrNumTokensRequired")]
+    LimitOfTimeOrNumTokensRequired {},
+
     #[error("InvalidMintPrice")]
     InvalidMintPrice {},
 
