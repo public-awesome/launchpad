@@ -27,7 +27,7 @@ library = []
 
 [dependencies]
 cosmwasm-schema = { workspace = true }
-cosmwasm-std    = { workspace = true, features = ["cosmwasm_1_1"] }
+cosmwasm-std    = { workspace = true, features = ["cosmwasm_1_2"] }
 cw2             = { workspace = true }
 cw721           = { workspace = true }
 cw721-base      = { workspace = true, features = ["library"] }
@@ -58,3 +58,4 @@ cw-vesting      = "2.2.0"
 [dev-dependencies]
 test-suite = { workspace = true }
 sg-multi-test = { workspace = true }
+cw-multi-test = { workspace = true }

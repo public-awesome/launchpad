@@ -4753,6 +4753,7 @@ version = "3.5.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
+ "cw-multi-test",
  "cw-storage-plus 1.1.0",
  "cw-utils 1.0.1",
  "cw-vesting",
