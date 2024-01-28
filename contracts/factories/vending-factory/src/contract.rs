@@ -127,7 +127,9 @@ pub fn execute_create_token_vault_minter(
     checked_fair_burn(&info, params.creation_fee.amount.u128(), None, &mut res)?;
 
     // Check the number of tokens is more than zero and less than the max limit
-    if msg.init_msg.num_tokens == 0 || msg.init_msg.num_tokens > params.extension.max_token_limit {
+    if msg.init_msg.base.num_tokens == 0
+        || msg.init_msg.base.num_tokens > params.extension.max_token_limit
+    {
         return Err(ContractError::InvalidNumTokens {
             min: 1,
             max: params.extension.max_token_limit,
@@ -135,25 +137,25 @@ pub fn execute_create_token_vault_minter(
     }
 
     // Check per address limit is valid
-    if msg.init_msg.per_address_limit == 0
-        || msg.init_msg.per_address_limit > params.extension.max_per_address_limit
+    if msg.init_msg.base.per_address_limit == 0
+        || msg.init_msg.base.per_address_limit > params.extension.max_per_address_limit
     {
         return Err(ContractError::InvalidPerAddressLimit {
             max: params.extension.max_per_address_limit,
             min: 1,
-            got: msg.init_msg.per_address_limit,
+            got: msg.init_msg.base.per_address_limit,
         });
     }
 
     ensure!(
-        params.min_mint_price.denom == msg.init_msg.mint_price.denom,
+        params.min_mint_price.denom == msg.init_msg.base.mint_price.denom,
         ContractError::DenomMismatch {}
     );
 
-    if params.min_mint_price.amount > msg.init_msg.mint_price.amount {
+    if params.min_mint_price.amount > msg.init_msg.base.mint_price.amount {
         return Err(ContractError::InsufficientMintPrice {
             expected: params.min_mint_price.amount.u128(),
-            got: msg.init_msg.mint_price.amount.into(),
+            got: msg.init_msg.base.mint_price.amount.into(),
         });
     }
 
@@ -162,7 +164,10 @@ pub fn execute_create_token_vault_minter(
         code_id: params.code_id,
         msg: to_binary(&msg)?,
         funds: vec![],
-        label: format!("VendingMinter-{}", msg.collection_params.name.trim()),
+        label: format!(
+            "TokenVaultVendingMinter-{}",
+            msg.collection_params.name.trim()
+        ),
     };
 
     Ok(res
