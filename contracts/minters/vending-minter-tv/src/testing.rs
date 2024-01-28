@@ -6,6 +6,7 @@ use cosmwasm_std::{
     Addr, Timestamp,
 };
 use cw_multi_test::{AppResponse, Executor};
+use sg2::msg::Sg2ExecuteMsg;
 use sg2::tests::mock_collection_params_1;
 use sg_multi_test::StargazeApp;
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
@@ -58,9 +59,7 @@ fn proper_initialization() {
     //     vault_info,
     // };
 
-    // let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
-
-    // let res = instantiate(deps.as_mut(), mock_env(), info, msg);
+    let msg = Sg2ExecuteMsg::CreateMinter(msg);
 
     // assert!(res.is_ok())
 }
