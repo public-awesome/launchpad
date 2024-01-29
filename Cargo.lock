@@ -3780,6 +3780,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "sg721-tv"
+version = "3.5.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-ownable",
+ "cw2 1.1.2",
+ "cw721 0.18.0",
+ "cw721-base 0.18.0",
+ "schemars",
+ "serde",
+ "sg-metadata",
+ "sg-std",
+ "sg721",
+ "sg721-base",
+]
+
+[[package]]
 name = "sg721-updatable"
 version = "3.5.0"
 dependencies = [
