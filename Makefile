@@ -15,7 +15,7 @@ deploy-local:
 		-p 26657:26657 \
 		-p 9090:9090 \
 		--mount type=volume,source=stargaze_data,target=/root \
-		publicawesome/stargaze:8.0.0 /data/entry-point.sh $(TEST_ADDRS)
+		publicawesome/stargaze:13.0.0-beta.2 /data/entry-point.sh $(TEST_ADDRS)
 
 e2etest:
 	RUST_LOG=info CONFIG=configs/cosm-orc.yaml cargo integration-test $(TEST_NAME)
