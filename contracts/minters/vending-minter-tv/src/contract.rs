@@ -16,6 +16,7 @@ use cosmwasm_std::{
     Timestamp, Uint128, WasmMsg,
 };
 use cw2::set_contract_version;
+use cw721::ContractInfoResponse;
 use cw721_base::Extension;
 use cw_utils::{may_pay, maybe_addr, nonpayable, parse_reply_instantiate_data};
 use rand_core::{RngCore, SeedableRng};
@@ -33,7 +34,7 @@ use sha2::{Digest, Sha256};
 use shuffle::{fy::FisherYates, shuffler::Shuffler};
 use std::convert::TryInto;
 use url::Url;
-use vending_factory::msg::{ParamsResponse, VendingMinterCreateMsg};
+use vending_factory::msg::{ParamsResponse, VaultInfo, VendingMinterCreateMsg};
 use vending_factory::state::VendingMinterParams;
 
 pub struct TokenPositionMapping {
@@ -736,6 +737,60 @@ fn _execute_mint(
             "seller_amount",
             coin(seller_amount.u128(), mint_price.denom).to_string(),
         ))
+}
+
+fn init_vesting(
+    deps: Deps,
+    contract_address: &str,
+    collection: &str,
+    token_id: &str,
+    vault_info: VaultInfo,
+    recipient: String,
+) -> Result<(Addr, WasmMsg), ContractError> {
+    let contract_info: ContractInfoResponse = deps
+        .querier
+        .query_wasm_smart(collection, &Sg721TVQueryMsg::ContractInfo {})?;
+
+    let title = contract_info.name + " #" + token_id;
+
+    let VaultInfo {
+        token_balance,
+        vesting_schedule,
+        vesting_duration_seconds,
+        unbonding_duration_seconds,
+        vesting_code_id,
+    } = vault_info;
+
+    let vesting_init = cw_vesting::msg::InstantiateMsg {
+        owner: None,
+        recipient,
+        title: title + " Vault",
+        description: None,
+        total: token_balance.amount,
+        denom: cw_vesting::UncheckedDenom::Native(token_balance.clone().denom),
+        schedule: vesting_schedule,
+        start_time: None,
+        vesting_duration_seconds,
+        unbonding_duration_seconds,
+    };
+
+    let canonical_creator = deps.api.addr_canonicalize(contract_address)?;
+    let checksum = deps.querier.query_wasm_code_info(vesting_code_id)?.checksum;
+    let salt_raw = collection.to_owned() + "/" + token_id;
+    let vesting_addr_raw =
+        instantiate2_address(&checksum, &canonical_creator, salt_raw.as_bytes())?;
+    let vesting_addr = deps.api.addr_humanize(&vesting_addr_raw)?;
+
+    let vesting_msg = WasmMsg::Instantiate2 {
+        admin: None,
+        code_id: vesting_code_id,
+        label: "Token-vault Vesting".to_string(),
+        msg: to_binary(&vesting_init)?,
+        funds: vec![token_balance],
+        salt: to_binary(&salt_raw)?,
+    };
+
+    Ok((vesting_addr, vesting_msg))
 }
 
 fn random_token_list(
