@@ -2,6 +2,7 @@ use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, Coin, Timestamp};
 use cw_storage_plus::{Item, Map};
 use sg4::{MinterConfig, Status};
+use vending_factory::msg::VaultInfo;
 
 #[cw_serde]
 pub struct ConfigExtension {
@@ -13,6 +14,7 @@ pub struct ConfigExtension {
     pub start_time: Timestamp,
     pub per_address_limit: u32,
     pub discount_price: Option<Coin>,
+    pub vault_info: VaultInfo,
 }
 pub type Config = MinterConfig<ConfigExtension>;
 

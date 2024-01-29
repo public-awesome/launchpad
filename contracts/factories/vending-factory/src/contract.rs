@@ -14,8 +14,8 @@ use sg_std::NATIVE_DENOM;
 
 use crate::error::ContractError;
 use crate::msg::{
-    ExecuteMsg, InstantiateMsg, ParamsResponse, SudoMsg, VendingMinterCreateMsg,
-    VendingUpdateParamsMsg,
+    ExecuteMsg, InstantiateMsg, ParamsResponse, SudoMsg, TokenVaultVendingMinterCreateMsg,
+    VendingMinterCreateMsg, VendingUpdateParamsMsg,
 };
 use crate::state::SUDO_PARAMS;
 
@@ -47,6 +47,9 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::CreateMinter(msg) => execute_create_minter(deps, env, info, msg),
+        ExecuteMsg::CreateTokenVaultMinter(msg) => {
+            execute_create_token_vault_minter(deps, env, info, msg)
+        }
     }
 }
 
@@ -102,6 +105,70 @@ pub fn execute_create_minter(
         msg: to_json_binary(&msg)?,
         funds: vec![],
         label: format!("VendingMinter-{}", msg.collection_params.name.trim()),
+    };
+
+    Ok(res
+        .add_attribute("action", "create_minter")
+        .add_message(wasm_msg))
+}
+
+pub fn execute_create_token_vault_minter(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    msg: TokenVaultVendingMinterCreateMsg,
+) -> Result<Response, ContractError> {
+    must_pay(&info, NATIVE_DENOM)?;
+    must_be_allowed_collection(deps.as_ref(), msg.collection_params.code_id)?;
+
+    let params = SUDO_PARAMS.load(deps.storage)?;
+    must_not_be_frozen(&params)?;
+
+    let mut res = Response::new();
+    checked_fair_burn(&info, params.creation_fee.amount.u128(), None, &mut res)?;
+
+    // Check the number of tokens is more than zero and less than the max limit
+    if msg.init_msg.base.num_tokens == 0
+        || msg.init_msg.base.num_tokens > params.extension.max_token_limit
+    {
+        return Err(ContractError::InvalidNumTokens {
+            min: 1,
+            max: params.extension.max_token_limit,
+        });
+    }
+
+    // Check per address limit is valid
+    if msg.init_msg.base.per_address_limit == 0
+        || msg.init_msg.base.per_address_limit > params.extension.max_per_address_limit
+    {
+        return Err(ContractError::InvalidPerAddressLimit {
+            max: params.extension.max_per_address_limit,
+            min: 1,
+            got: msg.init_msg.base.per_address_limit,
+        });
+    }
+
+    ensure!(
+        params.min_mint_price.denom == msg.init_msg.base.mint_price.denom,
+        ContractError::DenomMismatch {}
+    );
+
+    if params.min_mint_price.amount > msg.init_msg.base.mint_price.amount {
+        return Err(ContractError::InsufficientMintPrice {
+            expected: params.min_mint_price.amount.u128(),
+            got: msg.init_msg.base.mint_price.amount.into(),
+        });
+    }
+
+    let wasm_msg = WasmMsg::Instantiate {
+        admin: Some(info.sender.to_string()),
+        code_id: params.code_id,
+        msg: to_json_binary(&msg)?,
+        funds: vec![],
+        label: format!(
+            "TokenVaultVendingMinter-{}",
+            msg.collection_params.name.trim()
+        ),
     };
 
     Ok(res

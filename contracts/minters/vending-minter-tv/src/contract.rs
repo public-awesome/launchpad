@@ -17,7 +17,6 @@ use cosmwasm_std::{
 };
 use cw2::set_contract_version;
 use cw721::ContractInfoResponse;
-use cw721_base::Extension;
 use cw_utils::{may_pay, maybe_addr, nonpayable, parse_reply_instantiate_data};
 use rand_core::{RngCore, SeedableRng};
 use rand_xoshiro::Xoshiro128PlusPlus;
@@ -26,7 +25,7 @@ use sg1::{checked_fair_burn, ibc_denom_fair_burn};
 use sg2::query::Sg2QueryMsg;
 use sg4::{MinterConfig, Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
-use sg721_tv::QueryMsg as Sg721TVQueryMsg;
+use sg721_tv::{Metadata, QueryMsg as Sg721TVQueryMsg};
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use sg_whitelist::msg::{
     ConfigResponse as WhitelistConfigResponse, HasMemberResponse, QueryMsg as WhitelistQueryMsg,
@@ -35,7 +34,7 @@ use sha2::{Digest, Sha256};
 use shuffle::{fy::FisherYates, shuffler::Shuffler};
 use std::convert::TryInto;
 use url::Url;
-use vending_factory::msg::{ParamsResponse, VaultInfo, VendingMinterCreateMsg};
+use vending_factory::msg::{ParamsResponse, TokenVaultVendingMinterCreateMsg, VaultInfo};
 use vending_factory::state::VendingMinterParams;
 
 pub struct TokenPositionMapping {
@@ -54,7 +53,7 @@ pub fn instantiate(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    msg: VendingMinterCreateMsg,
+    msg: TokenVaultVendingMinterCreateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
@@ -71,23 +70,23 @@ pub fn instantiate(
     STATUS.save(deps.storage, &Status::default())?;
 
     if !check_dynamic_per_address_limit(
-        msg.init_msg.per_address_limit,
-        msg.init_msg.num_tokens,
+        msg.init_msg.base.per_address_limit,
+        msg.init_msg.base.num_tokens,
         factory_params.extension.max_per_address_limit,
     )? {
         return Err(ContractError::InvalidPerAddressLimit {
             max: display_max_mintable_tokens(
-                msg.init_msg.per_address_limit,
-                msg.init_msg.num_tokens,
+                msg.init_msg.base.per_address_limit,
+                msg.init_msg.base.num_tokens,
                 factory_params.extension.max_per_address_limit,
             )?,
             min: 1,
-            got: msg.init_msg.per_address_limit,
+            got: msg.init_msg.base.per_address_limit,
         });
     }
 
     // sanitize base token uri
-    let mut base_token_uri = msg.init_msg.base_token_uri.trim().to_string();
+    let mut base_token_uri = msg.init_msg.base.base_token_uri.trim().to_string();
     // Token URI must be a valid URL (ipfs, https, etc.)
     let parsed_token_uri =
         Url::parse(&base_token_uri).map_err(|_| ContractError::InvalidBaseTokenURI {})?;
@@ -95,14 +94,14 @@ pub fn instantiate(
 
     let genesis_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
     // If start time is before genesis time return error
-    if msg.init_msg.start_time < genesis_time {
+    if msg.init_msg.base.start_time < genesis_time {
         return Err(ContractError::BeforeGenesisTime {});
     }
 
     // If current time is beyond the provided start time return error
-    if env.block.time > msg.init_msg.start_time {
+    if env.block.time > msg.init_msg.base.start_time {
         return Err(ContractError::InvalidStartTime(
-            msg.init_msg.start_time,
+            msg.init_msg.base.start_time,
             env.block.time,
         ));
     }
@@ -110,6 +109,7 @@ pub fn instantiate(
     // Validate address for the optional whitelist contract
     let whitelist_addr = msg
         .init_msg
+        .base
         .whitelist
         .and_then(|w| deps.api.addr_validate(w.as_str()).ok());
 
@@ -126,7 +126,7 @@ pub fn instantiate(
     // Use default start trading time if not provided
     let mut collection_info = msg.collection_params.info.clone();
     let offset = factory_params.max_trading_offset_secs;
-    let default_start_time_with_offset = msg.init_msg.start_time.plus_seconds(offset);
+    let default_start_time_with_offset = msg.init_msg.base.start_time.plus_seconds(offset);
     if let Some(start_trading_time) = msg.collection_params.info.start_trading_time {
         // If trading start time > start_time + offset, return error
         if start_trading_time > default_start_time_with_offset {
@@ -150,25 +150,26 @@ pub fn instantiate(
             admin: deps
                 .api
                 .addr_validate(&msg.collection_params.info.creator)?,
-            payment_address: maybe_addr(deps.api, msg.init_msg.payment_address)?,
+            payment_address: maybe_addr(deps.api, msg.init_msg.base.payment_address)?,
             base_token_uri,
-            num_tokens: msg.init_msg.num_tokens,
-            per_address_limit: msg.init_msg.per_address_limit,
+            num_tokens: msg.init_msg.base.num_tokens,
+            per_address_limit: msg.init_msg.base.per_address_limit,
             whitelist: whitelist_addr,
-            start_time: msg.init_msg.start_time,
+            start_time: msg.init_msg.base.start_time,
             discount_price: None,
+            vault_info: msg.init_msg.vault_info,
         },
-        mint_price: msg.init_msg.mint_price,
+        mint_price: msg.init_msg.base.mint_price,
     };
 
     CONFIG.save(deps.storage, &config)?;
-    MINTABLE_NUM_TOKENS.save(deps.storage, &msg.init_msg.num_tokens)?;
+    MINTABLE_NUM_TOKENS.save(deps.storage, &msg.init_msg.base.num_tokens)?;
 
     let token_ids = random_token_list(
         &env,
         deps.api
             .addr_validate(&msg.collection_params.info.creator)?,
-        (1..=msg.init_msg.num_tokens).collect::<Vec<u32>>(),
+        (1..=msg.init_msg.base.num_tokens).collect::<Vec<u32>>(),
     )?;
     // Save mintable token ids map
     let mut token_position = 1;
@@ -678,19 +679,30 @@ fn _execute_mint(
             }
             TokenPositionMapping { position, token_id }
         }
-        None => random_mintable_token_mapping(deps.as_ref(), env, info.sender.clone())?,
+        None => random_mintable_token_mapping(deps.as_ref(), env.clone(), info.sender.clone())?,
     };
 
-    // Create mint msgs
-    let mint_msg = Sg721ExecuteMsg::<Extension, Empty>::Mint {
-        token_id: mintable_token_mapping.token_id.to_string(),
+    let token_id = &mintable_token_mapping.token_id.to_string();
+
+    let (vesting_addr, vesting_msg) = init_vesting(
+        deps.as_ref(),
+        env.contract.address.as_ref(),
+        sg721_address.as_str(),
+        token_id,
+        config.extension.vault_info,
+        recipient_addr.to_string(),
+    )?;
+    res = res.add_message(vesting_msg);
+
+    let mint_msg = Sg721ExecuteMsg::<Metadata, Empty>::Mint {
+        token_id: token_id.to_string(),
         owner: recipient_addr.to_string(),
-        token_uri: Some(format!(
-            "{}/{}",
-            config.extension.base_token_uri, mintable_token_mapping.token_id
-        )),
-        extension: None,
+        token_uri: Some(format!("{}/{}", config.extension.base_token_uri, token_id)),
+        extension: Metadata {
+            balance: vesting_addr,
+        },
     };
+
     let msg = CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: sg721_address.to_string(),
         msg: to_json_binary(&mint_msg)?,
