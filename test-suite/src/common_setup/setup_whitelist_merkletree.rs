@@ -1,16 +1,16 @@
 use cosmwasm_std::{coin, Addr, Timestamp};
 use cw_multi_test::Executor;
-use sg_multi_test::StargazeApp;
+
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use whitelist_mtree::msg::InstantiateMsg as WhitelistInstantiateMsg;
 
-use crate::common_setup::contract_boxes::contract_whitelist_merkletree;
+use crate::common_setup::contract_boxes::{contract_whitelist_merkletree, App};
 
 pub const WHITELIST_AMOUNT: u128 = 66_000_000;
 const WL_PER_ADDRESS_LIMIT: u32 = 1;
 
 pub fn setup_whitelist_mtree_contract(
-    router: &mut StargazeApp,
+    router: &mut App,
     creator: &Addr,
     whitelist_code_id: Option<u64>,
     denom: Option<&str>,

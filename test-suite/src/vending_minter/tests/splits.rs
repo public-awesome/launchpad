@@ -1,5 +1,5 @@
 use crate::common_setup::{
-    contract_boxes::{contract_splits, custom_mock_app},
+    contract_boxes::{contract_splits, custom_mock_app, App},
     msg::MinterCollectionResponse,
     setup_accounts_and_block::{instantiate_group, setup_accounts, setup_block_time},
     setup_minter::{
@@ -11,7 +11,7 @@ use cosmwasm_std::{coins, Addr, Coin, Timestamp};
 use cw4::Member;
 use cw_multi_test::{next_block, Executor};
 use sg2::tests::mock_collection_params_1;
-use sg_multi_test::StargazeApp;
+
 use sg_splits::msg::{ExecuteMsg as SplitsExecuteMsg, Group};
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
@@ -30,7 +30,7 @@ pub fn member<T: Into<String>>(addr: T, weight: u64) -> Member {
 }
 
 #[track_caller]
-fn instantiate_splits(app: &mut StargazeApp, group_addr: Addr) -> Addr {
+fn instantiate_splits(app: &mut App, group_addr: Addr) -> Addr {
     let splits_id = app.store_code(contract_splits());
     println!("splits_id: {splits_id}");
     let msg = sg_splits::msg::InstantiateMsg {
@@ -42,7 +42,7 @@ fn instantiate_splits(app: &mut StargazeApp, group_addr: Addr) -> Addr {
 }
 
 #[track_caller]
-fn setup_splits_test_case(app: &mut StargazeApp, init_funds: Vec<Coin>) -> (Addr, Addr) {
+fn setup_splits_test_case(app: &mut App, init_funds: Vec<Coin>) -> (Addr, Addr) {
     // 1. Instantiate group contract with members (and OWNER as admin)
     let members = vec![
         member(OWNER, 50),

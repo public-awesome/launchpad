@@ -11,7 +11,7 @@ use crate::msg::{
 use crate::state::{AdminList, Config, ADMIN_LIST, CONFIG, WHITELIST};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult};
+use cosmwasm_std::{to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
 use cosmwasm_std::{Order, Timestamp};
 use cw2::set_contract_version;
 use cw_storage_plus::Bound;
@@ -19,7 +19,7 @@ use cw_utils::{may_pay, maybe_addr, must_pay};
 use rust_decimal::prelude::ToPrimitive;
 use rust_decimal::Decimal;
 use sg1::checked_fair_burn;
-use sg_std::{Response, GENESIS_MINT_START_TIME, NATIVE_DENOM};
+use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sg-whitelist";
@@ -362,16 +362,16 @@ pub fn execute_increase_member_limit(
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::Members { start_after, limit } => {
-            to_binary(&query_members(deps, start_after, limit)?)
+            to_json_binary(&query_members(deps, start_after, limit)?)
         }
 
-        QueryMsg::HasStarted {} => to_binary(&query_has_started(deps, env)?),
-        QueryMsg::HasEnded {} => to_binary(&query_has_ended(deps, env)?),
-        QueryMsg::IsActive {} => to_binary(&query_is_active(deps, env)?),
-        QueryMsg::HasMember { member } => to_binary(&query_has_member(deps, member)?),
-        QueryMsg::Config {} => to_binary(&query_config(deps, env)?),
-        QueryMsg::AdminList {} => to_binary(&query_admin_list(deps)?),
-        QueryMsg::CanExecute { sender, .. } => to_binary(&query_can_execute(deps, &sender)?),
+        QueryMsg::HasStarted {} => to_json_binary(&query_has_started(deps, env)?),
+        QueryMsg::HasEnded {} => to_json_binary(&query_has_ended(deps, env)?),
+        QueryMsg::IsActive {} => to_json_binary(&query_is_active(deps, env)?),
+        QueryMsg::HasMember { member } => to_json_binary(&query_has_member(deps, member)?),
+        QueryMsg::Config {} => to_json_binary(&query_config(deps, env)?),
+        QueryMsg::AdminList {} => to_json_binary(&query_admin_list(deps)?),
+        QueryMsg::CanExecute { sender, .. } => to_json_binary(&query_can_execute(deps, &sender)?),
     }
 }
 

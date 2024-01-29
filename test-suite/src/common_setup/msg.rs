@@ -1,14 +1,14 @@
 use anyhow::Error;
 use cosmwasm_std::{Addr, Timestamp};
 
+use contract_boxes::App;
 use cosmwasm_std::Uint128;
 use open_edition_factory::state::{OpenEditionMinterParams, ParamsExtension};
 use sg2::msg::CollectionParams;
-use sg_multi_test::StargazeApp;
 use vending_factory::msg::VendingMinterInitMsgExtension;
 
 pub struct MinterSetupParams<'a> {
-    pub router: &'a mut StargazeApp,
+    pub router: &'a mut App,
     pub minter_admin: Addr,
     pub num_tokens: u32,
     pub collection_params: CollectionParams,
@@ -37,6 +37,8 @@ use cosmwasm_schema::cw_serde;
 use open_edition_factory::msg::OpenEditionMinterInitMsgExtension;
 use open_edition_factory::types::NftData;
 
+use super::contract_boxes;
+
 #[cw_serde]
 pub struct CodeIds {
     pub minter_code_id: u64,
@@ -46,13 +48,13 @@ pub struct CodeIds {
 
 pub struct MinterTemplateResponse<T> {
     pub collection_response_vec: Vec<MinterCollectionResponse>,
-    pub router: StargazeApp,
+    pub router: App,
     pub accts: T,
 }
 
 pub struct MinterTemplateResponseCodeIds<T> {
     pub collection_response_vec: Vec<MinterCollectionResponse>,
-    pub router: StargazeApp,
+    pub router: App,
     pub accts: T,
     pub code_ids: CodeIds,
 }
@@ -63,7 +65,7 @@ pub struct Accounts {
 }
 
 pub struct OpenEditionMinterSetupParams<'a> {
-    pub router: &'a mut StargazeApp,
+    pub router: &'a mut App,
     pub minter_admin: Addr,
     pub collection_params: CollectionParams,
     pub start_time: Option<Timestamp>,

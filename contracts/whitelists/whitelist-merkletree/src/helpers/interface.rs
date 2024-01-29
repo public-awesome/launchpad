@@ -1,5 +1,5 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{to_binary, Addr, StdResult, WasmMsg};
+use cosmwasm_std::{to_json_binary, Addr, StdResult, WasmMsg};
 use sg_std::CosmosMsg;
 
 use crate::msg::ExecuteMsg;
@@ -15,7 +15,7 @@ impl CollectionWhitelistContract {
     }
 
     pub fn call<T: Into<ExecuteMsg>>(&self, msg: T) -> StdResult<CosmosMsg> {
-        let msg = to_binary(&msg.into())?;
+        let msg = to_json_binary(&msg.into())?;
         Ok(WasmMsg::Execute {
             contract_addr: self.addr().into(),
             msg,

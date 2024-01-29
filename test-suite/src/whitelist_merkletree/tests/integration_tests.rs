@@ -3,7 +3,7 @@ mod tests {
     use cosmwasm_std::{coin, Addr, Timestamp};
     use cw_multi_test::Executor;
     use rs_merkle::MerkleTree;
-    use sg_multi_test::StargazeApp;
+
     use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
     use whitelist_mtree::{
@@ -11,7 +11,9 @@ mod tests {
         tests::{hasher::SortingSha256Hasher, test_helpers::hash_and_build_tree},
     };
 
-    use crate::common_setup::contract_boxes::{contract_whitelist_merkletree, custom_mock_app};
+    use crate::common_setup::contract_boxes::{
+        contract_whitelist_merkletree, custom_mock_app, App,
+    };
 
     type Tree = MerkleTree<SortingSha256Hasher>;
 
@@ -44,7 +46,7 @@ mod tests {
     }
 
     pub fn instantiate_with_root(
-        app: &mut StargazeApp,
+        app: &mut App,
         per_address_limit: u32,
         merkle_root: String,
     ) -> Addr {
@@ -70,7 +72,7 @@ mod tests {
         .unwrap()
     }
 
-    pub fn query_admin_list(app: &mut StargazeApp, wl_addr: Addr) {
+    pub fn query_admin_list(app: &mut App, wl_addr: Addr) {
         let res: AdminListResponse = app
             .wrap()
             .query_wasm_smart(wl_addr, &QueryMsg::AdminList {})
@@ -80,7 +82,7 @@ mod tests {
     }
 
     pub fn query_includes_address(
-        app: &mut StargazeApp,
+        app: &mut App,
         wl_addr: Addr,
         addr_to_check: String,
         proof_hashes: Vec<String>,
@@ -98,7 +100,7 @@ mod tests {
         assert!(res.has_member);
     }
 
-    pub fn query_per_address_limit(app: &mut StargazeApp, wl_addr: Addr, per_address_limit: u32) {
+    pub fn query_per_address_limit(app: &mut App, wl_addr: Addr, per_address_limit: u32) {
         let config: ConfigResponse = app
             .wrap()
             .query_wasm_smart(wl_addr, &QueryMsg::Config {})

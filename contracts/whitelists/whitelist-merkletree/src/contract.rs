@@ -13,11 +13,12 @@ use crate::state::{AdminList, Config, ADMIN_LIST, CONFIG, MERKLE_ROOT, MERKLE_TR
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdError, StdResult, Timestamp,
+    to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdError, StdResult,
+    Timestamp,
 };
 use cw2::set_contract_version;
 use cw_utils::nonpayable;
-use sg_std::{Response, GENESIS_MINT_START_TIME, NATIVE_DENOM};
+use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
 use rs_merkle::{algorithms::Sha256, Hasher};
 
@@ -205,18 +206,18 @@ pub fn execute_update_end_time(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::HasStarted {} => to_binary(&query_has_started(deps, env)?),
-        QueryMsg::HasEnded {} => to_binary(&query_has_ended(deps, env)?),
-        QueryMsg::IsActive {} => to_binary(&query_is_active(deps, env)?),
+        QueryMsg::HasStarted {} => to_json_binary(&query_has_started(deps, env)?),
+        QueryMsg::HasEnded {} => to_json_binary(&query_has_ended(deps, env)?),
+        QueryMsg::IsActive {} => to_json_binary(&query_is_active(deps, env)?),
         QueryMsg::HasMember {
             member,
             proof_hashes,
-        } => to_binary(&query_has_member(deps, member, proof_hashes)?),
-        QueryMsg::Config {} => to_binary(&query_config(deps, env)?),
-        QueryMsg::AdminList {} => to_binary(&query_admin_list(deps)?),
-        QueryMsg::CanExecute { sender, .. } => to_binary(&query_can_execute(deps, &sender)?),
-        QueryMsg::MerkleRoot {} => to_binary(&query_merkle_root(deps)?),
-        QueryMsg::MerkleTreeURI {} => to_binary(&query_merkle_tree_uri(deps)?),
+        } => to_json_binary(&query_has_member(deps, member, proof_hashes)?),
+        QueryMsg::Config {} => to_json_binary(&query_config(deps, env)?),
+        QueryMsg::AdminList {} => to_json_binary(&query_admin_list(deps)?),
+        QueryMsg::CanExecute { sender, .. } => to_json_binary(&query_can_execute(deps, &sender)?),
+        QueryMsg::MerkleRoot {} => to_json_binary(&query_merkle_root(deps)?),
+        QueryMsg::MerkleTreeURI {} => to_json_binary(&query_merkle_tree_uri(deps)?),
     }
 }
 

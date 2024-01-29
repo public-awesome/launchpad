@@ -62,10 +62,16 @@ fn invalid_whitelist_instantiate() {
     );
     let err = minter_collection_response[0].error.as_ref();
 
-    assert_eq!(
-        err.unwrap().source().unwrap().source().unwrap().to_string(),
-        "Generic error: Querier contract error: cw_multi_test::wasm::ContractData not found"
-    )
+    assert!(err
+        .unwrap()
+        .source()
+        .unwrap()
+        .source()
+        .unwrap()
+        .to_string()
+        .contains(
+            "Generic error: Querier contract error: type: cw_multi_test::wasm::ContractData;"
+        ))
 }
 
 #[test]
@@ -107,10 +113,15 @@ fn set_invalid_whitelist() {
             &[],
         )
         .unwrap_err();
-    assert_eq!(
-        err.source().unwrap().source().unwrap().to_string(),
-        "Generic error: Querier contract error: cw_multi_test::wasm::ContractData not found"
-    );
+    assert!(err
+        .source()
+        .unwrap()
+        .source()
+        .unwrap()
+        .to_string()
+        .contains(
+            "Generic error: Querier contract error: type: cw_multi_test::wasm::ContractData;"
+        ));
 
     // move time to make wl start
     setup_block_time(&mut router, GENESIS_MINT_START_TIME + 201, Some(11));

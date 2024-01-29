@@ -1,12 +1,12 @@
 [package]
-name = "ethereum-verify"
-authors = ["Michael Scotto <m@noreply.publicawsome.com>"]
+name        = "ethereum-verify"
+authors     = ["Michael Scotto <m@noreply.publicawsome.com>"]
 description = "Ethereum Cryptographic verification utility functions"
-version = { workspace = true }
-edition = { workspace = true }
-homepage = { workspace = true }
-repository = { workspace = true }
-license = { workspace = true }
+version     = { workspace = true }
+edition     = { workspace = true }
+homepage    = { workspace = true }
+repository  = { workspace = true }
+license     = { workspace = true }
 
 exclude = [
     # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
@@ -20,8 +20,8 @@ exclude = [
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-sha2 = { workspace = true }
-sha3 = "0.10"
-hex = "0.4"
+sha2            = { workspace = true }
+sha3            = "0.10"
+hex             = "0.4"
 cosmwasm-schema = { workspace = true }
-cosmwasm-std = { workspace = true, features = ["staking"] }
+cosmwasm-std    = { workspace = true, features = ["staking", "cosmwasm_1_4"] }
