@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "QueryMsg",
+  "oneOf": [
+    {
+      "type": "object",
+      "required": [
+        "airdrop_eligible"
+      ],
+      "properties": {
+        "airdrop_eligible": {
+          "type": "object",
+          "required": [
+            "eth_address"
+          ],
+          "properties": {
+            "eth_address": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_minter"
+      ],
+      "properties": {
+        "get_minter": {
+          "type": "object",
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  ]
+}

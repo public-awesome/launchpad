@@ -32,6 +32,8 @@ cd contracts/minters/vending-minter-wl-flex && cargo publish && cd ../../..
 sleep 15
 cd contracts/minters/vending-minter-merkle-wl && cargo publish && cd ../../..
 
-cd contracts/sg-eth-airdrop && cargo publish && cd ../..
+cd contracts/rekt-airdrop && cargo publish && cd ../..
+sleep 15
+cd contracts/dxdy-airdrop && cargo publish && cd ../..
 sleep 15
 cd test-suite && cargo publish && cd ..
