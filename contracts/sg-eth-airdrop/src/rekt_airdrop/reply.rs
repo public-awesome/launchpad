@@ -1,6 +1,6 @@
 #[cfg(not(feature = "library"))]
-use crate::error::ContractError;
-use crate::state::CONFIG;
+use crate::rekt_airdrop::error::ContractError;
+use crate::rekt_airdrop::state::CONFIG;
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{DepsMut, Env, Reply};
 use cw_utils::{parse_reply_instantiate_data, MsgInstantiateContractResponse, ParseReplyError};

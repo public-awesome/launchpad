@@ -3,7 +3,7 @@ use cosmwasm_std::{
     to_binary, Binary, Coin, Deps, DepsMut, Env, MessageInfo, StdResult, Timestamp,
 };
 use cw_multi_test::{Contract, ContractWrapper};
-use sg_eth_airdrop::error::ContractError;
+use sg_eth_airdrop::rekt_airdrop::error::ContractError;
 use sg_std::{Response, StargazeMsgWrapper};
 use vending_factory::msg::VendingMinterCreateMsg;
 use vending_minter::msg::{ExecuteMsg, QueryMsg};

@@ -8,8 +8,8 @@ use crate::sg_eth_airdrop::setup::execute_msg::instantiate_contract;
 use crate::sg_eth_airdrop::setup::test_msgs::InstantiateParams;
 
 use cosmwasm_std::Addr;
-use sg_eth_airdrop::contract::INSTANTIATION_FEE;
-use sg_eth_airdrop::msg::QueryMsg;
+use sg_eth_airdrop::rekt_airdrop::contract::INSTANTIATION_FEE;
+use sg_eth_airdrop::rekt_airdrop::msg::QueryMsg;
 use whitelist_immutable::helpers::WhitelistImmutableContract;
 
 #[test]
@@ -20,7 +20,7 @@ fn test_instantiate_with_addresses() {
         "addr3".to_string(),
     ];
 
-    let mut app = custom_mock_app();
+    let mut app = { custom_mock_app }();
     configure_mock_minter_with_mock_whitelist(&mut app);
     let minter_addr = Addr::unchecked(MOCK_MINTER_ADDR_STR);
     let airdrop_contract = Addr::unchecked(MOCK_AIRDROP_ADDR_STR);

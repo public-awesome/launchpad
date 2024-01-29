@@ -1,7 +1,7 @@
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult};
 use cw_multi_test::{Contract, ContractWrapper};
-use sg_eth_airdrop::error::ContractError;
+use sg_eth_airdrop::rekt_airdrop::error::ContractError;
 use sg_std::{Response, StargazeMsgWrapper};
 use sg_whitelist::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 

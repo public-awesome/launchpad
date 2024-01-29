@@ -9,7 +9,7 @@ use cosmwasm_std::{coins, Addr};
 use cw_multi_test::error::Error;
 use cw_multi_test::{AppResponse, BankSudo, Executor, SudoMsg};
 use eyre::Result;
-use sg_eth_airdrop::msg::{ExecuteMsg, InstantiateMsg};
+use sg_eth_airdrop::rekt_airdrop::msg::{ExecuteMsg, InstantiateMsg};
 use sg_multi_test::StargazeApp;
 use sg_std::NATIVE_DENOM;
 

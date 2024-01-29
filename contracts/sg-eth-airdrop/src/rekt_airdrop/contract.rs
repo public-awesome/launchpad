@@ -1,8 +1,8 @@
-use crate::claim_airdrop::claim_airdrop;
+use crate::rekt_airdrop::claim_airdrop::claim_airdrop;
 #[cfg(not(feature = "library"))]
-use crate::error::ContractError;
-use crate::msg::{ExecuteMsg, InstantiateMsg};
-use crate::state::CONFIG;
+use crate::rekt_airdrop::error::ContractError;
+use crate::rekt_airdrop::msg::{ExecuteMsg, InstantiateMsg};
+use crate::rekt_airdrop::state::CONFIG;
 
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{DepsMut, Env, MessageInfo};
@@ -55,7 +55,7 @@ pub fn execute(
 
 mod build_message {
     use super::*;
-    use crate::state::Config;
+    use crate::rekt_airdrop::state::Config;
     use cosmwasm_std::{to_binary, Deps, WasmMsg};
     use sg_std::{StargazeMsgWrapper, SubMsg};
     use validation::validate_airdrop_amount;

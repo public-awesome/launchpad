@@ -1,6 +1,6 @@
 use cosmwasm_schema::write_api;
 
-use sg_eth_airdrop::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use sg_eth_airdrop::rekt_airdrop::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
 fn main() {
     write_api! {
