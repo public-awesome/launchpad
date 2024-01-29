@@ -11,9 +11,9 @@ use crate::validation::{check_dynamic_per_address_limit, get_three_percent_of_to
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coin, ensure, to_json_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut,
-    Empty, Env, Event, MessageInfo, Order, Reply, ReplyOn, Response, StdError, StdResult, SubMsg,
-    Timestamp, Uint128, WasmMsg,
+    coin, ensure, instantiate2_address, to_json_binary, Addr, BankMsg, Binary, Coin, CosmosMsg,
+    Decimal, Deps, DepsMut, Empty, Env, Event, MessageInfo, Order, Reply, ReplyOn, Response,
+    StdError, StdResult, SubMsg, Timestamp, Uint128, WasmMsg,
 };
 use cw2::set_contract_version;
 use cw721::ContractInfoResponse;
@@ -26,6 +26,7 @@ use sg1::{checked_fair_burn, ibc_denom_fair_burn};
 use sg2::query::Sg2QueryMsg;
 use sg4::{MinterConfig, Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
+use sg721_tv::QueryMsg as Sg721TVQueryMsg;
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use sg_whitelist::msg::{
     ConfigResponse as WhitelistConfigResponse, HasMemberResponse, QueryMsg as WhitelistQueryMsg,
@@ -785,9 +786,9 @@ fn init_vesting(
         admin: None,
         code_id: vesting_code_id,
         label: "Token-vault Vesting".to_string(),
-        msg: to_binary(&vesting_init)?,
+        msg: to_json_binary(&vesting_init)?,
         funds: vec![token_balance],
-        salt: to_binary(&salt_raw)?,
+        salt: to_json_binary(&salt_raw)?,
     };
 
     Ok((vesting_addr, vesting_msg))

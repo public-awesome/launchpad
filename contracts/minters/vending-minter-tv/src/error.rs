@@ -1,4 +1,4 @@
-use cosmwasm_std::{Coin, StdError, Timestamp};
+use cosmwasm_std::{Coin, Instantiate2AddressError, StdError, Timestamp};
 use cw_utils::PaymentError;
 use sg1::FeeError;
 use thiserror::Error;
@@ -19,6 +19,9 @@ pub enum ContractError {
 
     #[error("Unauthorized: {0}")]
     Unauthorized(String),
+
+    #[error("{0}")]
+    Instantiate2AddressError(#[from] Instantiate2AddressError),
 
     #[error("UpdateStatus")]
     UpdateStatus {},

@@ -42,6 +42,7 @@ sg4             = { version = "3.5.0", path = "packages/sg4" }
 sg721           = { version = "3.5.0", path = "packages/sg721" }
 sg721-base      = { version = "3.5.0", path = "contracts/collections/sg721-base" }
 sg721-nt        = { version = "3.5.0", path = "contracts/collections/sg721-nt" }
+sg721-tv        = { version = "3.5.0", path = "contracts/collections/sg721-tv" }
 sg721-updatable = { version = "3.5.0", path = "contracts/collections/sg721-updatable" }
 sg-controllers  = { version = "3.5.0", path = "packages/controllers" }
 sg-metadata     = { version = "3.5.0", path = "packages/sg-metadata" }

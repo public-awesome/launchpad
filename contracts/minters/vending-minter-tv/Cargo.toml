@@ -36,6 +36,7 @@ cw721           = { workspace = true }
 cw721-base      = { workspace = true, features = ["library"] }
 cw-storage-plus = { workspace = true }
 cw-utils        = { workspace = true }
+cw-vesting      = { workspace = true }
 rand_core       = { version = "0.6.4", default-features = false }
 rand_xoshiro    = { version = "0.6.0", default-features = false }
 schemars        = { workspace = true }
@@ -47,6 +48,7 @@ sg2             = { workspace = true }
 sg4             = { workspace = true }
 sg721           = { workspace = true }
 sg-std          = { workspace = true }
+sg721-tv        = { workspace = true }
 sg-whitelist    = { workspace = true, features = ["library"] }
 thiserror       = { workspace = true }
 url             = { workspace = true }
