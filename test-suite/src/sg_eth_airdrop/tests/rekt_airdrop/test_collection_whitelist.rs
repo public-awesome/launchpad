@@ -1,16 +1,20 @@
 use crate::common_setup::setup_accounts_and_block::setup_block_time;
 use crate::common_setup::setup_collection_whitelist::configure_collection_whitelist;
-use crate::sg_eth_airdrop::constants::claim_constants::{CONFIG_PLAINTEXT, STARGAZE_WALLET_01};
-use crate::sg_eth_airdrop::constants::collection_constants::{
+use crate::sg_eth_airdrop::constants::rekt_airdrop::claim_constants::{
+    CONFIG_PLAINTEXT, STARGAZE_WALLET_01,
+};
+use crate::sg_eth_airdrop::constants::rekt_airdrop::collection_constants::{
     AIRDROP_ADDR_STR, MINT_PRICE, WHITELIST_AMOUNT,
 };
-use crate::sg_eth_airdrop::setup::collection_whitelist_helpers::{
+use crate::sg_eth_airdrop::setup::rekt_airdrop::collection_whitelist_helpers::{
     execute_airdrop_claim, execute_mint_fail_not_on_whitelist, execute_mint_success,
     send_funds_to_address, update_admin_for_whitelist,
 };
-use crate::sg_eth_airdrop::setup::execute_msg::instantiate_contract;
-use crate::sg_eth_airdrop::setup::setup_signatures::{get_msg_plaintext, get_wallet_and_sig};
-use crate::sg_eth_airdrop::setup::test_msgs::InstantiateParams;
+use crate::sg_eth_airdrop::setup::rekt_airdrop::execute_msg::instantiate_contract;
+use crate::sg_eth_airdrop::setup::rekt_airdrop::setup_signatures::{
+    get_msg_plaintext, get_wallet_and_sig,
+};
+use crate::sg_eth_airdrop::setup::rekt_airdrop::test_msgs::InstantiateParams;
 use cosmwasm_std::Addr;
 use sg_eth_airdrop::rekt_airdrop::msg::QueryMsg;
 use sg_std::GENESIS_MINT_START_TIME;

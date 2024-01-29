@@ -1,8 +1,8 @@
-use crate::sg_eth_airdrop::constants::claim_constants::OWNER;
-use crate::sg_eth_airdrop::constants::collection_constants::WHITELIST_AMOUNT;
+use crate::sg_eth_airdrop::constants::rekt_airdrop::claim_constants::OWNER;
+use crate::sg_eth_airdrop::constants::rekt_airdrop::collection_constants::WHITELIST_AMOUNT;
 use crate::{
     common_setup::contract_boxes::{contract_eth_airdrop, contract_whitelist_immutable},
-    sg_eth_airdrop::setup::test_msgs::InstantiateParams,
+    sg_eth_airdrop::setup::rekt_airdrop::test_msgs::InstantiateParams,
 };
 use anyhow::Error as anyhow_error;
 use cosmwasm_std::{coins, Addr};

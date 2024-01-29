@@ -1,7 +1,11 @@
-use crate::sg_eth_airdrop::constants::claim_constants::{NATIVE_DENOM, STARGAZE_WALLET_01};
-use crate::sg_eth_airdrop::constants::collection_constants::{MINT_PRICE, WHITELIST_AMOUNT};
+use crate::sg_eth_airdrop::constants::rekt_airdrop::claim_constants::{
+    NATIVE_DENOM, STARGAZE_WALLET_01,
+};
+use crate::sg_eth_airdrop::constants::rekt_airdrop::collection_constants::{
+    MINT_PRICE, WHITELIST_AMOUNT,
+};
 
-use crate::sg_eth_airdrop::setup::execute_msg::execute_contract_with_msg;
+use crate::sg_eth_airdrop::setup::rekt_airdrop::execute_msg::execute_contract_with_msg;
 use cosmwasm_std::{coins, Addr};
 use cw_multi_test::{BankSudo, Executor, SudoMsg};
 use sg_multi_test::StargazeApp;

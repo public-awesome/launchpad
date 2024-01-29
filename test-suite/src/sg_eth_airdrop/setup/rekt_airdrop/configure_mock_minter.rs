@@ -5,8 +5,8 @@ use crate::common_setup::contract_boxes::contract_vending_factory;
 use crate::common_setup::setup_minter::vending_minter::mock_params::{
     mock_create_minter, mock_params,
 };
-use crate::sg_eth_airdrop::constants::collection_constants::CREATION_FEE;
-use crate::sg_eth_airdrop::setup::mock_minter_contract::mock_minter;
+use crate::sg_eth_airdrop::constants::rekt_airdrop::collection_constants::CREATION_FEE;
+use crate::sg_eth_airdrop::setup::rekt_airdrop::mock_minter_contract::mock_minter;
 use cosmwasm_std::{coins, Addr, Timestamp};
 use cw_multi_test::Executor;
 use sg2::msg::Sg2ExecuteMsg;
@@ -14,7 +14,7 @@ use sg2::tests::mock_collection_params_1;
 use sg_multi_test::StargazeApp;
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
-use crate::sg_eth_airdrop::setup::mock_whitelist_contract::mock_whitelist;
+use crate::sg_eth_airdrop::setup::rekt_airdrop::mock_whitelist_contract::mock_whitelist;
 
 fn configure_mock_minter(app: &mut StargazeApp, creator: Addr) {
     let minter_code_id = app.store_code(mock_minter());

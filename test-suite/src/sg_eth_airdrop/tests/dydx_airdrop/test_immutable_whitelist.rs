@@ -1,15 +1,15 @@
 use crate::common_setup::contract_boxes::custom_mock_app;
-use crate::sg_eth_airdrop::constants::claim_constants::{
+use crate::sg_eth_airdrop::constants::dydx_airdrop::claim_constants::{
     CONFIG_PLAINTEXT, MOCK_AIRDROP_ADDR_STR, MOCK_MINTER_ADDR_STR, OWNER,
 };
-use crate::sg_eth_airdrop::constants::collection_constants::WHITELIST_AMOUNT;
-use crate::sg_eth_airdrop::setup::configure_mock_minter::configure_mock_minter_with_mock_whitelist;
-use crate::sg_eth_airdrop::setup::execute_msg::instantiate_contract;
-use crate::sg_eth_airdrop::setup::test_msgs::InstantiateParams;
+use crate::sg_eth_airdrop::constants::dydx_airdrop::collection_constants::WHITELIST_AMOUNT;
+use crate::sg_eth_airdrop::setup::dydx_airdrop::configure_mock_minter::configure_mock_minter_with_mock_whitelist;
+use crate::sg_eth_airdrop::setup::dydx_airdrop::execute_msg::instantiate_contract;
+use crate::sg_eth_airdrop::setup::dydx_airdrop::test_msgs::InstantiateParams;
 
 use cosmwasm_std::Addr;
-use sg_eth_airdrop::rekt_airdrop::contract::INSTANTIATION_FEE;
-use sg_eth_airdrop::rekt_airdrop::msg::QueryMsg;
+use sg_eth_airdrop::dydx_airdrop::contract::INSTANTIATION_FEE;
+use sg_eth_airdrop::dydx_airdrop::msg::QueryMsg;
 use whitelist_immutable::helpers::WhitelistImmutableContract;
 
 #[test]
