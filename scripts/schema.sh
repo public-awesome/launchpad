@@ -31,7 +31,7 @@ for d in contracts/whitelists/*; do
   fi
 done
 cd contracts/rekt-airdrop && cargo schema && rm -rf schema/raw && cd ../..
-cd contracts/dxdy-airdrop && cargo schema && rm -rf schema/raw && cd ../..
+cd contracts/dydx-airdrop && cargo schema && rm -rf schema/raw && cd ../..
 cd contracts/splits && cargo schema && rm -rf schema/raw && cd ../..
 
 cd ts && yarn install && yarn codegen

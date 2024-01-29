@@ -34,6 +34,6 @@ cd contracts/minters/vending-minter-merkle-wl && cargo publish && cd ../../..
 
 cd contracts/rekt-airdrop && cargo publish && cd ../..
 sleep 15
-cd contracts/dxdy-airdrop && cargo publish && cd ../..
+cd contracts/dydx-airdrop && cargo publish && cd ../..
 sleep 15
 cd test-suite && cargo publish && cd ..

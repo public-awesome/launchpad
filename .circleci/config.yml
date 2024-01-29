@@ -570,7 +570,7 @@ jobs:
               echo "Compiling `basename $C`..."
               (cd $C && cargo build --release --lib --target wasm32-unknown-unknown --locked)
             done
-            for C in ./contracts/dxdy-airdrop/
+            for C in ./contracts/dydx-airdrop/
             do
               echo "Compiling `basename $C`..."
               (cd $C && cargo build --release --lib --target wasm32-unknown-unknown --locked)
