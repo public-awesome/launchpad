@@ -123,11 +123,11 @@ pub fn contract_group() -> Box<dyn Contract<StargazeMsgWrapper>> {
 
 pub fn contract_eth_airdrop() -> Box<dyn Contract<StargazeMsgWrapper>> {
     let contract = ContractWrapper::new(
-        sg_eth_airdrop::rekt_airdrop::contract::execute,
-        sg_eth_airdrop::rekt_airdrop::contract::instantiate,
-        sg_eth_airdrop::rekt_airdrop::query::query,
+        rekt_airdrop::contract::execute,
+        rekt_airdrop::contract::instantiate,
+        rekt_airdrop::query::query,
     )
-    .with_reply(sg_eth_airdrop::rekt_airdrop::reply::reply);
+    .with_reply(rekt_airdrop::reply::reply);
     Box::new(contract)
 }
 

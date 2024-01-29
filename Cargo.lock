@@ -1348,6 +1348,41 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0688c2a7f92e427f44895cd63841bff7b29f8d7a1648b9e7e07a4a365b2e1257"
 
 [[package]]
+name = "dydx-airdrop"
+version = "3.5.0"
+dependencies = [
+ "anyhow",
+ "async-std",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-multi-test",
+ "cw-storage-plus 1.1.0",
+ "cw-utils 1.0.1",
+ "cw2 1.1.0",
+ "ethereum-verify",
+ "ethers-core",
+ "ethers-signers",
+ "eyre",
+ "hex",
+ "rlp",
+ "rust_decimal",
+ "schemars",
+ "serde",
+ "sg-multi-test",
+ "sg-std",
+ "sg-whitelist",
+ "sg1",
+ "sg2",
+ "sg721-base",
+ "sha2 0.10.7",
+ "sha3",
+ "thiserror",
+ "vending-factory",
+ "vending-minter",
+ "whitelist-immutable",
+]
+
+[[package]]
 name = "dyn-clone"
 version = "1.0.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3019,6 +3054,41 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dbb5fb1acd8a1a18b3dd5be62d25485eb770e05afb408a9627d14d451bae12da"
 
 [[package]]
+name = "rekt-airdrop"
+version = "3.5.0"
+dependencies = [
+ "anyhow",
+ "async-std",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-multi-test",
+ "cw-storage-plus 1.1.0",
+ "cw-utils 1.0.1",
+ "cw2 1.1.0",
+ "ethereum-verify",
+ "ethers-core",
+ "ethers-signers",
+ "eyre",
+ "hex",
+ "rlp",
+ "rust_decimal",
+ "schemars",
+ "serde",
+ "sg-multi-test",
+ "sg-std",
+ "sg-whitelist",
+ "sg1",
+ "sg2",
+ "sg721-base",
+ "sha2 0.10.7",
+ "sha3",
+ "thiserror",
+ "vending-factory",
+ "vending-minter",
+ "whitelist-immutable",
+]
+
+[[package]]
 name = "rend"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3484,41 +3554,6 @@ dependencies = [
  "serde",
  "sg-std",
  "thiserror",
-]
-
-[[package]]
-name = "sg-eth-airdrop"
-version = "3.5.0"
-dependencies = [
- "anyhow",
- "async-std",
- "cosmwasm-schema",
- "cosmwasm-std",
- "cw-multi-test",
- "cw-storage-plus 1.1.0",
- "cw-utils 1.0.1",
- "cw2 1.1.0",
- "ethereum-verify",
- "ethers-core",
- "ethers-signers",
- "eyre",
- "hex",
- "rlp",
- "rust_decimal",
- "schemars",
- "serde",
- "sg-multi-test",
- "sg-std",
- "sg-whitelist",
- "sg1",
- "sg2",
- "sg721-base",
- "sha2 0.10.7",
- "sha3",
- "thiserror",
- "vending-factory",
- "vending-minter",
- "whitelist-immutable",
 ]
 
 [[package]]
@@ -4132,6 +4167,7 @@ dependencies = [
  "cw4-group",
  "cw721 0.18.0",
  "cw721-base 0.18.0",
+ "dydx-airdrop",
  "ethers-core",
  "ethers-signers",
  "eyre",
@@ -4139,12 +4175,12 @@ dependencies = [
  "open-edition-minter",
  "rand_core 0.6.4",
  "rand_xoshiro",
+ "rekt-airdrop",
  "rlp",
  "rs_merkle",
  "schemars",
  "serde",
  "sg-controllers",
- "sg-eth-airdrop",
  "sg-metadata",
  "sg-multi-test",
  "sg-splits",

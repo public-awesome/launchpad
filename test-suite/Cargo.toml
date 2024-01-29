@@ -44,7 +44,8 @@ sg721-updatable     = { workspace = true }
 cw4-group           = { workspace = true }
 sg-splits           = { workspace = true }
 anyhow              = "1.0.57"
-sg-eth-airdrop      = { workspace = true }
+rekt-airdrop        = { workspace = true }
+dydx-airdrop        = { workspace = true }
 whitelist-immutable = { workspace = true, features = ["library"] }
 cw721               = { workspace = true }
 cw721-base          = { workspace = true, features = ["library"] }

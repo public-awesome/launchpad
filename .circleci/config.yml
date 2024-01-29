@@ -12,7 +12,8 @@ workflows:
       - contract_open_edition_factory
       - contract_open_edition_minter
       - contract_whitelist
-      - sg-eth-airdrop
+      - rekt-airdrop
+      - dydx-airdrop
       - test-suite
       - package_sg_std
       - package_sg_utils
@@ -424,10 +425,10 @@ jobs:
             - target
           key: cargocache-sg-utils-rust:1.73.0-{{ checksum "~/project/Cargo.lock" }}
 
-  sg-eth-airdrop:
+  rekt-airdrop:
     docker:
       - image: rust:1.73.0
-    working_directory: ~/project/contracts/sg-eth-airdrop
+    working_directory: ~/project/contracts/rekt-airdrop
     steps:
       - checkout:
           path: ~/project
@@ -436,7 +437,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-sg-eth-airdrop-rust:1.73.0-{{ checksum "~/project/Cargo.lock" }}
+            - cargocache-rekt-airdrop-rust:1.73.0-{{ checksum "~/project/Cargo.lock" }}
       - run:
           name: Unit Tests
           environment:
@@ -458,7 +459,43 @@ jobs:
           paths:
             - /usr/local/cargo/registry
             - target
-          key: cargocache-sg-eth-airdrop-rust:1.73.0-{{ checksum "~/project/Cargo.lock" }}
+          key: cargocache-rekt-airdrop-rust:1.73.0-{{ checksum "~/project/Cargo.lock" }}
+
+  dydx-airdrop:
+    docker:
+      - image: rust:1.73.0
+    working_directory: ~/project/contracts/dydx-airdrop
+    steps:
+      - checkout:
+          path: ~/project
+      - run:
+          name: Version information
+          command: rustc --version; cargo --version; rustup --version
+      - restore_cache:
+          keys:
+            - cargocache-dydx-airdrop-rust:1.73.0-{{ checksum "~/project/Cargo.lock" }}
+      - run:
+          name: Unit Tests
+          environment:
+            RUST_BACKTRACE: 1
+          command: cargo unit-test --locked
+      - run:
+          name: Build and run schema generator
+          command: cargo schema --locked
+      # - run:
+      #     name: Ensure checked-in schemas are up-to-date
+      #     command: |
+      #       CHANGES_IN_REPO=$(git status --porcelain)
+      #       if [[ -n "$CHANGES_IN_REPO" ]]; then
+      #         echo "Repository is dirty. Showing 'git status' and 'git --no-pager diff' for debugging now:"
+      #         git status && git --no-pager diff
+      #         exit 1
+      #       fi
+      - save_cache:
+          paths:
+            - /usr/local/cargo/registry
+            - target
+          key: cargocache-dydx-airdrop-rust:1.73.0-{{ checksum "~/project/Cargo.lock" }}
 
   lint:
     docker:
@@ -528,7 +565,12 @@ jobs:
               echo "Compiling `basename $C`..."
               (cd $C && cargo build --release --lib --target wasm32-unknown-unknown --locked)
             done
-            for C in ./contracts/sg-eth-airdrop/
+            for C in ./contracts/rekt-airdrop/
+            do
+              echo "Compiling `basename $C`..."
+              (cd $C && cargo build --release --lib --target wasm32-unknown-unknown --locked)
+            done
+            for C in ./contracts/dydx-airdrop/
             do
               echo "Compiling `basename $C`..."
               (cd $C && cargo build --release --lib --target wasm32-unknown-unknown --locked)
