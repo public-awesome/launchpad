@@ -54,3 +54,7 @@ thiserror       = { workspace = true }
 url             = { workspace = true }
 vending-factory = { workspace = true, features = ["library"] }
 semver          = { workspace = true }
+
+[dev-dependencies]
+test-suite = { workspace = true }
+cw-multi-test = { workspace = true }

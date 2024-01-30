@@ -4690,6 +4690,7 @@ version = "3.5.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
+ "cw-multi-test 0.20.0",
  "cw-storage-plus 1.2.0",
  "cw-utils 1.0.3",
  "cw-vesting",
@@ -4710,6 +4711,7 @@ dependencies = [
  "sg721-tv",
  "sha2 0.10.8",
  "shuffle",
+ "test-suite",
  "thiserror",
  "url",
  "vending-factory",

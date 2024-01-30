@@ -7,3 +7,6 @@ pub use crate::error::ContractError;
 
 pub mod helpers;
 pub mod validation;
+
+#[cfg(test)]
+mod testing;
