@@ -1,7 +1,7 @@
 use crate::dydx_airdrop::constants::claim_constants::OWNER;
 use crate::dydx_airdrop::constants::collection_constants::WHITELIST_AMOUNT;
 use crate::{
-    common_setup::contract_boxes::{contract_eth_airdrop, contract_whitelist_immutable},
+    common_setup::contract_boxes::{contract_dydx_airdrop, contract_whitelist_immutable},
     dydx_airdrop::setup::test_msgs::InstantiateParams,
 };
 use anyhow::Error as anyhow_error;
@@ -31,9 +31,10 @@ pub fn instantiate_contract(params: InstantiateParams) -> Result<cosmwasm_std::A
         .map_err(|err| println!("{err:?}"))
         .ok();
 
-    let sg_eth_id = params.app.store_code(contract_eth_airdrop());
+    let sg_eth_id = params.app.store_code(contract_dydx_airdrop());
     let whitelist_code_id = params.app.store_code(contract_whitelist_immutable());
     assert_eq!(sg_eth_id, params.expected_airdrop_contract_id);
+    let name_discount_wl_address = params.name_discount_wl_address;
 
     let msg: InstantiateMsg = InstantiateMsg {
         admin: Addr::unchecked(OWNER),
@@ -43,6 +44,7 @@ pub fn instantiate_contract(params: InstantiateParams) -> Result<cosmwasm_std::A
         whitelist_code_id,
         minter_address,
         per_address_limit,
+        name_discount_wl_address: name_discount_wl_address.to_string(),
     };
     params.app.instantiate_contract(
         sg_eth_id,

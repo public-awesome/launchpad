@@ -1,6 +1,6 @@
 use crate::common_setup::setup_accounts_and_block::setup_block_time;
 use crate::common_setup::setup_collection_whitelist::configure_collection_whitelist;
-use crate::dydx_airdrop::constants::claim_constants::{CONFIG_PLAINTEXT, STARGAZE_WALLET_01};
+use crate::dydx_airdrop::constants::claim_constants::{CONFIG_PLAINTEXT, MOCK_NAME_DISCOUNT_WL_ADDR_STR, STARGAZE_WALLET_01};
 use crate::dydx_airdrop::constants::collection_constants::{
     AIRDROP_ADDR_STR, MINT_PRICE, WHITELIST_AMOUNT,
 };
@@ -23,7 +23,7 @@ fn test_set_minter_contract_success() {
     let vt = vending_minter_template(1);
     let (mut app, creator) = (vt.router, vt.accts.creator);
     let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
-
+    let name_discount_wl_address = Addr::unchecked(MOCK_NAME_DISCOUNT_WL_ADDR_STR);
     let claim_plaintext = &get_msg_plaintext(STARGAZE_WALLET_01.to_string());
     let (_, _, _, eth_addr_str) = get_wallet_and_sig(claim_plaintext.clone());
 
@@ -37,6 +37,7 @@ fn test_set_minter_contract_success() {
         app: &mut app,
         per_address_limit: 1,
         claim_msg_plaintext: CONFIG_PLAINTEXT.to_string(),
+        name_discount_wl_address,
     };
     instantiate_contract(params).unwrap();
     let airdrop_contract = Addr::unchecked("contract3");
@@ -53,6 +54,7 @@ fn test_claim_added_to_minter_whitelist() {
     let vt = vending_minter_template(1);
     let (mut app, creator, buyer) = (vt.router, vt.accts.creator, vt.accts.buyer);
     let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
+    let name_discount_wl_address = Addr::unchecked(MOCK_NAME_DISCOUNT_WL_ADDR_STR);
     let whitelist_addr =
         configure_collection_whitelist(&mut app, creator.clone(), buyer, minter_addr.clone());
     setup_block_time(&mut app, GENESIS_MINT_START_TIME, None);
@@ -69,6 +71,7 @@ fn test_claim_added_to_minter_whitelist() {
         app: &mut app,
         per_address_limit: 1,
         claim_msg_plaintext: CONFIG_PLAINTEXT.to_string(),
+        name_discount_wl_address,
     };
     instantiate_contract(params).unwrap();
 

@@ -13,10 +13,7 @@ use ethers_core::rand::thread_rng;
 use ethers_signers::{LocalWallet, Signer};
 use sg_multi_test::StargazeApp;
 
-use crate::dydx_airdrop::constants::claim_constants::{
-    CONFIG_PLAINTEXT, MOCK_AIRDROP_ADDR_STR, MOCK_MINTER_ADDR_STR, NATIVE_DENOM, OWNER,
-    STARGAZE_WALLET_01, STARGAZE_WALLET_02,
-};
+use crate::dydx_airdrop::constants::claim_constants::{CONFIG_PLAINTEXT, MOCK_AIRDROP_ADDR_STR, MOCK_MINTER_ADDR_STR, MOCK_NAME_DISCOUNT_WL_ADDR_STR, NATIVE_DENOM, OWNER, STARGAZE_WALLET_01, STARGAZE_WALLET_02};
 
 use crate::dydx_airdrop::setup::execute_msg::{
     execute_contract_error_with_msg, execute_contract_with_msg, instantiate_contract,
@@ -37,6 +34,7 @@ fn query_minter_as_expected(app: &mut StargazeApp, airdrop_contract: Addr, minte
 fn test_instantiate() {
     let mut app = custom_mock_app();
     let minter_address = Addr::unchecked("contract1");
+    let name_discount_wl_address = Addr::unchecked(MOCK_NAME_DISCOUNT_WL_ADDR_STR);
     let claim_plaintext = &get_msg_plaintext(STARGAZE_WALLET_01.to_string());
     let (_, _, _, eth_addr_str) = get_wallet_and_sig(claim_plaintext.clone());
     let params = InstantiateParams {
@@ -48,6 +46,7 @@ fn test_instantiate() {
         app: &mut app,
         per_address_limit: 1,
         claim_msg_plaintext: CONFIG_PLAINTEXT.to_string(),
+        name_discount_wl_address,
     };
     instantiate_contract(params).unwrap();
 }
@@ -57,6 +56,7 @@ fn test_instantiate_plaintext_too_long() {
     let long_config_plaintext: String = String::from_utf8(vec![b'X'; 1001]).unwrap() + " {wallet}";
     let mut app = custom_mock_app();
     let minter_address = Addr::unchecked("contract1");
+    let name_discount_wl_address = Addr::unchecked(MOCK_NAME_DISCOUNT_WL_ADDR_STR);
     let claim_plaintext = &get_msg_plaintext(STARGAZE_WALLET_01.to_string());
     let (_, _, _, eth_addr_str) = get_wallet_and_sig(claim_plaintext.clone());
     let params = InstantiateParams {
@@ -68,6 +68,7 @@ fn test_instantiate_plaintext_too_long() {
         app: &mut app,
         per_address_limit: 1,
         claim_msg_plaintext: long_config_plaintext,
+        name_discount_wl_address,
     };
     let res = instantiate_contract(params).unwrap_err();
     assert_eq!(
@@ -81,6 +82,7 @@ fn test_instantiate_plaintext_missing_wallet() {
     let plaintext_config_no_wallet = "This message doesn't have wallet string".to_string();
     let mut app = custom_mock_app();
     let minter_address = Addr::unchecked("contract1");
+    let name_discount_wl_address = Addr::unchecked(MOCK_NAME_DISCOUNT_WL_ADDR_STR);
     let claim_plaintext = &get_msg_plaintext(STARGAZE_WALLET_01.to_string());
     let (_, _, _, eth_addr_str) = get_wallet_and_sig(claim_plaintext.clone());
     let params = InstantiateParams {
@@ -92,6 +94,7 @@ fn test_instantiate_plaintext_missing_wallet() {
         app: &mut app,
         per_address_limit: 1,
         claim_msg_plaintext: plaintext_config_no_wallet,
+        name_discount_wl_address,
     };
     let res = instantiate_contract(params).unwrap_err();
     assert_eq!(
@@ -107,6 +110,7 @@ fn test_airdrop_eligible_query() {
     let mut app = custom_mock_app();
     configure_mock_minter_with_mock_whitelist(&mut app);
     let minter_addr = Addr::unchecked(MOCK_MINTER_ADDR_STR);
+    let name_discount_wl_address = Addr::unchecked(MOCK_NAME_DISCOUNT_WL_ADDR_STR);
     let airdrop_contract = Addr::unchecked(MOCK_AIRDROP_ADDR_STR);
 
     let params = InstantiateParams {
@@ -118,6 +122,7 @@ fn test_airdrop_eligible_query() {
         app: &mut app,
         per_address_limit: 1,
         claim_msg_plaintext: CONFIG_PLAINTEXT.to_string(),
+        name_discount_wl_address: name_discount_wl_address.clone(),
     };
     instantiate_contract(params).unwrap();
     query_minter_as_expected(&mut app, airdrop_contract.clone(), minter_addr);
@@ -147,6 +152,7 @@ fn test_valid_eth_sig_claim() {
     let mut app = custom_mock_app();
     configure_mock_minter_with_mock_whitelist(&mut app);
     let minter_addr = Addr::unchecked(MOCK_MINTER_ADDR_STR);
+    let name_discount_wl_address = Addr::unchecked(MOCK_NAME_DISCOUNT_WL_ADDR_STR);
     let airdrop_contract = Addr::unchecked(MOCK_AIRDROP_ADDR_STR);
 
     let params = InstantiateParams {
@@ -158,6 +164,7 @@ fn test_valid_eth_sig_claim() {
         app: &mut app,
         per_address_limit: 1,
         claim_msg_plaintext: CONFIG_PLAINTEXT.to_string(),
+        name_discount_wl_address: name_discount_wl_address.clone(),
     };
     instantiate_contract(params).unwrap();
     query_minter_as_expected(&mut app, airdrop_contract.clone(), minter_addr);
@@ -196,6 +203,7 @@ fn test_invalid_eth_sig_claim() {
     let mut app = custom_mock_app();
     configure_mock_minter_with_mock_whitelist(&mut app);
     let minter_addr = Addr::unchecked(MOCK_MINTER_ADDR_STR);
+    let name_discount_wl_address = Addr::unchecked(MOCK_NAME_DISCOUNT_WL_ADDR_STR);
     let airdrop_contract = Addr::unchecked(MOCK_AIRDROP_ADDR_STR);
 
     let params = InstantiateParams {
@@ -207,6 +215,7 @@ fn test_invalid_eth_sig_claim() {
         app: &mut app,
         per_address_limit: 1,
         claim_msg_plaintext: CONFIG_PLAINTEXT.to_string(),
+        name_discount_wl_address: name_discount_wl_address.clone(),
     };
     instantiate_contract(params).unwrap();
     query_minter_as_expected(&mut app, airdrop_contract.clone(), minter_addr);
@@ -232,6 +241,7 @@ fn test_can_not_claim_twice() {
     let mut app = custom_mock_app();
     configure_mock_minter_with_mock_whitelist(&mut app);
     let minter_addr = Addr::unchecked(MOCK_MINTER_ADDR_STR);
+    let name_discount_wl_address = Addr::unchecked(MOCK_NAME_DISCOUNT_WL_ADDR_STR);
     let airdrop_contract = Addr::unchecked(MOCK_AIRDROP_ADDR_STR);
 
     let params = InstantiateParams {
@@ -243,6 +253,7 @@ fn test_can_not_claim_twice() {
         app: &mut app,
         per_address_limit: 1,
         claim_msg_plaintext: CONFIG_PLAINTEXT.to_string(),
+        name_discount_wl_address: name_discount_wl_address.clone(),
     };
     instantiate_contract(params).unwrap();
     query_minter_as_expected(&mut app, airdrop_contract.clone(), minter_addr);
@@ -290,6 +301,7 @@ fn test_claim_one_valid_airdrop() {
     let mut app = custom_mock_app();
     configure_mock_minter_with_mock_whitelist(&mut app);
     let minter_addr = Addr::unchecked(MOCK_MINTER_ADDR_STR);
+    let name_discount_wl_address = Addr::unchecked(MOCK_NAME_DISCOUNT_WL_ADDR_STR);
     let airdrop_contract = Addr::unchecked(MOCK_AIRDROP_ADDR_STR);
 
     let params = InstantiateParams {
@@ -297,6 +309,7 @@ fn test_claim_one_valid_airdrop() {
         funds_amount: WHITELIST_AMOUNT + INSTANTIATION_FEE,
         expected_airdrop_contract_id: 4,
         minter_address: minter_addr.clone(),
+        name_discount_wl_address: name_discount_wl_address.clone(),
         admin_account: Addr::unchecked(OWNER),
         app: &mut app,
         per_address_limit: 1,
@@ -340,6 +353,7 @@ fn test_claim_twice_receive_funds_once() {
 
     configure_mock_minter_with_mock_whitelist(&mut app);
     let minter_addr = Addr::unchecked(MOCK_MINTER_ADDR_STR);
+    let name_discount_wl_address = Addr::unchecked(MOCK_NAME_DISCOUNT_WL_ADDR_STR);
     let airdrop_contract = Addr::unchecked(MOCK_AIRDROP_ADDR_STR);
 
     let params = InstantiateParams {
@@ -347,6 +361,7 @@ fn test_claim_twice_receive_funds_once() {
         funds_amount: WHITELIST_AMOUNT + INSTANTIATION_FEE,
         expected_airdrop_contract_id: 4,
         minter_address: minter_addr.clone(),
+        name_discount_wl_address: name_discount_wl_address.clone(),
         admin_account: Addr::unchecked(OWNER),
         app: &mut app,
         per_address_limit: 1,
@@ -405,6 +420,7 @@ fn test_ineligible_does_not_receive_funds() {
     let mut app = custom_mock_app();
     configure_mock_minter_with_mock_whitelist(&mut app);
     let minter_addr = Addr::unchecked(MOCK_MINTER_ADDR_STR);
+    let name_discount_wl_address = Addr::unchecked(MOCK_NAME_DISCOUNT_WL_ADDR_STR);
     let airdrop_contract = Addr::unchecked(MOCK_AIRDROP_ADDR_STR);
 
     let params = InstantiateParams {
@@ -416,6 +432,7 @@ fn test_ineligible_does_not_receive_funds() {
         app: &mut app,
         per_address_limit: 1,
         claim_msg_plaintext: CONFIG_PLAINTEXT.to_string(),
+        name_discount_wl_address: name_discount_wl_address.clone(),
     };
     instantiate_contract(params).unwrap();
     query_minter_as_expected(&mut app, airdrop_contract.clone(), minter_addr);
@@ -462,6 +479,7 @@ fn test_one_eth_claim_two_stargaze_addresses_invalid() {
     let mut app = custom_mock_app();
     configure_mock_minter_with_mock_whitelist(&mut app);
     let minter_addr = Addr::unchecked(MOCK_MINTER_ADDR_STR);
+    let name_discount_wl_address = Addr::unchecked(MOCK_NAME_DISCOUNT_WL_ADDR_STR);
     let airdrop_contract = Addr::unchecked(MOCK_AIRDROP_ADDR_STR);
 
     let params = InstantiateParams {
@@ -473,6 +491,7 @@ fn test_one_eth_claim_two_stargaze_addresses_invalid() {
         app: &mut app,
         per_address_limit: 1,
         claim_msg_plaintext: CONFIG_PLAINTEXT.to_string(),
+        name_discount_wl_address: name_discount_wl_address.clone(),
     };
     instantiate_contract(params).unwrap();
 
@@ -532,6 +551,7 @@ fn test_two_claims_allowed_success() {
     let mut app = custom_mock_app();
     configure_mock_minter_with_mock_whitelist(&mut app);
     let minter_addr = Addr::unchecked(MOCK_MINTER_ADDR_STR);
+    let name_discount_wl_address = Addr::unchecked(MOCK_NAME_DISCOUNT_WL_ADDR_STR);
     let airdrop_contract = Addr::unchecked(MOCK_AIRDROP_ADDR_STR);
 
     let params = InstantiateParams {
@@ -543,6 +563,7 @@ fn test_two_claims_allowed_success() {
         app: &mut app,
         per_address_limit: 2,
         claim_msg_plaintext: CONFIG_PLAINTEXT.to_string(),
+        name_discount_wl_address: name_discount_wl_address.clone(),
     };
     instantiate_contract(params).unwrap();
 

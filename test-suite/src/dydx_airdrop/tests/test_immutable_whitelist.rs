@@ -1,7 +1,5 @@
 use crate::common_setup::contract_boxes::custom_mock_app;
-use crate::dydx_airdrop::constants::claim_constants::{
-    CONFIG_PLAINTEXT, MOCK_AIRDROP_ADDR_STR, MOCK_MINTER_ADDR_STR, OWNER,
-};
+use crate::dydx_airdrop::constants::claim_constants::{CONFIG_PLAINTEXT, MOCK_AIRDROP_ADDR_STR, MOCK_MINTER_ADDR_STR, MOCK_NAME_DISCOUNT_WL_ADDR_STR, OWNER};
 use crate::dydx_airdrop::constants::collection_constants::WHITELIST_AMOUNT;
 use crate::dydx_airdrop::setup::configure_mock_minter::configure_mock_minter_with_mock_whitelist;
 use crate::dydx_airdrop::setup::execute_msg::instantiate_contract;
@@ -23,6 +21,7 @@ fn test_instantiate_with_addresses() {
     let mut app = { custom_mock_app }();
     configure_mock_minter_with_mock_whitelist(&mut app);
     let minter_addr = Addr::unchecked(MOCK_MINTER_ADDR_STR);
+    let name_discount_wl_address = Addr::unchecked(MOCK_NAME_DISCOUNT_WL_ADDR_STR);
     let airdrop_contract = Addr::unchecked(MOCK_AIRDROP_ADDR_STR);
 
     let params = InstantiateParams {
@@ -34,6 +33,7 @@ fn test_instantiate_with_addresses() {
         app: &mut app,
         per_address_limit: 1,
         claim_msg_plaintext: CONFIG_PLAINTEXT.to_string(),
+        name_discount_wl_address,
     };
     instantiate_contract(params).unwrap();
 
@@ -67,6 +67,7 @@ fn test_whitelist_immutable_address_limit() {
     let mut app = custom_mock_app();
     configure_mock_minter_with_mock_whitelist(&mut app);
     let minter_addr = Addr::unchecked(MOCK_MINTER_ADDR_STR);
+    let name_discount_wl_address = Addr::unchecked(MOCK_NAME_DISCOUNT_WL_ADDR_STR);
 
     let params = InstantiateParams {
         addresses,
@@ -77,6 +78,7 @@ fn test_whitelist_immutable_address_limit() {
         app: &mut app,
         per_address_limit: 20,
         claim_msg_plaintext: CONFIG_PLAINTEXT.to_string(),
+        name_discount_wl_address,
     };
     instantiate_contract(params).unwrap();
     let whitelist_immutable = Addr::unchecked("contract4");
@@ -97,6 +99,7 @@ fn test_whitelist_immutable_address_count() {
     let mut app = custom_mock_app();
     configure_mock_minter_with_mock_whitelist(&mut app);
     let minter_addr = Addr::unchecked(MOCK_MINTER_ADDR_STR);
+    let name_discount_wl_address = Addr::unchecked(MOCK_NAME_DISCOUNT_WL_ADDR_STR);
 
     let params = InstantiateParams {
         addresses,
@@ -107,6 +110,7 @@ fn test_whitelist_immutable_address_count() {
         app: &mut app,
         per_address_limit: 20,
         claim_msg_plaintext: CONFIG_PLAINTEXT.to_string(),
+        name_discount_wl_address,
     };
     instantiate_contract(params).unwrap();
     let whitelist_immutable = Addr::unchecked("contract4");
@@ -127,6 +131,7 @@ fn test_whitelist_immutable_address_includes() {
     let mut app = custom_mock_app();
     configure_mock_minter_with_mock_whitelist(&mut app);
     let minter_addr = Addr::unchecked(MOCK_MINTER_ADDR_STR);
+    let name_discount_wl_address = Addr::unchecked(MOCK_NAME_DISCOUNT_WL_ADDR_STR);
 
     let params = InstantiateParams {
         addresses,
@@ -137,6 +142,7 @@ fn test_whitelist_immutable_address_includes() {
         app: &mut app,
         per_address_limit: 20,
         claim_msg_plaintext: CONFIG_PLAINTEXT.to_string(),
+        name_discount_wl_address,
     };
     instantiate_contract(params).unwrap();
     let whitelist_immutable = Addr::unchecked("contract4");
@@ -162,6 +168,7 @@ fn test_whitelist_immutable_address_config() {
     let mut app = custom_mock_app();
     configure_mock_minter_with_mock_whitelist(&mut app);
     let minter_addr = Addr::unchecked(MOCK_MINTER_ADDR_STR);
+    let name_discount_wl_address = Addr::unchecked(MOCK_NAME_DISCOUNT_WL_ADDR_STR);
 
     let params = InstantiateParams {
         addresses,
@@ -172,6 +179,7 @@ fn test_whitelist_immutable_address_config() {
         app: &mut app,
         per_address_limit: 20,
         claim_msg_plaintext: CONFIG_PLAINTEXT.to_string(),
+        name_discount_wl_address,
     };
     instantiate_contract(params).unwrap();
     let whitelist_immutable = Addr::unchecked("contract4");
