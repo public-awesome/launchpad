@@ -10,6 +10,7 @@ pub struct Config {
     pub airdrop_amount: u128,
     pub whitelist_address: Option<String>,
     pub minter_address: Addr,
+    pub name_discount_wl_address: Addr,
 }
 
 pub const CONFIG: Item<Config> = Item::new("cfg");

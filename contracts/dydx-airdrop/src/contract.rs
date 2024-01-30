@@ -94,6 +94,7 @@ mod build_message {
             airdrop_amount: validate_airdrop_amount(msg.airdrop_amount)?,
             whitelist_address: None,
             minter_address: deps.api.addr_validate(msg.minter_address.as_ref())?,
+            name_discount_wl_address: deps.api.addr_validate(msg.name_discount_wl_address.as_ref())?,
         })
     }
 }

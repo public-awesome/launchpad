@@ -10,6 +10,7 @@ pub struct InstantiateMsg {
     pub whitelist_code_id: u64,
     pub minter_address: Addr,
     pub per_address_limit: u32,
+    pub name_discount_wl_address: String,
 }
 
 #[cw_serde]
