@@ -65,60 +65,6 @@ export type ExecuteMsg = {
 } | {
   remove_discount_price: {};
 };
-export type Decimal = string;
-export interface InstantiateMsg {
-  create_msg: CreateMinterMsgForVendingMinterInitMsgExtension;
-  params: MinterParamsForParamsExtension;
-}
-export interface CreateMinterMsgForVendingMinterInitMsgExtension {
-  collection_params: CollectionParams;
-  init_msg: VendingMinterInitMsgExtension;
-}
-export interface CollectionParams {
-  code_id: number;
-  info: CollectionInfoForRoyaltyInfoResponse;
-  name: string;
-  symbol: string;
-}
-export interface CollectionInfoForRoyaltyInfoResponse {
-  creator: string;
-  description: string;
-  explicit_content?: boolean | null;
-  external_link?: string | null;
-  image: string;
-  royalty_info?: RoyaltyInfoResponse | null;
-  start_trading_time?: Timestamp | null;
-}
-export interface RoyaltyInfoResponse {
-  payment_address: string;
-  share: Decimal;
-}
-export interface VendingMinterInitMsgExtension {
-  base_token_uri: string;
-  mint_price: Coin;
-  num_tokens: number;
-  payment_address?: string | null;
-  per_address_limit: number;
-  start_time: Timestamp;
-  whitelist?: string | null;
-}
-export interface MinterParamsForParamsExtension {
-  allowed_sg721_code_ids: number[];
-  code_id: number;
-  creation_fee: Coin;
-  extension: ParamsExtension;
-  frozen: boolean;
-  max_trading_offset_secs: number;
-  min_mint_price: Coin;
-  mint_fee_bps: number;
-}
-export interface ParamsExtension {
-  airdrop_mint_fee_bps: number;
-  airdrop_mint_price: Coin;
-  max_per_address_limit: number;
-  max_token_limit: number;
-  shuffle_fee: Coin;
-}
 export interface MintCountResponse {
   address: string;
   count: number;
