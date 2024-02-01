@@ -4684,6 +4684,35 @@ dependencies = [
 ]
 
 [[package]]
+name = "vending-minter-wl-flex-featured"
+version = "3.5.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus 1.1.0",
+ "cw-utils 1.0.1",
+ "cw2 1.1.0",
+ "cw721 0.18.0",
+ "cw721-base 0.18.0",
+ "rand_core 0.6.4",
+ "rand_xoshiro",
+ "schemars",
+ "semver",
+ "serde",
+ "sg-std",
+ "sg-whitelist-flex",
+ "sg1",
+ "sg2",
+ "sg4",
+ "sg721",
+ "sha2 0.10.7",
+ "shuffle",
+ "thiserror",
+ "url",
+ "vending-factory",
+]
+
+[[package]]
 name = "version_check"
 version = "0.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
