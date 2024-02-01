@@ -139,3 +139,8 @@ fn proper_initialization() {
 
     assert!(res.is_ok())
 }
+
+#[test]
+fn mint() {
+    proper_initialization();
+}
