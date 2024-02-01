@@ -53,8 +53,14 @@ pub fn contract_vending_minter() -> Box<dyn Contract<Empty>> {
     Box::new(contract)
 }
 
-// TODO: need to deploy the vending minter tv contract (box)
-// and use that id for the in the params for the vending minter code id
+pub fn contract_tv_collection() -> Box<dyn Contract<Empty>> {
+    let contract = ContractWrapper::new(
+        sg721_tv::entry::execute,
+        sg721_tv::entry::instantiate,
+        sg721_tv::entry::query,
+    );
+    Box::new(contract)
+}
 
 pub fn mock_params(mint_denom: Option<String>) -> VendingMinterParams {
     VendingMinterParams {
@@ -80,19 +86,22 @@ pub fn mock_params(mint_denom: Option<String>) -> VendingMinterParams {
 
 #[test]
 fn proper_initialization() {
-    let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
-    let collection_params = mock_collection_params_1(Some(start_time));
-
     let mut app = custom_mock_app();
 
     let factory_code_id = app.store_code(contract_vending_factory());
     let vesting_code_id = app.store_code(cw_vesting_contract());
     let vending_code_id = app.store_code(contract_vending_minter());
+    let collection_code_id = app.store_code(contract_tv_collection());
+
+    let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
+    let mut collection_params = mock_collection_params_1(Some(start_time));
+    collection_params.code_id = collection_code_id;
 
     let (creator, buyer) = setup_accounts(&mut app);
 
     let mut params = mock_params(None);
     params.code_id = vending_code_id;
+    params.allowed_sg721_code_ids = vec![collection_code_id];
 
     let factory_addr = app
         .instantiate_contract(
@@ -126,11 +135,7 @@ fn proper_initialization() {
 
     let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
 
-    let err = app.execute_contract(creator, factory_addr.clone(), &msg, &creation_fee);
+    let res = app.execute_contract(creator, factory_addr.clone(), &msg, &creation_fee);
 
-    assert!(err.is_err());
-
-    assert_eq!(err.unwrap().events.len(), 5);
-
-    // assert!(res.is_ok())
+    assert!(res.is_ok())
 }

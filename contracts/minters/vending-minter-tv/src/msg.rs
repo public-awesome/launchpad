@@ -1,6 +1,6 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Coin, Timestamp};
-use vending_factory::{msg::VendingMinterCreateMsg, state::VendingMinterParams};
+// use vending_factory::{msg::VendingMinterCreateMsg, state::VendingMinterParams};
 
 // #[cw_serde]
 // pub struct InstantiateMsg {
