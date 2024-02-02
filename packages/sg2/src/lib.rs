@@ -20,19 +20,3 @@ pub struct MinterParams<T> {
     pub max_trading_offset_secs: u64,
     pub extension: T,
 }
-
-#[cfg(test)]
-impl<T: Default> Default for MinterParams<T> {
-    fn default() -> Self {
-        MinterParams {
-            code_id: Default::default(),
-            allowed_sg721_code_ids: Default::default(),
-            frozen: Default::default(),
-            creation_fee: Default::default(),
-            min_mint_price: Default::default(),
-            mint_fee_bps: Default::default(),
-            max_trading_offset_secs: Default::default(),
-            extension: Default::default(),
-        }
-    }
-}

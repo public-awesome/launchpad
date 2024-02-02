@@ -1,15 +1,12 @@
 [package]
-name = "vending-minter-tv"
-authors = [
-  "Jake Hartnell <jake@stargaze.zone>",
-  "Shane Vitarana <s@noreply.publicawesome.com>",
-]
+name        = "vending-minter-tv"
+authors     = ["Jake Hartnell <jake@stargaze.zone>", "Shane Vitarana <s@noreply.publicawesome.com>"]
 description = "Stargaze vending minter contract"
-version = { workspace = true }
-edition = { workspace = true }
-homepage = { workspace = true }
-repository = { workspace = true }
-license = { workspace = true }
+version     = { workspace = true }
+edition     = { workspace = true }
+homepage    = { workspace = true }
+repository  = { workspace = true }
+license     = { workspace = true }
 
 exclude = [
   # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
@@ -56,5 +53,5 @@ vending-factory = { workspace = true, features = ["library"] }
 semver          = { workspace = true }
 
 [dev-dependencies]
-test-suite = { workspace = true }
+test-suite    = { workspace = true }
 cw-multi-test = { workspace = true }

@@ -1,5 +1,5 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::Coin;
+use cosmwasm_std::{Coin, Decimal};
 use sg721::{CollectionInfo, RoyaltyInfoResponse};
 
 #[cw_serde]
@@ -15,6 +15,28 @@ pub struct CollectionParams {
     pub name: String,
     pub symbol: String,
     pub info: CollectionInfo<RoyaltyInfoResponse>,
+}
+
+impl Default for CollectionParams {
+    fn default() -> Self {
+        Self {
+            code_id: 1,
+            name: "Collection Name".to_string(),
+            symbol: "COL".to_string(),
+            info: CollectionInfo {
+                creator: "creator".to_string(),
+                description: String::from("Stargaze Monkeys"),
+                image: "https://example.com/image.png".to_string(),
+                external_link: Some("https://example.com/external.html".to_string()),
+                start_trading_time: None,
+                explicit_content: Some(false),
+                royalty_info: Some(RoyaltyInfoResponse {
+                    payment_address: "creator".to_string(),
+                    share: Decimal::percent(10),
+                }),
+            },
+        }
+    }
 }
 
 /// Message for params so they can be updated individually by governance

@@ -1,17 +1,14 @@
-use cosmwasm_std::{coin, coins, Addr, Empty, Timestamp};
+use cosmwasm_std::{coins, Addr, Empty};
 use cw_multi_test::{no_init, AppBuilder, BankSudo, Contract, ContractWrapper};
 use cw_multi_test::{Executor, SudoMsg};
-use sg2::tests::mock_collection_params_1;
-use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
-use test_suite::common_setup::contract_boxes::App;
+use sg_std::NATIVE_DENOM;
+use test_suite::common_setup::contract_boxes::{contract_vending_factory, App};
 use test_suite::common_setup::keeper::StargazeKeeper;
 use test_suite::common_setup::setup_accounts_and_block::INITIAL_BALANCE;
-use test_suite::common_setup::setup_minter::{
-    common::constants::CREATION_FEE, vending_minter::mock_params::mock_init_extension,
-};
+use test_suite::common_setup::setup_minter::common::constants::CREATION_FEE;
 use vending_factory::msg::{
-    InstantiateMsg, TokenVaultVendingMinterCreateMsg, TokenVaultVendingMinterInitMsgExtension,
-    VaultInfo,
+    TokenVaultVendingMinterCreateMsg, TokenVaultVendingMinterInitMsgExtension, VaultInfo,
+    VendingMinterInitMsgExtension,
 };
 
 const FACTORY_ADMIN: &str = "factory_admin";
@@ -26,17 +23,7 @@ fn cw_vesting_contract() -> Box<dyn Contract<Empty>> {
     Box::new(contract)
 }
 
-fn contract_vending_factory() -> Box<dyn Contract<Empty>> {
-    let contract = ContractWrapper::new(
-        vending_factory::contract::execute,
-        vending_factory::contract::instantiate,
-        vending_factory::contract::query,
-    )
-    .with_sudo(vending_factory::contract::sudo);
-    Box::new(contract)
-}
-
-fn contract_vending_minter() -> Box<dyn Contract<Empty>> {
+fn contract_vending_minter_tv() -> Box<dyn Contract<Empty>> {
     let contract = ContractWrapper::new(
         crate::contract::execute,
         crate::contract::instantiate,
@@ -82,20 +69,18 @@ fn setup_app() -> App {
 fn setup_contracts(app: &mut App) -> (Addr, u64, u64, u64) {
     let factory_code_id = app.store_code(contract_vending_factory());
     let vesting_code_id = app.store_code(cw_vesting_contract());
-    let vending_code_id = app.store_code(contract_vending_minter());
+    let vending_code_id = app.store_code(contract_vending_minter_tv());
     let collection_code_id = app.store_code(contract_tv_collection());
 
-    // let mut params = mock_params(None);
-    // params.code_id = vending_code_id;
-    // params.allowed_sg721_code_ids = vec![collection_code_id];
-
-    let params = InstantiateMsg::default();
+    let mut init_msg = vending_factory::msg::InstantiateMsg::default();
+    init_msg.params.code_id = vending_code_id;
+    init_msg.params.allowed_sg721_code_ids = vec![collection_code_id];
 
     let factory_addr = app
         .instantiate_contract(
             factory_code_id,
             Addr::unchecked(FACTORY_ADMIN),
-            &vending_factory::msg::InstantiateMsg { params },
+            &init_msg,
             &[],
             "factory",
             None,
@@ -116,26 +101,24 @@ fn proper_initialization() {
 
     let (factory_addr, vesting_code_id, _, collection_code_id) = setup_contracts(&mut app);
 
-    let base = mock_init_extension(None, None);
+    let mut vault_info = VaultInfo::default();
+    vault_info.vesting_code_id = vesting_code_id;
 
-    let vault_info = VaultInfo {
-        token_balance: coin(100u128, NATIVE_DENOM),
-        vesting_schedule: cw_vesting::vesting::Schedule::SaturatingLinear,
-        vesting_duration_seconds: 1000,
-        unbonding_duration_seconds: 0,
-        vesting_code_id,
+    let init_msg = TokenVaultVendingMinterInitMsgExtension {
+        base: VendingMinterInitMsgExtension::default(),
+        vault_info,
     };
 
-    let init_msg = TokenVaultVendingMinterInitMsgExtension { base, vault_info };
-
-    let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
-    let mut collection_params = mock_collection_params_1(Some(start_time));
+    let mut collection_params = sg2::msg::CollectionParams::default();
     collection_params.code_id = collection_code_id;
 
     let create_minter_msg = TokenVaultVendingMinterCreateMsg {
         init_msg,
         collection_params,
     };
+
+    // TODO: Use instantiate2 for minter address
+    // use `create_minter_msg` hash as the salt
 
     let msg = vending_factory::msg::ExecuteMsg::CreateTokenVaultMinter(create_minter_msg);
 
