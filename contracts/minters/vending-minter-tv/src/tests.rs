@@ -7,18 +7,12 @@ use test_suite::common_setup::contract_boxes::App;
 use test_suite::common_setup::keeper::StargazeKeeper;
 use test_suite::common_setup::setup_accounts_and_block::INITIAL_BALANCE;
 use test_suite::common_setup::setup_minter::{
-    common::constants::{
-        AIRDROP_MINT_FEE_FAIR_BURN, AIRDROP_MINT_PRICE, CREATION_FEE, MAX_PER_ADDRESS_LIMIT,
-        MAX_TOKEN_LIMIT, MINT_FEE_FAIR_BURN, MIN_MINT_PRICE, SHUFFLE_FEE,
-    },
-    vending_minter::mock_params::mock_init_extension,
+    common::constants::CREATION_FEE, vending_minter::mock_params::mock_init_extension,
 };
 use vending_factory::msg::{
-    TokenVaultVendingMinterCreateMsg, TokenVaultVendingMinterInitMsgExtension, VaultInfo,
+    InstantiateMsg, TokenVaultVendingMinterCreateMsg, TokenVaultVendingMinterInitMsgExtension,
+    VaultInfo,
 };
-use vending_factory::state::{ParamsExtension, VendingMinterParams};
-
-use crate::msg::ExecuteMsg;
 
 const FACTORY_ADMIN: &str = "factory_admin";
 const CREATOR: &str = "creator";
@@ -91,9 +85,11 @@ fn setup_contracts(app: &mut App) -> (Addr, u64, u64, u64) {
     let vending_code_id = app.store_code(contract_vending_minter());
     let collection_code_id = app.store_code(contract_tv_collection());
 
-    let mut params = mock_params(None);
-    params.code_id = vending_code_id;
-    params.allowed_sg721_code_ids = vec![collection_code_id];
+    // let mut params = mock_params(None);
+    // params.code_id = vending_code_id;
+    // params.allowed_sg721_code_ids = vec![collection_code_id];
+
+    let params = InstantiateMsg::default();
 
     let factory_addr = app
         .instantiate_contract(
@@ -112,28 +108,6 @@ fn setup_contracts(app: &mut App) -> (Addr, u64, u64, u64) {
         vending_code_id,
         collection_code_id,
     )
-}
-
-pub fn mock_params(mint_denom: Option<String>) -> VendingMinterParams {
-    VendingMinterParams {
-        code_id: 1,
-        allowed_sg721_code_ids: vec![1, 3, 5, 6],
-        frozen: false,
-        creation_fee: coin(CREATION_FEE, NATIVE_DENOM),
-        min_mint_price: coin(
-            MIN_MINT_PRICE,
-            mint_denom.unwrap_or_else(|| NATIVE_DENOM.to_string()),
-        ),
-        mint_fee_bps: MINT_FEE_FAIR_BURN,
-        max_trading_offset_secs: 60 * 60 * 24 * 7,
-        extension: ParamsExtension {
-            max_token_limit: MAX_TOKEN_LIMIT,
-            max_per_address_limit: MAX_PER_ADDRESS_LIMIT,
-            airdrop_mint_price: coin(AIRDROP_MINT_PRICE, NATIVE_DENOM),
-            airdrop_mint_fee_bps: AIRDROP_MINT_FEE_FAIR_BURN,
-            shuffle_fee: coin(SHUFFLE_FEE, NATIVE_DENOM),
-        },
-    }
 }
 
 #[test]

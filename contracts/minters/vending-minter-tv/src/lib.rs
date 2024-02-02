@@ -9,4 +9,4 @@ pub mod helpers;
 pub mod validation;
 
 #[cfg(test)]
-mod testing;
+mod tests;

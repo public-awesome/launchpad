@@ -9,6 +9,24 @@ pub struct InstantiateMsg {
     pub params: VendingMinterParams,
 }
 
+#[cfg(test)]
+impl Default for InstantiateMsg {
+    fn default() -> Self {
+        Self {
+            params: VendingMinterParams {
+                code_id: todo!(),
+                allowed_sg721_code_ids: todo!(),
+                frozen: todo!(),
+                creation_fee: todo!(),
+                min_mint_price: todo!(),
+                mint_fee_bps: todo!(),
+                max_trading_offset_secs: todo!(),
+                extension: todo!(),
+            },
+        }
+    }
+}
+
 #[cw_serde]
 pub struct VendingMinterInitMsgExtension {
     pub base_token_uri: String,
