@@ -25,10 +25,19 @@ backtraces = ["cosmwasm-std/backtraces"]
 # use library feature to disable all instantiate/execute/query exports
 library = []
 
+# [features]
+# default = []
+# backtraces = ["cosmwasm-std/backtraces"]
+# # backtrace = ["anyhow/backtrace"]
+# cosmwasm_1_1 = ["cosmwasm-std/cosmwasm_1_1"]
+# cosmwasm_1_2 = ["cosmwasm_1_1", "cosmwasm-std/cosmwasm_1_2"]
+# cosmwasm_1_3 = ["cosmwasm_1_2", "cosmwasm-std/cosmwasm_1_3"]
+# cosmwasm_1_4 = ["cosmwasm_1_3", "cosmwasm-std/cosmwasm_1_4"]
+
+
 [dependencies]
 cosmwasm-schema = { workspace = true }
 cosmwasm-std    = { workspace = true, features = ["cosmwasm_1_2"] }
-# cosmwasm-std    = { workspace = true }
 cw2             = { workspace = true }
 cw721           = { workspace = true }
 cw721-base      = { workspace = true, features = ["library"] }

@@ -12,8 +12,8 @@ use crate::validation::{check_dynamic_per_address_limit, get_three_percent_of_to
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     coin, ensure, instantiate2_address, to_json_binary, Addr, BankMsg, Binary, Coin, CosmosMsg,
-    Decimal, Deps, DepsMut, Empty, Env, Event, HexBinary, MessageInfo, Order, Reply, ReplyOn,
-    Response, StdError, StdResult, SubMsg, Timestamp, Uint128, WasmMsg,
+    Decimal, Deps, DepsMut, Empty, Env, Event, MessageInfo, Order, Reply, ReplyOn, Response,
+    StdError, StdResult, SubMsg, Timestamp, Uint128, WasmMsg,
 };
 use cw2::set_contract_version;
 use cw721::ContractInfoResponse;
@@ -787,13 +787,12 @@ fn init_vesting(
         unbonding_duration_seconds,
     };
 
-    // let canonical_creator = deps.api.addr_canonicalize(contract_address)?;
+    let canonical_creator = deps.api.addr_canonicalize(contract_address)?;
     let checksum = deps.querier.query_wasm_code_info(vesting_code_id)?.checksum;
     let salt_raw = collection.to_owned() + "/" + token_id;
-    // let vesting_addr_raw =
-    //     instantiate2_address(&checksum, &canonical_creator, salt_raw.as_bytes())?;
-    // let vesting_addr = deps.api.addr_humanize(&vesting_addr_raw)?;
-    let vesting_addr = Addr::unchecked("alkjfasd");
+    let vesting_addr_raw =
+        instantiate2_address(&checksum, &canonical_creator, salt_raw.as_bytes())?;
+    let vesting_addr = deps.api.addr_humanize(&vesting_addr_raw)?;
 
     let vesting_msg = WasmMsg::Instantiate2 {
         admin: None,

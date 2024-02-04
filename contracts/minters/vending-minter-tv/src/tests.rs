@@ -47,9 +47,17 @@ fn contract_tv_collection() -> Box<dyn Contract<Empty>> {
     Box::new(contract)
 }
 
+// pub struct TestWasm {}
+
 fn setup_app() -> App {
+    // let wasm_keeper: WasmKeeper<Empty, Empty> =
+    //     WasmKeeper::new().with_address_generator(MockAddressGenerator);
+
+    // let wasm_keeper: WasmKeeper<Empty, Empty> = WasmKeeper::new().with_checksum_generator(checksum_generator)
+
     let mut app = AppBuilder::new()
         .with_stargate(StargazeKeeper)
+        // .with_wasm(TestWasm)
         .build(no_init);
 
     app.sudo(SudoMsg::Bank({
