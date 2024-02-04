@@ -27,7 +27,8 @@ library = []
 
 [dependencies]
 cosmwasm-schema = { workspace = true }
-cosmwasm-std    = { workspace = true, features = ["cosmwasm_1_4"] }
+cosmwasm-std    = { workspace = true, features = ["cosmwasm_1_2"] }
+# cosmwasm-std    = { workspace = true }
 cw2             = { workspace = true }
 cw721           = { workspace = true }
 cw721-base      = { workspace = true, features = ["library"] }
