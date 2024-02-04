@@ -53,7 +53,7 @@ impl Default for VendingMinterInitMsgExtension {
             payment_address: None,
             start_time: Timestamp::from_nanos(GENESIS_MINT_START_TIME),
             num_tokens: 100,
-            mint_price: coin(50_000_000, NATIVE_DENOM),
+            mint_price: coin(100_000_000, NATIVE_DENOM),
             per_address_limit: 3,
             whitelist: None,
         }

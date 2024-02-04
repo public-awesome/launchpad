@@ -1,19 +1,23 @@
 use cosmwasm_std::{coins, Addr, Empty};
 use cw_multi_test::{no_init, AppBuilder, BankSudo, Contract, ContractWrapper};
 use cw_multi_test::{Executor, SudoMsg};
-use sg_std::NATIVE_DENOM;
+use sg2::msg::CollectionParams;
+use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use test_suite::common_setup::contract_boxes::{contract_vending_factory, App};
 use test_suite::common_setup::keeper::StargazeKeeper;
-use test_suite::common_setup::setup_accounts_and_block::INITIAL_BALANCE;
-use test_suite::common_setup::setup_minter::common::constants::CREATION_FEE;
+use test_suite::common_setup::setup_accounts_and_block::{setup_block_time, INITIAL_BALANCE};
+use test_suite::common_setup::setup_minter::common::constants::{CREATION_FEE, MINT_PRICE};
 use test_suite::common_setup::setup_minter::common::parse_response::parse_factory_response;
 use vending_factory::msg::{
     TokenVaultVendingMinterCreateMsg, TokenVaultVendingMinterInitMsgExtension, VaultInfo,
     VendingMinterInitMsgExtension,
 };
 
+use crate::msg::ExecuteMsg;
+
 const FACTORY_ADMIN: &str = "factory_admin";
 const CREATOR: &str = "creator";
+const BUYER: &str = "buyer";
 
 fn cw_vesting_contract() -> Box<dyn Contract<Empty>> {
     let contract = ContractWrapper::new(
@@ -64,6 +68,14 @@ fn setup_app() -> App {
     }))
     .unwrap();
 
+    app.sudo(SudoMsg::Bank({
+        BankSudo::Mint {
+            to_address: BUYER.to_string(),
+            amount: coins(INITIAL_BALANCE, NATIVE_DENOM),
+        }
+    }))
+    .unwrap();
+
     app
 }
 
@@ -96,21 +108,23 @@ fn setup_contracts(app: &mut App) -> (Addr, u64, u64, u64) {
     )
 }
 
-fn create_minter() -> (Addr, Addr) {
-    let mut app = setup_app();
+fn create_minter(app: &mut App) -> (Addr, Addr) {
+    let (factory_addr, vesting_code_id, _, collection_code_id) = setup_contracts(app);
 
-    let (factory_addr, vesting_code_id, _, collection_code_id) = setup_contracts(&mut app);
-
-    let mut vault_info = VaultInfo::default();
-    vault_info.vesting_code_id = vesting_code_id;
+    let vault_info = VaultInfo {
+        vesting_code_id,
+        ..VaultInfo::default()
+    };
 
     let init_msg = TokenVaultVendingMinterInitMsgExtension {
         base: VendingMinterInitMsgExtension::default(),
         vault_info,
     };
 
-    let mut collection_params = sg2::msg::CollectionParams::default();
-    collection_params.code_id = collection_code_id;
+    let collection_params = sg2::msg::CollectionParams {
+        code_id: collection_code_id,
+        ..CollectionParams::default()
+    };
 
     let create_minter_msg = TokenVaultVendingMinterCreateMsg {
         init_msg,
@@ -135,58 +149,31 @@ fn create_minter() -> (Addr, Addr) {
 
 #[test]
 fn proper_initialization() {
-    // let mut app = setup_app();
-
-    // let (factory_addr, vesting_code_id, _, collection_code_id) = setup_contracts(&mut app);
-
-    // let mut vault_info = VaultInfo::default();
-    // vault_info.vesting_code_id = vesting_code_id;
-
-    // let init_msg = TokenVaultVendingMinterInitMsgExtension {
-    //     base: VendingMinterInitMsgExtension::default(),
-    //     vault_info,
-    // };
-
-    // let mut collection_params = sg2::msg::CollectionParams::default();
-    // collection_params.code_id = collection_code_id;
-
-    // let create_minter_msg = TokenVaultVendingMinterCreateMsg {
-    //     init_msg,
-    //     collection_params,
-    // };
-
-    // let msg = vending_factory::msg::ExecuteMsg::CreateTokenVaultMinter(create_minter_msg);
-
-    // let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
-
-    // let res = app.execute_contract(
-    //     Addr::unchecked(CREATOR),
-    //     factory_addr.clone(),
-    //     &msg,
-    //     &creation_fee,
-    // );
-
-    // assert!(res.is_ok());
-
-    // let (minter, collection) = parse_factory_response(&res.unwrap());
-    // assert_eq!(factory_addr, "contract0".to_string());
-
-    let (minter, collection) = create_minter();
+    let mut app = setup_app();
+    let (minter, collection) = create_minter(&mut app);
 
     assert_eq!(minter, "contract1".to_string());
     assert_eq!(collection, "contract2".to_string());
 }
 
-// #[test]
-// fn mint() {
-//     proper_initialization();
+#[test]
+fn mint() {
+    let mut app = setup_app();
+    let (minter, _) = create_minter(&mut app);
 
-//     let mint_msg = ExecuteMsg::Mint {};
-//     let res = router.execute_contract(
-//         buyer.clone(),
-//         minter_addr.clone(),
-//         &mint_msg,
-//         &coins(MINT_PRICE, NATIVE_DENOM),
-//     );
-//     assert!(res.is_ok());
-// }
+    setup_block_time(&mut app, GENESIS_MINT_START_TIME + 10_000_000, None);
+
+    let mint_msg = ExecuteMsg::Mint {};
+    let err = app.execute_contract(
+        Addr::unchecked(BUYER),
+        minter.clone(),
+        &mint_msg,
+        &coins(MINT_PRICE, NATIVE_DENOM),
+    );
+    // assert!(res.is_ok());
+
+    assert_eq!(
+        err.unwrap_err().source().unwrap().to_string(),
+        "Unauthorized".to_string()
+    );
+}
