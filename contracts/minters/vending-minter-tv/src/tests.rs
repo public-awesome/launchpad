@@ -6,6 +6,7 @@ use test_suite::common_setup::contract_boxes::{contract_vending_factory, App};
 use test_suite::common_setup::keeper::StargazeKeeper;
 use test_suite::common_setup::setup_accounts_and_block::INITIAL_BALANCE;
 use test_suite::common_setup::setup_minter::common::constants::CREATION_FEE;
+use test_suite::common_setup::setup_minter::common::parse_response::parse_factory_response;
 use vending_factory::msg::{
     TokenVaultVendingMinterCreateMsg, TokenVaultVendingMinterInitMsgExtension, VaultInfo,
     VendingMinterInitMsgExtension,
@@ -95,8 +96,7 @@ fn setup_contracts(app: &mut App) -> (Addr, u64, u64, u64) {
     )
 }
 
-#[test]
-fn proper_initialization() {
+fn create_minter() -> (Addr, Addr) {
     let mut app = setup_app();
 
     let (factory_addr, vesting_code_id, _, collection_code_id) = setup_contracts(&mut app);
@@ -117,9 +117,6 @@ fn proper_initialization() {
         collection_params,
     };
 
-    // TODO: Use instantiate2 for minter address
-    // use `create_minter_msg` hash as the salt
-
     let msg = vending_factory::msg::ExecuteMsg::CreateTokenVaultMinter(create_minter_msg);
 
     let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
@@ -131,7 +128,53 @@ fn proper_initialization() {
         &creation_fee,
     );
 
-    assert!(res.is_ok())
+    let (minter, collection) = parse_factory_response(&res.unwrap());
+
+    (minter, collection)
+}
+
+#[test]
+fn proper_initialization() {
+    // let mut app = setup_app();
+
+    // let (factory_addr, vesting_code_id, _, collection_code_id) = setup_contracts(&mut app);
+
+    // let mut vault_info = VaultInfo::default();
+    // vault_info.vesting_code_id = vesting_code_id;
+
+    // let init_msg = TokenVaultVendingMinterInitMsgExtension {
+    //     base: VendingMinterInitMsgExtension::default(),
+    //     vault_info,
+    // };
+
+    // let mut collection_params = sg2::msg::CollectionParams::default();
+    // collection_params.code_id = collection_code_id;
+
+    // let create_minter_msg = TokenVaultVendingMinterCreateMsg {
+    //     init_msg,
+    //     collection_params,
+    // };
+
+    // let msg = vending_factory::msg::ExecuteMsg::CreateTokenVaultMinter(create_minter_msg);
+
+    // let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
+
+    // let res = app.execute_contract(
+    //     Addr::unchecked(CREATOR),
+    //     factory_addr.clone(),
+    //     &msg,
+    //     &creation_fee,
+    // );
+
+    // assert!(res.is_ok());
+
+    // let (minter, collection) = parse_factory_response(&res.unwrap());
+    // assert_eq!(factory_addr, "contract0".to_string());
+
+    let (minter, collection) = create_minter();
+
+    assert_eq!(minter, "contract1".to_string());
+    assert_eq!(collection, "contract2".to_string());
 }
 
 // #[test]
