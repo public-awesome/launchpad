@@ -1,7 +1,7 @@
 [package]
 name        = "vending-minter-tv"
-authors     = ["Jake Hartnell <jake@stargaze.zone>", "Shane Vitarana <s@noreply.publicawesome.com>"]
-description = "Stargaze vending minter contract"
+authors     = ["Shane Vitarana <s@noreply.publicawesome.com>"]
+description = "Stargaze vending minter with token-vault contract"
 version     = { workspace = true }
 edition     = { workspace = true }
 homepage    = { workspace = true }
