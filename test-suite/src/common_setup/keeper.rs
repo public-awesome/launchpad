@@ -62,13 +62,18 @@ impl Stargate for StargazeKeeper {
     /// Custom stargate queries.
     fn query(
         &self,
-        _api: &dyn Api,
-        _storage: &dyn Storage,
-        _querier: &dyn Querier,
-        _block: &BlockInfo,
-        _path: String,
-        _data: Binary,
+        api: &dyn Api,
+        storage: &dyn Storage,
+        querier: &dyn Querier,
+        block: &BlockInfo,
+        path: String,
+        data: Binary,
     ) -> AnyResult<Binary> {
-        bail!("not implemented");
+        let _ = (api, storage, querier, block);
+        bail!(
+            "Unexpected stargate query: path = {:?}, data = {:?}",
+            path,
+            data
+        )
     }
 }
