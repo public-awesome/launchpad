@@ -11,138 +11,138 @@ members = [
 resolver = "2"
 
 [workspace.package]
-version      = "3.5.0"
+version = "3.5.0"
 rust-version = "1.73.0"
-edition      = "2021"
-homepage     = "https://stargaze.zone"
-repository   = "https://github.com/public-awesome/launchpad"
-license      = "Apache-2.0"
+edition = "2021"
+homepage = "https://stargaze.zone"
+repository = "https://github.com/public-awesome/launchpad"
+license = "Apache-2.0"
 
 [workspace.dependencies]
-base-factory    = { version = "3.5.0", path = "contracts/factories/base-factory" }
-base-minter     = { version = "3.5.0", path = "contracts/minters/base-minter" }
+base-factory = { version = "3.5.0", path = "contracts/factories/base-factory" }
+base-minter = { version = "3.5.0", path = "contracts/minters/base-minter" }
 cosmwasm-schema = "1.5.3"
-cosmwasm-std    = { version = "1.5.3" }
-cw-controllers  = "1.1.0"
-cw2             = "1.1.0"
-cw4             = "1.1.0"
-cw4-group       = "1.1.0"
-cw721           = "0.18.0"
-cw721-base      = "0.18.0"
-cw-multi-test   = "0.20.0"
+cosmwasm-std = { version = "1.5.3" }
+cw-controllers = "1.1.0"
+cw2 = "1.1.0"
+cw4 = "1.1.0"
+cw4-group = "1.1.0"
+cw721 = "0.18.0"
+cw721-base = "0.18.0"
+cw-multi-test = "^0.20"
 cw-storage-plus = "1.2.0"
-cw-utils        = "1.0.1"
-cw-vesting      = "2.3.0"
-schemars        = "0.8.11"
-serde           = { version = "1.0", default-features = false, features = ["derive"] }
-serde_json      = "1.0"
-sg1             = { version = "3.5.0", path = "packages/sg1" }
-sg2             = { version = "3.5.0", path = "packages/sg2" }
-sg4             = { version = "3.5.0", path = "packages/sg4" }
-sg721           = { version = "3.5.0", path = "packages/sg721" }
-sg721-base      = { version = "3.5.0", path = "contracts/collections/sg721-base" }
-sg721-nt        = { version = "3.5.0", path = "contracts/collections/sg721-nt" }
-sg721-tv        = { version = "3.5.0", path = "contracts/collections/sg721-tv" }
+cw-utils = "1.0.1"
+cw-vesting = "2.3.0"
+schemars = "0.8.11"
+serde = { version = "1.0", default-features = false, features = ["derive"] }
+serde_json = "1.0"
+sg1 = { version = "3.5.0", path = "packages/sg1" }
+sg2 = { version = "3.5.0", path = "packages/sg2" }
+sg4 = { version = "3.5.0", path = "packages/sg4" }
+sg721 = { version = "3.5.0", path = "packages/sg721" }
+sg721-base = { version = "3.5.0", path = "contracts/collections/sg721-base" }
+sg721-nt = { version = "3.5.0", path = "contracts/collections/sg721-nt" }
+sg721-tv = { version = "3.5.0", path = "contracts/collections/sg721-tv" }
 sg721-updatable = { version = "3.5.0", path = "contracts/collections/sg721-updatable" }
-sg-controllers  = { version = "3.5.0", path = "packages/controllers" }
-sg-metadata     = { version = "3.5.0", path = "packages/sg-metadata" }
-sg-mint-hooks   = { version = "3.5.0", path = "packages/mint-hooks" }
-sg-multi-test   = { version = "3.1.0" }
-sg-splits       = { version = "3.5.0", path = "contracts/splits" }
-sg-std          = { version = "3.2.0" }
-sg-whitelist    = { version = "3.5.0", path = "contracts/whitelists/whitelist" }
-thiserror       = "1.0.31"
-url             = "2.2.2"
-sha2            = { version = "0.10.2", default-features = false }
+sg-controllers = { version = "3.5.0", path = "packages/controllers" }
+sg-metadata = { version = "3.5.0", path = "packages/sg-metadata" }
+sg-mint-hooks = { version = "3.5.0", path = "packages/mint-hooks" }
+sg-multi-test = { version = "3.1.0" }
+sg-splits = { version = "3.5.0", path = "contracts/splits" }
+sg-std = { version = "3.2.0" }
+sg-whitelist = { version = "3.5.0", path = "contracts/whitelists/whitelist" }
+thiserror = "1.0.31"
+url = "2.2.2"
+sha2 = { version = "0.10.2", default-features = false }
 
-whitelist-mtree          = { version = "3.5.0", path = "contracts/whitelists/whitelist-merkletree" }
+whitelist-mtree = { version = "3.5.0", path = "contracts/whitelists/whitelist-merkletree" }
 vending-minter-merkle-wl = { version = "3.5.0", path = "contracts/minters/vending-minter-merkle-wl" }
-vending-factory          = { version = "3.5.0", path = "contracts/factories/vending-factory" }
-vending-minter           = { version = "3.5.0", path = "contracts/minters/vending-minter" }
-open-edition-factory     = { version = "3.5.0", path = "contracts/factories/open-edition-factory" }
-open-edition-minter      = { version = "3.5.0", path = "contracts/minters/open-edition-minter" }
-whitelist-immutable      = { version = "3.5.0", path = "contracts/whitelists/whitelist-immutable" }
-sg-whitelist-flex        = { version = "3.5.0", path = "contracts/whitelists/whitelist-flex" }
-ethereum-verify          = { version = "3.5.0", path = "packages/ethereum-verify" }
-sg-eth-airdrop           = { version = "3.5.0", path = "contracts/sg-eth-airdrop" }
-test-suite               = { version = "3.5.0", path = "test-suite" }
+vending-factory = { version = "3.5.0", path = "contracts/factories/vending-factory" }
+vending-minter = { version = "3.5.0", path = "contracts/minters/vending-minter" }
+open-edition-factory = { version = "3.5.0", path = "contracts/factories/open-edition-factory" }
+open-edition-minter = { version = "3.5.0", path = "contracts/minters/open-edition-minter" }
+whitelist-immutable = { version = "3.5.0", path = "contracts/whitelists/whitelist-immutable" }
+sg-whitelist-flex = { version = "3.5.0", path = "contracts/whitelists/whitelist-flex" }
+ethereum-verify = { version = "3.5.0", path = "packages/ethereum-verify" }
+sg-eth-airdrop = { version = "3.5.0", path = "contracts/sg-eth-airdrop" }
+test-suite = { version = "3.5.0", path = "test-suite" }
 
-semver     = "1"
+semver = "1"
 cw-ownable = "0.5.1"
-anybuf     = "0.3.0"
+anybuf = "0.3.0"
 
 [profile.release.package.sg721]
 codegen-units = 1
-incremental   = false
+incremental = false
 
 [profile.release.package.sg1]
 codegen-units = 1
-incremental   = false
+incremental = false
 
 [profile.release.package.sg2]
 codegen-units = 1
-incremental   = false
+incremental = false
 
 [profile.release.package.sg4]
 codegen-units = 1
-incremental   = false
+incremental = false
 
 [profile.release.package.sg721-base]
 codegen-units = 1
-incremental   = false
+incremental = false
 
 [profile.release.package.sg721-nt]
 codegen-units = 1
-incremental   = false
+incremental = false
 
 [profile.release.package.sg721-updatable]
 codegen-units = 1
-incremental   = false
+incremental = false
 
 [profile.release.package.sg-whitelist]
 codegen-units = 1
-incremental   = false
+incremental = false
 
 [profile.release.package.base-factory]
 codegen-units = 1
-incremental   = false
+incremental = false
 
 [profile.release.package.base-minter]
 codegen-units = 1
-incremental   = false
+incremental = false
 
 [profile.release.package.sg-eth-airdrop]
 codegen-units = 1
-incremental   = false
+incremental = false
 
 [profile.release.package.vending-factory]
 codegen-units = 1
-incremental   = false
+incremental = false
 
 [profile.release.package.vending-minter]
 codegen-units = 1
-incremental   = false
+incremental = false
 
 [profile.release.package.sg-splits]
 codegen-units = 1
-incremental   = false
+incremental = false
 
 [profile.release.package.whitelist-immutable]
 codegen-units = 1
-incremental   = false
+incremental = false
 
 [profile.release.package.sg-whitelist-flex]
 codegen-units = 1
-incremental   = false
+incremental = false
 
 [profile.release.package.ethereum-verify]
 codegen-units = 1
-incremental   = false
+incremental = false
 
 [profile.release]
-rpath            = false
-lto              = true
-overflow-checks  = true
-opt-level        = 3
-debug            = false
+rpath = false
+lto = true
+overflow-checks = true
+opt-level = 3
+debug = false
 debug-assertions = false

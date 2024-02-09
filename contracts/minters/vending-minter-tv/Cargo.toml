@@ -1,17 +1,17 @@
 [package]
-name        = "vending-minter-tv"
-authors     = ["Shane Vitarana <s@noreply.publicawesome.com>"]
+name = "vending-minter-tv"
+authors = ["Shane Vitarana <s@noreply.publicawesome.com>"]
 description = "Stargaze vending minter with token-vault contract"
-version     = { workspace = true }
-edition     = { workspace = true }
-homepage    = { workspace = true }
-repository  = { workspace = true }
-license     = { workspace = true }
+version = { workspace = true }
+edition = { workspace = true }
+homepage = { workspace = true }
+repository = { workspace = true }
+license = { workspace = true }
 
 exclude = [
-  # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
-  "contract.wasm",
-  "hash.txt",
+    # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
+    "contract.wasm",
+    "hash.txt",
 ]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -37,31 +37,31 @@ library = []
 
 [dependencies]
 cosmwasm-schema = { workspace = true }
-cosmwasm-std    = { workspace = true, features = ["cosmwasm_1_4"] }
-cw2             = { workspace = true }
-cw721           = { workspace = true }
-cw721-base      = { workspace = true, features = ["library"] }
+cosmwasm-std = { workspace = true, features = ["cosmwasm_1_4"] }
+cw2 = { workspace = true }
+cw721 = { workspace = true }
+cw721-base = { workspace = true, features = ["library"] }
 cw-storage-plus = { workspace = true }
-cw-utils        = { workspace = true }
-cw-vesting      = { workspace = true }
-rand_core       = { version = "0.6.4", default-features = false }
-rand_xoshiro    = { version = "0.6.0", default-features = false }
-schemars        = { workspace = true }
-serde           = { workspace = true }
-sha2            = { workspace = true }
-shuffle         = { git = "https://github.com/webmaster128/shuffle", branch = "rm-getrandom", version = "0.1.7" }
-sg1             = { workspace = true }
-sg2             = { workspace = true }
-sg4             = { workspace = true }
-sg721           = { workspace = true }
-sg-std          = { workspace = true }
-sg721-tv        = { workspace = true }
-sg-whitelist    = { workspace = true, features = ["library"] }
-thiserror       = { workspace = true }
-url             = { workspace = true }
+cw-utils = { workspace = true }
+cw-vesting = { workspace = true }
+rand_core = { version = "0.6.4", default-features = false }
+rand_xoshiro = { version = "0.6.0", default-features = false }
+schemars = { workspace = true }
+serde = { workspace = true }
+sha2 = { workspace = true }
+shuffle = { git = "https://github.com/webmaster128/shuffle", branch = "rm-getrandom", version = "0.1.7" }
+sg1 = { workspace = true }
+sg2 = { workspace = true }
+sg4 = { workspace = true }
+sg721 = { workspace = true }
+sg-std = { workspace = true }
+sg721-tv = { workspace = true }
+sg-whitelist = { workspace = true, features = ["library"] }
+thiserror = { workspace = true }
+url = { workspace = true }
 vending-factory = { workspace = true, features = ["library"] }
-semver          = { workspace = true }
+semver = { workspace = true }
 
 [dev-dependencies]
-test-suite    = { workspace = true }
+test-suite = { workspace = true }
 cw-multi-test = { workspace = true, features = ["cosmwasm_1_4"] }
