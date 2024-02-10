@@ -77,7 +77,7 @@ pub struct VaultInfo {
 impl Default for VaultInfo {
     fn default() -> Self {
         Self {
-            token_balance: coin(100u128, NATIVE_DENOM),
+            token_balance: coin(500000u128, NATIVE_DENOM),
             vesting_schedule: cw_vesting::vesting::Schedule::SaturatingLinear,
             vesting_duration_seconds: 3 * 365 * 24 * 60 * 60,
             unbonding_duration_seconds: 14 * 24 * 60 * 60,

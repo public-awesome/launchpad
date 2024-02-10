@@ -148,7 +148,6 @@ fn create_minter(app: &mut App, factory_admin: Addr, creator: Addr) -> (Addr, Ad
         ..CollectionParams::default()
     };
     collection_params.info.creator = creator.to_string();
-    // collection_params.info.royalty_info.payment_address = creator.to_string();
 
     let create_minter_msg = TokenVaultVendingMinterCreateMsg {
         init_msg,
@@ -162,6 +161,15 @@ fn create_minter(app: &mut App, factory_admin: Addr, creator: Addr) -> (Addr, Ad
     let res = app.execute_contract(creator, factory_addr.clone(), &msg, &creation_fee);
 
     let (minter, collection) = parse_factory_response(&res.unwrap());
+
+    // send token vault funds to the minter
+    app.sudo(SudoMsg::Bank({
+        BankSudo::Mint {
+            to_address: minter.to_string(),
+            amount: coins(INITIAL_BALANCE, NATIVE_DENOM),
+        }
+    }))
+    .unwrap();
 
     (minter, collection)
 }
@@ -184,21 +192,16 @@ pub fn setup_block_time(router: &mut App, nanos: u64, height: Option<u64>) {
 #[test]
 fn mint() {
     let (mut app, factory_admin, creator, buyer) = setup_app();
-    let (minter, collection) = create_minter(&mut app, factory_admin, creator);
+    let (minter, _) = create_minter(&mut app, factory_admin, creator);
 
     setup_block_time(&mut app, GENESIS_MINT_START_TIME + 10_000_000, None);
 
     let mint_msg = ExecuteMsg::Mint {};
-    let err = app.execute_contract(
+    let res = app.execute_contract(
         buyer,
         minter.clone(),
         &mint_msg,
         &coins(MINT_PRICE, NATIVE_DENOM),
     );
-    // assert!(res.is_ok());
-
-    assert_eq!(
-        err.unwrap_err().source().unwrap().to_string(),
-        "Unauthorized".to_string()
-    );
+    assert!(res.is_ok());
 }
