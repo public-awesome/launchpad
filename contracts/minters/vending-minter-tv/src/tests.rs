@@ -1,6 +1,6 @@
 use crate::msg::ExecuteMsg;
 use cosmwasm_std::testing::MockStorage;
-use cosmwasm_std::{coins, Addr, Empty};
+use cosmwasm_std::{coins, Addr, Empty, Timestamp};
 use cw_multi_test::addons::{MockAddressGenerator, MockApiBech32};
 use cw_multi_test::{
     no_init, AppBuilder, BankKeeper, BankSudo, Contract, ContractWrapper, DistributionKeeper,
@@ -12,7 +12,7 @@ use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 // use test_suite::common_setup::contract_boxes::{contract_vending_factory, App};
 use test_suite::common_setup::contract_boxes::contract_vending_factory;
 use test_suite::common_setup::keeper::StargazeKeeper;
-use test_suite::common_setup::setup_accounts_and_block::{setup_block_time, INITIAL_BALANCE};
+use test_suite::common_setup::setup_accounts_and_block::INITIAL_BALANCE;
 use test_suite::common_setup::setup_minter::common::constants::{CREATION_FEE, MINT_PRICE};
 use test_suite::common_setup::setup_minter::common::parse_response::parse_factory_response;
 use vending_factory::msg::{
@@ -151,7 +151,7 @@ fn create_minter(app: &mut App, factory_admin: Addr, creator: Addr) -> (Addr, Ad
         ..CollectionParams::default()
     };
     collection_params.info.creator = creator.to_string();
-    collection_params.info.royalty_info.payment_address = creator.to_string();
+    // collection_params.info.royalty_info.payment_address = creator.to_string();
 
     let create_minter_msg = TokenVaultVendingMinterCreateMsg {
         init_msg,
@@ -164,44 +164,44 @@ fn create_minter(app: &mut App, factory_admin: Addr, creator: Addr) -> (Addr, Ad
 
     let res = app.execute_contract(creator, factory_addr.clone(), &msg, &creation_fee);
 
-    // assert_eq!(
-    //     res.unwrap_err().source().unwrap().to_string(),
-    //     "Unauthorized".to_string()
-    // );
-
     let (minter, collection) = parse_factory_response(&res.unwrap());
 
     (minter, collection)
-    // (Addr::unchecked("contract1"), Addr::unchecked("contract2"))
 }
 
 #[test]
 fn proper_initialization() {
     let (mut app, factory_admin, creator, _) = setup_app();
-    let (minter, collection) = create_minter(&mut app, factory_admin, creator);
-
-    // assert_eq!(minter, "contract1".to_string());
-    // assert_eq!(collection, "contract2".to_string());
+    create_minter(&mut app, factory_admin, creator);
 }
 
-// #[test]
-// fn mint() {
-//     let mut app = setup_app();
-//     let (minter, _) = create_minter(&mut app);
+pub fn setup_block_time(router: &mut App, nanos: u64, height: Option<u64>) {
+    let mut block = router.block_info();
+    block.time = Timestamp::from_nanos(nanos);
+    if let Some(h) = height {
+        block.height = h;
+    }
+    router.set_block(block);
+}
 
-//     setup_block_time(&mut app, GENESIS_MINT_START_TIME + 10_000_000, None);
+#[test]
+fn mint() {
+    let (mut app, factory_admin, creator, _) = setup_app();
+    let (minter, collection) = create_minter(&mut app, factory_admin, creator);
 
-//     let mint_msg = ExecuteMsg::Mint {};
-//     let err = app.execute_contract(
-//         Addr::unchecked(BUYER),
-//         minter.clone(),
-//         &mint_msg,
-//         &coins(MINT_PRICE, NATIVE_DENOM),
-//     );
-//     // assert!(res.is_ok());
+    setup_block_time(&mut app, GENESIS_MINT_START_TIME + 10_000_000, None);
 
-//     assert_eq!(
-//         err.unwrap_err().source().unwrap().to_string(),
-//         "Unauthorized".to_string()
-//     );
-// }
+    let mint_msg = ExecuteMsg::Mint {};
+    let err = app.execute_contract(
+        Addr::unchecked(BUYER),
+        minter.clone(),
+        &mint_msg,
+        &coins(MINT_PRICE, NATIVE_DENOM),
+    );
+    // assert!(res.is_ok());
+
+    assert_eq!(
+        err.unwrap_err().source().unwrap().to_string(),
+        "Unauthorized".to_string()
+    );
+}

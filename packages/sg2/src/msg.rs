@@ -30,10 +30,11 @@ impl Default for CollectionParams {
                 external_link: Some("https://example.com/external.html".to_string()),
                 start_trading_time: None,
                 explicit_content: Some(false),
-                royalty_info: Some(RoyaltyInfoResponse {
-                    payment_address: "creator".to_string(),
-                    share: Decimal::percent(10),
-                }),
+                // royalty_info: Some(RoyaltyInfoResponse {
+                //     payment_address: "creator".to_string(),
+                //     share: Decimal::percent(10),
+                // }),
+                royalty_info: None,
             },
         }
     }
