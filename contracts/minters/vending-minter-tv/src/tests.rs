@@ -9,7 +9,6 @@ use cw_multi_test::{
 use cw_multi_test::{Executor, SudoMsg};
 use sg2::msg::CollectionParams;
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
-// use test_suite::common_setup::contract_boxes::{contract_vending_factory, App};
 use test_suite::common_setup::contract_boxes::contract_vending_factory;
 use test_suite::common_setup::keeper::StargazeKeeper;
 use test_suite::common_setup::setup_accounts_and_block::INITIAL_BALANCE;
@@ -20,9 +19,7 @@ use vending_factory::msg::{
     VendingMinterInitMsgExtension,
 };
 
-const FACTORY_ADMIN: &str = "factory_admin";
-const CREATOR: &str = "creator";
-const BUYER: &str = "buyer";
+// const BUYER: &str = "buyer";
 
 fn cw_vesting_contract() -> Box<dyn Contract<Empty>> {
     let contract = ContractWrapper::new(
@@ -186,14 +183,14 @@ pub fn setup_block_time(router: &mut App, nanos: u64, height: Option<u64>) {
 
 #[test]
 fn mint() {
-    let (mut app, factory_admin, creator, _) = setup_app();
+    let (mut app, factory_admin, creator, buyer) = setup_app();
     let (minter, collection) = create_minter(&mut app, factory_admin, creator);
 
     setup_block_time(&mut app, GENESIS_MINT_START_TIME + 10_000_000, None);
 
     let mint_msg = ExecuteMsg::Mint {};
     let err = app.execute_contract(
-        Addr::unchecked(BUYER),
+        buyer,
         minter.clone(),
         &mint_msg,
         &coins(MINT_PRICE, NATIVE_DENOM),
