@@ -790,8 +790,11 @@ fn init_vesting(
     let canonical_creator = deps.api.addr_canonicalize(contract_address)?;
     let checksum = deps.querier.query_wasm_code_info(vesting_code_id)?.checksum;
     let salt_raw = collection.to_owned() + "/" + token_id;
-    let vesting_addr_raw =
-        instantiate2_address(&checksum, &canonical_creator, salt_raw.as_bytes())?;
+    let mut hasher = Sha256::new();
+    hasher.update(salt_raw.as_bytes());
+    let salt = hasher.finalize().to_vec();
+
+    let vesting_addr_raw = instantiate2_address(&checksum, &canonical_creator, &salt)?;
     let vesting_addr = deps.api.addr_humanize(&vesting_addr_raw)?;
 
     let vesting_msg = WasmMsg::Instantiate2 {
