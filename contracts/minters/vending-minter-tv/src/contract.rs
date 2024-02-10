@@ -803,7 +803,7 @@ fn init_vesting(
         label: "Token-vault Vesting".to_string(),
         msg: to_json_binary(&vesting_init)?,
         funds: vec![token_balance],
-        salt: to_json_binary(&salt_raw)?,
+        salt: salt.into(),
     };
 
     Ok((vesting_addr, vesting_msg))
