@@ -736,6 +736,14 @@ fn _execute_mint(
     });
     res = res.add_message(msg);
 
+    let postmint_hooks = prepare_postmint_hooks(
+        deps.as_ref(),
+        sg721_address,
+        Some(token_id.to_string()),
+        info.sender.to_string(),
+    )?;
+    res = res.add_submessages(postmint_hooks);
+
     // Remove mintable token position from map
     MINTABLE_TOKEN_POSITIONS.remove(deps.storage, mintable_token_mapping.position);
     let mintable_num_tokens = MINTABLE_NUM_TOKENS.load(deps.storage)?;
