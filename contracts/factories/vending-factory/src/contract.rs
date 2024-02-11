@@ -3,10 +3,12 @@ use base_factory::ContractError as BaseContractError;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    ensure, ensure_eq, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult, WasmMsg,
+    ensure, ensure_eq, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdError, StdResult,
+    WasmMsg,
 };
 use cw2::set_contract_version;
 use cw_utils::must_pay;
+use semver::Version;
 use sg1::checked_fair_burn;
 use sg2::query::{AllowedCollectionCodeIdResponse, AllowedCollectionCodeIdsResponse, Sg2QueryMsg};
 use sg_std::{Response, NATIVE_DENOM};
@@ -194,4 +196,71 @@ fn query_allowed_collection_code_id(
     let code_ids = params.allowed_sg721_code_ids;
     let allowed = code_ids.contains(&code_id);
     Ok(AllowedCollectionCodeIdResponse { allowed })
+}
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn migrate(
+    deps: DepsMut,
+    _env: Env,
+    msg: Option<VendingUpdateParamsMsg>,
+) -> Result<Response, ContractError> {
+    let prev_contract_info = cw2::get_contract_version(deps.storage)?;
+    let prev_contract_name: String = prev_contract_info.contract;
+    let prev_contract_version: Version = prev_contract_info
+        .version
+        .parse()
+        .map_err(|_| StdError::generic_err("Unable to retrieve previous contract version"))?;
+
+    let new_version: Version = CONTRACT_VERSION
+        .parse()
+        .map_err(|_| StdError::generic_err("Invalid contract version"))?;
+
+    if prev_contract_name != CONTRACT_NAME {
+        return Err(StdError::generic_err("Cannot migrate to a different contract").into());
+    }
+
+    if prev_contract_version > new_version {
+        return Err(StdError::generic_err("Cannot migrate to a previous contract version").into());
+    }
+
+    if let Some(msg) = msg {
+        let mut params = SUDO_PARAMS.load(deps.storage)?;
+
+        update_params(&mut params, msg.clone())?;
+
+        params.extension.max_token_limit = msg
+            .extension
+            .max_token_limit
+            .unwrap_or(params.extension.max_token_limit);
+        params.extension.max_per_address_limit = msg
+            .extension
+            .max_per_address_limit
+            .unwrap_or(params.extension.max_per_address_limit);
+
+        if let Some(airdrop_mint_price) = msg.extension.airdrop_mint_price {
+            ensure_eq!(
+                &airdrop_mint_price.denom,
+                &NATIVE_DENOM,
+                ContractError::BaseError(BaseContractError::InvalidDenom {})
+            );
+            params.extension.airdrop_mint_price = airdrop_mint_price;
+        }
+
+        params.extension.airdrop_mint_fee_bps = msg
+            .extension
+            .airdrop_mint_fee_bps
+            .unwrap_or(params.extension.airdrop_mint_fee_bps);
+
+        if let Some(shuffle_fee) = msg.extension.shuffle_fee {
+            ensure_eq!(
+                &shuffle_fee.denom,
+                &NATIVE_DENOM,
+                ContractError::BaseError(BaseContractError::InvalidDenom {})
+            );
+            params.extension.shuffle_fee = shuffle_fee;
+        }
+
+        SUDO_PARAMS.save(deps.storage, &params)?;
+    }
+    Ok(Response::new().add_attribute("action", "migrate"))
 }
