@@ -1,10 +1,12 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    ensure, ensure_eq, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult, WasmMsg,
+    ensure, ensure_eq, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdError, StdResult,
+    WasmMsg,
 };
 use cw2::set_contract_version;
 use cw_utils::must_pay;
+use semver::Version;
 use sg1::checked_fair_burn;
 use sg2::msg::UpdateMinterParamsMsg;
 use sg2::query::{AllowedCollectionCodeIdResponse, AllowedCollectionCodeIdsResponse, Sg2QueryMsg};
@@ -213,4 +215,40 @@ fn query_allowed_collection_code_id(
     let code_ids = params.allowed_sg721_code_ids;
     let allowed = code_ids.contains(&code_id);
     Ok(AllowedCollectionCodeIdResponse { allowed })
+}
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn migrate(
+    deps: DepsMut,
+    _env: Env,
+    msg: Option<BaseUpdateParamsMsg>,
+) -> Result<Response, ContractError> {
+    let prev_contract_info = cw2::get_contract_version(deps.storage)?;
+    let prev_contract_name: String = prev_contract_info.contract;
+    let prev_contract_version: Version = prev_contract_info
+        .version
+        .parse()
+        .map_err(|_| StdError::generic_err("Unable to retrieve previous contract version"))?;
+
+    let new_version: Version = CONTRACT_VERSION
+        .parse()
+        .map_err(|_| StdError::generic_err("Invalid contract version"))?;
+
+    if prev_contract_name != CONTRACT_NAME {
+        return Err(StdError::generic_err("Cannot migrate to a different contract").into());
+    }
+
+    if prev_contract_version > new_version {
+        return Err(StdError::generic_err("Cannot migrate to a previous contract version").into());
+    }
+
+    if let Some(msg) = msg {
+        let mut params = SUDO_PARAMS.load(deps.storage)?;
+
+        update_params(&mut params, msg)?;
+
+        SUDO_PARAMS.save(deps.storage, &params)?;
+    }
+
+    Ok(Response::new().add_attribute("action", "migrate"))
 }

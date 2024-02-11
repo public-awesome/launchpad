@@ -316,6 +316,7 @@ dependencies = [
  "cw-utils 1.0.1",
  "cw2 1.1.0",
  "schemars",
+ "semver",
  "serde",
  "sg-std",
  "sg1",
