@@ -61,6 +61,8 @@ thiserror = { workspace = true }
 url = { workspace = true }
 vending-factory = { workspace = true, features = ["library"] }
 semver = { workspace = true }
+sg-mint-hooks = { workspace = true }
+sg-controllers = { workspace = true }
 
 [dev-dependencies]
 test-suite = { workspace = true }

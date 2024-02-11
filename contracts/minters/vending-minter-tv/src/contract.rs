@@ -26,6 +26,8 @@ use sg2::query::Sg2QueryMsg;
 use sg4::{MinterConfig, Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
 use sg721_tv::{Metadata, QueryMsg as Sg721TVQueryMsg};
+use sg_mint_hooks::post::{add_postmint_hook, prepare_postmint_hooks};
+use sg_mint_hooks::pre::{add_premint_hook, prepare_premint_hooks};
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use sg_whitelist::msg::{
     ConfigResponse as WhitelistConfigResponse, HasMemberResponse, QueryMsg as WhitelistQueryMsg,
@@ -238,7 +240,23 @@ pub fn execute(
             execute_update_discount_price(deps, env, info, price)
         }
         ExecuteMsg::RemoveDiscountPrice {} => execute_remove_discount_price(deps, info),
+        ExecuteMsg::AddPreMintHook { hook } => {
+            only_admin(deps.as_ref(), &info)?;
+            add_premint_hook(deps, hook).map_err(ContractError::from)
+        }
+        ExecuteMsg::AddPostMintHook { hook } => {
+            only_admin(deps.as_ref(), &info)?;
+            add_postmint_hook(deps, hook).map_err(ContractError::from)
+        }
     }
+}
+
+fn only_admin(deps: Deps, info: &MessageInfo) -> Result<(), ContractError> {
+    ensure!(
+        CONFIG.load(deps.storage)?.extension.admin == info.sender,
+        ContractError::Unauthorized("Sender is not an admin".to_owned())
+    );
+    Ok(())
 }
 
 pub fn execute_update_discount_price(
@@ -693,6 +711,14 @@ fn _execute_mint(
         recipient_addr.to_string(),
     )?;
     res = res.add_message(vesting_msg);
+
+    let premint_hooks = prepare_premint_hooks(
+        deps.as_ref(),
+        sg721_address.clone(),
+        Some(token_id.to_string()),
+        info.sender.to_string(),
+    )?;
+    res = res.add_submessages(premint_hooks);
 
     let mint_msg = Sg721ExecuteMsg::<Metadata, Empty>::Mint {
         token_id: token_id.to_string(),
@@ -1191,6 +1217,12 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::MintableNumTokens {} => to_json_binary(&query_mintable_num_tokens(deps)?),
         QueryMsg::MintPrice {} => to_json_binary(&query_mint_price(deps)?),
         QueryMsg::MintCount { address } => to_json_binary(&query_mint_count(deps, address)?),
+        QueryMsg::PreMintHooks {} => {
+            to_json_binary(&sg_mint_hooks::pre::query_premint_hooks(deps)?)
+        }
+        QueryMsg::PostMintHooks {} => {
+            to_json_binary(&sg_mint_hooks::post::query_postmint_hooks(deps)?)
+        }
     }
 }
 

@@ -36,11 +36,11 @@ pub fn handle_reply(reply_id: u64) -> Result<(), MintHookError> {
 }
 
 pub mod pre {
-    use cosmwasm_schema::cw_serde;
-    use cosmwasm_std::{to_json_binary, Addr, Binary, Deps, DepsMut, StdResult, WasmMsg};
-    use sg_std::{Response, SubMsg};
-
     use crate::{MintHookError, PREMINT_HOOKS, PREMINT_HOOK_REPLY_ID};
+    use cosmwasm_schema::cw_serde;
+    use cosmwasm_std::{
+        to_json_binary, Addr, Binary, Deps, DepsMut, Response, StdResult, SubMsg, WasmMsg,
+    };
 
     #[cw_serde]
     pub struct PreMintHookMsg {
@@ -110,8 +110,9 @@ pub mod pre {
 
 pub mod post {
     use cosmwasm_schema::cw_serde;
-    use cosmwasm_std::{to_json_binary, Addr, Binary, Deps, DepsMut, StdResult, WasmMsg};
-    use sg_std::{Response, SubMsg};
+    use cosmwasm_std::{
+        to_json_binary, Addr, Binary, Deps, DepsMut, Response, StdResult, SubMsg, WasmMsg,
+    };
 
     use crate::{MintHookError, POSTMINT_HOOKS, POSTMINT_HOOK_REPLY_ID};
 

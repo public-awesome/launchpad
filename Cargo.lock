@@ -4702,6 +4702,8 @@ dependencies = [
  "schemars",
  "semver",
  "serde",
+ "sg-controllers",
+ "sg-mint-hooks",
  "sg-std",
  "sg-whitelist",
  "sg1",

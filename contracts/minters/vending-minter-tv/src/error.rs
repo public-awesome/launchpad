@@ -1,8 +1,10 @@
 use cosmwasm_std::{Coin, Instantiate2AddressError, StdError, Timestamp};
 use cw_utils::PaymentError;
 use sg1::FeeError;
+use sg_mint_hooks::MintHookError;
 use thiserror::Error;
 use url::ParseError;
+
 #[derive(Error, Debug, PartialEq)]
 pub enum ContractError {
     #[error("{0}")]
@@ -22,6 +24,9 @@ pub enum ContractError {
 
     #[error("{0}")]
     Instantiate2AddressError(#[from] Instantiate2AddressError),
+
+    #[error("{0}")]
+    MintHook(#[from] MintHookError),
 
     #[error("UpdateStatus")]
     UpdateStatus {},
