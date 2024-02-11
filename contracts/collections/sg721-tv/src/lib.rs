@@ -1,3 +1,6 @@
+// TODO:
+// 1. Set a cw-owner
+//
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::Addr;
 use cosmwasm_std::Empty;
