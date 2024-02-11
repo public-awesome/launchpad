@@ -1,5 +1,5 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Coin, Decimal};
+use cosmwasm_std::Coin;
 use sg721::{CollectionInfo, RoyaltyInfoResponse};
 
 #[cw_serde]
