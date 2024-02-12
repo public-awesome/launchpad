@@ -1,11 +1,13 @@
 use cosmwasm_std::{
-    coins, testing::mock_env, Addr, BlockInfo, Decimal, Timestamp, Uint128, Uint64, Validator,
+    coins, testing::mock_env, Addr, BlockInfo, Decimal, Empty, Timestamp, Uint128, Uint64,
+    Validator,
 };
-use cw_multi_test::{App, BankSudo, Executor, StakingInfo, StakingSudo};
-use dao_testing::contracts::cw_vesting_contract;
+use cw_multi_test::{App, BankSudo, Contract, ContractWrapper, Executor, StakingInfo, StakingSudo};
+// use dao_testing::contracts::cw_vesting_contract;
 
 use crate::{
     msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
+    tests::cw_vesting_contract,
     vesting::{Schedule, Vest},
     StakeTrackerQuery,
 };
@@ -21,6 +23,15 @@ pub(crate) struct Suite {
 pub(crate) struct SuiteBuilder {
     pub instantiate: InstantiateMsg,
 }
+
+// fn cw_vesting_contract() -> Box<dyn Contract<Empty>> {
+//     let contract = ContractWrapper::new(
+//         cw_vesting_owned::contract::execute,
+//         cw_vesting_owned::contract::instantiate,
+//         cw_vesting_owned::contract::query,
+//     );
+//     Box::new(contract)
+// }
 
 impl Default for SuiteBuilder {
     fn default() -> Self {

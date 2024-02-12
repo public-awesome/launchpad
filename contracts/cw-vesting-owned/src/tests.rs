@@ -6,7 +6,7 @@ use cw_multi_test::{
     App, AppBuilder, BankSudo, Contract, ContractWrapper, Executor, StakingInfo, SudoMsg,
 };
 use cw_ownable::Action;
-use dao_testing::contracts::cw20_base_contract;
+// use dao_testing::contracts::cw20_base_contract;
 
 use crate::contract::{execute, execute_receive_cw20};
 use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg, ReceiveMsg};
@@ -21,7 +21,7 @@ const TOTAL_VEST: u128 = 1000000;
 const OWNER: &str = "owner";
 const NATIVE_DENOM: &str = "ujuno";
 
-fn cw_vesting_contract() -> Box<dyn Contract<Empty>> {
+pub fn cw_vesting_contract() -> Box<dyn Contract<Empty>> {
     let contract = ContractWrapper::new(
         crate::contract::execute,
         crate::contract::instantiate,
@@ -83,6 +83,15 @@ pub fn setup_app() -> App {
     .unwrap();
 
     app
+}
+
+pub fn cw20_base_contract() -> Box<dyn Contract<Empty>> {
+    let contract = ContractWrapper::new(
+        cw20_base::contract::execute,
+        cw20_base::contract::instantiate,
+        cw20_base::contract::query,
+    );
+    Box::new(contract)
 }
 
 pub fn setup_contracts(app: &mut App) -> (Addr, u64, u64) {
