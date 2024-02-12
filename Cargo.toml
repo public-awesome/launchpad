@@ -87,7 +87,8 @@ cw20 = "1.1.2"
 cw20-base = "1.1.2"
 wynd-utils = "0.4.1"
 anyhow = "1.0.51"
-dao-testing = { git = "https://github.com/DA0-DA0/dao-contracts", tag = "v2.3.0" }
+# dao-testing = { git = "https://github.com/DA0-DA0/dao-contracts", tag = "v2.3.0" }
+dao-testing = { git = "https://github.com/DA0-DA0/dao-contracts", branch = "main" }
 
 semver = "1"
 cw-ownable = "0.5.1"
