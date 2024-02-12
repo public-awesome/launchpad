@@ -19,6 +19,17 @@ homepage = "https://stargaze.zone"
 repository = "https://github.com/public-awesome/launchpad"
 license = "Apache-2.0"
 
+[profile.release]
+codegen-units = 1
+opt-level = 3
+debug = false
+rpath = false
+lto = true
+debug-assertions = false
+panic = 'abort'
+incremental = false
+overflow-checks = true
+
 [workspace.dependencies]
 base-factory = { version = "3.5.0", path = "contracts/factories/base-factory" }
 base-minter = { version = "3.5.0", path = "contracts/minters/base-minter" }
@@ -81,79 +92,3 @@ dao-testing = "2.2.0"
 semver = "1"
 cw-ownable = "0.5.1"
 anybuf = "0.3.0"
-
-[profile.release.package.sg721]
-codegen-units = 1
-incremental = false
-
-[profile.release.package.sg1]
-codegen-units = 1
-incremental = false
-
-[profile.release.package.sg2]
-codegen-units = 1
-incremental = false
-
-[profile.release.package.sg4]
-codegen-units = 1
-incremental = false
-
-[profile.release.package.sg721-base]
-codegen-units = 1
-incremental = false
-
-[profile.release.package.sg721-nt]
-codegen-units = 1
-incremental = false
-
-[profile.release.package.sg721-updatable]
-codegen-units = 1
-incremental = false
-
-[profile.release.package.sg-whitelist]
-codegen-units = 1
-incremental = false
-
-[profile.release.package.base-factory]
-codegen-units = 1
-incremental = false
-
-[profile.release.package.base-minter]
-codegen-units = 1
-incremental = false
-
-[profile.release.package.sg-eth-airdrop]
-codegen-units = 1
-incremental = false
-
-[profile.release.package.vending-factory]
-codegen-units = 1
-incremental = false
-
-[profile.release.package.vending-minter]
-codegen-units = 1
-incremental = false
-
-[profile.release.package.sg-splits]
-codegen-units = 1
-incremental = false
-
-[profile.release.package.whitelist-immutable]
-codegen-units = 1
-incremental = false
-
-[profile.release.package.sg-whitelist-flex]
-codegen-units = 1
-incremental = false
-
-[profile.release.package.ethereum-verify]
-codegen-units = 1
-incremental = false
-
-[profile.release]
-rpath = false
-lto = true
-overflow-checks = true
-opt-level = 3
-debug = false
-debug-assertions = false
