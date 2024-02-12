@@ -106,7 +106,7 @@ pub fn execute(
     match msg {
         ExecuteMsg::Receive(msg) => execute_receive_cw20(env, deps, info, msg),
         ExecuteMsg::Cancel {} => execute_cancel_vesting_payment(env, deps, info),
-        ExecuteMsg::Distribute { amount } => execute_distribute(env, deps, amount),
+        ExecuteMsg::Distribute { amount } => execute_distribute(env, deps, amount, info),
         ExecuteMsg::WithdrawCanceledPayment { amount } => {
             execute_withdraw_canceled_payment(deps, env, amount)
         }
@@ -200,7 +200,10 @@ pub fn execute_distribute(
     env: Env,
     deps: DepsMut,
     request: Option<Uint128>,
+    info: MessageInfo,
 ) -> Result<Response, ContractError> {
+    cw_ownable::assert_owner(deps.storage, &info.sender)?;
+
     let msg = PAYMENT.distribute(deps.storage, env.block.time, request)?;
 
     Ok(Response::new()
