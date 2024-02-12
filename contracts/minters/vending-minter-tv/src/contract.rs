@@ -258,6 +258,10 @@ pub fn execute_distribute(
     info: MessageInfo,
 ) -> Result<Response, ContractError> {
     let vesting = VESTING_ADDRESS.load(deps.storage)?;
+    let vesting_info: cw_vesting_owned::vesting::Vest = deps
+        .querier
+        .query_wasm_smart(vesting, &cw_vesting_owned::msg::QueryMsg::Info {})?;
+    let claimed = vesting_info.claimed;
 
     // TODO: query vesting contract distribute total
 
