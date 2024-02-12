@@ -1,5 +1,5 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::{Coin, Timestamp};
+use cosmwasm_std::{Coin, Timestamp, Uint128};
 use sg4::StatusResponse;
 use sg_controllers::HooksResponse;
 use sg_mint_hooks::{sg_mint_hooks_execute, sg_mint_hooks_query};
@@ -34,6 +34,12 @@ pub enum ExecuteMsg {
         price: u128,
     },
     RemoveDiscountPrice {},
+    /// Distribute funds from the vesting account
+    Distribute {
+        /// The amount of tokens to distribute. If none are specified
+        /// all claimable tokens will be distributed.
+        amount: Option<Uint128>,
+    },
 }
 
 #[sg_mint_hooks_query]

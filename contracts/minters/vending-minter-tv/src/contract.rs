@@ -251,6 +251,25 @@ pub fn execute(
     }
 }
 
+pub fn execute_distribute(
+    env: Env,
+    deps: DepsMut,
+    request: Option<Uint128>,
+    info: MessageInfo,
+) -> Result<Response, ContractError> {
+    // TODO: query vesting contract distribute total
+    // TODO: execute distribute on vesting contract, excluding principal
+    // TODO: allow principal distribution if arriving from a burn operation
+
+    cw_ownable::assert_owner(deps.storage, &info.sender)?;
+
+    let msg = PAYMENT.distribute(deps.storage, env.block.time, request)?;
+
+    Ok(Response::new()
+        .add_attribute("method", "distribute")
+        .add_message(msg))
+}
+
 fn only_admin(deps: Deps, info: &MessageInfo) -> Result<(), ContractError> {
     ensure!(
         CONFIG.load(deps.storage)?.extension.admin == info.sender,
