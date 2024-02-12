@@ -18,9 +18,16 @@ pub struct ConfigExtension {
 }
 pub type Config = MinterConfig<ConfigExtension>;
 
+#[cw_serde]
+pub struct VestingInfo {
+    pub contract: Addr,
+    pub total: Coin,
+}
+
 pub const CONFIG: Item<Config> = Item::new("config");
+
 pub const SG721_ADDRESS: Item<Addr> = Item::new("sg721_address");
-pub const VESTING_ADDRESS: Item<Addr> = Item::new("vesting_address");
+pub const VESTING_INFO: Item<VestingInfo> = Item::new("vesting_info");
 
 // map of index position and token id
 pub const MINTABLE_TOKEN_POSITIONS: Map<u32, u32> = Map::new("mt");

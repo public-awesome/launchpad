@@ -4,8 +4,8 @@ use crate::msg::{
     QueryMsg, StartTimeResponse,
 };
 use crate::state::{
-    Config, ConfigExtension, CONFIG, MINTABLE_NUM_TOKENS, MINTABLE_TOKEN_POSITIONS, MINTER_ADDRS,
-    SG721_ADDRESS, STATUS, VESTING_ADDRESS,
+    Config, ConfigExtension, VestingInfo, CONFIG, MINTABLE_NUM_TOKENS, MINTABLE_TOKEN_POSITIONS,
+    MINTER_ADDRS, SG721_ADDRESS, STATUS, VESTING_INFO,
 };
 use crate::validation::{check_dynamic_per_address_limit, get_three_percent_of_tokens};
 #[cfg(not(feature = "library"))]
@@ -248,33 +248,31 @@ pub fn execute(
             only_admin(deps.as_ref(), &info)?;
             add_postmint_hook(deps, hook).map_err(ContractError::from)
         }
+        ExecuteMsg::Distribute { amount } => execute_distribute(deps, env, amount, info),
     }
 }
 
 pub fn execute_distribute(
-    env: Env,
     deps: DepsMut,
+    env: Env,
     request: Option<Uint128>,
     info: MessageInfo,
 ) -> Result<Response, ContractError> {
-    let vesting = VESTING_ADDRESS.load(deps.storage)?;
-    let vesting_info: cw_vesting_owned::vesting::Vest = deps
-        .querier
-        .query_wasm_smart(vesting, &cw_vesting_owned::msg::QueryMsg::Info {})?;
+    let vesting_info = VESTING_INFO.load(deps.storage)?;
+    let vesting_info: cw_vesting_owned::vesting::Vest = deps.querier.query_wasm_smart(
+        vesting_info.contract,
+        &cw_vesting_owned::msg::QueryMsg::Info {},
+    )?;
     let claimed = vesting_info.claimed;
-
-    // TODO: query vesting contract distribute total
 
     // TODO: execute distribute on vesting contract, excluding principal
     // TODO: allow principal distribution if arriving from a burn operation
 
-    cw_ownable::assert_owner(deps.storage, &info.sender)?;
+    // cw_ownable::assert_owner(deps.storage, &info.sender)?;
 
-    let msg = PAYMENT.distribute(deps.storage, env.block.time, request)?;
+    // let msg = PAYMENT.distribute(deps.storage, env.block.time, request)?;
 
-    Ok(Response::new()
-        .add_attribute("method", "distribute")
-        .add_message(msg))
+    Ok(Response::new())
 }
 
 fn only_admin(deps: Deps, info: &MessageInfo) -> Result<(), ContractError> {
@@ -857,7 +855,13 @@ fn init_vesting(
     let vesting_addr_raw = instantiate2_address(&checksum, &canonical_creator, &salt)?;
     let vesting_addr = deps.api.addr_humanize(&vesting_addr_raw)?;
 
-    VESTING_ADDRESS.save(deps.storage, &vesting_addr);
+    VESTING_INFO.save(
+        deps.storage,
+        &VestingInfo {
+            contract: vesting_addr.clone(),
+            total: token_balance.clone(),
+        },
+    );
 
     let vesting_msg = WasmMsg::Instantiate2 {
         admin: None,
