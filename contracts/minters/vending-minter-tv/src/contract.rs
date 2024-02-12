@@ -5,7 +5,7 @@ use crate::msg::{
 };
 use crate::state::{
     Config, ConfigExtension, CONFIG, MINTABLE_NUM_TOKENS, MINTABLE_TOKEN_POSITIONS, MINTER_ADDRS,
-    SG721_ADDRESS, STATUS,
+    SG721_ADDRESS, STATUS, VESTING_ADDRESS,
 };
 use crate::validation::{check_dynamic_per_address_limit, get_three_percent_of_tokens};
 #[cfg(not(feature = "library"))]
@@ -257,7 +257,10 @@ pub fn execute_distribute(
     request: Option<Uint128>,
     info: MessageInfo,
 ) -> Result<Response, ContractError> {
+    let vesting = VESTING_ADDRESS.load(deps.storage)?;
+
     // TODO: query vesting contract distribute total
+
     // TODO: execute distribute on vesting contract, excluding principal
     // TODO: allow principal distribution if arriving from a burn operation
 
@@ -722,7 +725,7 @@ fn _execute_mint(
     let token_id = &mintable_token_mapping.token_id.to_string();
 
     let (vesting_addr, vesting_msg) = init_vesting(
-        deps.as_ref(),
+        deps,
         env.contract.address.as_ref(),
         sg721_address.as_str(),
         token_id,
@@ -806,7 +809,7 @@ fn _execute_mint(
 }
 
 fn init_vesting(
-    deps: Deps,
+    deps: DepsMut,
     contract_address: &str,
     collection: &str,
     token_id: &str,
@@ -849,6 +852,8 @@ fn init_vesting(
 
     let vesting_addr_raw = instantiate2_address(&checksum, &canonical_creator, &salt)?;
     let vesting_addr = deps.api.addr_humanize(&vesting_addr_raw)?;
+
+    VESTING_ADDRESS.save(deps.storage, &vesting_addr);
 
     let vesting_msg = WasmMsg::Instantiate2 {
         admin: None,
