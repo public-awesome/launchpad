@@ -19,13 +19,11 @@ use vending_factory::msg::{
     VendingMinterInitMsgExtension,
 };
 
-// const BUYER: &str = "buyer";
-
 fn cw_vesting_contract() -> Box<dyn Contract<Empty>> {
     let contract = ContractWrapper::new(
-        cw_vesting::contract::execute,
-        cw_vesting::contract::instantiate,
-        cw_vesting::contract::query,
+        cw_vesting_owned::contract::execute,
+        cw_vesting_owned::contract::instantiate,
+        cw_vesting_owned::contract::query,
     );
     Box::new(contract)
 }

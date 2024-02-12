@@ -808,13 +808,13 @@ fn init_vesting(
         vesting_code_id,
     } = vault_info;
 
-    let vesting_init = cw_vesting::msg::InstantiateMsg {
+    let vesting_init = cw_vesting_owned::msg::InstantiateMsg {
         owner: None,
         recipient,
         title: title + " Vault",
         description: None,
         total: token_balance.amount,
-        denom: cw_vesting::UncheckedDenom::Native(token_balance.clone().denom),
+        denom: cw_vesting_owned::UncheckedDenom::Native(token_balance.clone().denom),
         schedule: vesting_schedule,
         start_time: None,
         vesting_duration_seconds,

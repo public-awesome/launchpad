@@ -1,7 +1,7 @@
 use crate::state::{ParamsExtension, VendingMinterParams};
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{coin, Coin, Timestamp};
-use cw_vesting::vesting::Schedule;
+use cw_vesting_owned::vesting::Schedule;
 use sg2::msg::{CreateMinterMsg, UpdateMinterParamsMsg};
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
@@ -78,7 +78,7 @@ impl Default for VaultInfo {
     fn default() -> Self {
         Self {
             token_balance: coin(500000u128, NATIVE_DENOM),
-            vesting_schedule: cw_vesting::vesting::Schedule::SaturatingLinear,
+            vesting_schedule: cw_vesting_owned::vesting::Schedule::SaturatingLinear,
             vesting_duration_seconds: 3 * 365 * 24 * 60 * 60,
             unbonding_duration_seconds: 14 * 24 * 60 * 60,
             vesting_code_id: 1,

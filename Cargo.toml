@@ -44,7 +44,7 @@ cw721-base = "0.18.0"
 cw-multi-test = "^0.20"
 cw-storage-plus = "1.2.0"
 cw-utils = "1.0.1"
-cw-vesting = "2.3.0"
+cw-vesting-owned = { version = "2.3.0", path = "contracts/cw-vesting-owned" }
 schemars = "0.8.11"
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 serde_json = "1.0"

@@ -1243,18 +1243,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cw-paginate-storage"
-version = "2.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8693baa8dc275f86c5b4f6b86702994e859ac1657e19c5cbcb55d295592a5c04"
-dependencies = [
- "cosmwasm-std",
- "cosmwasm-storage",
- "cw-storage-plus 1.2.0",
- "serde",
-]
-
-[[package]]
 name = "cw-proposal-single"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1420,30 +1408,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "cw-vesting"
-version = "2.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4d9ca27d1dd4995ebbed6656d2e48267a8968418679a0cae9dde030639913b31"
-dependencies = [
- "cosmwasm-schema",
- "cosmwasm-std",
- "cw-denom 2.3.0",
- "cw-ownable",
- "cw-paginate-storage 2.3.0",
- "cw-stake-tracker 2.3.0",
- "cw-storage-plus 1.2.0",
- "cw-utils 1.0.3",
- "cw-wormhole 2.3.0",
- "cw2 1.1.2",
- "cw20 1.1.2",
- "serde",
- "thiserror",
- "wynd-utils",
-]
-
-[[package]]
-name = "cw-vesting"
-version = "3.5.0"
+name = "cw-vesting-owned"
+version = "2.3.99"
 dependencies = [
  "anyhow",
  "cosmwasm-schema",
@@ -2021,7 +1987,7 @@ dependencies = [
  "cw-multi-test 0.16.2",
  "cw-proposal-single",
  "cw-utils 0.16.0",
- "cw-vesting 2.2.0",
+ "cw-vesting",
  "cw2 0.16.0",
  "cw20 0.16.0",
  "cw20-base 0.16.0",
@@ -5456,7 +5422,7 @@ dependencies = [
  "cosmwasm-std",
  "cw-storage-plus 1.2.0",
  "cw-utils 1.0.3",
- "cw-vesting 2.3.0",
+ "cw-vesting-owned",
  "cw2 1.1.2",
  "schemars",
  "serde",
@@ -5535,7 +5501,7 @@ dependencies = [
  "cw-multi-test 0.20.0",
  "cw-storage-plus 1.2.0",
  "cw-utils 1.0.3",
- "cw-vesting 2.3.0",
+ "cw-vesting-owned",
  "cw2 1.1.2",
  "cw721 0.18.0",
  "cw721-base 0.18.0",

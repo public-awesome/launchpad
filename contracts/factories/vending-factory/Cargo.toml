@@ -1,17 +1,17 @@
 [package]
-name        = "vending-factory"
-authors     = ["Shane Vitarana <s@noreply.publicawesome.com>"]
+name = "vending-factory"
+authors = ["Shane Vitarana <s@noreply.publicawesome.com>"]
 description = "Stargaze vending minter factory contract"
-version     = { workspace = true }
-edition     = { workspace = true }
-homepage    = { workspace = true }
-repository  = { workspace = true }
-license     = { workspace = true }
+version = { workspace = true }
+edition = { workspace = true }
+homepage = { workspace = true }
+repository = { workspace = true }
+license = { workspace = true }
 
 exclude = [
-  # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
-  "contract.wasm",
-  "hash.txt",
+    # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
+    "contract.wasm",
+    "hash.txt",
 ]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -26,17 +26,17 @@ backtraces = ["cosmwasm-std/backtraces"]
 library = []
 
 [dependencies]
-base-factory    = { workspace = true, features = ["library"] }
+base-factory = { workspace = true, features = ["library"] }
 cosmwasm-schema = { workspace = true }
-cosmwasm-std    = { workspace = true }
-cw2             = { workspace = true }
+cosmwasm-std = { workspace = true }
+cw2 = { workspace = true }
 cw-storage-plus = { workspace = true }
-cw-utils        = { workspace = true }
-cw-vesting      = { workspace = true }
-schemars        = { workspace = true }
-serde           = { workspace = true }
-sg1             = { workspace = true }
-sg2             = { workspace = true }
-sg721           = { workspace = true }
-sg-std          = { workspace = true }
-thiserror       = { workspace = true }
+cw-utils = { workspace = true }
+cw-vesting-owned = { workspace = true }
+schemars = { workspace = true }
+serde = { workspace = true }
+sg1 = { workspace = true }
+sg2 = { workspace = true }
+sg721 = { workspace = true }
+sg-std = { workspace = true }
+thiserror = { workspace = true }

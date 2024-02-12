@@ -1,11 +1,11 @@
 [package]
-name = "cw-vesting"
+name = "cw-vesting-owned"
 authors = ["Jake Hartnell", "ekez <ekez@withoutdoing.com>", "blue-note"]
 description = "A CosmWasm vesting contract."
 edition = { workspace = true }
 license = { workspace = true }
 repository = { workspace = true }
-version = { workspace = true }
+version = "2.3.99"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
