@@ -635,7 +635,7 @@ pub fn execute_mint_for(
 // mint_to(recipient: "friend") -> _execute_mint(Some(recipient), token_id: None)
 // mint_for(recipient: "friend2", token_id: 420) -> _execute_mint(recipient, token_id)
 fn _execute_mint(
-    deps: DepsMut,
+    mut deps: DepsMut,
     env: Env,
     info: MessageInfo,
     action: &str,
@@ -727,7 +727,7 @@ fn _execute_mint(
     let token_id = &mintable_token_mapping.token_id.to_string();
 
     let (vesting_addr, vesting_msg) = init_vesting(
-        deps,
+        deps.branch(),
         env.contract.address.as_ref(),
         sg721_address.as_str(),
         token_id,
