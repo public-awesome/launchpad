@@ -7,7 +7,7 @@ Mints are in random order. The entire collection is shuffled on instantiation. E
 ## TODO
 
 - [x] Fork cw-vesting.
-- [ ] Add `cw_ownable` to cw_vesting and gate `distribute`.
+- [x] Add `cw_ownable` to cw_vesting and gate `distribute`.
 - [ ] Add a `distribute` function that limits distributing more tokens than the
 principal.
 - [ ] Override burn in sg721-tv to allow for returning the principal.

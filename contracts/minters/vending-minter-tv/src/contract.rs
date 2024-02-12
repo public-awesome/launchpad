@@ -809,7 +809,7 @@ fn init_vesting(
     } = vault_info;
 
     let vesting_init = cw_vesting_owned::msg::InstantiateMsg {
-        owner: None,
+        owner: Some(contract_address.to_string()),
         recipient,
         title: title + " Vault",
         description: None,
