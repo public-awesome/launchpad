@@ -32,6 +32,7 @@ cw2             = { workspace = true }
 cw-storage-plus = { workspace = true }
 cw-utils        = { workspace = true }
 schemars        = { workspace = true }
+semver          = { workspace = true }
 serde           = { workspace = true }
 sg1             = { workspace = true }
 sg2             = { workspace = true }
