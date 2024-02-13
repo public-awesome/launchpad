@@ -11,7 +11,7 @@ use crate::state::{
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coin, to_binary, Addr, BankMsg, Binary, Coin, Decimal, Deps, DepsMut, Empty, Env, Event,
+    coin, to_json_binary, Addr, BankMsg, Binary, Coin, Decimal, Deps, DepsMut, Empty, Env, Event,
     MessageInfo, Order, Reply, ReplyOn, StdError, StdResult, Timestamp, WasmMsg,
 };
 use cw2::set_contract_version;
@@ -141,7 +141,7 @@ pub fn instantiate(
     let submsg = SubMsg {
         msg: WasmMsg::Instantiate {
             code_id: msg.collection_params.code_id,
-            msg: to_binary(&Sg721InstantiateMsg {
+            msg: to_json_binary(&Sg721InstantiateMsg {
                 name: msg.collection_params.name.clone(),
                 symbol: msg.collection_params.symbol,
                 minter: env.contract.address.to_string(),
@@ -602,7 +602,7 @@ pub fn execute_update_start_trading_time(
     // execute sg721 contract
     let msg = WasmMsg::Execute {
         contract_addr: sg721_contract_addr.to_string(),
-        msg: to_binary(&Sg721ExecuteMsg::<Empty, Empty>::UpdateStartTradingTime(
+        msg: to_json_binary(&Sg721ExecuteMsg::<Empty, Empty>::UpdateStartTradingTime(
             start_time,
         ))?,
         funds: vec![],
@@ -746,14 +746,16 @@ pub fn update_status(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::Config {} => to_binary(&query_config(deps)?),
-        QueryMsg::Status {} => to_binary(&query_status(deps)?),
-        QueryMsg::StartTime {} => to_binary(&query_start_time(deps)?),
-        QueryMsg::EndTime {} => to_binary(&query_end_time(deps)?),
-        QueryMsg::MintPrice {} => to_binary(&query_mint_price(deps)?),
-        QueryMsg::MintCount { address } => to_binary(&query_mint_count_per_address(deps, address)?),
-        QueryMsg::TotalMintCount {} => to_binary(&query_mint_count(deps)?),
-        QueryMsg::MintableNumTokens {} => to_binary(&query_mintable_num_tokens(deps)?),
+        QueryMsg::Config {} => to_json_binary(&query_config(deps)?),
+        QueryMsg::Status {} => to_json_binary(&query_status(deps)?),
+        QueryMsg::StartTime {} => to_json_binary(&query_start_time(deps)?),
+        QueryMsg::EndTime {} => to_json_binary(&query_end_time(deps)?),
+        QueryMsg::MintPrice {} => to_json_binary(&query_mint_price(deps)?),
+        QueryMsg::MintCount { address } => {
+            to_json_binary(&query_mint_count_per_address(deps, address)?)
+        }
+        QueryMsg::TotalMintCount {} => to_json_binary(&query_mint_count(deps)?),
+        QueryMsg::MintableNumTokens {} => to_json_binary(&query_mintable_num_tokens(deps)?),
     }
 }
 

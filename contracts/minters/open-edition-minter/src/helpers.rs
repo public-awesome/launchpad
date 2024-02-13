@@ -1,6 +1,6 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
-    to_binary, Addr, Coin, ContractInfoResponse, CustomQuery, Empty, Querier, QuerierWrapper,
+    to_json_binary, Addr, Coin, ContractInfoResponse, CustomQuery, Empty, Querier, QuerierWrapper,
     StdError, StdResult, WasmMsg, WasmQuery,
 };
 use cw721_base::Extension;
@@ -21,7 +21,7 @@ impl MinterContract {
     }
 
     pub fn call<T: Into<ExecuteMsg>>(&self, msg: T) -> StdResult<CosmosMsg> {
-        let msg = to_binary(&msg.into())?;
+        let msg = to_json_binary(&msg.into())?;
         Ok(WasmMsg::Execute {
             contract_addr: self.addr().into(),
             msg,
@@ -35,7 +35,7 @@ impl MinterContract {
         msg: T,
         funds: Coin,
     ) -> StdResult<CosmosMsg> {
-        let msg = to_binary(&msg.into())?;
+        let msg = to_json_binary(&msg.into())?;
         Ok(WasmMsg::Execute {
             contract_addr: self.addr().into(),
             msg,
@@ -74,7 +74,7 @@ pub fn mint_nft_msg(
     let mint_msg = if let Some(extension) = extension {
         CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: sg721_address.to_string(),
-            msg: to_binary(&Sg721ExecuteMsg::<Metadata, Empty>::Mint {
+            msg: to_json_binary(&Sg721ExecuteMsg::<Metadata, Empty>::Mint {
                 token_id,
                 owner: recipient_addr.to_string(),
                 token_uri: None,
@@ -85,7 +85,7 @@ pub fn mint_nft_msg(
     } else {
         CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: sg721_address.to_string(),
-            msg: to_binary(&Sg721ExecuteMsg::<Extension, Empty>::Mint {
+            msg: to_json_binary(&Sg721ExecuteMsg::<Extension, Empty>::Mint {
                 token_id,
                 owner: recipient_addr.to_string(),
                 token_uri,

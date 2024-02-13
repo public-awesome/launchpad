@@ -1,5 +1,5 @@
 use crate::{msg::QueryMsg, state::CONFIG, ContractError};
-use cosmwasm_std::{entry_point, to_binary, Binary};
+use cosmwasm_std::{entry_point, to_json_binary, Binary};
 use cosmwasm_std::{Addr, Env};
 use cosmwasm_std::{Deps, DepsMut, StdResult};
 use vending_minter::helpers::MinterContract;
@@ -9,9 +9,9 @@ use whitelist_immutable::helpers::WhitelistImmutableContract;
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::AirdropEligible { eth_address } => {
-            to_binary(&query_airdrop_is_eligible(deps, eth_address)?)
+            to_json_binary(&query_airdrop_is_eligible(deps, eth_address)?)
         }
-        QueryMsg::GetMinter {} => to_binary(&query_minter(deps)?),
+        QueryMsg::GetMinter {} => to_json_binary(&query_minter(deps)?),
     }
 }
 
