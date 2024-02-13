@@ -308,7 +308,7 @@ dependencies = [
 
 [[package]]
 name = "base-factory"
-version = "3.5.0"
+version = "3.6.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -325,7 +325,7 @@ dependencies = [
 
 [[package]]
 name = "base-minter"
-version = "3.5.0"
+version = "3.6.0"
 dependencies = [
  "base-factory",
  "cosmwasm-schema",
@@ -1355,7 +1355,7 @@ checksum = "bbfc4744c1b8f2a09adc0e55242f60b1af195d88596bd8700be74418c056c555"
 
 [[package]]
 name = "e2e"
-version = "3.5.0"
+version = "3.6.0"
 dependencies = [
  "assert_matches",
  "cosm-orc",
@@ -1605,7 +1605,7 @@ dependencies = [
 
 [[package]]
 name = "ethereum-verify"
-version = "3.5.0"
+version = "3.6.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -2483,7 +2483,7 @@ checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
 
 [[package]]
 name = "open-edition-factory"
-version = "3.5.0"
+version = "3.6.0"
 dependencies = [
  "base-factory",
  "cosmwasm-schema",
@@ -2501,7 +2501,7 @@ dependencies = [
 
 [[package]]
 name = "open-edition-minter"
-version = "3.5.0"
+version = "3.6.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -3474,7 +3474,7 @@ dependencies = [
 
 [[package]]
 name = "sg-controllers"
-version = "3.5.0"
+version = "3.6.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -3488,7 +3488,7 @@ dependencies = [
 
 [[package]]
 name = "sg-eth-airdrop"
-version = "3.5.0"
+version = "3.6.0"
 dependencies = [
  "anyhow",
  "async-std",
@@ -3523,7 +3523,7 @@ dependencies = [
 
 [[package]]
 name = "sg-metadata"
-version = "3.5.0"
+version = "3.6.0"
 dependencies = [
  "cosmwasm-schema",
  "schemars",
@@ -3532,7 +3532,7 @@ dependencies = [
 
 [[package]]
 name = "sg-mint-hooks"
-version = "3.5.0"
+version = "3.6.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -3571,7 +3571,7 @@ dependencies = [
 
 [[package]]
 name = "sg-splits"
-version = "3.5.0"
+version = "3.6.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -3604,7 +3604,7 @@ dependencies = [
 
 [[package]]
 name = "sg-whitelist"
-version = "3.5.0"
+version = "3.6.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -3621,7 +3621,7 @@ dependencies = [
 
 [[package]]
 name = "sg-whitelist-flex"
-version = "3.5.0"
+version = "3.6.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -3638,7 +3638,7 @@ dependencies = [
 
 [[package]]
 name = "sg1"
-version = "3.5.0"
+version = "3.6.0"
 dependencies = [
  "cosmwasm-std",
  "cw-utils 1.0.1",
@@ -3649,7 +3649,7 @@ dependencies = [
 
 [[package]]
 name = "sg2"
-version = "3.5.0"
+version = "3.6.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -3663,7 +3663,7 @@ dependencies = [
 
 [[package]]
 name = "sg4"
-version = "3.5.0"
+version = "3.6.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -3674,7 +3674,7 @@ dependencies = [
 
 [[package]]
 name = "sg721"
-version = "3.5.0"
+version = "3.6.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -3688,7 +3688,7 @@ dependencies = [
 
 [[package]]
 name = "sg721-base"
-version = "3.5.0"
+version = "3.6.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -3707,7 +3707,7 @@ dependencies = [
 
 [[package]]
 name = "sg721-metadata-onchain"
-version = "3.5.0"
+version = "3.6.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -3725,7 +3725,7 @@ dependencies = [
 
 [[package]]
 name = "sg721-nt"
-version = "3.5.0"
+version = "3.6.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -3742,7 +3742,7 @@ dependencies = [
 
 [[package]]
 name = "sg721-updatable"
-version = "3.5.0"
+version = "3.6.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -4115,7 +4115,7 @@ dependencies = [
 
 [[package]]
 name = "test-suite"
-version = "3.5.0"
+version = "3.6.0"
 dependencies = [
  "anyhow",
  "async-std",
@@ -4549,7 +4549,7 @@ checksum = "d92ccd67fb88503048c01b59152a04effd0782d035a83a6d256ce6085f08f4a3"
 
 [[package]]
 name = "vending-factory"
-version = "3.5.0"
+version = "3.6.0"
 dependencies = [
  "base-factory",
  "cosmwasm-schema",
@@ -4568,7 +4568,7 @@ dependencies = [
 
 [[package]]
 name = "vending-minter"
-version = "3.5.0"
+version = "3.6.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -4597,7 +4597,7 @@ dependencies = [
 
 [[package]]
 name = "vending-minter-featured"
-version = "3.5.0"
+version = "3.6.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -4626,7 +4626,7 @@ dependencies = [
 
 [[package]]
 name = "vending-minter-merkle-wl"
-version = "3.5.0"
+version = "3.6.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -4656,7 +4656,7 @@ dependencies = [
 
 [[package]]
 name = "vending-minter-wl-flex"
-version = "3.5.0"
+version = "3.6.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -4817,7 +4817,7 @@ dependencies = [
 
 [[package]]
 name = "whitelist-immutable"
-version = "3.5.0"
+version = "3.6.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -4834,7 +4834,7 @@ dependencies = [
 
 [[package]]
 name = "whitelist-mtree"
-version = "3.5.0"
+version = "3.6.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
