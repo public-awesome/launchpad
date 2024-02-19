@@ -56,7 +56,7 @@ pub fn execute(
 mod build_message {
     use super::*;
     use crate::state::Config;
-    use cosmwasm_std::{to_binary, Deps, WasmMsg};
+    use cosmwasm_std::{to_json_binary, Deps, WasmMsg};
     use sg_std::{StargazeMsgWrapper, SubMsg};
     use validation::validate_airdrop_amount;
     use whitelist_immutable::msg::InstantiateMsg as WGInstantiateMsg;
@@ -78,7 +78,7 @@ mod build_message {
             admin: Some(env.contract.address.to_string()),
             funds: vec![],
             label: GENERIC_WHITELIST_LABEL.to_string(),
-            msg: to_binary(&whitelist_instantiate_msg)?,
+            msg: to_json_binary(&whitelist_instantiate_msg)?,
         };
         Ok(SubMsg::reply_on_success(wasm_msg, INIT_WHITELIST_REPLY_ID))
     }

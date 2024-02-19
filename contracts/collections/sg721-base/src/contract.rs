@@ -2,7 +2,7 @@ use cw721_base::state::TokenInfo;
 use url::Url;
 
 use cosmwasm_std::{
-    to_binary, Addr, Binary, ContractInfoResponse, Decimal, Deps, DepsMut, Empty, Env, Event,
+    to_json_binary, Addr, Binary, ContractInfoResponse, Decimal, Deps, DepsMut, Empty, Env, Event,
     MessageInfo, StdError, StdResult, Storage, Timestamp, WasmQuery,
 };
 
@@ -358,7 +358,7 @@ where
 
     pub fn query(&self, deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         match msg {
-            QueryMsg::CollectionInfo {} => to_binary(&self.query_collection_info(deps)?),
+            QueryMsg::CollectionInfo {} => to_json_binary(&self.query_collection_info(deps)?),
             _ => self.parent.query(deps, env, msg.into()),
         }
     }

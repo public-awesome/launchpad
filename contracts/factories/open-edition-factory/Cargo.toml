@@ -32,6 +32,7 @@ cosmwasm-std    = { workspace = true }
 cw2             = { workspace = true }
 cw-storage-plus = { workspace = true }
 cw-utils        = { workspace = true }
+semver          = { workspace = true }
 sg1             = { workspace = true }
 sg2             = { workspace = true }
 sg721           = { workspace = true }

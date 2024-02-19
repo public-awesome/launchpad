@@ -1,7 +1,7 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coins, to_binary, Addr, BankMsg, Binary, Deps, DepsMut, Env, MessageInfo, Reply, Response,
+    coins, to_json_binary, Addr, BankMsg, Binary, Deps, DepsMut, Env, MessageInfo, Reply, Response,
     StdResult, SubMsg, Uint128,
 };
 use cw2::set_contract_version;
@@ -160,12 +160,12 @@ fn can_distribute(deps: Deps, info: MessageInfo) -> StdResult<bool> {
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::Admin {} => to_binary(&ADMIN.query_admin(deps)?),
-        QueryMsg::Group {} => to_binary(&query_group(deps)?),
+        QueryMsg::Admin {} => to_json_binary(&ADMIN.query_admin(deps)?),
+        QueryMsg::Group {} => to_json_binary(&query_group(deps)?),
         QueryMsg::ListMembers { start_after, limit } => {
-            to_binary(&list_members(deps, start_after, limit)?)
+            to_json_binary(&list_members(deps, start_after, limit)?)
         }
-        QueryMsg::Member { address } => to_binary(&query_member(deps, address)?),
+        QueryMsg::Member { address } => to_json_binary(&query_member(deps, address)?),
     }
 }
 
