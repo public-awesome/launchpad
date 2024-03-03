@@ -1,5 +1,5 @@
-use cosmwasm_std::{entry_point, to_json_binary};
-use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, StdResult};
+use cosmwasm_std::entry_point;
+use cosmwasm_std::{to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult};
 use cw_multi_test::{Contract, ContractWrapper};
 use dydx_airdrop::error::ContractError;
 use sg_std::{Response, StargazeMsgWrapper};
