@@ -44,7 +44,8 @@ pub fn instantiate(
 fn update_whitelist(deps: &mut DepsMut, msg: InstantiateMsg) -> Result<u64, ContractError> {
     let mut count = 0u64;
     for address in msg.addresses.into_iter() {
-        WHITELIST.save(deps.storage, &address, &true)?;
+        let address_lower = address.clone().to_ascii_lowercase();
+        WHITELIST.save(deps.storage, &address_lower, &true)?;
         count += 1;
     }
     Ok(count)

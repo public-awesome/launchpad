@@ -19,15 +19,17 @@ pub fn claim_airdrop(
     eth_sig: String,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
+    let eth_address_lower = eth_address.to_ascii_lowercase();
+    validation::assert_lower_case(eth_address_lower.clone())?;
     validate_claim(
         &deps,
         info.clone(),
-        eth_address.clone(),
+        eth_address_lower.clone(),
         eth_sig,
         config.clone(),
     )?;
     let res = claim_and_whitelist_add(&deps, info, config.airdrop_amount)?;
-    increment_local_mint_count_for_address(deps, eth_address)?;
+    increment_local_mint_count_for_address(deps, eth_address_lower)?;
 
     Ok(res.add_attribute("claimed_amount", config.airdrop_amount.to_string()))
 }
@@ -100,6 +102,15 @@ mod validation {
         )
     }
 
+    pub fn assert_lower_case(eth_address: String) -> Result<(), ContractError> {
+        match eth_address.to_lowercase() == eth_address {
+            true => Ok(()),
+            false => Err(ContractError::EthAddressShouldBeLower {
+                address: eth_address,
+            }),
+        }
+    }
+
     pub fn validate_claim(
         deps: &DepsMut,
         info: MessageInfo,
@@ -107,6 +118,7 @@ mod validation {
         eth_sig: String,
         config: Config,
     ) -> Result<(), ContractError> {
+        assert_lower_case(eth_address.clone())?;
         validate_is_eligible(deps, eth_address.clone())?;
         validate_eth_sig(deps, info, eth_address.clone(), eth_sig, config)?;
         validate_mints_remaining(deps, &eth_address)?;
