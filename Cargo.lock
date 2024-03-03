@@ -4346,6 +4346,7 @@ dependencies = [
  "vending-minter",
  "vending-minter-merkle-wl",
  "whitelist-immutable",
+ "whitelist-immutable-flex",
  "whitelist-mtree",
 ]
 
@@ -5041,6 +5042,23 @@ dependencies = [
 
 [[package]]
 name = "whitelist-immutable"
+version = "3.5.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-controllers 0.16.0",
+ "cw-storage-plus 1.2.0",
+ "cw-utils 1.0.3",
+ "cw2 1.1.2",
+ "schemars",
+ "serde",
+ "sg-std",
+ "sg-whitelist",
+ "thiserror",
+]
+
+[[package]]
+name = "whitelist-immutable-flex"
 version = "3.5.0"
 dependencies = [
  "cosmwasm-schema",
