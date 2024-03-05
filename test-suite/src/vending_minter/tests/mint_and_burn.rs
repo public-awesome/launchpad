@@ -194,6 +194,54 @@ fn update_discount_mint_price() {
     );
     assert!(res.is_ok());
 
+    // try updating discount price to soon
+    let update_discount_msg = ExecuteMsg::UpdateDiscountPrice {
+        price: MINT_PRICE - 10,
+    };
+    let res = router.execute_contract(
+        creator.clone(),
+        minter_addr.clone(),
+        &update_discount_msg,
+        &[],
+    );
+    assert!(res.is_err());
+
+    // try removing discount price too soon
+    let remove_discount_msg = ExecuteMsg::RemoveDiscountPrice {};
+    let res = router.execute_contract(
+        creator.clone(),
+        minter_addr.clone(),
+        &remove_discount_msg,
+        &[],
+    );
+    assert!(res.is_err());
+
+    // wait 12 hours
+    setup_block_time(
+        &mut router,
+        GENESIS_MINT_START_TIME + 10_000_000 + 43_200_000_000_000,
+        None,
+    );
+
+    // update discount price
+    let update_discount_msg = ExecuteMsg::UpdateDiscountPrice {
+        price: MINT_PRICE - 10,
+    };
+    let res = router.execute_contract(
+        creator.clone(),
+        minter_addr.clone(),
+        &update_discount_msg,
+        &[],
+    );
+    assert!(res.is_ok());
+
+    // wait another 12 hours
+    setup_block_time(
+        &mut router,
+        GENESIS_MINT_START_TIME + 10_000_000 + 43_200_000_000_000 + 43_200_000_000_000,
+        None,
+    );
+
     // remove discount price
     let remove_discount_msg = ExecuteMsg::RemoveDiscountPrice {};
     let res = router.execute_contract(
