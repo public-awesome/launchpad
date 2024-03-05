@@ -56,6 +56,9 @@ pub enum ContractError {
     #[error("Update price {updated} higher than allowed price {allowed}")]
     UpdatedMintPriceTooHigh { allowed: u128, updated: u128 },
 
+    #[error("Discount price can only be updated every 12 hours")]
+    DiscountUpdateTooSoon {},
+
     #[error("Invalid address {addr}")]
     InvalidAddress { addr: String },
 
