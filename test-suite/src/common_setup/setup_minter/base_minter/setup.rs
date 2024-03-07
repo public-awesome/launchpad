@@ -7,7 +7,7 @@ use crate::common_setup::msg::MinterSetupParams;
 use crate::common_setup::setup_minter::common::constants::MIN_MINT_PRICE;
 use crate::common_setup::setup_minter::common::parse_response::build_collection_response;
 use cosmwasm_std::coin;
-use cosmwasm_std::to_binary;
+use cosmwasm_std::to_json_binary;
 use cosmwasm_std::Coin;
 use cosmwasm_std::Empty;
 use cosmwasm_std::{coins, Addr};
@@ -117,7 +117,7 @@ pub fn sudo_update_params(
 
         let sudo_res = app.sudo(cw_multi_test::SudoMsg::Wasm(cw_multi_test::WasmSudo {
             contract_addr: collection_response.factory.clone().unwrap(),
-            msg: to_binary(&sudo_update_msg).unwrap(),
+            msg: to_json_binary(&sudo_update_msg).unwrap(),
         }));
         sudo_responses.push(sudo_res);
     }

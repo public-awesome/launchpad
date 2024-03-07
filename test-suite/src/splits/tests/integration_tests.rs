@@ -4,7 +4,7 @@ mod tests {
     use crate::common_setup::{
         contract_boxes_empty::contract_splits, helpers::mock_app_builder_init_funds,
     };
-    use cosmwasm_std::{to_binary, Addr, Coin};
+    use cosmwasm_std::{to_json_binary, Addr, Coin};
     use cw2::{query_contract_info, ContractVersion};
     use cw4::{Cw4ExecuteMsg, Member, MemberListResponse};
     use cw4_group::msg::ExecuteMsg as Cw4GroupExecuteMsg;
@@ -60,7 +60,7 @@ mod tests {
         let msg = sg_splits::msg::InstantiateMsg {
             group: Group::Cw4Instantiate(ContractInstantiateMsg {
                 code_id: app.store_code(contract_group()),
-                msg: to_binary(&group_msg).unwrap(),
+                msg: to_json_binary(&group_msg).unwrap(),
                 admin: None,
                 label: "cw4-group".to_string(),
             }),
@@ -87,7 +87,7 @@ mod tests {
         let msg = sg_splits::msg::InstantiateMsg {
             group: Group::Cw4Instantiate(ContractInstantiateMsg {
                 code_id: app.store_code(contract_group()),
-                msg: to_binary(&group_msg).unwrap(),
+                msg: to_json_binary(&group_msg).unwrap(),
                 admin: None,
                 label: "cw4-group".to_string(),
             }),

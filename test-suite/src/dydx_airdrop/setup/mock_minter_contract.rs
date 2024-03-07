@@ -1,6 +1,6 @@
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Binary, Coin, Deps, DepsMut, Env, MessageInfo, StdResult, Timestamp,
+    to_json_binary, Binary, Coin, Deps, DepsMut, Env, MessageInfo, StdResult, Timestamp,
 };
 use cw_multi_test::{Contract, ContractWrapper};
 use dydx_airdrop::error::ContractError;
@@ -46,8 +46,8 @@ pub fn execute(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(_deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::Config {} => to_binary(&query_config()),
-        _ => to_binary("invalid"),
+        QueryMsg::Config {} => to_json_binary(&query_config()),
+        _ => to_json_binary("invalid"),
     }
 }
 

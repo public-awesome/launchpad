@@ -24,4 +24,6 @@ mod whitelist;
 #[cfg(test)]
 mod whitelist_immutable;
 #[cfg(test)]
+mod whitelist_immutable_flex;
+#[cfg(test)]
 mod whitelist_merkletree;

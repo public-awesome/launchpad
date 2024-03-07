@@ -47,6 +47,7 @@ anyhow              = "1.0.57"
 rekt-airdrop        = { workspace = true }
 dydx-airdrop        = { workspace = true }
 whitelist-immutable = { workspace = true, features = ["library"] }
+whitelist-immutable-flex = { workspace = true, features = ["library"] }
 cw721               = { workspace = true }
 cw721-base          = { workspace = true, features = ["library"] }
 sg2                 = { workspace = true }
