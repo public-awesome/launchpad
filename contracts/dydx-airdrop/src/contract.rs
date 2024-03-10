@@ -59,25 +59,24 @@ mod build_message {
     use cosmwasm_std::{to_json_binary, Deps, WasmMsg};
     use sg_std::{StargazeMsgWrapper, SubMsg};
     use validation::validate_airdrop_amount;
-    use whitelist_immutable::msg::InstantiateMsg as WGInstantiateMsg;
+    use whitelist_immutable_flex::msg::InstantiateMsg as WIFInstantiateMsg;
 
-    pub const GENERIC_WHITELIST_LABEL: &str = "Generic Whitelist for Airdrop";
+    pub const IMMUTABLE_WHITELIST_LABEL: &str = "Whitelist Immutable Flex for Airdrop";
     pub const INIT_WHITELIST_REPLY_ID: u64 = 1;
 
     pub fn whitelist_instantiate(
         env: Env,
         msg: InstantiateMsg,
     ) -> Result<cosmwasm_std::SubMsg<StargazeMsgWrapper>, ContractError> {
-        let whitelist_instantiate_msg = WGInstantiateMsg {
-            addresses: msg.addresses,
+        let whitelist_instantiate_msg = WIFInstantiateMsg {
+            members: msg.members,
             mint_discount_bps: Some(0),
-            per_address_limit: msg.per_address_limit,
         };
         let wasm_msg = WasmMsg::Instantiate {
             code_id: msg.whitelist_code_id,
             admin: Some(env.contract.address.to_string()),
             funds: vec![],
-            label: GENERIC_WHITELIST_LABEL.to_string(),
+            label: IMMUTABLE_WHITELIST_LABEL.to_string(),
             msg: to_json_binary(&whitelist_instantiate_msg)?,
         };
         Ok(SubMsg::reply_on_success(wasm_msg, INIT_WHITELIST_REPLY_ID))

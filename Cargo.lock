@@ -1413,7 +1413,7 @@ dependencies = [
  "thiserror",
  "vending-factory",
  "vending-minter",
- "whitelist-immutable",
+ "whitelist-immutable-flex",
 ]
 
 [[package]]
