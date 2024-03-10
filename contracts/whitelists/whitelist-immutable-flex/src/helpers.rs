@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use cosmwasm_std::{to_json_binary, Addr, QuerierWrapper, QueryRequest, StdResult, WasmQuery};
 
+use crate::msg::{Member, MemberResponse};
 use crate::{
     msg::{ConfigResponse, QueryMsg},
     state::Config,
@@ -41,5 +42,14 @@ impl WhitelistImmutableFlexContract {
         }))?;
 
         Ok(res.config)
+    }
+
+    pub fn mint_count(&self, querier: &QuerierWrapper, address: String) -> StdResult<u32> {
+        let member_response: MemberResponse =
+            querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
+                contract_addr: self.addr().into(),
+                msg: to_json_binary(&QueryMsg::Member { address })?,
+            }))?;
+        Ok(member_response.member.mint_count)
     }
 }
