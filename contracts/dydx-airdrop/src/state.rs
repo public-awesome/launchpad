@@ -15,3 +15,4 @@ pub struct Config {
 
 pub const CONFIG: Item<Config> = Item::new("cfg");
 pub const ADDRS_TO_MINT_COUNT: Map<&str, u32> = Map::new("amc");
+pub const IS_ADDRESS_REGISTERED: Map<&str, bool> = Map::new("iar");

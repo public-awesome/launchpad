@@ -60,6 +60,7 @@ open-edition-factory = { version = "3.5.0", path = "contracts/factories/open-edi
 open-edition-minter  = { version = "3.5.0", path = "contracts/minters/open-edition-minter" }
 whitelist-immutable  = { version = "3.5.0", path = "contracts/whitelists/whitelist-immutable" }
 whitelist-immutable-flex  = { version = "3.5.0", path = "contracts/whitelists/whitelist-immutable-flex" }
+whitelist-updatable = "0.12.0"
 sg-whitelist-flex    = { version = "3.5.0", path = "contracts/whitelists/whitelist-flex" }
 ethereum-verify      = { version = "3.5.0", path = "packages/ethereum-verify" }
 rekt-airdrop      = { version = "3.5.0", path = "contracts/rekt-airdrop"}

@@ -22,6 +22,10 @@ pub struct AirdropClaimResponse {
 
 #[cw_serde]
 pub enum ExecuteMsg {
+    Register {
+        eth_address: String,
+        eth_sig: String,
+    },
     ClaimAirdrop {
         eth_address: String,
         eth_sig: String,

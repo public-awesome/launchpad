@@ -34,7 +34,7 @@ cw2                 = { workspace = true }
 ethereum-verify     = { workspace = true }
 hex                 = "0.4"
 rust_decimal        = { version = "1.14.3" }
-sg-whitelist        = { workspace = true }
+sg-whitelist-flex       = { workspace = true }
 sg1                 = { workspace = true }
 sha2                = { workspace = true }
 sha3                = "0.10"
@@ -44,6 +44,7 @@ sg-std              = { workspace = true }
 thiserror           = { workspace = true }
 vending-minter      = { workspace = true, features = ["library"] }
 whitelist-immutable-flex = { workspace = true, features = ["library"] }
+whitelist-updatable = { workspace = true, features = ["library"] }
 
 [dev-dependencies]
 async-std       = "1.12.0"

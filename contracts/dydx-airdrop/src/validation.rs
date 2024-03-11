@@ -7,9 +7,56 @@ use cosmwasm_std::StdError;
 use ethereum_verify::verify_ethereum_text;
 
 use crate::{
-    query::{query_airdrop_is_eligible, query_per_address_limit},
+    query::{query_airdrop_is_eligible},
     state::Config,
 };
+
+use cosmwasm_std::Uint128;
+use cw_utils::must_pay;
+use sg_std::NATIVE_DENOM;
+use crate::contract::INSTANTIATION_FEE;
+use crate::msg::InstantiateMsg;
+
+const MIN_AIRDROP: u128 = 10_000_000; // 10 STARS
+const MAX_AIRDROP: u128 = 100_000_000_000_000; // 100 million STARS
+
+pub fn validate_instantiation_params(
+    info: MessageInfo,
+    msg: InstantiateMsg,
+) -> Result<(), ContractError> {
+    validate_airdrop_amount(msg.airdrop_amount)?;
+    validate_plaintext_msg(msg.claim_msg_plaintext)?;
+    validate_instantiate_funds(info)?;
+    Ok(())
+}
+
+pub fn validate_instantiate_funds(info: MessageInfo) -> Result<(), ContractError> {
+    let amount = must_pay(&info, NATIVE_DENOM)?;
+    if amount < Uint128::from(INSTANTIATION_FEE) {
+        return Err(ContractError::InsufficientFundsInstantiate {});
+    };
+    Ok(())
+}
+
+pub fn validate_airdrop_amount(airdrop_amount: u128) -> Result<u128, ContractError> {
+    if airdrop_amount < MIN_AIRDROP {
+        return Err(ContractError::AirdropTooSmall {});
+    };
+    if airdrop_amount > MAX_AIRDROP {
+        return Err(ContractError::AirdropTooBig {});
+    };
+    Ok(airdrop_amount)
+}
+
+pub fn validate_plaintext_msg(plaintext_msg: String) -> Result<(), ContractError> {
+    if !plaintext_msg.contains("{wallet}") {
+        return Err(ContractError::PlaintextMsgNoWallet {});
+    }
+    if plaintext_msg.len() > 1000 {
+        return Err(ContractError::PlaintextTooLong {});
+    }
+    Ok(())
+}
 
 pub fn compute_plaintext_msg(config: &Config, info: MessageInfo) -> String {
     str::replace(
@@ -41,7 +88,8 @@ pub fn validate_claim(
 ) -> Result<(), ContractError> {
     validate_is_eligible(deps, eth_address.clone())?;
     validate_eth_sig(deps, info, eth_address.clone(), eth_sig, config)?;
-    validate_mints_remaining(deps, &eth_address)?;
+    // TODO: Replace with collection and names mint validation
+    // validate_mints_remaining(deps, &eth_address)?;
     Ok(())
 }
 
@@ -72,20 +120,22 @@ fn validate_eth_sig(
     }
 }
 
-pub fn validate_mints_remaining(
+// TODO: Implement validate_collection_mint for reward claim
+pub fn validate_collection_mint(
     deps: &DepsMut,
     eth_address: &str,
 ) -> Result<(), ContractError> {
-    let mint_count = ADDRS_TO_MINT_COUNT.load(deps.storage, eth_address);
-    let mint_count = mint_count.unwrap_or(0);
-    let per_address_limit = query_per_address_limit(&deps.as_ref())?;
-    if mint_count < per_address_limit {
-        Ok(())
-    } else {
-        Err(ContractError::MintCountReached {
-            address: eth_address.to_string(),
-        })
-    }
+    unimplemented!();
+    // let mint_count = ADDRS_TO_MINT_COUNT.load(deps.storage, eth_address);
+    // let mint_count = mint_count.unwrap_or(0);
+    //let per_address_limit = query_per_address_limit(&deps.as_ref())?;
+    // if mint_count < per_address_limit {
+    //     Ok(())
+    // } else {
+    //     Err(ContractError::MintCountReached {
+    //         address: eth_address.to_string(),
+    //     })
+    // }
 }
 
 pub fn validate_ethereum_text(
@@ -118,4 +168,13 @@ pub fn check_previous_registration(
     } else {
         Ok(())
     }
+}
+
+pub fn validate_required_action_completion(
+    deps: &DepsMut,
+    eth_address: &str,
+) -> Result<(), ContractError> {
+   unimplemented!()
+    // validate_collection_mint()
+    // validate_names_mint()
 }

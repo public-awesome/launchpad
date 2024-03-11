@@ -3,7 +3,8 @@ use cosmwasm_std::{entry_point, to_json_binary, Binary};
 use cosmwasm_std::{Addr, Env};
 use cosmwasm_std::{Deps, DepsMut, StdResult};
 use vending_minter::helpers::MinterContract;
-use whitelist_immutable::helpers::WhitelistImmutableContract;
+use whitelist_immutable_flex::helpers::WhitelistImmutableFlexContract;
+use whitelist_immutable_flex::msg::MemberResponse;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
@@ -23,7 +24,7 @@ fn query_minter(deps: Deps) -> StdResult<Addr> {
 pub fn query_airdrop_is_eligible(deps: Deps, eth_address: String) -> StdResult<bool> {
     let config = CONFIG.load(deps.storage)?;
     match config.whitelist_address {
-        Some(address) => WhitelistImmutableContract(deps.api.addr_validate(&address)?)
+        Some(address) => WhitelistImmutableFlexContract(deps.api.addr_validate(&address)?)
             .includes(&deps.querier, eth_address),
         None => Err(cosmwasm_std::StdError::NotFound {
             kind: "Whitelist Contract".to_string(),
@@ -41,13 +42,16 @@ pub fn query_collection_whitelist(deps: &DepsMut) -> Result<String, ContractErro
     }
 }
 
-pub fn query_per_address_limit(deps: &Deps) -> StdResult<u32> {
+pub fn query_mint_count(deps: &DepsMut, eth_address: String) -> StdResult<u32> {
     let config = CONFIG.load(deps.storage)?;
-    match config.whitelist_address {
-        Some(address) => WhitelistImmutableContract(deps.api.addr_validate(&address)?)
-            .per_address_limit(&deps.querier),
-        None => Err(cosmwasm_std::StdError::NotFound {
+    let whitelist_address = config.whitelist_address.ok_or_else(|| {
+        cosmwasm_std::StdError::NotFound {
             kind: "Whitelist Contract".to_string(),
-        }),
-    }
+        }
+    })?;
+    let member_response: MemberResponse = deps.querier.query(&cosmwasm_std::QueryRequest::Wasm(cosmwasm_std::WasmQuery::Smart {
+        contract_addr: whitelist_address.into(),
+        msg: to_json_binary(&whitelist_immutable_flex::msg::QueryMsg::Member { address: eth_address })?,
+    }))?;
+    Ok(member_response.member.mint_count)
 }

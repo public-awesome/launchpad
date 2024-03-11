@@ -43,6 +43,9 @@ pub enum ContractError {
     #[error("Address {address} has already claimed all available mints")]
     MintCountReached { address: String },
 
+    #[error("Address {address} has already registered for the airdrop")]
+    AlreadyRegistered { address: String },
+
     #[error("Collection Whitelist on Minter contract has not been set")]
     CollectionWhitelistMinterNotSet {},
 
