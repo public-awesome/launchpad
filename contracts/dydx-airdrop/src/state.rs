@@ -11,6 +11,7 @@ pub struct Config {
     pub whitelist_address: Option<String>,
     pub minter_address: Addr,
     pub name_discount_wl_address: Addr,
+    pub name_collection_address: Addr,
 }
 
 pub const CONFIG: Item<Config> = Item::new("cfg");

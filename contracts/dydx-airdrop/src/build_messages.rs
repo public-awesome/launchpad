@@ -44,6 +44,7 @@ pub fn state_config(
         whitelist_address: None,
         minter_address: deps.api.addr_validate(msg.minter_address.as_ref())?,
         name_discount_wl_address: deps.api.addr_validate(msg.name_discount_wl_address.as_ref())?,
+        name_collection_address: deps.api.addr_validate(msg.name_collection_address.as_ref())?,
     })
 }
 
