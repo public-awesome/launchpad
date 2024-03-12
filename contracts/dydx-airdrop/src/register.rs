@@ -3,6 +3,7 @@ use cosmwasm_std::DepsMut;
 use cosmwasm_std::{Env, MessageInfo};
 use sg_std::Response;
 use crate::build_messages::{dust_and_whitelist_add};
+use crate::state::IS_ADDRESS_REGISTERED;
 use crate::validation::{validate_registration};
 
 pub fn register(
@@ -21,6 +22,7 @@ pub fn register(
         config.clone(),
     )?;
     let res = dust_and_whitelist_add(&deps, info, eth_address.clone())?;
+    IS_ADDRESS_REGISTERED.save(deps.storage, &eth_address, &true)?;
 
     Ok(res.add_attribute("address_registered", eth_address))
 }
