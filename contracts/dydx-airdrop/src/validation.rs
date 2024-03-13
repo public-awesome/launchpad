@@ -1,5 +1,5 @@
-use crate::state::IS_ADDRESS_REGISTERED;
 use crate::state::{ADDRS_TO_MINT_COUNT, CONFIG};
+use crate::state::{HAS_CLAIMED, IS_ADDRESS_REGISTERED};
 use crate::ContractError;
 use cosmwasm_std::{DepsMut, MessageInfo, StdResult};
 
@@ -88,9 +88,10 @@ pub fn validate_claim(
     config: Config,
 ) -> Result<(), ContractError> {
     validate_is_eligible(deps, eth_address.clone())?;
-    validate_eth_sig(deps, info, eth_address.clone(), eth_sig, config)?;
-    // TODO: Replace with collection and names mint validation
-    // validate_mints_remaining(deps, &eth_address)?;
+    validate_eth_sig(deps, info.clone(), eth_address.clone(), eth_sig, config)?;
+    check_previous_claim(deps, &eth_address.clone())?;
+    validate_collection_mint(deps, info.clone())?;
+    validate_name_mint_and_association(deps, info.clone())?;
     Ok(())
 }
 
@@ -137,7 +138,10 @@ pub fn validate_collection_mint(deps: &DepsMut, info: MessageInfo) -> Result<(),
     };
 }
 
-pub fn validate_name_mint_and_association(deps: &DepsMut, info: MessageInfo) -> Result<(), ContractError> {
+pub fn validate_name_mint_and_association(
+    deps: &DepsMut,
+    info: MessageInfo,
+) -> Result<(), ContractError> {
     let config = CONFIG.load(deps.storage)?;
     let name_collection_address = config.name_collection_address;
     let tokens_response: TokensResponse = deps.querier.query_wasm_smart(
@@ -149,7 +153,7 @@ pub fn validate_name_mint_and_association(deps: &DepsMut, info: MessageInfo) -> 
         },
     )?;
     if tokens_response.tokens.len() == 0 {
-       return Err(ContractError::NameNotMinted {})
+        return Err(ContractError::NameNotMinted {});
     };
     let associated_name: String = deps.querier.query_wasm_smart(
         name_collection_address.clone(),
@@ -183,19 +187,19 @@ pub fn check_previous_registration(deps: &DepsMut, eth_address: &str) -> Result<
         .load(deps.storage, eth_address)
         .unwrap_or(false);
     if registered {
-        Err(ContractError::AlreadyRegistered {
+        return Err(ContractError::AlreadyRegistered {
             address: eth_address.to_string(),
         })
-    } else {
-        Ok(())
     }
+    Ok(())
 }
 
-pub fn validate_required_action_completion(
-    deps: &DepsMut,
-    eth_address: &str,
-) -> Result<(), ContractError> {
-    unimplemented!()
-    // validate_collection_mint()
-    // validate_names_mint()
+pub fn check_previous_claim(deps: &DepsMut, eth_address: &str) -> Result<(), ContractError> {
+    let already_claimed = HAS_CLAIMED.load(deps.storage, eth_address).unwrap_or(false);
+    if already_claimed {
+        return Err(ContractError::AlreadyClaimed {
+            address: eth_address.to_string(),
+        })
+    }
+    Ok(())
 }

@@ -46,6 +46,9 @@ pub enum ContractError {
     #[error("Address {address} has already registered for the airdrop")]
     AlreadyRegistered { address: String },
 
+    #[error("Address {address} has already claimed the airdrop")]
+    AlreadyClaimed { address: String },
+
     #[error("Collection Whitelist on Minter contract has not been set")]
     CollectionWhitelistMinterNotSet {},
 
