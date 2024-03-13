@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use cosmwasm_std::{to_json_binary, Addr, QuerierWrapper, QueryRequest, StdResult, WasmQuery};
 
-use crate::msg::{Member, MemberResponse};
+use crate::msg::MemberResponse;
 use crate::{
     msg::{ConfigResponse, QueryMsg},
     state::Config,
