@@ -2,7 +2,7 @@ use crate::claim_airdrop::claim_airdrop;
 #[cfg(not(feature = "library"))]
 use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, InstantiateMsg};
-use crate::state::CONFIG;
+use crate::state::{AIRDROP_COUNT, CONFIG};
 
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{DepsMut, Env, MessageInfo};
@@ -29,6 +29,7 @@ pub fn instantiate(
     validate_instantiation_params(info.clone(), msg.clone())?;
     let mut res = Response::new();
     fair_burn(INSTANTIATION_FEE, None, &mut res);
+    AIRDROP_COUNT.save(deps.storage, &0)?;
     let cfg = state_config(deps.as_ref(), info.clone(), msg.clone())?;
     CONFIG.save(deps.storage, &cfg)?;
     Ok(res

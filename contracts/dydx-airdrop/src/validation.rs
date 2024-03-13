@@ -1,4 +1,4 @@
-use crate::state::{ADDRS_TO_MINT_COUNT, CONFIG};
+use crate::state::CONFIG;
 use crate::state::{HAS_CLAIMED, IS_ADDRESS_REGISTERED};
 use crate::ContractError;
 use cosmwasm_std::{DepsMut, MessageInfo, StdResult};
@@ -155,7 +155,7 @@ pub fn validate_name_mint_and_association(
     if tokens_response.tokens.len() == 0 {
         return Err(ContractError::NameNotMinted {});
     };
-    let associated_name: String = deps.querier.query_wasm_smart(
+    let _associated_name: String = deps.querier.query_wasm_smart(
         name_collection_address.clone(),
         &NameQueryMsg::Name {
             address: String::from(info.sender.clone()),
@@ -189,7 +189,7 @@ pub fn check_previous_registration(deps: &DepsMut, eth_address: &str) -> Result<
     if registered {
         return Err(ContractError::AlreadyRegistered {
             address: eth_address.to_string(),
-        })
+        });
     }
     Ok(())
 }
@@ -199,7 +199,7 @@ pub fn check_previous_claim(deps: &DepsMut, eth_address: &str) -> Result<(), Con
     if already_claimed {
         return Err(ContractError::AlreadyClaimed {
             address: eth_address.to_string(),
-        })
+        });
     }
     Ok(())
 }

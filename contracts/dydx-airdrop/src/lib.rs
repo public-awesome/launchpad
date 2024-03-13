@@ -5,7 +5,7 @@ pub mod query;
 pub mod reply;
 pub mod state;
 pub use crate::error::ContractError;
+mod build_messages;
 mod claim_airdrop;
 mod register;
 mod validation;
-mod build_messages;

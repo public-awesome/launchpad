@@ -1,16 +1,18 @@
-use cosmwasm_std::{Addr, BankMsg, coins, Deps, DepsMut, Env, MessageInfo, StdResult, to_json_binary, WasmMsg};
-use sg_std::{CosmosMsg, NATIVE_DENOM, Response, StargazeMsgWrapper, SubMsg};
+use cosmwasm_std::{
+    coins, to_json_binary, Addr, BankMsg, Deps, DepsMut, Env, MessageInfo, StdResult, WasmMsg,
+};
+use sg_std::{CosmosMsg, Response, StargazeMsgWrapper, SubMsg, NATIVE_DENOM};
 use whitelist_updatable::msg::ExecuteMsg;
 // TODO: Replace with whitelist_updatable_flatrate
-use whitelist_updatable::msg::ExecuteMsg::AddAddresses;
-use sg_whitelist_flex::helpers::interface::CollectionWhitelistContract;
-use crate::ContractError;
-use crate::query::{query_collection_whitelist, query_mint_count};
-use sg_whitelist_flex::msg::{ExecuteMsg as CollectionWhitelistExecuteMsg, Member};
-use sg_whitelist_flex::msg::AddMembersMsg;
 use crate::msg::InstantiateMsg;
-use crate::state::{CONFIG, Config};
+use crate::query::{query_collection_whitelist, query_mint_count};
+use crate::state::{Config, CONFIG};
+use crate::ContractError;
+use sg_whitelist_flex::helpers::interface::CollectionWhitelistContract;
+use sg_whitelist_flex::msg::AddMembersMsg;
+use sg_whitelist_flex::msg::{ExecuteMsg as CollectionWhitelistExecuteMsg, Member};
 use whitelist_immutable_flex::msg::InstantiateMsg as WIFInstantiateMsg;
+use whitelist_updatable::msg::ExecuteMsg::AddAddresses;
 pub const IMMUTABLE_WHITELIST_LABEL: &str = "Whitelist Immutable Flex for Airdrop";
 pub const INIT_WHITELIST_REPLY_ID: u64 = 1;
 
@@ -43,16 +45,17 @@ pub fn state_config(
         airdrop_amount: crate::validation::validate_airdrop_amount(msg.airdrop_amount)?,
         whitelist_address: None,
         minter_address: deps.api.addr_validate(msg.minter_address.as_ref())?,
-        name_discount_wl_address: deps.api.addr_validate(msg.name_discount_wl_address.as_ref())?,
-        name_collection_address: deps.api.addr_validate(msg.name_collection_address.as_ref())?,
+        name_discount_wl_address: deps
+            .api
+            .addr_validate(msg.name_discount_wl_address.as_ref())?,
+        name_collection_address: deps
+            .api
+            .addr_validate(msg.name_collection_address.as_ref())?,
+        airdrop_count_limit: msg.airdrop_count_limit,
     })
 }
 
-pub fn claim_reward(
-    info: MessageInfo,
-    airdrop_amount: u128,
-) -> Result<Response, ContractError> {
-    // TODO: add a limit to the number of claims (500 as per the proposal)
+pub fn claim_reward(info: MessageInfo, airdrop_amount: u128) -> Result<Response, ContractError> {
     let mut res = Response::new();
     let bank_msg = SubMsg::new(BankMsg::Send {
         to_address: info.sender.to_string(),
@@ -80,7 +83,7 @@ pub fn add_member_to_whitelists(
     let config = CONFIG.load(deps.storage)?;
     let collection_whitelist = query_collection_whitelist(deps)?;
     let mint_count = query_mint_count(deps, eth_address.clone())?;
-    let names_discount_whitelist  = config.name_discount_wl_address;
+    let names_discount_whitelist = config.name_discount_wl_address;
 
     let res = Response::new();
     let res = res.add_message(add_member_to_collection_whitelist(
@@ -109,27 +112,26 @@ fn add_member_to_collection_whitelist(
         }],
     };
     let execute_msg = CollectionWhitelistExecuteMsg::AddMembers(inner_msg);
-    CollectionWhitelistContract(deps.api.addr_validate(&collection_whitelist)?)
-        .call(execute_msg)
+    CollectionWhitelistContract(deps.api.addr_validate(&collection_whitelist)?).call(execute_msg)
 }
 
 fn add_member_to_names_discount_whitelist(
     wallet_address: Addr,
     name_discount_wl: String,
 ) -> StdResult<CosmosMsg> {
-    let execute_msg: ExecuteMsg = AddAddresses { addresses: vec![wallet_address.to_string()] };
+    let execute_msg: ExecuteMsg = AddAddresses {
+        addresses: vec![wallet_address.to_string()],
+    };
     let msg = to_json_binary(&execute_msg)?;
     Ok(WasmMsg::Execute {
         contract_addr: name_discount_wl,
         msg,
         funds: vec![],
     }
-        .into())
+    .into())
 }
 
-pub fn dust_member_wallet(
-    info: MessageInfo,
-) -> StdResult<CosmosMsg> {
+pub fn dust_member_wallet(info: MessageInfo) -> StdResult<CosmosMsg> {
     let inner_msg = BankMsg::Send {
         to_address: info.sender.to_string(),
         amount: coins(1000000, NATIVE_DENOM),

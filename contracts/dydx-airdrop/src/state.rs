@@ -12,9 +12,11 @@ pub struct Config {
     pub minter_address: Addr,
     pub name_discount_wl_address: Addr,
     pub name_collection_address: Addr,
+    pub airdrop_count_limit: u32,
 }
 
 pub const CONFIG: Item<Config> = Item::new("cfg");
 pub const ADDRS_TO_MINT_COUNT: Map<&str, u32> = Map::new("amc");
 pub const IS_ADDRESS_REGISTERED: Map<&str, bool> = Map::new("iar");
 pub const HAS_CLAIMED: Map<&str, bool> = Map::new("hc");
+pub const AIRDROP_COUNT: Item<u32> = Item::new("ac");

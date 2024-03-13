@@ -1,10 +1,10 @@
+use crate::build_messages::dust_and_whitelist_add;
+use crate::state::IS_ADDRESS_REGISTERED;
+use crate::validation::validate_registration;
 use crate::{state::CONFIG, ContractError};
 use cosmwasm_std::DepsMut;
 use cosmwasm_std::{Env, MessageInfo};
 use sg_std::Response;
-use crate::build_messages::{dust_and_whitelist_add};
-use crate::state::IS_ADDRESS_REGISTERED;
-use crate::validation::{validate_registration};
 
 pub fn register(
     deps: DepsMut,

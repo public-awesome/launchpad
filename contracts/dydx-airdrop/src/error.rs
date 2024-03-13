@@ -61,6 +61,9 @@ pub enum ContractError {
     #[error("Need to mint a name first")]
     NameNotMinted {},
 
+    #[error("Airdrop count limit exceeded")]
+    AirdropCountLimitExceeded {},
+
     #[error("Plaintext message must contain `{{wallet}}` string")]
     PlaintextMsgNoWallet {},
 

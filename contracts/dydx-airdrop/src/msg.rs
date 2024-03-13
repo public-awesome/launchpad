@@ -12,6 +12,7 @@ pub struct InstantiateMsg {
     pub minter_address: Addr,
     pub name_discount_wl_address: String,
     pub name_collection_address: String,
+    pub airdrop_count_limit: u32,
 }
 
 #[cw_serde]

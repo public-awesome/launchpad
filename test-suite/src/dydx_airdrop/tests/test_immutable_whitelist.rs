@@ -1,5 +1,8 @@
 use crate::common_setup::contract_boxes::custom_mock_app;
-use crate::dydx_airdrop::constants::claim_constants::{CONFIG_PLAINTEXT, MOCK_AIRDROP_ADDR_STR, MOCK_MINTER_ADDR_STR, MOCK_NAME_DISCOUNT_WL_ADDR_STR, OWNER};
+use crate::dydx_airdrop::constants::claim_constants::{
+    CONFIG_PLAINTEXT, MOCK_AIRDROP_ADDR_STR, MOCK_MINTER_ADDR_STR, MOCK_NAME_DISCOUNT_WL_ADDR_STR,
+    OWNER,
+};
 use crate::dydx_airdrop::constants::collection_constants::WHITELIST_AMOUNT;
 use crate::dydx_airdrop::setup::configure_mock_minter::configure_mock_minter_with_mock_whitelist;
 use crate::dydx_airdrop::setup::execute_msg::instantiate_contract;

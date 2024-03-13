@@ -51,14 +51,19 @@ pub fn query_collection_address(deps: &DepsMut) -> StdResult<String> {
 
 pub fn query_mint_count(deps: &DepsMut, eth_address: String) -> StdResult<u32> {
     let config = CONFIG.load(deps.storage)?;
-    let whitelist_address = config.whitelist_address.ok_or_else(|| {
-        cosmwasm_std::StdError::NotFound {
-            kind: "Whitelist Contract".to_string(),
-        }
-    })?;
-    let member_response: MemberResponse = deps.querier.query(&cosmwasm_std::QueryRequest::Wasm(cosmwasm_std::WasmQuery::Smart {
-        contract_addr: whitelist_address.into(),
-        msg: to_json_binary(&whitelist_immutable_flex::msg::QueryMsg::Member { address: eth_address })?,
-    }))?;
+    let whitelist_address =
+        config
+            .whitelist_address
+            .ok_or_else(|| cosmwasm_std::StdError::NotFound {
+                kind: "Whitelist Contract".to_string(),
+            })?;
+    let member_response: MemberResponse = deps.querier.query(&cosmwasm_std::QueryRequest::Wasm(
+        cosmwasm_std::WasmQuery::Smart {
+            contract_addr: whitelist_address.into(),
+            msg: to_json_binary(&whitelist_immutable_flex::msg::QueryMsg::Member {
+                address: eth_address,
+            })?,
+        },
+    ))?;
     Ok(member_response.member.mint_count)
 }

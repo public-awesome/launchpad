@@ -137,7 +137,7 @@ pub fn contract_dydx_airdrop() -> Box<dyn Contract<StargazeMsgWrapper>> {
         dydx_airdrop::contract::instantiate,
         dydx_airdrop::query::query,
     )
-        .with_reply(dydx_airdrop::reply::reply);
+    .with_reply(dydx_airdrop::reply::reply);
     Box::new(contract)
 }
 

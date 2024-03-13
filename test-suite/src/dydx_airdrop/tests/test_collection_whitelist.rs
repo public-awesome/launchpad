@@ -1,6 +1,8 @@
 use crate::common_setup::setup_accounts_and_block::setup_block_time;
 use crate::common_setup::setup_collection_whitelist::configure_collection_whitelist;
-use crate::dydx_airdrop::constants::claim_constants::{CONFIG_PLAINTEXT, MOCK_NAME_DISCOUNT_WL_ADDR_STR, STARGAZE_WALLET_01};
+use crate::dydx_airdrop::constants::claim_constants::{
+    CONFIG_PLAINTEXT, MOCK_NAME_DISCOUNT_WL_ADDR_STR, STARGAZE_WALLET_01,
+};
 use crate::dydx_airdrop::constants::collection_constants::{
     AIRDROP_ADDR_STR, MINT_PRICE, WHITELIST_AMOUNT,
 };

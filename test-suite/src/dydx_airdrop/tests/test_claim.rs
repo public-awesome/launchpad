@@ -13,7 +13,10 @@ use ethers_core::rand::thread_rng;
 use ethers_signers::{LocalWallet, Signer};
 use sg_multi_test::StargazeApp;
 
-use crate::dydx_airdrop::constants::claim_constants::{CONFIG_PLAINTEXT, MOCK_AIRDROP_ADDR_STR, MOCK_MINTER_ADDR_STR, MOCK_NAME_DISCOUNT_WL_ADDR_STR, NATIVE_DENOM, OWNER, STARGAZE_WALLET_01, STARGAZE_WALLET_02};
+use crate::dydx_airdrop::constants::claim_constants::{
+    CONFIG_PLAINTEXT, MOCK_AIRDROP_ADDR_STR, MOCK_MINTER_ADDR_STR, MOCK_NAME_DISCOUNT_WL_ADDR_STR,
+    NATIVE_DENOM, OWNER, STARGAZE_WALLET_01, STARGAZE_WALLET_02,
+};
 
 use crate::dydx_airdrop::setup::execute_msg::{
     execute_contract_error_with_msg, execute_contract_with_msg, instantiate_contract,
