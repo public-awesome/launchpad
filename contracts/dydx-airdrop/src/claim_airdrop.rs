@@ -1,4 +1,4 @@
-use crate::state::ADDRS_TO_MINT_COUNT;
+use crate::state::{ADDRS_TO_MINT_COUNT, HAS_CLAIMED};
 use crate::{state::CONFIG, ContractError};
 use cosmwasm_std::DepsMut;
 use cosmwasm_std::{Env, MessageInfo};
@@ -23,21 +23,6 @@ pub fn claim_airdrop(
         config.clone(),
     )?;
     let res = claim_reward(info, config.airdrop_amount)?;
-
-    // TODO: To be removed
-    increment_local_mint_count_for_address(deps, eth_address)?;
-
+    HAS_CLAIMED.save(deps.storage, &eth_address, &true)?;
     Ok(res.add_attribute("claimed_amount", config.airdrop_amount.to_string()))
-}
-
-pub fn increment_local_mint_count_for_address(
-    deps: DepsMut,
-    eth_address: String,
-) -> Result<Response, ContractError> {
-    let mint_count_for_address = ADDRS_TO_MINT_COUNT
-        .load(deps.storage, &eth_address)
-        .unwrap_or(0);
-    ADDRS_TO_MINT_COUNT.save(deps.storage, &eth_address, &(mint_count_for_address + 1))?;
-
-    Ok(Response::new())
 }
