@@ -1,21 +1,21 @@
-use cosmwasm_std::{DepsMut, MessageInfo, StdResult};
-use crate::ContractError;
-use crate::state::{ADDRS_TO_MINT_COUNT};
 use crate::state::IS_ADDRESS_REGISTERED;
+use crate::state::{ADDRS_TO_MINT_COUNT, CONFIG};
+use crate::ContractError;
+use cosmwasm_std::{DepsMut, MessageInfo, StdResult};
 
 use cosmwasm_std::StdError;
 use ethereum_verify::verify_ethereum_text;
 
-use crate::{
-    query::{query_airdrop_is_eligible},
-    state::Config,
-};
+use crate::{query::query_airdrop_is_eligible, state::Config};
 
-use cosmwasm_std::Uint128;
-use cw_utils::must_pay;
-use sg_std::NATIVE_DENOM;
 use crate::contract::INSTANTIATION_FEE;
 use crate::msg::InstantiateMsg;
+use crate::query::query_collection_address;
+use cosmwasm_std::Uint128;
+use cw721::TokensResponse;
+use cw_utils::must_pay;
+use sg721_base::msg::QueryMsg;
+use sg_std::NATIVE_DENOM;
 
 const MIN_AIRDROP: u128 = 10_000_000; // 10 STARS
 const MAX_AIRDROP: u128 = 100_000_000_000_000; // 100 million STARS
@@ -110,8 +110,7 @@ fn validate_eth_sig(
     eth_sig: String,
     config: Config,
 ) -> Result<(), ContractError> {
-    let valid_eth_sig =
-        validate_ethereum_text(deps, info, &config, eth_sig, eth_address.clone())?;
+    let valid_eth_sig = validate_ethereum_text(deps, info, &config, eth_sig, eth_address.clone())?;
     match valid_eth_sig {
         true => Ok(()),
         false => Err(ContractError::AddressNotEligible {
@@ -120,22 +119,21 @@ fn validate_eth_sig(
     }
 }
 
-// TODO: Implement validate_collection_mint for reward claim
-pub fn validate_collection_mint(
-    deps: &DepsMut,
-    eth_address: &str,
-) -> Result<(), ContractError> {
-    unimplemented!();
-    // let mint_count = ADDRS_TO_MINT_COUNT.load(deps.storage, eth_address);
-    // let mint_count = mint_count.unwrap_or(0);
-    //let per_address_limit = query_per_address_limit(&deps.as_ref())?;
-    // if mint_count < per_address_limit {
-    //     Ok(())
-    // } else {
-    //     Err(ContractError::MintCountReached {
-    //         address: eth_address.to_string(),
-    //     })
-    // }
+pub fn validate_collection_mint(deps: &DepsMut, info: MessageInfo) -> Result<(), ContractError> {
+    let collection_address = query_collection_address(deps)?;
+    let tokens_response: TokensResponse = deps.querier.query_wasm_smart(
+        collection_address,
+        &QueryMsg::Tokens {
+            owner: String::from(info.sender.clone()),
+            start_after: None,
+            limit: None,
+        },
+    )?;
+    return if tokens_response.tokens.len() == 0 {
+        Err(ContractError::CollectionNotMinted {})
+    } else {
+        Ok(())
+    };
 }
 
 pub fn validate_ethereum_text(
@@ -156,11 +154,10 @@ pub fn validate_ethereum_text(
     }
 }
 
-pub fn check_previous_registration(
-    deps: &DepsMut,
-    eth_address: &str,
-) -> Result<(), ContractError> {
-    let registered = IS_ADDRESS_REGISTERED.load(deps.storage, eth_address).unwrap_or(false);
+pub fn check_previous_registration(deps: &DepsMut, eth_address: &str) -> Result<(), ContractError> {
+    let registered = IS_ADDRESS_REGISTERED
+        .load(deps.storage, eth_address)
+        .unwrap_or(false);
     if registered {
         Err(ContractError::AlreadyRegistered {
             address: eth_address.to_string(),
@@ -174,7 +171,7 @@ pub fn validate_required_action_completion(
     deps: &DepsMut,
     eth_address: &str,
 ) -> Result<(), ContractError> {
-   unimplemented!()
+    unimplemented!()
     // validate_collection_mint()
     // validate_names_mint()
 }

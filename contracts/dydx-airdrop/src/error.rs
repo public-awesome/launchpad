@@ -49,6 +49,12 @@ pub enum ContractError {
     #[error("Collection Whitelist on Minter contract has not been set")]
     CollectionWhitelistMinterNotSet {},
 
+    #[error("Minter config is missing the collection contract address")]
+    CollectionContractNotSet {},
+
+    #[error("Need to mint a Geckies token first")]
+    CollectionNotMinted {},
+
     #[error("Plaintext message must contain `{{wallet}}` string")]
     PlaintextMsgNoWallet {},
 

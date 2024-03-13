@@ -42,6 +42,13 @@ pub fn query_collection_whitelist(deps: &DepsMut) -> Result<String, ContractErro
     }
 }
 
+pub fn query_collection_address(deps: &DepsMut) -> StdResult<String> {
+    let config = CONFIG.load(deps.storage)?;
+    let minter_addr = config.minter_address;
+    let config = MinterContract(minter_addr).config(&deps.querier)?;
+    Ok(config.sg721_address)
+}
+
 pub fn query_mint_count(deps: &DepsMut, eth_address: String) -> StdResult<u32> {
     let config = CONFIG.load(deps.storage)?;
     let whitelist_address = config.whitelist_address.ok_or_else(|| {

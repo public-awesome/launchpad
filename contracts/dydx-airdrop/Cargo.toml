@@ -34,7 +34,9 @@ cw2                 = { workspace = true }
 ethereum-verify     = { workspace = true }
 hex                 = "0.4"
 rust_decimal        = { version = "1.14.3" }
-sg-whitelist-flex       = { workspace = true }
+cw721               = { workspace = true }
+sg721-base          = { workspace = true }
+sg-whitelist-flex   = { workspace = true }
 sg1                 = { workspace = true }
 sha2                = { workspace = true }
 sha3                = "0.10"
@@ -54,7 +56,6 @@ eyre            = "0.6"
 rlp             = "0.5"
 sg2             = { workspace = true }
 vending-factory = { workspace = true }
-sg721-base      = { workspace = true }
 cw-multi-test   = { workspace = true }
 sg-multi-test   = { workspace = true }
 anyhow          = "1.0.57"
