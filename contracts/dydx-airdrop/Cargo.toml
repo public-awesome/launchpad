@@ -35,8 +35,9 @@ ethereum-verify     = { workspace = true }
 hex                 = "0.4"
 rust_decimal        = { version = "1.14.3" }
 cw721               = { workspace = true }
-sg721-base          = { workspace = true }
-sg-whitelist-flex   = { workspace = true }
+sg721-base          = { workspace = true, features = ["library"] }
+sg721-name          = { workspace = true, features = ["library"] }
+sg-whitelist-flex   = { workspace = true, features = ["library"] }
 sg1                 = { workspace = true }
 sha2                = { workspace = true }
 sha3                = "0.10"

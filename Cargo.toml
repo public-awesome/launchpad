@@ -62,6 +62,7 @@ whitelist-immutable  = { version = "3.5.0", path = "contracts/whitelists/whiteli
 whitelist-immutable-flex  = { version = "3.5.0", path = "contracts/whitelists/whitelist-immutable-flex" }
 whitelist-updatable = "0.12.0"
 sg-whitelist-flex    = { version = "3.5.0", path = "contracts/whitelists/whitelist-flex" }
+sg721-name = "1.2.5"
 ethereum-verify      = { version = "3.5.0", path = "packages/ethereum-verify" }
 rekt-airdrop      = { version = "3.5.0", path = "contracts/rekt-airdrop"}
 dydx-airdrop      = { version = "3.5.0", path = "contracts/dydx-airdrop"}

@@ -55,6 +55,9 @@ pub enum ContractError {
     #[error("Need to mint a Geckies token first")]
     CollectionNotMinted {},
 
+    #[error("Need to mint a name first")]
+    NameNotMinted {},
+
     #[error("Plaintext message must contain `{{wallet}}` string")]
     PlaintextMsgNoWallet {},
 

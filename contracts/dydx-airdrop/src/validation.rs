@@ -15,6 +15,7 @@ use cosmwasm_std::Uint128;
 use cw721::TokensResponse;
 use cw_utils::must_pay;
 use sg721_base::msg::QueryMsg;
+use sg721_name::msg::QueryMsg as NameQueryMsg;
 use sg_std::NATIVE_DENOM;
 
 const MIN_AIRDROP: u128 = 10_000_000; // 10 STARS
@@ -134,6 +135,29 @@ pub fn validate_collection_mint(deps: &DepsMut, info: MessageInfo) -> Result<(),
     } else {
         Ok(())
     };
+}
+
+pub fn validate_name_mint_and_association(deps: &DepsMut, info: MessageInfo) -> Result<(), ContractError> {
+    let config = CONFIG.load(deps.storage)?;
+    let name_collection_address = config.name_collection_address;
+    let tokens_response: TokensResponse = deps.querier.query_wasm_smart(
+        name_collection_address.clone(),
+        &QueryMsg::Tokens {
+            owner: String::from(info.sender.clone()),
+            start_after: None,
+            limit: None,
+        },
+    )?;
+    if tokens_response.tokens.len() == 0 {
+       return Err(ContractError::NameNotMinted {})
+    };
+    let associated_name: String = deps.querier.query_wasm_smart(
+        name_collection_address.clone(),
+        &NameQueryMsg::Name {
+            address: String::from(info.sender.clone()),
+        },
+    )?;
+    Ok(())
 }
 
 pub fn validate_ethereum_text(

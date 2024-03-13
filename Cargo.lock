@@ -373,8 +373,8 @@ dependencies = [
  "sg1",
  "sg2",
  "sg4",
- "sg721",
- "sg721-base",
+ "sg721 3.5.0",
+ "sg721-base 3.5.0",
  "thiserror",
  "url",
 ]
@@ -1462,7 +1462,8 @@ dependencies = [
  "sg-whitelist-flex",
  "sg1",
  "sg2",
- "sg721-base",
+ "sg721-base 3.5.0",
+ "sg721-name",
  "sha2 0.10.8",
  "sha3",
  "thiserror",
@@ -1495,8 +1496,8 @@ dependencies = [
  "serde_json",
  "sg-metadata",
  "sg2",
- "sg721",
- "sg721-base",
+ "sg721 3.5.0",
+ "sg721-base 3.5.0",
  "test-context",
  "vending-factory",
  "vending-minter",
@@ -2674,7 +2675,7 @@ dependencies = [
  "sg-std 3.2.0",
  "sg1",
  "sg2",
- "sg721",
+ "sg721 3.5.0",
  "thiserror",
 ]
 
@@ -2696,7 +2697,7 @@ dependencies = [
  "sg1",
  "sg2",
  "sg4",
- "sg721",
+ "sg721 3.5.0",
  "thiserror",
  "url",
 ]
@@ -3254,7 +3255,7 @@ dependencies = [
  "sg-whitelist",
  "sg1",
  "sg2",
- "sg721-base",
+ "sg721-base 3.5.0",
  "sha2 0.10.8",
  "sha3",
  "thiserror",
@@ -3794,6 +3795,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "sg-name"
+version = "1.2.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fba179e312060ca767f809353a3181a9f7a94932f2498d9b0f337229063a6b93"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "schemars",
+ "serde",
+]
+
+[[package]]
+name = "sg-name-market"
+version = "1.2.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d7c1d3bc0742d8ad86ce05aaeb15835954f665e21da96dc18c7c7412eaa3befa"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "schemars",
+ "serde",
+]
+
+[[package]]
 name = "sg-name-minter"
 version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3829,6 +3854,21 @@ name = "sg-std"
 version = "0.21.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f332c16bb8cab94613e6b9bef76fbd27937e0be1c40c979ed1a7367b96866126"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-utils 0.16.0",
+ "cw721 0.16.0",
+ "schemars",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "sg-std"
+version = "0.22.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bd076abea035a2da34a770eb7a239a4fbffa59d3a193ab91e07fb81583937c5c"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -3921,7 +3961,7 @@ dependencies = [
  "cw-utils 1.0.3",
  "schemars",
  "serde",
- "sg721",
+ "sg721 3.5.0",
  "thiserror",
 ]
 
@@ -3932,6 +3972,20 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "schemars",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "sg721"
+version = "0.22.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4a8c0cb5748e59d506cb7cf375d1f03769f1e3586a1542be8a199730721c6102"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-utils 0.16.0",
+ "cw721-base 0.16.0",
  "serde",
  "thiserror",
 ]
@@ -3952,6 +4006,26 @@ dependencies = [
 
 [[package]]
 name = "sg721-base"
+version = "0.22.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a6c3ba2af031105758e21f94e8a1488bf810b33914b7e49d7ef5efcf1936cf96"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus 0.16.0",
+ "cw-utils 0.16.0",
+ "cw2 0.16.0",
+ "cw721 0.16.0",
+ "cw721-base 0.16.0",
+ "serde",
+ "sg-std 0.22.11",
+ "sg721 0.22.11",
+ "thiserror",
+ "url",
+]
+
+[[package]]
+name = "sg721-base"
 version = "3.5.0"
 dependencies = [
  "cosmwasm-schema",
@@ -3964,7 +4038,7 @@ dependencies = [
  "cw721-base 0.18.0",
  "serde",
  "sg-std 3.2.0",
- "sg721",
+ "sg721 3.5.0",
  "thiserror",
  "url",
 ]
@@ -3983,8 +4057,34 @@ dependencies = [
  "serde",
  "sg-metadata",
  "sg-std 3.2.0",
- "sg721",
- "sg721-base",
+ "sg721 3.5.0",
+ "sg721-base 3.5.0",
+]
+
+[[package]]
+name = "sg721-name"
+version = "1.2.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dcc40d7bb875a788848daacac5d8d3e894f48f8c282a3d704f3492ffa9261ede"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-controllers 0.16.0",
+ "cw-storage-plus 0.16.0",
+ "cw-utils 0.16.0",
+ "cw2 0.16.0",
+ "cw721 0.16.0",
+ "cw721-base 0.16.0",
+ "schemars",
+ "semver",
+ "serde",
+ "sg-name",
+ "sg-name-market",
+ "sg-std 0.22.11",
+ "sg721 0.22.11",
+ "sg721-base 0.22.11",
+ "subtle-encoding",
+ "thiserror",
 ]
 
 [[package]]
@@ -4000,8 +4100,8 @@ dependencies = [
  "schemars",
  "serde",
  "sg-std 3.2.0",
- "sg721",
- "sg721-base",
+ "sg721 3.5.0",
+ "sg721-base 3.5.0",
 ]
 
 [[package]]
@@ -4021,8 +4121,8 @@ dependencies = [
  "serde",
  "sg-std 3.2.0",
  "sg1",
- "sg721",
- "sg721-base",
+ "sg721 3.5.0",
+ "sg721-base 3.5.0",
  "thiserror",
 ]
 
@@ -4430,8 +4530,8 @@ dependencies = [
  "sg1",
  "sg2",
  "sg4",
- "sg721",
- "sg721-base",
+ "sg721 3.5.0",
+ "sg721-base 3.5.0",
  "sg721-nt",
  "sg721-updatable",
  "sha2 0.10.8",
@@ -4854,7 +4954,7 @@ dependencies = [
  "sg-std 3.2.0",
  "sg1",
  "sg2",
- "sg721",
+ "sg721 3.5.0",
  "thiserror",
 ]
 
@@ -4879,7 +4979,7 @@ dependencies = [
  "sg1",
  "sg2",
  "sg4",
- "sg721",
+ "sg721 3.5.0",
  "sha2 0.10.8",
  "shuffle",
  "thiserror",
@@ -4908,7 +5008,7 @@ dependencies = [
  "sg1",
  "sg2",
  "sg4",
- "sg721",
+ "sg721 3.5.0",
  "sha2 0.10.8",
  "shuffle",
  "thiserror",
@@ -4937,7 +5037,7 @@ dependencies = [
  "sg1",
  "sg2",
  "sg4",
- "sg721",
+ "sg721 3.5.0",
  "sha2 0.10.8",
  "shuffle",
  "thiserror",
@@ -4967,7 +5067,7 @@ dependencies = [
  "sg1",
  "sg2",
  "sg4",
- "sg721",
+ "sg721 3.5.0",
  "sha2 0.10.8",
  "shuffle",
  "thiserror",
@@ -4996,7 +5096,7 @@ dependencies = [
  "sg1",
  "sg2",
  "sg4",
- "sg721",
+ "sg721 3.5.0",
  "sha2 0.10.8",
  "shuffle",
  "thiserror",
