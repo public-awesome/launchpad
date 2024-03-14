@@ -64,6 +64,15 @@ pub fn contract_collection_whitelist() -> Box<dyn Contract<StargazeMsgWrapper>> 
     Box::new(contract)
 }
 
+pub fn contract_collection_whitelist_flex() -> Box<dyn Contract<StargazeMsgWrapper>> {
+    let contract = ContractWrapper::new(
+        sg_whitelist_flex::contract::execute,
+        sg_whitelist_flex::contract::instantiate,
+        sg_whitelist_flex::contract::query,
+    );
+    Box::new(contract)
+}
+
 pub fn contract_open_edition_minter() -> Box<dyn Contract<StargazeMsgWrapper>> {
     let contract = ContractWrapper::new(
         open_edition_minter::contract::execute,

@@ -4527,11 +4527,13 @@ dependencies = [
  "sg-splits",
  "sg-std 3.2.0",
  "sg-whitelist",
+ "sg-whitelist-flex",
  "sg1",
  "sg2",
  "sg4",
  "sg721 3.5.0",
  "sg721-base 3.5.0",
+ "sg721-name",
  "sg721-nt",
  "sg721-updatable",
  "sha2 0.10.8",
@@ -4544,6 +4546,7 @@ dependencies = [
  "whitelist-immutable",
  "whitelist-immutable-flex",
  "whitelist-mtree",
+ "whitelist-updatable",
 ]
 
 [[package]]

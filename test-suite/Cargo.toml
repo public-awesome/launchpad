@@ -48,6 +48,8 @@ rekt-airdrop        = { workspace = true }
 dydx-airdrop        = { workspace = true }
 whitelist-immutable = { workspace = true, features = ["library"] }
 whitelist-immutable-flex = { workspace = true, features = ["library"] }
+whitelist-updatable = { workspace = true, features = ["library"] }
+sg721-name         = { workspace = true }
 cw721               = { workspace = true }
 cw721-base          = { workspace = true, features = ["library"] }
 sg2                 = { workspace = true }
@@ -55,7 +57,8 @@ sg721               = { workspace = true }
 sg-metadata              = { workspace = true }
 open-edition-factory     = { workspace = true, features = ["library"] }
 open-edition-minter      = { workspace = true, features = ["library"] }
-sg-whitelist        = { workspace = true, features = ["library"] }
+sg-whitelist      = { workspace = true, features = ["library"] }
+sg-whitelist-flex      = { workspace = true, features = ["library"] }
 vending-factory     = { workspace = true, features = ["library"] }
 vending-minter      = { workspace = true, features = ["library"] }
 base-factory        = { workspace = true }
