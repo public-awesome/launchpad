@@ -10,6 +10,7 @@ use cosmwasm_std::{
     Reply, Response, StdResult, SubMsg, Timestamp, WasmMsg,
 };
 use cw2::set_contract_version;
+use cw721::{DefaultOptionCollectionMetadataExtension, DefaultOptionNftMetadataExtension};
 use cw_utils::{must_pay, nonpayable, parse_reply_instantiate_data};
 use sg1::checked_fair_burn;
 use sg2::query::Sg2QueryMsg;
@@ -121,7 +122,10 @@ pub fn execute_mint_sender(
     // Should mint and then list on the marketplace for secondary sales
     let collection_info: CollectionInfoResponse = deps.querier.query_wasm_smart(
         collection_address.clone(),
-        &Sg721QueryMsg::CollectionInfo {},
+        &Sg721QueryMsg::CollectionInfo::<
+            DefaultOptionNftMetadataExtension,
+            DefaultOptionCollectionMetadataExtension,
+        > {},
     )?;
     // allow only sg721 creator address to mint
     if collection_info.creator != info.sender {
@@ -183,7 +187,7 @@ pub fn execute_update_start_trading_time(
 
     let collection_info: CollectionInfoResponse = deps.querier.query_wasm_smart(
         sg721_contract_addr.clone(),
-        &Sg721QueryMsg::CollectionInfo {},
+        &Sg721QueryMsg::<DefaultOptionNftMetadataExtension, DefaultOptionCollectionMetadataExtension>::CollectionInfo {},
     )?;
     if info.sender != collection_info.creator {
         return Err(ContractError::Unauthorized(

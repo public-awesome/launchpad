@@ -1,13 +1,16 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::Binary;
 use cosmwasm_std::Timestamp;
+use cw721::DefaultOptionCollectionMetadataExtension;
+use cw721::DefaultOptionNftMetadataExtension;
+use cw721::DefaultOptionNftMetadataExtensionMsg;
 use cw_utils::Expiration;
 use sg721::{RoyaltyInfoResponse, UpdateCollectionInfoMsg};
 use sg721_base::msg::QueryMsg as Sg721QueryMsg;
 use sg721_base::ExecuteMsg as Sg721ExecuteMsg;
 
 #[cw_serde]
-pub enum ExecuteMsg<T, E> {
+pub enum ExecuteMsg<TNftMetadataExtensionMsg, TCollectionMetadataExtensionMsg> {
     /// Freeze token metadata so creator can no longer update token uris
     FreezeTokenMetadata {},
     /// Creator calls can update token uris
@@ -61,19 +64,21 @@ pub enum ExecuteMsg<T, E> {
         /// Metadata JSON Schema
         token_uri: Option<String>,
         /// Any custom extension used by this contract
-        extension: T,
+        extension: TNftMetadataExtensionMsg,
     },
     Extension {
-        msg: E,
+        msg: TCollectionMetadataExtensionMsg,
     },
 }
 
-impl<T, E> From<ExecuteMsg<T, E>> for Sg721ExecuteMsg
+impl<TNftMetadataExtensionMsg, TCollectionMetadataExtensionMsg>
+    From<ExecuteMsg<TNftMetadataExtensionMsg, TCollectionMetadataExtensionMsg>> for Sg721ExecuteMsg
 where
-    T: Clone + PartialEq + Into<Option<cosmwasm_std::Empty>>,
-    Option<cosmwasm_std::Empty>: From<T>,
+    TNftMetadataExtensionMsg: Clone + PartialEq + Into<DefaultOptionNftMetadataExtensionMsg>,
 {
-    fn from(msg: ExecuteMsg<T, E>) -> Sg721ExecuteMsg {
+    fn from(
+        msg: ExecuteMsg<TNftMetadataExtensionMsg, TCollectionMetadataExtensionMsg>,
+    ) -> Sg721ExecuteMsg {
         match msg {
             ExecuteMsg::TransferNft {
                 recipient,
@@ -177,8 +182,13 @@ pub enum QueryMsg {
     CollectionInfo {},
 }
 
-impl From<QueryMsg> for Sg721QueryMsg {
-    fn from(msg: QueryMsg) -> Sg721QueryMsg {
+impl From<QueryMsg>
+    for Sg721QueryMsg<DefaultOptionNftMetadataExtension, DefaultOptionCollectionMetadataExtension>
+{
+    fn from(
+        msg: QueryMsg,
+    ) -> Sg721QueryMsg<DefaultOptionNftMetadataExtension, DefaultOptionCollectionMetadataExtension>
+    {
         match msg {
             QueryMsg::OwnerOf {
                 token_id,

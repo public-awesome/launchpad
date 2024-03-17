@@ -1,6 +1,7 @@
 use cosmwasm_std::{coin, coins, Addr, Empty, Timestamp};
-use cw721::{Cw721QueryMsg, TokensResponse};
-use cw721_base::ExecuteMsg as Cw721ExecuteMsg;
+use cw721::{DefaultOptionCollectionMetadataExtension, DefaultOptionNftMetadataExtension};
+use cw721_base::msg::ExecuteMsg as Cw721ExecuteMsg;
+use cw721_base::msg::{Cw721QueryMsg, TokensResponse};
 use cw_multi_test::Executor;
 use sg2::tests::mock_collection_params_1;
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
@@ -277,7 +278,10 @@ fn whitelist_mint_count_query() {
     assert_eq!(res.address, buyer.to_string());
 
     // get random mint token_id
-    let tokens_msg = Cw721QueryMsg::Tokens {
+    let tokens_msg = Cw721QueryMsg::<
+        DefaultOptionNftMetadataExtension,
+        DefaultOptionCollectionMetadataExtension,
+    >::Tokens {
         owner: buyer.to_string(),
         start_after: None,
         limit: None,

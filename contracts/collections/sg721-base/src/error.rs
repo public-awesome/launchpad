@@ -15,7 +15,7 @@ pub enum ContractError {
     Parse(#[from] ParseError),
 
     #[error("{0}")]
-    Base(#[from] cw721_base::ContractError),
+    Base(#[from] cw721_base::error::ContractError),
 
     #[error("Unauthorized")]
     Unauthorized {},

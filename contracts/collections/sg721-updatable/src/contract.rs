@@ -7,6 +7,10 @@ use cosmwasm_std::{Deps, StdResult};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::{DepsMut, Env, Event, MessageInfo};
 use cw2::set_contract_version;
+use cw721::{
+    DefaultOptionCollectionMetadataExtension, DefaultOptionCollectionMetadataExtensionMsg,
+    DefaultOptionNftMetadataExtension, DefaultOptionNftMetadataExtensionMsg,
+};
 use semver::Version;
 use sg721::InstantiateMsg;
 use sg721_base::msg::CollectionInfoResponse;
@@ -19,7 +23,14 @@ use cw_utils::nonpayable;
 use sg1::checked_fair_burn;
 use sg721_base::ContractError::Unauthorized;
 use sg721_base::Sg721Contract;
-pub type Sg721UpdatableContract<'a> = Sg721Contract<'a, Extension>;
+pub type Sg721UpdatableContract<'a> = Sg721Contract<
+    'a,
+    DefaultOptionNftMetadataExtension,
+    DefaultOptionNftMetadataExtensionMsg,
+    DefaultOptionCollectionMetadataExtension,
+    DefaultOptionCollectionMetadataExtensionMsg,
+    Empty,
+>;
 
 const CONTRACT_NAME: &str = "crates.io:sg721-updatable";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -125,7 +136,7 @@ pub fn execute_update_token_metadata(
     }
 
     // Update token metadata
-    Sg721UpdatableContract::default().tokens.update(
+    Sg721UpdatableContract::default().config.nft_info.update(
         deps.storage,
         &token_id,
         |token| match token {
@@ -237,7 +248,7 @@ mod tests {
         from_json, to_json_binary, ContractInfoResponse, ContractResult, Empty, OwnedDeps, Querier,
         QuerierResult, QueryRequest, SystemError, SystemResult, WasmQuery,
     };
-    use cw721::Cw721Query;
+    use cw721_base::query::Cw721Query;
     use sg721::{CollectionInfo, InstantiateMsg};
     use std::marker::PhantomData;
 
@@ -349,24 +360,25 @@ mod tests {
         );
 
         // Update token metadata
-        execute(deps.as_mut(), mock_env(), info.clone(), update_msg).unwrap();
+        let env = mock_env();
+        execute(deps.as_mut(), env.clone(), info.clone(), update_msg).unwrap();
 
         // Check token contains updated metadata
         let res = contract
             .parent
-            .nft_info(deps.as_ref(), token_id.into())
+            .query_nft_info(deps.as_ref(), &env, token_id.into())
             .unwrap();
         assert_eq!(res.token_uri, updated_token_uri);
 
         // Update token metadata with None token_uri
-        let update_msg = ExecuteMsg::<Extension, Empty>::UpdateTokenMetadata {
+        let update_msg = ExecuteMsg::<DefaultOptionNftMetadataExtensionMsg, DefaultOptionCollectionMetadataExtensionMsg>::UpdateTokenMetadata {
             token_id: token_id.to_string(),
             token_uri: None,
         };
         execute(deps.as_mut(), mock_env(), info.clone(), update_msg).unwrap();
         let res = contract
             .parent
-            .nft_info(deps.as_ref(), token_id.into())
+            .query_nft_info(deps.as_ref(), &env, token_id.into())
             .unwrap();
         assert_eq!(res.token_uri, None);
 

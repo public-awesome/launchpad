@@ -6,11 +6,22 @@ pub mod upgrades;
 
 pub use crate::error::ContractError;
 pub use crate::state::Sg721Contract;
-use cosmwasm_std::Empty;
-use cw721_base::Extension;
+use cw721::{
+    DefaultOptionCollectionMetadataExtensionMsg, DefaultOptionNftMetadataExtensionMsg, RoyaltyInfo,
+};
+use cw721_base::msg::CollectionMetadataExtensionMsg;
+use cw721_base::{
+    DefaultOptionCollectionMetadataExtension, DefaultOptionNftMetadataExtension, NftMetadataMsg,
+};
 
-pub type ExecuteMsg = sg721::ExecuteMsg<Extension, Empty>;
-pub type QueryMsg = cw721_base::QueryMsg<Empty>;
+pub type ExecuteMsg = sg721::ExecuteMsg<
+    DefaultOptionNftMetadataExtensionMsg,
+    DefaultOptionCollectionMetadataExtensionMsg,
+>;
+pub type QueryMsg = cw721_base::msg::QueryMsg<
+    DefaultOptionNftMetadataExtension,
+    DefaultOptionCollectionMetadataExtension,
+>;
 
 pub mod entry {
     use super::*;
@@ -18,9 +29,8 @@ pub mod entry {
 
     #[cfg(not(feature = "library"))]
     use cosmwasm_std::entry_point;
-    use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
+    use cosmwasm_std::{Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult};
     use cw2::set_contract_version;
-    use cw721_base::Extension;
     use sg721::InstantiateMsg;
 
     // version info for migration info
@@ -36,7 +46,14 @@ pub mod entry {
     ) -> Result<Response, ContractError> {
         set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
-        let res = Sg721Contract::<Extension>::default().instantiate(deps, env, info, msg)?;
+        let res = Sg721Contract::<
+            DefaultOptionNftMetadataExtension,
+            DefaultOptionNftMetadataExtensionMsg,
+            DefaultOptionCollectionMetadataExtension,
+            DefaultOptionCollectionMetadataExtensionMsg,
+            Empty,
+        >::default()
+        .instantiate(deps, env, info, msg)?;
 
         Ok(res
             .add_attribute("contract_name", CONTRACT_NAME)
@@ -50,11 +67,29 @@ pub mod entry {
         info: MessageInfo,
         msg: ExecuteMsg,
     ) -> Result<Response, ContractError> {
-        Sg721Contract::<Extension>::default().execute(deps, env, info, msg)
+        Sg721Contract::<
+            DefaultOptionNftMetadataExtension,
+            DefaultOptionNftMetadataExtensionMsg,
+            DefaultOptionCollectionMetadataExtension,
+            DefaultOptionCollectionMetadataExtensionMsg,
+            Empty,
+        >::default()
+        .execute(deps, env, info, msg)
     }
 
     #[cfg_attr(not(feature = "library"), entry_point)]
-    pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
-        Sg721Contract::<Extension>::default().query(deps, env, msg)
+    pub fn query(
+        deps: Deps,
+        env: Env,
+        msg: QueryMsg<DefaultOptionNftMetadataExtension, DefaultOptionCollectionMetadataExtension>,
+    ) -> Result<Binary, ContractError> {
+        Sg721Contract::<
+            DefaultOptionNftMetadataExtension,
+            DefaultOptionNftMetadataExtensionMsg,
+            DefaultOptionCollectionMetadataExtension,
+            DefaultOptionCollectionMetadataExtensionMsg,
+            Empty,
+        >::default()
+        .query(deps, env, msg)
     }
 }

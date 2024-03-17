@@ -10,7 +10,9 @@ use crate::common_setup::setup_minter::vending_minter::mock_params::{
 };
 use crate::common_setup::setup_minter::vending_minter::setup::vending_minter_code_ids;
 use cosmwasm_std::{coin, coins, Addr, Timestamp};
-use cw721::TokensResponse;
+use cw721::DefaultOptionCollectionMetadataExtension;
+use cw721::DefaultOptionNftMetadataExtension;
+use cw721_base::msg::TokensResponse;
 use cw_multi_test::Executor;
 use sg2::msg::Sg2ExecuteMsg;
 use sg2::tests::{mock_collection_params, mock_collection_params_1};
@@ -100,7 +102,7 @@ fn zero_mint_price() {
         .wrap()
         .query_wasm_smart(
             sg721,
-            &sg721_base::msg::QueryMsg::Tokens {
+            &sg721_base::msg::QueryMsg::<DefaultOptionNftMetadataExtension, DefaultOptionCollectionMetadataExtension>::Tokens {
                 owner: buyer.to_string(),
                 start_after: None,
                 limit: None,

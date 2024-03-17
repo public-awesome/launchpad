@@ -2,11 +2,26 @@
 use cosmwasm_std::entry_point;
 
 pub mod msg;
+use cosmwasm_std::Empty;
+use cw721::{
+    DefaultOptionCollectionMetadataExtension, DefaultOptionCollectionMetadataExtensionMsg,
+    DefaultOptionNftMetadataExtension, DefaultOptionNftMetadataExtensionMsg,
+};
 use cw721_base::Extension;
 use sg721::InstantiateMsg;
 use sg721_base::Sg721Contract;
-pub type QueryMsg = sg721_base::msg::QueryMsg;
-pub type Sg721NonTransferableContract<'a> = Sg721Contract<'a, Extension>;
+pub type QueryMsg = sg721_base::msg::QueryMsg<
+    DefaultOptionNftMetadataExtension,
+    DefaultOptionCollectionMetadataExtension,
+>;
+pub type Sg721NonTransferableContract<'a> = Sg721Contract<
+    'a,
+    DefaultOptionNftMetadataExtension,
+    DefaultOptionNftMetadataExtensionMsg,
+    DefaultOptionCollectionMetadataExtension,
+    DefaultOptionCollectionMetadataExtensionMsg,
+    Empty,
+>;
 use sg721_base::msg::NftParams;
 
 // version info for migration info
@@ -24,7 +39,8 @@ pub mod entry {
     use cosmwasm_std::{
         Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdError, StdResult,
     };
-    use cw721::Cw721Execute;
+    use cw721::msg::Cw721MigrateMsg;
+    use cw721_base::execute::Cw721Execute;
     use sg721_base::ContractError;
 
     #[entry_point]
@@ -53,7 +69,7 @@ pub mod entry {
         match msg {
             ExecuteMsg::Burn { token_id } => Sg721NonTransferableContract::default()
                 .parent
-                .burn(deps, env, info, token_id)
+                .burn_nft(deps, &env, &info, token_id)
                 .map_err(|e| e.into()),
             ExecuteMsg::Mint {
                 token_id,
@@ -86,12 +102,12 @@ pub mod entry {
     }
 
     #[entry_point]
-    pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
+    pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, ContractError> {
         Sg721NonTransferableContract::default().query(deps, env, msg)
     }
 
     #[entry_point]
-    pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
+    pub fn migrate(deps: DepsMut, env: Env, _msg: Empty) -> Result<Response, ContractError> {
         // make sure the correct contract is being upgraded, and it's being
         // upgraded from the correct version.
         if CONTRACT_VERSION < EARLIEST_VERSION {
@@ -113,10 +129,30 @@ pub mod entry {
         cw2::set_contract_version(deps.storage, CONTRACT_NAME, TO_VERSION)?;
 
         // perform the upgrade
-        let cw17_res = cw721_base::upgrades::v0_17::migrate::<Extension, Empty, Empty, Empty>(deps)
-            .map_err(|e| sg721_base::ContractError::MigrationError(e.to_string()))?;
+        // cw721 migration allows all versions: 0.18. 0.17, 0.16 and older
+        let contract = Sg721Contract::<
+            DefaultOptionNftMetadataExtension,
+            DefaultOptionNftMetadataExtensionMsg,
+            DefaultOptionCollectionMetadataExtension,
+            DefaultOptionCollectionMetadataExtensionMsg,
+            Empty,
+        >::default();
+        let migrate_msg = Cw721MigrateMsg::WithUpdate {
+            minter: None,
+            creator: None,
+        };
+        let cw721_res = contract
+            .parent
+            .migrate(
+                deps,
+                env.clone(),
+                migrate_msg,
+                CONTRACT_NAME,
+                CONTRACT_VERSION,
+            )
+            .map_err(|e| ContractError::MigrationError(e.to_string()))?;
         let mut sgz_res = Response::new();
-        sgz_res.attributes = cw17_res.attributes;
+        sgz_res.attributes = cw721_res.attributes;
         Ok(sgz_res)
     }
 }

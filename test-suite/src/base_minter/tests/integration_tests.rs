@@ -9,7 +9,8 @@ use base_factory::msg::{BaseMinterCreateMsg, BaseUpdateParamsMsg, SudoMsg};
 
 use base_minter::msg::{ConfigResponse, ExecuteMsg};
 use cosmwasm_std::{coin, coins, Addr, Timestamp};
-use cw721::{Cw721ExecuteMsg, Cw721QueryMsg, OwnerOfResponse};
+use cw721::{DefaultOptionCollectionMetadataExtension, DefaultOptionNftMetadataExtension};
+use cw721_base::msg::{Cw721ExecuteMsg, Cw721QueryMsg, OwnerOfResponse};
 use cw_multi_test::Executor;
 use sg2::msg::Sg2ExecuteMsg;
 use sg2::query::{AllowedCollectionCodeIdsResponse, Sg2QueryMsg};
@@ -154,7 +155,10 @@ fn check_mint() {
     assert_eq!(res.collection_address, "contract2".to_string());
     assert_eq!(res.config.mint_price.amount.u128(), MIN_MINT_PRICE);
 
-    let query_owner_msg = Cw721QueryMsg::OwnerOf {
+    let query_owner_msg = Cw721QueryMsg::<
+        DefaultOptionNftMetadataExtension,
+        DefaultOptionCollectionMetadataExtension,
+    >::OwnerOf {
         token_id: String::from("1"),
         include_expired: None,
     };
@@ -165,7 +169,10 @@ fn check_mint() {
     assert_eq!(res.owner, creator.to_string());
 
     // make sure sg721-nt cannot be transferred
-    let transfer_msg = Cw721ExecuteMsg::TransferNft {
+    let transfer_msg = Cw721ExecuteMsg::<
+        DefaultOptionNftMetadataExtension,
+        DefaultOptionCollectionMetadataExtension,
+    >::TransferNft {
         recipient: "adsf".to_string(),
         token_id: "1".to_string(),
     };
@@ -220,7 +227,13 @@ fn update_start_trading_time() {
     // confirm trading start time
     let res: CollectionInfoResponse = router
         .wrap()
-        .query_wasm_smart(collection_addr, &Sg721QueryMsg::CollectionInfo {})
+        .query_wasm_smart(
+            collection_addr,
+            &Sg721QueryMsg::<
+                DefaultOptionNftMetadataExtension,
+                DefaultOptionCollectionMetadataExtension,
+            >::CollectionInfo {},
+        )
         .unwrap();
     assert_eq!(res.start_trading_time, Some(default_start_trading_time));
 }

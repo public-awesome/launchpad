@@ -27,8 +27,8 @@ cw-controllers  = "1.1.0"
 cw2             = "1.1.0"
 cw4             = "1.1.0"
 cw4-group       = "1.1.0"
-cw721           = "0.18.0"
-cw721-base      = "0.18.0"
+cw721           = { git = "https://github.com/arkprotocol/cw-nfts.git", branch = "collection-info"} # TODO: switch to official repo once merged
+cw721-base      = { git = "https://github.com/arkprotocol/cw-nfts.git", branch = "collection-info"} # TODO: switch to official repo once merged
 cw-multi-test   = "0.20.0"
 cw-storage-plus = "1.2.0"
 cw-utils        = "1.0.1"
@@ -50,7 +50,7 @@ sg-splits       = { version = "3.5.0", path = "contracts/splits" }
 sg-std          = { version = "3.2.0" }
 sg-whitelist    = { version = "3.5.0", path = "contracts/whitelists/whitelist" }
 thiserror       = "1.0.31"
-url             = "2.2.2"
+url             = "^2.5"
 sha2            = { version = "0.10.2", default-features = false }
 
 whitelist-mtree          = { version = "3.5.0", path = "contracts/whitelists/whitelist-merkletree" }
@@ -66,7 +66,7 @@ sg-eth-airdrop           = { version = "3.5.0", path = "contracts/sg-eth-airdrop
 test-suite               = { version = "3.5.0", path = "test-suite" }
 
 semver     = "1"
-cw-ownable = "0.5.1"
+cw-ownable = { git = "https://github.com/public-awesome/cw-plus-plus.git", branch = "multiple_ownership"} # TODO: switch to official https://github.com/larry0x/cw-plus-plus once merged
 anybuf     = "0.3.0"
 
 [profile.release.package.sg721]

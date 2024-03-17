@@ -3,7 +3,7 @@ mod tests {
     use crate::common_setup::contract_boxes::App;
     use anyhow::Error;
     use cosmwasm_std::{coin, Addr};
-    use cw721::NumTokensResponse;
+    use cw721_base::msg::NumTokensResponse;
     use cw_multi_test::{AppResponse, BankSudo, Executor, SudoMsg};
     use sg2::msg::CreateMinterMsg;
     use sg2::tests::mock_collection_params;
@@ -113,13 +113,15 @@ mod tests {
         let cosmos_msg = factory_contract.call_with_funds(msg, creation_fee).unwrap();
 
         let res = app.execute(Addr::unchecked(ADMIN), cosmos_msg);
+        println!(">>>>> {:?}", res);
         assert!(res.is_ok());
 
         (app, Addr::unchecked("contract2"))
     }
 
     mod init {
-        use cw721_base::MinterResponse;
+        use cw721::{DefaultOptionCollectionMetadataExtension, DefaultOptionNftMetadataExtension};
+        use cw721_base::msg::MinterResponse;
 
         use crate::common_setup::setup_minter::vending_minter::mock_params::mock_create_minter_init_msg;
 
@@ -133,7 +135,13 @@ mod tests {
 
             let res: NumTokensResponse = app
                 .wrap()
-                .query_wasm_smart(contract, &QueryMsg::NumTokens {})
+                .query_wasm_smart(
+                    contract,
+                    &QueryMsg::<
+                        DefaultOptionNftMetadataExtension,
+                        DefaultOptionCollectionMetadataExtension,
+                    >::NumTokens {},
+                )
                 .unwrap();
             assert_eq!(res.count, 0);
         }
@@ -187,7 +195,13 @@ mod tests {
             // query minter config to confirm base_token_uri got trimmed
             let res: MinterResponse = app
                 .wrap()
-                .query_wasm_smart(contract, &QueryMsg::Minter {})
+                .query_wasm_smart(
+                    contract,
+                    &QueryMsg::<
+                        DefaultOptionNftMetadataExtension,
+                        DefaultOptionCollectionMetadataExtension,
+                    >::Minter {},
+                )
                 .unwrap();
             let minter = res.minter;
             let minter = minter.unwrap();
@@ -214,7 +228,13 @@ mod tests {
             // query minter config to confirm base_token_uri got trimmed and starts with ipfs
             let res: MinterResponse = app
                 .wrap()
-                .query_wasm_smart(contract, &QueryMsg::Minter {})
+                .query_wasm_smart(
+                    contract,
+                    &QueryMsg::<
+                        DefaultOptionNftMetadataExtension,
+                        DefaultOptionCollectionMetadataExtension,
+                    >::Minter {},
+                )
                 .unwrap();
             let minter = res.minter.unwrap();
             let res: ConfigResponse = app
@@ -235,7 +255,13 @@ mod tests {
             let (app, contract) = custom_proper_instantiate(custom_create_minter_msg);
             let res: MinterResponse = app
                 .wrap()
-                .query_wasm_smart(contract, &QueryMsg::Minter {})
+                .query_wasm_smart(
+                    contract,
+                    &QueryMsg::<
+                        DefaultOptionNftMetadataExtension,
+                        DefaultOptionCollectionMetadataExtension,
+                    >::Minter {},
+                )
                 .unwrap();
             let minter = res.minter.unwrap();
             let res: ConfigResponse = app
@@ -248,6 +274,7 @@ mod tests {
 
     mod start_trading_time {
         use cosmwasm_std::{Decimal, Empty};
+        use cw721::{DefaultOptionCollectionMetadataExtension, DefaultOptionNftMetadataExtension};
         use sg721::{RoyaltyInfoResponse, UpdateCollectionInfoMsg};
 
         use crate::common_setup::{
@@ -305,7 +332,13 @@ mod tests {
             // default trading start time is start time + default trading start time offset
             let res: CollectionInfoResponse = app
                 .wrap()
-                .query_wasm_smart(contract, &QueryMsg::CollectionInfo {})
+                .query_wasm_smart(
+                    contract,
+                    &QueryMsg::<
+                        DefaultOptionNftMetadataExtension,
+                        DefaultOptionCollectionMetadataExtension,
+                    >::CollectionInfo {},
+                )
                 .unwrap();
             let default_start_time = mock_init_extension(None, None)
                 .start_time
@@ -450,7 +483,13 @@ mod tests {
 
             let res: CollectionInfoResponse = app
                 .wrap()
-                .query_wasm_smart(contract.clone(), &QueryMsg::CollectionInfo {})
+                .query_wasm_smart(
+                    contract.clone(),
+                    &QueryMsg::<
+                        DefaultOptionNftMetadataExtension,
+                        DefaultOptionCollectionMetadataExtension,
+                    >::CollectionInfo {},
+                )
                 .unwrap();
             assert_eq!(res.royalty_info.unwrap(), royalty_info);
 
@@ -474,7 +513,13 @@ mod tests {
 
             let res: CollectionInfoResponse = app
                 .wrap()
-                .query_wasm_smart(contract.clone(), &QueryMsg::CollectionInfo {})
+                .query_wasm_smart(
+                    contract.clone(),
+                    &QueryMsg::<
+                        DefaultOptionNftMetadataExtension,
+                        DefaultOptionCollectionMetadataExtension,
+                    >::CollectionInfo {},
+                )
                 .unwrap();
             // check explicit content changed to true
             assert!(res.explicit_content.unwrap());
@@ -521,6 +566,7 @@ mod tests {
 
         use crate::common_setup::setup_minter::vending_minter::mock_params::mock_create_minter_init_msg;
         use cosmwasm_std::{Decimal, Response, Uint128};
+        use cw721::{DefaultOptionCollectionMetadataExtension, DefaultOptionNftMetadataExtension};
         use sg2::msg::CollectionParams;
         use sg721::RoyaltyInfoResponse;
         use sg721_base::msg::{CollectionInfoResponse, QueryMsg};
@@ -531,7 +577,13 @@ mod tests {
 
             let res: CollectionInfoResponse = app
                 .wrap()
-                .query_wasm_smart(contract.clone(), &QueryMsg::CollectionInfo {})
+                .query_wasm_smart(
+                    contract.clone(),
+                    &QueryMsg::<
+                        DefaultOptionNftMetadataExtension,
+                        DefaultOptionCollectionMetadataExtension,
+                    >::CollectionInfo {},
+                )
                 .unwrap();
 
             // payout 100stars, royalty share 10%, royalty payout 10stars
@@ -573,7 +625,13 @@ mod tests {
 
             let res: CollectionInfoResponse = app
                 .wrap()
-                .query_wasm_smart(contract.clone(), &QueryMsg::CollectionInfo {})
+                .query_wasm_smart(
+                    contract.clone(),
+                    &QueryMsg::<
+                        DefaultOptionNftMetadataExtension,
+                        DefaultOptionCollectionMetadataExtension,
+                    >::CollectionInfo {},
+                )
                 .unwrap();
 
             // payout 100stars, royalty share 0%, royalty payout 0stars
@@ -614,7 +672,13 @@ mod tests {
 
             let res: CollectionInfoResponse = app
                 .wrap()
-                .query_wasm_smart(contract.clone(), &QueryMsg::CollectionInfo {})
+                .query_wasm_smart(
+                    contract.clone(),
+                    &QueryMsg::<
+                        DefaultOptionNftMetadataExtension,
+                        DefaultOptionCollectionMetadataExtension,
+                    >::CollectionInfo {},
+                )
                 .unwrap();
 
             // payout 100stars, royalty share 91%, royalty payout fails
@@ -655,7 +719,13 @@ mod tests {
 
             let res: CollectionInfoResponse = app
                 .wrap()
-                .query_wasm_smart(contract.clone(), &QueryMsg::CollectionInfo {})
+                .query_wasm_smart(
+                    contract.clone(),
+                    &QueryMsg::<
+                        DefaultOptionNftMetadataExtension,
+                        DefaultOptionCollectionMetadataExtension,
+                    >::CollectionInfo {},
+                )
                 .unwrap();
 
             // payout 100stars, royalty share 1%, royalty payout 10stars
@@ -694,7 +764,13 @@ mod tests {
 
             let res: CollectionInfoResponse = app
                 .wrap()
-                .query_wasm_smart(contract.clone(), &QueryMsg::CollectionInfo {})
+                .query_wasm_smart(
+                    contract.clone(),
+                    &QueryMsg::<
+                        DefaultOptionNftMetadataExtension,
+                        DefaultOptionCollectionMetadataExtension,
+                    >::CollectionInfo {},
+                )
                 .unwrap();
 
             // payout 100stars, royalty share none, royalty payout 0stars
@@ -714,7 +790,8 @@ mod tests {
 
     mod ownership {
         use cosmwasm_std::Attribute;
-        use cw721_base::MinterResponse;
+        use cw721::{DefaultOptionCollectionMetadataExtension, DefaultOptionNftMetadataExtension};
+        use cw721_base::msg::MinterResponse;
 
         use crate::common_setup::setup_minter::vending_minter::mock_params::mock_create_minter_init_msg;
 
@@ -736,7 +813,13 @@ mod tests {
             // query minter config to confirm base_token_uri got trimmed
             let res: MinterResponse = app
                 .wrap()
-                .query_wasm_smart(contract, &QueryMsg::Minter {})
+                .query_wasm_smart(
+                    contract,
+                    &QueryMsg::<
+                        DefaultOptionNftMetadataExtension,
+                        DefaultOptionCollectionMetadataExtension,
+                    >::Minter {},
+                )
                 .unwrap();
             let minter = res.minter;
             let minter = minter.unwrap();
@@ -747,7 +830,7 @@ mod tests {
             let sg721_address = res.sg721_address;
 
             let update_ownership_msg: cw721ExecuteMsg<Empty, Empty> =
-                cw721ExecuteMsg::UpdateOwnership(cw_ownable::Action::TransferOwnership {
+                cw721ExecuteMsg::UpdateMinterOwnership(cw_ownable::Action::TransferOwnership {
                     new_owner: "new_owner".to_string(),
                     expiry: None,
                 });
@@ -757,17 +840,21 @@ mod tests {
                 &update_ownership_msg,
                 &[],
             );
-            let attribute_owner_response = res.unwrap().events[1].clone().attributes[2].clone();
+            // get attribute with key "pending_owner"
+            let attribute_minter_owner_response = res.unwrap().events[1].clone().attributes.iter().find(|x| x.key == "pending_owner").expect("pending_owner not found").clone();
             let expected_attribute = Attribute {
                 key: "pending_owner".to_string(),
                 value: "new_owner".to_string(),
             };
-            assert_eq!(attribute_owner_response, expected_attribute);
+            assert_eq!(attribute_minter_owner_response, expected_attribute);
             let res: cw_ownable::Ownership<Addr> = app
                 .wrap()
                 .query_wasm_smart(
                     sg721_address.clone(),
-                    &sg721_base::msg::QueryMsg::Ownership {},
+                    &sg721_base::msg::QueryMsg::<
+                        DefaultOptionNftMetadataExtension,
+                        DefaultOptionCollectionMetadataExtension,
+                    >::GetMinterOwnership {},
                 )
                 .unwrap();
             let pending_owner = res.pending_owner;
@@ -782,16 +869,22 @@ mod tests {
                 &accept_ownership_msg,
                 &[],
             );
-            let pending_owner_response = res.unwrap().events[1].clone().attributes[2].clone();
+            let attribute_minter_owner_response = res.unwrap().events[1].clone().attributes.iter().find(|x| x.key == "pending_owner").expect("pending_owner not found").clone();
             let expected_pending_owner_response = Attribute {
                 key: "pending_owner".to_string(),
                 value: "none".to_string(),
             };
-            assert_eq!(pending_owner_response, expected_pending_owner_response);
+            assert_eq!(attribute_minter_owner_response, expected_pending_owner_response);
 
             let res: cw_ownable::Ownership<Addr> = app
                 .wrap()
-                .query_wasm_smart(sg721_address, &sg721_base::msg::QueryMsg::Ownership {})
+                .query_wasm_smart(
+                    sg721_address,
+                    &sg721_base::msg::QueryMsg::<
+                        DefaultOptionNftMetadataExtension,
+                        DefaultOptionCollectionMetadataExtension,
+                    >::GetMinterOwnership {},
+                )
                 .unwrap();
 
             let expected_onwership_response = Ownership {
@@ -806,7 +899,7 @@ mod tests {
     mod sg721_mutable {
         use crate::common_setup::contract_boxes::App;
         use cosmwasm_std::{coin, Addr};
-        use cw721::NumTokensResponse;
+        use cw721::msg::NumTokensResponse;
         use cw_multi_test::{BankSudo, Executor, SudoMsg};
         use sg2::tests::mock_collection_params;
         use sg721_updatable::msg::QueryMsg;

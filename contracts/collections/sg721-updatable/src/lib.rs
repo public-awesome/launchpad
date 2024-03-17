@@ -20,6 +20,7 @@ pub mod entry {
     };
     use cosmwasm_std::{entry_point, to_json_binary, Empty};
     use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
+    use cw721::{DefaultOptionCollectionMetadataExtensionMsg, DefaultOptionNftMetadataExtensionMsg};
     use cw721_base::Extension;
 
     #[entry_point]
@@ -37,7 +38,7 @@ pub mod entry {
         deps: DepsMut,
         env: Env,
         info: MessageInfo,
-        msg: ExecuteMsg<Extension, Empty>,
+        msg: ExecuteMsg<DefaultOptionNftMetadataExtensionMsg, DefaultOptionCollectionMetadataExtensionMsg>,
     ) -> Result<Response, ContractError> {
         match msg {
             ExecuteMsg::FreezeTokenMetadata {} => execute_freeze_token_metadata(deps, env, info),
@@ -53,12 +54,12 @@ pub mod entry {
     }
 
     #[entry_point]
-    pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
+    pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, ContractError> {
         match msg {
-            QueryMsg::EnableUpdatable {} => to_json_binary(&query_enable_updatable(deps)?),
-            QueryMsg::EnableUpdatableFee {} => to_json_binary(&query_enable_updatable_fee()?),
-            QueryMsg::FreezeTokenMetadata {} => to_json_binary(&query_frozen_token_metadata(deps)?),
-            _ => Sg721UpdatableContract::default().query(deps, env, msg.into()),
+            QueryMsg::EnableUpdatable {} => Ok(to_json_binary(&query_enable_updatable(deps)?)?),
+            QueryMsg::EnableUpdatableFee {} => Ok(to_json_binary(&query_enable_updatable_fee()?)?),
+            QueryMsg::FreezeTokenMetadata {} => Ok(to_json_binary(&query_frozen_token_metadata(deps)?)?),
+            _ => Ok(Sg721UpdatableContract::default().query(deps, env, msg.into())?),
         }
     }
 

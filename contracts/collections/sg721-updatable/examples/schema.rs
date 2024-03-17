@@ -4,12 +4,12 @@ use std::fs::create_dir_all;
 use cosmwasm_schema::{export_schema, export_schema_with_title, remove_schemas, schema_for};
 
 use cosmwasm_std::Empty;
-pub use cw721::{
-    AllNftInfoResponse, ApprovalResponse, ApprovalsResponse, ContractInfoResponse, NftInfoResponse,
-    NumTokensResponse, OperatorsResponse, OwnerOfResponse, TokensResponse,
-};
+use cw721::{DefaultOptionCollectionMetadataExtension, DefaultOptionNftMetadataExtension};
+pub use cw721_base::{ContractInfoResponse,msg::{
+    AllNftInfoResponse, ApprovalResponse, ApprovalsResponse, NftInfoResponse,
+    NumTokensResponse, OperatorsResponse, OwnerOfResponse, TokensResponse, MinterResponse
+}};
 use cw721_base::Extension;
-pub use cw721_base::MinterResponse;
 use sg721::InstantiateMsg;
 pub use sg721_base::msg::CollectionInfoResponse;
 use sg721_base::msg::QueryMsg;
@@ -23,7 +23,10 @@ fn main() {
 
     export_schema(&schema_for!(InstantiateMsg), &out_dir);
     export_schema(&schema_for!(ExecuteMsg<Extension, Empty>), &out_dir);
-    export_schema(&schema_for!(QueryMsg), &out_dir);
+    export_schema(&schema_for!(QueryMsg::<
+        DefaultOptionNftMetadataExtension,
+        DefaultOptionCollectionMetadataExtension,
+    >), &out_dir);
     export_schema(&schema_for!(CollectionInfoResponse), &out_dir);
     export_schema_with_title(
         &schema_for!(AllNftInfoResponse<Empty>),

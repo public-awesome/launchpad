@@ -11,7 +11,8 @@ use crate::common_setup::{
     templates::vending_minter_template,
 };
 use cosmwasm_std::{coin, coins, Coin, Timestamp, Uint128};
-use cw721::{Cw721QueryMsg, OwnerOfResponse, TokensResponse};
+use cw721::{DefaultOptionCollectionMetadataExtension, DefaultOptionNftMetadataExtension};
+use cw721_base::msg::{Cw721QueryMsg, OwnerOfResponse, TokensResponse};
 use cw_multi_test::Executor;
 use sg2::tests::mock_collection_params_1;
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
@@ -348,7 +349,10 @@ fn mint_for_token_id_addr() {
     assert!(res.is_ok());
 
     // get random mint token_id
-    let tokens_msg = Cw721QueryMsg::Tokens {
+    let tokens_msg = Cw721QueryMsg::<
+        DefaultOptionNftMetadataExtension,
+        DefaultOptionCollectionMetadataExtension,
+    >::Tokens {
         owner: buyer.to_string(),
         start_after: None,
         limit: None,
@@ -460,7 +464,7 @@ fn mint_for_token_id_addr() {
         .wrap()
         .query_wasm_smart(
             collection_addr,
-            &Cw721QueryMsg::OwnerOf {
+            &Cw721QueryMsg::<DefaultOptionNftMetadataExtension, DefaultOptionCollectionMetadataExtension>::OwnerOf {
                 token_id: 2.to_string(),
                 include_expired: None,
             },

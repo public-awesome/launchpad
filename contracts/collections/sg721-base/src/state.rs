@@ -1,42 +1,121 @@
-use cosmwasm_std::{Empty, Timestamp};
+use cosmwasm_std::Timestamp;
+use cw721::traits::{Cw721CustomMsg, Cw721State};
 use cw_storage_plus::Item;
 use serde::{de::DeserializeOwned, Serialize};
-use sg721::{CollectionInfo, RoyaltyInfo};
 
 use std::ops::Deref;
 
-type Parent<'a, T> = cw721_base::Cw721Contract<'a, T, Empty, Empty, Empty>;
-pub struct Sg721Contract<'a, T>
-where
-    T: Serialize + DeserializeOwned + Clone,
-{
-    pub parent: Parent<'a, T>,
-    pub collection_info: Item<'a, CollectionInfo<RoyaltyInfo>>,
+type Parent<
+    'a,
+    // Metadata defined in NftInfo (used for mint).
+    TNftMetadataExtension,
+    // Message passed for updating metadata.
+    TNftMetadataExtensionMsg,
+    // Extension defined in CollectionMetadata.
+    TCollectionMetadataExtension,
+    TCollectionMetadataExtensionMsg,
+    // Defines for `CosmosMsg::Custom<T>` in response. Barely used, so `Empty` can be used.
+    TCustomResponseMsg,
+> = cw721_base::Cw721Contract<
+    'a,
+    TNftMetadataExtension,
+    TNftMetadataExtensionMsg,
+    TCollectionMetadataExtension,
+    TCollectionMetadataExtensionMsg,
+    TCustomResponseMsg,
+>;
 
+pub struct Sg721Contract<
+    'a,
+    // Metadata defined in NftInfo (used for mint).
+    TNftMetadataExtension,
+    // Message passed for updating metadata.
+    TNftMetadataExtensionMsg,
+    // Extension defined in CollectionMetadata.
+    TCollectionMetadataExtension,
+    TCollectionMetadataExtensionMsg,
+    // Defines for `CosmosMsg::Custom<T>` in response. Barely used, so `Empty` can be used.
+    TCustomResponseMsg,
+> where
+    TNftMetadataExtension: Cw721State,
+    TNftMetadataExtensionMsg: Cw721CustomMsg,
+    TCollectionMetadataExtension: Cw721State,
+    TCollectionMetadataExtensionMsg: Cw721CustomMsg,
+{
+    pub parent: Parent<
+        'a,
+        TNftMetadataExtension,
+        TNftMetadataExtensionMsg,
+        TCollectionMetadataExtension,
+        TCollectionMetadataExtensionMsg,
+        TCustomResponseMsg,
+    >,
     /// Instantiate set to false by the minter, then true by creator to freeze collection info
     pub frozen_collection_info: Item<'a, bool>,
     pub royalty_updated_at: Item<'a, Timestamp>,
 }
 
-impl<'a, T> Default for Sg721Contract<'a, T>
+impl<
+        'a,
+        TNftMetadataExtension,
+        TNftMetadataExtensionMsg,
+        TCollectionMetadataExtension,
+        TCollectionMetadataExtensionMsg,
+        TCustomResponseMsg,
+    > Default
+    for Sg721Contract<
+        'a,
+        TNftMetadataExtension,
+        TNftMetadataExtensionMsg,
+        TCollectionMetadataExtension,
+        TCollectionMetadataExtensionMsg,
+        TCustomResponseMsg,
+    >
 where
-    T: Serialize + DeserializeOwned + Clone,
+    TNftMetadataExtension: Cw721State,
+    TNftMetadataExtensionMsg: Cw721CustomMsg,
+    TCollectionMetadataExtension: Cw721State,
+    TCollectionMetadataExtensionMsg: Cw721CustomMsg,
 {
     fn default() -> Self {
         Sg721Contract {
             parent: cw721_base::Cw721Contract::default(),
-            collection_info: Item::new("collection_info"),
             frozen_collection_info: Item::new("frozen_collection_info"),
             royalty_updated_at: Item::new("royalty_updated_at"),
         }
     }
 }
 
-impl<'a, T> Deref for Sg721Contract<'a, T>
+impl<
+        'a,
+        TNftMetadataExtension,
+        TNftMetadataExtensionMsg,
+        TCollectionMetadataExtension,
+        TCollectionMetadataExtensionMsg,
+        TCustomResponseMsg,
+    > Deref
+    for Sg721Contract<
+        'a,
+        TNftMetadataExtension,
+        TNftMetadataExtensionMsg,
+        TCollectionMetadataExtension,
+        TCollectionMetadataExtensionMsg,
+        TCustomResponseMsg,
+    >
 where
-    T: Serialize + DeserializeOwned + Clone,
+    TNftMetadataExtension: Cw721State,
+    TNftMetadataExtensionMsg: Cw721CustomMsg,
+    TCollectionMetadataExtension: Cw721State,
+    TCollectionMetadataExtensionMsg: Cw721CustomMsg,
 {
-    type Target = Parent<'a, T>;
+    type Target = Parent<
+        'a,
+        TNftMetadataExtension,
+        TNftMetadataExtensionMsg,
+        TCollectionMetadataExtension,
+        TCollectionMetadataExtensionMsg,
+        TCustomResponseMsg,
+    >;
 
     fn deref(&self) -> &Self::Target {
         &self.parent

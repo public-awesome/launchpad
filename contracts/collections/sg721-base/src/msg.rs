@@ -1,86 +1,54 @@
+use cw721::msg::RoyaltyInfoResponse;
+use cw721::traits::Cw721State;
+use cw721::CollectionMetadataExtension;
+use cw721::DefaultOptionCollectionMetadataExtensionMsg;
+use cw721::RoyaltyInfo;
+use serde::de::DeserializeOwned;
+use serde::Serialize;
+use std::fmt::Debug;
+
 use cosmwasm_schema::cw_serde;
 use cosmwasm_schema::QueryResponses;
-use cosmwasm_std::{
-    coin, Addr, BankMsg, Binary, Empty, Event, StdError, StdResult, Timestamp, Uint128,
+use cosmwasm_std::{coin, Addr, BankMsg, Empty, Event, StdError, StdResult, Timestamp, Uint128};
+use cw721_base::{
+    msg::{
+        AllNftInfoResponse, ApprovalResponse, ApprovalsResponse, Cw721ExecuteMsg, MinterResponse,
+        NftInfoResponse, NumTokensResponse, OperatorsResponse, OwnerOfResponse,
+        QueryMsg as Cw721QueryMsg, TokensResponse,
+    },
+    state::CollectionMetadata,
 };
-use cw721::{
-    AllNftInfoResponse, ApprovalResponse, ApprovalsResponse, ContractInfoResponse, NftInfoResponse,
-    NumTokensResponse, OperatorsResponse, OwnerOfResponse, TokensResponse,
-};
-use cw721_base::msg::MinterResponse;
-use cw721_base::msg::QueryMsg as Cw721QueryMsg;
-use cw_ownable::cw_ownable_execute;
-use cw_ownable::cw_ownable_query;
-use cw_utils::Expiration;
-use sg721::RoyaltyInfoResponse;
+use cw_ownable::Ownership;
 use sg_std::{Response, SubMsg, NATIVE_DENOM};
 
-#[cw_ownable_execute]
-#[cw_serde]
-pub enum ExecuteMsg<T, E> {
-    /// Transfer is a base message to move a token to another account without triggering actions
-    TransferNft { recipient: String, token_id: String },
-    /// Send is a base message to transfer a token to a contract and trigger an action
-    /// on the receiving contract.
-    SendNft {
-        contract: String,
-        token_id: String,
-        msg: Binary,
-    },
-    /// Allows operator to transfer / send the token from the owner's account.
-    /// If expiration is set, then this allowance has a time/height limit
-    Approve {
-        spender: String,
-        token_id: String,
-        expires: Option<Expiration>,
-    },
-    /// Remove previously granted Approval
-    Revoke { spender: String, token_id: String },
-    /// Allows operator to transfer / send any token from the owner's account.
-    /// If expiration is set, then this allowance has a time/height limit
-    ApproveAll {
-        operator: String,
-        expires: Option<Expiration>,
-    },
-    /// Remove previously granted ApproveAll permission
-    RevokeAll { operator: String },
-
-    /// Mint a new NFT, can only be called by the contract minter
-    Mint {
-        /// Unique ID of the NFT
-        token_id: String,
-        /// The owner of the newly minter NFT
-        owner: String,
-        /// Universal resource identifier for this NFT
-        /// Should point to a JSON file that conforms to the ERC721
-        /// Metadata JSON Schema
-        token_uri: Option<String>,
-        /// Any custom extension used by this contract
-        extension: T,
-    },
-
-    /// Burn an NFT the sender has access to
-    Burn { token_id: String },
-
-    /// Extension msg
-    Extension { msg: E },
-}
-
-#[cw_ownable_query]
 #[derive(QueryResponses)]
 #[cw_serde]
-pub enum QueryMsg {
+pub enum QueryMsg<
+    // Return type of NFT metadata defined in `NftInfo` and `AllNftInfo`.
+    TNftMetadataExtension,
+    // Return type of collection metadata extension defined in `GetCollectionMetadata`.
+    TCollectionMetadataExtension,
+> {
+    #[returns(CollectionInfoResponse)]
+    #[deprecated = "Please use GetCollectionMetadata instead"]
+    CollectionInfo {},
+
+    // ---- cw721 v0.19.0 msgs ----
+    /// Return the owner of the given token, error if token does not exist
     #[returns(OwnerOfResponse)]
     OwnerOf {
         token_id: String,
+        /// unset or false will filter out expired approvals, you must set to true to see them
         include_expired: Option<bool>,
     },
+    /// Return operator that can access all of the owner's tokens.
     #[returns(ApprovalResponse)]
     Approval {
         token_id: String,
         spender: String,
         include_expired: Option<bool>,
     },
+    /// Return approvals that a token has
     #[returns(ApprovalsResponse)]
     Approvals {
         token_id: String,
@@ -89,40 +57,108 @@ pub enum QueryMsg {
     #[returns(OperatorsResponse)]
     AllOperators {
         owner: String,
+        /// unset or false will filter out expired items, you must set to true to see them
         include_expired: Option<bool>,
         start_after: Option<String>,
         limit: Option<u32>,
     },
+    /// Total number of tokens issued
     #[returns(NumTokensResponse)]
     NumTokens {},
-    #[returns(ContractInfoResponse)]
+
+    #[deprecated(since = "0.19.0", note = "Please use GetCollectionMetadata instead")]
+    #[returns(CollectionMetadata<Empty>)]
+    /// Deprecated: use GetCollectionMetadata instead! Will be removed in next release!
     ContractInfo {},
-    #[returns(NftInfoResponse<Empty>)]
+
+    /// With MetaData Extension.
+    /// Returns top-level metadata about the contract
+    #[returns(CollectionMetadata<TCollectionMetadataExtension>)]
+    GetCollectionMetadata {},
+
+    #[deprecated(since = "0.19.0", note = "Please use GetMinterOwnership instead")]
+    #[returns(Ownership<Addr>)]
+    /// Deprecated: use GetMinterOwnership instead! Will be removed in next release!
+    Ownership {},
+
+    /// Return the minter
+    #[deprecated(since = "0.19.0", note = "Please use GetMinterOwnership instead")]
+    #[returns(MinterResponse)]
+    /// Deprecated: use GetMinterOwnership instead! Will be removed in next release!
+    Minter {},
+
+    #[returns(Ownership<Addr>)]
+    GetMinterOwnership {},
+
+    #[returns(Ownership<Addr>)]
+    GetCreatorOwnership {},
+
+    /// With MetaData Extension.
+    /// Returns metadata about one particular token, based on *ERC721 Metadata JSON Schema*
+    /// but directly from the contract
+    #[returns(NftInfoResponse<TNftMetadataExtension>)]
     NftInfo { token_id: String },
-    #[returns(AllNftInfoResponse<Empty>)]
+    /// With MetaData Extension.
+    /// Returns the result of both `NftInfo` and `OwnerOf` as one query as an optimization
+    /// for clients
+    #[returns(AllNftInfoResponse<TNftMetadataExtension>)]
     AllNftInfo {
         token_id: String,
+        /// unset or false will filter out expired approvals, you must set to true to see them
         include_expired: Option<bool>,
     },
+
+    /// With Enumerable extension.
+    /// Returns all tokens owned by the given address, [] if unset.
     #[returns(TokensResponse)]
     Tokens {
         owner: String,
         start_after: Option<String>,
         limit: Option<u32>,
     },
+    /// With Enumerable extension.
+    /// Requires pagination. Lists all token_ids controlled by the contract.
     #[returns(TokensResponse)]
     AllTokens {
         start_after: Option<String>,
         limit: Option<u32>,
     },
-    #[returns(MinterResponse)]
-    Minter {},
-    #[returns(CollectionInfoResponse)]
-    CollectionInfo {},
+
+    #[returns(Option<String>)]
+    GetWithdrawAddress {},
+
+    // -- below queries, Extension and GetCollectionMetadataExtension, are just dummies, since type annotations are required for
+    // -- TNftMetadataExtension and TCollectionMetadataExtension, Error:
+    // -- "type annotations needed: cannot infer type for type parameter `TNftMetadataExtension` declared on the enum `Cw721QueryMsg`"
+    /// Use NftInfo instead.
+    /// No-op / NFT metadata query returning empty binary, needed for inferring type parameter during compile.
+    ///
+    /// Note: it may be extended in case there are use cases e.g. for specific NFT metadata query.
+    #[returns(())]
+    #[deprecated(since = "0.19.0", note = "Please use GetNftMetadata instead")]
+    Extension { msg: TNftMetadataExtension },
+
+    #[returns(())]
+    GetNftMetadata { msg: TNftMetadataExtension },
+
+    /// Use GetCollectionMetadata instead.
+    /// No-op / collection metadata extension query returning empty binary, needed for inferring type parameter during compile
+    ///
+    /// Note: it may be extended in case there are use cases e.g. for specific collection metadata query.
+    #[returns(())]
+    GetCollectionMetadataExtension { msg: TCollectionMetadataExtension },
 }
 
-impl From<QueryMsg> for Cw721QueryMsg<Empty> {
-    fn from(msg: QueryMsg) -> Cw721QueryMsg<Empty> {
+impl<TNftMetadataExtension, TCollectionMetadataExtension>
+    From<QueryMsg<TNftMetadataExtension, TCollectionMetadataExtension>>
+    for Cw721QueryMsg<TNftMetadataExtension, TCollectionMetadataExtension>
+where
+    TNftMetadataExtension: Cw721State,
+    TCollectionMetadataExtension: Cw721State,
+{
+    fn from(
+        msg: QueryMsg<TNftMetadataExtension, TCollectionMetadataExtension>,
+    ) -> Cw721QueryMsg<TNftMetadataExtension, TCollectionMetadataExtension> {
         match msg {
             QueryMsg::OwnerOf {
                 token_id,
@@ -160,6 +196,11 @@ impl From<QueryMsg> for Cw721QueryMsg<Empty> {
             },
             QueryMsg::NumTokens {} => Cw721QueryMsg::NumTokens {},
             QueryMsg::ContractInfo {} => Cw721QueryMsg::ContractInfo {},
+            QueryMsg::GetCollectionMetadata {} => Cw721QueryMsg::GetCollectionMetadata {},
+            QueryMsg::Ownership {} => Cw721QueryMsg::Ownership {},
+            QueryMsg::Minter {} => Cw721QueryMsg::Minter {},
+            QueryMsg::GetMinterOwnership {} => Cw721QueryMsg::GetMinterOwnership {},
+            QueryMsg::GetCreatorOwnership {} => Cw721QueryMsg::GetCreatorOwnership {},
             QueryMsg::NftInfo { token_id } => Cw721QueryMsg::NftInfo { token_id },
             QueryMsg::AllNftInfo {
                 token_id,
@@ -180,14 +221,13 @@ impl From<QueryMsg> for Cw721QueryMsg<Empty> {
             QueryMsg::AllTokens { start_after, limit } => {
                 Cw721QueryMsg::AllTokens { start_after, limit }
             }
-            QueryMsg::Minter {} => Cw721QueryMsg::Minter {},
-            QueryMsg::Ownership {} => Cw721QueryMsg::Ownership {},
             _ => unreachable!("cannot convert {:?} to Cw721QueryMsg", msg),
         }
     }
 }
 
 #[cw_serde]
+#[deprecated = "Please use CollectionMetadata<CollectionMetadataExtension<RoyaltyInfo>> instead"]
 pub struct CollectionInfoResponse {
     pub creator: String,
     pub description: String,
