@@ -94,7 +94,7 @@ pub fn configure_collection_whitelist_flex(
     // Update whitelist_expiration fails if not admin
     let wl_msg = sg_whitelist_flex::msg::ExecuteMsg::UpdateEndTime(AFTER_GENESIS_TIME);
     router
-        .execute_contract(buyer, whitelist_addr.clone(), &wl_msg, &[])
+        .execute_contract(buyer, whitelist_flex_addr.clone(), &wl_msg, &[])
         .unwrap_err();
 
     // Update whitelist_expiration succeeds when from admin

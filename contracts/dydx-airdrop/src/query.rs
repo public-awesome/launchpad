@@ -59,7 +59,7 @@ pub fn query_mint_count(deps: &DepsMut, eth_address: String) -> StdResult<u32> {
             })?;
     let member_response: MemberResponse = deps.querier.query(&cosmwasm_std::QueryRequest::Wasm(
         cosmwasm_std::WasmQuery::Smart {
-            contract_addr: whitelist_address.into(),
+            contract_addr: whitelist_address,
             msg: to_json_binary(&whitelist_immutable_flex::msg::QueryMsg::Member {
                 address: eth_address,
             })?,

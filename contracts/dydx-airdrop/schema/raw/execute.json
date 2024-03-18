@@ -5,6 +5,31 @@
     {
       "type": "object",
       "required": [
+        "register"
+      ],
+      "properties": {
+        "register": {
+          "type": "object",
+          "required": [
+            "eth_address",
+            "eth_sig"
+          ],
+          "properties": {
+            "eth_address": {
+              "type": "string"
+            },
+            "eth_sig": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
         "claim_airdrop"
       ],
       "properties": {

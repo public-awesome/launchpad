@@ -131,11 +131,10 @@ pub fn validate_collection_mint(deps: &DepsMut, info: MessageInfo) -> Result<(),
             limit: None,
         },
     )?;
-    return if tokens_response.tokens.len() == 0 {
-        Err(ContractError::CollectionNotMinted {})
-    } else {
-        Ok(())
-    };
+    if tokens_response.tokens.is_empty() {
+        return Err(ContractError::CollectionNotMinted {});
+    }
+    Ok(())
 }
 
 pub fn validate_name_mint_and_association(
@@ -152,7 +151,7 @@ pub fn validate_name_mint_and_association(
             limit: None,
         },
     )?;
-    if tokens_response.tokens.len() == 0 {
+    if tokens_response.tokens.is_empty() {
         return Err(ContractError::NameNotMinted {});
     };
     let _associated_name: String = deps.querier.query_wasm_smart(

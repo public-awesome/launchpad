@@ -14,12 +14,13 @@ use sg_multi_test::StargazeApp;
 use sg_std::NATIVE_DENOM;
 
 pub fn instantiate_contract(params: InstantiateParams) -> Result<cosmwasm_std::Addr, anyhow_error> {
-    let addresses = params.addresses;
+    let members = params.members;
     let minter_address = params.minter_address;
     let admin_account = params.admin_account;
     let funds_amount = params.funds_amount;
-    let per_address_limit = params.per_address_limit;
     let claim_msg_plaintext = params.claim_msg_plaintext;
+    let airdrop_amount = params.airdrop_amount;
+    let airdrop_count_limit = params.airdrop_count_limit;
     params
         .app
         .sudo(SudoMsg::Bank({
@@ -37,14 +38,15 @@ pub fn instantiate_contract(params: InstantiateParams) -> Result<cosmwasm_std::A
     let name_discount_wl_address = params.name_discount_wl_address;
 
     let msg: InstantiateMsg = InstantiateMsg {
-        admin: Addr::unchecked(OWNER),
+        admin: OWNER.to_string(),
         claim_msg_plaintext,
-        airdrop_amount: WHITELIST_AMOUNT,
-        addresses,
+        airdrop_amount,
         whitelist_code_id,
         minter_address,
-        per_address_limit,
         name_discount_wl_address: name_discount_wl_address.to_string(),
+        name_collection_address: "name_collection".to_string(),
+        members: members.clone(),
+        airdrop_count_limit,
     };
     params.app.instantiate_contract(
         sg_eth_id,
