@@ -16,6 +16,7 @@ use sg1::checked_fair_burn;
 use sg2::query::Sg2QueryMsg;
 use sg4::{QueryMsg, Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
+#[allow(deprecated)]
 use sg721_base::msg::{CollectionInfoResponse, QueryMsg as Sg721QueryMsg};
 use sg_std::NATIVE_DENOM;
 use url::Url;
@@ -25,6 +26,7 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 const INSTANTIATE_SG721_REPLY_ID: u64 = 1;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
+#[allow(deprecated)]
 pub fn instantiate(
     deps: DepsMut,
     env: Env,
@@ -110,6 +112,7 @@ pub fn execute(
     }
 }
 
+#[allow(deprecated)]
 pub fn execute_mint_sender(
     deps: DepsMut,
     info: MessageInfo,
@@ -176,6 +179,7 @@ pub fn execute_mint_sender(
         .add_attribute("network_fee", network_fee.to_string()))
 }
 
+#[allow(deprecated)]
 pub fn execute_update_start_trading_time(
     deps: DepsMut,
     env: Env,
