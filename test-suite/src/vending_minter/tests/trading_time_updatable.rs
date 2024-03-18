@@ -291,7 +291,10 @@ fn update_start_trading_time() {
         .wrap()
         .query_wasm_smart(
             collection_addr.to_string(),
-            &Sg721QueryMsg::<DefaultOptionNftMetadataExtension, DefaultOptionCollectionMetadataExtension>::CollectionInfo {},
+            &Sg721QueryMsg::<
+                DefaultOptionNftMetadataExtension,
+                DefaultOptionCollectionMetadataExtension,
+            >::CollectionInfo {},
         )
         .unwrap();
 

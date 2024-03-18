@@ -3,9 +3,10 @@ use std::fs::create_dir_all;
 
 use cosmwasm_schema::{export_schema, export_schema_with_title, remove_schemas, schema_for};
 
-use cosmwasm_std::Empty;
-
-use cw721::{state::CollectionMetadata, DefaultOptionCollectionMetadataExtension, DefaultOptionNftMetadataExtension};
+use cw721::{
+    state::CollectionMetadata, DefaultOptionCollectionMetadataExtension,
+    DefaultOptionNftMetadataExtension,
+};
 #[allow(deprecated)]
 use cw721_base::{
     msg::{
@@ -33,7 +34,7 @@ fn main() {
         &out_dir,
     );
     export_schema_with_title(
-        &schema_for!(AllNftInfoResponse<Empty>),
+        &schema_for!(AllNftInfoResponse<DefaultOptionNftMetadataExtension>),
         &out_dir,
         "AllNftInfoResponse",
     );
@@ -49,9 +50,12 @@ fn main() {
     export_schema(&schema_for!(OperatorsResponse), &out_dir);
     #[allow(deprecated)]
     export_schema(&schema_for!(ContractInfoResponse), &out_dir);
-    export_schema(&schema_for!(CollectionMetadata<DefaultOptionCollectionMetadataExtension>), &out_dir);
+    export_schema(
+        &schema_for!(CollectionMetadata<DefaultOptionCollectionMetadataExtension>),
+        &out_dir,
+    );
     export_schema_with_title(
-        &schema_for!(NftInfoResponse<Empty>),
+        &schema_for!(NftInfoResponse<DefaultOptionNftMetadataExtension>),
         &out_dir,
         "NftInfoResponse",
     );

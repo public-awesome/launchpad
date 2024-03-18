@@ -674,7 +674,10 @@ fn _execute_mint(
     };
 
     // Create mint msgs
-    let mint_msg = Sg721ExecuteMsg::<DefaultOptionNftMetadataExtension, DefaultOptionCollectionMetadataExtension>::Mint {
+    let mint_msg = Sg721ExecuteMsg::<
+        DefaultOptionNftMetadataExtension,
+        DefaultOptionCollectionMetadataExtension,
+    >::Mint {
         token_id: mintable_token_mapping.token_id.to_string(),
         owner: recipient_addr.to_string(),
         token_uri: Some(format!(

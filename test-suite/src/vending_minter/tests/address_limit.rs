@@ -464,7 +464,10 @@ fn mint_for_token_id_addr() {
         .wrap()
         .query_wasm_smart(
             collection_addr,
-            &Cw721QueryMsg::<DefaultOptionNftMetadataExtension, DefaultOptionCollectionMetadataExtension>::OwnerOf {
+            &Cw721QueryMsg::<
+                DefaultOptionNftMetadataExtension,
+                DefaultOptionCollectionMetadataExtension,
+            >::OwnerOf {
                 token_id: 2.to_string(),
                 include_expired: None,
             },

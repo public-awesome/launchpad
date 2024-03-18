@@ -20,7 +20,9 @@ pub mod entry {
     };
     use cosmwasm_std::{entry_point, to_json_binary, Empty};
     use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, Response};
-    use cw721::{DefaultOptionCollectionMetadataExtensionMsg, DefaultOptionNftMetadataExtensionMsg};
+    use cw721::{
+        DefaultOptionCollectionMetadataExtensionMsg, DefaultOptionNftMetadataExtensionMsg,
+    };
 
     #[entry_point]
     pub fn instantiate(
@@ -37,7 +39,10 @@ pub mod entry {
         deps: DepsMut,
         env: Env,
         info: MessageInfo,
-        msg: ExecuteMsg<DefaultOptionNftMetadataExtensionMsg, DefaultOptionCollectionMetadataExtensionMsg>,
+        msg: ExecuteMsg<
+            DefaultOptionNftMetadataExtensionMsg,
+            DefaultOptionCollectionMetadataExtensionMsg,
+        >,
     ) -> Result<Response, ContractError> {
         match msg {
             ExecuteMsg::FreezeTokenMetadata {} => execute_freeze_token_metadata(deps, env, info),
@@ -57,7 +62,9 @@ pub mod entry {
         match msg {
             QueryMsg::EnableUpdatable {} => Ok(to_json_binary(&query_enable_updatable(deps)?)?),
             QueryMsg::EnableUpdatableFee {} => Ok(to_json_binary(&query_enable_updatable_fee()?)?),
-            QueryMsg::FreezeTokenMetadata {} => Ok(to_json_binary(&query_frozen_token_metadata(deps)?)?),
+            QueryMsg::FreezeTokenMetadata {} => {
+                Ok(to_json_binary(&query_frozen_token_metadata(deps)?)?)
+            }
             _ => Ok(Sg721UpdatableContract::default().query(deps, env, msg.into())?),
         }
     }

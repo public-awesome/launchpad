@@ -6,12 +6,8 @@ pub mod upgrades;
 
 pub use crate::error::ContractError;
 pub use crate::state::Sg721Contract;
-use cw721::{
-    DefaultOptionCollectionMetadataExtensionMsg, DefaultOptionNftMetadataExtensionMsg, 
-};
-use cw721_base::{
-    DefaultOptionCollectionMetadataExtension, DefaultOptionNftMetadataExtension,
-};
+use cw721::{DefaultOptionCollectionMetadataExtensionMsg, DefaultOptionNftMetadataExtensionMsg};
+use cw721_base::{DefaultOptionCollectionMetadataExtension, DefaultOptionNftMetadataExtension};
 
 pub type ExecuteMsg = sg721::ExecuteMsg<
     DefaultOptionNftMetadataExtensionMsg,

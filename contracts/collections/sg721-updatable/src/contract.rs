@@ -139,17 +139,16 @@ pub fn execute_update_token_metadata(
     }
 
     // Update token metadata
-    Sg721UpdatableContract::default().config.nft_info.update(
-        deps.storage,
-        &token_id,
-        |token| match token {
+    Sg721UpdatableContract::default()
+        .config
+        .nft_info
+        .update(deps.storage, &token_id, |token| match token {
             Some(mut token_info) => {
                 token_info.token_uri = token_uri.clone();
                 Ok(token_info)
             }
             None => Err(ContractError::TokenIdNotFound {}),
-        },
-    )?;
+        })?;
 
     let mut event = Event::new("update_update_token_metadata")
         .add_attribute("sender", info.sender)
@@ -375,7 +374,10 @@ mod tests {
         assert_eq!(res.token_uri, updated_token_uri);
 
         // Update token metadata with None token_uri
-        let update_msg = ExecuteMsg::<DefaultOptionNftMetadataExtensionMsg, DefaultOptionCollectionMetadataExtensionMsg>::UpdateTokenMetadata {
+        let update_msg = ExecuteMsg::<
+            DefaultOptionNftMetadataExtensionMsg,
+            DefaultOptionCollectionMetadataExtensionMsg,
+        >::UpdateTokenMetadata {
             token_id: token_id.to_string(),
             token_uri: None,
         };

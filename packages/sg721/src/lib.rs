@@ -2,7 +2,8 @@ use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Binary, Coin, Timestamp};
 use cw721_base::{
     msg::{
-        CollectionMetadataExtensionMsg, CollectionMetadataMsg, ExecuteMsg as Cw721ExecuteMsg, InstantiateMsg as Cw721InstantiateMsg
+        CollectionMetadataExtensionMsg, CollectionMetadataMsg, ExecuteMsg as Cw721ExecuteMsg,
+        InstantiateMsg as Cw721InstantiateMsg,
     },
     DefaultOptionCollectionMetadataExtensionMsg,
 };
@@ -124,24 +125,11 @@ pub enum ExecuteMsg<
 }
 
 impl<TNftMetadataExtensionMsg, TCollectionMetadataExtensionMsg>
-    From<
-        ExecuteMsg<
-            TNftMetadataExtensionMsg,
-            TCollectionMetadataExtensionMsg,
-        >,
-    >
-    for Cw721ExecuteMsg<
-        TNftMetadataExtensionMsg,
-        TCollectionMetadataExtensionMsg,
-    >
+    From<ExecuteMsg<TNftMetadataExtensionMsg, TCollectionMetadataExtensionMsg>>
+    for Cw721ExecuteMsg<TNftMetadataExtensionMsg, TCollectionMetadataExtensionMsg>
 {
     #[allow(deprecated)]
-    fn from(
-        msg: ExecuteMsg<
-            TNftMetadataExtensionMsg,
-            TCollectionMetadataExtensionMsg,
-        >,
-    ) -> Self {
+    fn from(msg: ExecuteMsg<TNftMetadataExtensionMsg, TCollectionMetadataExtensionMsg>) -> Self {
         match msg {
             // ---- sg721 msgs ----
             ExecuteMsg::UpdateCollectionInfo { collection_info: _ } => {
@@ -264,7 +252,9 @@ pub struct UpdateCollectionInfoMsg<T> {
 }
 
 #[allow(deprecated)]
-impl From<UpdateCollectionInfoMsg<RoyaltyInfoResponse>> for CollectionMetadataExtensionMsg<RoyaltyInfoResponse> {
+impl From<UpdateCollectionInfoMsg<RoyaltyInfoResponse>>
+    for CollectionMetadataExtensionMsg<RoyaltyInfoResponse>
+{
     fn from(msg: UpdateCollectionInfoMsg<RoyaltyInfoResponse>) -> Self {
         CollectionMetadataExtensionMsg {
             description: msg.description,

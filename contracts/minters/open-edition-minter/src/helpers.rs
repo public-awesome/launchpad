@@ -84,7 +84,10 @@ pub fn mint_nft_msg(
     } else {
         CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: sg721_address.to_string(),
-            msg: to_json_binary(&Sg721ExecuteMsg::<DefaultOptionNftMetadataExtension, DefaultOptionCollectionMetadataExtension>::Mint {
+            msg: to_json_binary(&Sg721ExecuteMsg::<
+                DefaultOptionNftMetadataExtension,
+                DefaultOptionCollectionMetadataExtension,
+            >::Mint {
                 token_id,
                 owner: recipient_addr.to_string(),
                 token_uri,

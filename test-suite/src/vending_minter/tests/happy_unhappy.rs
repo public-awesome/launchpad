@@ -213,7 +213,10 @@ fn happy_path() {
     assert_eq!(0, minter_balance.len());
 
     // Check that NFT is transferred
-    let query_owner_msg = Cw721QueryMsg::<DefaultOptionNftMetadataExtension, DefaultOptionCollectionMetadataExtension>::OwnerOf {
+    let query_owner_msg = Cw721QueryMsg::<
+        DefaultOptionNftMetadataExtension,
+        DefaultOptionCollectionMetadataExtension,
+    >::OwnerOf {
         token_id: String::from("1"),
         include_expired: None,
     };

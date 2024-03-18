@@ -3,14 +3,15 @@ use cw721::traits::Cw721State;
 
 use cosmwasm_schema::cw_serde;
 use cosmwasm_schema::QueryResponses;
-use cosmwasm_std::{coin, Addr, BankMsg, Empty, Event, StdError, StdResult, Timestamp, Uint128};
+use cosmwasm_std::{coin, Addr, BankMsg, Event, StdError, StdResult, Timestamp, Uint128};
 use cw721_base::{
     msg::{
-        AllNftInfoResponse, ApprovalResponse, ApprovalsResponse, MinterResponse,
-        NftInfoResponse, NumTokensResponse, OperatorsResponse, OwnerOfResponse,
-        QueryMsg as Cw721QueryMsg, TokensResponse,
+        AllNftInfoResponse, ApprovalResponse, ApprovalsResponse, MinterResponse, NftInfoResponse,
+        NumTokensResponse, OperatorsResponse, OwnerOfResponse, QueryMsg as Cw721QueryMsg,
+        TokensResponse,
     },
     state::CollectionMetadata,
+    DefaultOptionCollectionMetadataExtensionMsg,
 };
 use cw_ownable::Ownership;
 use sg_std::{Response, SubMsg, NATIVE_DENOM};
@@ -63,7 +64,7 @@ pub enum QueryMsg<
     NumTokens {},
 
     #[deprecated(since = "0.19.0", note = "Please use GetCollectionMetadata instead")]
-    #[returns(CollectionMetadata<Empty>)]
+    #[returns(CollectionMetadata<DefaultOptionCollectionMetadataExtensionMsg>)]
     /// Deprecated: use GetCollectionMetadata instead! Will be removed in next release!
     ContractInfo {},
 

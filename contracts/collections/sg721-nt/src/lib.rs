@@ -35,9 +35,7 @@ pub mod entry {
     use super::*;
 
     use crate::msg::ExecuteMsg;
-    use cosmwasm_std::{
-        Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdError,
-    };
+    use cosmwasm_std::{Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdError};
     use cw721::msg::Cw721MigrateMsg;
     use cw721_base::execute::Cw721Execute;
     use sg721_base::ContractError;
@@ -82,13 +80,8 @@ pub mod entry {
                     token_uri,
                     extension,
                 };
-                Sg721NonTransferableContract::default().mint(
-                deps,
-                env,
-                info,
-                nft_data,
-            )
-        },
+                Sg721NonTransferableContract::default().mint(deps, env, info, nft_data)
+            }
             ExecuteMsg::UpdateCollectionInfo {
                 new_collection_info,
             } => Sg721NonTransferableContract::default().update_collection_info(

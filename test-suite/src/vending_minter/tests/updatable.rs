@@ -33,7 +33,10 @@ fn update_token_metadata() {
     assert!(res.is_ok());
 
     // query buyer token_id
-    let query_tokens_msg = Cw721QueryMsg::<DefaultOptionNftMetadataExtension, DefaultOptionCollectionMetadataExtension>::Tokens {
+    let query_tokens_msg = Cw721QueryMsg::<
+        DefaultOptionNftMetadataExtension,
+        DefaultOptionCollectionMetadataExtension,
+    >::Tokens {
         owner: buyer.to_string(),
         start_after: None,
         limit: None,
@@ -59,7 +62,12 @@ fn update_token_metadata() {
         .query_wasm_smart(collection_addr.clone(), &query_tokens_msg)
         .unwrap();
     assert_eq!(res.tokens[0], token_id);
-    let query_token_msg = Cw721QueryMsg::<DefaultOptionNftMetadataExtension, DefaultOptionCollectionMetadataExtension>::NftInfo { token_id };
+    let query_token_msg = Cw721QueryMsg::<
+        DefaultOptionNftMetadataExtension,
+        DefaultOptionCollectionMetadataExtension,
+    >::NftInfo {
+        token_id,
+    };
     let res: NftInfoResponse<DefaultOptionNftMetadataExtension> = router
         .wrap()
         .query_wasm_smart(collection_addr, &query_token_msg)

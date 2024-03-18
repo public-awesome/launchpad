@@ -103,7 +103,10 @@ fn zero_mint_price() {
         .wrap()
         .query_wasm_smart(
             sg721,
-            &sg721_base::msg::QueryMsg::<DefaultOptionNftMetadataExtension, DefaultOptionCollectionMetadataExtension>::Tokens {
+            &sg721_base::msg::QueryMsg::<
+                DefaultOptionNftMetadataExtension,
+                DefaultOptionCollectionMetadataExtension,
+            >::Tokens {
                 owner: buyer.to_string(),
                 start_after: None,
                 limit: None,

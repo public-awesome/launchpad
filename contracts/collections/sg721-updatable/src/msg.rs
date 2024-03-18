@@ -116,7 +116,8 @@ where
             }
             ExecuteMsg::RevokeAll { operator } => Sg721ExecuteMsg::RevokeAll { operator },
             ExecuteMsg::Burn { token_id } => Sg721ExecuteMsg::Burn { token_id },
-            ExecuteMsg::UpdateCollectionInfo { collection_info } => {
+            ExecuteMsg::UpdateCollectionInfo { collection_info } =>
+            {
                 #[allow(deprecated)]
                 Sg721ExecuteMsg::UpdateCollectionInfo { collection_info }
             }

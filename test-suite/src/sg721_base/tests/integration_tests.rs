@@ -549,7 +549,7 @@ mod tests {
                     &QueryMsg::<
                         DefaultOptionNftMetadataExtension,
                         DefaultOptionCollectionMetadataExtension,
-                    >::GetCreatorOwnership {  },
+                    >::GetCreatorOwnership {},
                 )
                 .unwrap();
             assert_eq!(res.owner, Some(creator.clone()));
@@ -596,7 +596,10 @@ mod tests {
 
         use crate::common_setup::setup_minter::vending_minter::mock_params::mock_create_minter_init_msg;
         use cosmwasm_std::{Decimal, Response, Uint128};
-        use cw721::{state::MAX_ROYALTY_SHARE_PCT, DefaultOptionCollectionMetadataExtension, DefaultOptionNftMetadataExtension};
+        use cw721::{
+            state::MAX_ROYALTY_SHARE_PCT, DefaultOptionCollectionMetadataExtension,
+            DefaultOptionNftMetadataExtension,
+        };
         use sg2::msg::CollectionParams;
         use sg721::RoyaltyInfoResponse;
         use sg721_base::msg::{CollectionInfoResponse, QueryMsg};
@@ -871,7 +874,13 @@ mod tests {
                 &[],
             );
             // get attribute with key "pending_owner"
-            let attribute_minter_owner_response = res.unwrap().events[1].clone().attributes.iter().find(|x| x.key == "pending_owner").expect("pending_owner not found").clone();
+            let attribute_minter_owner_response = res.unwrap().events[1]
+                .clone()
+                .attributes
+                .iter()
+                .find(|x| x.key == "pending_owner")
+                .expect("pending_owner not found")
+                .clone();
             let expected_attribute = Attribute {
                 key: "pending_owner".to_string(),
                 value: "new_owner".to_string(),
@@ -899,12 +908,21 @@ mod tests {
                 &accept_ownership_msg,
                 &[],
             );
-            let attribute_minter_owner_response = res.unwrap().events[1].clone().attributes.iter().find(|x| x.key == "pending_owner").expect("pending_owner not found").clone();
+            let attribute_minter_owner_response = res.unwrap().events[1]
+                .clone()
+                .attributes
+                .iter()
+                .find(|x| x.key == "pending_owner")
+                .expect("pending_owner not found")
+                .clone();
             let expected_pending_owner_response = Attribute {
                 key: "pending_owner".to_string(),
                 value: "none".to_string(),
             };
-            assert_eq!(attribute_minter_owner_response, expected_pending_owner_response);
+            assert_eq!(
+                attribute_minter_owner_response,
+                expected_pending_owner_response
+            );
 
             let res: cw_ownable::Ownership<Addr> = app
                 .wrap()
