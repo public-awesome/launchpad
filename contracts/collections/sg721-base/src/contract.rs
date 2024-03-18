@@ -78,12 +78,6 @@ where
             CONTRACT_VERSION,
         )?;
 
-        if let Some(royalty_info) = msg.collection_info.royalty_info {
-            if royalty_info.share > Decimal::percent(MAX_ROYALTY_SHARE_PCT) {
-                share_validate(royalty_info.share)?;
-            }
-        }
-
         Ok(Response::new()
             .add_attribute("action", "instantiate")
             .add_attribute("collection_name", msg.name)
@@ -317,16 +311,6 @@ where
 
         Ok(response)
     }
-}
-
-pub fn share_validate(share: Decimal) -> Result<Decimal, ContractError> {
-    if share > Decimal::one() {
-        return Err(ContractError::InvalidRoyalties(
-            "Share cannot be greater than 100%".to_string(),
-        ));
-    }
-
-    Ok(share)
 }
 
 pub fn get_owner_minter(storage: &mut dyn Storage) -> Result<Addr, ContractError> {

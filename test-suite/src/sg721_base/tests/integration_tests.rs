@@ -596,7 +596,7 @@ mod tests {
 
         use crate::common_setup::setup_minter::vending_minter::mock_params::mock_create_minter_init_msg;
         use cosmwasm_std::{Decimal, Response, Uint128};
-        use cw721::{DefaultOptionCollectionMetadataExtension, DefaultOptionNftMetadataExtension};
+        use cw721::{state::MAX_ROYALTY_SHARE_PCT, DefaultOptionCollectionMetadataExtension, DefaultOptionNftMetadataExtension};
         use sg2::msg::CollectionParams;
         use sg721::RoyaltyInfoResponse;
         use sg721_base::msg::{CollectionInfoResponse, QueryMsg};
@@ -691,7 +691,7 @@ mod tests {
                     explicit_content: Some(false),
                     royalty_info: Some(RoyaltyInfoResponse {
                         payment_address: "creator".to_string(),
-                        share: Decimal::percent(91),
+                        share: Decimal::percent(MAX_ROYALTY_SHARE_PCT),
                     }),
                 },
                 ..mock_collection_params()
@@ -711,13 +711,13 @@ mod tests {
                 )
                 .unwrap();
 
-            // payout 100stars, royalty share 91%, royalty payout fails
+            // payout 100stars, royalty share 10% (MAX_ROYALTY_SHARE_PCT), royalty payout fails
             // fees exceed payment
             let payment = Uint128::from(100000000u128);
             let res = res.royalty_payout(
                 contract,
                 payment,
-                Uint128::from(10000000u128),
+                Uint128::from(91000000u128), // 91stars
                 None,
                 &mut Response::default(),
             );
