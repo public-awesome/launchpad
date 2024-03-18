@@ -1,5 +1,4 @@
 use crate::dydx_airdrop::constants::claim_constants::OWNER;
-use crate::dydx_airdrop::constants::collection_constants::WHITELIST_AMOUNT;
 use crate::{
     common_setup::contract_boxes::{contract_dydx_airdrop, contract_whitelist_immutable},
     dydx_airdrop::setup::test_msgs::InstantiateParams,

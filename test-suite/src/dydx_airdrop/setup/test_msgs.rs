@@ -1,4 +1,3 @@
-use cosmwasm_std::Addr;
 use sg_multi_test::StargazeApp;
 use whitelist_immutable_flex::msg::Member;
 

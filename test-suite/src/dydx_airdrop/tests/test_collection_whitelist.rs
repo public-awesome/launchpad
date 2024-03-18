@@ -1,6 +1,6 @@
 use crate::common_setup::setup_accounts_and_block::setup_block_time;
 use crate::common_setup::setup_collection_whitelist::configure_collection_whitelist;
-use crate::dydx_airdrop::constants::claim_constants::{CONFIG_PLAINTEXT, MOCK_MINTER_ADDR_STR, MOCK_NAME_COLLECTION_ADDR, MOCK_NAME_DISCOUNT_WL_ADDR_STR, OWNER, STARGAZE_WALLET_01};
+use crate::dydx_airdrop::constants::claim_constants::{CONFIG_PLAINTEXT, MOCK_MINTER_ADDR_STR, MOCK_NAME_COLLECTION_ADDR, MOCK_NAME_DISCOUNT_WL_ADDR_STR, STARGAZE_WALLET_01};
 use crate::dydx_airdrop::constants::collection_constants::{
     AIRDROP_ADDR_STR, MINT_PRICE, WHITELIST_AMOUNT,
 };
@@ -34,7 +34,7 @@ fn test_set_minter_contract_success() {
         members: vec![Member {address: eth_addr_str, mint_count: 1}],
         funds_amount: WHITELIST_AMOUNT + INSTANTIATION_FEE,
         expected_airdrop_contract_id: 4,
-        minter_address,
+        minter_address: minter_address.clone(),
         admin_account: contract_admin.to_string(),
         app: &mut app,
         claim_msg_plaintext: CONFIG_PLAINTEXT.to_string(),
@@ -68,10 +68,10 @@ fn test_claim_added_to_minter_whitelist() {
 
     let airdrop_contract = Addr::unchecked(AIRDROP_ADDR_STR);
     let params = InstantiateParams {
-        members: vec![Member {address: eth_addr_str, mint_count: 1}],
+        members: vec![Member {address: eth_addr_str.clone(), mint_count: 1}],
         funds_amount: WHITELIST_AMOUNT + INSTANTIATION_FEE,
         expected_airdrop_contract_id: 5,
-        minter_address,
+        minter_address: minter_address.clone(),
         admin_account: creator.to_string(),
         app: &mut app,
         claim_msg_plaintext: CONFIG_PLAINTEXT.to_string(),

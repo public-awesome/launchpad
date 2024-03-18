@@ -203,9 +203,8 @@ fn test_whitelist_immutable_address_config() {
     let res: Config = WhitelistImmutableFlexContract(whitelist_immutable)
         .config(&app.wrap())
         .unwrap();
-    let expected_config = whitelist_immutable::state::Config {
+    let expected_config = whitelist_immutable_flex::state::Config {
         admin: Addr::unchecked("contract3"),
-        per_address_limit: 20,
         mint_discount_bps: Some(0),
     };
     assert_eq!(res, expected_config);
