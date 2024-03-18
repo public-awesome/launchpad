@@ -66,7 +66,7 @@ sg-eth-airdrop           = { version = "3.5.0", path = "contracts/sg-eth-airdrop
 test-suite               = { version = "3.5.0", path = "test-suite" }
 
 semver     = "1"
-cw-ownable = { git = "https://github.com/public-awesome/cw-plus-plus.git", branch = "multiple_ownership"} # TODO: switch to official https://github.com/larry0x/cw-plus-plus once merged
+cw-ownable = { git = "https://github.com/public-awesome/cw-plus-plus.git", branch = "main"} # TODO: switch to official https://github.com/larry0x/cw-plus-plus once merged
 anybuf     = "0.3.0"
 
 [profile.release.package.sg721]

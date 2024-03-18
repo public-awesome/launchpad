@@ -3,6 +3,7 @@ use cosmwasm_std::Decimal;
 use cosmwasm_std::Timestamp;
 use sg721::{CollectionInfo, RoyaltyInfoResponse};
 
+#[allow(deprecated)]
 pub fn mock_collection_params() -> CollectionParams {
     CollectionParams {
         code_id: 1,

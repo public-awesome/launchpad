@@ -1,4 +1,5 @@
 #[cfg(test)]
+#[allow(deprecated)]
 mod tests {
     use crate::common_setup::contract_boxes::App;
     use anyhow::Error;
@@ -113,7 +114,6 @@ mod tests {
         let cosmos_msg = factory_contract.call_with_funds(msg, creation_fee).unwrap();
 
         let res = app.execute(Addr::unchecked(ADMIN), cosmos_msg);
-        println!(">>>>> {:?}", res);
         assert!(res.is_ok());
 
         (app, Addr::unchecked("contract2"))
@@ -349,7 +349,6 @@ mod tests {
             let (mut app, contract) = custom_proper_instantiate(custom_create_minter_msg);
 
             let creator = Addr::unchecked("creator".to_string());
-            let new_creator = Addr::unchecked("new_creator".to_string());
 
             // succeeds
             let res = app.execute_contract(
@@ -493,13 +492,32 @@ mod tests {
                 .unwrap();
             assert_eq!(res.royalty_info.unwrap(), royalty_info);
 
-            // update explicit content with new creator
+            // other cant update
+            let other = Addr::unchecked("other".to_string());
             let res = app.execute_contract(
-                creator,
+                other.clone(),
                 contract.clone(),
                 &Sg721ExecuteMsg::<Empty, Empty>::UpdateCollectionInfo {
                     collection_info: UpdateCollectionInfoMsg {
-                        creator: Some(new_creator.to_string()),
+                        creator: None,
+                        description: Some(params.info.description.clone()),
+                        image: Some(params.info.image.clone()),
+                        external_link: Some(params.info.external_link.clone()),
+                        explicit_content: Some(true),
+                        royalty_info: None,
+                    },
+                },
+                &[],
+            );
+            assert!(res.is_err());
+
+            // update explicit content with new creator
+            let res = app.execute_contract(
+                creator.clone(),
+                contract.clone(),
+                &Sg721ExecuteMsg::<Empty, Empty>::UpdateCollectionInfo {
+                    collection_info: UpdateCollectionInfoMsg {
+                        creator: Some(other.to_string()), // other is ignored
                         description: Some(params.info.description.clone()),
                         image: Some(params.info.image.clone()),
                         external_link: Some(params.info.external_link.clone()),
@@ -523,6 +541,18 @@ mod tests {
                 .unwrap();
             // check explicit content changed to true
             assert!(res.explicit_content.unwrap());
+            // check creator is unchanged
+            let res: Ownership<Addr> = app
+                .wrap()
+                .query_wasm_smart(
+                    contract.clone(),
+                    &QueryMsg::<
+                        DefaultOptionNftMetadataExtension,
+                        DefaultOptionCollectionMetadataExtension,
+                    >::GetCreatorOwnership {  },
+                )
+                .unwrap();
+            assert_eq!(res.owner, Some(creator.clone()));
 
             // freeze collection throw err if not creator
             let res = app.execute_contract(
@@ -534,7 +564,7 @@ mod tests {
             assert!(res.is_err());
             // freeze collection to prevent further updates
             let res = app.execute_contract(
-                new_creator.clone(),
+                creator.clone(),
                 contract.clone(),
                 &Sg721ExecuteMsg::<Empty, Empty>::FreezeCollectionInfo {},
                 &[],
@@ -543,7 +573,7 @@ mod tests {
 
             // trying to update collection after frozen should throw err
             let res = app.execute_contract(
-                new_creator,
+                creator,
                 contract,
                 &Sg721ExecuteMsg::<Empty, Empty>::UpdateCollectionInfo {
                     collection_info: UpdateCollectionInfoMsg {

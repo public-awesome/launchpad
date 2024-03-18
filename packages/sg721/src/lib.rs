@@ -260,6 +260,7 @@ pub struct UpdateCollectionInfoMsg<T> {
     pub external_link: Option<Option<String>>,
     pub explicit_content: Option<bool>,
     pub royalty_info: Option<Option<T>>,
+    /// creator is ignore here, use `UpdateCreatorOwnership` instead
     pub creator: Option<String>,
 }
 
@@ -292,7 +293,7 @@ impl From<InstantiateMsg> for Cw721InstantiateMsg<DefaultOptionCollectionMetadat
             name: msg.name,
             symbol: msg.symbol,
             minter: Some(msg.minter),
-            creator: None, // in case of none, sender is creator
+            creator: Some(msg.collection_info.creator.clone()),
             collection_metadata_extension: msg.collection_info.into(),
             withdraw_address: None,
         }

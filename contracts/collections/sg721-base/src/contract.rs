@@ -1,27 +1,24 @@
-use std::fmt::Debug;
-
 use cw721::msg::CollectionMetadataMsg;
-use cw721::state::{MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_ROYALTY_SHARE_PCT};
+use cw721::state::{MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_ROYALTY_SHARE_PCT, MINTER};
 use cw721::traits::{Cw721CustomMsg, Cw721State};
-use cw721_base::msg::{CollectionMetadataExtensionMsg, Cw721InstantiateMsg, RoyaltyInfoResponse};
-use cw721_base::state::NftInfo;
+use cw721_base::msg::{CollectionMetadataExtensionMsg, RoyaltyInfoResponse};
 use cw721_base::{
     traits::StateFactory, DefaultOptionCollectionMetadataExtension,
     DefaultOptionCollectionMetadataExtensionMsg,
 };
-use url::Url;
 
 use cosmwasm_std::{
     to_json_binary, Addr, Binary, ContractInfoResponse, CustomMsg, Decimal, Deps, DepsMut, Empty,
-    Env, Event, MessageInfo, Response, StdError, StdResult, Storage, Timestamp, WasmQuery,
+    Env, Event, MessageInfo, Response, StdError, Storage, Timestamp, WasmQuery,
 };
 
-use cw721_base::{execute::Cw721Execute, query::Cw721Query, state::CollectionMetadata};
+use cw721_base::{execute::Cw721Execute, query::Cw721Query};
 use cw_utils::nonpayable;
-use serde::{de::DeserializeOwned, Serialize};
 
-use sg721::{CollectionInfo, ExecuteMsg, InstantiateMsg, RoyaltyInfo, UpdateCollectionInfoMsg};
+#[allow(deprecated)]
+use sg721::{ExecuteMsg, InstantiateMsg, UpdateCollectionInfoMsg};
 
+#[allow(deprecated)]
 use crate::msg::{CollectionInfoResponse, NftParams, QueryMsg};
 use crate::{ContractError, Sg721Contract};
 
@@ -135,18 +132,6 @@ where
             return Err(ContractError::CollectionInfoFrozen {});
         }
 
-        // only creator can update collection info
-        let creator = self.get_creator(deps.as_ref().storage)?;
-        if creator.is_none() || creator.unwrap() != info.sender {
-            return Err(ContractError::Unauthorized {});
-        }
-
-        if let Some(new_creator) = collection_msg.creator.clone() {
-            // TODO: for keeping logic as-is, creator is set right away, but it should use cw-ownable's Action::TransferOwnership
-            self.parent
-                .initialize_creator(deps.storage, deps.api, Some(new_creator.as_str()))?;
-        }
-
         // in this contract, extension is always present, so unwrap is safe
         let collection_extension = collection_info.extension.unwrap();
 
@@ -191,7 +176,6 @@ where
     ) -> Result<Response<TCustomResponseMsg>, ContractError> {
         assert_minter_owner(deps.storage, &info.sender)?;
 
-        let collection_info = self.parent.config.collection_metadata.load(deps.storage)?;
         let msg = CollectionMetadataMsg {
             name: None,
             symbol: None,
@@ -218,6 +202,7 @@ where
         info: MessageInfo,
     ) -> Result<Response<TCustomResponseMsg>, ContractError> {
         let collection = self.query_collection_info(deps.as_ref())?;
+        #[allow(deprecated)]
         if collection.creator != info.sender {
             return Err(ContractError::Unauthorized {});
         }
@@ -263,6 +248,7 @@ where
         msg: QueryMsg<TNftMetadataExtension, DefaultOptionCollectionMetadataExtension>,
     ) -> Result<Binary, ContractError> {
         match msg {
+            #[allow(deprecated)]
             QueryMsg::CollectionInfo {} => Ok(to_json_binary(&self.query_collection_info(deps)?)?),
             _ => Ok(self.parent.query(deps, &env, msg.into())?),
         }
@@ -275,7 +261,9 @@ where
     ) -> Result<CollectionInfoResponse, ContractError> {
         let collection_info = self.parent.config.collection_metadata.load(deps.storage)?;
 
-        let creator = self.get_creator(deps.storage)?.map_or("none".to_string(), |c| c.to_string());
+        let creator = self
+            .get_creator(deps.storage)?
+            .map_or("none".to_string(), |c| c.to_string());
         // in this contract, extension is always present, so unwrap is safe
         let collection_extension = collection_info.extension.unwrap();
 
@@ -342,7 +330,7 @@ pub fn share_validate(share: Decimal) -> Result<Decimal, ContractError> {
 }
 
 pub fn get_owner_minter(storage: &mut dyn Storage) -> Result<Addr, ContractError> {
-    let ownership = cw_ownable::get_ownership(storage)?;
+    let ownership = MINTER.get_ownership(storage)?;
     match ownership.owner {
         Some(owner_value) => Ok(owner_value),
         None => Err(ContractError::MinterNotFound {}),
@@ -350,7 +338,7 @@ pub fn get_owner_minter(storage: &mut dyn Storage) -> Result<Addr, ContractError
 }
 
 pub fn assert_minter_owner(storage: &mut dyn Storage, sender: &Addr) -> Result<(), ContractError> {
-    let res = cw_ownable::assert_owner(storage, sender);
+    let res = MINTER.assert_owner(storage, sender);
     match res {
         Ok(_) => Ok(()),
         Err(_) => Err(ContractError::UnauthorizedOwner {}),
