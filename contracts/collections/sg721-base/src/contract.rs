@@ -1,5 +1,5 @@
 use cw721::msg::CollectionMetadataMsg;
-use cw721::state::{MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_ROYALTY_SHARE_PCT, MINTER};
+use cw721::state::{MAX_COLLECTION_DESCRIPTION_LENGTH, MINTER};
 use cw721::traits::{Cw721CustomMsg, Cw721State};
 use cw721_base::msg::{CollectionMetadataExtensionMsg, RoyaltyInfoResponse};
 use cw721_base::{
@@ -8,7 +8,7 @@ use cw721_base::{
 };
 
 use cosmwasm_std::{
-    to_json_binary, Addr, Binary, ContractInfoResponse, CustomMsg, Decimal, Deps, DepsMut, Empty,
+    to_json_binary, Addr, Binary, ContractInfoResponse, CustomMsg, Deps, DepsMut, Empty,
     Env, Event, MessageInfo, Response, StdError, Storage, Timestamp, WasmQuery,
 };
 

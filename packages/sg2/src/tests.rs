@@ -1,6 +1,7 @@
 use crate::msg::CollectionParams;
 use cosmwasm_std::Decimal;
 use cosmwasm_std::Timestamp;
+#[allow(deprecated)]
 use sg721::{CollectionInfo, RoyaltyInfoResponse};
 
 #[allow(deprecated)]
@@ -29,6 +30,7 @@ pub fn mock_collection_params_1(start_trading_time: Option<Timestamp>) -> Collec
         code_id: 1,
         name: "Collection Name".to_string(),
         symbol: "COL".to_string(),
+        #[allow(deprecated)]
         info: CollectionInfo {
             creator: "creator".to_string(),
             description: String::from("Stargaze Monkeys"),
@@ -49,6 +51,7 @@ pub fn mock_curator_payment_address(start_trading_time: Option<Timestamp>) -> Co
         code_id: 1,
         name: String::from("Test Coin"),
         symbol: String::from("TEST"),
+        #[allow(deprecated)]
         info: CollectionInfo {
             creator: "creator".to_string(),
             description: String::from("Stargaze Monkeys"),
@@ -69,6 +72,7 @@ pub fn mock_collection_params_high_fee(start_trading_time: Option<Timestamp>) ->
         code_id: 1,
         name: String::from("Test Coin"),
         symbol: String::from("TEST"),
+        #[allow(deprecated)]
         info: CollectionInfo {
             creator: "creator".to_string(),
             description: String::from("Stargaze Monkeys"),
@@ -91,6 +95,7 @@ pub fn mock_collection_two(start_trading_time: Option<Timestamp>) -> CollectionP
         code_id: 1,
         name: String::from("Test Collection 2"),
         symbol: String::from("TEST 2"),
+        #[allow(deprecated)]
         info: CollectionInfo {
             creator: "creator".to_string(),
             description: String::from("Stargaze Monkeys 2"),

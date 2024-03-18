@@ -1,5 +1,6 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::Coin;
+#[allow(deprecated)]
 use sg721::{CollectionInfo, RoyaltyInfoResponse};
 
 #[cw_serde]
@@ -9,11 +10,13 @@ pub struct CreateMinterMsg<T> {
 }
 
 #[cw_serde]
+#[allow(deprecated)]
 pub struct CollectionParams {
     /// The collection code id
     pub code_id: u64,
     pub name: String,
     pub symbol: String,
+    #[allow(deprecated)]
     pub info: CollectionInfo<RoyaltyInfoResponse>,
 }
 

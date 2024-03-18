@@ -5,6 +5,7 @@ use cw721::DefaultOptionCollectionMetadataExtension;
 use cw721::DefaultOptionNftMetadataExtension;
 use cw721::DefaultOptionNftMetadataExtensionMsg;
 use cw_utils::Expiration;
+#[allow(deprecated)]
 use sg721::{RoyaltyInfoResponse, UpdateCollectionInfoMsg};
 use sg721_base::msg::QueryMsg as Sg721QueryMsg;
 use sg721_base::ExecuteMsg as Sg721ExecuteMsg;
@@ -49,7 +50,9 @@ pub enum ExecuteMsg<TNftMetadataExtensionMsg, TCollectionMetadataExtensionMsg> {
     Burn {
         token_id: String,
     },
+    #[allow(deprecated)]
     UpdateCollectionInfo {
+        #[allow(deprecated)]
         collection_info: UpdateCollectionInfoMsg<RoyaltyInfoResponse>,
     },
     UpdateStartTradingTime(Option<Timestamp>),
@@ -114,6 +117,7 @@ where
             ExecuteMsg::RevokeAll { operator } => Sg721ExecuteMsg::RevokeAll { operator },
             ExecuteMsg::Burn { token_id } => Sg721ExecuteMsg::Burn { token_id },
             ExecuteMsg::UpdateCollectionInfo { collection_info } => {
+                #[allow(deprecated)]
                 Sg721ExecuteMsg::UpdateCollectionInfo { collection_info }
             }
             ExecuteMsg::FreezeCollectionInfo {} => Sg721ExecuteMsg::FreezeCollectionInfo {},
@@ -225,6 +229,7 @@ impl From<QueryMsg>
                 limit,
             },
             QueryMsg::NumTokens {} => Sg721QueryMsg::NumTokens {},
+            #[allow(deprecated)]
             QueryMsg::ContractInfo {} => Sg721QueryMsg::ContractInfo {},
             QueryMsg::NftInfo { token_id } => Sg721QueryMsg::NftInfo { token_id },
             QueryMsg::AllNftInfo {
@@ -246,7 +251,9 @@ impl From<QueryMsg>
             QueryMsg::AllTokens { start_after, limit } => {
                 Sg721QueryMsg::AllTokens { start_after, limit }
             }
+            #[allow(deprecated)]
             QueryMsg::Minter {} => Sg721QueryMsg::Minter {},
+            #[allow(deprecated)]
             QueryMsg::CollectionInfo {} => Sg721QueryMsg::CollectionInfo {},
             _ => unreachable!("cannot convert {:?} to Sg721QueryMsg", msg),
         }

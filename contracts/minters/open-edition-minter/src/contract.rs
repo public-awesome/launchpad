@@ -33,6 +33,7 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 const INSTANTIATE_SG721_REPLY_ID: u64 = 1;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
+#[allow(deprecated)]
 pub fn instantiate(
     deps: DepsMut,
     env: Env,

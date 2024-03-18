@@ -9,6 +9,7 @@ use cosmwasm_std::{coins, Addr, Timestamp};
 use cw721::{DefaultOptionCollectionMetadataExtension, DefaultOptionNftMetadataExtension};
 use cw_multi_test::Executor;
 use sg2::tests::mock_collection_params_1;
+#[allow(deprecated)]
 use sg721_base::msg::{CollectionInfoResponse, QueryMsg as Sg721QueryMsg};
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use vending_minter::msg::{ExecuteMsg, QueryMsg, StartTimeResponse};
@@ -228,6 +229,7 @@ fn invalid_trading_time_during_init() {
     );
 }
 #[test]
+#[allow(deprecated)]
 fn update_start_trading_time() {
     let mut router = custom_mock_app();
     setup_block_time(&mut router, GENESIS_MINT_START_TIME - 1, None);

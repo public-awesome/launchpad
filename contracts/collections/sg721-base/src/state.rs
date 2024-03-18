@@ -1,7 +1,6 @@
 use cosmwasm_std::Timestamp;
 use cw721::traits::{Cw721CustomMsg, Cw721State};
 use cw_storage_plus::Item;
-use serde::{de::DeserializeOwned, Serialize};
 
 use std::ops::Deref;
 

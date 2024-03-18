@@ -13,12 +13,12 @@ use cw721::{
 };
 use semver::Version;
 use sg721::InstantiateMsg;
+#[allow(deprecated)]
 use sg721_base::msg::CollectionInfoResponse;
 
 use crate::msg::{EnableUpdatableResponse, FrozenTokenMetadataResponse};
 use crate::state::ENABLE_UPDATABLE;
 
-use cw721_base::Extension;
 use cw_utils::nonpayable;
 use sg1::checked_fair_burn;
 use sg721_base::ContractError::Unauthorized;
@@ -59,6 +59,7 @@ pub fn _instantiate(
     Ok(res)
 }
 
+#[allow(deprecated)]
 pub fn execute_enable_updatable(
     deps: DepsMut,
     _env: Env,
@@ -87,6 +88,7 @@ pub fn execute_enable_updatable(
         .add_attribute("enabled", "true"))
 }
 
+#[allow(deprecated)]
 pub fn execute_freeze_token_metadata(
     deps: DepsMut,
     _env: Env,
@@ -107,6 +109,7 @@ pub fn execute_freeze_token_metadata(
         .add_attribute("frozen", "true"))
 }
 
+#[allow(deprecated)]
 pub fn execute_update_token_metadata(
     deps: DepsMut,
     _env: Env,
@@ -238,6 +241,7 @@ pub fn _migrate(mut deps: DepsMut, env: Env, _msg: Empty) -> Result<Response, Co
 }
 
 #[cfg(test)]
+#[allow(deprecated)]
 mod tests {
     use super::*;
 

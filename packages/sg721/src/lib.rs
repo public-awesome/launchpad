@@ -1,13 +1,10 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Addr, Binary, Coin, Decimal, Timestamp};
+use cosmwasm_std::{Binary, Coin, Timestamp};
 use cw721_base::{
     msg::{
         CollectionMetadataExtensionMsg, CollectionMetadataMsg, ExecuteMsg as Cw721ExecuteMsg, InstantiateMsg as Cw721InstantiateMsg
     },
-    state::{
-        CollectionMetadata, CollectionMetadataExtension,
-    },
-    DefaultOptionCollectionMetadataExtension, DefaultOptionCollectionMetadataExtensionMsg,
+    DefaultOptionCollectionMetadataExtensionMsg,
 };
 use cw_ownable::Action;
 use cw_utils::Expiration;
@@ -26,6 +23,7 @@ pub enum ExecuteMsg<
     /// Update specific collection info fields
     #[deprecated = "Please use UpdateCollectionInfo instead"]
     UpdateCollectionInfo {
+        #[allow(deprecated)]
         collection_info: UpdateCollectionInfoMsg<RoyaltyInfoResponse>,
     },
     /// Called by the minter to update trading start time
@@ -137,6 +135,7 @@ impl<TNftMetadataExtensionMsg, TCollectionMetadataExtensionMsg>
         TCollectionMetadataExtensionMsg,
     >
 {
+    #[allow(deprecated)]
     fn from(
         msg: ExecuteMsg<
             TNftMetadataExtensionMsg,
@@ -145,7 +144,7 @@ impl<TNftMetadataExtensionMsg, TCollectionMetadataExtensionMsg>
     ) -> Self {
         match msg {
             // ---- sg721 msgs ----
-            ExecuteMsg::UpdateCollectionInfo { collection_info } => {
+            ExecuteMsg::UpdateCollectionInfo { collection_info: _ } => {
                 panic!("not a cw721 msg")
             }
             ExecuteMsg::UpdateStartTradingTime(_) => panic!("not a cw721 msg"),
@@ -287,6 +286,7 @@ pub struct InstantiateMsg {
     pub collection_info: CollectionInfo<RoyaltyInfoResponse>,
 }
 
+#[allow(deprecated)]
 impl From<InstantiateMsg> for Cw721InstantiateMsg<DefaultOptionCollectionMetadataExtensionMsg> {
     fn from(msg: InstantiateMsg) -> Self {
         Cw721InstantiateMsg {

@@ -5,7 +5,8 @@ use cosmwasm_schema::{export_schema, export_schema_with_title, remove_schemas, s
 
 use cosmwasm_std::Empty;
 
-use cw721::{DefaultOptionCollectionMetadataExtension, DefaultOptionNftMetadataExtension};
+use cw721::{state::CollectionMetadata, DefaultOptionCollectionMetadataExtension, DefaultOptionNftMetadataExtension};
+#[allow(deprecated)]
 use cw721_base::{
     msg::{
         AllNftInfoResponse, ApprovalResponse, ApprovalsResponse, Cw721QueryMsg, MinterResponse,
@@ -46,7 +47,9 @@ fn main() {
     export_schema(&schema_for!(ApprovalResponse), &out_dir);
     export_schema(&schema_for!(ApprovalsResponse), &out_dir);
     export_schema(&schema_for!(OperatorsResponse), &out_dir);
+    #[allow(deprecated)]
     export_schema(&schema_for!(ContractInfoResponse), &out_dir);
+    export_schema(&schema_for!(CollectionMetadata<DefaultOptionCollectionMetadataExtension>), &out_dir);
     export_schema_with_title(
         &schema_for!(NftInfoResponse<Empty>),
         &out_dir,

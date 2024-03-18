@@ -7,7 +7,6 @@ use cw721::{
     DefaultOptionCollectionMetadataExtension, DefaultOptionCollectionMetadataExtensionMsg,
     DefaultOptionNftMetadataExtension, DefaultOptionNftMetadataExtensionMsg,
 };
-use cw721_base::Extension;
 use sg721::InstantiateMsg;
 use sg721_base::Sg721Contract;
 pub type QueryMsg = sg721_base::msg::QueryMsg<
@@ -37,7 +36,7 @@ pub mod entry {
 
     use crate::msg::ExecuteMsg;
     use cosmwasm_std::{
-        Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdError, StdResult,
+        Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdError,
     };
     use cw721::msg::Cw721MigrateMsg;
     use cw721_base::execute::Cw721Execute;
@@ -64,7 +63,7 @@ pub mod entry {
         deps: DepsMut,
         env: Env,
         info: MessageInfo,
-        msg: ExecuteMsg<Extension>,
+        msg: ExecuteMsg<DefaultOptionNftMetadataExtension>,
     ) -> Result<Response, sg721_base::ContractError> {
         match msg {
             ExecuteMsg::Burn { token_id } => Sg721NonTransferableContract::default()
@@ -76,17 +75,20 @@ pub mod entry {
                 token_uri,
                 owner,
                 extension,
-            } => Sg721NonTransferableContract::default().mint(
-                deps,
-                env,
-                info,
-                NftParams::NftData {
+            } => {
+                let nft_data = NftParams::NftData {
                     token_id,
                     owner,
                     token_uri,
                     extension,
-                },
-            ),
+                };
+                Sg721NonTransferableContract::default().mint(
+                deps,
+                env,
+                info,
+                nft_data,
+            )
+        },
             ExecuteMsg::UpdateCollectionInfo {
                 new_collection_info,
             } => Sg721NonTransferableContract::default().update_collection_info(

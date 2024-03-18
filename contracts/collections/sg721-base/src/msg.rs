@@ -1,18 +1,12 @@
 use cw721::msg::RoyaltyInfoResponse;
 use cw721::traits::Cw721State;
-use cw721::CollectionMetadataExtension;
-use cw721::DefaultOptionCollectionMetadataExtensionMsg;
-use cw721::RoyaltyInfo;
-use serde::de::DeserializeOwned;
-use serde::Serialize;
-use std::fmt::Debug;
 
 use cosmwasm_schema::cw_serde;
 use cosmwasm_schema::QueryResponses;
 use cosmwasm_std::{coin, Addr, BankMsg, Empty, Event, StdError, StdResult, Timestamp, Uint128};
 use cw721_base::{
     msg::{
-        AllNftInfoResponse, ApprovalResponse, ApprovalsResponse, Cw721ExecuteMsg, MinterResponse,
+        AllNftInfoResponse, ApprovalResponse, ApprovalsResponse, MinterResponse,
         NftInfoResponse, NumTokensResponse, OperatorsResponse, OwnerOfResponse,
         QueryMsg as Cw721QueryMsg, TokensResponse,
     },
@@ -23,12 +17,14 @@ use sg_std::{Response, SubMsg, NATIVE_DENOM};
 
 #[derive(QueryResponses)]
 #[cw_serde]
+#[allow(deprecated)]
 pub enum QueryMsg<
     // Return type of NFT metadata defined in `NftInfo` and `AllNftInfo`.
     TNftMetadataExtension,
     // Return type of collection metadata extension defined in `GetCollectionMetadata`.
     TCollectionMetadataExtension,
 > {
+    #[allow(deprecated)]
     #[returns(CollectionInfoResponse)]
     #[deprecated = "Please use GetCollectionMetadata instead"]
     CollectionInfo {},
@@ -156,6 +152,7 @@ where
     TNftMetadataExtension: Cw721State,
     TCollectionMetadataExtension: Cw721State,
 {
+    #[allow(deprecated)]
     fn from(
         msg: QueryMsg<TNftMetadataExtension, TCollectionMetadataExtension>,
     ) -> Cw721QueryMsg<TNftMetadataExtension, TCollectionMetadataExtension> {
@@ -227,7 +224,7 @@ where
 }
 
 #[cw_serde]
-#[deprecated = "Please use CollectionMetadata<CollectionMetadataExtension<RoyaltyInfo>> instead"]
+#[deprecated = "Please use `CollectionMetadata<CollectionMetadataExtension<RoyaltyInfo>>` instead"]
 pub struct CollectionInfoResponse {
     pub creator: String,
     pub description: String,
@@ -238,6 +235,7 @@ pub struct CollectionInfoResponse {
     pub royalty_info: Option<RoyaltyInfoResponse>,
 }
 
+#[allow(deprecated)]
 impl CollectionInfoResponse {
     pub fn royalty_payout(
         &self,

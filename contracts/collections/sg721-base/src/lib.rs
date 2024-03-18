@@ -7,11 +7,10 @@ pub mod upgrades;
 pub use crate::error::ContractError;
 pub use crate::state::Sg721Contract;
 use cw721::{
-    DefaultOptionCollectionMetadataExtensionMsg, DefaultOptionNftMetadataExtensionMsg, RoyaltyInfo,
+    DefaultOptionCollectionMetadataExtensionMsg, DefaultOptionNftMetadataExtensionMsg, 
 };
-use cw721_base::msg::CollectionMetadataExtensionMsg;
 use cw721_base::{
-    DefaultOptionCollectionMetadataExtension, DefaultOptionNftMetadataExtension, NftMetadataMsg,
+    DefaultOptionCollectionMetadataExtension, DefaultOptionNftMetadataExtension,
 };
 
 pub type ExecuteMsg = sg721::ExecuteMsg<
@@ -29,7 +28,7 @@ pub mod entry {
 
     #[cfg(not(feature = "library"))]
     use cosmwasm_std::entry_point;
-    use cosmwasm_std::{Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult};
+    use cosmwasm_std::{Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response};
     use cw2::set_contract_version;
     use sg721::InstantiateMsg;
 

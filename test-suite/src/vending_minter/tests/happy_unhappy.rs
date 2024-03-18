@@ -23,6 +23,7 @@ const ADMIN_MINT_PRICE: u128 = 0;
 const MAX_TOKEN_LIMIT: u32 = 10000;
 
 #[test]
+#[allow(deprecated)]
 fn initialization() {
     let mut deps = mock_dependencies_with_balance(&coins(2, "token"));
 

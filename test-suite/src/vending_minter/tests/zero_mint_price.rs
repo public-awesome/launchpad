@@ -23,6 +23,7 @@ use vending_minter::msg::ExecuteMsg;
 const MINT_PRICE: u128 = 0;
 
 #[test]
+#[allow(deprecated)]
 fn zero_mint_price() {
     let num_tokens = 2;
     let mut app = custom_mock_app();
@@ -113,6 +114,7 @@ fn zero_mint_price() {
 }
 
 #[test]
+#[allow(deprecated)]
 fn zero_wl_mint_price() {
     let num_tokens = 2;
     let mut app = custom_mock_app();
@@ -209,6 +211,7 @@ fn zero_wl_mint_price() {
 }
 
 #[test]
+#[allow(deprecated)]
 fn zero_wl_mint_errs_with_min_mint_factory() {
     let num_tokens = 2;
     let min_mint_price: u128 = 100_000_000;

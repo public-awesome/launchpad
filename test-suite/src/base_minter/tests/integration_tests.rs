@@ -16,6 +16,7 @@ use sg2::msg::Sg2ExecuteMsg;
 use sg2::query::{AllowedCollectionCodeIdsResponse, Sg2QueryMsg};
 use sg2::tests::mock_collection_params_1;
 use sg4::QueryMsg;
+#[allow(deprecated)]
 use sg721_base::msg::{CollectionInfoResponse, QueryMsg as Sg721QueryMsg};
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
@@ -27,6 +28,7 @@ fn init() {
 }
 
 #[test]
+#[allow(deprecated)]
 fn update_code_id() {
     let sg721_code_id = 7u64;
     let bmt = base_minter_with_specified_sg721(1, sg721_code_id);
@@ -186,6 +188,7 @@ fn check_mint() {
 }
 
 #[test]
+#[allow(deprecated)]
 fn update_start_trading_time() {
     let bmt = base_minter_with_sg721(1);
     let (mut router, creator, buyer) = (bmt.router, bmt.accts.creator, bmt.accts.buyer);
