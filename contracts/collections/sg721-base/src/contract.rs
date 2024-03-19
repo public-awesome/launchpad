@@ -1,4 +1,4 @@
-use cw721::msg::CollectionMetadataMsg;
+use cw721::msg::{CollectionMetadataMsg, Cw721MigrateMsg};
 use cw721::state::{MAX_COLLECTION_DESCRIPTION_LENGTH, MINTER};
 use cw721::traits::{Cw721CustomMsg, Cw721State};
 use cw721_base::msg::{CollectionMetadataExtensionMsg, RoyaltyInfoResponse};
@@ -274,7 +274,11 @@ where
         Ok(collection_info)
     }
 
-    pub fn migrate(mut deps: DepsMut, env: Env, _msg: Empty) -> Result<Response, ContractError> {
+    pub fn migrate(
+        mut deps: DepsMut,
+        env: Env,
+        msg: Cw721MigrateMsg,
+    ) -> Result<Response, ContractError> {
         let prev_contract_version = cw2::get_contract_version(deps.storage)?;
 
         let valid_contract_names = vec![CONTRACT_NAME.to_string()];
@@ -289,15 +293,10 @@ where
 
         let mut response = Response::new();
 
-        #[allow(clippy::cmp_owned)]
-        if prev_contract_version.version < "3.0.0".to_string() {
-            response = crate::upgrades::v3_0_0::upgrade(deps.branch(), &env, response)?;
-        }
-
-        #[allow(clippy::cmp_owned)]
-        if prev_contract_version.version < "3.1.0".to_string() {
-            response = crate::upgrades::v3_1_0::upgrade(deps.branch(), &env, response)?;
-        }
+        // these upgrades can always be called. migration is only executed in case new stores are empty! It is safe calling these on any version.
+        response = crate::upgrades::v3_0_0_ownable::upgrade(deps.branch(), &env, response, msg)?;
+        response =
+            crate::upgrades::v3_1_0_royalty_timestamp::upgrade(deps.branch(), &env, response)?;
 
         cw2::set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 

@@ -11,7 +11,22 @@ use cw721::{
 };
 use cw721_base::execute::Cw721Execute;
 
-pub fn upgrade(deps: DepsMut, env: &Env, response: Response) -> Result<Response, ContractError> {
+/// Migrates cw721 states:
+/// (1) legacy creator and minter migration, now using cw-ownable
+/// - v0.15 and v0.16: dedicated minter store
+/// - v0.17 and v0.18: minter stored using cw-ownable
+/// (2) legacy contract info migration -> collection metadata
+/// - before v0.19 there was only contract info
+/// - now we have collection metadata with optional extension
+/// (3) optional creator and minter reset (as passed in Cw721MigrateMsg::WithUpdate)
+///
+/// Note: migration is only executed in case new stores are empty! It is safe calling these on any version.
+pub fn upgrade(
+    deps: DepsMut,
+    env: &Env,
+    response: Response,
+    msg: Cw721MigrateMsg,
+) -> Result<Response, ContractError> {
     let contract = Sg721Contract::<
         DefaultOptionNftMetadataExtension,
         DefaultOptionNftMetadataExtensionMsg,
@@ -19,20 +34,10 @@ pub fn upgrade(deps: DepsMut, env: &Env, response: Response) -> Result<Response,
         DefaultOptionCollectionMetadataExtensionMsg,
         Empty,
     >::default();
-    let migrate_msg = Cw721MigrateMsg::WithUpdate {
-        minter: None,
-        creator: None,
-    };
-    // cw721 migration allows all versions: 0.18. 0.17, 0.16 and older
+    // cw721 migration covers these versions: 0.18. 0.17, 0.16 and 0.15
     let cw721_res = contract
         .parent
-        .migrate(
-            deps,
-            env.clone(),
-            migrate_msg,
-            CONTRACT_NAME,
-            CONTRACT_VERSION,
-        )
+        .migrate(deps, env.clone(), msg, CONTRACT_NAME, CONTRACT_VERSION)
         .map_err(|e| ContractError::MigrationError(e.to_string()))?;
 
     let mut event = Event::new("migrate-3.0.0");

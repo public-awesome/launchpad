@@ -20,6 +20,7 @@ pub mod entry {
     };
     use cosmwasm_std::{entry_point, to_json_binary, Empty};
     use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, Response};
+    use cw721::msg::Cw721MigrateMsg;
     use cw721::{
         DefaultOptionCollectionMetadataExtensionMsg, DefaultOptionNftMetadataExtensionMsg,
     };
@@ -70,7 +71,11 @@ pub mod entry {
     }
 
     #[entry_point]
-    pub fn migrate(deps: DepsMut, env: Env, msg: Empty) -> Result<Response, ContractError> {
+    pub fn migrate(
+        deps: DepsMut,
+        env: Env,
+        msg: Cw721MigrateMsg,
+    ) -> Result<Response, ContractError> {
         _migrate(deps, env, msg)
     }
 }

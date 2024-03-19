@@ -7,6 +7,7 @@ use cosmwasm_std::{Deps, StdResult};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::{DepsMut, Env, Event, MessageInfo};
 use cw2::set_contract_version;
+use cw721::msg::Cw721MigrateMsg;
 use cw721::{
     DefaultOptionCollectionMetadataExtension, DefaultOptionCollectionMetadataExtensionMsg,
     DefaultOptionNftMetadataExtension, DefaultOptionNftMetadataExtensionMsg,
@@ -173,7 +174,11 @@ pub fn query_frozen_token_metadata(deps: Deps) -> StdResult<FrozenTokenMetadataR
     Ok(FrozenTokenMetadataResponse { frozen })
 }
 
-pub fn _migrate(mut deps: DepsMut, env: Env, _msg: Empty) -> Result<Response, ContractError> {
+pub fn _migrate(
+    mut deps: DepsMut,
+    env: Env,
+    msg: Cw721MigrateMsg,
+) -> Result<Response, ContractError> {
     let prev_contract_info = cw2::get_contract_version(deps.storage)?;
     let prev_contract_name: String = prev_contract_info.contract;
     let prev_contract_version: Version = prev_contract_info
@@ -216,15 +221,10 @@ pub fn _migrate(mut deps: DepsMut, env: Env, _msg: Empty) -> Result<Response, Co
 
     let mut response = Response::new();
 
-    #[allow(clippy::cmp_owned)]
-    if prev_contract_version < Version::new(3, 0, 0) {
-        response = sg721_base::upgrades::v3_0_0::upgrade(deps.branch(), &env, response)?;
-    }
-
-    #[allow(clippy::cmp_owned)]
-    if prev_contract_version < Version::new(3, 1, 0) {
-        response = sg721_base::upgrades::v3_1_0::upgrade(deps.branch(), &env, response)?;
-    }
+    // these upgrades can always be called. migration is only executed in case new stores are empty! It is safe calling these on any version.
+    response = sg721_base::upgrades::v3_0_0_ownable::upgrade(deps.branch(), &env, response, msg)?;
+    response =
+        sg721_base::upgrades::v3_1_0_royalty_timestamp::upgrade(deps.branch(), &env, response)?;
 
     cw2::set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
