@@ -51,4 +51,7 @@ pub enum ContractError {
 
     #[error("Plaintext message is too long")]
     PlaintextTooLong {},
+
+    #[error("Address {address} should be converted to lowercase")]
+    EthAddressShouldBeLower { address: String },
 }
