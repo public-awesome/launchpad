@@ -19,6 +19,7 @@ use cw721_base::execute::Cw721Execute;
 /// - before v0.19 there was only contract info
 /// - now we have collection metadata with optional extension
 /// (3) optional creator and minter reset (as passed in Cw721MigrateMsg::WithUpdate)
+/// (4) contract name and version
 ///
 /// Note: migration is only executed in case new stores are empty! It is safe calling these on any version.
 pub fn upgrade(

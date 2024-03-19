@@ -298,8 +298,6 @@ where
         response =
             crate::upgrades::v3_1_0_royalty_timestamp::upgrade(deps.branch(), &env, response)?;
 
-        cw2::set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-
         response = response.add_event(
             Event::new("migrate")
                 .add_attribute("from_name", prev_contract_version.contract)
