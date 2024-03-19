@@ -1,14 +1,9 @@
-use crate::{
-    entry::{CONTRACT_NAME, CONTRACT_VERSION},
-    ContractError, Sg721Contract,
-};
-use cw721_base::execute::Cw721Execute;
+use crate::{ContractError, Sg721Contract};
 
 use cosmwasm_std::{DepsMut, Empty, Env, Event, Response};
 use cw721::{
-    msg::Cw721MigrateMsg, DefaultOptionCollectionMetadataExtension,
-    DefaultOptionCollectionMetadataExtensionMsg, DefaultOptionNftMetadataExtension,
-    DefaultOptionNftMetadataExtensionMsg,
+    DefaultOptionCollectionMetadataExtension, DefaultOptionCollectionMetadataExtensionMsg,
+    DefaultOptionNftMetadataExtension, DefaultOptionNftMetadataExtensionMsg,
 };
 
 pub fn upgrade(deps: DepsMut, env: &Env, response: Response) -> Result<Response, ContractError> {

@@ -18,6 +18,7 @@ use cw721_base::execute::Cw721Execute;
 /// (2) legacy contract info migration -> collection metadata
 /// - before v0.19 there was only contract info
 /// - now we have collection metadata with optional extension
+/// - here it is migrated to the new format with empty extension
 /// (3) optional creator and minter reset (as passed in Cw721MigrateMsg::WithUpdate)
 /// (4) contract name and version
 ///
