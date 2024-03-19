@@ -31,7 +31,7 @@ const COMPATIBLE_CONTRACT_NAMES_FOR_MIGRATION: [&str; 4] = [
     "sg721-updatable",
     "crates.io:sg721-updatable",
 ];
-const ENABLE_UPDATABLE_FEE: u128 = 2_000_000_000;
+const ENABLE_UPDATABLE_FEE: u128 = 1_500_000_000;
 
 pub fn _instantiate(
     deps: DepsMut,
