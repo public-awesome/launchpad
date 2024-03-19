@@ -39,6 +39,7 @@ fn test_instantiate() {
     let minter_address = Addr::unchecked("contract1");
     let claim_plaintext = &get_msg_plaintext(STARGAZE_WALLET_01.to_string());
     let (_, _, _, eth_addr_str) = get_wallet_and_sig(claim_plaintext.clone());
+
     let params = InstantiateParams {
         addresses: vec![eth_addr_str],
         funds_amount: WHITELIST_AMOUNT + INSTANTIATION_FEE,
@@ -590,6 +591,68 @@ fn test_two_claims_allowed_success() {
     let expected_balance = [Coin {
         denom: NATIVE_DENOM.to_string(),
         amount: Uint128::new(2 * WHITELIST_AMOUNT),
+    }];
+    assert_eq!(balances, expected_balance)
+}
+
+#[test]
+fn test_claim_converts_to_lowercase() {
+    let claim_plaintext = &get_msg_plaintext(STARGAZE_WALLET_01.to_string());
+    let (_, eth_sig_str, _, eth_addr_str) = get_wallet_and_sig(claim_plaintext.clone());
+
+    let stargaze_wallet_01 = Addr::unchecked(STARGAZE_WALLET_01);
+
+    let mut app = custom_mock_app();
+    configure_mock_minter_with_mock_whitelist(&mut app);
+    let minter_addr = Addr::unchecked(MOCK_MINTER_ADDR_STR);
+    let airdrop_contract = Addr::unchecked(MOCK_AIRDROP_ADDR_STR);
+
+    let mut mixed_case = vec![];
+    let mut to_upper = true;
+    for char in eth_addr_str.chars() {
+        if !to_upper {
+            mixed_case.extend([char.to_string().to_lowercase()]);
+        } else {
+            mixed_case.extend([char.to_string().to_uppercase()]);
+        }
+        to_upper = !to_upper;
+    }
+    let mixed_case_eth_addr: String = mixed_case.into_iter().collect();
+
+    let params = InstantiateParams {
+        addresses: vec![mixed_case_eth_addr.clone()],
+        funds_amount: WHITELIST_AMOUNT + INSTANTIATION_FEE,
+        expected_airdrop_contract_id: 4,
+        minter_address: minter_addr.clone(),
+        admin_account: Addr::unchecked(OWNER),
+        app: &mut app,
+        per_address_limit: 1,
+        claim_msg_plaintext: CONFIG_PLAINTEXT.to_string(),
+    };
+    instantiate_contract(params).unwrap();
+    query_minter_as_expected(&mut app, airdrop_contract.clone(), minter_addr);
+    let balances = app
+        .wrap()
+        .query_all_balances(stargaze_wallet_01.clone())
+        .unwrap();
+    assert_eq!(balances, []);
+
+    let claim_message = ExecuteMsg::ClaimAirdrop {
+        eth_address: mixed_case_eth_addr,
+        eth_sig: eth_sig_str,
+    };
+    let _ = execute_contract_with_msg(
+        claim_message,
+        &mut app,
+        stargaze_wallet_01.clone(),
+        airdrop_contract,
+    )
+    .unwrap();
+
+    let balances = app.wrap().query_all_balances(stargaze_wallet_01).unwrap();
+    let expected_balance = [Coin {
+        denom: NATIVE_DENOM.to_string(),
+        amount: Uint128::new(WHITELIST_AMOUNT),
     }];
     assert_eq!(balances, expected_balance)
 }
