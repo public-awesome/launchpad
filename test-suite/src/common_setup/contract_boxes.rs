@@ -123,11 +123,11 @@ pub fn contract_group() -> Box<dyn Contract<StargazeMsgWrapper>> {
 
 pub fn contract_eth_airdrop() -> Box<dyn Contract<StargazeMsgWrapper>> {
     let contract = ContractWrapper::new(
-        sg_eth_airdrop::contract::execute,
-        sg_eth_airdrop::contract::instantiate,
-        sg_eth_airdrop::query::query,
+        rekt_airdrop::contract::execute,
+        rekt_airdrop::contract::instantiate,
+        rekt_airdrop::query::query,
     )
-    .with_reply(sg_eth_airdrop::reply::reply);
+    .with_reply(rekt_airdrop::reply::reply);
     Box::new(contract)
 }
 
@@ -136,6 +136,15 @@ pub fn contract_whitelist_immutable() -> Box<dyn Contract<StargazeMsgWrapper>> {
         whitelist_immutable::contract::execute,
         whitelist_immutable::contract::instantiate,
         whitelist_immutable::contract::query,
+    );
+    Box::new(contract)
+}
+
+pub fn contract_whitelist_immutable_flex() -> Box<dyn Contract<StargazeMsgWrapper>> {
+    let contract = ContractWrapper::new(
+        whitelist_immutable_flex::contract::execute,
+        whitelist_immutable_flex::contract::instantiate,
+        whitelist_immutable_flex::contract::query,
     );
     Box::new(contract)
 }

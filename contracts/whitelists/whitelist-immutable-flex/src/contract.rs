@@ -5,12 +5,12 @@ use cosmwasm_std::{to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdR
 use cw2::set_contract_version;
 
 use crate::error::ContractError;
-use crate::msg::{ConfigResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
+use crate::msg::{ConfigResponse, ExecuteMsg, InstantiateMsg, Member, QueryMsg};
 use cw_utils::nonpayable;
 use sg_std::Response;
 
 // version info for migration info
-const CONTRACT_NAME: &str = "crates.io:whitelist-immutable";
+const CONTRACT_NAME: &str = "crates.io:whitelist-immutable-flex";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -24,12 +24,10 @@ pub fn instantiate(
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
     let config = Config {
         admin: info.sender,
-        per_address_limit: msg.per_address_limit,
         mint_discount_bps: msg.mint_discount_bps,
     };
 
-    msg.addresses.sort_unstable();
-    msg.addresses.dedup();
+    msg.members.dedup();
     let count = update_whitelist(&mut deps, msg)?;
     validate_nonempty_whitelist(count)?;
     TOTAL_ADDRESS_COUNT.save(deps.storage, &count)?;
@@ -43,9 +41,8 @@ pub fn instantiate(
 
 fn update_whitelist(deps: &mut DepsMut, msg: InstantiateMsg) -> Result<u64, ContractError> {
     let mut count = 0u64;
-    for address in msg.addresses.into_iter() {
-        let address_lower = address.clone().to_ascii_lowercase();
-        WHITELIST.save(deps.storage, &address_lower, &true)?;
+    for member in msg.members.into_iter() {
+        WHITELIST.save(deps.storage, &member.address, &member.mint_count)?;
         count += 1;
     }
     Ok(count)
@@ -72,12 +69,10 @@ pub fn execute(
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::Config {} => to_json_binary(&query_config(deps)?),
-        QueryMsg::IncludesAddress { address } => {
-            to_json_binary(&query_includes_address(deps, address)?)
-        }
+        QueryMsg::HasMember { address } => to_json_binary(&query_has_member(deps, address)?),
         QueryMsg::Admin {} => to_json_binary(&query_admin(deps)?),
         QueryMsg::AddressCount {} => to_json_binary(&query_address_count(deps)?),
-        QueryMsg::PerAddressLimit {} => to_json_binary(&query_per_address_limit(deps)?),
+        QueryMsg::Member { address } => to_json_binary(&query_member(deps, address)?),
     }
 }
 
@@ -86,7 +81,7 @@ pub fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
     Ok(ConfigResponse { config })
 }
 
-pub fn query_includes_address(deps: Deps, address: String) -> StdResult<bool> {
+pub fn query_has_member(deps: Deps, address: String) -> StdResult<bool> {
     Ok(WHITELIST.has(deps.storage, &address))
 }
 
@@ -99,7 +94,10 @@ pub fn query_address_count(deps: Deps) -> StdResult<u64> {
     TOTAL_ADDRESS_COUNT.load(deps.storage)
 }
 
-pub fn query_per_address_limit(deps: Deps) -> StdResult<u32> {
-    let config = CONFIG.load(deps.storage)?;
-    Ok(config.per_address_limit)
+pub fn query_member(deps: Deps, address: String) -> StdResult<Member> {
+    let mint_count = WHITELIST.load(deps.storage, &address)?;
+    Ok(Member {
+        address,
+        mint_count,
+    })
 }

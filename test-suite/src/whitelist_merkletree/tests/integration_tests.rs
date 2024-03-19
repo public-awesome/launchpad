@@ -90,7 +90,7 @@ mod tests {
             .query_wasm_smart(
                 wl_addr,
                 &QueryMsg::HasMember {
-                    member: addr_to_check.to_string(),
+                    member: addr_to_check,
                     proof_hashes,
                 },
             )
