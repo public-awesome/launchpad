@@ -67,6 +67,15 @@ pub fn compute_plaintext_msg(config: &Config, info: MessageInfo) -> String {
     )
 }
 
+pub fn assert_lower_case(eth_address: String) -> Result<(), ContractError> {
+    match eth_address.to_lowercase() == eth_address {
+        true => Ok(()),
+        false => Err(ContractError::EthAddressShouldBeLower {
+            address: eth_address,
+        }),
+    }
+}
+
 pub fn validate_registration(
     deps: &DepsMut,
     info: MessageInfo,
@@ -74,6 +83,7 @@ pub fn validate_registration(
     eth_sig: String,
     config: Config,
 ) -> Result<(), ContractError> {
+    assert_lower_case(eth_address.clone())?;
     validate_is_eligible(deps, eth_address.clone())?;
     validate_eth_sig(deps, info, eth_address.clone(), eth_sig, config)?;
     check_previous_registration(deps, &eth_address)?;
@@ -87,6 +97,7 @@ pub fn validate_claim(
     eth_sig: String,
     config: Config,
 ) -> Result<(), ContractError> {
+    assert_lower_case(eth_address.clone())?;
     validate_is_eligible(deps, eth_address.clone())?;
     validate_eth_sig(deps, info.clone(), eth_address.clone(), eth_sig, config)?;
     check_previous_claim(deps, &eth_address.clone())?;

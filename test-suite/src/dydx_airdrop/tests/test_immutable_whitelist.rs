@@ -1,5 +1,8 @@
 use crate::common_setup::contract_boxes::custom_mock_app;
-use crate::dydx_airdrop::constants::claim_constants::{CONFIG_PLAINTEXT, MOCK_AIRDROP_ADDR_STR, MOCK_MINTER_ADDR_STR, MOCK_NAME_COLLECTION_ADDR, MOCK_NAME_DISCOUNT_WL_ADDR_STR, OWNER};
+use crate::dydx_airdrop::constants::claim_constants::{
+    CONFIG_PLAINTEXT, MOCK_AIRDROP_ADDR_STR, MOCK_MINTER_ADDR_STR, MOCK_NAME_COLLECTION_ADDR,
+    MOCK_NAME_DISCOUNT_WL_ADDR_STR, OWNER,
+};
 use crate::dydx_airdrop::constants::collection_constants::WHITELIST_AMOUNT;
 use crate::dydx_airdrop::setup::configure_mock_minter::configure_mock_minter_with_mock_whitelist;
 use crate::dydx_airdrop::setup::execute_msg::instantiate_contract;
@@ -28,7 +31,20 @@ fn test_instantiate_with_addresses() {
     let airdrop_contract = Addr::unchecked(MOCK_AIRDROP_ADDR_STR);
 
     let params = InstantiateParams {
-        members: vec![Member {address: addresses[0].clone(), mint_count: 1}, Member {address: addresses[1].clone(), mint_count: 1}, Member {address: addresses[2].clone(), mint_count: 1}],
+        members: vec![
+            Member {
+                address: addresses[0].clone(),
+                mint_count: 1,
+            },
+            Member {
+                address: addresses[1].clone(),
+                mint_count: 1,
+            },
+            Member {
+                address: addresses[2].clone(),
+                mint_count: 1,
+            },
+        ],
         funds_amount: WHITELIST_AMOUNT + INSTANTIATION_FEE,
         expected_airdrop_contract_id: 4,
         minter_address,
@@ -76,7 +92,20 @@ fn test_whitelist_immutable_address_limit() {
     let name_collection_address = MOCK_NAME_COLLECTION_ADDR.to_string();
 
     let params = InstantiateParams {
-        members: vec![Member {address: addresses[0].clone(), mint_count: 20}, Member {address: addresses[1].clone(), mint_count: 1}, Member {address: addresses[2].clone(), mint_count: 1}],
+        members: vec![
+            Member {
+                address: addresses[0].clone(),
+                mint_count: 20,
+            },
+            Member {
+                address: addresses[1].clone(),
+                mint_count: 1,
+            },
+            Member {
+                address: addresses[2].clone(),
+                mint_count: 1,
+            },
+        ],
         funds_amount: WHITELIST_AMOUNT + INSTANTIATION_FEE,
         expected_airdrop_contract_id: 4,
         minter_address,
@@ -111,7 +140,20 @@ fn test_whitelist_immutable_address_count() {
     let name_collection_address = MOCK_NAME_COLLECTION_ADDR.to_string();
 
     let params = InstantiateParams {
-        members: vec![Member {address: addresses[0].clone(), mint_count: 1}, Member {address: addresses[1].clone(), mint_count: 1}, Member {address: addresses[2].clone(), mint_count: 1}],
+        members: vec![
+            Member {
+                address: addresses[0].clone(),
+                mint_count: 1,
+            },
+            Member {
+                address: addresses[1].clone(),
+                mint_count: 1,
+            },
+            Member {
+                address: addresses[2].clone(),
+                mint_count: 1,
+            },
+        ],
         funds_amount: WHITELIST_AMOUNT + INSTANTIATION_FEE,
         expected_airdrop_contract_id: 4,
         minter_address,
@@ -146,7 +188,20 @@ fn test_whitelist_immutable_address_includes() {
     let name_collection_address = MOCK_NAME_COLLECTION_ADDR.to_string();
 
     let params = InstantiateParams {
-        members: vec![Member {address: addresses[0].clone(), mint_count: 1}, Member {address: addresses[1].clone(), mint_count: 1}, Member {address: addresses[2].clone(), mint_count: 1}],
+        members: vec![
+            Member {
+                address: addresses[0].clone(),
+                mint_count: 1,
+            },
+            Member {
+                address: addresses[1].clone(),
+                mint_count: 1,
+            },
+            Member {
+                address: addresses[2].clone(),
+                mint_count: 1,
+            },
+        ],
         funds_amount: WHITELIST_AMOUNT + INSTANTIATION_FEE,
         expected_airdrop_contract_id: 4,
         minter_address,
@@ -186,7 +241,20 @@ fn test_whitelist_immutable_address_config() {
     let name_collection_address = MOCK_NAME_COLLECTION_ADDR.to_string();
 
     let params = InstantiateParams {
-        members: vec![Member {address: addresses[0].clone(), mint_count: 1}, Member {address: addresses[1].clone(), mint_count: 1}, Member {address: addresses[2].clone(), mint_count: 1}],
+        members: vec![
+            Member {
+                address: addresses[0].clone(),
+                mint_count: 1,
+            },
+            Member {
+                address: addresses[1].clone(),
+                mint_count: 1,
+            },
+            Member {
+                address: addresses[2].clone(),
+                mint_count: 1,
+            },
+        ],
         funds_amount: WHITELIST_AMOUNT + INSTANTIATION_FEE,
         expected_airdrop_contract_id: 4,
         minter_address,

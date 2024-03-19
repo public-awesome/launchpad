@@ -1,6 +1,9 @@
 use crate::common_setup::setup_accounts_and_block::setup_block_time;
 use crate::common_setup::setup_collection_whitelist::configure_collection_whitelist;
-use crate::dydx_airdrop::constants::claim_constants::{CONFIG_PLAINTEXT, MOCK_MINTER_ADDR_STR, MOCK_NAME_COLLECTION_ADDR, MOCK_NAME_DISCOUNT_WL_ADDR_STR, STARGAZE_WALLET_01};
+use crate::dydx_airdrop::constants::claim_constants::{
+    CONFIG_PLAINTEXT, MOCK_MINTER_ADDR_STR, MOCK_NAME_COLLECTION_ADDR,
+    MOCK_NAME_DISCOUNT_WL_ADDR_STR, STARGAZE_WALLET_01,
+};
 use crate::dydx_airdrop::constants::collection_constants::{
     AIRDROP_ADDR_STR, MINT_PRICE, WHITELIST_AMOUNT,
 };
@@ -31,7 +34,10 @@ fn test_set_minter_contract_success() {
 
     let contract_admin = Addr::unchecked(creator);
     let params = InstantiateParams {
-        members: vec![Member {address: eth_addr_str, mint_count: 1}],
+        members: vec![Member {
+            address: eth_addr_str,
+            mint_count: 1,
+        }],
         funds_amount: WHITELIST_AMOUNT + INSTANTIATION_FEE,
         expected_airdrop_contract_id: 4,
         minter_address: minter_address.clone(),
@@ -60,15 +66,22 @@ fn test_claim_added_to_minter_whitelist() {
     let minter_address = MOCK_MINTER_ADDR_STR.to_string();
     let name_discount_wl_address = MOCK_NAME_DISCOUNT_WL_ADDR_STR.to_string();
     let name_collection_address = MOCK_NAME_COLLECTION_ADDR.to_string();
-    let whitelist_addr =
-        configure_collection_whitelist(&mut app, creator.clone(), buyer, Addr::unchecked(minter_address.clone()));
+    let whitelist_addr = configure_collection_whitelist(
+        &mut app,
+        creator.clone(),
+        buyer,
+        Addr::unchecked(minter_address.clone()),
+    );
     setup_block_time(&mut app, GENESIS_MINT_START_TIME, None);
     let claim_plaintext = &get_msg_plaintext(STARGAZE_WALLET_01.to_string());
     let (_, eth_sig_str, _, eth_addr_str) = get_wallet_and_sig(claim_plaintext.clone());
 
     let airdrop_contract = Addr::unchecked(AIRDROP_ADDR_STR);
     let params = InstantiateParams {
-        members: vec![Member {address: eth_addr_str.clone(), mint_count: 1}],
+        members: vec![Member {
+            address: eth_addr_str.clone(),
+            mint_count: 1,
+        }],
         funds_amount: WHITELIST_AMOUNT + INSTANTIATION_FEE,
         expected_airdrop_contract_id: 5,
         minter_address: minter_address.clone(),
@@ -93,5 +106,9 @@ fn test_claim_added_to_minter_whitelist() {
         stargaze_wallet_01.clone(),
         airdrop_contract,
     );
-    execute_mint_success(&mut app, stargaze_wallet_01, Addr::unchecked(minter_address.clone()));
+    execute_mint_success(
+        &mut app,
+        stargaze_wallet_01,
+        Addr::unchecked(minter_address.clone()),
+    );
 }

@@ -5,6 +5,7 @@ members = [
     "contracts/factories/*",
     "contracts/minters/*",
     "contracts/whitelists/*",
+    "contracts/dydx-airdrop",
     "test-suite/",
     "e2e",
 ]
