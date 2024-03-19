@@ -1,2 +1,2 @@
-pub mod v3_0_0_ownable;
+pub mod v3_0_0_ownable_and_collection_metadata;
 pub mod v3_1_0_royalty_timestamp;

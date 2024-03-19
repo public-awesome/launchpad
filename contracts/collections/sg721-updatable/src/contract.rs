@@ -222,7 +222,12 @@ pub fn _migrate(
     let mut response = Response::new();
 
     // these upgrades can always be called. migration is only executed in case new stores are empty! It is safe calling these on any version.
-    response = sg721_base::upgrades::v3_0_0_ownable::upgrade(deps.branch(), &env, response, msg)?;
+    response = sg721_base::upgrades::v3_0_0_ownable_and_collection_metadata::upgrade(
+        deps.branch(),
+        &env,
+        response,
+        msg,
+    )?;
     response =
         sg721_base::upgrades::v3_1_0_royalty_timestamp::upgrade(deps.branch(), &env, response)?;
 
