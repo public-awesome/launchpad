@@ -41,4 +41,10 @@ pub enum QueryMsg {
     AirdropEligible { eth_address: String },
     #[returns(Addr)]
     GetMinter {},
+    #[returns(bool)]
+    IsRegistered { eth_address: String },
+    #[returns(bool)]
+    HasClaimed { eth_address: String },
+    #[returns(u32)]
+    GetAirdropCount {},
 }
