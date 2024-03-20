@@ -8,8 +8,8 @@ use cw721_base::{
 };
 
 use cosmwasm_std::{
-    to_json_binary, Addr, Binary, ContractInfoResponse, CustomMsg, Deps, DepsMut, Env,
-    Event, MessageInfo, Response, StdError, Storage, Timestamp, WasmQuery,
+    to_json_binary, Addr, Binary, ContractInfoResponse, CustomMsg, Deps, DepsMut, Env, Event,
+    MessageInfo, Response, StdError, Storage, Timestamp, WasmQuery,
 };
 
 use cw721_base::{execute::Cw721Execute, query::Cw721Query};
