@@ -6,7 +6,7 @@
 
 import { CosmWasmClient, SigningCosmWasmClient, ExecuteResult } from "@cosmjs/cosmwasm-stargate";
 import { Coin, StdFee } from "@cosmjs/amino";
-import { InstantiateMsg, Member, ExecuteMsg, QueryMsg, Boolean, Addr } from "./DydxAirdrop.types";
+import { InstantiateMsg, Member, ExecuteMsg, QueryMsg, Boolean, Uint32, Addr } from "./DydxAirdrop.types";
 export interface DydxAirdropReadOnlyInterface {
   contractAddress: string;
   airdropEligible: ({
@@ -15,6 +15,17 @@ export interface DydxAirdropReadOnlyInterface {
     ethAddress: string;
   }) => Promise<Boolean>;
   getMinter: () => Promise<Addr>;
+  isRegistered: ({
+    ethAddress
+  }: {
+    ethAddress: string;
+  }) => Promise<Boolean>;
+  hasClaimed: ({
+    ethAddress
+  }: {
+    ethAddress: string;
+  }) => Promise<Boolean>;
+  getAirdropCount: () => Promise<Uint32>;
 }
 export class DydxAirdropQueryClient implements DydxAirdropReadOnlyInterface {
   client: CosmWasmClient;
@@ -25,6 +36,9 @@ export class DydxAirdropQueryClient implements DydxAirdropReadOnlyInterface {
     this.contractAddress = contractAddress;
     this.airdropEligible = this.airdropEligible.bind(this);
     this.getMinter = this.getMinter.bind(this);
+    this.isRegistered = this.isRegistered.bind(this);
+    this.hasClaimed = this.hasClaimed.bind(this);
+    this.getAirdropCount = this.getAirdropCount.bind(this);
   }
 
   airdropEligible = async ({
@@ -41,6 +55,33 @@ export class DydxAirdropQueryClient implements DydxAirdropReadOnlyInterface {
   getMinter = async (): Promise<Addr> => {
     return this.client.queryContractSmart(this.contractAddress, {
       get_minter: {}
+    });
+  };
+  isRegistered = async ({
+    ethAddress
+  }: {
+    ethAddress: string;
+  }): Promise<Boolean> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      is_registered: {
+        eth_address: ethAddress
+      }
+    });
+  };
+  hasClaimed = async ({
+    ethAddress
+  }: {
+    ethAddress: string;
+  }): Promise<Boolean> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      has_claimed: {
+        eth_address: ethAddress
+      }
+    });
+  };
+  getAirdropCount = async (): Promise<Uint32> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      get_airdrop_count: {}
     });
   };
 }

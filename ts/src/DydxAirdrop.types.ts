@@ -36,6 +36,17 @@ export type QueryMsg = {
   };
 } | {
   get_minter: {};
+} | {
+  is_registered: {
+    eth_address: string;
+  };
+} | {
+  has_claimed: {
+    eth_address: string;
+  };
+} | {
+  get_airdrop_count: {};
 };
 export type Boolean = boolean;
+export type Uint32 = number;
 export type Addr = string;
