@@ -117,7 +117,7 @@ pub enum QueryMsg {
     },
     #[returns(MinterResponse)]
     Minter {},
-    #[returns(MinterResponse)]
+    #[returns(CollectionInfoResponse)]
     CollectionInfo {},
 }
 
