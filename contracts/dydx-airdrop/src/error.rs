@@ -40,6 +40,9 @@ pub enum ContractError {
     #[error("Address {address} is not eligible")]
     AddressNotEligible { address: String },
 
+    #[error("Invalid Eth signature for address: {address}")]
+    InvalidEthSignature { address: String },
+
     #[error("Address {address} has already claimed all available mints")]
     MintCountReached { address: String },
 

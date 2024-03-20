@@ -126,7 +126,7 @@ fn validate_eth_sig(
     let valid_eth_sig = validate_ethereum_text(deps, info, &config, eth_sig, eth_address.clone())?;
     match valid_eth_sig {
         true => Ok(()),
-        false => Err(ContractError::AddressNotEligible {
+        false => Err(ContractError::InvalidEthSignature {
             address: eth_address,
         }),
     }
