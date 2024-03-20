@@ -5,7 +5,7 @@ use cosmwasm_std::{to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdR
 use cw2::set_contract_version;
 
 use crate::error::ContractError;
-use crate::msg::{ConfigResponse, ExecuteMsg, InstantiateMsg, Member, QueryMsg};
+use crate::msg::{ConfigResponse, ExecuteMsg, InstantiateMsg, Member, MemberResponse, QueryMsg};
 use cw_utils::nonpayable;
 use sg_std::Response;
 
@@ -94,10 +94,12 @@ pub fn query_address_count(deps: Deps) -> StdResult<u64> {
     TOTAL_ADDRESS_COUNT.load(deps.storage)
 }
 
-pub fn query_member(deps: Deps, address: String) -> StdResult<Member> {
+pub fn query_member(deps: Deps, address: String) -> StdResult<MemberResponse> {
     let mint_count = WHITELIST.load(deps.storage, &address)?;
-    Ok(Member {
-        address,
-        mint_count,
+    Ok(MemberResponse {
+        member: Member {
+            address,
+            mint_count,
+        },
     })
 }
