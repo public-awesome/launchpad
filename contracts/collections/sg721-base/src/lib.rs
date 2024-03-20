@@ -26,6 +26,7 @@ pub mod entry {
     use cosmwasm_std::entry_point;
     use cosmwasm_std::{Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response};
     use cw2::set_contract_version;
+    use cw721::msg::Cw721MigrateMsg;
     use sg721::InstantiateMsg;
 
     // version info for migration info
@@ -86,5 +87,21 @@ pub mod entry {
             Empty,
         >::default()
         .query(deps, env, msg)
+    }
+
+    /// allows migration of all sg721-base versions
+    #[cfg_attr(not(feature = "library"), entry_point)]
+    pub fn migrate(
+        deps: DepsMut,
+        env: Env,
+        msg: Cw721MigrateMsg,
+    ) -> Result<Response, ContractError> {
+        Sg721Contract::<
+            DefaultOptionNftMetadataExtension,
+            DefaultOptionNftMetadataExtensionMsg,
+            DefaultOptionCollectionMetadataExtension,
+            DefaultOptionCollectionMetadataExtensionMsg,
+            Empty,
+        >::migrate(deps, env, msg)
     }
 }

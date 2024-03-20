@@ -18,7 +18,7 @@ pub mod entry {
         },
         msg::ExecuteMsg,
     };
-    use cosmwasm_std::{entry_point, to_json_binary, Empty};
+    use cosmwasm_std::{entry_point, to_json_binary};
     use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, Response};
     use cw721::msg::Cw721MigrateMsg;
     use cw721::{

@@ -25,6 +25,28 @@ pub fn mock_collection_params() -> CollectionParams {
     }
 }
 
+/// `v3.8.0-prerelease` is only used for testing migration from collection info (sg721) to new collection metadata extension (cw721)
+#[allow(deprecated)]
+pub fn mock_collection_params_v3_8_0_prerelease() -> sg2_v3_8_0_prerelease::msg::CollectionParams {
+    sg2_v3_8_0_prerelease::msg::CollectionParams {
+        code_id: 1,
+        name: "Collection Name".to_string(),
+        symbol: "COL".to_string(),
+        info: sg721_v3_8_0_prerelease::CollectionInfo {
+            creator: "creator".to_string(),
+            description: String::from("Stargaze Monkeys"),
+            image: "https://example.com/image.png".to_string(),
+            external_link: Some("https://example.com/external.html".to_string()),
+            start_trading_time: None,
+            explicit_content: Some(false),
+            royalty_info: Some(sg721_v3_8_0_prerelease::RoyaltyInfoResponse {
+                payment_address: "creator".to_string(),
+                share: Decimal::percent(10),
+            }),
+        },
+    }
+}
+
 pub fn mock_collection_params_1(start_trading_time: Option<Timestamp>) -> CollectionParams {
     CollectionParams {
         code_id: 1,

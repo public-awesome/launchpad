@@ -37,9 +37,14 @@ serde           = { version = "1.0", default-features = false, features = ["deri
 serde_json      = "1.0"
 sg1             = { version = "3.5.0", path = "packages/sg1" }
 sg2             = { version = "3.5.0", path = "packages/sg2" }
+# NOTE: `v3.8.0-prerelease` contains commit for switch to new cw721 with collection metadata
+# This is needed for testing legacy migration from collection info -> collection metadata
+sg2-v3-8-0-prerelease      = { git = "https://github.com/public-awesome/launchpad", rev = "b584245bcc7ff07d9b384df1ccc4e3e2466d92db", package = "sg2" } # needed for testing legacy migration
 sg4             = { version = "3.5.0", path = "packages/sg4" }
 sg721           = { version = "3.5.0", path = "packages/sg721" }
+sg721-v3-8-0-prerelease      = { git = "https://github.com/public-awesome/launchpad", rev = "b584245bcc7ff07d9b384df1ccc4e3e2466d92db", package = "sg721" } # needed for testing legacy migration
 sg721-base      = { version = "3.5.0", path = "contracts/collections/sg721-base" }
+sg721-base-v3-8-0-prerelease      = { git = "https://github.com/public-awesome/launchpad", rev = "b584245bcc7ff07d9b384df1ccc4e3e2466d92db", package = "sg721-base" } # needed for testing legacy migration
 sg721-nt        = { version = "3.5.0", path = "contracts/collections/sg721-nt" }
 sg721-updatable = { version = "3.5.0", path = "contracts/collections/sg721-updatable" }
 sg-controllers  = { version = "3.5.0", path = "packages/controllers" }
@@ -56,7 +61,9 @@ sha2            = { version = "0.10.2", default-features = false }
 whitelist-mtree          = { version = "3.5.0", path = "contracts/whitelists/whitelist-merkletree" }
 vending-minter-merkle-wl = { version = "3.5.0", path = "contracts/minters/vending-minter-merkle-wl" }
 vending-factory          = { version = "3.5.0", path = "contracts/factories/vending-factory" }
+vending-factory-v3-8-0-prerelease      = { git = "https://github.com/public-awesome/launchpad", rev = "b584245bcc7ff07d9b384df1ccc4e3e2466d92db", package = "vending-factory" } # needed for testing legacy migration
 vending-minter           = { version = "3.5.0", path = "contracts/minters/vending-minter" }
+vending-minter-v3-8-0-prerelease      = { git = "https://github.com/public-awesome/launchpad", rev = "b584245bcc7ff07d9b384df1ccc4e3e2466d92db", package = "vending-minter" } # needed for testing legacy migration
 open-edition-factory     = { version = "3.5.0", path = "contracts/factories/open-edition-factory" }
 open-edition-minter      = { version = "3.5.0", path = "contracts/minters/open-edition-minter" }
 whitelist-immutable      = { version = "3.5.0", path = "contracts/whitelists/whitelist-immutable" }

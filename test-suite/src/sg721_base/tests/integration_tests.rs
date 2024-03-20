@@ -1,13 +1,16 @@
 #[cfg(test)]
 #[allow(deprecated)]
 mod tests {
-    use crate::common_setup::contract_boxes::App;
+    use crate::common_setup::contract_boxes::{
+        contract_sg721_base_v3_8_0_prerelease, contract_vending_factory_v3_8_0_prerelease,
+        contract_vending_minter_v3_8_0_prerelease, App,
+    };
     use anyhow::Error;
     use cosmwasm_std::{coin, Addr};
     use cw721_base::msg::NumTokensResponse;
     use cw_multi_test::{AppResponse, BankSudo, Executor, SudoMsg};
     use sg2::msg::CreateMinterMsg;
-    use sg2::tests::mock_collection_params;
+    use sg2::tests::{mock_collection_params, mock_collection_params_v3_8_0_prerelease};
     use sg721::ExecuteMsg as Sg721ExecuteMsg;
     use sg721::{CollectionInfo, InstantiateMsg};
 
@@ -21,7 +24,8 @@ mod tests {
     };
     use crate::common_setup::setup_minter::common::constants::CREATION_FEE;
     use crate::common_setup::setup_minter::vending_minter::mock_params::{
-        mock_create_minter, mock_init_extension, mock_params,
+        mock_create_minter, mock_create_minter_v3_8_0_prerelease, mock_init_extension, mock_params,
+        mock_params_v3_8_0_prerelease,
     };
     use cosmwasm_std::Empty;
     use cw721_base::msg::ExecuteMsg as cw721ExecuteMsg;
@@ -60,6 +64,36 @@ mod tests {
         (app, factory_contract)
     }
 
+    /// `v3.8.0-prerelease` is only used for testing migration from collection info (sg721) to new collection metadata extension (cw721)
+    fn proper_instantiate_factory_v3_8_0_prerelease() -> (
+        App,
+        vending_factory_v3_8_0_prerelease::helpers::FactoryContract,
+    ) {
+        let mut app = custom_mock_app();
+        let factory_id = app.store_code(contract_vending_factory_v3_8_0_prerelease());
+        let minter_id = app.store_code(contract_vending_minter_v3_8_0_prerelease());
+
+        let mut params = mock_params_v3_8_0_prerelease(None);
+        params.code_id = minter_id;
+
+        let msg = vending_factory_v3_8_0_prerelease::msg::InstantiateMsg { params };
+        let factory_addr = app
+            .instantiate_contract(
+                factory_id,
+                Addr::unchecked(GOVERNANCE),
+                &msg,
+                &[],
+                "factory",
+                Some(GOVERNANCE.to_string()),
+            )
+            .unwrap();
+
+        let factory_contract =
+            vending_factory_v3_8_0_prerelease::helpers::FactoryContract(factory_addr);
+
+        (app, factory_contract)
+    }
+
     fn proper_instantiate() -> (App, Addr) {
         let (mut app, factory_contract) = proper_instantiate_factory();
         let sg721_id = app.store_code(contract_sg721_base());
@@ -68,6 +102,36 @@ mod tests {
         let mut m = mock_create_minter(None, collection_params, None);
         m.collection_params.code_id = sg721_id;
         let msg = ExecuteMsg::CreateMinter(m);
+
+        let creation_fee = coin(CREATION_FEE, NATIVE_DENOM);
+
+        app.sudo(SudoMsg::Bank(BankSudo::Mint {
+            to_address: ADMIN.to_string(),
+            amount: vec![creation_fee.clone()],
+        }))
+        .unwrap();
+
+        let bal = app.wrap().query_all_balances(ADMIN).unwrap();
+        assert_eq!(bal, vec![creation_fee.clone()]);
+
+        // this should create the minter + sg721
+        let cosmos_msg = factory_contract.call_with_funds(msg, creation_fee).unwrap();
+
+        let res = app.execute(Addr::unchecked(ADMIN), cosmos_msg);
+        assert!(res.is_ok());
+
+        (app, Addr::unchecked("contract2"))
+    }
+
+    /// `v3.8.0-prerelease` is only used for testing migration from collection info (sg721) to new collection metadata extension (cw721)
+    fn proper_instantiate_v3_8_0_prerelease() -> (App, Addr) {
+        let (mut app, factory_contract) = proper_instantiate_factory_v3_8_0_prerelease();
+        let sg721_id = app.store_code(contract_sg721_base_v3_8_0_prerelease());
+
+        let collection_params = mock_collection_params_v3_8_0_prerelease();
+        let mut m = mock_create_minter_v3_8_0_prerelease(None, collection_params, None);
+        m.collection_params.code_id = sg721_id;
+        let msg = vending_factory_v3_8_0_prerelease::msg::ExecuteMsg::CreateMinter(m);
 
         let creation_fee = coin(CREATION_FEE, NATIVE_DENOM);
 
@@ -1003,6 +1067,81 @@ mod tests {
                 .query_wasm_smart(contract, &QueryMsg::NumTokens {})
                 .unwrap();
             assert_eq!(res.count, 0);
+        }
+    }
+
+    mod migrate {
+        use super::*;
+        use cosmwasm_std::testing::mock_env;
+        use cw721::{
+            msg::Cw721MigrateMsg, state::CollectionMetadata, CollectionMetadataExtension,
+            DefaultOptionCollectionMetadataExtension, DefaultOptionNftMetadataExtension,
+            RoyaltyInfo,
+        };
+        use sg721_base::msg::QueryMsg;
+
+        #[test]
+        fn migrate_sg721_base_collection_metadata() {
+            let (mut app, contract) = proper_instantiate_v3_8_0_prerelease();
+            // query legacy collection info
+            let legacy_collection_info: sg721_base_v3_8_0_prerelease::msg::CollectionInfoResponse =
+                app.wrap()
+                    .query_wasm_smart(
+                        contract.clone(),
+                        &sg721_base_v3_8_0_prerelease::msg::QueryMsg::CollectionInfo {},
+                    )
+                    .unwrap();
+            // throws a generic error, for unknown GetCollectionMetadata query
+            app.wrap()
+                .query_wasm_smart::<CollectionMetadata<DefaultOptionCollectionMetadataExtension>>(
+                    contract.clone(),
+                    &QueryMsg::<
+                        DefaultOptionNftMetadataExtension,
+                        DefaultOptionCollectionMetadataExtension,
+                    >::GetCollectionMetadata {},
+                )
+                .expect_err("expecting generic error, for unknown GetCollectionMetadata query");
+
+            // migrate
+            let sg721_id = app.store_code(contract_sg721_base());
+            let admin = Addr::unchecked("creator");
+            let migrate_msg = Cw721MigrateMsg::WithUpdate {
+                minter: None,
+                creator: None,
+            };
+            app.migrate_contract(admin, contract.clone(), &migrate_msg, sg721_id)
+                .unwrap();
+            // assert collection metadata
+            let collection_metadata = app
+                .wrap()
+                .query_wasm_smart::<CollectionMetadata<DefaultOptionCollectionMetadataExtension>>(
+                    contract.clone(),
+                    &QueryMsg::<
+                        DefaultOptionNftMetadataExtension,
+                        DefaultOptionCollectionMetadataExtension,
+                    >::GetCollectionMetadata {},
+                )
+                .unwrap();
+            let env = mock_env();
+            assert_eq!(
+                collection_metadata,
+                CollectionMetadata::<DefaultOptionCollectionMetadataExtension> {
+                    name: "Collection Name".to_string(),
+                    symbol: "COL".to_string(),
+                    updated_at: env.block.time,
+                    extension: Some(CollectionMetadataExtension::<RoyaltyInfo> {
+                        description: legacy_collection_info.description,
+                        image: legacy_collection_info.image,
+                        external_link: legacy_collection_info.external_link,
+                        start_trading_time: legacy_collection_info.start_trading_time,
+                        explicit_content: legacy_collection_info.explicit_content,
+                        royalty_info: legacy_collection_info.royalty_info.map(|r| RoyaltyInfo {
+                            payment_address: Addr::unchecked(r.payment_address),
+                            share: r.share,
+                        }),
+                    })
+                }
+            );
         }
     }
 }

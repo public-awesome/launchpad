@@ -8,7 +8,7 @@ use cw721_base::{
 };
 
 use cosmwasm_std::{
-    to_json_binary, Addr, Binary, ContractInfoResponse, CustomMsg, Deps, DepsMut, Empty, Env,
+    to_json_binary, Addr, Binary, ContractInfoResponse, CustomMsg, Deps, DepsMut, Env,
     Event, MessageInfo, Response, StdError, Storage, Timestamp, WasmQuery,
 };
 
@@ -286,11 +286,6 @@ where
             return Err(StdError::generic_err("Invalid contract name for migration").into());
         }
 
-        #[allow(clippy::cmp_owned)]
-        if prev_contract_version.version >= CONTRACT_VERSION.to_string() {
-            return Err(StdError::generic_err("Must upgrade contract version").into());
-        }
-
         let mut response = Response::new();
 
         // these upgrades can always be called. migration is only executed in case new stores are empty! It is safe calling these on any version.
@@ -302,6 +297,9 @@ where
         )?;
         response =
             crate::upgrades::v3_1_0_royalty_timestamp::upgrade(deps.branch(), &env, response)?;
+        // after migration of collection metadata in cw721, we can migrate collection info to new collection metadata extension
+        response =
+            crate::upgrades::v3_8_0_collection_metadata::upgrade(deps.branch(), &env, response)?;
 
         response = response.add_event(
             Event::new("migrate")

@@ -16,7 +16,7 @@ pub fn upgrade(deps: DepsMut, env: &Env, response: Response) -> Result<Response,
     >::default();
     // check whether royalty timestamp already exists
     let royalty_updated_at = contract.royalty_updated_at.may_load(deps.storage)?;
-    if let Some(_) = royalty_updated_at {
+    if royalty_updated_at.is_some() {
         // already migrated
         return Ok(response);
     }
