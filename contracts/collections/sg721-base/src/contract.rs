@@ -69,7 +69,7 @@ where
 
         self.frozen_collection_info.save(deps.storage, &false)?;
 
-        self.parent.instantiate(
+        self.parent.instantiate_with_version(
             deps,
             &env,
             &info,
