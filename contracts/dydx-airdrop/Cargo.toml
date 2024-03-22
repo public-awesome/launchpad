@@ -48,6 +48,7 @@ thiserror           = { workspace = true }
 vending-minter      = { workspace = true, features = ["library"] }
 whitelist-immutable-flex = { workspace = true, features = ["library"] }
 whitelist-updatable = { workspace = true, features = ["library"] }
+whitelist-updatable-flatrate = { workspace = true, features = ["library"] }
 
 [dev-dependencies]
 async-std       = "1.12.0"

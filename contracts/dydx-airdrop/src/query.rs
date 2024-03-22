@@ -1,3 +1,4 @@
+use crate::state::{AIRDROP_COUNT, HAS_CLAIMED, IS_ADDRESS_REGISTERED};
 use crate::{msg::QueryMsg, state::CONFIG, ContractError};
 use cosmwasm_std::{entry_point, to_json_binary, Binary};
 use cosmwasm_std::{Addr, Env};
@@ -5,7 +6,6 @@ use cosmwasm_std::{Deps, DepsMut, StdResult};
 use vending_minter::helpers::MinterContract;
 use whitelist_immutable_flex::helpers::WhitelistImmutableFlexContract;
 use whitelist_immutable_flex::msg::MemberResponse;
-use crate::state::{AIRDROP_COUNT, HAS_CLAIMED, IS_ADDRESS_REGISTERED};
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
@@ -14,8 +14,12 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
             to_json_binary(&query_airdrop_is_eligible(deps, eth_address)?)
         }
         QueryMsg::GetMinter {} => to_json_binary(&query_minter(deps)?),
-        QueryMsg::IsRegistered { eth_address } => to_json_binary(&query_airdrop_is_registered(deps, eth_address)?),
-        QueryMsg::HasClaimed { eth_address } => to_json_binary(&query_airdrop_has_claimed(deps, eth_address)?),
+        QueryMsg::IsRegistered { eth_address } => {
+            to_json_binary(&query_airdrop_is_registered(deps, eth_address)?)
+        }
+        QueryMsg::HasClaimed { eth_address } => {
+            to_json_binary(&query_airdrop_has_claimed(deps, eth_address)?)
+        }
         QueryMsg::GetAirdropCount {} => to_json_binary(&query_airdrop_count(deps)?),
     }
 }
@@ -42,7 +46,7 @@ pub fn query_airdrop_count(deps: Deps) -> StdResult<u32> {
 }
 
 pub fn query_airdrop_is_registered(deps: Deps, eth_address: String) -> StdResult<bool> {
-   let is_registered = IS_ADDRESS_REGISTERED.may_load(deps.storage, &eth_address)?;
+    let is_registered = IS_ADDRESS_REGISTERED.may_load(deps.storage, &eth_address)?;
     Ok(is_registered.unwrap_or_default())
 }
 
@@ -50,7 +54,6 @@ pub fn query_airdrop_has_claimed(deps: Deps, eth_address: String) -> StdResult<b
     let has_claimed = HAS_CLAIMED.may_load(deps.storage, &eth_address)?;
     Ok(has_claimed.unwrap_or_default())
 }
-
 
 pub fn query_collection_whitelist(deps: &DepsMut) -> Result<String, ContractError> {
     let config = CONFIG.load(deps.storage)?;

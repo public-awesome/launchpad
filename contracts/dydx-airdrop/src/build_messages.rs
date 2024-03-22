@@ -1,18 +1,17 @@
-use cosmwasm_std::{
-    coins, to_json_binary, Addr, BankMsg, Deps, DepsMut, Env, MessageInfo, StdResult, WasmMsg,
-};
-use sg_std::{CosmosMsg, Response, StargazeMsgWrapper, SubMsg, NATIVE_DENOM};
-use whitelist_updatable::msg::ExecuteMsg;
-// TODO: Replace with whitelist_updatable_flatrate
 use crate::msg::InstantiateMsg;
 use crate::query::{query_collection_whitelist, query_mint_count};
 use crate::state::{Config, CONFIG};
 use crate::ContractError;
+use cosmwasm_std::{
+    coins, to_json_binary, Addr, BankMsg, Deps, DepsMut, Env, MessageInfo, StdResult, WasmMsg,
+};
+use sg_std::{CosmosMsg, Response, StargazeMsgWrapper, SubMsg, NATIVE_DENOM};
 use sg_whitelist_flex::helpers::interface::CollectionWhitelistContract;
 use sg_whitelist_flex::msg::AddMembersMsg;
 use sg_whitelist_flex::msg::{ExecuteMsg as CollectionWhitelistExecuteMsg, Member};
 use whitelist_immutable_flex::msg::InstantiateMsg as WIFInstantiateMsg;
-use whitelist_updatable::msg::ExecuteMsg::AddAddresses;
+use whitelist_updatable_flatrate::msg::ExecuteMsg;
+use whitelist_updatable_flatrate::msg::ExecuteMsg::AddAddresses;
 pub const IMMUTABLE_WHITELIST_LABEL: &str = "Whitelist Immutable Flex for Airdrop";
 pub const INIT_WHITELIST_REPLY_ID: u64 = 1;
 

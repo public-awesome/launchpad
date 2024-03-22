@@ -1471,6 +1471,7 @@ dependencies = [
  "vending-minter",
  "whitelist-immutable-flex",
  "whitelist-updatable",
+ "whitelist-updatable-flatrate",
 ]
 
 [[package]]
@@ -3832,6 +3833,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "sg-name-minter"
+version = "2.1.0"
+source = "git+https://github.com/public-awesome/names.git?branch=flat-rate-whitelist#33fec3cd6714ec279e6f7ff7b31b691385ac04ee"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-controllers 0.16.0",
+ "schemars",
+ "serde",
+]
+
+[[package]]
 name = "sg-splits"
 version = "3.5.0"
 dependencies = [
@@ -3916,6 +3929,17 @@ name = "sg-whitelist-basic"
 version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bf0670b0de4489224faa3c18ceb28af7251441118473f454110739a69df587b9"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "schemars",
+ "serde",
+]
+
+[[package]]
+name = "sg-whitelist-basic"
+version = "2.1.0"
+source = "git+https://github.com/public-awesome/names.git?branch=flat-rate-whitelist#33fec3cd6714ec279e6f7ff7b31b691385ac04ee"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -5308,9 +5332,29 @@ dependencies = [
  "cw2 0.16.0",
  "schemars",
  "serde",
- "sg-name-minter",
+ "sg-name-minter 0.12.0",
  "sg-std 0.21.12",
- "sg-whitelist-basic",
+ "sg-whitelist-basic 0.12.0",
+ "thiserror",
+]
+
+[[package]]
+name = "whitelist-updatable-flatrate"
+version = "2.1.0"
+source = "git+https://github.com/public-awesome/names.git?branch=flat-rate-whitelist#33fec3cd6714ec279e6f7ff7b31b691385ac04ee"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-controllers 0.16.0",
+ "cw-storage-plus 0.16.0",
+ "cw-utils 0.16.0",
+ "cw2 0.16.0",
+ "schemars",
+ "semver",
+ "serde",
+ "sg-name-minter 2.1.0",
+ "sg-std 0.22.11",
+ "sg-whitelist-basic 2.1.0",
  "thiserror",
 ]
 
