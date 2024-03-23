@@ -1367,7 +1367,7 @@ dependencies = [
 [[package]]
 name = "cw721"
 version = "0.19.0"
-source = "git+https://github.com/arkprotocol/cw-nfts.git?branch=collection-info#bb0228572db9b2a371e2e014fcc8a59ae9de88df"
+source = "git+https://github.com/arkprotocol/cw-nfts.git?branch=collection-info#eec41c0db193a17cb70750c41d71d6873a5710ac"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -1422,7 +1422,7 @@ dependencies = [
 [[package]]
 name = "cw721-base"
 version = "0.19.0"
-source = "git+https://github.com/arkprotocol/cw-nfts.git?branch=collection-info#bb0228572db9b2a371e2e014fcc8a59ae9de88df"
+source = "git+https://github.com/arkprotocol/cw-nfts.git?branch=collection-info#eec41c0db193a17cb70750c41d71d6873a5710ac"
 dependencies = [
  "cosmwasm-std",
  "cw-ownable 0.6.0",
@@ -3287,9 +3287,9 @@ dependencies = [
 
 [[package]]
 name = "regex"
-version = "1.10.3"
+version = "1.10.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b62dbe01f0b06f9d8dc7d49e05a0785f153b00b2c227856282f671e0318c9b15"
+checksum = "c117dbdfde9c8308975b6a18d71f3f385c89461f7b3fb054288ecf2a2058ba4c"
 dependencies = [
  "aho-corasick",
  "memchr",
