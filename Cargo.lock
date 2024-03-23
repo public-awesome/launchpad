@@ -330,9 +330,9 @@ dependencies = [
 
 [[package]]
 name = "backtrace"
-version = "0.3.69"
+version = "0.3.71"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2089b7e3f35b9dd2d0ed921ead4f6d318c27680d4a5bd167b3ee120edb105837"
+checksum = "26b05800d2e817c8b3b4b54abd461726265fa9789ae34330622f2db9ee696f9d"
 dependencies = [
  "addr2line",
  "cc",
@@ -678,9 +678,9 @@ checksum = "1fd0f2584146f6f2ef48085050886acf353beff7305ebd1ae69500e27c67f64b"
 
 [[package]]
 name = "bytes"
-version = "1.5.0"
+version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a2bd12c1caf447e69cd4528f47f94d203fd2582878ecb9e9465484c4148a8223"
+checksum = "514de17de45fdb8dc022b1a7975556c53c86f9f0aa5f534b98977b171857c2c9"
 dependencies = [
  "serde",
 ]
@@ -972,6 +972,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "cosmwasm-storage"
+version = "1.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "66de2ab9db04757bcedef2b5984fbe536903ada4a8a9766717a4a71197ef34f6"
+dependencies = [
+ "cosmwasm-std",
+ "serde",
+]
+
+[[package]]
 name = "cpufeatures"
 version = "0.2.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1194,6 +1204,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "cw-paginate-storage"
+version = "2.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8693baa8dc275f86c5b4f6b86702994e859ac1657e19c5cbcb55d295592a5c04"
+dependencies = [
+ "cosmwasm-std",
+ "cosmwasm-storage",
+ "cw-storage-plus 1.2.0",
+ "serde",
+]
+
+[[package]]
 name = "cw-storage-plus"
 version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1345,11 +1367,12 @@ dependencies = [
 [[package]]
 name = "cw721"
 version = "0.19.0"
-source = "git+https://github.com/arkprotocol/cw-nfts.git?branch=collection-info#025f7c0e5546ca5b86edce80788b626fe38a3528"
+source = "git+https://github.com/arkprotocol/cw-nfts.git?branch=collection-info#bb0228572db9b2a371e2e014fcc8a59ae9de88df"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-ownable 0.6.0",
+ "cw-paginate-storage",
  "cw-storage-plus 1.2.0",
  "cw-utils 1.0.3",
  "cw2 1.1.2",
@@ -1399,7 +1422,7 @@ dependencies = [
 [[package]]
 name = "cw721-base"
 version = "0.19.0"
-source = "git+https://github.com/arkprotocol/cw-nfts.git?branch=collection-info#025f7c0e5546ca5b86edce80788b626fe38a3528"
+source = "git+https://github.com/arkprotocol/cw-nfts.git?branch=collection-info#bb0228572db9b2a371e2e014fcc8a59ae9de88df"
 dependencies = [
  "cosmwasm-std",
  "cw-ownable 0.6.0",
@@ -2148,7 +2171,7 @@ dependencies = [
  "futures-sink",
  "futures-util",
  "http",
- "indexmap 2.2.5",
+ "indexmap 2.2.6",
  "slab",
  "tokio",
  "tokio-util",
@@ -2409,9 +2432,9 @@ dependencies = [
 
 [[package]]
 name = "indexmap"
-version = "2.2.5"
+version = "2.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7b0b929d511467233429c45a44ac1dcaa21ba0f5ba11e4879e6ed28ddb4f9df4"
+checksum = "168fb715dda47215e360912c096649d23d58bf392ac62f73919e831745e40f26"
 dependencies = [
  "equivalent",
  "hashbrown 0.14.3",
@@ -4719,7 +4742,7 @@ version = "0.19.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1b5bb770da30e5cbfde35a2d7b9b8a2c4b8ef89548a7a6aeab5c9a576e3e7421"
 dependencies = [
- "indexmap 2.2.5",
+ "indexmap 2.2.6",
  "toml_datetime",
  "winnow",
 ]
@@ -4730,7 +4753,7 @@ version = "0.20.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "396e4d48bbb2b7554c944bde63101b5ae446cff6ec4a24227428f15eb72ef338"
 dependencies = [
- "indexmap 2.2.5",
+ "indexmap 2.2.6",
  "toml_datetime",
  "winnow",
 ]

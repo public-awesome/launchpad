@@ -1074,9 +1074,9 @@ mod tests {
         use super::*;
         use cosmwasm_std::testing::mock_env;
         use cw721::{
-            msg::Cw721MigrateMsg, state::CollectionMetadata, CollectionMetadataExtension,
-            DefaultOptionCollectionMetadataExtension, DefaultOptionNftMetadataExtension,
-            RoyaltyInfo,
+            msg::Cw721MigrateMsg, state::CollectionMetadataAndExtension,
+            CollectionMetadataExtensionWrapper, DefaultOptionCollectionMetadataExtension,
+            DefaultOptionNftMetadataExtension, RoyaltyInfo,
         };
         use sg721_base::msg::QueryMsg;
 
@@ -1093,7 +1093,7 @@ mod tests {
                     .unwrap();
             // throws a generic error, for unknown GetCollectionMetadata query
             app.wrap()
-                .query_wasm_smart::<CollectionMetadata<DefaultOptionCollectionMetadataExtension>>(
+                .query_wasm_smart::<CollectionMetadataAndExtension<DefaultOptionCollectionMetadataExtension>>(
                     contract.clone(),
                     &QueryMsg::<
                         DefaultOptionNftMetadataExtension,
@@ -1114,7 +1114,7 @@ mod tests {
             // assert collection metadata
             let collection_metadata = app
                 .wrap()
-                .query_wasm_smart::<CollectionMetadata<DefaultOptionCollectionMetadataExtension>>(
+                .query_wasm_smart::<CollectionMetadataAndExtension<DefaultOptionCollectionMetadataExtension>>(
                     contract.clone(),
                     &QueryMsg::<
                         DefaultOptionNftMetadataExtension,
@@ -1125,11 +1125,11 @@ mod tests {
             let env = mock_env();
             assert_eq!(
                 collection_metadata,
-                CollectionMetadata::<DefaultOptionCollectionMetadataExtension> {
+                CollectionMetadataAndExtension::<DefaultOptionCollectionMetadataExtension> {
                     name: "Collection Name".to_string(),
                     symbol: "COL".to_string(),
                     updated_at: env.block.time,
-                    extension: Some(CollectionMetadataExtension::<RoyaltyInfo> {
+                    extension: Some(CollectionMetadataExtensionWrapper::<RoyaltyInfo> {
                         description: legacy_collection_info.description,
                         image: legacy_collection_info.image,
                         external_link: legacy_collection_info.external_link,

@@ -12,7 +12,7 @@ use cosmwasm_std::{
     MessageInfo, Response, StdError, Storage, Timestamp, WasmQuery,
 };
 
-use cw721_base::{execute::Cw721Execute, query::Cw721Query};
+use cw721_base::traits::{Cw721Execute, Cw721Query};
 use cw_utils::nonpayable;
 
 #[allow(deprecated)]
@@ -120,7 +120,9 @@ where
         info: MessageInfo,
         collection_msg: UpdateCollectionInfoMsg<RoyaltyInfoResponse>,
     ) -> Result<Response<TCustomResponseMsg>, ContractError> {
-        let collection_info = self.parent.config.collection_metadata.load(deps.storage)?;
+        let collection_info = self
+            .parent
+            .query_collection_metadata_and_extension(deps.as_ref())?;
 
         if self.frozen_collection_info.load(deps.storage)? {
             return Err(ContractError::CollectionInfoFrozen {});
@@ -153,7 +155,7 @@ where
             extension: Some(collection_extension),
         };
         self.parent
-            .update_collection_metadata(deps, &info, &env, msg)?;
+            .update_collection_metadata(deps, Some(&info), Some(&env), msg)?;
 
         let event = Event::new("update_collection_info").add_attribute("sender", info.sender);
         Ok(Response::new().add_event(event))
@@ -183,7 +185,7 @@ where
             }),
         };
         self.parent
-            .update_collection_metadata(deps, &info, &env, msg)?;
+            .update_collection_metadata(deps, Some(&info), Some(&env), msg)?;
 
         let event = Event::new("update_start_trading_time").add_attribute("sender", info.sender);
         Ok(Response::new().add_event(event))
@@ -253,7 +255,7 @@ where
         &self,
         deps: Deps,
     ) -> Result<CollectionInfoResponse, ContractError> {
-        let collection_info = self.parent.config.collection_metadata.load(deps.storage)?;
+        let collection_info = self.parent.query_collection_metadata_and_extension(deps)?;
 
         let creator = self
             .get_creator(deps.storage)?

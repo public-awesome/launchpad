@@ -3,13 +3,14 @@ use std::fs::create_dir_all;
 
 use cosmwasm_schema::{export_schema, export_schema_with_title, remove_schemas, schema_for};
 
+use cw721::CollectionMetadataAndExtension;
 use cw721_base::{
     msg::{
         AllNftInfoResponse, ApprovalResponse, ApprovalsResponse, MinterResponse, NftInfoResponse,
         NumTokensResponse, OperatorsResponse, OwnerOfResponse, TokensResponse,
     },
     state::CollectionMetadata,
-    CollectionMetadataExtension, DefaultOptionCollectionMetadataExtension,
+    CollectionMetadataExtensionWrapper, DefaultOptionCollectionMetadataExtension,
     DefaultOptionNftMetadataExtension, RoyaltyInfo,
 };
 use sg721::InstantiateMsg;
@@ -30,7 +31,9 @@ fn main() {
     #[allow(deprecated)]
     export_schema(&schema_for!(CollectionInfoResponse), &out_dir);
     export_schema(
-        &schema_for!(CollectionMetadata<CollectionMetadataExtension<RoyaltyInfo>>),
+        &schema_for!(
+            CollectionMetadataAndExtension<CollectionMetadataExtensionWrapper<RoyaltyInfo>>
+        ),
         &out_dir,
     );
     export_schema_with_title(
@@ -49,7 +52,7 @@ fn main() {
     export_schema(&schema_for!(ApprovalsResponse), &out_dir);
     export_schema(&schema_for!(OperatorsResponse), &out_dir);
     export_schema(
-        &schema_for!(CollectionMetadata<DefaultOptionCollectionMetadataExtension>),
+        &schema_for!(CollectionMetadataAndExtension<DefaultOptionCollectionMetadataExtension>),
         &out_dir,
     );
     export_schema_with_title(

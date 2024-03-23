@@ -10,7 +10,7 @@ use cw721_base::{
         NumTokensResponse, OperatorsResponse, OwnerOfResponse, QueryMsg as Cw721QueryMsg,
         TokensResponse,
     },
-    state::CollectionMetadata,
+    state::CollectionMetadataAndExtension,
     DefaultOptionCollectionMetadataExtensionMsg,
 };
 use cw_ownable::Ownership;
@@ -64,13 +64,13 @@ pub enum QueryMsg<
     NumTokens {},
 
     #[deprecated(since = "0.19.0", note = "Please use GetCollectionMetadata instead")]
-    #[returns(CollectionMetadata<DefaultOptionCollectionMetadataExtensionMsg>)]
+    #[returns(CollectionMetadataAndExtension<DefaultOptionCollectionMetadataExtensionMsg>)]
     /// Deprecated: use GetCollectionMetadata instead! Will be removed in next release!
     ContractInfo {},
 
     /// With MetaData Extension.
     /// Returns top-level metadata about the contract
-    #[returns(CollectionMetadata<TCollectionMetadataExtension>)]
+    #[returns(CollectionMetadataAndExtension<TCollectionMetadataExtension>)]
     GetCollectionMetadata {},
 
     #[deprecated(since = "0.19.0", note = "Please use GetMinterOwnership instead")]

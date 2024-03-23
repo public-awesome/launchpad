@@ -256,7 +256,7 @@ mod tests {
         from_json, to_json_binary, ContractInfoResponse, ContractResult, Empty, OwnedDeps, Querier,
         QuerierResult, QueryRequest, SystemError, SystemResult, WasmQuery,
     };
-    use cw721_base::query::Cw721Query;
+    use cw721_base::traits::Cw721Query;
     use sg721::{CollectionInfo, InstantiateMsg};
     use std::marker::PhantomData;
 

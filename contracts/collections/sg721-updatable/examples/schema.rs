@@ -4,7 +4,7 @@ use std::fs::create_dir_all;
 use cosmwasm_schema::{export_schema, export_schema_with_title, remove_schemas, schema_for};
 
 use cw721::{
-    state::CollectionMetadata, CollectionMetadataExtension,
+    CollectionMetadataAndExtension, CollectionMetadataExtensionWrapper,
     DefaultOptionCollectionMetadataExtension, DefaultOptionNftMetadataExtension, RoyaltyInfo,
 };
 #[allow(deprecated)]
@@ -41,7 +41,9 @@ fn main() {
     #[allow(deprecated)]
     export_schema(&schema_for!(CollectionInfoResponse), &out_dir);
     export_schema(
-        &schema_for!(CollectionMetadata<CollectionMetadataExtension<RoyaltyInfo>>),
+        &schema_for!(
+            CollectionMetadataAndExtension<CollectionMetadataExtensionWrapper<RoyaltyInfo>>
+        ),
         &out_dir,
     );
     export_schema_with_title(
@@ -61,7 +63,7 @@ fn main() {
     #[allow(deprecated)]
     export_schema(&schema_for!(ContractInfoResponse), &out_dir);
     export_schema(
-        &schema_for!(CollectionMetadata<DefaultOptionCollectionMetadataExtension>),
+        &schema_for!(CollectionMetadataAndExtension<DefaultOptionCollectionMetadataExtension>),
         &out_dir,
     );
     export_schema_with_title(

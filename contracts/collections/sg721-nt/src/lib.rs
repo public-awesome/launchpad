@@ -37,7 +37,7 @@ pub mod entry {
     use crate::msg::ExecuteMsg;
     use cosmwasm_std::{Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdError};
     use cw721::msg::Cw721MigrateMsg;
-    use cw721_base::execute::Cw721Execute;
+    use cw721_base::traits::Cw721Execute;
     use sg721_base::ContractError;
 
     #[entry_point]

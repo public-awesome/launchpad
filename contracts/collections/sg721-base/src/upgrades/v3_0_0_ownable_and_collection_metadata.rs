@@ -9,7 +9,7 @@ use cw721::{
     DefaultOptionCollectionMetadataExtensionMsg, DefaultOptionNftMetadataExtension,
     DefaultOptionNftMetadataExtensionMsg,
 };
-use cw721_base::execute::Cw721Execute;
+use cw721_base::traits::Cw721Execute;
 
 /// Migrates cw721 states:
 /// (1) legacy creator and minter migration, now using cw-ownable
