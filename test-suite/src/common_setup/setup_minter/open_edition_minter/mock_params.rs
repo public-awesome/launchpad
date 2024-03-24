@@ -12,6 +12,7 @@ use crate::common_setup::setup_minter::common::constants::{
     CREATION_FEE, DEV_ADDRESS, MAX_TOKEN_LIMIT, MINT_FEE_FAIR_BURN, MIN_MINT_PRICE_OPEN_EDITION,
 };
 
+#[allow(clippy::too_many_arguments)]
 pub fn mock_init_minter_extension(
     start_time: Option<Timestamp>,
     end_time: Option<Timestamp>,
