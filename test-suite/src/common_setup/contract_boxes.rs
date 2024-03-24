@@ -35,7 +35,7 @@ pub fn contract_vending_factory() -> Box<dyn Contract<Empty>> {
     Box::new(contract)
 }
 
-/// `v3.8.0-prerelease` is only used for testing migration from collection info (sg721) to new collection metadata extension (cw721)
+/// `v3.8.0-prerelease` is only used for testing migration from collection info (sg721) to new collection extension (cw721)
 pub fn contract_vending_factory_v3_8_0_prerelease() -> Box<dyn Contract<Empty>> {
     let contract = ContractWrapper::new(
         vending_factory_v3_8_0_prerelease::contract::execute,
@@ -114,7 +114,7 @@ pub fn contract_vending_minter() -> Box<dyn Contract<Empty>> {
     Box::new(contract)
 }
 
-/// `v3.8.0-prerelease` is only used for testing migration from collection info (sg721) to new collection metadata extension (cw721)
+/// `v3.8.0-prerelease` is only used for testing migration from collection info (sg721) to new collection extension (cw721)
 pub fn contract_vending_minter_v3_8_0_prerelease() -> Box<dyn Contract<Empty>> {
     let contract = ContractWrapper::new(
         vending_minter_v3_8_0_prerelease::contract::execute,
@@ -135,7 +135,7 @@ pub fn contract_sg721_base() -> Box<dyn Contract<Empty>> {
     Box::new(contract)
 }
 
-/// `v3.8.0-prerelease` is only used for testing migration from collection info (sg721) to new collection metadata extension (cw721)
+/// `v3.8.0-prerelease` is only used for testing migration from collection info (sg721) to new collection extension (cw721)
 pub fn contract_sg721_base_v3_8_0_prerelease() -> Box<dyn Contract<Empty>> {
     let contract = ContractWrapper::new(
         sg721_base_v3_8_0_prerelease::entry::execute,

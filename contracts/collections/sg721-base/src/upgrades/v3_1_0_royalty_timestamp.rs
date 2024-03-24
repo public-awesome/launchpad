@@ -2,16 +2,18 @@ use crate::{ContractError, Sg721Contract};
 
 use cosmwasm_std::{DepsMut, Empty, Env, Event, Response};
 use cw721::{
-    DefaultOptionCollectionMetadataExtension, DefaultOptionCollectionMetadataExtensionMsg,
-    DefaultOptionNftMetadataExtension, DefaultOptionNftMetadataExtensionMsg,
+    DefaultOptionalCollectionExtension, DefaultOptionalCollectionExtensionMsg,
+    DefaultOptionalNftExtension, DefaultOptionalNftExtensionMsg,
 };
 
 pub fn upgrade(deps: DepsMut, env: &Env, response: Response) -> Result<Response, ContractError> {
     let contract = Sg721Contract::<
-        DefaultOptionNftMetadataExtension,
-        DefaultOptionNftMetadataExtensionMsg,
-        DefaultOptionCollectionMetadataExtension,
-        DefaultOptionCollectionMetadataExtensionMsg,
+        DefaultOptionalNftExtension,
+        DefaultOptionalNftExtensionMsg,
+        DefaultOptionalCollectionExtension,
+        DefaultOptionalCollectionExtensionMsg,
+        Empty,
+        Empty,
         Empty,
     >::default();
     // check whether royalty timestamp already exists

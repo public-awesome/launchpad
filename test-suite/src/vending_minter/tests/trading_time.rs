@@ -5,8 +5,8 @@ use crate::common_setup::setup_minter::vending_minter::setup::{
     configure_minter, vending_minter_code_ids,
 };
 use crate::common_setup::templates::{vending_minter_with_app, vending_minter_with_start_time};
-use cosmwasm_std::{coins, Addr, Timestamp};
-use cw721::{DefaultOptionCollectionMetadataExtension, DefaultOptionNftMetadataExtension};
+use cosmwasm_std::{coins, Addr, Empty, Timestamp};
+use cw721::{DefaultOptionalCollectionExtension, DefaultOptionalNftExtension};
 use cw_multi_test::Executor;
 use sg2::tests::mock_collection_params_1;
 #[allow(deprecated)]
@@ -285,8 +285,9 @@ fn update_start_trading_time() {
         .query_wasm_smart(
             collection_addr.to_string(),
             &Sg721QueryMsg::<
-                DefaultOptionNftMetadataExtension,
-                DefaultOptionCollectionMetadataExtension,
+                DefaultOptionalNftExtension,
+                DefaultOptionalCollectionExtension,
+                Empty,
             >::CollectionInfo {},
         )
         .unwrap();

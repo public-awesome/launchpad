@@ -6,47 +6,61 @@ use std::ops::Deref;
 
 type Parent<
     'a,
-    // Metadata defined in NftInfo (used for mint).
-    TNftMetadataExtension,
-    // Message passed for updating metadata.
-    TNftMetadataExtensionMsg,
-    // Extension defined in CollectionMetadata.
-    TCollectionMetadataExtension,
-    TCollectionMetadataExtensionMsg,
+    // NftInfo extension (onchain metadata).
+    TNftExtension,
+    // NftInfo extension msg for onchain metadata.
+    TNftExtensionMsg,
+    // CollectionInfo extension (onchain attributes).
+    TCollectionExtension,
+    // CollectionInfo extension msg for onchain collection attributes.
+    TCollectionExtensionMsg,
+    // Custom extension msg for custom contract logic. Default implementation is a no-op.
+    TExtensionMsg,
+    // Custom query msg for custom contract logic. Default implementation returns an empty binary.
+    TExtensionQueryMsg,
     // Defines for `CosmosMsg::Custom<T>` in response. Barely used, so `Empty` can be used.
     TCustomResponseMsg,
 > = cw721_base::Cw721Contract<
     'a,
-    TNftMetadataExtension,
-    TNftMetadataExtensionMsg,
-    TCollectionMetadataExtension,
-    TCollectionMetadataExtensionMsg,
+    TNftExtension,
+    TNftExtensionMsg,
+    TCollectionExtension,
+    TCollectionExtensionMsg,
+    TExtensionMsg,
+    TExtensionQueryMsg,
     TCustomResponseMsg,
 >;
 
 pub struct Sg721Contract<
     'a,
-    // Metadata defined in NftInfo (used for mint).
-    TNftMetadataExtension,
-    // Message passed for updating metadata.
-    TNftMetadataExtensionMsg,
-    // Extension defined in CollectionMetadata.
-    TCollectionMetadataExtension,
-    TCollectionMetadataExtensionMsg,
+    // NftInfo extension (onchain metadata).
+    TNftExtension,
+    // NftInfo extension msg for onchain metadata.
+    TNftExtensionMsg,
+    // CollectionInfo extension (onchain attributes).
+    TCollectionExtension,
+    // CollectionInfo extension msg for onchain collection attributes.
+    TCollectionExtensionMsg,
+    // Custom extension msg for custom contract logic. Default implementation is a no-op.
+    TExtensionMsg,
+    // Custom query msg for custom contract logic. Default implementation returns an empty binary.
+    TExtensionQueryMsg,
     // Defines for `CosmosMsg::Custom<T>` in response. Barely used, so `Empty` can be used.
     TCustomResponseMsg,
 > where
-    TNftMetadataExtension: Cw721State,
-    TNftMetadataExtensionMsg: Cw721CustomMsg,
-    TCollectionMetadataExtension: Cw721State,
-    TCollectionMetadataExtensionMsg: Cw721CustomMsg,
+    TNftExtension: Cw721State,
+    TNftExtensionMsg: Cw721CustomMsg,
+    TCollectionExtension: Cw721State,
+    TCollectionExtensionMsg: Cw721CustomMsg,
 {
     pub parent: Parent<
         'a,
-        TNftMetadataExtension,
-        TNftMetadataExtensionMsg,
-        TCollectionMetadataExtension,
-        TCollectionMetadataExtensionMsg,
+        TNftExtension,
+        TNftExtensionMsg,
+        TCollectionExtension,
+        TCollectionExtensionMsg,
+        TExtensionMsg,
+        TExtensionQueryMsg,
         TCustomResponseMsg,
     >,
     /// Instantiate set to false by the minter, then true by creator to freeze collection info
@@ -56,25 +70,29 @@ pub struct Sg721Contract<
 
 impl<
         'a,
-        TNftMetadataExtension,
-        TNftMetadataExtensionMsg,
-        TCollectionMetadataExtension,
-        TCollectionMetadataExtensionMsg,
+        TNftExtension,
+        TNftExtensionMsg,
+        TCollectionExtension,
+        TCollectionExtensionMsg,
+        TExtensionMsg,
+        TExtensionQueryMsg,
         TCustomResponseMsg,
     > Default
     for Sg721Contract<
         'a,
-        TNftMetadataExtension,
-        TNftMetadataExtensionMsg,
-        TCollectionMetadataExtension,
-        TCollectionMetadataExtensionMsg,
+        TNftExtension,
+        TNftExtensionMsg,
+        TCollectionExtension,
+        TCollectionExtensionMsg,
+        TExtensionMsg,
+        TExtensionQueryMsg,
         TCustomResponseMsg,
     >
 where
-    TNftMetadataExtension: Cw721State,
-    TNftMetadataExtensionMsg: Cw721CustomMsg,
-    TCollectionMetadataExtension: Cw721State,
-    TCollectionMetadataExtensionMsg: Cw721CustomMsg,
+    TNftExtension: Cw721State,
+    TNftExtensionMsg: Cw721CustomMsg,
+    TCollectionExtension: Cw721State,
+    TCollectionExtensionMsg: Cw721CustomMsg,
 {
     fn default() -> Self {
         Sg721Contract {
@@ -87,32 +105,38 @@ where
 
 impl<
         'a,
-        TNftMetadataExtension,
-        TNftMetadataExtensionMsg,
-        TCollectionMetadataExtension,
-        TCollectionMetadataExtensionMsg,
+        TNftExtension,
+        TNftExtensionMsg,
+        TCollectionExtension,
+        TCollectionExtensionMsg,
+        TExtensionMsg,
+        TExtensionQueryMsg,
         TCustomResponseMsg,
     > Deref
     for Sg721Contract<
         'a,
-        TNftMetadataExtension,
-        TNftMetadataExtensionMsg,
-        TCollectionMetadataExtension,
-        TCollectionMetadataExtensionMsg,
+        TNftExtension,
+        TNftExtensionMsg,
+        TCollectionExtension,
+        TCollectionExtensionMsg,
+        TExtensionMsg,
+        TExtensionQueryMsg,
         TCustomResponseMsg,
     >
 where
-    TNftMetadataExtension: Cw721State,
-    TNftMetadataExtensionMsg: Cw721CustomMsg,
-    TCollectionMetadataExtension: Cw721State,
-    TCollectionMetadataExtensionMsg: Cw721CustomMsg,
+    TNftExtension: Cw721State,
+    TNftExtensionMsg: Cw721CustomMsg,
+    TCollectionExtension: Cw721State,
+    TCollectionExtensionMsg: Cw721CustomMsg,
 {
     type Target = Parent<
         'a,
-        TNftMetadataExtension,
-        TNftMetadataExtensionMsg,
-        TCollectionMetadataExtension,
-        TCollectionMetadataExtensionMsg,
+        TNftExtension,
+        TNftExtensionMsg,
+        TCollectionExtension,
+        TCollectionExtensionMsg,
+        TExtensionMsg,
+        TExtensionQueryMsg,
         TCustomResponseMsg,
     >;
 

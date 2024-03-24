@@ -4,21 +4,24 @@ use cosmwasm_std::entry_point;
 pub mod msg;
 use cosmwasm_std::Empty;
 use cw721::{
-    DefaultOptionCollectionMetadataExtension, DefaultOptionCollectionMetadataExtensionMsg,
-    DefaultOptionNftMetadataExtension, DefaultOptionNftMetadataExtensionMsg,
+    DefaultOptionalCollectionExtension, DefaultOptionalCollectionExtensionMsg,
+    DefaultOptionalNftExtension, DefaultOptionalNftExtensionMsg,
 };
 use sg721::InstantiateMsg;
 use sg721_base::Sg721Contract;
 pub type QueryMsg = sg721_base::msg::QueryMsg<
-    DefaultOptionNftMetadataExtension,
-    DefaultOptionCollectionMetadataExtension,
+    DefaultOptionalNftExtension,
+    DefaultOptionalCollectionExtension,
+    Empty,
 >;
 pub type Sg721NonTransferableContract<'a> = Sg721Contract<
     'a,
-    DefaultOptionNftMetadataExtension,
-    DefaultOptionNftMetadataExtensionMsg,
-    DefaultOptionCollectionMetadataExtension,
-    DefaultOptionCollectionMetadataExtensionMsg,
+    DefaultOptionalNftExtension,
+    DefaultOptionalNftExtensionMsg,
+    DefaultOptionalCollectionExtension,
+    DefaultOptionalCollectionExtensionMsg,
+    Empty,
+    Empty,
     Empty,
 >;
 use sg721_base::msg::NftParams;
@@ -61,7 +64,7 @@ pub mod entry {
         deps: DepsMut,
         env: Env,
         info: MessageInfo,
-        msg: ExecuteMsg<DefaultOptionNftMetadataExtension>,
+        msg: ExecuteMsg<DefaultOptionalNftExtension>,
     ) -> Result<Response, sg721_base::ContractError> {
         match msg {
             ExecuteMsg::Burn { token_id } => Sg721NonTransferableContract::default()
@@ -126,10 +129,12 @@ pub mod entry {
         // perform the upgrade
         // cw721 migration allows all versions: 0.18. 0.17, 0.16 and older
         let contract = Sg721Contract::<
-            DefaultOptionNftMetadataExtension,
-            DefaultOptionNftMetadataExtensionMsg,
-            DefaultOptionCollectionMetadataExtension,
-            DefaultOptionCollectionMetadataExtensionMsg,
+            DefaultOptionalNftExtension,
+            DefaultOptionalNftExtensionMsg,
+            DefaultOptionalCollectionExtension,
+            DefaultOptionalCollectionExtensionMsg,
+            Empty,
+            Empty,
             Empty,
         >::default();
         let migrate_msg = Cw721MigrateMsg::WithUpdate {

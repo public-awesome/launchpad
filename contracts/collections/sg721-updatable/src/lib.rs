@@ -21,9 +21,7 @@ pub mod entry {
     use cosmwasm_std::{entry_point, to_json_binary};
     use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, Response};
     use cw721::msg::Cw721MigrateMsg;
-    use cw721::{
-        DefaultOptionCollectionMetadataExtensionMsg, DefaultOptionNftMetadataExtensionMsg,
-    };
+    use cw721::{DefaultOptionalCollectionExtensionMsg, DefaultOptionalNftExtensionMsg};
 
     #[entry_point]
     pub fn instantiate(
@@ -40,10 +38,7 @@ pub mod entry {
         deps: DepsMut,
         env: Env,
         info: MessageInfo,
-        msg: ExecuteMsg<
-            DefaultOptionNftMetadataExtensionMsg,
-            DefaultOptionCollectionMetadataExtensionMsg,
-        >,
+        msg: ExecuteMsg<DefaultOptionalNftExtensionMsg, DefaultOptionalCollectionExtensionMsg>,
     ) -> Result<Response, ContractError> {
         match msg {
             ExecuteMsg::FreezeTokenMetadata {} => execute_freeze_token_metadata(deps, env, info),

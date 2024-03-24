@@ -3,12 +3,13 @@ use crate::common_setup::templates::vending_minter_template;
 use crate::common_setup::{
     setup_accounts_and_block::coins_for_msg, setup_accounts_and_block::setup_block_time,
 };
+use cosmwasm_std::Empty;
 use cosmwasm_std::{
     coin, coins,
     testing::{mock_dependencies_with_balance, mock_env, mock_info},
     Api, Coin, Timestamp, Uint128,
 };
-use cw721::{DefaultOptionCollectionMetadataExtension, DefaultOptionNftMetadataExtension};
+use cw721::{DefaultOptionalCollectionExtension, DefaultOptionalNftExtension};
 use cw721_base::msg::{Cw721QueryMsg, OwnerOfResponse};
 use cw_multi_test::Executor;
 use sg2::tests::mock_collection_params_1;
@@ -152,8 +153,9 @@ fn happy_path() {
     // Check NFT owned by buyer
     // Random mint token_id 1
     let query_owner_msg = Cw721QueryMsg::<
-        DefaultOptionNftMetadataExtension,
-        DefaultOptionCollectionMetadataExtension,
+        DefaultOptionalNftExtension,
+        DefaultOptionalCollectionExtension,
+        Empty,
     >::OwnerOf {
         token_id: String::from("2"),
         include_expired: None,
@@ -214,8 +216,9 @@ fn happy_path() {
 
     // Check that NFT is transferred
     let query_owner_msg = Cw721QueryMsg::<
-        DefaultOptionNftMetadataExtension,
-        DefaultOptionCollectionMetadataExtension,
+        DefaultOptionalNftExtension,
+        DefaultOptionalCollectionExtension,
+        Empty,
     >::OwnerOf {
         token_id: String::from("1"),
         include_expired: None,

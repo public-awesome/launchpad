@@ -2,10 +2,10 @@ use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Binary, Coin, Timestamp};
 use cw721_base::{
     msg::{
-        CollectionMetadataExtensionMsg, CollectionMetadataMsg, ExecuteMsg as Cw721ExecuteMsg,
+        CollectionExtensionMsg, CollectionInfoMsg, ExecuteMsg as Cw721ExecuteMsg,
         InstantiateMsg as Cw721InstantiateMsg,
     },
-    DefaultOptionCollectionMetadataExtensionMsg,
+    DefaultOptionalCollectionExtensionMsg,
 };
 use cw_ownable::Action;
 use cw_utils::Expiration;
@@ -15,10 +15,12 @@ pub use cw721_base::state::RoyaltyInfo;
 
 #[cw_serde]
 pub enum ExecuteMsg<
-    // Message passed for updating metadata.
-    TNftMetadataExtensionMsg,
-    // Message passed for updating collection info extension.
-    TCollectionMetadataExtensionMsg,
+    // NftInfo extension msg for onchain metadata.
+    TNftExtensionMsg,
+    // CollectionInfo extension msg for onchain collection attributes.
+    TCollectionExtensionMsg,
+    // Custom extension msg for custom contract logic. Default implementation is a no-op.
+    TExtensionMsg,
 > {
     // ---- sg721 specific msgs ----
     /// Update specific collection info fields
@@ -39,9 +41,9 @@ pub enum ExecuteMsg<
     UpdateMinterOwnership(Action),
     UpdateCreatorOwnership(Action),
 
-    /// The creator is the only one eligible to update `CollectionMetadata`.
-    UpdateCollectionMetadata {
-        collection_metadata: CollectionMetadataMsg<TCollectionMetadataExtensionMsg>,
+    /// The creator is the only one eligible to update `CollectionInfo`.
+    Cw721UpdateCollectionInfo {
+        collection_info: CollectionInfoMsg<TCollectionExtensionMsg>,
     },
     /// Transfer is a base message to move a token to another account without triggering actions
     TransferNft {
@@ -89,7 +91,7 @@ pub enum ExecuteMsg<
         /// Metadata JSON Schema
         token_uri: Option<String>,
         /// Any custom extension used by this contract
-        extension: TNftMetadataExtensionMsg,
+        extension: TNftExtensionMsg,
     },
 
     /// Burn an NFT the sender has access to
@@ -97,18 +99,17 @@ pub enum ExecuteMsg<
         token_id: String,
     },
 
-    /// Metadata msg
-    #[deprecated(since = "0.19.0", note = "Please use UpdateNftMetadata instead")]
-    /// Deprecated: use UpdateNftMetadata instead! In previous release it was a no-op for customization in other contracts. Will be removed in next release!
+    /// Custom msg execution. This is a no-op in default implementation.
     Extension {
-        msg: TNftMetadataExtensionMsg,
+        msg: TExtensionMsg,
     },
+
     /// The creator is the only one eligible to update NFT's token uri and onchain metadata (`NftInfo.extension`).
     /// NOTE: approvals and owner are not affected by this call, since they belong to the NFT owner.
     UpdateNftInfo {
         token_id: String,
         token_uri: Option<String>,
-        extension: TNftMetadataExtensionMsg,
+        extension: TNftExtensionMsg,
     },
 
     /// Sets address to send withdrawn fees to. Only owner can call this.
@@ -124,12 +125,12 @@ pub enum ExecuteMsg<
     },
 }
 
-impl<TNftMetadataExtensionMsg, TCollectionMetadataExtensionMsg>
-    From<ExecuteMsg<TNftMetadataExtensionMsg, TCollectionMetadataExtensionMsg>>
-    for Cw721ExecuteMsg<TNftMetadataExtensionMsg, TCollectionMetadataExtensionMsg>
+impl<TNftExtensionMsg, TCollectionExtensionMsg, TExtensionMsg>
+    From<ExecuteMsg<TNftExtensionMsg, TCollectionExtensionMsg, TExtensionMsg>>
+    for Cw721ExecuteMsg<TNftExtensionMsg, TCollectionExtensionMsg, TExtensionMsg>
 {
     #[allow(deprecated)]
-    fn from(msg: ExecuteMsg<TNftMetadataExtensionMsg, TCollectionMetadataExtensionMsg>) -> Self {
+    fn from(msg: ExecuteMsg<TNftExtensionMsg, TCollectionExtensionMsg, TExtensionMsg>) -> Self {
         match msg {
             // ---- sg721 msgs ----
             ExecuteMsg::UpdateCollectionInfo { collection_info: _ } => {
@@ -145,11 +146,9 @@ impl<TNftMetadataExtensionMsg, TCollectionMetadataExtensionMsg>
             ExecuteMsg::UpdateCreatorOwnership(action) => {
                 Cw721ExecuteMsg::UpdateCreatorOwnership(action)
             }
-            ExecuteMsg::UpdateCollectionMetadata {
-                collection_metadata,
-            } => Cw721ExecuteMsg::UpdateCollectionMetadata {
-                collection_metadata,
-            },
+            ExecuteMsg::Cw721UpdateCollectionInfo { collection_info } => {
+                Cw721ExecuteMsg::UpdateCollectionInfo { collection_info }
+            }
             ExecuteMsg::TransferNft {
                 recipient,
                 token_id,
@@ -214,7 +213,7 @@ impl<TNftMetadataExtensionMsg, TCollectionMetadataExtensionMsg>
 }
 
 #[cw_serde]
-#[deprecated = "Please use CollectionMetadata instead"]
+#[deprecated = "Please use CollectionInfo instead"]
 pub struct CollectionInfo<T> {
     pub creator: String,
     pub description: String,
@@ -226,9 +225,9 @@ pub struct CollectionInfo<T> {
 }
 
 #[allow(deprecated)]
-impl From<CollectionInfo<RoyaltyInfoResponse>> for DefaultOptionCollectionMetadataExtensionMsg {
+impl From<CollectionInfo<RoyaltyInfoResponse>> for DefaultOptionalCollectionExtensionMsg {
     fn from(info: CollectionInfo<RoyaltyInfoResponse>) -> Self {
-        Some(CollectionMetadataExtensionMsg {
+        Some(CollectionExtensionMsg {
             description: Some(info.description),
             image: Some(info.image),
             external_link: info.external_link,
@@ -240,7 +239,7 @@ impl From<CollectionInfo<RoyaltyInfoResponse>> for DefaultOptionCollectionMetada
 }
 
 #[cw_serde]
-#[deprecated = "Please use `UpdateCollectionMetadata<DefaultOptionCollectionMetadataExtensionMsg>` instead"]
+#[deprecated = "Please use `UpdateCollectionInfo<DefaultOptionalCollectionExtensionMsg>` instead"]
 pub struct UpdateCollectionInfoMsg<T> {
     pub description: Option<String>,
     pub image: Option<String>,
@@ -253,10 +252,10 @@ pub struct UpdateCollectionInfoMsg<T> {
 
 #[allow(deprecated)]
 impl From<UpdateCollectionInfoMsg<RoyaltyInfoResponse>>
-    for CollectionMetadataExtensionMsg<RoyaltyInfoResponse>
+    for CollectionExtensionMsg<RoyaltyInfoResponse>
 {
     fn from(msg: UpdateCollectionInfoMsg<RoyaltyInfoResponse>) -> Self {
-        CollectionMetadataExtensionMsg {
+        CollectionExtensionMsg {
             description: msg.description,
             image: msg.image,
             external_link: msg.external_link.unwrap_or_default(),
@@ -277,14 +276,14 @@ pub struct InstantiateMsg {
 }
 
 #[allow(deprecated)]
-impl From<InstantiateMsg> for Cw721InstantiateMsg<DefaultOptionCollectionMetadataExtensionMsg> {
+impl From<InstantiateMsg> for Cw721InstantiateMsg<DefaultOptionalCollectionExtensionMsg> {
     fn from(msg: InstantiateMsg) -> Self {
         Cw721InstantiateMsg {
             name: msg.name,
             symbol: msg.symbol,
             minter: Some(msg.minter),
             creator: Some(msg.collection_info.creator.clone()),
-            collection_metadata_extension: msg.collection_info.into(),
+            collection_info_extension: msg.collection_info.into(),
             withdraw_address: None,
         }
     }

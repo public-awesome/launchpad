@@ -26,7 +26,7 @@ pub fn mock_init_extension(
     }
 }
 
-/// `v3.8.0-prerelease` is only used for testing migration from collection info (sg721) to new collection metadata extension (cw721)
+/// `v3.8.0-prerelease` is only used for testing migration from collection info (sg721) to new collection extension (cw721)
 pub fn mock_init_extension_v3_8_0_prerelease(
     splits_addr: Option<String>,
     start_time: Option<Timestamp>,
@@ -53,7 +53,7 @@ pub fn mock_create_minter(
     }
 }
 
-/// `v3.8.0-prerelease` is only used for testing migration from collection info (sg721) to new collection metadata extension (cw721)
+/// `v3.8.0-prerelease` is only used for testing migration from collection info (sg721) to new collection extension (cw721)
 pub fn mock_create_minter_v3_8_0_prerelease(
     splits_addr: Option<String>,
     collection_params: sg2_v3_8_0_prerelease::msg::CollectionParams,
@@ -97,7 +97,7 @@ pub fn mock_params(mint_denom: Option<String>) -> VendingMinterParams {
     }
 }
 
-/// `v3.8.0-prerelease` is only used for testing migration from collection info (sg721) to new collection metadata extension (cw721)
+/// `v3.8.0-prerelease` is only used for testing migration from collection info (sg721) to new collection extension (cw721)
 pub fn mock_params_v3_8_0_prerelease(
     mint_denom: Option<String>,
 ) -> vending_factory_v3_8_0_prerelease::state::VendingMinterParams {

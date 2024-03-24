@@ -8,8 +8,8 @@ use crate::common_setup::templates::{
 use base_factory::msg::{BaseMinterCreateMsg, BaseUpdateParamsMsg, SudoMsg};
 
 use base_minter::msg::{ConfigResponse, ExecuteMsg};
-use cosmwasm_std::{coin, coins, Addr, Timestamp};
-use cw721::{DefaultOptionCollectionMetadataExtension, DefaultOptionNftMetadataExtension};
+use cosmwasm_std::{coin, coins, Addr, Empty, Timestamp};
+use cw721::{DefaultOptionalCollectionExtension, DefaultOptionalNftExtension};
 use cw721_base::msg::{Cw721ExecuteMsg, Cw721QueryMsg, OwnerOfResponse};
 use cw_multi_test::Executor;
 use sg2::msg::Sg2ExecuteMsg;
@@ -158,8 +158,9 @@ fn check_mint() {
     assert_eq!(res.config.mint_price.amount.u128(), MIN_MINT_PRICE);
 
     let query_owner_msg = Cw721QueryMsg::<
-        DefaultOptionNftMetadataExtension,
-        DefaultOptionCollectionMetadataExtension,
+        DefaultOptionalNftExtension,
+        DefaultOptionalCollectionExtension,
+        Empty,
     >::OwnerOf {
         token_id: String::from("1"),
         include_expired: None,
@@ -172,8 +173,9 @@ fn check_mint() {
 
     // make sure sg721-nt cannot be transferred
     let transfer_msg = Cw721ExecuteMsg::<
-        DefaultOptionNftMetadataExtension,
-        DefaultOptionCollectionMetadataExtension,
+        DefaultOptionalNftExtension,
+        DefaultOptionalCollectionExtension,
+        Empty,
     >::TransferNft {
         recipient: "adsf".to_string(),
         token_id: "1".to_string(),
@@ -233,8 +235,9 @@ fn update_start_trading_time() {
         .query_wasm_smart(
             collection_addr,
             &Sg721QueryMsg::<
-                DefaultOptionNftMetadataExtension,
-                DefaultOptionCollectionMetadataExtension,
+                DefaultOptionalNftExtension,
+                DefaultOptionalCollectionExtension,
+                Empty,
             >::CollectionInfo {},
         )
         .unwrap();

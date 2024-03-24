@@ -5,9 +5,9 @@ use crate::{
 
 use cosmwasm_std::{DepsMut, Empty, Env, Event, Response};
 use cw721::{
-    msg::Cw721MigrateMsg, DefaultOptionCollectionMetadataExtension,
-    DefaultOptionCollectionMetadataExtensionMsg, DefaultOptionNftMetadataExtension,
-    DefaultOptionNftMetadataExtensionMsg,
+    msg::Cw721MigrateMsg, DefaultOptionalCollectionExtension,
+    DefaultOptionalCollectionExtensionMsg, DefaultOptionalNftExtension,
+    DefaultOptionalNftExtensionMsg,
 };
 use cw721_base::traits::Cw721Execute;
 
@@ -30,10 +30,12 @@ pub fn upgrade(
     msg: Cw721MigrateMsg,
 ) -> Result<Response, ContractError> {
     let contract = Sg721Contract::<
-        DefaultOptionNftMetadataExtension,
-        DefaultOptionNftMetadataExtensionMsg,
-        DefaultOptionCollectionMetadataExtension,
-        DefaultOptionCollectionMetadataExtensionMsg,
+        DefaultOptionalNftExtension,
+        DefaultOptionalNftExtensionMsg,
+        DefaultOptionalCollectionExtension,
+        DefaultOptionalCollectionExtensionMsg,
+        Empty,
+        Empty,
         Empty,
     >::default();
     // cw721 migration covers these versions: 0.18. 0.17, 0.16 and 0.15

@@ -6,16 +6,16 @@ pub mod upgrades;
 
 pub use crate::error::ContractError;
 pub use crate::state::Sg721Contract;
-use cw721::{DefaultOptionCollectionMetadataExtensionMsg, DefaultOptionNftMetadataExtensionMsg};
-use cw721_base::{DefaultOptionCollectionMetadataExtension, DefaultOptionNftMetadataExtension};
+use cosmwasm_std::Empty;
+use cw721::{DefaultOptionalCollectionExtensionMsg, DefaultOptionalNftExtensionMsg};
+use cw721_base::{DefaultOptionalCollectionExtension, DefaultOptionalNftExtension};
 
-pub type ExecuteMsg = sg721::ExecuteMsg<
-    DefaultOptionNftMetadataExtensionMsg,
-    DefaultOptionCollectionMetadataExtensionMsg,
->;
+pub type ExecuteMsg =
+    sg721::ExecuteMsg<DefaultOptionalNftExtensionMsg, DefaultOptionalCollectionExtensionMsg, Empty>;
 pub type QueryMsg = cw721_base::msg::QueryMsg<
-    DefaultOptionNftMetadataExtension,
-    DefaultOptionCollectionMetadataExtension,
+    DefaultOptionalNftExtension,
+    DefaultOptionalCollectionExtension,
+    Empty,
 >;
 
 pub mod entry {
@@ -43,10 +43,12 @@ pub mod entry {
         set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
         let res = Sg721Contract::<
-            DefaultOptionNftMetadataExtension,
-            DefaultOptionNftMetadataExtensionMsg,
-            DefaultOptionCollectionMetadataExtension,
-            DefaultOptionCollectionMetadataExtensionMsg,
+            DefaultOptionalNftExtension,
+            DefaultOptionalNftExtensionMsg,
+            DefaultOptionalCollectionExtension,
+            DefaultOptionalCollectionExtensionMsg,
+            Empty,
+            Empty,
             Empty,
         >::default()
         .instantiate(deps, env, info, msg)?;
@@ -64,10 +66,12 @@ pub mod entry {
         msg: ExecuteMsg,
     ) -> Result<Response, ContractError> {
         Sg721Contract::<
-            DefaultOptionNftMetadataExtension,
-            DefaultOptionNftMetadataExtensionMsg,
-            DefaultOptionCollectionMetadataExtension,
-            DefaultOptionCollectionMetadataExtensionMsg,
+            DefaultOptionalNftExtension,
+            DefaultOptionalNftExtensionMsg,
+            DefaultOptionalCollectionExtension,
+            DefaultOptionalCollectionExtensionMsg,
+            Empty,
+            Empty,
             Empty,
         >::default()
         .execute(deps, env, info, msg)
@@ -77,13 +81,15 @@ pub mod entry {
     pub fn query(
         deps: Deps,
         env: Env,
-        msg: QueryMsg<DefaultOptionNftMetadataExtension, DefaultOptionCollectionMetadataExtension>,
+        msg: QueryMsg<DefaultOptionalNftExtension, DefaultOptionalCollectionExtension, Empty>,
     ) -> Result<Binary, ContractError> {
         Sg721Contract::<
-            DefaultOptionNftMetadataExtension,
-            DefaultOptionNftMetadataExtensionMsg,
-            DefaultOptionCollectionMetadataExtension,
-            DefaultOptionCollectionMetadataExtensionMsg,
+            DefaultOptionalNftExtension,
+            DefaultOptionalNftExtensionMsg,
+            DefaultOptionalCollectionExtension,
+            DefaultOptionalCollectionExtensionMsg,
+            Empty,
+            Empty,
             Empty,
         >::default()
         .query(deps, env, msg)
@@ -97,10 +103,12 @@ pub mod entry {
         msg: Cw721MigrateMsg,
     ) -> Result<Response, ContractError> {
         Sg721Contract::<
-            DefaultOptionNftMetadataExtension,
-            DefaultOptionNftMetadataExtensionMsg,
-            DefaultOptionCollectionMetadataExtension,
-            DefaultOptionCollectionMetadataExtensionMsg,
+            DefaultOptionalNftExtension,
+            DefaultOptionalNftExtensionMsg,
+            DefaultOptionalCollectionExtension,
+            DefaultOptionalCollectionExtensionMsg,
+            Empty,
+            Empty,
             Empty,
         >::migrate(deps, env, msg)
     }

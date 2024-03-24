@@ -1,5 +1,5 @@
-use cosmwasm_std::{coins, Coin, Timestamp, Uint128};
-use cw721::{DefaultOptionCollectionMetadataExtension, DefaultOptionNftMetadataExtension};
+use cosmwasm_std::{coins, Coin, Empty, Timestamp, Uint128};
+use cw721::{DefaultOptionalCollectionExtension, DefaultOptionalNftExtension};
 use cw721_base::msg::{Cw721QueryMsg, NumTokensResponse, OwnerOfResponse};
 use cw_multi_test::{BankSudo, Executor, SudoMsg};
 use open_edition_factory::state::ParamsExtension;
@@ -211,8 +211,9 @@ fn check_mint_revenues_distribution(num_tokens: Option<u32>, end_minter_time: Op
 
     // Should be owner of the token -> 2
     let query_owner_msg = Cw721QueryMsg::<
-        DefaultOptionNftMetadataExtension,
-        DefaultOptionCollectionMetadataExtension,
+        DefaultOptionalNftExtension,
+        DefaultOptionalCollectionExtension,
+        Empty,
     >::OwnerOf {
         token_id: String::from("2"),
         include_expired: None,
@@ -226,8 +227,9 @@ fn check_mint_revenues_distribution(num_tokens: Option<u32>, end_minter_time: Op
 
     // Check mint count
     let num_tokens_msg = Cw721QueryMsg::<
-        DefaultOptionNftMetadataExtension,
-        DefaultOptionCollectionMetadataExtension,
+        DefaultOptionalNftExtension,
+        DefaultOptionalCollectionExtension,
+        Empty,
     >::NumTokens {};
     let res: NumTokensResponse = router
         .wrap()

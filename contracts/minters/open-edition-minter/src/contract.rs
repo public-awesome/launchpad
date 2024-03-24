@@ -15,9 +15,7 @@ use cosmwasm_std::{
     MessageInfo, Order, Reply, ReplyOn, Response, StdError, StdResult, SubMsg, Timestamp, WasmMsg,
 };
 use cw2::set_contract_version;
-use cw721_base::{
-    DefaultOptionCollectionMetadataExtensionMsg, DefaultOptionNftMetadataExtensionMsg,
-};
+use cw721_base::{DefaultOptionalCollectionExtensionMsg, DefaultOptionalNftExtensionMsg};
 use cw_utils::{may_pay, maybe_addr, nonpayable, parse_reply_instantiate_data};
 use open_edition_factory::msg::{OpenEditionMinterCreateMsg, ParamsResponse};
 use open_edition_factory::types::NftMetadataType;
@@ -604,8 +602,9 @@ pub fn execute_update_start_trading_time(
     let msg = WasmMsg::Execute {
         contract_addr: sg721_contract_addr.to_string(),
         msg: to_json_binary(&Sg721ExecuteMsg::<
-            DefaultOptionNftMetadataExtensionMsg,
-            DefaultOptionCollectionMetadataExtensionMsg,
+            DefaultOptionalNftExtensionMsg,
+            DefaultOptionalCollectionExtensionMsg,
+            Empty,
         >::UpdateStartTradingTime(start_time))?,
         funds: vec![],
     };

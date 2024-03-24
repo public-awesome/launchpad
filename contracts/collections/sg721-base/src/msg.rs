@@ -1,4 +1,5 @@
 use cw721::msg::RoyaltyInfoResponse;
+use cw721::traits::Cw721CustomMsg;
 use cw721::traits::Cw721State;
 
 use cosmwasm_schema::cw_serde;
@@ -6,12 +7,12 @@ use cosmwasm_schema::QueryResponses;
 use cosmwasm_std::{coin, Addr, BankMsg, Event, StdError, StdResult, Timestamp, Uint128};
 use cw721_base::{
     msg::{
-        AllNftInfoResponse, ApprovalResponse, ApprovalsResponse, MinterResponse, NftInfoResponse,
-        NumTokensResponse, OperatorsResponse, OwnerOfResponse, QueryMsg as Cw721QueryMsg,
+        AllInfoResponse, AllNftInfoResponse, ApprovalResponse, ApprovalsResponse,
+        CollectionInfoAndExtensionResponse, MinterResponse, NftInfoResponse, NumTokensResponse,
+        OperatorResponse, OperatorsResponse, OwnerOfResponse, QueryMsg as Cw721QueryMsg,
         TokensResponse,
     },
-    state::CollectionMetadataAndExtension,
-    DefaultOptionCollectionMetadataExtensionMsg,
+    state::CollectionExtensionAttributes,
 };
 use cw_ownable::Ownership;
 use sg_std::{Response, SubMsg, NATIVE_DENOM};
@@ -21,13 +22,15 @@ use sg_std::{Response, SubMsg, NATIVE_DENOM};
 #[allow(deprecated)]
 pub enum QueryMsg<
     // Return type of NFT metadata defined in `NftInfo` and `AllNftInfo`.
-    TNftMetadataExtension,
-    // Return type of collection metadata extension defined in `GetCollectionMetadata`.
-    TCollectionMetadataExtension,
+    TNftExtension,
+    // Return type of collection extension defined in `GetCollectionInfo`.
+    TCollectionExtension,
+    // Custom query msg for custom contract logic. Default implementation returns an empty binary.
+    TExtensionQueryMsg,
 > {
     #[allow(deprecated)]
     #[returns(CollectionInfoResponse)]
-    #[deprecated = "Please use GetCollectionMetadata instead"]
+    #[deprecated = "Please use GetCollectionInfo instead"]
     CollectionInfo {},
 
     // ---- cw721 v0.19.0 msgs ----
@@ -51,6 +54,14 @@ pub enum QueryMsg<
         token_id: String,
         include_expired: Option<bool>,
     },
+    /// Return approval of a given operator for all tokens of an owner, error if not set
+    #[returns(OperatorResponse)]
+    Operator {
+        owner: String,
+        operator: String,
+        include_expired: Option<bool>,
+    },
+    /// List all operators that can access all of the owner's tokens
     #[returns(OperatorsResponse)]
     AllOperators {
         owner: String,
@@ -63,15 +74,25 @@ pub enum QueryMsg<
     #[returns(NumTokensResponse)]
     NumTokens {},
 
-    #[deprecated(since = "0.19.0", note = "Please use GetCollectionMetadata instead")]
-    #[returns(CollectionMetadataAndExtension<DefaultOptionCollectionMetadataExtensionMsg>)]
-    /// Deprecated: use GetCollectionMetadata instead! Will be removed in next release!
+    #[deprecated(
+        since = "0.19.0",
+        note = "Please use GetCollectionInfoAndExtension instead"
+    )]
+    #[returns(CollectionInfoAndExtensionResponse<TCollectionExtension>)]
+    /// Deprecated: use GetCollectionInfoAndExtension instead! Will be removed in next release!
     ContractInfo {},
 
-    /// With MetaData Extension.
-    /// Returns top-level metadata about the contract
-    #[returns(CollectionMetadataAndExtension<TCollectionMetadataExtension>)]
-    GetCollectionMetadata {},
+    /// Returns `CollectionInfoAndExtensionResponse`
+    #[returns(CollectionInfoAndExtensionResponse<TCollectionExtension>)]
+    GetCollectionInfoAndExtension {},
+
+    /// returns `AllInfoResponse` which contains contract, collection and nft details
+    #[returns(AllInfoResponse)]
+    GetAllInfo {},
+
+    /// Returns `CollectionExtensionAttributes`
+    #[returns(CollectionExtensionAttributes)]
+    GetCollectionExtensionAttributes {},
 
     #[deprecated(since = "0.19.0", note = "Please use GetMinterOwnership instead")]
     #[returns(Ownership<Addr>)]
@@ -93,12 +114,20 @@ pub enum QueryMsg<
     /// With MetaData Extension.
     /// Returns metadata about one particular token, based on *ERC721 Metadata JSON Schema*
     /// but directly from the contract
-    #[returns(NftInfoResponse<TNftMetadataExtension>)]
+    #[returns(NftInfoResponse<TNftExtension>)]
     NftInfo { token_id: String },
+
+    #[returns(Option<NftInfoResponse<TNftExtension>>)]
+    GetNftByExtension {
+        extension: TNftExtension,
+        start_after: Option<String>,
+        limit: Option<u32>,
+    },
+
     /// With MetaData Extension.
     /// Returns the result of both `NftInfo` and `OwnerOf` as one query as an optimization
     /// for clients
-    #[returns(AllNftInfoResponse<TNftMetadataExtension>)]
+    #[returns(AllNftInfoResponse<TNftExtension>)]
     AllNftInfo {
         token_id: String,
         /// unset or false will filter out expired approvals, you must set to true to see them
@@ -121,42 +150,29 @@ pub enum QueryMsg<
         limit: Option<u32>,
     },
 
+    /// Custom msg query. Default implementation returns an empty binary.
+    #[returns(())]
+    Extension { msg: TExtensionQueryMsg },
+
+    #[returns(())]
+    GetCollectionExtension { msg: TCollectionExtension },
+
     #[returns(Option<String>)]
     GetWithdrawAddress {},
-
-    // -- below queries, Extension and GetCollectionMetadataExtension, are just dummies, since type annotations are required for
-    // -- TNftMetadataExtension and TCollectionMetadataExtension, Error:
-    // -- "type annotations needed: cannot infer type for type parameter `TNftMetadataExtension` declared on the enum `Cw721QueryMsg`"
-    /// Use NftInfo instead.
-    /// No-op / NFT metadata query returning empty binary, needed for inferring type parameter during compile.
-    ///
-    /// Note: it may be extended in case there are use cases e.g. for specific NFT metadata query.
-    #[returns(())]
-    #[deprecated(since = "0.19.0", note = "Please use GetNftMetadata instead")]
-    Extension { msg: TNftMetadataExtension },
-
-    #[returns(())]
-    GetNftMetadata { msg: TNftMetadataExtension },
-
-    /// Use GetCollectionMetadata instead.
-    /// No-op / collection metadata extension query returning empty binary, needed for inferring type parameter during compile
-    ///
-    /// Note: it may be extended in case there are use cases e.g. for specific collection metadata query.
-    #[returns(())]
-    GetCollectionMetadataExtension { msg: TCollectionMetadataExtension },
 }
 
-impl<TNftMetadataExtension, TCollectionMetadataExtension>
-    From<QueryMsg<TNftMetadataExtension, TCollectionMetadataExtension>>
-    for Cw721QueryMsg<TNftMetadataExtension, TCollectionMetadataExtension>
+impl<TNftExtension, TCollectionExtension, TExtensionQueryMsg>
+    From<QueryMsg<TNftExtension, TCollectionExtension, TExtensionQueryMsg>>
+    for Cw721QueryMsg<TNftExtension, TCollectionExtension, TExtensionQueryMsg>
 where
-    TNftMetadataExtension: Cw721State,
-    TCollectionMetadataExtension: Cw721State,
+    TNftExtension: Cw721State,
+    TCollectionExtension: Cw721State,
+    TExtensionQueryMsg: Cw721CustomMsg,
 {
     #[allow(deprecated)]
     fn from(
-        msg: QueryMsg<TNftMetadataExtension, TCollectionMetadataExtension>,
-    ) -> Cw721QueryMsg<TNftMetadataExtension, TCollectionMetadataExtension> {
+        msg: QueryMsg<TNftExtension, TCollectionExtension, TExtensionQueryMsg>,
+    ) -> Cw721QueryMsg<TNftExtension, TCollectionExtension, TExtensionQueryMsg> {
         match msg {
             QueryMsg::OwnerOf {
                 token_id,
@@ -194,7 +210,9 @@ where
             },
             QueryMsg::NumTokens {} => Cw721QueryMsg::NumTokens {},
             QueryMsg::ContractInfo {} => Cw721QueryMsg::ContractInfo {},
-            QueryMsg::GetCollectionMetadata {} => Cw721QueryMsg::GetCollectionMetadata {},
+            QueryMsg::GetCollectionInfoAndExtension {} => {
+                Cw721QueryMsg::GetCollectionInfoAndExtension {}
+            }
             QueryMsg::Ownership {} => Cw721QueryMsg::Ownership {},
             QueryMsg::Minter {} => Cw721QueryMsg::Minter {},
             QueryMsg::GetMinterOwnership {} => Cw721QueryMsg::GetMinterOwnership {},
@@ -225,7 +243,7 @@ where
 }
 
 #[cw_serde]
-#[deprecated = "Please use `CollectionMetadata<CollectionMetadataExtension<RoyaltyInfo>>` instead"]
+#[deprecated = "Please use `CollectionInfo<CollectionInfoExtension<RoyaltyInfo>>` instead"]
 pub struct CollectionInfoResponse {
     pub creator: String,
     pub description: String,

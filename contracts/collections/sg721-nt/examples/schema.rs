@@ -3,15 +3,14 @@ use std::fs::create_dir_all;
 
 use cosmwasm_schema::{export_schema, export_schema_with_title, remove_schemas, schema_for};
 
-use cw721::{
-    CollectionMetadataAndExtension, DefaultOptionCollectionMetadataExtension,
-    DefaultOptionNftMetadataExtension,
-};
+use cosmwasm_std::Empty;
+use cw721::{DefaultOptionalCollectionExtension, DefaultOptionalNftExtension};
 #[allow(deprecated)]
 use cw721_base::{
     msg::{
-        AllNftInfoResponse, ApprovalResponse, ApprovalsResponse, Cw721QueryMsg, MinterResponse,
-        NftInfoResponse, NumTokensResponse, OperatorsResponse, OwnerOfResponse, TokensResponse,
+        AllNftInfoResponse, ApprovalResponse, ApprovalsResponse,
+        CollectionInfoAndExtensionResponse, Cw721QueryMsg, MinterResponse, NftInfoResponse,
+        NumTokensResponse, OperatorsResponse, OwnerOfResponse, TokensResponse,
     },
     ContractInfoResponse,
 };
@@ -26,15 +25,12 @@ fn main() {
     export_schema(&schema_for!(InstantiateMsg), &out_dir);
     export_schema(
         &schema_for!(
-            Cw721QueryMsg::<
-                DefaultOptionNftMetadataExtension,
-                DefaultOptionCollectionMetadataExtension,
-            >
+            Cw721QueryMsg::<DefaultOptionalNftExtension, DefaultOptionalCollectionExtension, Empty>
         ),
         &out_dir,
     );
     export_schema_with_title(
-        &schema_for!(AllNftInfoResponse<DefaultOptionNftMetadataExtension>),
+        &schema_for!(AllNftInfoResponse<DefaultOptionalNftExtension>),
         &out_dir,
         "AllNftInfoResponse",
     );
@@ -51,11 +47,11 @@ fn main() {
     #[allow(deprecated)]
     export_schema(&schema_for!(ContractInfoResponse), &out_dir);
     export_schema(
-        &schema_for!(CollectionMetadataAndExtension<DefaultOptionCollectionMetadataExtension>),
+        &schema_for!(CollectionInfoAndExtensionResponse<DefaultOptionalCollectionExtension>),
         &out_dir,
     );
     export_schema_with_title(
-        &schema_for!(NftInfoResponse<DefaultOptionNftMetadataExtension>),
+        &schema_for!(NftInfoResponse<DefaultOptionalNftExtension>),
         &out_dir,
         "NftInfoResponse",
     );

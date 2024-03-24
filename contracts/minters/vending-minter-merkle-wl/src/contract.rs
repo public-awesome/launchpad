@@ -16,7 +16,7 @@ use cosmwasm_std::{
     Timestamp, Uint128, WasmMsg,
 };
 use cw2::set_contract_version;
-use cw721::{DefaultOptionCollectionMetadataExtension, DefaultOptionNftMetadataExtension};
+use cw721::{DefaultOptionalCollectionExtension, DefaultOptionalNftExtension};
 use cw_utils::{may_pay, maybe_addr, nonpayable, parse_reply_instantiate_data};
 use rand_core::{RngCore, SeedableRng};
 use rand_xoshiro::Xoshiro128PlusPlus;
@@ -705,8 +705,9 @@ fn _execute_mint(
 
     // Create mint msgs
     let mint_msg = Sg721ExecuteMsg::<
-        DefaultOptionNftMetadataExtension,
-        DefaultOptionCollectionMetadataExtension,
+        DefaultOptionalNftExtension,
+        DefaultOptionalCollectionExtension,
+        Empty,
     >::Mint {
         token_id: mintable_token_mapping.token_id.to_string(),
         owner: recipient_addr.to_string(),
@@ -951,9 +952,9 @@ pub fn execute_update_start_trading_time(
     // execute sg721 contract
     let msg = WasmMsg::Execute {
         contract_addr: sg721_contract_addr.to_string(),
-        msg: to_json_binary(&Sg721ExecuteMsg::<Empty, Empty>::UpdateStartTradingTime(
-            start_time,
-        ))?,
+        msg: to_json_binary(
+            &Sg721ExecuteMsg::<Empty, Empty, Empty>::UpdateStartTradingTime(start_time),
+        )?,
         funds: vec![],
     };
 

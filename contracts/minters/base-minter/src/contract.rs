@@ -10,8 +10,8 @@ use cosmwasm_std::{
 };
 use cw2::set_contract_version;
 use cw721::{
-    DefaultOptionCollectionMetadataExtension, DefaultOptionCollectionMetadataExtensionMsg,
-    DefaultOptionNftMetadataExtension, DefaultOptionNftMetadataExtensionMsg,
+    DefaultOptionalCollectionExtension, DefaultOptionalCollectionExtensionMsg,
+    DefaultOptionalNftExtension, DefaultOptionalNftExtensionMsg,
 };
 use cw_utils::{must_pay, nonpayable, parse_reply_instantiate_data};
 use sg1::checked_fair_burn;
@@ -128,8 +128,9 @@ pub fn execute_mint_sender(
     let collection_info: CollectionInfoResponse = deps.querier.query_wasm_smart(
         collection_address.clone(),
         &Sg721QueryMsg::CollectionInfo::<
-            DefaultOptionNftMetadataExtension,
-            DefaultOptionCollectionMetadataExtension,
+            DefaultOptionalNftExtension,
+            DefaultOptionalCollectionExtension,
+            Empty,
         > {},
     )?;
     // allow only sg721 creator address to mint
@@ -162,8 +163,9 @@ pub fn execute_mint_sender(
 
     // Create mint msgs
     let mint_msg = Sg721ExecuteMsg::<
-        DefaultOptionNftMetadataExtensionMsg,
-        DefaultOptionCollectionMetadataExtensionMsg,
+        DefaultOptionalNftExtensionMsg,
+        DefaultOptionalCollectionExtensionMsg,
+        Empty,
     >::Mint {
         token_id: increment_token_index(deps.storage)?.to_string(),
         owner: info.sender.to_string(),
@@ -194,13 +196,15 @@ pub fn execute_update_start_trading_time(
     nonpayable(&info)?;
     let sg721_contract_addr = COLLECTION_ADDRESS.load(deps.storage)?;
 
-    let collection_info: CollectionInfoResponse = deps.querier.query_wasm_smart(
-        sg721_contract_addr.clone(),
-        &Sg721QueryMsg::<
-            DefaultOptionNftMetadataExtension,
-            DefaultOptionCollectionMetadataExtension,
-        >::CollectionInfo {},
-    )?;
+    let collection_info: CollectionInfoResponse =
+        deps.querier.query_wasm_smart(
+            sg721_contract_addr.clone(),
+            &Sg721QueryMsg::<
+                DefaultOptionalNftExtension,
+                DefaultOptionalCollectionExtension,
+                Empty,
+            >::CollectionInfo {},
+        )?;
     if info.sender != collection_info.creator {
         return Err(ContractError::Unauthorized(
             "Sender is not creator".to_owned(),
@@ -221,8 +225,9 @@ pub fn execute_update_start_trading_time(
     let msg = WasmMsg::Execute {
         contract_addr: sg721_contract_addr.to_string(),
         msg: to_json_binary(&Sg721ExecuteMsg::<
-            DefaultOptionNftMetadataExtensionMsg,
-            DefaultOptionCollectionMetadataExtensionMsg,
+            DefaultOptionalNftExtensionMsg,
+            DefaultOptionalCollectionExtensionMsg,
+            Empty,
         >::UpdateStartTradingTime(start_time))?,
         funds: vec![],
     };

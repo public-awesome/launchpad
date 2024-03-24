@@ -25,7 +25,7 @@ pub fn mock_collection_params() -> CollectionParams {
     }
 }
 
-/// `v3.8.0-prerelease` is only used for testing migration from collection info (sg721) to new collection metadata extension (cw721)
+/// `v3.8.0-prerelease` is only used for testing migration from collection info (sg721) to new collection extension (cw721)
 #[allow(deprecated)]
 pub fn mock_collection_params_v3_8_0_prerelease() -> sg2_v3_8_0_prerelease::msg::CollectionParams {
     sg2_v3_8_0_prerelease::msg::CollectionParams {

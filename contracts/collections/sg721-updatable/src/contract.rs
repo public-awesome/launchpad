@@ -9,8 +9,8 @@ use cosmwasm_std::{DepsMut, Env, Event, MessageInfo};
 use cw2::set_contract_version;
 use cw721::msg::Cw721MigrateMsg;
 use cw721::{
-    DefaultOptionCollectionMetadataExtension, DefaultOptionCollectionMetadataExtensionMsg,
-    DefaultOptionNftMetadataExtension, DefaultOptionNftMetadataExtensionMsg,
+    DefaultOptionalCollectionExtension, DefaultOptionalCollectionExtensionMsg,
+    DefaultOptionalNftExtension, DefaultOptionalNftExtensionMsg,
 };
 use semver::Version;
 use sg721::InstantiateMsg;
@@ -26,10 +26,12 @@ use sg721_base::ContractError::Unauthorized;
 use sg721_base::Sg721Contract;
 pub type Sg721UpdatableContract<'a> = Sg721Contract<
     'a,
-    DefaultOptionNftMetadataExtension,
-    DefaultOptionNftMetadataExtensionMsg,
-    DefaultOptionCollectionMetadataExtension,
-    DefaultOptionCollectionMetadataExtensionMsg,
+    DefaultOptionalNftExtension,
+    DefaultOptionalNftExtensionMsg,
+    DefaultOptionalCollectionExtension,
+    DefaultOptionalCollectionExtensionMsg,
+    Empty,
+    Empty,
     Empty,
 >;
 
@@ -222,7 +224,7 @@ pub fn _migrate(
     let mut response = Response::new();
 
     // these upgrades can always be called. migration is only executed in case new stores are empty! It is safe calling these on any version.
-    response = sg721_base::upgrades::v3_0_0_ownable_and_collection_metadata::upgrade(
+    response = sg721_base::upgrades::v3_0_0_ownable_and_collection_info::upgrade(
         deps.branch(),
         &env,
         response,
@@ -374,14 +376,14 @@ mod tests {
         // Check token contains updated metadata
         let res = contract
             .parent
-            .query_nft_info(deps.as_ref(), &env, token_id.into())
+            .query_nft_info(deps.as_ref().storage, token_id.into())
             .unwrap();
         assert_eq!(res.token_uri, updated_token_uri);
 
         // Update token metadata with None token_uri
         let update_msg = ExecuteMsg::<
-            DefaultOptionNftMetadataExtensionMsg,
-            DefaultOptionCollectionMetadataExtensionMsg,
+            DefaultOptionalNftExtensionMsg,
+            DefaultOptionalCollectionExtensionMsg,
         >::UpdateTokenMetadata {
             token_id: token_id.to_string(),
             token_uri: None,
@@ -389,7 +391,7 @@ mod tests {
         execute(deps.as_mut(), mock_env(), info.clone(), update_msg).unwrap();
         let res = contract
             .parent
-            .query_nft_info(deps.as_ref(), &env, token_id.into())
+            .query_nft_info(deps.as_ref().storage, token_id.into())
             .unwrap();
         assert_eq!(res.token_uri, None);
 

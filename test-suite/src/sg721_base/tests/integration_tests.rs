@@ -64,7 +64,7 @@ mod tests {
         (app, factory_contract)
     }
 
-    /// `v3.8.0-prerelease` is only used for testing migration from collection info (sg721) to new collection metadata extension (cw721)
+    /// `v3.8.0-prerelease` is only used for testing migration from collection info (sg721) to new collection extension (cw721)
     fn proper_instantiate_factory_v3_8_0_prerelease() -> (
         App,
         vending_factory_v3_8_0_prerelease::helpers::FactoryContract,
@@ -123,7 +123,7 @@ mod tests {
         (app, Addr::unchecked("contract2"))
     }
 
-    /// `v3.8.0-prerelease` is only used for testing migration from collection info (sg721) to new collection metadata extension (cw721)
+    /// `v3.8.0-prerelease` is only used for testing migration from collection info (sg721) to new collection extension (cw721)
     fn proper_instantiate_v3_8_0_prerelease() -> (App, Addr) {
         let (mut app, factory_contract) = proper_instantiate_factory_v3_8_0_prerelease();
         let sg721_id = app.store_code(contract_sg721_base_v3_8_0_prerelease());
@@ -184,7 +184,7 @@ mod tests {
     }
 
     mod init {
-        use cw721::{DefaultOptionCollectionMetadataExtension, DefaultOptionNftMetadataExtension};
+        use cw721::{DefaultOptionalCollectionExtension, DefaultOptionalNftExtension};
         use cw721_base::msg::MinterResponse;
 
         use crate::common_setup::setup_minter::vending_minter::mock_params::mock_create_minter_init_msg;
@@ -202,8 +202,9 @@ mod tests {
                 .query_wasm_smart(
                     contract,
                     &QueryMsg::<
-                        DefaultOptionNftMetadataExtension,
-                        DefaultOptionCollectionMetadataExtension,
+                        DefaultOptionalNftExtension,
+                        DefaultOptionalCollectionExtension,
+                        Empty,
                     >::NumTokens {},
                 )
                 .unwrap();
@@ -262,8 +263,9 @@ mod tests {
                 .query_wasm_smart(
                     contract,
                     &QueryMsg::<
-                        DefaultOptionNftMetadataExtension,
-                        DefaultOptionCollectionMetadataExtension,
+                        DefaultOptionalNftExtension,
+                        DefaultOptionalCollectionExtension,
+                        Empty,
                     >::Minter {},
                 )
                 .unwrap();
@@ -295,8 +297,9 @@ mod tests {
                 .query_wasm_smart(
                     contract,
                     &QueryMsg::<
-                        DefaultOptionNftMetadataExtension,
-                        DefaultOptionCollectionMetadataExtension,
+                        DefaultOptionalNftExtension,
+                        DefaultOptionalCollectionExtension,
+                        Empty,
                     >::Minter {},
                 )
                 .unwrap();
@@ -322,8 +325,9 @@ mod tests {
                 .query_wasm_smart(
                     contract,
                     &QueryMsg::<
-                        DefaultOptionNftMetadataExtension,
-                        DefaultOptionCollectionMetadataExtension,
+                        DefaultOptionalNftExtension,
+                        DefaultOptionalCollectionExtension,
+                        Empty,
                     >::Minter {},
                 )
                 .unwrap();
@@ -338,7 +342,7 @@ mod tests {
 
     mod start_trading_time {
         use cosmwasm_std::{Decimal, Empty};
-        use cw721::{DefaultOptionCollectionMetadataExtension, DefaultOptionNftMetadataExtension};
+        use cw721::{DefaultOptionalCollectionExtension, DefaultOptionalNftExtension};
         use sg721::{RoyaltyInfoResponse, UpdateCollectionInfoMsg};
 
         use crate::common_setup::{
@@ -369,7 +373,7 @@ mod tests {
             let res = app.execute_contract(
                 creator,
                 contract,
-                &Sg721ExecuteMsg::<Empty, Empty>::UpdateCollectionInfo {
+                &Sg721ExecuteMsg::<Empty, Empty, Empty>::UpdateCollectionInfo {
                     collection_info: UpdateCollectionInfoMsg {
                         creator: None,
                         description: None,
@@ -399,8 +403,9 @@ mod tests {
                 .query_wasm_smart(
                     contract,
                     &QueryMsg::<
-                        DefaultOptionNftMetadataExtension,
-                        DefaultOptionCollectionMetadataExtension,
+                        DefaultOptionalNftExtension,
+                        DefaultOptionalCollectionExtension,
+                        Empty,
                     >::CollectionInfo {},
                 )
                 .unwrap();
@@ -418,7 +423,7 @@ mod tests {
             let res = app.execute_contract(
                 creator.clone(),
                 contract.clone(),
-                &Sg721ExecuteMsg::<Empty, Empty>::UpdateCollectionInfo {
+                &Sg721ExecuteMsg::<Empty, Empty, Empty>::UpdateCollectionInfo {
                     collection_info: UpdateCollectionInfoMsg {
                         creator: None,
                         description: Some(params.info.description.clone()),
@@ -440,7 +445,7 @@ mod tests {
             let res = app.execute_contract(
                 creator.clone(),
                 contract.clone(),
-                &Sg721ExecuteMsg::<Empty, Empty>::UpdateCollectionInfo {
+                &Sg721ExecuteMsg::<Empty, Empty, Empty>::UpdateCollectionInfo {
                     collection_info: UpdateCollectionInfoMsg {
                         creator: None,
                         description: Some(params.info.description.clone()),
@@ -474,7 +479,7 @@ mod tests {
             let res = app.execute_contract(
                 creator.clone(),
                 contract.clone(),
-                &Sg721ExecuteMsg::<Empty, Empty>::UpdateCollectionInfo {
+                &Sg721ExecuteMsg::<Empty, Empty, Empty>::UpdateCollectionInfo {
                     collection_info: UpdateCollectionInfoMsg {
                         creator: None,
                         description: Some(params.info.description.clone()),
@@ -502,7 +507,7 @@ mod tests {
             let res = app.execute_contract(
                 creator.clone(),
                 contract.clone(),
-                &Sg721ExecuteMsg::<Empty, Empty>::UpdateCollectionInfo {
+                &Sg721ExecuteMsg::<Empty, Empty, Empty>::UpdateCollectionInfo {
                     collection_info: UpdateCollectionInfoMsg {
                         creator: None,
                         description: Some(params.info.description.clone()),
@@ -530,7 +535,7 @@ mod tests {
             let res = app.execute_contract(
                 creator.clone(),
                 contract.clone(),
-                &Sg721ExecuteMsg::<Empty, Empty>::UpdateCollectionInfo {
+                &Sg721ExecuteMsg::<Empty, Empty, Empty>::UpdateCollectionInfo {
                     collection_info: UpdateCollectionInfoMsg {
                         creator: None,
                         description: Some(params.info.description.clone()),
@@ -549,8 +554,9 @@ mod tests {
                 .query_wasm_smart(
                     contract.clone(),
                     &QueryMsg::<
-                        DefaultOptionNftMetadataExtension,
-                        DefaultOptionCollectionMetadataExtension,
+                        DefaultOptionalNftExtension,
+                        DefaultOptionalCollectionExtension,
+                        Empty,
                     >::CollectionInfo {},
                 )
                 .unwrap();
@@ -561,7 +567,7 @@ mod tests {
             let res = app.execute_contract(
                 other.clone(),
                 contract.clone(),
-                &Sg721ExecuteMsg::<Empty, Empty>::UpdateCollectionInfo {
+                &Sg721ExecuteMsg::<Empty, Empty, Empty>::UpdateCollectionInfo {
                     collection_info: UpdateCollectionInfoMsg {
                         creator: None,
                         description: Some(params.info.description.clone()),
@@ -579,7 +585,7 @@ mod tests {
             let res = app.execute_contract(
                 creator.clone(),
                 contract.clone(),
-                &Sg721ExecuteMsg::<Empty, Empty>::UpdateCollectionInfo {
+                &Sg721ExecuteMsg::<Empty, Empty, Empty>::UpdateCollectionInfo {
                     collection_info: UpdateCollectionInfoMsg {
                         creator: Some(other.to_string()), // other is ignored
                         description: Some(params.info.description.clone()),
@@ -598,8 +604,9 @@ mod tests {
                 .query_wasm_smart(
                     contract.clone(),
                     &QueryMsg::<
-                        DefaultOptionNftMetadataExtension,
-                        DefaultOptionCollectionMetadataExtension,
+                        DefaultOptionalNftExtension,
+                        DefaultOptionalCollectionExtension,
+                        Empty,
                     >::CollectionInfo {},
                 )
                 .unwrap();
@@ -611,8 +618,9 @@ mod tests {
                 .query_wasm_smart(
                     contract.clone(),
                     &QueryMsg::<
-                        DefaultOptionNftMetadataExtension,
-                        DefaultOptionCollectionMetadataExtension,
+                        DefaultOptionalNftExtension,
+                        DefaultOptionalCollectionExtension,
+                        Empty,
                     >::GetCreatorOwnership {},
                 )
                 .unwrap();
@@ -622,7 +630,7 @@ mod tests {
             let res = app.execute_contract(
                 Addr::unchecked("badguy"),
                 contract.clone(),
-                &Sg721ExecuteMsg::<Empty, Empty>::FreezeCollectionInfo {},
+                &Sg721ExecuteMsg::<Empty, Empty, Empty>::FreezeCollectionInfo {},
                 &[],
             );
             assert!(res.is_err());
@@ -630,7 +638,7 @@ mod tests {
             let res = app.execute_contract(
                 creator.clone(),
                 contract.clone(),
-                &Sg721ExecuteMsg::<Empty, Empty>::FreezeCollectionInfo {},
+                &Sg721ExecuteMsg::<Empty, Empty, Empty>::FreezeCollectionInfo {},
                 &[],
             );
             assert!(res.is_ok());
@@ -639,7 +647,7 @@ mod tests {
             let res = app.execute_contract(
                 creator,
                 contract,
-                &Sg721ExecuteMsg::<Empty, Empty>::UpdateCollectionInfo {
+                &Sg721ExecuteMsg::<Empty, Empty, Empty>::UpdateCollectionInfo {
                     collection_info: UpdateCollectionInfoMsg {
                         creator: None,
                         description: Some(params.info.description.clone()),
@@ -661,8 +669,8 @@ mod tests {
         use crate::common_setup::setup_minter::vending_minter::mock_params::mock_create_minter_init_msg;
         use cosmwasm_std::{Decimal, Response, Uint128};
         use cw721::{
-            state::MAX_ROYALTY_SHARE_PCT, DefaultOptionCollectionMetadataExtension,
-            DefaultOptionNftMetadataExtension,
+            state::MAX_ROYALTY_SHARE_PCT, DefaultOptionalCollectionExtension,
+            DefaultOptionalNftExtension,
         };
         use sg2::msg::CollectionParams;
         use sg721::RoyaltyInfoResponse;
@@ -677,8 +685,9 @@ mod tests {
                 .query_wasm_smart(
                     contract.clone(),
                     &QueryMsg::<
-                        DefaultOptionNftMetadataExtension,
-                        DefaultOptionCollectionMetadataExtension,
+                        DefaultOptionalNftExtension,
+                        DefaultOptionalCollectionExtension,
+                        Empty,
                     >::CollectionInfo {},
                 )
                 .unwrap();
@@ -725,8 +734,9 @@ mod tests {
                 .query_wasm_smart(
                     contract.clone(),
                     &QueryMsg::<
-                        DefaultOptionNftMetadataExtension,
-                        DefaultOptionCollectionMetadataExtension,
+                        DefaultOptionalNftExtension,
+                        DefaultOptionalCollectionExtension,
+                        Empty,
                     >::CollectionInfo {},
                 )
                 .unwrap();
@@ -772,8 +782,9 @@ mod tests {
                 .query_wasm_smart(
                     contract.clone(),
                     &QueryMsg::<
-                        DefaultOptionNftMetadataExtension,
-                        DefaultOptionCollectionMetadataExtension,
+                        DefaultOptionalNftExtension,
+                        DefaultOptionalCollectionExtension,
+                        Empty,
                     >::CollectionInfo {},
                 )
                 .unwrap();
@@ -819,8 +830,9 @@ mod tests {
                 .query_wasm_smart(
                     contract.clone(),
                     &QueryMsg::<
-                        DefaultOptionNftMetadataExtension,
-                        DefaultOptionCollectionMetadataExtension,
+                        DefaultOptionalNftExtension,
+                        DefaultOptionalCollectionExtension,
+                        Empty,
                     >::CollectionInfo {},
                 )
                 .unwrap();
@@ -864,8 +876,9 @@ mod tests {
                 .query_wasm_smart(
                     contract.clone(),
                     &QueryMsg::<
-                        DefaultOptionNftMetadataExtension,
-                        DefaultOptionCollectionMetadataExtension,
+                        DefaultOptionalNftExtension,
+                        DefaultOptionalCollectionExtension,
+                        Empty,
                     >::CollectionInfo {},
                 )
                 .unwrap();
@@ -887,7 +900,7 @@ mod tests {
 
     mod ownership {
         use cosmwasm_std::Attribute;
-        use cw721::{DefaultOptionCollectionMetadataExtension, DefaultOptionNftMetadataExtension};
+        use cw721::{DefaultOptionalCollectionExtension, DefaultOptionalNftExtension};
         use cw721_base::msg::MinterResponse;
 
         use crate::common_setup::setup_minter::vending_minter::mock_params::mock_create_minter_init_msg;
@@ -913,8 +926,9 @@ mod tests {
                 .query_wasm_smart(
                     contract,
                     &QueryMsg::<
-                        DefaultOptionNftMetadataExtension,
-                        DefaultOptionCollectionMetadataExtension,
+                        DefaultOptionalNftExtension,
+                        DefaultOptionalCollectionExtension,
+                        Empty,
                     >::Minter {},
                 )
                 .unwrap();
@@ -926,7 +940,7 @@ mod tests {
                 .unwrap();
             let sg721_address = res.sg721_address;
 
-            let update_ownership_msg: cw721ExecuteMsg<Empty, Empty> =
+            let update_ownership_msg: cw721ExecuteMsg<Empty, Empty, Empty> =
                 cw721ExecuteMsg::UpdateMinterOwnership(cw_ownable::Action::TransferOwnership {
                     new_owner: "new_owner".to_string(),
                     expiry: None,
@@ -955,8 +969,9 @@ mod tests {
                 .query_wasm_smart(
                     sg721_address.clone(),
                     &sg721_base::msg::QueryMsg::<
-                        DefaultOptionNftMetadataExtension,
-                        DefaultOptionCollectionMetadataExtension,
+                        DefaultOptionalNftExtension,
+                        DefaultOptionalCollectionExtension,
+                        Empty,
                     >::GetMinterOwnership {},
                 )
                 .unwrap();
@@ -964,7 +979,7 @@ mod tests {
             let expected_pending_owner = Some(Addr::unchecked("new_owner".to_string()));
             assert_eq!(pending_owner, expected_pending_owner);
 
-            let accept_ownership_msg: cw721ExecuteMsg<Empty, Empty> =
+            let accept_ownership_msg: cw721ExecuteMsg<Empty, Empty, Empty> =
                 cw721ExecuteMsg::UpdateOwnership(cw_ownable::Action::AcceptOwnership {});
             let res = app.execute_contract(
                 Addr::unchecked("new_owner".to_string()),
@@ -993,8 +1008,9 @@ mod tests {
                 .query_wasm_smart(
                     sg721_address,
                     &sg721_base::msg::QueryMsg::<
-                        DefaultOptionNftMetadataExtension,
-                        DefaultOptionCollectionMetadataExtension,
+                        DefaultOptionalNftExtension,
+                        DefaultOptionalCollectionExtension,
+                        Empty,
                     >::GetMinterOwnership {},
                 )
                 .unwrap();
@@ -1074,9 +1090,10 @@ mod tests {
         use super::*;
         use cosmwasm_std::testing::mock_env;
         use cw721::{
-            msg::Cw721MigrateMsg, state::CollectionMetadataAndExtension,
-            CollectionMetadataExtensionWrapper, DefaultOptionCollectionMetadataExtension,
-            DefaultOptionNftMetadataExtension, RoyaltyInfo,
+            msg::{
+                CollectionExtensionResponse, CollectionInfoAndExtensionResponse, Cw721MigrateMsg,
+            },
+            DefaultOptionalCollectionExtension, DefaultOptionalNftExtension, RoyaltyInfo,
         };
         use sg721_base::msg::QueryMsg;
 
@@ -1091,16 +1108,17 @@ mod tests {
                         &sg721_base_v3_8_0_prerelease::msg::QueryMsg::CollectionInfo {},
                     )
                     .unwrap();
-            // throws a generic error, for unknown GetCollectionMetadata query
+            // throws a generic error, for unknown GetCollectionInfo query
             app.wrap()
-                .query_wasm_smart::<CollectionMetadataAndExtension<DefaultOptionCollectionMetadataExtension>>(
+                .query_wasm_smart::<CollectionInfoAndExtensionResponse<DefaultOptionalCollectionExtension>>(
                     contract.clone(),
                     &QueryMsg::<
-                        DefaultOptionNftMetadataExtension,
-                        DefaultOptionCollectionMetadataExtension,
-                    >::GetCollectionMetadata {},
+                        DefaultOptionalNftExtension,
+                        DefaultOptionalCollectionExtension,
+                        Empty,
+                    >::GetCollectionInfoAndExtension {},
                 )
-                .expect_err("expecting generic error, for unknown GetCollectionMetadata query");
+                .expect_err("expecting generic error, for unknown GetCollectionInfo query");
 
             // migrate
             let sg721_id = app.store_code(contract_sg721_base());
@@ -1114,22 +1132,23 @@ mod tests {
             // assert collection metadata
             let collection_metadata = app
                 .wrap()
-                .query_wasm_smart::<CollectionMetadataAndExtension<DefaultOptionCollectionMetadataExtension>>(
+                .query_wasm_smart::<CollectionInfoAndExtensionResponse<DefaultOptionalCollectionExtension>>(
                     contract.clone(),
                     &QueryMsg::<
-                        DefaultOptionNftMetadataExtension,
-                        DefaultOptionCollectionMetadataExtension,
-                    >::GetCollectionMetadata {},
+                        DefaultOptionalNftExtension,
+                        DefaultOptionalCollectionExtension,
+                        Empty,
+                        >::GetCollectionInfoAndExtension {  },
                 )
                 .unwrap();
             let env = mock_env();
             assert_eq!(
                 collection_metadata,
-                CollectionMetadataAndExtension::<DefaultOptionCollectionMetadataExtension> {
+                CollectionInfoAndExtensionResponse::<DefaultOptionalCollectionExtension> {
                     name: "Collection Name".to_string(),
                     symbol: "COL".to_string(),
                     updated_at: env.block.time,
-                    extension: Some(CollectionMetadataExtensionWrapper::<RoyaltyInfo> {
+                    extension: Some(CollectionExtensionResponse::<RoyaltyInfo> {
                         description: legacy_collection_info.description,
                         image: legacy_collection_info.image,
                         external_link: legacy_collection_info.external_link,

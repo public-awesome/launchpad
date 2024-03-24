@@ -1,10 +1,9 @@
-use cw721::msg::{CollectionMetadataMsg, Cw721MigrateMsg};
+use cw721::msg::{CollectionInfoMsg, Cw721MigrateMsg};
 use cw721::state::{MAX_COLLECTION_DESCRIPTION_LENGTH, MINTER};
-use cw721::traits::{Cw721CustomMsg, Cw721State};
-use cw721_base::msg::{CollectionMetadataExtensionMsg, RoyaltyInfoResponse};
+use cw721::traits::{Contains, Cw721CustomMsg, Cw721State};
+use cw721_base::msg::{CollectionExtensionMsg, RoyaltyInfoResponse};
 use cw721_base::{
-    traits::StateFactory, DefaultOptionCollectionMetadataExtension,
-    DefaultOptionCollectionMetadataExtensionMsg,
+    traits::StateFactory, DefaultOptionalCollectionExtension, DefaultOptionalCollectionExtensionMsg,
 };
 
 use cosmwasm_std::{
@@ -24,23 +23,35 @@ use crate::{ContractError, Sg721Contract};
 
 use crate::entry::{CONTRACT_NAME, CONTRACT_VERSION};
 
-impl<'a, TNftMetadataExtension, TNftMetadataExtensionMsg, TCustomResponseMsg>
+impl<
+        'a,
+        TNftExtension,
+        TNftExtensionMsg,
+        TExtensionMsg,
+        TExtensionQueryMsg,
+        TCustomResponseMsg,
+    >
     Sg721Contract<
         'a,
-        // Metadata defined in NftInfo (used for mint).
-        TNftMetadataExtension,
-        // Message passed for updating metadata.
-        TNftMetadataExtensionMsg,
-        // Extension defined in CollectionMetadata.
-        DefaultOptionCollectionMetadataExtension,
-        // Message passed for updating collection info extension.
-        DefaultOptionCollectionMetadataExtensionMsg,
+        // NftInfo extension (onchain metadata).
+        TNftExtension,
+        // NftInfo extension msg for onchain metadata.
+        TNftExtensionMsg,
+        // CollectionInfo extension (onchain attributes).
+        DefaultOptionalCollectionExtension,
+        // CollectionInfo extension msg for onchain collection attributes.
+        DefaultOptionalCollectionExtensionMsg,
+        // Custom extension msg for custom contract logic. Default implementation is a no-op.
+        TExtensionMsg,
+        // Custom query msg for custom contract logic. Default implementation returns an empty binary.
+        TExtensionQueryMsg,
         // Defines for `CosmosMsg::Custom<T>` in response. Barely used, so `Empty` can be used.
         TCustomResponseMsg,
     >
 where
-    TNftMetadataExtension: Cw721State,
-    TNftMetadataExtensionMsg: Cw721CustomMsg + StateFactory<TNftMetadataExtension>,
+    TNftExtension: Cw721State + Contains,
+    TNftExtensionMsg: Cw721CustomMsg + StateFactory<TNftExtension>,
+    TExtensionQueryMsg: Cw721CustomMsg,
     TCustomResponseMsg: CustomMsg,
 {
     #[allow(deprecated)]
@@ -92,7 +103,7 @@ where
         deps: DepsMut,
         env: Env,
         info: MessageInfo,
-        msg: ExecuteMsg<TNftMetadataExtensionMsg, DefaultOptionCollectionMetadataExtensionMsg>,
+        msg: ExecuteMsg<TNftExtensionMsg, DefaultOptionalCollectionExtensionMsg, TExtensionMsg>,
     ) -> Result<Response<TCustomResponseMsg>, ContractError> {
         match msg {
             // ---- sg721 specific msgs ----
@@ -122,7 +133,7 @@ where
     ) -> Result<Response<TCustomResponseMsg>, ContractError> {
         let collection_info = self
             .parent
-            .query_collection_metadata_and_extension(deps.as_ref())?;
+            .query_collection_info_and_extension(deps.as_ref())?;
 
         if self.frozen_collection_info.load(deps.storage)? {
             return Err(ContractError::CollectionInfoFrozen {});
@@ -147,15 +158,15 @@ where
                 .save(deps.storage, &env.block.time)?;
         }
 
-        let collection_extension: CollectionMetadataExtensionMsg<RoyaltyInfoResponse> =
+        let collection_extension: CollectionExtensionMsg<RoyaltyInfoResponse> =
             collection_msg.into();
-        let msg = CollectionMetadataMsg {
+        let msg = CollectionInfoMsg {
             name: None,
             symbol: None,
             extension: Some(collection_extension),
         };
         self.parent
-            .update_collection_metadata(deps, Some(&info), Some(&env), msg)?;
+            .update_collection_info(deps, Some(&info), Some(&env), msg)?;
 
         let event = Event::new("update_collection_info").add_attribute("sender", info.sender);
         Ok(Response::new().add_event(event))
@@ -172,10 +183,10 @@ where
     ) -> Result<Response<TCustomResponseMsg>, ContractError> {
         assert_minter_owner(deps.storage, &info.sender)?;
 
-        let msg = CollectionMetadataMsg {
+        let msg = CollectionInfoMsg {
             name: None,
             symbol: None,
-            extension: Some(CollectionMetadataExtensionMsg {
+            extension: Some(CollectionExtensionMsg {
                 description: None,
                 image: None,
                 external_link: None,
@@ -185,7 +196,7 @@ where
             }),
         };
         self.parent
-            .update_collection_metadata(deps, Some(&info), Some(&env), msg)?;
+            .update_collection_info(deps, Some(&info), Some(&env), msg)?;
 
         let event = Event::new("update_start_trading_time").add_attribute("sender", info.sender);
         Ok(Response::new().add_event(event))
@@ -214,7 +225,7 @@ where
         deps: DepsMut,
         env: Env,
         info: MessageInfo,
-        nft_data: NftParams<TNftMetadataExtensionMsg>,
+        nft_data: NftParams<TNftExtensionMsg>,
     ) -> Result<Response<TCustomResponseMsg>, ContractError> {
         assert_minter_owner(deps.storage, &info.sender)?;
         let (token_id, owner, token_uri, extension) = match nft_data {
@@ -241,7 +252,7 @@ where
         &self,
         deps: Deps,
         env: Env,
-        msg: QueryMsg<TNftMetadataExtension, DefaultOptionCollectionMetadataExtension>,
+        msg: QueryMsg<TNftExtension, DefaultOptionalCollectionExtension, TExtensionQueryMsg>,
     ) -> Result<Binary, ContractError> {
         match msg {
             #[allow(deprecated)]
@@ -255,7 +266,7 @@ where
         &self,
         deps: Deps,
     ) -> Result<CollectionInfoResponse, ContractError> {
-        let collection_info = self.parent.query_collection_metadata_and_extension(deps)?;
+        let collection_info = self.parent.query_collection_info_and_extension(deps)?;
 
         let creator = self
             .get_creator(deps.storage)?
@@ -291,7 +302,7 @@ where
         let mut response = Response::new();
 
         // these upgrades can always be called. migration is only executed in case new stores are empty! It is safe calling these on any version.
-        response = crate::upgrades::v3_0_0_ownable_and_collection_metadata::upgrade(
+        response = crate::upgrades::v3_0_0_ownable_and_collection_info::upgrade(
             deps.branch(),
             &env,
             response,
@@ -299,7 +310,7 @@ where
         )?;
         response =
             crate::upgrades::v3_1_0_royalty_timestamp::upgrade(deps.branch(), &env, response)?;
-        // after migration of collection metadata in cw721, we can migrate collection info to new collection metadata extension
+        // after migration of collection metadata in cw721, we can migrate collection info to new collection extension
         response =
             crate::upgrades::v3_8_0_collection_metadata::upgrade(deps.branch(), &env, response)?;
 
