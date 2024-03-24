@@ -38,6 +38,7 @@ sg2                     = { workspace = true }
 sg4                     = { workspace = true }
 sg721                   = { workspace = true }
 sg-std                  = { workspace = true }
+sg-whitelist            = { workspace = true, features = ["library"] }
 sg-metadata             = { workspace = true }
 thiserror               = { workspace = true }
 url                     = { workspace = true }

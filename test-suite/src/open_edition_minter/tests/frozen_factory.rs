@@ -35,6 +35,7 @@ fn frozen_factory_cannot_create_new_minters() {
         Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
         None,
         None,
+        None,
     );
     let vt = open_edition_minter_custom_template(params_extension, init_msg).unwrap();
 
@@ -88,6 +89,7 @@ fn frozen_factory_cannot_create_new_minters() {
         None,
         default_nft_data,
         collection_params,
+        None,
         None,
     );
     msg.collection_params.code_id = 3;

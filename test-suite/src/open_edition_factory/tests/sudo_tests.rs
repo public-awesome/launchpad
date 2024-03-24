@@ -31,6 +31,7 @@ fn happy_path_with_params_update() {
         Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
         None,
         None,
+        None,
     );
     let vt = open_edition_minter_custom_template(params_extension, init_msg).unwrap();
     let mut router = vt.router;
@@ -55,6 +56,7 @@ fn sudo_params_update_creation_fee() {
         per_address_limit_minter,
         None,
         Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
+        None,
         None,
         None,
     );

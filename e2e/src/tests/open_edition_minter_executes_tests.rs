@@ -53,6 +53,7 @@ fn test_open_edition_exec_functions(chain: &mut Chain) {
             extension: None,
             token_uri: Some("ipfs://...".to_string()),
         },
+        None,
     ));
 
     let res = chain

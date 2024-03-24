@@ -13,6 +13,9 @@ pub struct InstantiateMsg {
 #[cw_serde]
 pub enum ExecuteMsg {
     Mint {},
+    SetWhitelist {
+        whitelist: String,
+    },
     Purge {},
     UpdateMintPrice {
         price: u128,
@@ -55,6 +58,7 @@ pub struct ConfigResponse {
     pub start_time: Timestamp,
     pub mint_price: Coin,
     pub factory: String,
+    pub whitelist: Option<String>,
 }
 
 #[cw_serde]
@@ -76,6 +80,7 @@ pub struct EndTimeResponse {
 pub struct MintPriceResponse {
     pub public_price: Coin,
     pub airdrop_price: Coin,
+    pub whitelist_price: Option<Coin>,
     pub current_price: Coin,
 }
 

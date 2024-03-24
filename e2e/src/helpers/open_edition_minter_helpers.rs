@@ -84,6 +84,7 @@ pub fn create_minter_msg(
     num_tokens: Option<u32>,
     start_trading_time: Option<Timestamp>,
     nft_data: NftData,
+    whitelist: Option<String>,
 ) -> CreateMinterMsg<OpenEditionMinterInitMsgExtension> {
     let denom = &chain.cfg.orc_cfg.chain_cfg.denom;
 
@@ -99,6 +100,7 @@ pub fn create_minter_msg(
             per_address_limit: limit,
             end_time,
             num_tokens,
+            whitelist,
         },
         collection_params: CollectionParams {
             code_id: code_id.unwrap_or_else(|| chain.orc.contract_map.code_id(SG721_NAME).unwrap()),

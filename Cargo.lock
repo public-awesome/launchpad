@@ -2602,6 +2602,7 @@ dependencies = [
  "serde",
  "sg-metadata",
  "sg-std",
+ "sg-whitelist",
  "sg1",
  "sg2",
  "sg4",

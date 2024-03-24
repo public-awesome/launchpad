@@ -11,19 +11,23 @@ use crate::state::{
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coin, to_json_binary, Addr, BankMsg, Binary, Coin, Decimal, Deps, DepsMut, Empty, Env, Event,
-    MessageInfo, Order, Reply, ReplyOn, StdError, StdResult, Timestamp, WasmMsg,
+    coin, ensure, to_json_binary, Addr, BankMsg, Binary, Coin, Decimal, Deps, DepsMut, Empty, Env,
+    Event, MessageInfo, Order, Reply, ReplyOn, StdError, StdResult, Timestamp, WasmMsg,
 };
 use cw2::set_contract_version;
 use cw_utils::{may_pay, maybe_addr, nonpayable, parse_reply_instantiate_data};
 use open_edition_factory::msg::{OpenEditionMinterCreateMsg, ParamsResponse};
+use open_edition_factory::state::OpenEditionMinterParams;
 use open_edition_factory::types::NftMetadataType;
 use semver::Version;
 use sg1::{checked_fair_burn, ibc_denom_fair_burn};
 use sg2::query::Sg2QueryMsg;
-use sg4::{Status, StatusResponse, SudoMsg};
+use sg4::{MinterConfig, Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
 use sg_std::{StargazeMsgWrapper, NATIVE_DENOM};
+use sg_whitelist::msg::{
+    ConfigResponse as WhitelistConfigResponse, HasMemberResponse, QueryMsg as WhitelistQueryMsg,
+};
 use url::Url;
 
 pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
@@ -90,6 +94,22 @@ pub fn instantiate(
     // Validations/Check at the factory level:
     // - Mint price, # of tokens / address, Start & End time, Max Tokens
 
+    // Validate address for the optional whitelist contract
+    let whitelist_addr = msg
+        .init_msg
+        .whitelist
+        .and_then(|w| deps.api.addr_validate(w.as_str()).ok());
+
+    if let Some(whitelist) = whitelist_addr.clone() {
+        // check the whitelist exists
+        let res: WhitelistConfigResponse = deps
+            .querier
+            .query_wasm_smart(whitelist, &WhitelistQueryMsg::Config {})?;
+        if res.is_active {
+            return Err(ContractError::WhitelistAlreadyStarted {});
+        }
+    }
+
     // Use default start trading time if not provided
     let mut collection_info = msg.collection_params.info.clone();
     let offset = factory_params.max_trading_offset_secs;
@@ -123,6 +143,7 @@ pub fn instantiate(
             end_time: msg.init_msg.end_time,
             nft_data: msg.init_msg.nft_data,
             num_tokens: msg.init_msg.num_tokens,
+            whitelist: whitelist_addr,
         },
         mint_price: msg.init_msg.mint_price,
     };
@@ -185,6 +206,9 @@ pub fn execute(
             execute_update_per_address_limit(deps, env, info, per_address_limit)
         }
         ExecuteMsg::MintTo { recipient } => execute_mint_to(deps, env, info, recipient),
+        ExecuteMsg::SetWhitelist { whitelist } => {
+            execute_set_whitelist(deps, env, info, &whitelist)
+        }
         ExecuteMsg::BurnRemaining {} => execute_burn_remaining(deps, env, info),
     }
 }
@@ -226,6 +250,99 @@ pub fn execute_purge(
         .add_attribute("sender", info.sender))
 }
 
+pub fn execute_set_whitelist(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    whitelist: &str,
+) -> Result<Response, ContractError> {
+    nonpayable(&info)?;
+    let mut config = CONFIG.load(deps.storage)?;
+    let MinterConfig {
+        factory,
+        extension:
+            ConfigExtension {
+                whitelist: existing_whitelist,
+                admin,
+                start_time,
+                ..
+            },
+        ..
+    } = config.clone();
+    ensure!(
+        admin == info.sender,
+        ContractError::Unauthorized("Sender is not an admin".to_owned())
+    );
+
+    ensure!(
+        env.block.time < start_time,
+        ContractError::AlreadyStarted {}
+    );
+
+    if let Some(whitelist) = existing_whitelist {
+        let res: WhitelistConfigResponse = deps
+            .querier
+            .query_wasm_smart(whitelist, &WhitelistQueryMsg::Config {})?;
+
+        ensure!(!res.is_active, ContractError::WhitelistAlreadyStarted {});
+    }
+
+    let new_wl = deps.api.addr_validate(whitelist)?;
+    config.extension.whitelist = Some(new_wl.clone());
+    // check that the new whitelist exists
+    let WhitelistConfigResponse {
+        is_active: wl_is_active,
+        mint_price: wl_mint_price,
+        ..
+    } = deps
+        .querier
+        .query_wasm_smart(new_wl, &WhitelistQueryMsg::Config {})?;
+
+    ensure!(!wl_is_active, ContractError::WhitelistAlreadyStarted {});
+
+    ensure!(
+        wl_mint_price.denom == config.mint_price.denom,
+        ContractError::InvalidDenom {
+            expected: config.mint_price.denom,
+            got: wl_mint_price.denom,
+        }
+    );
+
+    // Whitelist could be free, while factory minimum is not
+    let ParamsResponse {
+        params:
+            OpenEditionMinterParams {
+                min_mint_price: factory_min_mint_price,
+                ..
+            },
+    } = deps
+        .querier
+        .query_wasm_smart(factory, &Sg2QueryMsg::Params {})?;
+
+    ensure!(
+        factory_min_mint_price.amount <= wl_mint_price.amount,
+        ContractError::InsufficientWhitelistMintPrice {
+            expected: factory_min_mint_price.amount.into(),
+            got: wl_mint_price.amount.into(),
+        }
+    );
+
+    // Whitelist denom should match factory mint denom
+    ensure!(
+        factory_min_mint_price.denom == wl_mint_price.denom,
+        ContractError::InvalidDenom {
+            expected: factory_min_mint_price.denom,
+            got: wl_mint_price.denom,
+        }
+    );
+
+    CONFIG.save(deps.storage, &config)?;
+
+    Ok(Response::default()
+        .add_attribute("action", "set_whitelist")
+        .add_attribute("whitelist", whitelist.to_string()))
+}
+
 pub fn execute_mint_sender(
     deps: DepsMut,
     env: Env,
@@ -234,8 +351,9 @@ pub fn execute_mint_sender(
     let config = CONFIG.load(deps.storage)?;
     let action = "mint_sender";
 
+    // If there is no active whitelist right now, check public mint
     // Check start and end time (if not optional)
-    if env.block.time < config.extension.start_time {
+    if is_public_mint(deps.as_ref(), &info)? && (env.block.time < config.extension.start_time) {
         return Err(ContractError::BeforeMintStartTime {});
     }
     if let Some(end_time) = config.extension.end_time {
@@ -251,6 +369,55 @@ pub fn execute_mint_sender(
     }
 
     _execute_mint(deps, env, info, action, false, None)
+}
+
+// Check if a whitelist exists and not ended
+// Sender has to be whitelisted to mint
+fn is_public_mint(deps: Deps, info: &MessageInfo) -> Result<bool, ContractError> {
+    let config = CONFIG.load(deps.storage)?;
+
+    // If there is no whitelist, there's only a public mint
+    if config.extension.whitelist.is_none() {
+        return Ok(true);
+    }
+
+    let whitelist = config.extension.whitelist.unwrap();
+
+    let wl_config: WhitelistConfigResponse = deps
+        .querier
+        .query_wasm_smart(whitelist.clone(), &WhitelistQueryMsg::Config {})?;
+
+    if !wl_config.is_active {
+        return Ok(true);
+    }
+
+    let res: HasMemberResponse = deps.querier.query_wasm_smart(
+        whitelist,
+        &WhitelistQueryMsg::HasMember {
+            member: info.sender.to_string(),
+        },
+    )?;
+    if !res.has_member {
+        return Err(ContractError::NotWhitelisted {
+            addr: info.sender.to_string(),
+        });
+    }
+
+    // Check wl per address limit
+    let mint_count = mint_count(deps, info)?;
+    if mint_count >= wl_config.per_address_limit {
+        return Err(ContractError::MaxPerAddressLimitExceeded {});
+    }
+
+    Ok(false)
+}
+
+fn mint_count(deps: Deps, info: &MessageInfo) -> Result<u32, StdError> {
+    let mint_count = MINTER_ADDRS
+        .key(&info.sender)
+        .may_load(deps.storage)?
+        .unwrap_or(0);
+    Ok(mint_count)
 }
 
 pub fn execute_mint_to(
@@ -468,6 +635,10 @@ pub fn execute_update_mint_price(
         });
     }
 
+    if config.extension.num_tokens.is_none() {
+        ensure!(price != 0, ContractError::NoTokenLimitWithZeroMintPrice {})
+    }
+
     config.mint_price = coin(price, config.mint_price.denom);
     CONFIG.save(deps.storage, &config)?;
     Ok(Response::new()
@@ -661,12 +832,32 @@ pub fn mint_price(deps: Deps, is_admin: bool) -> Result<Coin, StdError> {
             .querier
             .query_wasm_smart(config.factory, &Sg2QueryMsg::Params {})?;
         let factory_params = factory.params;
+        if factory_params.extension.airdrop_mint_price.amount.is_zero() {
+            ensure!(
+                config.extension.num_tokens.is_some(),
+                StdError::generic_err(
+                    "Open Edition collections should have a non-zero airdrop price"
+                )
+            );
+        }
         Ok(coin(
             factory_params.extension.airdrop_mint_price.amount.u128(),
             factory_params.extension.airdrop_mint_price.denom,
         ))
     } else {
-        Ok(config.mint_price)
+        if config.extension.whitelist.is_none() {
+            return Ok(config.mint_price.clone());
+        }
+        let whitelist = config.extension.whitelist.unwrap();
+        let whitelist_config: WhitelistConfigResponse = deps
+            .querier
+            .query_wasm_smart(whitelist, &WhitelistQueryMsg::Config {})?;
+
+        if whitelist_config.is_active {
+            Ok(whitelist_config.mint_price)
+        } else {
+            Ok(config.mint_price.clone())
+        }
     }
 }
 
@@ -775,6 +966,7 @@ fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
         start_time: config.extension.start_time,
         mint_price: config.mint_price,
         factory: config.factory.to_string(),
+        whitelist: config.extension.whitelist.map(|w| w.to_string()),
     })
 }
 
@@ -834,6 +1026,14 @@ fn query_mint_price(deps: Deps) -> StdResult<MintPriceResponse> {
 
     let current_price = mint_price(deps, false)?;
     let public_price = config.mint_price.clone();
+    let whitelist_price: Option<Coin> = if let Some(whitelist) = config.extension.whitelist {
+        let wl_config: WhitelistConfigResponse = deps
+            .querier
+            .query_wasm_smart(whitelist, &WhitelistQueryMsg::Config {})?;
+        Some(wl_config.mint_price)
+    } else {
+        None
+    };
     let airdrop_price = coin(
         factory_params.extension.airdrop_mint_price.amount.u128(),
         config.mint_price.denom,
@@ -841,6 +1041,7 @@ fn query_mint_price(deps: Deps) -> StdResult<MintPriceResponse> {
     Ok(MintPriceResponse {
         public_price,
         airdrop_price,
+        whitelist_price,
         current_price,
     })
 }

@@ -20,6 +20,7 @@ pub fn mock_init_minter_extension(
     mint_price: Option<Coin>,
     nft_data: NftData,
     payment_address: Option<String>,
+    whitelist: Option<String>,
 ) -> OpenEditionMinterInitMsgExtension {
     OpenEditionMinterInitMsgExtension {
         nft_data,
@@ -29,6 +30,7 @@ pub fn mock_init_minter_extension(
         end_time,
         payment_address,
         num_tokens,
+        whitelist,
     }
 }
 
@@ -42,6 +44,7 @@ pub fn mock_create_minter(
     default_nft_data: NftData,
     collection_params: CollectionParams,
     payment_address: Option<String>,
+    whitelist: Option<String>,
 ) -> OpenEditionMinterCreateMsg {
     OpenEditionMinterCreateMsg {
         init_msg: mock_init_minter_extension(
@@ -52,6 +55,7 @@ pub fn mock_create_minter(
             mint_price,
             default_nft_data,
             payment_address,
+            whitelist,
         ),
         collection_params,
     }

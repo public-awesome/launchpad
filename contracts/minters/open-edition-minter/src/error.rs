@@ -43,6 +43,12 @@ pub enum ContractError {
     #[error("InvalidNumTokens {max}, min: 1")]
     InvalidNumTokens { max: u32, min: u32 },
 
+    #[error("Open Edition collections should have a non-zero airdrop price")]
+    NoTokenLimitWithZeroAirdropPrice {},
+
+    #[error("Open Edition collections should have a non-zero mint price")]
+    NoTokenLimitWithZeroMintPrice {},
+
     #[error("Sold out")]
     SoldOut {},
 
