@@ -16,6 +16,16 @@
     },
     "public_price": {
       "$ref": "#/definitions/Coin"
+    },
+    "whitelist_price": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/Coin"
+        },
+        {
+          "type": "null"
+        }
+      ]
     }
   },
   "additionalProperties": false,

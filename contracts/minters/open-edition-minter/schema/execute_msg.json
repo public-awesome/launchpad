@@ -18,6 +18,27 @@
     {
       "type": "object",
       "required": [
+        "set_whitelist"
+      ],
+      "properties": {
+        "set_whitelist": {
+          "type": "object",
+          "required": [
+            "whitelist"
+          ],
+          "properties": {
+            "whitelist": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
         "purge"
       ],
       "properties": {

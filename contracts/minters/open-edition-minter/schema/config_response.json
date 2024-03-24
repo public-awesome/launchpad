@@ -68,6 +68,12 @@
     },
     "start_time": {
       "$ref": "#/definitions/Timestamp"
+    },
+    "whitelist": {
+      "type": [
+        "string",
+        "null"
+      ]
     }
   },
   "additionalProperties": false,

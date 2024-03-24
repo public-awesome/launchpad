@@ -96,6 +96,16 @@
         },
         "start_time": {
           "$ref": "#/definitions/Timestamp"
+        },
+        "whitelist": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Addr"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "additionalProperties": false
