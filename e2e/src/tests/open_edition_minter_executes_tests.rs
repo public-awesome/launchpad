@@ -46,7 +46,7 @@ fn test_open_edition_exec_functions(chain: &mut Chain) {
         MAX_TOKENS,
         start_time,
         end_time,
-        None,
+        Some(100),
         None,
         NftData {
             nft_data_type: NftMetadataType::OffChainMetadata,
