@@ -46,7 +46,7 @@ fn test_open_edition_exec_functions(chain: &mut Chain) {
         MAX_TOKENS,
         start_time,
         end_time,
-        Some(100),
+        None,
         None,
         NftData {
             nft_data_type: NftMetadataType::OffChainMetadata,
@@ -186,7 +186,10 @@ fn test_open_edition_exec_functions(chain: &mut Chain) {
                 recipient: dev.account.address.to_string(),
             },
             &user.key,
-            vec![],
+            vec![OrcCoin {
+                amount: 1_000_000,
+                denom: denom.parse().unwrap(),
+            }],
         )
         .unwrap();
 

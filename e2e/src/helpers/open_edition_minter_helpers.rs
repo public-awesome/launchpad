@@ -59,7 +59,7 @@ pub fn instantiate_factory(
                     max_per_address_limit: 50,
                     airdrop_mint_fee_bps: 0,
                     airdrop_mint_price: Coin {
-                        amount: Uint128::new(0),
+                        amount: Uint128::new(1_000_000),
                         denom: denom.to_string(),
                     },
                     dev_fee_address: dev_addr,
