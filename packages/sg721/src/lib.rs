@@ -24,7 +24,7 @@ pub enum ExecuteMsg<
 > {
     // ---- sg721 specific msgs ----
     /// Update specific collection info fields
-    #[deprecated = "Please use UpdateCollectionInfo instead"]
+    #[deprecated = "Please use Cw721UpdateCollectionInfo instead"]
     UpdateCollectionInfo {
         #[allow(deprecated)]
         collection_info: UpdateCollectionInfoMsg<RoyaltyInfoResponse>,

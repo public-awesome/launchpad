@@ -243,7 +243,7 @@ where
 }
 
 #[cw_serde]
-#[deprecated = "Please use `CollectionInfo<CollectionInfoExtension<RoyaltyInfo>>` instead"]
+#[deprecated = "Please use `CollectionInfo<CollectionExtensionResponse<RoyaltyInfo>>` instead"]
 pub struct CollectionInfoResponse {
     pub creator: String,
     pub description: String,
