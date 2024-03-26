@@ -5,10 +5,9 @@ use crate::msg::{ExecuteMsg, InstantiateMsg};
 use crate::state::CONFIG;
 
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{DepsMut, Env, MessageInfo};
+use cosmwasm_std::{DepsMut, Env, MessageInfo, Response};
 use cw2::set_contract_version;
 use sg1::fair_burn;
-use sg_std::Response;
 
 use build_message::{state_config, whitelist_instantiate};
 use validation::validate_instantiation_params;
@@ -27,7 +26,12 @@ pub fn instantiate(
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
     validate_instantiation_params(info.clone(), msg.clone())?;
     let mut res = Response::new();
-    fair_burn(INSTANTIATION_FEE, None, &mut res);
+    fair_burn(
+        env.contract.address.to_string(),
+        INSTANTIATION_FEE,
+        None,
+        &mut res,
+    );
     let cfg = state_config(deps.as_ref(), info.clone(), msg.clone())?;
     CONFIG.save(deps.storage, &cfg)?;
     Ok(res
@@ -56,18 +60,15 @@ pub fn execute(
 mod build_message {
     use super::*;
     use crate::state::Config;
-    use cosmwasm_std::{to_binary, Deps, WasmMsg};
-    use sg_std::{StargazeMsgWrapper, SubMsg};
+    use cosmwasm_std::{to_json_binary, Deps, SubMsg, WasmMsg};
+
     use validation::validate_airdrop_amount;
     use whitelist_immutable::msg::InstantiateMsg as WGInstantiateMsg;
 
     pub const GENERIC_WHITELIST_LABEL: &str = "Generic Whitelist for Airdrop";
     pub const INIT_WHITELIST_REPLY_ID: u64 = 1;
 
-    pub fn whitelist_instantiate(
-        env: Env,
-        msg: InstantiateMsg,
-    ) -> Result<cosmwasm_std::SubMsg<StargazeMsgWrapper>, ContractError> {
+    pub fn whitelist_instantiate(env: Env, msg: InstantiateMsg) -> Result<SubMsg, ContractError> {
         let whitelist_instantiate_msg = WGInstantiateMsg {
             addresses: msg.addresses,
             mint_discount_bps: Some(0),
@@ -78,7 +79,7 @@ mod build_message {
             admin: Some(env.contract.address.to_string()),
             funds: vec![],
             label: GENERIC_WHITELIST_LABEL.to_string(),
-            msg: to_binary(&whitelist_instantiate_msg)?,
+            msg: to_json_binary(&whitelist_instantiate_msg)?,
         };
         Ok(SubMsg::reply_on_success(wasm_msg, INIT_WHITELIST_REPLY_ID))
     }

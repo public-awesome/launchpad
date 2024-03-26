@@ -1,4 +1,4 @@
-use crate::common_setup::contract_boxes::custom_mock_app;
+use crate::common_setup::contract_boxes::{custom_mock_app, App};
 use crate::sg_eth_airdrop::constants::collection_constants::WHITELIST_AMOUNT;
 use crate::sg_eth_airdrop::setup::configure_mock_minter::configure_mock_minter_with_mock_whitelist;
 use crate::sg_eth_airdrop::setup::setup_signatures::{
@@ -11,7 +11,6 @@ use sg_eth_airdrop::msg::{ExecuteMsg, QueryMsg};
 
 use ethers_core::rand::thread_rng;
 use ethers_signers::{LocalWallet, Signer};
-use sg_multi_test::StargazeApp;
 
 use crate::sg_eth_airdrop::constants::claim_constants::{
     CONFIG_PLAINTEXT, MOCK_AIRDROP_ADDR_STR, MOCK_MINTER_ADDR_STR, NATIVE_DENOM, OWNER,
@@ -24,7 +23,7 @@ use crate::sg_eth_airdrop::setup::execute_msg::{
 
 use sg_eth_airdrop::contract::INSTANTIATION_FEE;
 
-fn query_minter_as_expected(app: &mut StargazeApp, airdrop_contract: Addr, minter_addr: Addr) {
+fn query_minter_as_expected(app: &mut App, airdrop_contract: Addr, minter_addr: Addr) {
     let query_msg = QueryMsg::GetMinter {};
     let result: Addr = app
         .wrap()
@@ -176,7 +175,7 @@ fn test_valid_eth_sig_claim() {
     .unwrap();
     let expected_attributes = [
         Attribute {
-            key: "_contract_addr".to_string(),
+            key: "_contract_address".to_string(),
             value: airdrop_contract.to_string(),
         },
         Attribute {
@@ -261,7 +260,7 @@ fn test_can_not_claim_twice() {
 
     let expected_attributes = [
         Attribute {
-            key: "_contract_addr".to_string(),
+            key: "_contract_address".to_string(),
             value: airdrop_contract.to_string(),
         },
         Attribute {
@@ -491,7 +490,7 @@ fn test_one_eth_claim_two_stargaze_addresses_invalid() {
 
     let expected_attributes = [
         Attribute {
-            key: "_contract_addr".to_string(),
+            key: "_contract_address".to_string(),
             value: airdrop_contract.to_string(),
         },
         Attribute {

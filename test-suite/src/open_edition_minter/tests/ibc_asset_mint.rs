@@ -1,4 +1,4 @@
-use cosmwasm_std::{coin, Addr, Coin, Decimal, Uint128};
+use cosmwasm_std::{coin, Addr, Coin, Decimal, Timestamp, Uint128};
 use cw_multi_test::{BankSudo, Executor, SudoMsg};
 use open_edition_factory::state::{OpenEditionMinterParams, ParamsExtension};
 use open_edition_minter::msg::ExecuteMsg;
@@ -21,6 +21,7 @@ fn check_custom_create_minter_denom() {
     let denom = "ibc/frenz";
     let mint_price = coin(MIN_MINT_PRICE_OPEN_EDITION, denom.to_string());
     let params_extension = ParamsExtension {
+        max_token_limit: 10,
         max_per_address_limit: 10,
         airdrop_mint_fee_bps: 100,
         airdrop_mint_price: Coin {
@@ -34,6 +35,7 @@ fn check_custom_create_minter_denom() {
         default_nft_data(),
         per_address_limit_minter,
         None,
+        Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
         None,
         Some(mint_price.clone()),
     );
@@ -46,6 +48,7 @@ fn check_custom_create_minter_denom() {
         mint_fee_bps: MINT_FEE_FAIR_BURN,
         max_trading_offset_secs: 60 * 60 * 24 * 7,
         extension: ParamsExtension {
+            max_token_limit: 10,
             max_per_address_limit: 10,
             airdrop_mint_fee_bps: 100,
             dev_fee_address: DEV_ADDRESS.to_string(),
@@ -96,6 +99,7 @@ fn one_hundred_percent_burned_ibc_minter() {
     let denom = "ibc/frenz";
     let mint_price = coin(MIN_MINT_PRICE_OPEN_EDITION, denom.to_string());
     let params_extension = ParamsExtension {
+        max_token_limit: 10,
         max_per_address_limit: 10,
         airdrop_mint_fee_bps: 100,
         airdrop_mint_price: Coin {
@@ -109,6 +113,7 @@ fn one_hundred_percent_burned_ibc_minter() {
         default_nft_data(),
         per_address_limit_minter,
         None,
+        Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
         None,
         Some(mint_price.clone()),
     );
@@ -122,6 +127,7 @@ fn one_hundred_percent_burned_ibc_minter() {
         mint_fee_bps: 10000,
         max_trading_offset_secs: 60 * 60 * 24 * 7,
         extension: ParamsExtension {
+            max_token_limit: 10,
             max_per_address_limit: 10,
             airdrop_mint_fee_bps: 100,
             dev_fee_address: DEV_ADDRESS.to_string(),
@@ -177,6 +183,7 @@ fn zero_mint_fee() {
     let mint_price = coin(MIN_MINT_PRICE_OPEN_EDITION, denom.to_string());
 
     let params_extension = ParamsExtension {
+        max_token_limit: 10,
         max_per_address_limit: 10,
         airdrop_mint_fee_bps: 100,
         airdrop_mint_price: Coin {
@@ -190,6 +197,7 @@ fn zero_mint_fee() {
         default_nft_data(),
         per_address_limit_minter,
         None,
+        Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
         None,
         Some(mint_price.clone()),
     );
@@ -203,6 +211,7 @@ fn zero_mint_fee() {
         mint_fee_bps: 0,
         max_trading_offset_secs: 60 * 60 * 24 * 7,
         extension: ParamsExtension {
+            max_token_limit: 10,
             max_per_address_limit: 10,
             airdrop_mint_fee_bps: 100,
             dev_fee_address: DEV_ADDRESS.to_string(),

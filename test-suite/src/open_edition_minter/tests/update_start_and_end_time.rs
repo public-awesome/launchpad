@@ -15,6 +15,7 @@ use crate::common_setup::templates::open_edition_minter_custom_template;
 #[test]
 fn check_start_end_time_updates() {
     let params_extension = ParamsExtension {
+        max_token_limit: 10,
         max_per_address_limit: 10,
         airdrop_mint_fee_bps: 100,
         airdrop_mint_price: Coin {
@@ -28,6 +29,7 @@ fn check_start_end_time_updates() {
         default_nft_data(),
         per_address_limit_minter,
         None,
+        Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
         None,
         None,
     );
@@ -56,7 +58,7 @@ fn check_start_end_time_updates() {
         .unwrap();
     assert_eq!(
         res.end_time,
-        Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000).to_string()
+        Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000).to_string())
     );
 
     // Cant change start time to before the current time
@@ -141,6 +143,6 @@ fn check_start_end_time_updates() {
         .unwrap();
     assert_eq!(
         res.end_time,
-        Timestamp::from_nanos(GENESIS_MINT_START_TIME + 20_000).to_string()
+        Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 20_000).to_string())
     );
 }

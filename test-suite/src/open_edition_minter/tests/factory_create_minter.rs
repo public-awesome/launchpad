@@ -3,7 +3,7 @@ use open_edition_factory::state::ParamsExtension;
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
 use crate::common_setup::setup_minter::common::constants::{
-    DEV_ADDRESS, MIN_MINT_PRICE_OPEN_EDITION,
+    DEV_ADDRESS, MAX_TOKEN_LIMIT, MIN_MINT_PRICE_OPEN_EDITION,
 };
 use crate::common_setup::setup_minter::open_edition_minter::minter_params::{
     default_nft_data, init_msg,
@@ -23,6 +23,7 @@ fn check_valid_create_minter() {
     // Set a per address lower or equal than the factory -> ok
     let max_per_address_limit = 10;
     let params_extension = ParamsExtension {
+        max_token_limit: 10,
         max_per_address_limit,
         airdrop_mint_fee_bps: 100,
         airdrop_mint_price: Coin {
@@ -31,16 +32,47 @@ fn check_valid_create_minter() {
         },
         dev_fee_address: DEV_ADDRESS.to_string(),
     };
-    let per_address_limit_minter = Some(2);
+    let per_address_limit_minter = Some(5);
     let init_msg = init_msg(
         default_nft_data(),
         per_address_limit_minter,
         None,
+        Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
         None,
         None,
     );
     let vt = open_edition_minter_custom_template(params_extension, init_msg).unwrap();
     assert!(vt.collection_response_vec[0].error.is_none())
+}
+
+#[test]
+fn check_custom_denom_create_minter() {
+    // Set a per address lower or equal than the factory -> ok
+    let max_per_address_limit = 10;
+    let params_extension = ParamsExtension {
+        max_token_limit: 10,
+        max_per_address_limit,
+        airdrop_mint_fee_bps: 100,
+        airdrop_mint_price: Coin {
+            denom: "ibc/frenz".to_string(),
+            amount: Uint128::new(100_000_000u128),
+        },
+        dev_fee_address: DEV_ADDRESS.to_string(),
+    };
+    let per_address_limit_minter = Some(5);
+    let init_msg = init_msg(
+        default_nft_data(),
+        per_address_limit_minter,
+        None,
+        Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
+        None,
+        Some(Coin {
+            denom: "ibc/frenz".to_string(),
+            amount: Uint128::new(100_000_000u128),
+        }),
+    );
+    let vt = open_edition_minter_custom_template(params_extension, init_msg);
+    assert!(vt.is_ok())
 }
 
 #[test]
@@ -50,6 +82,7 @@ fn check_invalid_create_minter_address_limit() {
 
     let max_per_address_limit = 10;
     let params_extension = ParamsExtension {
+        max_token_limit: 10,
         max_per_address_limit,
         airdrop_mint_fee_bps: 100,
         airdrop_mint_price: Coin {
@@ -63,6 +96,7 @@ fn check_invalid_create_minter_address_limit() {
         default_nft_data(),
         per_address_limit_minter,
         None,
+        Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
         None,
         None,
     );
@@ -82,6 +116,7 @@ fn check_invalid_create_minter_address_limit() {
         default_nft_data(),
         per_address_limit_minter,
         None,
+        Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
         None,
         None,
     );
@@ -100,6 +135,7 @@ fn check_invalid_create_minter_address_limit() {
 #[test]
 fn check_invalid_create_minter_start_end_time() {
     let params_extension = ParamsExtension {
+        max_token_limit: 10,
         max_per_address_limit: 10,
         airdrop_mint_fee_bps: 100,
         airdrop_mint_price: Coin {
@@ -114,6 +150,7 @@ fn check_invalid_create_minter_start_end_time() {
         default_nft_data(),
         per_address_limit_minter,
         start_time,
+        Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
         None,
         None,
     );
@@ -142,6 +179,7 @@ fn check_invalid_create_minter_start_end_time() {
         start_time,
         end_time,
         None,
+        None,
     );
     let vt =
         open_edition_minter_start_and_end_time(params_extension, init_msg_1, start_time, end_time)
@@ -162,6 +200,7 @@ fn check_invalid_create_minter_start_end_time() {
 fn check_invalid_create_minter_mint_price() {
     // Invalid denom
     let params_extension = ParamsExtension {
+        max_token_limit: 10,
         max_per_address_limit: 10,
         airdrop_mint_fee_bps: 100,
         airdrop_mint_price: Coin {
@@ -175,6 +214,7 @@ fn check_invalid_create_minter_mint_price() {
         default_nft_data(),
         per_address_limit_minter,
         None,
+        Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
         None,
         Some(Coin {
             denom: "uinvalid".to_string(),
@@ -196,6 +236,7 @@ fn check_invalid_create_minter_mint_price() {
         default_nft_data(),
         per_address_limit_minter,
         None,
+        Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
         None,
         Some(Coin {
             denom: NATIVE_DENOM.to_string(),
@@ -217,6 +258,7 @@ fn check_invalid_create_minter_mint_price() {
 #[test]
 fn check_invalid_create_minter_nft_data() {
     let params_extension = ParamsExtension {
+        max_token_limit: 10,
         max_per_address_limit: 10,
         airdrop_mint_fee_bps: 100,
         airdrop_mint_price: Coin {
@@ -236,6 +278,7 @@ fn check_invalid_create_minter_nft_data() {
         nft_data_1.clone(),
         per_address_limit_minter,
         start_time,
+        Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
         None,
         None,
     );
@@ -280,6 +323,7 @@ fn check_invalid_create_minter_nft_data() {
         nft_data_2.clone(),
         per_address_limit_minter,
         start_time,
+        Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
         None,
         None,
     );
@@ -311,6 +355,7 @@ fn check_invalid_create_minter_nft_data() {
         nft_data_3.clone(),
         per_address_limit_minter,
         start_time,
+        Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
         None,
         None,
     );
@@ -326,4 +371,42 @@ fn check_invalid_create_minter_nft_data() {
             .to_string(),
         "InvalidNftDataProvided"
     );
+}
+
+#[test]
+fn check_invalid_create_minter_max_tokens() {
+    // Invalid max tokens
+    let params_extension = ParamsExtension {
+        max_token_limit: MAX_TOKEN_LIMIT,
+        max_per_address_limit: 10,
+        airdrop_mint_fee_bps: 100,
+        airdrop_mint_price: Coin {
+            denom: NATIVE_DENOM.to_string(),
+            amount: Uint128::new(100_000_000u128),
+        },
+        dev_fee_address: DEV_ADDRESS.to_string(),
+    };
+    let per_address_limit_minter = Some(2);
+    let init_msg_1 = init_msg(
+        default_nft_data(),
+        per_address_limit_minter,
+        None,
+        None,
+        Some(MAX_TOKEN_LIMIT + 1),
+        None,
+    );
+    let vt = open_edition_minter_custom_template(params_extension.clone(), init_msg_1).unwrap();
+    assert!(vt.collection_response_vec[0].error.is_some());
+
+    // Number of Tokens and End Time are both None
+    let init_msg_2 = init_msg(
+        default_nft_data(),
+        per_address_limit_minter,
+        None,
+        None,
+        None,
+        None,
+    );
+    let vt = open_edition_minter_custom_template(params_extension, init_msg_2).unwrap();
+    assert!(vt.collection_response_vec[0].error.is_some());
 }

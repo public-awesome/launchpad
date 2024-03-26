@@ -1,4 +1,4 @@
-use cosmwasm_std::{coins, Coin, Uint128};
+use cosmwasm_std::{coins, Coin, Timestamp, Uint128};
 use cw_multi_test::Executor;
 use open_edition_factory::state::ParamsExtension;
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
@@ -18,6 +18,7 @@ const MINT_PRICE: u128 = 100_000_000;
 #[test]
 fn check_per_address_limit() {
     let params_extension = ParamsExtension {
+        max_token_limit: 10_000,
         max_per_address_limit: 10,
         airdrop_mint_fee_bps: 100,
         airdrop_mint_price: Coin {
@@ -31,6 +32,7 @@ fn check_per_address_limit() {
         default_nft_data(),
         per_address_limit_minter,
         None,
+        Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
         None,
         None,
     );
@@ -41,7 +43,7 @@ fn check_per_address_limit() {
     // Set to a valid mint time
     setup_block_time(&mut router, GENESIS_MINT_START_TIME + 101, None);
 
-    // Check the Config
+    // Check the Config for per address limit
     let query_config_msg = QueryMsg::Config {};
     let res: ConfigResponse = router
         .wrap()

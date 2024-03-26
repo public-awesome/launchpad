@@ -3,10 +3,9 @@ use crate::state::ADDRS_TO_MINT_COUNT;
 use crate::{state::CONFIG, ContractError};
 use build_messages::claim_and_whitelist_add;
 use cosmwasm_std::DepsMut;
-use cosmwasm_std::{coins, Addr, BankMsg, StdResult};
+use cosmwasm_std::{coins, Addr, BankMsg, CosmosMsg, Response, StdResult, SubMsg};
 use cosmwasm_std::{Env, MessageInfo};
-use sg_std::Response;
-use sg_std::{CosmosMsg, SubMsg};
+
 use sg_whitelist::msg::ExecuteMsg as CollectionWhitelistExecuteMsg;
 use sg_whitelist::{helpers::interface::CollectionWhitelistContract, msg::AddMembersMsg};
 use validation::validate_claim;

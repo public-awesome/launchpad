@@ -1,7 +1,7 @@
 use crate::sg_eth_airdrop::constants::claim_constants::OWNER;
 use crate::sg_eth_airdrop::constants::collection_constants::WHITELIST_AMOUNT;
 use crate::{
-    common_setup::contract_boxes::{contract_eth_airdrop, contract_whitelist_immutable},
+    common_setup::contract_boxes::{contract_eth_airdrop, contract_whitelist_immutable, App},
     sg_eth_airdrop::setup::test_msgs::InstantiateParams,
 };
 use anyhow::Error as anyhow_error;
@@ -10,7 +10,7 @@ use cw_multi_test::error::Error;
 use cw_multi_test::{AppResponse, BankSudo, Executor, SudoMsg};
 use eyre::Result;
 use sg_eth_airdrop::msg::{ExecuteMsg, InstantiateMsg};
-use sg_multi_test::StargazeApp;
+
 use sg_std::NATIVE_DENOM;
 
 pub fn instantiate_contract(params: InstantiateParams) -> Result<cosmwasm_std::Addr, anyhow_error> {
@@ -56,17 +56,17 @@ pub fn instantiate_contract(params: InstantiateParams) -> Result<cosmwasm_std::A
 
 pub fn execute_contract_with_msg(
     msg: ExecuteMsg,
-    app: &mut StargazeApp,
+    app: &mut App,
     user: Addr,
     target_address: Addr,
-) -> Result<AppResponse, Error> {
+) -> Result<AppResponse, Box<Error>> {
     let result = app.execute_contract(user, target_address, &msg, &[]);
     Ok(result.unwrap())
 }
 
 pub fn execute_contract_error_with_msg(
     msg: ExecuteMsg,
-    app: &mut StargazeApp,
+    app: &mut App,
     user: Addr,
     target_address: Addr,
 ) -> String {

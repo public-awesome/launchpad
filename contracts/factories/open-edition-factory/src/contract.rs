@@ -1,10 +1,10 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    ensure, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdResult, WasmMsg,
+    ensure, to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult, WasmMsg,
 };
 use cw2::set_contract_version;
-use sg_std::{Response, NATIVE_DENOM};
+use sg_std::NATIVE_DENOM;
 
 use base_factory::contract::{
     must_be_allowed_collection, must_not_be_frozen, must_pay_exact_amount, update_params,
@@ -97,7 +97,7 @@ pub fn execute_create_minter(
     let wasm_msg = WasmMsg::Instantiate {
         admin: Some(info.sender.to_string()),
         code_id: params.code_id,
-        msg: to_binary(&msg)?,
+        msg: to_json_binary(&msg)?,
         funds: vec![],
         label: format!("OpenEditionMinter-{}", msg.collection_params.name.trim()),
     };
@@ -123,6 +123,11 @@ pub fn sudo_update_params(
     let mut params = SUDO_PARAMS.load(deps.storage)?;
 
     update_params(&mut params, param_msg.clone())?;
+
+    params.extension.max_token_limit = param_msg
+        .extension
+        .max_token_limit
+        .unwrap_or(params.extension.max_token_limit);
 
     params.extension.dev_fee_address = param_msg
         .extension
@@ -152,12 +157,12 @@ pub fn sudo_update_params(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: Sg2QueryMsg) -> StdResult<Binary> {
     match msg {
-        Sg2QueryMsg::Params {} => to_binary(&query_params(deps)?),
+        Sg2QueryMsg::Params {} => to_json_binary(&query_params(deps)?),
         Sg2QueryMsg::AllowedCollectionCodeIds {} => {
-            to_binary(&query_allowed_collection_code_ids(deps)?)
+            to_json_binary(&query_allowed_collection_code_ids(deps)?)
         }
         Sg2QueryMsg::AllowedCollectionCodeId(code_id) => {
-            to_binary(&query_allowed_collection_code_id(deps, code_id)?)
+            to_json_binary(&query_allowed_collection_code_id(deps, code_id)?)
         }
     }
 }

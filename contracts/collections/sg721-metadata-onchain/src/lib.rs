@@ -20,10 +20,11 @@ pub type Extension = Option<Empty>;
 pub mod entry {
     use super::*;
 
-    use cosmwasm_std::{entry_point, Binary, Deps, DepsMut, Env, MessageInfo, StdError, StdResult};
+    use cosmwasm_std::{
+        entry_point, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdError, StdResult,
+    };
 
     use sg721_base::{msg::QueryMsg, ContractError};
-    use sg_std::Response;
 
     #[entry_point]
     pub fn instantiate(
@@ -93,7 +94,7 @@ mod tests {
 
     use cosmwasm_std::testing::{mock_env, mock_info, MockApi, MockQuerier, MockStorage};
     use cosmwasm_std::{
-        from_slice, to_binary, ContractInfoResponse, ContractResult, Empty, OwnedDeps, Querier,
+        from_json, to_json_binary, ContractInfoResponse, ContractResult, Empty, OwnedDeps, Querier,
         QuerierResult, QueryRequest, SystemError, SystemResult, WasmQuery,
     };
     use cw721::Cw721Query;
@@ -117,7 +118,7 @@ mod tests {
 
     impl Querier for CustomMockQuerier {
         fn raw_query(&self, bin_request: &[u8]) -> QuerierResult {
-            let request: QueryRequest<Empty> = match from_slice(bin_request) {
+            let request: QueryRequest<Empty> = match from_json(bin_request) {
                 Ok(v) => v,
                 Err(e) => {
                     return SystemResult::Err(SystemError::InvalidRequest {
@@ -138,7 +139,7 @@ mod tests {
                     let mut response = ContractInfoResponse::default();
                     response.code_id = 1;
                     response.creator = CREATOR.to_string();
-                    SystemResult::Ok(ContractResult::Ok(to_binary(&response).unwrap()))
+                    SystemResult::Ok(ContractResult::Ok(to_json_binary(&response).unwrap()))
                 }
                 _ => self.base.handle_query(request),
             }

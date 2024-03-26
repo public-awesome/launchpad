@@ -1,5 +1,5 @@
 use crate::common_setup::contract_boxes::{
-    contract_open_edition_factory, contract_open_edition_minter, contract_sg721_base,
+    contract_open_edition_factory, contract_open_edition_minter, contract_sg721_base, App,
 };
 use crate::common_setup::msg::{
     MinterCollectionResponse, OpenEditionMinterInstantiateParams, OpenEditionMinterSetupParams,
@@ -7,14 +7,14 @@ use crate::common_setup::msg::{
 use crate::common_setup::setup_minter::base_minter::mock_params::MIN_MINT_PRICE;
 use crate::common_setup::setup_minter::common::parse_response::build_collection_response;
 use anyhow::Error;
-use cosmwasm_std::{coin, coins, to_binary, Addr, Coin, Timestamp};
+use cosmwasm_std::{coin, coins, to_json_binary, Addr, Coin, Timestamp};
 use cw_multi_test::{AppResponse, Executor};
 use open_edition_factory::msg::{
     OpenEditionMinterInitMsgExtension, OpenEditionUpdateParamsExtension, OpenEditionUpdateParamsMsg,
 };
 use open_edition_factory::types::NftData;
 use sg2::msg::{CollectionParams, Sg2ExecuteMsg};
-use sg_multi_test::StargazeApp;
+
 use sg_std::NATIVE_DENOM;
 
 use crate::common_setup::msg::CodeIds;
@@ -24,10 +24,12 @@ use crate::common_setup::setup_minter::open_edition_minter::mock_params::{
 
 use crate::common_setup::setup_minter::common::constants::CREATION_FEE;
 
+#[allow(clippy::too_many_arguments)]
 pub fn build_init_msg(
     init_msg: Option<OpenEditionMinterInitMsgExtension>,
     start_time: Option<Timestamp>,
     end_time: Option<Timestamp>,
+    num_tokens: Option<u32>,
     per_address_limit_minter: Option<u32>,
     nft_data: NftData,
     mint_price: Option<Coin>,
@@ -39,6 +41,7 @@ pub fn build_init_msg(
             start_time,
             end_time,
             per_address_limit_minter,
+            num_tokens,
             mint_price,
             nft_data,
             payment_address,
@@ -86,6 +89,7 @@ pub fn setup_open_edition_minter_contract(
         end_time,
         Some(coin(min_mint_price.u128(), denom.clone())),
         Some(params.extension.max_per_address_limit),
+        None,
         nft_data.clone(),
         collection_params,
         None,
@@ -94,6 +98,7 @@ pub fn setup_open_edition_minter_contract(
         init_msg,
         start_time,
         end_time,
+        Some(params.extension.max_token_limit),
         Some(params.extension.max_per_address_limit),
         nft_data,
         Some(coin(min_mint_price.u128(), denom)),
@@ -118,7 +123,7 @@ pub fn setup_open_edition_minter_contract(
     }
 }
 
-pub fn open_edition_minter_code_ids(router: &mut StargazeApp) -> CodeIds {
+pub fn open_edition_minter_code_ids(router: &mut App) -> CodeIds {
     let minter_code_id = router.store_code(contract_open_edition_minter());
 
     let factory_code_id = router.store_code(contract_open_edition_factory());
@@ -133,7 +138,7 @@ pub fn open_edition_minter_code_ids(router: &mut StargazeApp) -> CodeIds {
 }
 
 pub fn sudo_update_params(
-    app: &mut StargazeApp,
+    app: &mut App,
     collection_responses: &Vec<MinterCollectionResponse>,
     code_ids: CodeIds,
     update_msg: Option<OpenEditionUpdateParamsMsg>,
@@ -158,6 +163,7 @@ pub fn sudo_update_params(
                     min_mint_price: None,
                     dev_fee_address: None,
                     max_per_address_limit: None,
+                    max_token_limit: None,
                     airdrop_mint_price: None,
                     airdrop_mint_fee_bps: None,
                 },
@@ -168,7 +174,7 @@ pub fn sudo_update_params(
 
         let sudo_res = app.sudo(cw_multi_test::SudoMsg::Wasm(cw_multi_test::WasmSudo {
             contract_addr: collection_response.factory.clone().unwrap(),
-            msg: to_binary(&sudo_update_msg).unwrap(),
+            msg: to_json_binary(&sudo_update_msg).unwrap(),
         }));
         sudo_responses.push(sudo_res);
     }
@@ -176,7 +182,7 @@ pub fn sudo_update_params(
 }
 
 pub fn configure_open_edition_minter(
-    app: &mut StargazeApp,
+    app: &mut App,
     minter_admin: Addr,
     collection_params_vec: Vec<CollectionParams>,
     minter_instantiate_params_vec: Vec<OpenEditionMinterInstantiateParams>,
@@ -202,6 +208,7 @@ pub fn configure_open_edition_minter(
                 .unwrap(),
             init_msg: minter_instantiate_params_vec[index].init_msg.clone(),
             end_time: minter_instantiate_params_vec[index].end_time.to_owned(),
+            num_tokens: minter_instantiate_params_vec[index].num_tokens.to_owned(),
             custom_params: minter_instantiate_params_vec[index].custom_params.clone(),
         };
         let minter_collection_res = setup_open_edition_minter_contract(setup_params);

@@ -18,11 +18,10 @@ pub mod entry {
 
     #[cfg(not(feature = "library"))]
     use cosmwasm_std::entry_point;
-    use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, StdResult};
+    use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
     use cw2::set_contract_version;
     use cw721_base::Extension;
     use sg721::InstantiateMsg;
-    use sg_std::Response;
 
     // version info for migration info
     pub const CONTRACT_NAME: &str = "crates.io:sg721-base";

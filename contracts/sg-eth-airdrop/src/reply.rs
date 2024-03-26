@@ -2,9 +2,8 @@
 use crate::error::ContractError;
 use crate::state::CONFIG;
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{DepsMut, Env, Reply};
+use cosmwasm_std::{DepsMut, Env, Reply, Response};
 use cw_utils::{parse_reply_instantiate_data, MsgInstantiateContractResponse, ParseReplyError};
-use sg_std::Response;
 
 const INIT_WHITELIST_REPLY_ID: u64 = 1;
 
