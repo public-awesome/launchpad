@@ -61,6 +61,7 @@ pub fn init_msg(
     end_time: Option<Timestamp>,
     num_tokens: Option<u32>,
     mint_price: Option<Coin>,
+    whitelist: Option<String>,
 ) -> OpenEditionMinterInitMsgExtension {
     let start_time = start_time.unwrap_or(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 100));
     let mint_price = mint_price.unwrap_or(Coin {
@@ -75,5 +76,6 @@ pub fn init_msg(
         Some(mint_price),
         nft_data,
         None,
+        whitelist,
     )
 }

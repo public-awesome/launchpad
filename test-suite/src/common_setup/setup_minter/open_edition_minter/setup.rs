@@ -34,6 +34,7 @@ pub fn build_init_msg(
     nft_data: NftData,
     mint_price: Option<Coin>,
     payment_address: Option<String>,
+    whitelist: Option<String>,
 ) -> OpenEditionMinterInitMsgExtension {
     match init_msg {
         Some(init_msg_from_params) => init_msg_from_params,
@@ -45,6 +46,7 @@ pub fn build_init_msg(
             mint_price,
             nft_data,
             payment_address,
+            whitelist,
         ),
     }
 }
@@ -62,7 +64,8 @@ pub fn setup_open_edition_minter_contract(
     let start_time = setup_params.start_time;
     let end_time = setup_params.end_time;
     let init_msg = setup_params.init_msg.clone();
-    let nft_data = setup_params.init_msg.unwrap().nft_data;
+    let nft_data = setup_params.init_msg.clone().unwrap().nft_data;
+    let whitelist = setup_params.init_msg.unwrap().whitelist;
 
     let custom_params = setup_params.custom_params;
 
@@ -93,6 +96,7 @@ pub fn setup_open_edition_minter_contract(
         nft_data.clone(),
         collection_params,
         None,
+        whitelist.clone(),
     );
     msg.init_msg = build_init_msg(
         init_msg,
@@ -103,6 +107,7 @@ pub fn setup_open_edition_minter_contract(
         nft_data,
         Some(coin(min_mint_price.u128(), denom)),
         None,
+        whitelist.clone(),
     );
     msg.collection_params.code_id = sg721_code_id;
     msg.collection_params.info.creator = minter_admin.to_string();

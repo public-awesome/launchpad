@@ -6,7 +6,7 @@ use crate::msg::{
 };
 use crate::state::{
     increment_token_index, Config, ConfigExtension, CONFIG, MINTABLE_NUM_TOKENS, MINTER_ADDRS,
-    SG721_ADDRESS, STATUS, TOTAL_MINT_COUNT,
+    SG721_ADDRESS, STATUS, TOTAL_MINT_COUNT, WHITELIST_MINTER_ADDRS,
 };
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
@@ -25,8 +25,9 @@ use sg2::query::Sg2QueryMsg;
 use sg4::{MinterConfig, Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
 use sg_std::{StargazeMsgWrapper, NATIVE_DENOM};
-use sg_whitelist::msg::{
-    ConfigResponse as WhitelistConfigResponse, HasMemberResponse, QueryMsg as WhitelistQueryMsg,
+use sg_whitelist_flex::msg::{
+    ConfigResponse as WhitelistConfigResponse, HasMemberResponse, Member,
+    QueryMsg as WhitelistQueryMsg,
 };
 use url::Url;
 
@@ -34,7 +35,7 @@ pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
 pub type SubMsg = cosmwasm_std::SubMsg<StargazeMsgWrapper>;
 
 // version info for migration info
-const CONTRACT_NAME: &str = "crates.io:sg-open-edition-minter";
+const CONTRACT_NAME: &str = "crates.io:sg-open-edition-minter-flex";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 const INSTANTIATE_SG721_REPLY_ID: u64 = 1;
@@ -244,6 +245,13 @@ pub fn execute_purge(
         MINTER_ADDRS.remove(deps.storage, &key?);
     }
 
+    let keys = WHITELIST_MINTER_ADDRS
+        .keys(deps.storage, None, None, Order::Ascending)
+        .collect::<Vec<_>>();
+    for key in keys {
+        WHITELIST_MINTER_ADDRS.remove(deps.storage, &key?);
+    }
+
     Ok(Response::new()
         .add_attribute("action", "purge")
         .add_attribute("contract", env.contract.address.to_string())
@@ -353,9 +361,11 @@ pub fn execute_mint_sender(
 
     // If there is no active whitelist right now, check public mint
     // Check start and end time (if not optional)
-    if is_public_mint(deps.as_ref(), &info)? && (env.block.time < config.extension.start_time) {
+    let is_public = is_public_mint(deps.as_ref(), &info)?;
+    if is_public && (env.block.time < config.extension.start_time) {
         return Err(ContractError::BeforeMintStartTime {});
     }
+
     if let Some(end_time) = config.extension.end_time {
         if env.block.time >= end_time {
             return Err(ContractError::AfterMintEndTime {});
@@ -363,12 +373,12 @@ pub fn execute_mint_sender(
     }
 
     // Check if already minted max per address limit
-    if matches!(mint_count_per_addr(deps.as_ref(), &info)?, count if count >= config.extension.per_address_limit)
-    {
+    let mint_count = public_mint_count(deps.as_ref(), &info)?;
+    if is_public && mint_count >= config.extension.per_address_limit {
         return Err(ContractError::MaxPerAddressLimitExceeded {});
     }
 
-    _execute_mint(deps, env, info, action, false, None)
+    _execute_mint(deps, env, info, action, false, None, is_public)
 }
 
 // Check if a whitelist exists and not ended
@@ -392,7 +402,7 @@ fn is_public_mint(deps: Deps, info: &MessageInfo) -> Result<bool, ContractError>
     }
 
     let res: HasMemberResponse = deps.querier.query_wasm_smart(
-        whitelist,
+        whitelist.clone(),
         &WhitelistQueryMsg::HasMember {
             member: info.sender.to_string(),
         },
@@ -404,19 +414,37 @@ fn is_public_mint(deps: Deps, info: &MessageInfo) -> Result<bool, ContractError>
     }
 
     // Check wl per address limit
-    let mint_count = mint_count(deps, info)?;
-    if mint_count >= wl_config.per_address_limit {
+    let wl_mint_count = whitelist_mint_count(deps, info)?;
+    if config.extension.num_tokens.is_none() {
+        ensure!(
+            wl_mint_count < config.extension.per_address_limit,
+            ContractError::MaxPerAddressLimitExceeded {}
+        );
+    }
+
+    let wl_limit: Member = deps.querier.query_wasm_smart(
+        whitelist,
+        &WhitelistQueryMsg::Member {
+            member: info.sender.to_string(),
+        },
+    )?;
+    if wl_mint_count >= wl_limit.mint_count {
         return Err(ContractError::MaxPerAddressLimitExceeded {});
     }
 
     Ok(false)
 }
 
-fn mint_count(deps: Deps, info: &MessageInfo) -> Result<u32, StdError> {
-    let mint_count = MINTER_ADDRS
+fn public_mint_count(deps: Deps, info: &MessageInfo) -> Result<u32, StdError> {
+    let mint_count = (MINTER_ADDRS.key(&info.sender).may_load(deps.storage)?).unwrap_or(0);
+    Ok(mint_count)
+}
+
+fn whitelist_mint_count(deps: Deps, info: &MessageInfo) -> Result<u32, StdError> {
+    let mint_count = (WHITELIST_MINTER_ADDRS
         .key(&info.sender)
-        .may_load(deps.storage)?
-        .unwrap_or(0);
+        .may_load(deps.storage)?)
+    .unwrap_or(0);
     Ok(mint_count)
 }
 
@@ -443,7 +471,7 @@ pub fn execute_mint_to(
         }
     }
 
-    _execute_mint(deps, env, info, action, true, Some(recipient))
+    _execute_mint(deps, env, info, action, true, Some(recipient), true)
 }
 
 // Generalize checks and mint message creation
@@ -456,6 +484,7 @@ fn _execute_mint(
     action: &str,
     is_admin: bool,
     recipient: Option<Addr>,
+    is_public: bool,
 ) -> Result<Response, ContractError> {
     let mintable_num_tokens = MINTABLE_NUM_TOKENS.may_load(deps.storage)?;
     if let Some(mintable_nb_tokens) = mintable_num_tokens {
@@ -545,9 +574,15 @@ fn _execute_mint(
     )?;
     res = res.add_message(msg);
 
-    // Save the new mint count for the sender's address
-    let new_mint_count = mint_count_per_addr(deps.as_ref(), &info)? + 1;
-    MINTER_ADDRS.save(deps.storage, &info.sender, &new_mint_count)?;
+    if is_public {
+        // Save the new mint count for the sender's address
+        let new_mint_count = public_mint_count(deps.as_ref(), &info)? + 1;
+        MINTER_ADDRS.save(deps.storage, &info.sender, &new_mint_count)?;
+    } else {
+        // Save the new mint count for the sender's address
+        let new_mint_count = whitelist_mint_count(deps.as_ref(), &info)? + 1;
+        WHITELIST_MINTER_ADDRS.save(deps.storage, &info.sender, &new_mint_count)?;
+    }
 
     // Update the mint count
     TOTAL_MINT_COUNT.update(
@@ -902,11 +937,6 @@ pub fn execute_burn_remaining(
     Ok(Response::new().add_event(event))
 }
 
-fn mint_count_per_addr(deps: Deps, info: &MessageInfo) -> Result<u32, StdError> {
-    let mint_count = (MINTER_ADDRS.key(&info.sender).may_load(deps.storage)?).unwrap_or(0);
-    Ok(mint_count)
-}
-
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn sudo(deps: DepsMut, _env: Env, msg: SudoMsg) -> Result<Response, ContractError> {
     match msg {
@@ -979,9 +1009,12 @@ pub fn query_status(deps: Deps) -> StdResult<StatusResponse> {
 fn query_mint_count_per_address(deps: Deps, address: String) -> StdResult<MintCountResponse> {
     let addr = deps.api.addr_validate(&address)?;
     let mint_count = (MINTER_ADDRS.key(&addr).may_load(deps.storage)?).unwrap_or(0);
+    let whitelist_mint_count =
+        (WHITELIST_MINTER_ADDRS.key(&addr).may_load(deps.storage)?).unwrap_or(0);
     Ok(MintCountResponse {
         address: addr.to_string(),
         count: mint_count,
+        whitelist_count: whitelist_mint_count,
     })
 }
 

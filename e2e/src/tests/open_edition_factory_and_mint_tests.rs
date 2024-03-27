@@ -62,6 +62,7 @@ fn test_create_minter(chain: &mut Chain) {
             extension: None,
             token_uri: Some("ipfs://...".to_string()),
         },
+        None,
     ));
 
     // requires fee
@@ -110,6 +111,7 @@ fn test_create_minter(chain: &mut Chain) {
             extension: None,
             token_uri: Some("ipfs://...".to_string()),
         },
+        None,
     ));
     let err = chain
         .orc
@@ -152,6 +154,7 @@ fn test_create_minter(chain: &mut Chain) {
             }),
             token_uri: Some("ipfs://...".to_string()),
         },
+        None,
     ));
     let err = chain
         .orc
@@ -184,6 +187,7 @@ fn test_create_minter(chain: &mut Chain) {
             extension: None,
             token_uri: Some("ipfs://...".to_string()),
         },
+        None,
     ));
     let err = chain
         .orc
@@ -371,6 +375,7 @@ fn test_start_trading_time(chain: &mut Chain) {
             extension: None,
             token_uri: Some("ipfs://...".to_string()),
         },
+        None,
     ));
 
     let err = chain
@@ -404,6 +409,7 @@ fn test_start_trading_time(chain: &mut Chain) {
             extension: None,
             token_uri: Some("ipfs://...".to_string()),
         },
+        None,
     ));
 
     let res = chain

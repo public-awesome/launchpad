@@ -38,6 +38,7 @@ fn check_mint_revenues_distribution(num_tokens: Option<u32>, end_minter_time: Op
         end_minter_time,
         num_tokens,
         None,
+        None,
     );
     let vt = open_edition_minter_custom_template(params_extension, init_msg).unwrap();
 

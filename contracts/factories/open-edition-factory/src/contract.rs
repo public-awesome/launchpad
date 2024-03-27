@@ -95,6 +95,20 @@ pub fn execute_create_minter(
         }
     );
 
+    if msg.init_msg.num_tokens.is_none() {
+        ensure!(
+            !msg.init_msg.mint_price.amount.is_zero(),
+            ContractError::NoTokenLimitWithZeroMintPrice {}
+        );
+    }
+
+    if params.extension.airdrop_mint_price.amount.is_zero() {
+        ensure!(
+            msg.init_msg.num_tokens.is_some(),
+            ContractError::NoTokenLimitWithZeroAirdropPrice {}
+        );
+    }
+
     let wasm_msg = WasmMsg::Instantiate {
         admin: Some(info.sender.to_string()),
         code_id: params.code_id,

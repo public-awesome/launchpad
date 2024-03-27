@@ -32,6 +32,7 @@ fn check_start_end_time_updates() {
         Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
         None,
         None,
+        None,
     );
     let vt = open_edition_minter_custom_template(params_extension, init_msg).unwrap();
     let (mut router, creator, _buyer) = (vt.router, vt.accts.creator, vt.accts.buyer);

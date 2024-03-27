@@ -1,7 +1,7 @@
 [package]
-name        = "open-edition-minter"
+name        = "open-edition-minter-wl-flex"
 authors     = ["Racoon Supply <racoon.supply.nft@gmail.com>"]
-description = "Stargaze open edition minter contract"
+description = "Stargaze open edition minter contract with flexible whitelist compatibility"
 version     = { workspace = true }
 edition     = { workspace = true }
 homepage    = { workspace = true }
@@ -38,7 +38,7 @@ sg2                     = { workspace = true }
 sg4                     = { workspace = true }
 sg721                   = { workspace = true }
 sg-std                  = { workspace = true }
-sg-whitelist            = { workspace = true, features = ["library"] }
+sg-whitelist-flex       = { workspace = true, features = ["library"] }
 sg-metadata             = { workspace = true }
 thiserror               = { workspace = true }
 url                     = { workspace = true }

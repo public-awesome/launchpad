@@ -53,6 +53,7 @@ fn test_open_edition_exec_functions(chain: &mut Chain) {
             extension: None,
             token_uri: Some("ipfs://...".to_string()),
         },
+        None,
     ));
 
     let res = chain
@@ -185,7 +186,10 @@ fn test_open_edition_exec_functions(chain: &mut Chain) {
                 recipient: dev.account.address.to_string(),
             },
             &user.key,
-            vec![],
+            vec![OrcCoin {
+                amount: 1_000_000,
+                denom: denom.parse().unwrap(),
+            }],
         )
         .unwrap();
 
