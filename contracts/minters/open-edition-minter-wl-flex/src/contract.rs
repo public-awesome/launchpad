@@ -415,6 +415,13 @@ fn is_public_mint(deps: Deps, info: &MessageInfo) -> Result<bool, ContractError>
 
     // Check wl per address limit
     let wl_mint_count = whitelist_mint_count(deps, info)?;
+    if config.extension.num_tokens.is_none() {
+        ensure!(
+            wl_mint_count < config.extension.per_address_limit,
+            ContractError::MaxPerAddressLimitExceeded {}
+        );
+    }
+
     let wl_limit: Member = deps.querier.query_wasm_smart(
         whitelist,
         &WhitelistQueryMsg::Member {
