@@ -64,7 +64,7 @@ pub mod entry {
         deps: DepsMut,
         env: Env,
         info: MessageInfo,
-        msg: ExecuteMsg<DefaultOptionalNftExtension>,
+        msg: ExecuteMsg<DefaultOptionalNftExtensionMsg>,
     ) -> Result<Response, sg721_base::ContractError> {
         match msg {
             ExecuteMsg::Burn { token_id } => Sg721NonTransferableContract::default()

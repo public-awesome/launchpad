@@ -200,7 +200,7 @@ impl<TNftExtensionMsg, TCollectionExtensionMsg, TExtensionMsg>
                 extension,
             } => Cw721ExecuteMsg::UpdateNftInfo {
                 token_id,
-                token_uri,
+                token_uri: token_uri.into(),
                 extension,
             },
             ExecuteMsg::SetWithdrawAddress { address } => {

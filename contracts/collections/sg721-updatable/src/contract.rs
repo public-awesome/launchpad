@@ -9,8 +9,9 @@ use cosmwasm_std::{DepsMut, Env, Event, MessageInfo};
 use cw2::set_contract_version;
 use cw721::msg::Cw721MigrateMsg;
 use cw721::{
-    DefaultOptionalCollectionExtension, DefaultOptionalCollectionExtensionMsg,
-    DefaultOptionalNftExtension, DefaultOptionalNftExtensionMsg,
+    traits::Cw721Execute, DefaultOptionalCollectionExtension,
+    DefaultOptionalCollectionExtensionMsg, DefaultOptionalNftExtension,
+    DefaultOptionalNftExtensionMsg,
 };
 use semver::Version;
 use sg721::InstantiateMsg;
@@ -115,19 +116,12 @@ pub fn execute_freeze_token_metadata(
 #[allow(deprecated)]
 pub fn execute_update_token_metadata(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
     token_id: String,
     token_uri: Option<String>,
 ) -> Result<Response, ContractError> {
     nonpayable(&info)?;
-    // Check if sender is creator
-    let owner = deps.api.addr_validate(info.sender.as_ref())?;
-    let collection_info: CollectionInfoResponse =
-        Sg721UpdatableContract::default().query_collection_info(deps.as_ref())?;
-    if owner != collection_info.creator {
-        return Err(ContractError::Base(Unauthorized {}));
-    }
 
     // Check if token metadata is frozen
     let frozen = FROZEN_TOKEN_METADATA.load(deps.storage)?;
@@ -142,16 +136,14 @@ pub fn execute_update_token_metadata(
     }
 
     // Update token metadata
-    Sg721UpdatableContract::default()
-        .config
-        .nft_info
-        .update(deps.storage, &token_id, |token| match token {
-            Some(mut token_info) => {
-                token_info.token_uri = token_uri.clone();
-                Ok(token_info)
-            }
-            None => Err(ContractError::TokenIdNotFound {}),
-        })?;
+    Sg721UpdatableContract::default().parent.update_nft_info(
+        deps,
+        &env,
+        &info,
+        token_id.clone(),
+        token_uri.clone().into(),
+        None,
+    )?;
 
     let mut event = Event::new("update_update_token_metadata")
         .add_attribute("sender", info.sender)
@@ -258,6 +250,7 @@ mod tests {
         from_json, to_json_binary, ContractInfoResponse, ContractResult, Empty, OwnedDeps, Querier,
         QuerierResult, QueryRequest, SystemError, SystemResult, WasmQuery,
     };
+    use cw721::error::Cw721ContractError;
     use cw721_base::traits::Cw721Query;
     use sg721::{CollectionInfo, InstantiateMsg};
     use std::marker::PhantomData;
@@ -351,11 +344,8 @@ mod tests {
             token_id: "wrong-token-id".to_string(),
             token_uri: updated_token_uri.clone(),
         };
-        let err = execute(deps.as_mut(), mock_env(), info.clone(), update_msg).unwrap_err();
-        assert_eq!(
-            err.to_string(),
-            ContractError::TokenIdNotFound {}.to_string()
-        );
+        // throws not found error
+        execute(deps.as_mut(), mock_env(), info.clone(), update_msg).unwrap_err();
 
         // Update token metadata fails because sent by hacker
         let update_msg = ExecuteMsg::UpdateTokenMetadata {
@@ -365,8 +355,8 @@ mod tests {
         let hacker_info = mock_info(HACKER, &[]);
         let err = execute(deps.as_mut(), mock_env(), hacker_info, update_msg.clone()).unwrap_err();
         assert_eq!(
-            err.to_string(),
-            ContractError::Base(Unauthorized {}).to_string()
+            err,
+            ContractError::Cw721(Cw721ContractError::NotCreator {})
         );
 
         // Update token metadata

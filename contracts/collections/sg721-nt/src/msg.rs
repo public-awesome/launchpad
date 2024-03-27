@@ -6,7 +6,7 @@ use sg721::{RoyaltyInfoResponse, UpdateCollectionInfoMsg};
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 #[allow(deprecated)]
-pub enum ExecuteMsg<T> {
+pub enum ExecuteMsg<TNftExtensionMsg> {
     /// Mint a new NFT, can only be called by the contract minter
     Mint {
         /// Unique ID of the NFT
@@ -18,7 +18,7 @@ pub enum ExecuteMsg<T> {
         /// Metadata JSON Schema
         token_uri: Option<String>,
         /// Any custom extension used by this contract
-        extension: T,
+        extension: TNftExtensionMsg,
     },
     /// Burn an NFT the sender has access to
     Burn { token_id: String },

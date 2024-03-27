@@ -1367,7 +1367,7 @@ dependencies = [
 [[package]]
 name = "cw721"
 version = "0.19.0"
-source = "git+https://github.com/arkprotocol/cw-nfts.git?branch=collection-info#7a36bb78cb6e2512c46476909d0f6bdfc3d4d02f"
+source = "git+https://github.com/arkprotocol/cw-nfts.git?branch=collection-info#dea2b0175f77a2dabd25ad109244bc215f0740df"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -1422,7 +1422,7 @@ dependencies = [
 [[package]]
 name = "cw721-base"
 version = "0.19.0"
-source = "git+https://github.com/arkprotocol/cw-nfts.git?branch=collection-info#7a36bb78cb6e2512c46476909d0f6bdfc3d4d02f"
+source = "git+https://github.com/arkprotocol/cw-nfts.git?branch=collection-info#dea2b0175f77a2dabd25ad109244bc215f0740df"
 dependencies = [
  "cosmwasm-std",
  "cw-ownable 0.6.0",
@@ -2614,9 +2614,9 @@ checksum = "0e7465ac9959cc2b1404e8e2367b43684a6d13790fe23056cc8c6c5a6b7bcb94"
 
 [[package]]
 name = "memchr"
-version = "2.7.1"
+version = "2.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "523dc4f511e55ab87b694dc30d0f820d60906ef06413f93d4d7a1385599cc149"
+checksum = "6c8640c5d730cb13ebd907d8d04b52f55ac9a2eec55b440c8892f40d56c76c1d"
 
 [[package]]
 name = "mime"
