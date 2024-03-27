@@ -3835,7 +3835,7 @@ dependencies = [
 [[package]]
 name = "sg-name-minter"
 version = "2.1.0"
-source = "git+https://github.com/public-awesome/names.git?branch=flat-rate-whitelist#33fec3cd6714ec279e6f7ff7b31b691385ac04ee"
+source = "git+https://github.com/public-awesome/names.git?branch=dYdX-airdrop#eeb9b9002d0a8da979103f95d8937cef31ba5121"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -3939,7 +3939,7 @@ dependencies = [
 [[package]]
 name = "sg-whitelist-basic"
 version = "2.1.0"
-source = "git+https://github.com/public-awesome/names.git?branch=flat-rate-whitelist#33fec3cd6714ec279e6f7ff7b31b691385ac04ee"
+source = "git+https://github.com/public-awesome/names.git?branch=dYdX-airdrop#eeb9b9002d0a8da979103f95d8937cef31ba5121"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -5341,7 +5341,7 @@ dependencies = [
 [[package]]
 name = "whitelist-updatable-flatrate"
 version = "2.1.0"
-source = "git+https://github.com/public-awesome/names.git?branch=flat-rate-whitelist#33fec3cd6714ec279e6f7ff7b31b691385ac04ee"
+source = "git+https://github.com/public-awesome/names.git?branch=dYdX-airdrop#eeb9b9002d0a8da979103f95d8937cef31ba5121"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
