@@ -3,7 +3,7 @@ use cw_utils::PaymentError;
 use thiserror::Error;
 use url::ParseError;
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, PartialEq)]
 pub enum ContractError {
     #[error("{0}")]
     Std(#[from] StdError),
@@ -15,7 +15,7 @@ pub enum ContractError {
     Parse(#[from] ParseError),
 
     #[error("{0}")]
-    Base(#[from] cw721_base::ContractError),
+    Base(#[from] cw721_base::error::ContractError),
 
     #[error("Unauthorized")]
     Unauthorized {},

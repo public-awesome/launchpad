@@ -1,6 +1,7 @@
 use assert_matches::assert_matches;
 use cosm_orc::orchestrator::error::CosmwasmError::TxError;
 use cosm_orc::orchestrator::error::ProcessError;
+#[allow(deprecated)]
 use sg721::{CollectionInfo, InstantiateMsg};
 use test_context::test_context;
 
@@ -20,6 +21,7 @@ fn test_unauthorized_sg721_instantiation(chain: &mut Chain) {
             name: "Collection Name".to_string(),
             symbol: "COL".to_string(),
             minter: user_addr.to_string(),
+            #[allow(deprecated)]
             collection_info: CollectionInfo {
                 creator: user_addr.to_string(),
                 description: "Description".to_string(),

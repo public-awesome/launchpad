@@ -23,6 +23,7 @@ fn init() {
 }
 
 #[test]
+#[allow(deprecated)]
 fn update_code_id() {
     let sg721_code_id = 7u64;
 

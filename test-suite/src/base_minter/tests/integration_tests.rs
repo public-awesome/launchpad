@@ -8,13 +8,15 @@ use crate::common_setup::templates::{
 use base_factory::msg::{BaseMinterCreateMsg, BaseUpdateParamsMsg, SudoMsg};
 
 use base_minter::msg::{ConfigResponse, ExecuteMsg};
-use cosmwasm_std::{coin, coins, Addr, Timestamp};
-use cw721::{Cw721ExecuteMsg, Cw721QueryMsg, OwnerOfResponse};
+use cosmwasm_std::{coin, coins, Addr, Empty, Timestamp};
+use cw721::{DefaultOptionalCollectionExtension, DefaultOptionalNftExtension};
+use cw721_base::msg::{Cw721ExecuteMsg, Cw721QueryMsg, OwnerOfResponse};
 use cw_multi_test::Executor;
 use sg2::msg::Sg2ExecuteMsg;
 use sg2::query::{AllowedCollectionCodeIdsResponse, Sg2QueryMsg};
 use sg2::tests::mock_collection_params_1;
 use sg4::QueryMsg;
+#[allow(deprecated)]
 use sg721_base::msg::{CollectionInfoResponse, QueryMsg as Sg721QueryMsg};
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
@@ -26,6 +28,7 @@ fn init() {
 }
 
 #[test]
+#[allow(deprecated)]
 fn update_code_id() {
     let sg721_code_id = 7u64;
     let bmt = base_minter_with_specified_sg721(1, sg721_code_id);
@@ -154,7 +157,11 @@ fn check_mint() {
     assert_eq!(res.collection_address, "contract2".to_string());
     assert_eq!(res.config.mint_price.amount.u128(), MIN_MINT_PRICE);
 
-    let query_owner_msg = Cw721QueryMsg::OwnerOf {
+    let query_owner_msg = Cw721QueryMsg::<
+        DefaultOptionalNftExtension,
+        DefaultOptionalCollectionExtension,
+        Empty,
+    >::OwnerOf {
         token_id: String::from("1"),
         include_expired: None,
     };
@@ -165,7 +172,11 @@ fn check_mint() {
     assert_eq!(res.owner, creator.to_string());
 
     // make sure sg721-nt cannot be transferred
-    let transfer_msg = Cw721ExecuteMsg::TransferNft {
+    let transfer_msg = Cw721ExecuteMsg::<
+        DefaultOptionalNftExtension,
+        DefaultOptionalCollectionExtension,
+        Empty,
+    >::TransferNft {
         recipient: "adsf".to_string(),
         token_id: "1".to_string(),
     };
@@ -179,6 +190,7 @@ fn check_mint() {
 }
 
 #[test]
+#[allow(deprecated)]
 fn update_start_trading_time() {
     let bmt = base_minter_with_sg721(1);
     let (mut router, creator, buyer) = (bmt.router, bmt.accts.creator, bmt.accts.buyer);
@@ -220,7 +232,14 @@ fn update_start_trading_time() {
     // confirm trading start time
     let res: CollectionInfoResponse = router
         .wrap()
-        .query_wasm_smart(collection_addr, &Sg721QueryMsg::CollectionInfo {})
+        .query_wasm_smart(
+            collection_addr,
+            &Sg721QueryMsg::<
+                DefaultOptionalNftExtension,
+                DefaultOptionalCollectionExtension,
+                Empty,
+            >::CollectionInfo {},
+        )
         .unwrap();
     assert_eq!(res.start_trading_time, Some(default_start_trading_time));
 }

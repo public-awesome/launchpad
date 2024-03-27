@@ -58,6 +58,7 @@ fn mint_with_ibc_asset() {
 }
 
 #[test]
+#[allow(deprecated)]
 fn denom_mismatch_creating_minter() {
     // create factory w NATIVE_DENOM, then try creating a minter w different denom
     let denom = "ibc/asset";
@@ -133,6 +134,7 @@ fn wl_denom_mismatch() {
 }
 
 #[test]
+#[allow(deprecated)]
 fn wl_denom_mint() {
     // create factory, minter, wl w custom denom, then try mint
     let denom = "ibc/asset";

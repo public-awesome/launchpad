@@ -36,6 +36,7 @@ pub fn build_init_msg(
 }
 
 // Upload contract code and instantiate minter contract
+#[allow(deprecated)]
 pub fn setup_minter_contract(setup_params: MinterSetupParams) -> MinterCollectionResponse {
     let minter_code_id = setup_params.minter_code_id;
     let router = setup_params.router;

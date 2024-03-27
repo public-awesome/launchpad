@@ -1,13 +1,18 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::Binary;
+use cosmwasm_std::Empty;
 use cosmwasm_std::Timestamp;
+use cw721::DefaultOptionalCollectionExtension;
+use cw721::DefaultOptionalNftExtension;
+use cw721::DefaultOptionalNftExtensionMsg;
 use cw_utils::Expiration;
+#[allow(deprecated)]
 use sg721::{RoyaltyInfoResponse, UpdateCollectionInfoMsg};
 use sg721_base::msg::QueryMsg as Sg721QueryMsg;
 use sg721_base::ExecuteMsg as Sg721ExecuteMsg;
 
 #[cw_serde]
-pub enum ExecuteMsg<T, E> {
+pub enum ExecuteMsg<TNftExtensionMsg, TCollectionExtensionMsg> {
     /// Freeze token metadata so creator can no longer update token uris
     FreezeTokenMetadata {},
     /// Creator calls can update token uris
@@ -46,7 +51,9 @@ pub enum ExecuteMsg<T, E> {
     Burn {
         token_id: String,
     },
+    #[allow(deprecated)]
     UpdateCollectionInfo {
+        #[allow(deprecated)]
         collection_info: UpdateCollectionInfoMsg<RoyaltyInfoResponse>,
     },
     UpdateStartTradingTime(Option<Timestamp>),
@@ -61,19 +68,19 @@ pub enum ExecuteMsg<T, E> {
         /// Metadata JSON Schema
         token_uri: Option<String>,
         /// Any custom extension used by this contract
-        extension: T,
+        extension: TNftExtensionMsg,
     },
     Extension {
-        msg: E,
+        msg: TCollectionExtensionMsg,
     },
 }
 
-impl<T, E> From<ExecuteMsg<T, E>> for Sg721ExecuteMsg
+impl<TNftExtensionMsg, TCollectionExtensionMsg>
+    From<ExecuteMsg<TNftExtensionMsg, TCollectionExtensionMsg>> for Sg721ExecuteMsg
 where
-    T: Clone + PartialEq + Into<Option<cosmwasm_std::Empty>>,
-    Option<cosmwasm_std::Empty>: From<T>,
+    TNftExtensionMsg: Clone + PartialEq + Into<DefaultOptionalNftExtensionMsg>,
 {
-    fn from(msg: ExecuteMsg<T, E>) -> Sg721ExecuteMsg {
+    fn from(msg: ExecuteMsg<TNftExtensionMsg, TCollectionExtensionMsg>) -> Sg721ExecuteMsg {
         match msg {
             ExecuteMsg::TransferNft {
                 recipient,
@@ -108,7 +115,9 @@ where
             }
             ExecuteMsg::RevokeAll { operator } => Sg721ExecuteMsg::RevokeAll { operator },
             ExecuteMsg::Burn { token_id } => Sg721ExecuteMsg::Burn { token_id },
-            ExecuteMsg::UpdateCollectionInfo { collection_info } => {
+            ExecuteMsg::UpdateCollectionInfo { collection_info } =>
+            {
+                #[allow(deprecated)]
                 Sg721ExecuteMsg::UpdateCollectionInfo { collection_info }
             }
             ExecuteMsg::FreezeCollectionInfo {} => Sg721ExecuteMsg::FreezeCollectionInfo {},
@@ -177,8 +186,12 @@ pub enum QueryMsg {
     CollectionInfo {},
 }
 
-impl From<QueryMsg> for Sg721QueryMsg {
-    fn from(msg: QueryMsg) -> Sg721QueryMsg {
+impl From<QueryMsg>
+    for Sg721QueryMsg<DefaultOptionalNftExtension, DefaultOptionalCollectionExtension, Empty>
+{
+    fn from(
+        msg: QueryMsg,
+    ) -> Sg721QueryMsg<DefaultOptionalNftExtension, DefaultOptionalCollectionExtension, Empty> {
         match msg {
             QueryMsg::OwnerOf {
                 token_id,
@@ -215,6 +228,7 @@ impl From<QueryMsg> for Sg721QueryMsg {
                 limit,
             },
             QueryMsg::NumTokens {} => Sg721QueryMsg::NumTokens {},
+            #[allow(deprecated)]
             QueryMsg::ContractInfo {} => Sg721QueryMsg::ContractInfo {},
             QueryMsg::NftInfo { token_id } => Sg721QueryMsg::NftInfo { token_id },
             QueryMsg::AllNftInfo {
@@ -236,7 +250,9 @@ impl From<QueryMsg> for Sg721QueryMsg {
             QueryMsg::AllTokens { start_after, limit } => {
                 Sg721QueryMsg::AllTokens { start_after, limit }
             }
+            #[allow(deprecated)]
             QueryMsg::Minter {} => Sg721QueryMsg::Minter {},
+            #[allow(deprecated)]
             QueryMsg::CollectionInfo {} => Sg721QueryMsg::CollectionInfo {},
             _ => unreachable!("cannot convert {:?} to Sg721QueryMsg", msg),
         }

@@ -15,6 +15,7 @@ use vending_factory::msg::{
 };
 
 #[test]
+#[allow(deprecated)]
 fn frozen_factory_cannot_create_new_minters() {
     let vt = vending_minter_template(2);
     let (mut router, creator, _) = (vt.router, vt.accts.creator, vt.accts.buyer);

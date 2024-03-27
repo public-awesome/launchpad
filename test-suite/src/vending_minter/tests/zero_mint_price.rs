@@ -9,8 +9,11 @@ use crate::common_setup::setup_minter::vending_minter::mock_params::{
     mock_create_minter_init_msg, mock_init_extension, mock_params,
 };
 use crate::common_setup::setup_minter::vending_minter::setup::vending_minter_code_ids;
+use cosmwasm_std::Empty;
 use cosmwasm_std::{coin, coins, Addr, Timestamp};
-use cw721::TokensResponse;
+use cw721::DefaultOptionalCollectionExtension;
+use cw721::DefaultOptionalNftExtension;
+use cw721_base::msg::TokensResponse;
 use cw_multi_test::Executor;
 use sg2::msg::Sg2ExecuteMsg;
 use sg2::tests::{mock_collection_params, mock_collection_params_1};
@@ -21,6 +24,7 @@ use vending_minter::msg::ExecuteMsg;
 const MINT_PRICE: u128 = 0;
 
 #[test]
+#[allow(deprecated)]
 fn zero_mint_price() {
     let num_tokens = 2;
     let mut app = custom_mock_app();
@@ -100,7 +104,11 @@ fn zero_mint_price() {
         .wrap()
         .query_wasm_smart(
             sg721,
-            &sg721_base::msg::QueryMsg::Tokens {
+            &sg721_base::msg::QueryMsg::<
+                DefaultOptionalNftExtension,
+                DefaultOptionalCollectionExtension,
+                Empty,
+            >::Tokens {
                 owner: buyer.to_string(),
                 start_after: None,
                 limit: None,
@@ -111,6 +119,7 @@ fn zero_mint_price() {
 }
 
 #[test]
+#[allow(deprecated)]
 fn zero_wl_mint_price() {
     let num_tokens = 2;
     let mut app = custom_mock_app();
@@ -207,6 +216,7 @@ fn zero_wl_mint_price() {
 }
 
 #[test]
+#[allow(deprecated)]
 fn zero_wl_mint_errs_with_min_mint_factory() {
     let num_tokens = 2;
     let min_mint_price: u128 = 100_000_000;

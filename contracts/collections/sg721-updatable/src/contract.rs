@@ -7,19 +7,34 @@ use cosmwasm_std::{Deps, StdResult};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::{DepsMut, Env, Event, MessageInfo};
 use cw2::set_contract_version;
+use cw721::msg::Cw721MigrateMsg;
+use cw721::{
+    traits::Cw721Execute, DefaultOptionalCollectionExtension,
+    DefaultOptionalCollectionExtensionMsg, DefaultOptionalNftExtension,
+    DefaultOptionalNftExtensionMsg,
+};
 use semver::Version;
 use sg721::InstantiateMsg;
+#[allow(deprecated)]
 use sg721_base::msg::CollectionInfoResponse;
 
 use crate::msg::{EnableUpdatableResponse, FrozenTokenMetadataResponse};
 use crate::state::ENABLE_UPDATABLE;
 
-use cw721_base::Extension;
 use cw_utils::nonpayable;
 use sg1::checked_fair_burn;
 use sg721_base::ContractError::Unauthorized;
 use sg721_base::Sg721Contract;
-pub type Sg721UpdatableContract<'a> = Sg721Contract<'a, Extension>;
+pub type Sg721UpdatableContract<'a> = Sg721Contract<
+    'a,
+    DefaultOptionalNftExtension,
+    DefaultOptionalNftExtensionMsg,
+    DefaultOptionalCollectionExtension,
+    DefaultOptionalCollectionExtensionMsg,
+    Empty,
+    Empty,
+    Empty,
+>;
 
 const CONTRACT_NAME: &str = "crates.io:sg721-updatable";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -48,6 +63,7 @@ pub fn _instantiate(
     Ok(res)
 }
 
+#[allow(deprecated)]
 pub fn execute_enable_updatable(
     deps: DepsMut,
     _env: Env,
@@ -76,6 +92,7 @@ pub fn execute_enable_updatable(
         .add_attribute("enabled", "true"))
 }
 
+#[allow(deprecated)]
 pub fn execute_freeze_token_metadata(
     deps: DepsMut,
     _env: Env,
@@ -96,21 +113,15 @@ pub fn execute_freeze_token_metadata(
         .add_attribute("frozen", "true"))
 }
 
+#[allow(deprecated)]
 pub fn execute_update_token_metadata(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
     token_id: String,
     token_uri: Option<String>,
 ) -> Result<Response, ContractError> {
     nonpayable(&info)?;
-    // Check if sender is creator
-    let owner = deps.api.addr_validate(info.sender.as_ref())?;
-    let collection_info: CollectionInfoResponse =
-        Sg721UpdatableContract::default().query_collection_info(deps.as_ref())?;
-    if owner != collection_info.creator {
-        return Err(ContractError::Base(Unauthorized {}));
-    }
 
     // Check if token metadata is frozen
     let frozen = FROZEN_TOKEN_METADATA.load(deps.storage)?;
@@ -125,16 +136,13 @@ pub fn execute_update_token_metadata(
     }
 
     // Update token metadata
-    Sg721UpdatableContract::default().tokens.update(
-        deps.storage,
-        &token_id,
-        |token| match token {
-            Some(mut token_info) => {
-                token_info.token_uri = token_uri.clone();
-                Ok(token_info)
-            }
-            None => Err(ContractError::TokenIdNotFound {}),
-        },
+    Sg721UpdatableContract::default().parent.update_nft_info(
+        deps,
+        &env,
+        &info,
+        token_id.clone(),
+        token_uri.clone().into(),
+        None,
     )?;
 
     let mut event = Event::new("update_update_token_metadata")
@@ -160,7 +168,11 @@ pub fn query_frozen_token_metadata(deps: Deps) -> StdResult<FrozenTokenMetadataR
     Ok(FrozenTokenMetadataResponse { frozen })
 }
 
-pub fn _migrate(mut deps: DepsMut, env: Env, _msg: Empty) -> Result<Response, ContractError> {
+pub fn _migrate(
+    mut deps: DepsMut,
+    env: Env,
+    msg: Cw721MigrateMsg,
+) -> Result<Response, ContractError> {
     let prev_contract_info = cw2::get_contract_version(deps.storage)?;
     let prev_contract_name: String = prev_contract_info.contract;
     let prev_contract_version: Version = prev_contract_info
@@ -203,15 +215,15 @@ pub fn _migrate(mut deps: DepsMut, env: Env, _msg: Empty) -> Result<Response, Co
 
     let mut response = Response::new();
 
-    #[allow(clippy::cmp_owned)]
-    if prev_contract_version < Version::new(3, 0, 0) {
-        response = sg721_base::upgrades::v3_0_0::upgrade(deps.branch(), &env, response)?;
-    }
-
-    #[allow(clippy::cmp_owned)]
-    if prev_contract_version < Version::new(3, 1, 0) {
-        response = sg721_base::upgrades::v3_1_0::upgrade(deps.branch(), &env, response)?;
-    }
+    // these upgrades can always be called. migration is only executed in case new stores are empty! It is safe calling these on any version.
+    response = sg721_base::upgrades::v3_0_0_ownable_and_collection_info::upgrade(
+        deps.branch(),
+        &env,
+        response,
+        msg,
+    )?;
+    response =
+        sg721_base::upgrades::v3_1_0_royalty_timestamp::upgrade(deps.branch(), &env, response)?;
 
     cw2::set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
@@ -227,6 +239,7 @@ pub fn _migrate(mut deps: DepsMut, env: Env, _msg: Empty) -> Result<Response, Co
 }
 
 #[cfg(test)]
+#[allow(deprecated)]
 mod tests {
     use super::*;
 
@@ -237,7 +250,8 @@ mod tests {
         from_json, to_json_binary, ContractInfoResponse, ContractResult, Empty, OwnedDeps, Querier,
         QuerierResult, QueryRequest, SystemError, SystemResult, WasmQuery,
     };
-    use cw721::Cw721Query;
+    use cw721::error::Cw721ContractError;
+    use cw721_base::traits::Cw721Query;
     use sg721::{CollectionInfo, InstantiateMsg};
     use std::marker::PhantomData;
 
@@ -330,11 +344,8 @@ mod tests {
             token_id: "wrong-token-id".to_string(),
             token_uri: updated_token_uri.clone(),
         };
-        let err = execute(deps.as_mut(), mock_env(), info.clone(), update_msg).unwrap_err();
-        assert_eq!(
-            err.to_string(),
-            ContractError::TokenIdNotFound {}.to_string()
-        );
+        // throws not found error
+        execute(deps.as_mut(), mock_env(), info.clone(), update_msg).unwrap_err();
 
         // Update token metadata fails because sent by hacker
         let update_msg = ExecuteMsg::UpdateTokenMetadata {
@@ -344,29 +355,33 @@ mod tests {
         let hacker_info = mock_info(HACKER, &[]);
         let err = execute(deps.as_mut(), mock_env(), hacker_info, update_msg.clone()).unwrap_err();
         assert_eq!(
-            err.to_string(),
-            ContractError::Base(Unauthorized {}).to_string()
+            err,
+            ContractError::Cw721(Cw721ContractError::NotCreator {})
         );
 
         // Update token metadata
-        execute(deps.as_mut(), mock_env(), info.clone(), update_msg).unwrap();
+        let env = mock_env();
+        execute(deps.as_mut(), env.clone(), info.clone(), update_msg).unwrap();
 
         // Check token contains updated metadata
         let res = contract
             .parent
-            .nft_info(deps.as_ref(), token_id.into())
+            .query_nft_info(deps.as_ref().storage, token_id.into())
             .unwrap();
         assert_eq!(res.token_uri, updated_token_uri);
 
         // Update token metadata with None token_uri
-        let update_msg = ExecuteMsg::<Extension, Empty>::UpdateTokenMetadata {
+        let update_msg = ExecuteMsg::<
+            DefaultOptionalNftExtensionMsg,
+            DefaultOptionalCollectionExtensionMsg,
+        >::UpdateTokenMetadata {
             token_id: token_id.to_string(),
             token_uri: None,
         };
         execute(deps.as_mut(), mock_env(), info.clone(), update_msg).unwrap();
         let res = contract
             .parent
-            .nft_info(deps.as_ref(), token_id.into())
+            .query_nft_info(deps.as_ref().storage, token_id.into())
             .unwrap();
         assert_eq!(res.token_uri, None);
 

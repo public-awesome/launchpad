@@ -2,7 +2,6 @@ use crate::error::ContractError;
 use crate::msg::{ConfigResponse, ExecuteMsg};
 use crate::state::{increment_token_index, Config, COLLECTION_ADDRESS, CONFIG, STATUS};
 use base_factory::msg::{BaseMinterCreateMsg, ParamsResponse};
-use base_factory::state::Extension;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
@@ -10,11 +9,16 @@ use cosmwasm_std::{
     Reply, Response, StdResult, SubMsg, Timestamp, WasmMsg,
 };
 use cw2::set_contract_version;
+use cw721::{
+    DefaultOptionalCollectionExtension, DefaultOptionalCollectionExtensionMsg,
+    DefaultOptionalNftExtension, DefaultOptionalNftExtensionMsg,
+};
 use cw_utils::{must_pay, nonpayable, parse_reply_instantiate_data};
 use sg1::checked_fair_burn;
 use sg2::query::Sg2QueryMsg;
 use sg4::{QueryMsg, Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
+#[allow(deprecated)]
 use sg721_base::msg::{CollectionInfoResponse, QueryMsg as Sg721QueryMsg};
 use sg_std::NATIVE_DENOM;
 use url::Url;
@@ -24,6 +28,7 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 const INSTANTIATE_SG721_REPLY_ID: u64 = 1;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
+#[allow(deprecated)]
 pub fn instantiate(
     deps: DepsMut,
     env: Env,
@@ -109,6 +114,7 @@ pub fn execute(
     }
 }
 
+#[allow(deprecated)]
 pub fn execute_mint_sender(
     deps: DepsMut,
     info: MessageInfo,
@@ -121,7 +127,11 @@ pub fn execute_mint_sender(
     // Should mint and then list on the marketplace for secondary sales
     let collection_info: CollectionInfoResponse = deps.querier.query_wasm_smart(
         collection_address.clone(),
-        &Sg721QueryMsg::CollectionInfo {},
+        &Sg721QueryMsg::CollectionInfo::<
+            DefaultOptionalNftExtension,
+            DefaultOptionalCollectionExtension,
+            Empty,
+        > {},
     )?;
     // allow only sg721 creator address to mint
     if collection_info.creator != info.sender {
@@ -152,7 +162,11 @@ pub fn execute_mint_sender(
     checked_fair_burn(&info, network_fee.u128(), None, &mut res)?;
 
     // Create mint msgs
-    let mint_msg = Sg721ExecuteMsg::<Extension, Empty>::Mint {
+    let mint_msg = Sg721ExecuteMsg::<
+        DefaultOptionalNftExtensionMsg,
+        DefaultOptionalCollectionExtensionMsg,
+        Empty,
+    >::Mint {
         token_id: increment_token_index(deps.storage)?.to_string(),
         owner: info.sender.to_string(),
         token_uri: Some(token_uri.clone()),
@@ -172,6 +186,7 @@ pub fn execute_mint_sender(
         .add_attribute("network_fee", network_fee.to_string()))
 }
 
+#[allow(deprecated)]
 pub fn execute_update_start_trading_time(
     deps: DepsMut,
     env: Env,
@@ -181,10 +196,15 @@ pub fn execute_update_start_trading_time(
     nonpayable(&info)?;
     let sg721_contract_addr = COLLECTION_ADDRESS.load(deps.storage)?;
 
-    let collection_info: CollectionInfoResponse = deps.querier.query_wasm_smart(
-        sg721_contract_addr.clone(),
-        &Sg721QueryMsg::CollectionInfo {},
-    )?;
+    let collection_info: CollectionInfoResponse =
+        deps.querier.query_wasm_smart(
+            sg721_contract_addr.clone(),
+            &Sg721QueryMsg::<
+                DefaultOptionalNftExtension,
+                DefaultOptionalCollectionExtension,
+                Empty,
+            >::CollectionInfo {},
+        )?;
     if info.sender != collection_info.creator {
         return Err(ContractError::Unauthorized(
             "Sender is not creator".to_owned(),
@@ -204,9 +224,11 @@ pub fn execute_update_start_trading_time(
     // execute sg721 contract
     let msg = WasmMsg::Execute {
         contract_addr: sg721_contract_addr.to_string(),
-        msg: to_json_binary(
-            &Sg721ExecuteMsg::<Extension, Empty>::UpdateStartTradingTime(start_time),
-        )?,
+        msg: to_json_binary(&Sg721ExecuteMsg::<
+            DefaultOptionalNftExtensionMsg,
+            DefaultOptionalCollectionExtensionMsg,
+            Empty,
+        >::UpdateStartTradingTime(start_time))?,
         funds: vec![],
     };
 
