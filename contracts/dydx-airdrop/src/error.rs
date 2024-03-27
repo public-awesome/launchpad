@@ -40,11 +40,32 @@ pub enum ContractError {
     #[error("Address {address} is not eligible")]
     AddressNotEligible { address: String },
 
+    #[error("Invalid Eth signature for address: {address}")]
+    InvalidEthSignature { address: String },
+
     #[error("Address {address} has already claimed all available mints")]
     MintCountReached { address: String },
 
+    #[error("Address {address} has already registered for the airdrop")]
+    AlreadyRegistered { address: String },
+
+    #[error("Address {address} has already claimed the airdrop")]
+    AlreadyClaimed { address: String },
+
     #[error("Collection Whitelist on Minter contract has not been set")]
     CollectionWhitelistMinterNotSet {},
+
+    #[error("Minter config is missing the collection contract address")]
+    CollectionContractNotSet {},
+
+    #[error("Need to mint a Geckies token first")]
+    CollectionNotMinted {},
+
+    #[error("Need to mint a name first")]
+    NameNotMinted {},
+
+    #[error("Airdrop count limit exceeded")]
+    AirdropCountLimitExceeded {},
 
     #[error("Plaintext message must contain `{{wallet}}` string")]
     PlaintextMsgNoWallet {},

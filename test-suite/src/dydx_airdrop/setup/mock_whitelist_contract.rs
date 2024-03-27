@@ -3,7 +3,7 @@ use cosmwasm_std::{to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdR
 use cw_multi_test::{Contract, ContractWrapper};
 use dydx_airdrop::error::ContractError;
 use sg_std::{Response, StargazeMsgWrapper};
-use sg_whitelist::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use sg_whitelist_flex::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(

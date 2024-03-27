@@ -64,6 +64,15 @@ pub fn contract_collection_whitelist() -> Box<dyn Contract<StargazeMsgWrapper>> 
     Box::new(contract)
 }
 
+pub fn contract_collection_whitelist_flex() -> Box<dyn Contract<StargazeMsgWrapper>> {
+    let contract = ContractWrapper::new(
+        sg_whitelist_flex::contract::execute,
+        sg_whitelist_flex::contract::instantiate,
+        sg_whitelist_flex::contract::query,
+    );
+    Box::new(contract)
+}
+
 pub fn contract_open_edition_minter() -> Box<dyn Contract<StargazeMsgWrapper>> {
     let contract = ContractWrapper::new(
         open_edition_minter::contract::execute,
@@ -128,6 +137,16 @@ pub fn contract_eth_airdrop() -> Box<dyn Contract<StargazeMsgWrapper>> {
         rekt_airdrop::query::query,
     )
     .with_reply(rekt_airdrop::reply::reply);
+    Box::new(contract)
+}
+
+pub fn contract_dydx_airdrop() -> Box<dyn Contract<StargazeMsgWrapper>> {
+    let contract = ContractWrapper::new(
+        dydx_airdrop::contract::execute,
+        dydx_airdrop::contract::instantiate,
+        dydx_airdrop::query::query,
+    )
+    .with_reply(dydx_airdrop::reply::reply);
     Box::new(contract)
 }
 

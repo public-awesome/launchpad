@@ -3,39 +3,47 @@
   "title": "InstantiateMsg",
   "type": "object",
   "required": [
-    "addresses",
     "admin",
     "airdrop_amount",
+    "airdrop_count_limit",
     "claim_msg_plaintext",
+    "members",
     "minter_address",
-    "per_address_limit",
+    "name_collection_address",
+    "name_discount_wl_address",
     "whitelist_code_id"
   ],
   "properties": {
-    "addresses": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
     "admin": {
-      "$ref": "#/definitions/Addr"
+      "type": "string"
     },
     "airdrop_amount": {
       "type": "integer",
       "format": "uint128",
       "minimum": 0.0
     },
-    "claim_msg_plaintext": {
-      "type": "string"
-    },
-    "minter_address": {
-      "$ref": "#/definitions/Addr"
-    },
-    "per_address_limit": {
+    "airdrop_count_limit": {
       "type": "integer",
       "format": "uint32",
       "minimum": 0.0
+    },
+    "claim_msg_plaintext": {
+      "type": "string"
+    },
+    "members": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Member"
+      }
+    },
+    "minter_address": {
+      "type": "string"
+    },
+    "name_collection_address": {
+      "type": "string"
+    },
+    "name_discount_wl_address": {
+      "type": "string"
     },
     "whitelist_code_id": {
       "type": "integer",
@@ -45,9 +53,23 @@
   },
   "additionalProperties": false,
   "definitions": {
-    "Addr": {
-      "description": "A human readable address.\n\nIn Cosmos, this is typically bech32 encoded. But for multi-chain smart contracts no assumptions should be made other than being UTF-8 encoded and of reasonable length.\n\nThis type represents a validated address. It can be created in the following ways 1. Use `Addr::unchecked(input)` 2. Use `let checked: Addr = deps.api.addr_validate(input)?` 3. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?` 4. Deserialize from JSON. This must only be done from JSON that was validated before such as a contract's state. `Addr` must not be used in messages sent by the user because this would result in unvalidated instances.\n\nThis type is immutable. If you really need to mutate it (Really? Are you sure?), create a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String` instance.",
-      "type": "string"
+    "Member": {
+      "type": "object",
+      "required": [
+        "address",
+        "mint_count"
+      ],
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "mint_count": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        }
+      },
+      "additionalProperties": false
     }
   }
 }

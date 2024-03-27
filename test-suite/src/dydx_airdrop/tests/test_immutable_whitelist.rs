@@ -1,6 +1,7 @@
 use crate::common_setup::contract_boxes::custom_mock_app;
 use crate::dydx_airdrop::constants::claim_constants::{
-    CONFIG_PLAINTEXT, MOCK_AIRDROP_ADDR_STR, MOCK_MINTER_ADDR_STR, OWNER,
+    CONFIG_PLAINTEXT, MOCK_AIRDROP_ADDR_STR, MOCK_MINTER_ADDR_STR, MOCK_NAME_COLLECTION_ADDR,
+    MOCK_NAME_DISCOUNT_WL_ADDR_STR, OWNER,
 };
 use crate::dydx_airdrop::constants::collection_constants::WHITELIST_AMOUNT;
 use crate::dydx_airdrop::setup::configure_mock_minter::configure_mock_minter_with_mock_whitelist;
@@ -10,7 +11,9 @@ use crate::dydx_airdrop::setup::test_msgs::InstantiateParams;
 use cosmwasm_std::Addr;
 use dydx_airdrop::contract::INSTANTIATION_FEE;
 use dydx_airdrop::msg::QueryMsg;
-use whitelist_immutable::helpers::WhitelistImmutableContract;
+use whitelist_immutable_flex::helpers::WhitelistImmutableFlexContract;
+use whitelist_immutable_flex::msg::Member;
+use whitelist_immutable_flex::state::Config;
 
 #[test]
 fn test_instantiate_with_addresses() {
@@ -22,18 +25,36 @@ fn test_instantiate_with_addresses() {
 
     let mut app = { custom_mock_app }();
     configure_mock_minter_with_mock_whitelist(&mut app);
-    let minter_addr = Addr::unchecked(MOCK_MINTER_ADDR_STR);
+    let minter_address = MOCK_MINTER_ADDR_STR.to_string();
+    let name_discount_wl_address = MOCK_NAME_DISCOUNT_WL_ADDR_STR.to_string();
+    let name_collection_address = MOCK_NAME_COLLECTION_ADDR.to_string();
     let airdrop_contract = Addr::unchecked(MOCK_AIRDROP_ADDR_STR);
 
     let params = InstantiateParams {
-        addresses,
+        members: vec![
+            Member {
+                address: addresses[0].clone(),
+                mint_count: 1,
+            },
+            Member {
+                address: addresses[1].clone(),
+                mint_count: 1,
+            },
+            Member {
+                address: addresses[2].clone(),
+                mint_count: 1,
+            },
+        ],
         funds_amount: WHITELIST_AMOUNT + INSTANTIATION_FEE,
         expected_airdrop_contract_id: 4,
-        minter_address: minter_addr,
-        admin_account: Addr::unchecked(OWNER),
+        minter_address,
+        admin_account: OWNER.to_string(),
         app: &mut app,
-        per_address_limit: 1,
         claim_msg_plaintext: CONFIG_PLAINTEXT.to_string(),
+        name_discount_wl_address,
+        name_collection_address,
+        airdrop_count_limit: 500,
+        airdrop_amount: WHITELIST_AMOUNT,
     };
     instantiate_contract(params).unwrap();
 
@@ -66,22 +87,40 @@ fn test_whitelist_immutable_address_limit() {
 
     let mut app = custom_mock_app();
     configure_mock_minter_with_mock_whitelist(&mut app);
-    let minter_addr = Addr::unchecked(MOCK_MINTER_ADDR_STR);
+    let minter_address = MOCK_MINTER_ADDR_STR.to_string();
+    let name_discount_wl_address = MOCK_NAME_DISCOUNT_WL_ADDR_STR.to_string();
+    let name_collection_address = MOCK_NAME_COLLECTION_ADDR.to_string();
 
     let params = InstantiateParams {
-        addresses,
+        members: vec![
+            Member {
+                address: addresses[0].clone(),
+                mint_count: 20,
+            },
+            Member {
+                address: addresses[1].clone(),
+                mint_count: 1,
+            },
+            Member {
+                address: addresses[2].clone(),
+                mint_count: 1,
+            },
+        ],
         funds_amount: WHITELIST_AMOUNT + INSTANTIATION_FEE,
         expected_airdrop_contract_id: 4,
-        minter_address: minter_addr,
-        admin_account: Addr::unchecked(OWNER),
+        minter_address,
+        admin_account: OWNER.to_string(),
         app: &mut app,
-        per_address_limit: 20,
         claim_msg_plaintext: CONFIG_PLAINTEXT.to_string(),
+        name_discount_wl_address,
+        name_collection_address,
+        airdrop_count_limit: 500,
+        airdrop_amount: WHITELIST_AMOUNT,
     };
     instantiate_contract(params).unwrap();
-    let whitelist_immutable = Addr::unchecked("contract4");
-    let res: u32 = WhitelistImmutableContract(whitelist_immutable)
-        .per_address_limit(&app.wrap())
+    let whitelist_immutable_flex = Addr::unchecked("contract4");
+    let res: u32 = WhitelistImmutableFlexContract(whitelist_immutable_flex)
+        .mint_count(&app.wrap(), "addr1".to_string())
         .unwrap();
     assert_eq!(res, 20);
 }
@@ -96,21 +135,39 @@ fn test_whitelist_immutable_address_count() {
 
     let mut app = custom_mock_app();
     configure_mock_minter_with_mock_whitelist(&mut app);
-    let minter_addr = Addr::unchecked(MOCK_MINTER_ADDR_STR);
+    let minter_address = MOCK_MINTER_ADDR_STR.to_string();
+    let name_discount_wl_address = MOCK_NAME_DISCOUNT_WL_ADDR_STR.to_string();
+    let name_collection_address = MOCK_NAME_COLLECTION_ADDR.to_string();
 
     let params = InstantiateParams {
-        addresses,
+        members: vec![
+            Member {
+                address: addresses[0].clone(),
+                mint_count: 1,
+            },
+            Member {
+                address: addresses[1].clone(),
+                mint_count: 1,
+            },
+            Member {
+                address: addresses[2].clone(),
+                mint_count: 1,
+            },
+        ],
         funds_amount: WHITELIST_AMOUNT + INSTANTIATION_FEE,
         expected_airdrop_contract_id: 4,
-        minter_address: minter_addr,
-        admin_account: Addr::unchecked(OWNER),
+        minter_address,
+        admin_account: OWNER.to_string(),
         app: &mut app,
-        per_address_limit: 20,
         claim_msg_plaintext: CONFIG_PLAINTEXT.to_string(),
+        name_discount_wl_address,
+        name_collection_address,
+        airdrop_count_limit: 500,
+        airdrop_amount: WHITELIST_AMOUNT,
     };
     instantiate_contract(params).unwrap();
     let whitelist_immutable = Addr::unchecked("contract4");
-    let res: u64 = WhitelistImmutableContract(whitelist_immutable)
+    let res: u64 = WhitelistImmutableFlexContract(whitelist_immutable)
         .address_count(&app.wrap())
         .unwrap();
     assert_eq!(res, 3);
@@ -126,26 +183,44 @@ fn test_whitelist_immutable_address_includes() {
 
     let mut app = custom_mock_app();
     configure_mock_minter_with_mock_whitelist(&mut app);
-    let minter_addr = Addr::unchecked(MOCK_MINTER_ADDR_STR);
+    let minter_address = MOCK_MINTER_ADDR_STR.to_string();
+    let name_discount_wl_address = MOCK_NAME_DISCOUNT_WL_ADDR_STR.to_string();
+    let name_collection_address = MOCK_NAME_COLLECTION_ADDR.to_string();
 
     let params = InstantiateParams {
-        addresses,
+        members: vec![
+            Member {
+                address: addresses[0].clone(),
+                mint_count: 1,
+            },
+            Member {
+                address: addresses[1].clone(),
+                mint_count: 1,
+            },
+            Member {
+                address: addresses[2].clone(),
+                mint_count: 1,
+            },
+        ],
         funds_amount: WHITELIST_AMOUNT + INSTANTIATION_FEE,
         expected_airdrop_contract_id: 4,
-        minter_address: minter_addr,
-        admin_account: Addr::unchecked(OWNER),
+        minter_address,
+        admin_account: OWNER.to_string(),
         app: &mut app,
-        per_address_limit: 20,
         claim_msg_plaintext: CONFIG_PLAINTEXT.to_string(),
+        name_discount_wl_address,
+        name_collection_address,
+        airdrop_count_limit: 500,
+        airdrop_amount: WHITELIST_AMOUNT,
     };
     instantiate_contract(params).unwrap();
     let whitelist_immutable = Addr::unchecked("contract4");
-    let res: bool = WhitelistImmutableContract(whitelist_immutable.clone())
+    let res: bool = WhitelistImmutableFlexContract(whitelist_immutable.clone())
         .includes(&app.wrap(), "addr3".to_string())
         .unwrap();
     assert!(res);
 
-    let res: bool = WhitelistImmutableContract(whitelist_immutable)
+    let res: bool = WhitelistImmutableFlexContract(whitelist_immutable)
         .includes(&app.wrap(), "nonsense".to_string())
         .unwrap();
     assert!(!res);
@@ -161,26 +236,43 @@ fn test_whitelist_immutable_address_config() {
 
     let mut app = custom_mock_app();
     configure_mock_minter_with_mock_whitelist(&mut app);
-    let minter_addr = Addr::unchecked(MOCK_MINTER_ADDR_STR);
+    let minter_address = MOCK_MINTER_ADDR_STR.to_string();
+    let name_discount_wl_address = MOCK_NAME_DISCOUNT_WL_ADDR_STR.to_string();
+    let name_collection_address = MOCK_NAME_COLLECTION_ADDR.to_string();
 
     let params = InstantiateParams {
-        addresses,
+        members: vec![
+            Member {
+                address: addresses[0].clone(),
+                mint_count: 1,
+            },
+            Member {
+                address: addresses[1].clone(),
+                mint_count: 1,
+            },
+            Member {
+                address: addresses[2].clone(),
+                mint_count: 1,
+            },
+        ],
         funds_amount: WHITELIST_AMOUNT + INSTANTIATION_FEE,
         expected_airdrop_contract_id: 4,
-        minter_address: minter_addr,
-        admin_account: Addr::unchecked(OWNER),
+        minter_address,
+        admin_account: OWNER.to_string(),
         app: &mut app,
-        per_address_limit: 20,
         claim_msg_plaintext: CONFIG_PLAINTEXT.to_string(),
+        name_discount_wl_address,
+        name_collection_address,
+        airdrop_count_limit: 500,
+        airdrop_amount: WHITELIST_AMOUNT,
     };
     instantiate_contract(params).unwrap();
     let whitelist_immutable = Addr::unchecked("contract4");
-    let res: whitelist_immutable::state::Config = WhitelistImmutableContract(whitelist_immutable)
+    let res: Config = WhitelistImmutableFlexContract(whitelist_immutable)
         .config(&app.wrap())
         .unwrap();
-    let expected_config = whitelist_immutable::state::Config {
+    let expected_config = whitelist_immutable_flex::state::Config {
         admin: Addr::unchecked("contract3"),
-        per_address_limit: 20,
         mint_discount_bps: Some(0),
     };
     assert_eq!(res, expected_config);

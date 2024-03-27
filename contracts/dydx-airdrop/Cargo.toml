@@ -34,7 +34,10 @@ cw2                 = { workspace = true }
 ethereum-verify     = { workspace = true }
 hex                 = "0.4"
 rust_decimal        = { version = "1.14.3" }
-sg-whitelist        = { workspace = true }
+cw721               = { workspace = true }
+sg721-base          = { workspace = true, features = ["library"] }
+sg721-name          = { workspace = true, features = ["library"] }
+sg-whitelist-flex   = { workspace = true, features = ["library"] }
 sg1                 = { workspace = true }
 sha2                = { workspace = true }
 sha3                = "0.10"
@@ -43,7 +46,9 @@ serde               = { workspace = true }
 sg-std              = { workspace = true }
 thiserror           = { workspace = true }
 vending-minter      = { workspace = true, features = ["library"] }
-whitelist-immutable = { workspace = true, features = ["library"] }
+whitelist-immutable-flex = { workspace = true, features = ["library"] }
+whitelist-updatable = { workspace = true, features = ["library"] }
+whitelist-updatable-flatrate = { workspace = true, features = ["library"] }
 
 [dev-dependencies]
 async-std       = "1.12.0"
@@ -53,7 +58,6 @@ eyre            = "0.6"
 rlp             = "0.5"
 sg2             = { workspace = true }
 vending-factory = { workspace = true }
-sg721-base      = { workspace = true }
 cw-multi-test   = { workspace = true }
 sg-multi-test   = { workspace = true }
 anyhow          = "1.0.57"

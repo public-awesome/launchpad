@@ -6,7 +6,7 @@ use cosmwasm_std::{coins, Addr};
 use cw_multi_test::{BankSudo, Executor, SudoMsg};
 use sg_multi_test::StargazeApp;
 
-extern crate whitelist_immutable;
+extern crate whitelist_immutable_flex;
 
 pub fn update_admin_for_whitelist(
     app: &mut StargazeApp,
@@ -15,7 +15,7 @@ pub fn update_admin_for_whitelist(
     target_contract: Addr,
 ) {
     // add airdrop contract as admin on whitelist
-    let update_admin_message = sg_whitelist::msg::ExecuteMsg::UpdateAdmins {
+    let update_admin_message = sg_whitelist_flex::msg::ExecuteMsg::UpdateAdmins {
         admins: vec![target_admin.to_string()],
     };
     let _ = app.execute_contract(sender, target_contract, &update_admin_message, &[]);
