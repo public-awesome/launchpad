@@ -22,6 +22,7 @@ pub const SG721_ADDRESS: Item<Addr> = Item::new("sg721_address");
 pub const MINTABLE_TOKEN_POSITIONS: Map<u32, u32> = Map::new("mt");
 pub const MINTABLE_NUM_TOKENS: Item<u32> = Item::new("mintable_num_tokens");
 pub const MINTER_ADDRS: Map<&Addr, u32> = Map::new("ma");
+pub const LAST_DISCOUNT_TIME: Item<Timestamp> = Item::new("last_discount_time");
 
 /// Holds the status of the minter. Can be changed with on-chain governance proposals.
 pub const STATUS: Item<Status> = Item::new("status");

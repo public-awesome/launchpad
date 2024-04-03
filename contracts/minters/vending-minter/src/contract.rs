@@ -4,8 +4,8 @@ use crate::msg::{
     QueryMsg, StartTimeResponse,
 };
 use crate::state::{
-    Config, ConfigExtension, CONFIG, MINTABLE_NUM_TOKENS, MINTABLE_TOKEN_POSITIONS, MINTER_ADDRS,
-    SG721_ADDRESS, STATUS,
+    Config, ConfigExtension, CONFIG, LAST_DISCOUNT_TIME, MINTABLE_NUM_TOKENS,
+    MINTABLE_TOKEN_POSITIONS, MINTER_ADDRS, SG721_ADDRESS, STATUS,
 };
 use crate::validation::{check_dynamic_per_address_limit, get_three_percent_of_tokens};
 #[cfg(not(feature = "library"))]
@@ -165,6 +165,9 @@ pub fn instantiate(
     CONFIG.save(deps.storage, &config)?;
     MINTABLE_NUM_TOKENS.save(deps.storage, &msg.init_msg.num_tokens)?;
 
+    let last_discount_time = env.block.time.minus_seconds(60 * 60 * 12);
+    LAST_DISCOUNT_TIME.save(deps.storage, &last_discount_time)?;
+
     let token_ids = random_token_list(
         &env,
         deps.api
@@ -237,7 +240,7 @@ pub fn execute(
         ExecuteMsg::UpdateDiscountPrice { price } => {
             execute_update_discount_price(deps, env, info, price)
         }
-        ExecuteMsg::RemoveDiscountPrice {} => execute_remove_discount_price(deps, info),
+        ExecuteMsg::RemoveDiscountPrice {} => execute_remove_discount_price(deps, env, info),
     }
 }
 
@@ -256,6 +259,11 @@ pub fn execute_update_discount_price(
     }
     if env.block.time < config.extension.start_time {
         return Err(ContractError::BeforeMintStartTime {});
+    }
+
+    let last_discount_time = LAST_DISCOUNT_TIME.load(deps.storage)?;
+    if last_discount_time.plus_seconds(12 * 60 * 60) > env.block.time {
+        return Err(ContractError::DiscountUpdateTooSoon {});
     }
 
     // discount price can't be greater than unit price
@@ -280,6 +288,7 @@ pub fn execute_update_discount_price(
 
     config.extension.discount_price = Some(coin(price, config.mint_price.denom.clone()));
     CONFIG.save(deps.storage, &config)?;
+    LAST_DISCOUNT_TIME.save(deps.storage, &env.block.time)?;
 
     Ok(Response::new()
         .add_attribute("action", "update_discount_price")
@@ -289,6 +298,7 @@ pub fn execute_update_discount_price(
 
 pub fn execute_remove_discount_price(
     deps: DepsMut,
+    env: Env,
     info: MessageInfo,
 ) -> Result<Response, ContractError> {
     nonpayable(&info)?;
@@ -298,8 +308,13 @@ pub fn execute_remove_discount_price(
             "Sender is not an admin".to_owned(),
         ));
     }
+    let last_discount_time = LAST_DISCOUNT_TIME.load(deps.storage)?;
+    if last_discount_time.plus_seconds(60 * 60) > env.block.time {
+        return Err(ContractError::DiscountRemovalTooSoon {});
+    }
     config.extension.discount_price = None;
     CONFIG.save(deps.storage, &config)?;
+    LAST_DISCOUNT_TIME.save(deps.storage, &env.block.time)?;
 
     Ok(Response::new()
         .add_attribute("action", "remove_discount_price")
@@ -1226,7 +1241,7 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractE
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
+pub fn migrate(deps: DepsMut, env: Env, _msg: Empty) -> Result<Response, ContractError> {
     let current_version = cw2::get_contract_version(deps.storage)?;
     if current_version.contract != CONTRACT_NAME {
         return Err(StdError::generic_err("Cannot upgrade to a different contract").into());
@@ -1245,6 +1260,11 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, Contra
     // if same version return
     if version == new_version {
         return Ok(Response::new());
+    }
+    // init last discount time for older contracts during migration
+    if version < Version::new(3, 6, 0) {
+        let last_discount_time = env.block.time.minus_seconds(60 * 60 * 12);
+        LAST_DISCOUNT_TIME.save(deps.storage, &last_discount_time)?;
     }
 
     // set new contract version
