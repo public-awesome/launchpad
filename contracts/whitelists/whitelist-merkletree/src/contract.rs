@@ -292,7 +292,6 @@ pub fn query_has_member(
 
 pub fn query_config(deps: Deps, env: Env) -> StdResult<ConfigResponse> {
     let config = CONFIG.load(deps.storage)?;
-    let merkle_root = MERKLE_ROOT.load(deps.storage)?;
     Ok(ConfigResponse {
         num_members: 0,
         member_limit: 0,
