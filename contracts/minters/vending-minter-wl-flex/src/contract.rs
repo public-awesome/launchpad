@@ -1249,7 +1249,7 @@ pub fn migrate(deps: DepsMut, env: Env, _msg: Empty) -> Result<Response, Contrac
         return Ok(Response::new());
     }
     // init last discount time for older contracts during migration
-    if version < Version::new(3, 6, 0) {
+    if version < Version::new(3, 8, 0) {
         let last_discount_time = env.block.time.minus_seconds(60 * 60 * 12);
         LAST_DISCOUNT_TIME.save(deps.storage, &last_discount_time)?;
     }
