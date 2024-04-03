@@ -13,20 +13,23 @@ use crate::state::{AdminList, Config, ADMIN_LIST, CONFIG, MERKLE_ROOT, MERKLE_TR
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdError, StdResult, Timestamp,
+    to_json_binary, Binary, Deps, DepsMut, Empty, Env, Event, MessageInfo, StdError, StdResult,
+    Timestamp,
 };
 use cw2::set_contract_version;
-use cw_utils::nonpayable;
+use cw_utils::must_pay;
 use sg_std::{Response, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
 use rs_merkle::{algorithms::Sha256, Hasher};
+use semver::Version;
+use sg1::checked_fair_burn;
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:whitelist-merkletree";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 // contract governance params
-pub const PRICE_PER_1000_MEMBERS: u128 = 100_000_000;
+pub const CREATION_FEE: u128 = 1_000_000_000;
 pub const MIN_MINT_PRICE: u128 = 0;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -36,10 +39,17 @@ pub fn instantiate(
     info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
-    nonpayable(&info)?;
     verify_merkle_root(&msg.merkle_root)?;
     verify_tree_uri(&msg.merkle_tree_uri)?;
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+
+    let payment = must_pay(&info, NATIVE_DENOM)?;
+    if payment.u128() != CREATION_FEE {
+        return Err(ContractError::IncorrectCreationFee(
+            payment.u128(),
+            CREATION_FEE,
+        ));
+    }
 
     if msg.mint_price.denom != NATIVE_DENOM {
         return Err(ContractError::InvalidDenom(msg.mint_price.denom));
@@ -66,6 +76,9 @@ pub fn instantiate(
             genesis_start_time,
         ));
     }
+
+    let mut res = Response::new();
+    checked_fair_burn(&info, CREATION_FEE, None, &mut res)?;
 
     let config = Config {
         start_time: msg.start_time,
@@ -96,7 +109,7 @@ pub fn instantiate(
     }
     attrs.push(("sender", info.sender.as_str()));
 
-    Ok(Response::new().add_attributes(attrs))
+    Ok(res.add_attributes(attrs))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -300,4 +313,36 @@ pub fn query_merkle_tree_uri(deps: Deps) -> StdResult<MerkleTreeURIResponse> {
     Ok(MerkleTreeURIResponse {
         merkle_tree_uri: MERKLE_TREE_URI.may_load(deps.storage)?,
     })
+}
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
+    let current_version = cw2::get_contract_version(deps.storage)?;
+    if current_version.contract != CONTRACT_NAME {
+        return Err(StdError::generic_err("Cannot upgrade to a different contract").into());
+    }
+    let version: Version = current_version
+        .version
+        .parse()
+        .map_err(|_| StdError::generic_err("Invalid contract version"))?;
+    let new_version: Version = CONTRACT_VERSION
+        .parse()
+        .map_err(|_| StdError::generic_err("Invalid contract version"))?;
+
+    if version > new_version {
+        return Err(StdError::generic_err("Cannot upgrade to a previous contract version").into());
+    }
+    // if same version return
+    if version == new_version {
+        return Ok(Response::new());
+    }
+
+    // set new contract version
+    set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+    let event = Event::new("migrate")
+        .add_attribute("from_name", current_version.contract)
+        .add_attribute("from_version", current_version.version)
+        .add_attribute("to_name", CONTRACT_NAME)
+        .add_attribute("to_version", CONTRACT_VERSION);
+    Ok(Response::new().add_event(event))
 }

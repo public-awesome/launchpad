@@ -17,6 +17,8 @@ mod tests {
     const ADMIN: &str = "admin";
     const UNIT_AMOUNT: u128 = 100_000_000;
 
+    const CREATION_AMOUNT: u128 = 1_000_000_000;
+
     const GENESIS_START_TIME: Timestamp = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
     const END_TIME: Timestamp = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 1000);
 
@@ -37,9 +39,9 @@ mod tests {
             admins: vec![ADMIN.to_string()],
             admins_mutable: true,
         };
-        let info = mock_info(ADMIN, &[]);
+        let info = mock_info(ADMIN, &[coin(CREATION_AMOUNT, NATIVE_DENOM)]);
         let res = instantiate(deps, mock_env(), info, msg).unwrap();
-        assert_eq!(0, res.messages.len());
+        assert_eq!(2, res.messages.len());
         assert_eq!(5, res.attributes.len());
     }
 
