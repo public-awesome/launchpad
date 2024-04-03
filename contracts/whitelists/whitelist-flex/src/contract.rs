@@ -26,7 +26,7 @@ const CONTRACT_NAME: &str = "crates.io:sg-whitelist-flex";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 // contract governance params
-pub const MAX_MEMBERS: u32 = 5000;
+pub const MAX_MEMBERS: u32 = 25_000;
 pub const PRICE_PER_1000_MEMBERS: u128 = 100_000_000;
 pub const MIN_MINT_PRICE: u128 = 0;
 
@@ -233,11 +233,10 @@ pub fn execute_add_members(
             });
         }
         let addr = deps.api.addr_validate(&add.address)?;
-        if WHITELIST.has(deps.storage, addr.clone()) {
-            return Err(ContractError::DuplicateMember(addr.to_string()));
+        if !WHITELIST.has(deps.storage, addr.clone()) {
+            WHITELIST.save(deps.storage, addr, &add.mint_count)?;
+            config.num_members += 1;
         }
-        WHITELIST.save(deps.storage, addr, &add.mint_count)?;
-        config.num_members += 1;
     }
 
     CONFIG.save(deps.storage, &config)?;

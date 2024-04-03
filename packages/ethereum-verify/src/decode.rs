@@ -10,6 +10,7 @@ use sha3::{Digest, Keccak256};
 /// [EIP-155]: https://github.com/ethereum/EIPs/blob/master/EIPS/eip-155.md
 pub fn get_recovery_param(v: u8) -> StdResult<u8> {
     match v {
+        0 | 1 => Ok(v),
         27 => Ok(0),
         28 => Ok(1),
         _ => Err(StdError::generic_err("Values of v other than 27 and 28 not supported. Replay protection (EIP-155) cannot be used here."))

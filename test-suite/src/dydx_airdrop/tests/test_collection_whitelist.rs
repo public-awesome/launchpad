@@ -1,6 +1,9 @@
 use crate::common_setup::setup_accounts_and_block::setup_block_time;
 use crate::common_setup::setup_collection_whitelist::configure_collection_whitelist;
-use crate::dydx_airdrop::constants::claim_constants::{CONFIG_PLAINTEXT, STARGAZE_WALLET_01};
+use crate::dydx_airdrop::constants::claim_constants::{
+    CONFIG_PLAINTEXT, MOCK_MINTER_ADDR_STR, MOCK_NAME_COLLECTION_ADDR,
+    MOCK_NAME_DISCOUNT_WL_ADDR_STR, STARGAZE_WALLET_01,
+};
 use crate::dydx_airdrop::constants::collection_constants::{
     AIRDROP_ADDR_STR, MINT_PRICE, WHITELIST_AMOUNT,
 };
@@ -17,26 +20,34 @@ use sg_std::GENESIS_MINT_START_TIME;
 extern crate whitelist_immutable;
 use crate::common_setup::templates::vending_minter_template;
 use dydx_airdrop::contract::INSTANTIATION_FEE;
+use whitelist_immutable_flex::msg::Member;
 
 #[test]
 fn test_set_minter_contract_success() {
     let vt = vending_minter_template(1);
     let (mut app, creator) = (vt.router, vt.accts.creator);
-    let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
-
+    let minter_address = MOCK_MINTER_ADDR_STR.to_string();
+    let name_discount_wl_address = MOCK_NAME_DISCOUNT_WL_ADDR_STR.to_string();
+    let name_collection_address = MOCK_NAME_COLLECTION_ADDR.to_string();
     let claim_plaintext = &get_msg_plaintext(STARGAZE_WALLET_01.to_string());
     let (_, _, _, eth_addr_str) = get_wallet_and_sig(claim_plaintext.clone());
 
     let contract_admin = Addr::unchecked(creator);
     let params = InstantiateParams {
-        addresses: vec![eth_addr_str],
+        members: vec![Member {
+            address: eth_addr_str,
+            mint_count: 1,
+        }],
         funds_amount: WHITELIST_AMOUNT + INSTANTIATION_FEE,
         expected_airdrop_contract_id: 4,
-        minter_address: minter_addr.clone(),
-        admin_account: contract_admin,
+        minter_address: minter_address.clone(),
+        admin_account: contract_admin.to_string(),
         app: &mut app,
-        per_address_limit: 1,
         claim_msg_plaintext: CONFIG_PLAINTEXT.to_string(),
+        name_discount_wl_address,
+        name_collection_address,
+        airdrop_count_limit: 500,
+        airdrop_amount: WHITELIST_AMOUNT,
     };
     instantiate_contract(params).unwrap();
     let airdrop_contract = Addr::unchecked("contract3");
@@ -45,43 +56,59 @@ fn test_set_minter_contract_success() {
         .wrap()
         .query_wasm_smart(airdrop_contract, &query_msg)
         .unwrap();
-    assert_eq!(result, minter_addr);
+    assert_eq!(result, minter_address);
 }
 
 #[test]
 fn test_claim_added_to_minter_whitelist() {
     let vt = vending_minter_template(1);
     let (mut app, creator, buyer) = (vt.router, vt.accts.creator, vt.accts.buyer);
-    let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
-    let whitelist_addr =
-        configure_collection_whitelist(&mut app, creator.clone(), buyer, minter_addr.clone());
+    let minter_address = MOCK_MINTER_ADDR_STR.to_string();
+    let name_discount_wl_address = MOCK_NAME_DISCOUNT_WL_ADDR_STR.to_string();
+    let name_collection_address = MOCK_NAME_COLLECTION_ADDR.to_string();
+    let whitelist_addr = configure_collection_whitelist(
+        &mut app,
+        creator.clone(),
+        buyer,
+        Addr::unchecked(minter_address.clone()),
+    );
     setup_block_time(&mut app, GENESIS_MINT_START_TIME, None);
     let claim_plaintext = &get_msg_plaintext(STARGAZE_WALLET_01.to_string());
     let (_, eth_sig_str, _, eth_addr_str) = get_wallet_and_sig(claim_plaintext.clone());
 
     let airdrop_contract = Addr::unchecked(AIRDROP_ADDR_STR);
     let params = InstantiateParams {
-        addresses: vec![eth_addr_str.clone()],
+        members: vec![Member {
+            address: eth_addr_str.clone(),
+            mint_count: 1,
+        }],
         funds_amount: WHITELIST_AMOUNT + INSTANTIATION_FEE,
         expected_airdrop_contract_id: 5,
-        minter_address: minter_addr.clone(),
-        admin_account: creator.clone(),
+        minter_address: minter_address.clone(),
+        admin_account: creator.to_string(),
         app: &mut app,
-        per_address_limit: 1,
         claim_msg_plaintext: CONFIG_PLAINTEXT.to_string(),
+        name_discount_wl_address,
+        name_collection_address,
+        airdrop_count_limit: 500,
+        airdrop_amount: WHITELIST_AMOUNT,
     };
     instantiate_contract(params).unwrap();
 
     let stargaze_wallet_01 = Addr::unchecked(STARGAZE_WALLET_01);
     update_admin_for_whitelist(&mut app, creator, airdrop_contract.clone(), whitelist_addr);
     send_funds_to_address(&mut app, STARGAZE_WALLET_01, MINT_PRICE);
-    execute_mint_fail_not_on_whitelist(&mut app, minter_addr.clone());
+    execute_mint_fail_not_on_whitelist(&mut app, Addr::unchecked(minter_address.clone()));
     execute_airdrop_claim(
         &mut app,
-        eth_addr_str,
+        eth_addr_str.clone(),
         eth_sig_str,
         stargaze_wallet_01.clone(),
         airdrop_contract,
     );
-    execute_mint_success(&mut app, stargaze_wallet_01, minter_addr);
+    execute_mint_success(
+        &mut app,
+        stargaze_wallet_01,
+        Addr::unchecked(minter_address.clone()),
+    );
 }
