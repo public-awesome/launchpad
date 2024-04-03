@@ -294,8 +294,8 @@ pub fn execute_remove_discount_price(
         ));
     }
     let last_discount_time = LAST_DISCOUNT_TIME.load(deps.storage)?;
-    if last_discount_time.plus_seconds(12 * 60 * 60) > env.block.time {
-        return Err(ContractError::DiscountUpdateTooSoon {});
+    if last_discount_time.plus_seconds(60 * 60) > env.block.time {
+        return Err(ContractError::DiscountRemovalTooSoon {});
     }
     config.extension.discount_price = None;
     CONFIG.save(deps.storage, &config)?;

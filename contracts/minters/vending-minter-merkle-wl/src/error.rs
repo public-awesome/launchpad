@@ -59,6 +59,9 @@ pub enum ContractError {
     #[error("Discount price can only be updated every 12 hours")]
     DiscountUpdateTooSoon {},
 
+    #[error("Discount price can only be removed 1 hour after the last update")]
+    DiscountRemovalTooSoon {},
+
     #[error("Invalid address {addr}")]
     InvalidAddress { addr: String },
 
