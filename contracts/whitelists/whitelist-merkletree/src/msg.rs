@@ -101,12 +101,13 @@ pub struct MintPriceResponse {
 
 #[cw_serde]
 pub struct ConfigResponse {
+    pub num_members: u32,
     pub per_address_limit: u32,
+    pub member_limit: u32,
     pub start_time: Timestamp,
     pub end_time: Timestamp,
     pub mint_price: Coin,
     pub is_active: bool,
-    pub merkle_root: String,
 }
 
 #[cw_serde]
