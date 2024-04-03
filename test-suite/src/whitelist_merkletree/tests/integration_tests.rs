@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
-    use cosmwasm_std::{coin, Addr, Timestamp};
-    use cw_multi_test::Executor;
+    use cosmwasm_std::{coin, coins, Addr, Timestamp};
+    use cw_multi_test::{BankSudo, Executor, SudoMsg as CWSudoMsg};
     use rs_merkle::MerkleTree;
     use sg_multi_test::StargazeApp;
     use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
@@ -48,6 +48,14 @@ mod tests {
         per_address_limit: u32,
         merkle_root: String,
     ) -> Addr {
+        app.sudo(CWSudoMsg::Bank({
+            BankSudo::Mint {
+                to_address: CREATOR.to_string(),
+                amount: coins(1000000000u128, NATIVE_DENOM),
+            }
+        }))
+        .map_err(|err| println!("{err:?}"))
+        .ok();
         let msg = InstantiateMsg {
             admins: vec![],
             admins_mutable: false,
@@ -63,7 +71,7 @@ mod tests {
             wl_id,
             Addr::unchecked(CREATOR),
             &msg,
-            &[],
+            &[coin(1000000000u128, NATIVE_DENOM)],
             "wl-contract-mtree".to_string(),
             None,
         )

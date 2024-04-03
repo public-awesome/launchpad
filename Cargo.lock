@@ -5033,6 +5033,7 @@ dependencies = [
  "rs_merkle",
  "rust_decimal",
  "schemars",
+ "semver",
  "serde",
  "serde_json",
  "sg-std",
