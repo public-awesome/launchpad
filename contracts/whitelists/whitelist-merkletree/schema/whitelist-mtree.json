@@ -662,6 +662,7 @@
         "end_time",
         "is_active",
         "member_limit",
+        "merkle_root",
         "mint_price",
         "num_members",
         "per_address_limit",
@@ -678,6 +679,9 @@
           "type": "integer",
           "format": "uint32",
           "minimum": 0.0
+        },
+        "merkle_root": {
+          "type": "string"
         },
         "mint_price": {
           "$ref": "#/definitions/Coin"

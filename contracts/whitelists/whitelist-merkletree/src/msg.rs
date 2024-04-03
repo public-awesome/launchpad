@@ -108,6 +108,7 @@ pub struct ConfigResponse {
     pub end_time: Timestamp,
     pub mint_price: Coin,
     pub is_active: bool,
+    pub merkle_root: String,
 }
 
 #[cw_serde]
