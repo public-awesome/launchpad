@@ -1,6 +1,6 @@
 {
   "contract_name": "whitelist-mtree",
-  "contract_version": "3.10.0",
+  "contract_version": "3.11.0",
   "idl_version": "1.0.0",
   "instantiate": {
     "$schema": "http://json-schema.org/draft-07/schema#",
