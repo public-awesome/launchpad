@@ -51,10 +51,6 @@ pub fn instantiate(
         ));
     }
 
-    if msg.mint_price.denom != NATIVE_DENOM {
-        return Err(ContractError::InvalidDenom(msg.mint_price.denom));
-    }
-
     if msg.start_time > msg.end_time {
         return Err(ContractError::InvalidStartTime(
             msg.start_time,
