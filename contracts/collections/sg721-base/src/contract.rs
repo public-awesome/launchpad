@@ -1,10 +1,10 @@
-use cw721_base::state::TokenInfo;
-use url::Url;
-
 use cosmwasm_std::{
     to_json_binary, Addr, Binary, ContractInfoResponse, Decimal, Deps, DepsMut, Empty, Env, Event,
     MessageInfo, StdError, StdResult, Storage, Timestamp, WasmQuery,
 };
+use cw721_base::state::TokenInfo;
+use cw_storage_plus::Item;
+use url::Url;
 
 use cw721::{ContractInfoResponse as CW721ContractInfoResponse, Cw721Execute};
 use cw_utils::nonpayable;
@@ -411,6 +411,11 @@ where
         }
 
         cw2::set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+
+        // substract 1 day on migration
+        let royalty_updated_at = Item::new("royalty_updated_at");
+        let last_royalty_update: Timestamp = royalty_updated_at.load(deps.storage)?;
+        royalty_updated_at.save(deps.storage, &last_royalty_update.minus_days(1))?;
 
         response = response.add_event(
             Event::new("migrate")
