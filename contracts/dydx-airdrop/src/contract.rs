@@ -100,7 +100,7 @@ pub fn withdraw_remaining(
     };
 
     let msg = BankMsg::Send {
-        to_address: recipient.into(),
+        to_address: recipient_addr.to_string(),
         amount: vec![Coin {
             denom: NATIVE_DENOM.to_string(),
             amount: amount_to_withdraw,
