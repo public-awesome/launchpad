@@ -1,5 +1,5 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::Addr;
+use cosmwasm_std::{Addr, Uint128};
 use whitelist_immutable_flex::msg::Member;
 
 #[cw_serde]
@@ -31,6 +31,10 @@ pub enum ExecuteMsg {
     ClaimAirdrop {
         eth_address: String,
         eth_sig: String,
+    },
+    WithdrawRemaining {
+        recipient: String,
+        amount: Option<Uint128>,
     },
 }
 
