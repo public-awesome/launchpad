@@ -4,9 +4,12 @@ use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, InstantiateMsg};
 use crate::state::{AIRDROP_COUNT, CONFIG};
 
-use cosmwasm_std::{attr, ensure, entry_point, BankMsg, Coin, CosmosMsg, Uint128};
+use cosmwasm_std::{
+    attr, ensure, entry_point, BankMsg, Coin, CosmosMsg, Empty, Event, StdError, Uint128,
+};
 use cosmwasm_std::{DepsMut, Env, MessageInfo};
 use cw2::set_contract_version;
+use semver::Version;
 use sg1::fair_burn;
 use sg_std::{Response, NATIVE_DENOM};
 
@@ -115,4 +118,36 @@ pub fn withdraw_remaining(
             attr("recipient", recipient_addr.to_string()),
         ]);
     Ok(res)
+}
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
+    let current_version = cw2::get_contract_version(deps.storage)?;
+    if current_version.contract != CONTRACT_NAME {
+        return Err(StdError::generic_err("Cannot upgrade to a different contract").into());
+    }
+    let version: Version = current_version
+        .version
+        .parse()
+        .map_err(|_| StdError::generic_err("Invalid contract version"))?;
+    let new_version: Version = CONTRACT_VERSION
+        .parse()
+        .map_err(|_| StdError::generic_err("Invalid contract version"))?;
+
+    if version > new_version {
+        return Err(StdError::generic_err("Cannot upgrade to a previous contract version").into());
+    }
+    // if same version return
+    if version == new_version {
+        return Ok(Response::new());
+    }
+
+    // set new contract version
+    set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+    let event = Event::new("migrate")
+        .add_attribute("from_name", current_version.contract)
+        .add_attribute("from_version", current_version.version)
+        .add_attribute("to_name", CONTRACT_NAME)
+        .add_attribute("to_version", CONTRACT_VERSION);
+    Ok(Response::new().add_event(event))
 }
