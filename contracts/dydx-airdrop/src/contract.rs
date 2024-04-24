@@ -1,5 +1,5 @@
 use crate::claim_airdrop::claim_airdrop;
-// #[cfg(not(feature = "library"))]
+#[cfg(not(feature = "library"))]
 use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, InstantiateMsg};
 use crate::state::{AIRDROP_COUNT, CONFIG};
