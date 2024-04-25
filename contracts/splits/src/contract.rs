@@ -1,13 +1,12 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coins, to_json_binary, Addr, BankMsg, Binary, Deps, DepsMut, Env, MessageInfo, Reply, Response,
-    StdResult, SubMsg, Uint128,
+    coins, ensure, to_json_binary, Addr, BankMsg, Binary, CosmosMsg, Deps, DepsMut, Env,
+    MessageInfo, Reply, Response, StdResult, SubMsg, Uint128,
 };
 use cw2::set_contract_version;
 use cw4::{Cw4Contract, Member, MemberListResponse, MemberResponse};
 use cw_utils::{maybe_addr, parse_reply_instantiate_data};
-use sg_std::NATIVE_DENOM;
 
 use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, Group, InstantiateMsg, QueryMsg};
@@ -95,31 +94,32 @@ pub fn execute_distribute(
         });
     }
 
-    let funds = deps
-        .querier
-        .query_balance(env.contract.address, NATIVE_DENOM)?;
-    if funds.amount.is_zero() {
-        return Err(ContractError::NoFunds {});
-    }
+    let funds = deps.querier.query_all_balances(env.contract.address)?;
 
-    // To avoid rounding errors, distribute funds modulo the total weight.
-    // Keep remaining balance in the contract.
-    let multiplier = funds.amount / Uint128::from(total_weight);
-    if multiplier.is_zero() {
-        return Err(ContractError::NotEnoughFunds { min: total_weight });
-    }
+    ensure!(funds.len() > 0, ContractError::NoFunds {});
 
-    let msgs = members
-        .iter()
-        .filter(|m| m.weight > 0)
-        .map(|member| {
-            let amount = multiplier * Uint128::from(member.weight);
-            BankMsg::Send {
-                to_address: member.addr.clone(),
-                amount: coins(amount.u128(), funds.denom.clone()),
+    let mut msgs: Vec<CosmosMsg> = Vec::new();
+    for member in members.iter().filter(|m| m.weight > 0) {
+        for coin in funds.iter() {
+            // To avoid rounding errors, distribute funds modulo the total weight.
+            // Keep remaining balance in the contract.
+            let multiplier = coin.amount / Uint128::from(total_weight);
+            if multiplier.is_zero() {
+                continue;
             }
-        })
-        .collect::<Vec<_>>();
+
+            let amount = Uint128::from(member.weight) * multiplier;
+            msgs.push(CosmosMsg::Bank(BankMsg::Send {
+                to_address: member.addr.clone(),
+                amount: coins(amount.u128(), coin.denom.clone()),
+            }));
+        }
+    }
+
+    ensure!(
+        msgs.len() > 0,
+        ContractError::NotEnoughFunds { min: total_weight }
+    );
 
     Ok(Response::new()
         .add_attribute("action", "distribute")
