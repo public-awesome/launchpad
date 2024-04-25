@@ -31,6 +31,12 @@ pub enum ContractError {
     #[error("InvalidMintPrice")]
     InvalidMintPrice {},
 
+    #[error("Open Edition collections should have a non-zero mint price")]
+    NoTokenLimitWithZeroMintPrice {},
+
+    #[error("Open Edition collections should have a non-zero airdrop price")]
+    NoTokenLimitWithZeroAirdropPrice {},
+
     #[error("InvalidNftDataProvided")]
     InvalidNftDataProvided {},
 

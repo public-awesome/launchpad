@@ -22,6 +22,8 @@ pub const CONFIG: Item<Config> = Item::new("config");
 pub const SG721_ADDRESS: Item<Addr> = Item::new("sg721_address");
 pub const MINTER_ADDRS: Map<&Addr, u32> = Map::new("ma");
 
+pub const WHITELIST_MINTER_ADDRS: Map<&Addr, u32> = Map::new("wlma");
+
 /// This keeps track of the mint count
 pub const TOTAL_MINT_COUNT: Item<u32> = Item::new("total_mint_count");
 

@@ -2602,6 +2602,31 @@ dependencies = [
  "serde",
  "sg-metadata",
  "sg-std",
+ "sg-whitelist",
+ "sg1",
+ "sg2",
+ "sg4",
+ "sg721",
+ "thiserror",
+ "url",
+]
+
+[[package]]
+name = "open-edition-minter-wl-flex"
+version = "3.5.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus 1.2.0",
+ "cw-utils 1.0.3",
+ "cw2 1.1.2",
+ "cw721-base 0.18.0",
+ "open-edition-factory",
+ "semver",
+ "serde",
+ "sg-metadata",
+ "sg-std",
+ "sg-whitelist-flex",
  "sg1",
  "sg2",
  "sg4",

@@ -38,6 +38,7 @@ fn check_custom_create_minter_denom() {
         Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
         None,
         Some(mint_price.clone()),
+        None,
     );
     let custom_minter_params = OpenEditionMinterParams {
         code_id: 1,
@@ -116,6 +117,7 @@ fn one_hundred_percent_burned_ibc_minter() {
         Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
         None,
         Some(mint_price.clone()),
+        None,
     );
 
     let custom_minter_params = OpenEditionMinterParams {
@@ -200,6 +202,7 @@ fn zero_mint_fee() {
         Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
         None,
         Some(mint_price.clone()),
+        None,
     );
 
     let custom_minter_params = OpenEditionMinterParams {

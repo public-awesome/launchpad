@@ -34,6 +34,7 @@ fn invalid_code_id() {
         Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
         None,
         None,
+        None,
     );
     let mut app = custom_mock_app();
     let mut code_ids = open_edition_minter_code_ids(&mut app);
