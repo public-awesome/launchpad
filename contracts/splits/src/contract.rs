@@ -96,7 +96,7 @@ pub fn execute_distribute(
 
     let funds = deps.querier.query_all_balances(env.contract.address)?;
 
-    ensure!(funds.len() > 0, ContractError::NoFunds {});
+    ensure!(!funds.is_empty(), ContractError::NoFunds {});
 
     let mut msgs: Vec<CosmosMsg> = Vec::new();
     for member in members.iter().filter(|m| m.weight > 0) {
@@ -117,7 +117,7 @@ pub fn execute_distribute(
     }
 
     ensure!(
-        msgs.len() > 0,
+        !msgs.is_empty(),
         ContractError::NotEnoughFunds { min: total_weight }
     );
 
