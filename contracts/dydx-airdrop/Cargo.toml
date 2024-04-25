@@ -43,6 +43,7 @@ sha2                = { workspace = true }
 sha3                = "0.10"
 schemars            = { workspace = true }
 serde               = { workspace = true }
+semver              = { workspace = true }
 sg-std              = { workspace = true }
 thiserror           = { workspace = true }
 vending-minter      = { workspace = true, features = ["library"] }

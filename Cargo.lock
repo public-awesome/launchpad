@@ -1456,6 +1456,7 @@ dependencies = [
  "rlp",
  "rust_decimal",
  "schemars",
+ "semver",
  "serde",
  "sg-multi-test",
  "sg-std 3.2.0",

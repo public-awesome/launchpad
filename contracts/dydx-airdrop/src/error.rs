@@ -1,4 +1,4 @@
-use cosmwasm_std::{Addr, StdError};
+use cosmwasm_std::{Addr, StdError, Uint128};
 use cw_utils::{self, PaymentError};
 use thiserror::Error;
 
@@ -75,4 +75,7 @@ pub enum ContractError {
 
     #[error("Address {address} should be converted to lowercase")]
     EthAddressShouldBeLower { address: String },
+
+    #[error("Insufficient Funds: Contract balance: {balance} does not cover the required amount: {amount}")]
+    InsufficientFunds { balance: Uint128, amount: Uint128 },
 }
