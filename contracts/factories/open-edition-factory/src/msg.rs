@@ -22,6 +22,7 @@ pub struct OpenEditionMinterInitMsgExtension {
     pub num_tokens: Option<u32>,
     // If not the admin/init
     pub payment_address: Option<String>,
+    pub whitelist: Option<String>,
 }
 
 impl OpenEditionMinterInitMsgExtension {
@@ -87,6 +88,7 @@ impl OpenEditionMinterInitMsgExtension {
             per_address_limit,
             num_tokens: init_msg.num_tokens,
             payment_address: init_msg.payment_address,
+            whitelist: init_msg.whitelist,
         })
     }
 }

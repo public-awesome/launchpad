@@ -40,6 +40,7 @@ fn check_valid_create_minter() {
         Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
         None,
         None,
+        None,
     );
     let vt = open_edition_minter_custom_template(params_extension, init_msg).unwrap();
     assert!(vt.collection_response_vec[0].error.is_none())
@@ -70,6 +71,7 @@ fn check_custom_denom_create_minter() {
             denom: "ibc/frenz".to_string(),
             amount: Uint128::new(100_000_000u128),
         }),
+        None,
     );
     let vt = open_edition_minter_custom_template(params_extension, init_msg);
     assert!(vt.is_ok())
@@ -99,6 +101,7 @@ fn check_invalid_create_minter_address_limit() {
         Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
         None,
         None,
+        None,
     );
     let vt = open_edition_minter_custom_template(params_extension.clone(), init_msg_1).unwrap();
     assert_eq!(
@@ -117,6 +120,7 @@ fn check_invalid_create_minter_address_limit() {
         per_address_limit_minter,
         None,
         Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
+        None,
         None,
         None,
     );
@@ -153,6 +157,7 @@ fn check_invalid_create_minter_start_end_time() {
         Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
         None,
         None,
+        None,
     );
     let vt = open_edition_minter_start_and_end_time(
         params_extension.clone(),
@@ -178,6 +183,7 @@ fn check_invalid_create_minter_start_end_time() {
         per_address_limit_minter,
         start_time,
         end_time,
+        None,
         None,
         None,
     );
@@ -220,6 +226,7 @@ fn check_invalid_create_minter_mint_price() {
             denom: "uinvalid".to_string(),
             amount: Uint128::new(MIN_MINT_PRICE_OPEN_EDITION),
         }),
+        None,
     );
     let vt = open_edition_minter_custom_template(params_extension.clone(), init_msg_1).unwrap();
     assert_eq!(
@@ -242,6 +249,7 @@ fn check_invalid_create_minter_mint_price() {
             denom: NATIVE_DENOM.to_string(),
             amount: Uint128::new(100u128),
         }),
+        None,
     );
     let vt = open_edition_minter_custom_template(params_extension, init_msg_2).unwrap();
     assert_eq!(
@@ -279,6 +287,7 @@ fn check_invalid_create_minter_nft_data() {
         per_address_limit_minter,
         start_time,
         Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
+        None,
         None,
         None,
     );
@@ -326,6 +335,7 @@ fn check_invalid_create_minter_nft_data() {
         Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
         None,
         None,
+        None,
     );
 
     let vt =
@@ -356,6 +366,7 @@ fn check_invalid_create_minter_nft_data() {
         per_address_limit_minter,
         start_time,
         Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
+        None,
         None,
         None,
     );
@@ -394,6 +405,7 @@ fn check_invalid_create_minter_max_tokens() {
         None,
         Some(MAX_TOKEN_LIMIT + 1),
         None,
+        None,
     );
     let vt = open_edition_minter_custom_template(params_extension.clone(), init_msg_1).unwrap();
     assert!(vt.collection_response_vec[0].error.is_some());
@@ -402,6 +414,7 @@ fn check_invalid_create_minter_max_tokens() {
     let init_msg_2 = init_msg(
         default_nft_data(),
         per_address_limit_minter,
+        None,
         None,
         None,
         None,

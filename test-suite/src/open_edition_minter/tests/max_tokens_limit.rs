@@ -36,6 +36,7 @@ fn check_max_tokens_limit_init() {
         Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
         Some(MAX_TOKEN_LIMIT + 1),
         None,
+        None,
     );
     let vt = open_edition_minter_custom_template(params_extension.clone(), init_msg).unwrap();
     assert!(vt.collection_response_vec[0].error.is_some());
@@ -46,6 +47,7 @@ fn check_max_tokens_limit_init() {
         None,
         Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
         Some(2),
+        None,
         None,
     );
     let vt = open_edition_minter_custom_template(params_extension, init_msg);

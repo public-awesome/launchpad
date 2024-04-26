@@ -12,6 +12,7 @@ use crate::common_setup::setup_minter::common::constants::{
     CREATION_FEE, DEV_ADDRESS, MAX_TOKEN_LIMIT, MINT_FEE_FAIR_BURN, MIN_MINT_PRICE_OPEN_EDITION,
 };
 
+#[allow(clippy::too_many_arguments)]
 pub fn mock_init_minter_extension(
     start_time: Option<Timestamp>,
     end_time: Option<Timestamp>,
@@ -20,6 +21,7 @@ pub fn mock_init_minter_extension(
     mint_price: Option<Coin>,
     nft_data: NftData,
     payment_address: Option<String>,
+    whitelist: Option<String>,
 ) -> OpenEditionMinterInitMsgExtension {
     OpenEditionMinterInitMsgExtension {
         nft_data,
@@ -29,6 +31,7 @@ pub fn mock_init_minter_extension(
         end_time,
         payment_address,
         num_tokens,
+        whitelist,
     }
 }
 
@@ -42,6 +45,7 @@ pub fn mock_create_minter(
     default_nft_data: NftData,
     collection_params: CollectionParams,
     payment_address: Option<String>,
+    whitelist: Option<String>,
 ) -> OpenEditionMinterCreateMsg {
     OpenEditionMinterCreateMsg {
         init_msg: mock_init_minter_extension(
@@ -52,6 +56,7 @@ pub fn mock_create_minter(
             mint_price,
             default_nft_data,
             payment_address,
+            whitelist,
         ),
         collection_params,
     }

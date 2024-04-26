@@ -14,6 +14,7 @@ pub struct ConfigExtension {
     pub end_time: Option<Timestamp>,
     pub per_address_limit: u32,
     pub num_tokens: Option<u32>,
+    pub whitelist: Option<Addr>,
 }
 pub type Config = MinterConfig<ConfigExtension>;
 
