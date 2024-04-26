@@ -1,6 +1,6 @@
 {
   "contract_name": "sg-whitelist-flex",
-  "contract_version": "3.12.0",
+  "contract_version": "3.13.0",
   "idl_version": "1.0.0",
   "instantiate": {
     "$schema": "http://json-schema.org/draft-07/schema#",
