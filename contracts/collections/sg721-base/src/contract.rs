@@ -1,10 +1,10 @@
-use cw721_base::state::TokenInfo;
-use url::Url;
-
 use cosmwasm_std::{
     to_json_binary, Addr, Binary, ContractInfoResponse, Decimal, Deps, DepsMut, Empty, Env, Event,
     MessageInfo, StdError, StdResult, Storage, Timestamp, WasmQuery,
 };
+use cw721_base::state::TokenInfo;
+use cw_storage_plus::Item;
+use url::Url;
 
 use cw721::{ContractInfoResponse as CW721ContractInfoResponse, Cw721Execute};
 use cw_utils::nonpayable;
@@ -385,7 +385,7 @@ where
         })
     }
 
-    pub fn migrate(mut deps: DepsMut, env: Env, _msg: Empty) -> Result<Response, ContractError> {
+    pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
         let prev_contract_version = cw2::get_contract_version(deps.storage)?;
 
         let valid_contract_names = vec![CONTRACT_NAME.to_string()];
@@ -393,24 +393,14 @@ where
             return Err(StdError::generic_err("Invalid contract name for migration").into());
         }
 
-        #[allow(clippy::cmp_owned)]
-        if prev_contract_version.version >= CONTRACT_VERSION.to_string() {
-            return Err(StdError::generic_err("Must upgrade contract version").into());
-        }
-
         let mut response = Response::new();
 
-        #[allow(clippy::cmp_owned)]
-        if prev_contract_version.version < "3.0.0".to_string() {
-            response = crate::upgrades::v3_0_0::upgrade(deps.branch(), &env, response)?;
-        }
-
-        #[allow(clippy::cmp_owned)]
-        if prev_contract_version.version < "3.1.0".to_string() {
-            response = crate::upgrades::v3_1_0::upgrade(deps.branch(), &env, response)?;
-        }
-
         cw2::set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+
+        // substract 1 day on migration
+        let royalty_updated_at = Item::new("royalty_updated_at");
+        let last_royalty_update: Timestamp = royalty_updated_at.load(deps.storage)?;
+        royalty_updated_at.save(deps.storage, &last_royalty_update.minus_days(1))?;
 
         response = response.add_event(
             Event::new("migrate")

@@ -58,4 +58,9 @@ pub mod entry {
     pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         Sg721Contract::<Extension>::default().query(deps, env, msg)
     }
+
+    #[cfg_attr(not(feature = "library"), entry_point)]
+    pub fn migrate(deps: DepsMut, env: Env, msg: Empty) -> Result<Response, ContractError> {
+        Sg721Contract::<Extension>::migrate(deps, env, msg)
+    }
 }
