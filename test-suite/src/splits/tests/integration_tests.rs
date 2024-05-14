@@ -270,7 +270,7 @@ mod tests {
 
             let (splits_addr, _) = setup_test_case(&mut app, vec![], false);
 
-            let msg = ExecuteMsg::Distribute {};
+            let msg = ExecuteMsg::Distribute { denom_list: None };
 
             let err = app
                 .execute_contract(Addr::unchecked(OWNER), splits_addr, &msg, &[])
@@ -286,10 +286,10 @@ mod tests {
 
             let (splits_addr, _) = setup_test_case(&mut app, init_funds, false);
 
-            let msg = ExecuteMsg::Distribute {};
+            let msg = ExecuteMsg::Distribute { denom_list: None };
 
             app.execute_contract(
-                Addr::unchecked("non_memeber".to_string()),
+                Addr::unchecked("non_member".to_string()),
                 splits_addr,
                 &msg,
                 &[],
@@ -305,7 +305,7 @@ mod tests {
 
             let (splits_addr, _) = setup_test_case_with_internal_group(&mut app, init_funds);
 
-            let msg = ExecuteMsg::Distribute {};
+            let msg = ExecuteMsg::Distribute { denom_list: None };
 
             app.execute_contract(Addr::unchecked(OWNER), splits_addr.clone(), &msg, &[])
                 .unwrap();
@@ -345,7 +345,7 @@ mod tests {
                 setup_test_case_with_internal_group(&mut app, init_funds);
             let total_weight = Cw4Contract(group_addr).total_weight(&app.wrap()).unwrap();
 
-            let msg = ExecuteMsg::Distribute {};
+            let msg = ExecuteMsg::Distribute { denom_list: None };
 
             let err = app
                 .execute_contract(Addr::unchecked(OWNER), splits_addr, &msg, &[])
@@ -369,7 +369,7 @@ mod tests {
             let multiplier = init_funds[0].amount / Uint128::from(total_weight);
             let contract_balance = init_funds[0].amount - multiplier * Uint128::from(total_weight);
 
-            let msg = ExecuteMsg::Distribute {};
+            let msg = ExecuteMsg::Distribute { denom_list: None };
 
             let _ = app
                 .execute_contract(Addr::unchecked(OWNER), splits_addr.clone(), &msg, &[])
@@ -403,7 +403,7 @@ mod tests {
 
             let (splits_addr, _) = setup_test_case_with_overflow_group(&mut app, init_funds);
 
-            let msg = ExecuteMsg::Distribute {};
+            let msg = ExecuteMsg::Distribute { denom_list: None };
             let err = app
                 .execute_contract(Addr::unchecked(OWNER), splits_addr, &msg, &[])
                 .unwrap_err();
@@ -433,7 +433,7 @@ mod tests {
                 .execute_contract(Addr::unchecked(OWNER), group_addr, &msg, &[])
                 .unwrap();
 
-            let msg = ExecuteMsg::Distribute {};
+            let msg = ExecuteMsg::Distribute { denom_list: None };
             let _ = app
                 .execute_contract(Addr::unchecked(OWNER), splits_addr, &msg, &[])
                 .unwrap();
@@ -465,7 +465,7 @@ mod tests {
             let contract_balance = init_funds[0].amount - multiplier * Uint128::from(total_weight);
             let mut payouts = vec![];
 
-            let msg = ExecuteMsg::Distribute {};
+            let msg = ExecuteMsg::Distribute { denom_list: None };
 
             let _ = app
                 .execute_contract(Addr::unchecked(OWNER), splits_addr.clone(), &msg, &[])
@@ -534,7 +534,7 @@ mod tests {
             );
 
             // distribute again and check accounting
-            let msg = ExecuteMsg::Distribute {};
+            let msg = ExecuteMsg::Distribute { denom_list: None };
             let _ = app
                 .execute_contract(Addr::unchecked(OWNER), splits_addr.clone(), &msg, &[])
                 .unwrap();

@@ -95,7 +95,7 @@ fn mint_and_split() {
     );
     assert!(res.is_ok());
 
-    let dist_msg = SplitsExecuteMsg::Distribute {};
+    let dist_msg = SplitsExecuteMsg::Distribute { denom_list: None };
     let res = app.execute_contract(Addr::unchecked(OWNER), splits_addr, &dist_msg, &[]);
     assert!(res.is_ok());
 

@@ -17,7 +17,7 @@ pub struct InstantiateMsg {
 #[cw_serde]
 pub enum ExecuteMsg {
     UpdateAdmin { admin: Option<String> },
-    Distribute {},
+    Distribute { denom_list: Option<Vec<String>> },
 }
 
 #[cw_serde]
