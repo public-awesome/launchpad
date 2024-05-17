@@ -7,7 +7,7 @@ use cosmwasm_std::{
 use cw2::set_contract_version;
 use cw_utils::must_pay;
 use semver::Version;
-use sg1::checked_fair_burn;
+use sg1::{checked_fair_burn, transfer_funds_to_launchpad_dao};
 use sg2::msg::UpdateMinterParamsMsg;
 use sg2::query::{AllowedCollectionCodeIdResponse, AllowedCollectionCodeIdsResponse, Sg2QueryMsg};
 use sg2::MinterParams;
@@ -57,14 +57,23 @@ pub fn execute_create_minter(
     info: MessageInfo,
     msg: BaseMinterCreateMsg,
 ) -> Result<Response, ContractError> {
-    must_pay(&info, NATIVE_DENOM)?;
+    let params = SUDO_PARAMS.load(deps.storage)?;
+    must_pay(&info, &*params.creation_fee.denom)?;
     must_be_allowed_collection(deps.as_ref(), msg.collection_params.code_id)?;
 
-    let params = SUDO_PARAMS.load(deps.storage)?;
     must_not_be_frozen(&params)?;
 
     let mut res = Response::new();
-    checked_fair_burn(&info, params.creation_fee.amount.u128(), None, &mut res)?;
+    if params.creation_fee.denom == NATIVE_DENOM {
+        checked_fair_burn(&info, params.creation_fee.amount.u128(), None, &mut res)?;
+    } else {
+        transfer_funds_to_launchpad_dao(
+            &info,
+            params.creation_fee.amount.u128(),
+            &*params.creation_fee.denom,
+            &mut res,
+        )?;
+    }
 
     let msg = WasmMsg::Instantiate {
         admin: Some(info.sender.to_string()),

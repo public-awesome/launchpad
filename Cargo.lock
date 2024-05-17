@@ -4841,7 +4841,6 @@ dependencies = [
 [[package]]
 name = "vending-minter-merkle-wl-featured"
 version = "3.13.0"
-
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
