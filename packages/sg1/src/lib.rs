@@ -121,7 +121,7 @@ pub fn transfer_funds_to_launchpad_dao(
 
     let msg = BankMsg::Send {
         to_address: LAUNCHPAD_DAO_ADDRESS.to_string(),
-        amount: vec![coin(fee, accepted_denom)],
+        amount: vec![coin(payment.u128(), accepted_denom)],
     };
     res.messages.push(SubMsg::new(msg));
 
