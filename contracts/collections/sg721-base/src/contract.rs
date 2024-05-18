@@ -388,7 +388,7 @@ where
     pub fn migrate(mut deps: DepsMut, env: Env, _msg: Empty) -> Result<Response, ContractError> {
         let prev_contract_version = cw2::get_contract_version(deps.storage)?;
 
-        let valid_contract_names = vec![CONTRACT_NAME.to_string()];
+        let valid_contract_names = [CONTRACT_NAME.to_string()];
         if !valid_contract_names.contains(&prev_contract_version.contract) {
             return Err(StdError::generic_err("Invalid contract name for migration").into());
         }

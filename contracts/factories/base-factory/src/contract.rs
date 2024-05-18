@@ -58,7 +58,7 @@ pub fn execute_create_minter(
     msg: BaseMinterCreateMsg,
 ) -> Result<Response, ContractError> {
     let params = SUDO_PARAMS.load(deps.storage)?;
-    must_pay(&info, &*params.creation_fee.denom)?;
+    must_pay(&info, &params.creation_fee.denom)?;
     must_be_allowed_collection(deps.as_ref(), msg.collection_params.code_id)?;
 
     must_not_be_frozen(&params)?;
@@ -70,7 +70,7 @@ pub fn execute_create_minter(
         transfer_funds_to_launchpad_dao(
             &info,
             params.creation_fee.amount.u128(),
-            &*params.creation_fee.denom,
+            &params.creation_fee.denom,
             &mut res,
         )?;
     }
