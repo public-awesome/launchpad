@@ -1,11 +1,15 @@
-use cosmwasm_std::{coin, coins, Addr, BankMsg, Coin, Decimal, Event, MessageInfo, Uint128};
-use cw_utils::{may_pay, PaymentError};
+use cosmwasm_std::{
+    coin, coins, ensure, Addr, BankMsg, Coin, Decimal, Event, MessageInfo, Uint128,
+};
+use cw_utils::{may_pay, must_pay, PaymentError};
 use sg_std::{create_fund_fairburn_pool_msg, Response, SubMsg, NATIVE_DENOM};
 use thiserror::Error;
 
 // governance parameters
 const FEE_BURN_PERCENT: u64 = 50;
 const FOUNDATION: &str = "stars1xqz6xujjyz0r9uzn7srasle5uynmpa0zkjr5l8";
+const LAUNCHPAD_DAO_ADDRESS: &str =
+    "stars1huqk6ha02jgrm69lxh8xfgl6wch9wlg7s65ujxydwdr725cxvuus423tj0";
 
 /// Burn and distribute fees and return an error if the fee is not enough
 pub fn checked_fair_burn(
@@ -101,6 +105,27 @@ pub fn fair_burn(fee: u128, developer: Option<Addr>, res: &mut Response) {
     }
 
     res.events.push(event);
+}
+
+pub fn transfer_funds_to_launchpad_dao(
+    info: &MessageInfo,
+    fee: u128,
+    accepted_denom: &str,
+    res: &mut Response,
+) -> Result<(), FeeError> {
+    let payment = must_pay(info, accepted_denom)?;
+    ensure!(
+        payment.u128() >= fee,
+        FeeError::InsufficientFee(fee, payment.u128())
+    );
+
+    let msg = BankMsg::Send {
+        to_address: LAUNCHPAD_DAO_ADDRESS.to_string(),
+        amount: vec![coin(payment.u128(), accepted_denom)],
+    };
+    res.messages.push(SubMsg::new(msg));
+
+    Ok(())
 }
 
 #[derive(Error, Debug, PartialEq, Eq)]
