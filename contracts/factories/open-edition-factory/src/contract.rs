@@ -36,11 +36,6 @@ pub fn instantiate(
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
     let params = msg.params;
 
-    ensure!(
-        params.creation_fee.denom == NATIVE_DENOM,
-        BaseContractError::InvalidDenom {}
-    );
-
     SUDO_PARAMS.save(deps.storage, &params)?;
 
     Ok(Response::new())
