@@ -153,11 +153,6 @@ pub fn update_params<T, C>(
     }
 
     if let Some(creation_fee) = param_msg.creation_fee {
-        ensure_eq!(
-            &creation_fee.denom,
-            &NATIVE_DENOM,
-            ContractError::InvalidDenom {}
-        );
         params.creation_fee = creation_fee;
     }
 
