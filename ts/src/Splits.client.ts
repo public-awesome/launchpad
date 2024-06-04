@@ -81,7 +81,11 @@ export interface SplitsInterface extends SplitsReadOnlyInterface {
   }: {
     admin?: string;
   }, fee?: number | StdFee | "auto", memo?: string, funds?: Coin[]) => Promise<ExecuteResult>;
-  distribute: (fee?: number | StdFee | "auto", memo?: string, funds?: Coin[]) => Promise<ExecuteResult>;
+  distribute: ({
+    denomList
+  }: {
+    denomList?: string[];
+  }, fee?: number | StdFee | "auto", memo?: string, funds?: Coin[]) => Promise<ExecuteResult>;
 }
 export class SplitsClient extends SplitsQueryClient implements SplitsInterface {
   client: SigningCosmWasmClient;
@@ -108,9 +112,15 @@ export class SplitsClient extends SplitsQueryClient implements SplitsInterface {
       }
     }, fee, memo, funds);
   };
-  distribute = async (fee: number | StdFee | "auto" = "auto", memo?: string, funds?: Coin[]): Promise<ExecuteResult> => {
+  distribute = async ({
+    denomList
+  }: {
+    denomList?: string[];
+  }, fee: number | StdFee | "auto" = "auto", memo?: string, funds?: Coin[]): Promise<ExecuteResult> => {
     return await this.client.execute(this.sender, this.contractAddress, {
-      distribute: {}
+      distribute: {
+        denom_list: denomList
+      }
     }, fee, memo, funds);
   };
 }

@@ -32,7 +32,9 @@ export type ExecuteMsg = {
     admin?: string | null;
   };
 } | {
-  distribute: {};
+  distribute: {
+    denom_list?: string[] | null;
+  };
 };
 export type QueryMsg = {
   admin: {};
