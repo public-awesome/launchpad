@@ -17,7 +17,11 @@ export interface SplitsMessage {
   }: {
     admin?: string;
   }, funds?: Coin[]) => MsgExecuteContractEncodeObject;
-  distribute: (funds?: Coin[]) => MsgExecuteContractEncodeObject;
+  distribute: ({
+    denomList
+  }: {
+    denomList?: string[];
+  }, funds?: Coin[]) => MsgExecuteContractEncodeObject;
 }
 export class SplitsMessageComposer implements SplitsMessage {
   sender: string;
@@ -49,14 +53,20 @@ export class SplitsMessageComposer implements SplitsMessage {
       })
     };
   };
-  distribute = (funds?: Coin[]): MsgExecuteContractEncodeObject => {
+  distribute = ({
+    denomList
+  }: {
+    denomList?: string[];
+  }, funds?: Coin[]): MsgExecuteContractEncodeObject => {
     return {
       typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract",
       value: MsgExecuteContract.fromPartial({
         sender: this.sender,
         contract: this.contractAddress,
         msg: toUtf8(JSON.stringify({
-          distribute: {}
+          distribute: {
+            denom_list: denomList
+          }
         })),
         funds
       })
