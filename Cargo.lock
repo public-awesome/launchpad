@@ -3795,6 +3795,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "sg-whitelist-tiered"
+version = "3.14.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus 1.2.0",
+ "cw-utils 1.0.3",
+ "cw2 1.1.2",
+ "rust_decimal",
+ "schemars",
+ "serde",
+ "sg-std",
+ "sg1",
+ "thiserror",
+]
+
+[[package]]
 name = "sg1"
 version = "3.14.0"
 dependencies = [
