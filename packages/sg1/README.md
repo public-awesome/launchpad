@@ -29,4 +29,4 @@ checked_fair_burn(info: &MessageInfo, fee: u128, developer: Option<Addr>) -> Res
 fair_burn(fee: u128, developer: Option<Addr>) -> Vec<SubMsg>
 ```
 
-Custom contract developers can pass in a a `developer` address that will receive 10% of all fees.
+Custom contract developers can pass in a `developer` address that will receive 10% of all fees.
