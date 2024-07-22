@@ -389,6 +389,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::HasStarted {} => to_json_binary(&query_has_started(deps, env)?),
         QueryMsg::HasEnded {} => to_json_binary(&query_has_ended(deps, env)?),
         QueryMsg::IsActive {} => to_json_binary(&query_is_active(deps, env)?),
+        QueryMsg::ActiveStage {} => to_json_binary(&fetch_active_stage(deps.storage, &env)),
         QueryMsg::HasMember { member } => to_json_binary(&query_has_member(deps, env, member)?),
         QueryMsg::Config {} => to_json_binary(&query_config(deps, env)?),
         QueryMsg::AdminList {} => to_json_binary(&query_admin_list(deps)?),
@@ -452,7 +453,7 @@ pub fn query_config(deps: Deps, env: Env) -> StdResult<ConfigResponse> {
     let config = CONFIG.load(deps.storage)?;
     let active_stage = fetch_active_stage(deps.storage, &env);
     if let Some(stage) = active_stage {
-        return Ok(ConfigResponse {
+        Ok(ConfigResponse {
             num_members: config.num_members,
             per_address_limit: stage.per_address_limit,
             member_limit: config.member_limit,
@@ -460,9 +461,24 @@ pub fn query_config(deps: Deps, env: Env) -> StdResult<ConfigResponse> {
             end_time: stage.end_time,
             mint_price: stage.mint_price,
             is_active: true,
-        });
+        })
+    } else if config.stages.len() > 0 {
+        let stage = if env.block.time < config.stages[0].start_time {
+            config.stages[0].clone()
+        } else {
+            config.stages[config.stages.len() - 1].clone()
+        };
+        Ok(ConfigResponse {
+            num_members: config.num_members,
+            per_address_limit: stage.per_address_limit,
+            member_limit: config.member_limit,
+            start_time: stage.start_time,
+            end_time: stage.end_time,
+            mint_price: stage.mint_price,
+            is_active: false,
+        })
     } else {
-        return Ok(ConfigResponse {
+        Ok(ConfigResponse {
             num_members: config.num_members,
             per_address_limit: 0,
             member_limit: config.member_limit,
@@ -473,6 +489,6 @@ pub fn query_config(deps: Deps, env: Env) -> StdResult<ConfigResponse> {
                 amount: Uint128::zero(),
             },
             is_active: false,
-        });
+        })
     }
 }
