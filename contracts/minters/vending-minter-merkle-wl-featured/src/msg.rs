@@ -12,6 +12,7 @@ pub struct InstantiateMsg {
 pub enum ExecuteMsg {
     Mint {
         proof_hashes: Option<Vec<String>>,
+        allocation: Option<u32>,
     },
     SetWhitelist {
         whitelist: String,
