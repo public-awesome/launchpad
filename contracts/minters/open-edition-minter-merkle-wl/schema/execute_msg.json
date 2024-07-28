@@ -10,6 +10,25 @@
       "properties": {
         "mint": {
           "type": "object",
+          "required": [
+            "proof_hashes"
+          ],
+          "properties": {
+            "allocation": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint32",
+              "minimum": 0.0
+            },
+            "proof_hashes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
           "additionalProperties": false
         }
       },
