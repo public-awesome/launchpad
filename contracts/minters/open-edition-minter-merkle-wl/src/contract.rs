@@ -407,7 +407,7 @@ fn is_public_mint(
         whitelist,
         &WhitelistMtreeQueryMsg::HasMember {
             member: match allocation {
-                Some(allocation) => format!("{}{}", info.sender.to_string(), allocation),
+                Some(allocation) => format!("{}{}", info.sender, allocation),
                 None => info.sender.to_string(),
             },
             proof_hashes,

@@ -518,10 +518,8 @@ pub fn execute_mint_sender(
         if is_public_mint && mint_count >= config.extension.per_address_limit {
             return Err(ContractError::MaxPerAddressLimitExceeded {});
         }
-    } else {
-        if mint_count >= config.extension.per_address_limit {
-            return Err(ContractError::MaxPerAddressLimitExceeded {});
-        }
+    } else if mint_count >= config.extension.per_address_limit {
+        return Err(ContractError::MaxPerAddressLimitExceeded {});
     }
 
     _execute_mint(deps, env, info, action, false, None, None)
@@ -557,7 +555,7 @@ fn is_public_mint(
             whitelist,
             &WhitelistMtreeQueryMsg::HasMember {
                 member: match allocation {
-                    Some(allocation) => format!("{}{}", info.sender.to_string(), allocation),
+                    Some(allocation) => format!("{}{}", info.sender, allocation),
                     None => info.sender.to_string(),
                 },
                 proof_hashes: proof_hashes.unwrap(),
