@@ -255,8 +255,6 @@ pub fn query_has_member(
     member: String,
     proof_hashes: Vec<String>,
 ) -> StdResult<HasMemberResponse> {
-    deps.api.addr_validate(&member)?;
-
     let merkle_root = MERKLE_ROOT.load(deps.storage)?;
 
     let member_init_hash_slice = Sha256::hash(member.as_bytes());
