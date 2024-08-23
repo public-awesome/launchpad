@@ -352,7 +352,7 @@ pub fn execute_mint_sender(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    proof_hashes: Vec<String>,
+    proof_hashes: Option<Vec<String>>,
     allocation: Option<u32>,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
@@ -384,7 +384,7 @@ pub fn execute_mint_sender(
 fn is_public_mint(
     deps: Deps,
     info: &MessageInfo,
-    proof_hashes: Vec<String>,
+    proof_hashes: Option<Vec<String>>,
     allocation: Option<u32>,
 ) -> Result<bool, ContractError> {
     let config = CONFIG.load(deps.storage)?;
@@ -404,16 +404,20 @@ fn is_public_mint(
         return Ok(true);
     }
 
-    let res: HasMemberResponse = deps.querier.query_wasm_smart(
-        whitelist,
-        &WhitelistQueryMsg::HasMember {
-            member: match allocation {
-                Some(allocation) => format!("{}{}", info.sender, allocation),
-                None => info.sender.to_string(),
+    let res: HasMemberResponse = if proof_hashes.is_some() {
+        deps.querier.query_wasm_smart(
+            whitelist,
+            &WhitelistQueryMsg::HasMember {
+                member: match allocation {
+                    Some(allocation) => format!("{}{}", info.sender, allocation),
+                    None => info.sender.to_string(),
+                },
+                proof_hashes: proof_hashes.unwrap(),
             },
-            proof_hashes,
-        },
-    )?;
+        )?
+    } else {
+        return Err(ContractError::MissingProofHashes {});
+    };
 
     if !res.has_member {
         return Err(ContractError::NotWhitelisted {
