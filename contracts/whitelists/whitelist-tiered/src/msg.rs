@@ -76,6 +76,12 @@ pub enum QueryMsg {
     },
     Config {},
 
+    Stage {
+        stage_id: u32,
+    },
+
+    Stages {},
+
     AdminList {},
 
     CanExecute {
@@ -136,4 +142,14 @@ pub enum SudoMsg {
 #[cw_serde]
 pub struct CanExecuteResponse {
     pub can_execute: bool,
+}
+
+#[cw_serde]
+pub struct StageResponse {
+    pub stage: Stage,
+}
+
+#[cw_serde]
+pub struct StagesResponse {
+    pub stages: Vec<Stage>,
 }

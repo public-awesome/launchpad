@@ -4,15 +4,11 @@ use crate::admin::{
 use crate::error::ContractError;
 use crate::helpers::validators::map_validate;
 use crate::helpers::{fetch_active_stage, fetch_active_stage_index, validate_stages};
-use crate::msg::{
-    AddMembersMsg, ConfigResponse, ExecuteMsg, HasEndedResponse, HasMemberResponse,
-    HasStartedResponse, InstantiateMsg, IsActiveResponse, MembersResponse, QueryMsg,
-    RemoveMembersMsg, UpdateStageConfigMsg,
-};
+use crate::msg::{AddMembersMsg, ConfigResponse, ExecuteMsg, HasEndedResponse, HasMemberResponse, HasStartedResponse, InstantiateMsg, IsActiveResponse, MembersResponse, QueryMsg, RemoveMembersMsg, StageResponse, StagesResponse, UpdateStageConfigMsg};
 use crate::state::{AdminList, Config, Stage, ADMIN_LIST, CONFIG, WHITELIST_STAGES};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::Order;
+use cosmwasm_std::{Order, StdError};
 use cosmwasm_std::{
     ensure, to_json_binary, Binary, Coin, Deps, DepsMut, Env, MessageInfo, StdResult, Timestamp,
     Uint128,
@@ -392,6 +388,8 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::ActiveStage {} => to_json_binary(&fetch_active_stage(deps.storage, &env)),
         QueryMsg::HasMember { member } => to_json_binary(&query_has_member(deps, env, member)?),
         QueryMsg::Config {} => to_json_binary(&query_config(deps, env)?),
+        QueryMsg::Stage { stage_id } => to_json_binary(&query_stage(deps, stage_id)?),
+        QueryMsg::Stages {} => to_json_binary(&query_stage_list(deps)?),
         QueryMsg::AdminList {} => to_json_binary(&query_admin_list(deps)?),
         QueryMsg::CanExecute { sender, .. } => to_json_binary(&query_can_execute(deps, &sender)?),
     }
@@ -491,4 +489,23 @@ pub fn query_config(deps: Deps, env: Env) -> StdResult<ConfigResponse> {
             is_active: false,
         })
     }
+}
+
+pub fn query_stage(deps: Deps, stage_id: u32) -> StdResult<StageResponse> {
+    let config = CONFIG.load(deps.storage)?;
+    ensure!(
+        stage_id < config.stages.len() as u32,
+        StdError::generic_err("Stage not found")
+    );
+    Ok(StageResponse {
+        stage: config.stages[stage_id as usize].clone(),
+    })
+}
+
+pub fn query_stage_list(deps: Deps) -> StdResult<StagesResponse> {
+    let config = CONFIG.load(deps.storage)?;
+    ensure! (!config.stages.is_empty(), StdError::generic_err("No stages found"));
+    Ok(StagesResponse {
+        stages: config.stages.clone(),
+    })
 }
