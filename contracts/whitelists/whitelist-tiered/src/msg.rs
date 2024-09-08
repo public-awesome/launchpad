@@ -54,6 +54,7 @@ pub struct RemoveStageMsg {
 #[cw_serde]
 pub struct UpdateStageConfigMsg {
     pub stage_id: u32,
+    pub name: Option<String>,
     pub start_time: Option<Timestamp>,
     pub end_time: Option<Timestamp>,
     pub mint_price: Option<Coin>,

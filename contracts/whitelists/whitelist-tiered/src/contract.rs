@@ -141,6 +141,7 @@ pub fn execute_update_stage_config(
     let mut config = CONFIG.load(deps.storage)?;
     let stage_id = msg.stage_id as usize;
     let updated_stage = Stage {
+        name: msg.name.unwrap_or(config.stages[stage_id].clone().name),
         start_time: msg
             .start_time
             .unwrap_or(config.stages[stage_id].clone().start_time),
@@ -161,6 +162,7 @@ pub fn execute_update_stage_config(
     Ok(Response::new()
         .add_attribute("action", "update_stage_config")
         .add_attribute("stage_id", stage_id.to_string())
+        .add_attribute("name", updated_stage.clone().name)
         .add_attribute("start_time", updated_stage.clone().start_time.to_string())
         .add_attribute("end_time", updated_stage.clone().end_time.to_string())
         .add_attribute("mint_price", updated_stage.clone().mint_price.to_string())

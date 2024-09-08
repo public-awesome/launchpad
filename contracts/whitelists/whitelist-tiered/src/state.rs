@@ -4,6 +4,7 @@ use cw_storage_plus::{Item, Map};
 
 #[cw_serde]
 pub struct Stage {
+    pub name: String,
     pub start_time: Timestamp,
     pub end_time: Timestamp,
     pub mint_price: Coin,
