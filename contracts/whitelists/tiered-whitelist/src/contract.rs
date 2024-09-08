@@ -22,7 +22,7 @@ use sg1::checked_fair_burn;
 use sg_std::{Response, NATIVE_DENOM};
 
 // version info for migration info
-const CONTRACT_NAME: &str = "crates.io:sg-whitelist-tiered";
+const CONTRACT_NAME: &str = "crates.io:sg-tiered-whitelist";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 // contract governance params

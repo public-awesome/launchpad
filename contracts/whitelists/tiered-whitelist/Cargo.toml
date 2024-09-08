@@ -1,5 +1,5 @@
 [package]
-name        = "sg-whitelist-tiered"
+name        = "sg-tiered-whitelist"
 authors     = ["Shane Vitarana <s@noreply.publicawesome.com>"]
 description = "Stargaze NFT tiered whitelist contract"
 version     = { workspace = true }
