@@ -130,7 +130,7 @@
         "to_add": {
           "type": "array",
           "items": {
-            "type": "string"
+            "$ref": "#/definitions/Member"
           }
         }
       },
@@ -146,7 +146,7 @@
         "members": {
           "type": "array",
           "items": {
-            "type": "string"
+            "$ref": "#/definitions/Member"
           }
         },
         "stage": {
@@ -169,6 +169,24 @@
           "type": "string"
         }
       }
+    },
+    "Member": {
+      "type": "object",
+      "required": [
+        "address",
+        "mint_count"
+      ],
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "mint_count": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        }
+      },
+      "additionalProperties": false
     },
     "RemoveMembersMsg": {
       "type": "object",
@@ -211,7 +229,6 @@
         "end_time",
         "mint_price",
         "name",
-        "per_address_limit",
         "start_time"
       ],
       "properties": {
@@ -223,11 +240,6 @@
         },
         "name": {
           "type": "string"
-        },
-        "per_address_limit": {
-          "type": "integer",
-          "format": "uint32",
-          "minimum": 0.0
         },
         "start_time": {
           "$ref": "#/definitions/Timestamp"
@@ -282,14 +294,6 @@
             "string",
             "null"
           ]
-        },
-        "per_address_limit": {
-          "type": [
-            "integer",
-            "null"
-          ],
-          "format": "uint32",
-          "minimum": 0.0
         },
         "stage_id": {
           "type": "integer",

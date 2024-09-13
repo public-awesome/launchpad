@@ -6,7 +6,7 @@ use crate::helpers::validators::map_validate;
 use crate::helpers::{fetch_active_stage, fetch_active_stage_index, validate_stages};
 use crate::msg::{
     AddMembersMsg, ConfigResponse, ExecuteMsg, HasEndedResponse, HasMemberResponse,
-    HasStartedResponse, InstantiateMsg, IsActiveResponse, MembersResponse, QueryMsg,
+    HasStartedResponse, InstantiateMsg, IsActiveResponse, Member, MembersResponse, QueryMsg,
     RemoveMembersMsg, StageResponse, StagesResponse, UpdateStageConfigMsg,
 };
 use crate::state::{AdminList, Config, Stage, ADMIN_LIST, CONFIG, WHITELIST_STAGES};
@@ -26,7 +26,7 @@ use sg1::checked_fair_burn;
 use sg_std::{Response, NATIVE_DENOM};
 
 // version info for migration info
-const CONTRACT_NAME: &str = "crates.io:sg-tiered-whitelist";
+const CONTRACT_NAME: &str = "crates.io:sg-tiered-whitelist-flex";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 // contract governance params
@@ -44,7 +44,7 @@ pub fn instantiate(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    mut msg: InstantiateMsg,
+    msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
@@ -71,16 +71,18 @@ pub fn instantiate(
         ));
     }
 
-    // remove duplicate from the vector of member lists for each stage
-    msg.members
-        .iter_mut()
-        .for_each(|members| members.sort_unstable());
-    msg.members.iter_mut().for_each(|members| members.dedup());
+    if let Some(whale_cap) = msg.whale_cap {
+        ensure!(
+            whale_cap > msg.member_limit,
+            ContractError::InvalidWhaleCap(whale_cap, msg.member_limit)
+        );
+    }
 
     let config = Config {
         stages: msg.stages.clone(),
         num_members: msg.members.iter().map(|m| m.len() as u32).sum(),
         member_limit: msg.member_limit,
+        whale_cap: msg.whale_cap,
     };
     CONFIG.save(deps.storage, &config)?;
 
@@ -102,8 +104,13 @@ pub fn instantiate(
 
     for stage in 0..msg.stages.clone().len() {
         for member in msg.members[stage].iter() {
-            let addr = deps.api.addr_validate(member)?;
-            WHITELIST_STAGES.save(deps.storage, (stage as u32, addr), &true)?;
+            let addr = deps.api.addr_validate(&member.address)?;
+            if let Some(whale_cap) = config.whale_cap {
+                if member.mint_count > whale_cap {
+                    return Err(ContractError::ExceededWhaleCap {});
+                }
+            }
+            WHITELIST_STAGES.save(deps.storage, (stage as u32, addr), &member.mint_count)?;
         }
     }
 
@@ -155,9 +162,6 @@ pub fn execute_update_stage_config(
         mint_price: msg
             .mint_price
             .unwrap_or(config.stages[stage_id].clone().mint_price),
-        per_address_limit: msg
-            .per_address_limit
-            .unwrap_or(config.stages[stage_id].clone().per_address_limit),
     };
     config.stages[stage_id] = updated_stage.clone();
     validate_stages(&env, &config.stages)?;
@@ -170,10 +174,6 @@ pub fn execute_update_stage_config(
         .add_attribute("start_time", updated_stage.clone().start_time.to_string())
         .add_attribute("end_time", updated_stage.clone().end_time.to_string())
         .add_attribute("mint_price", updated_stage.clone().mint_price.to_string())
-        .add_attribute(
-            "per_address_limit",
-            updated_stage.clone().per_address_limit.to_string(),
-        )
         .add_attribute("sender", info.sender))
 }
 
@@ -181,7 +181,7 @@ pub fn execute_add_members(
     deps: DepsMut,
     _env: Env,
     info: MessageInfo,
-    mut msg: AddMembersMsg,
+    msg: AddMembersMsg,
 ) -> Result<Response, ContractError> {
     can_execute(&deps, info.sender.clone())?;
     let mut config = CONFIG.load(deps.storage)?;
@@ -189,9 +189,7 @@ pub fn execute_add_members(
         msg.stage_id < config.stages.len() as u32,
         ContractError::StageNotFound {}
     );
-    // remove duplicate members
-    msg.to_add.sort_unstable();
-    msg.to_add.dedup();
+
     let mut members_added = 0;
     for add in msg.to_add.into_iter() {
         if config.num_members >= config.member_limit {
@@ -200,12 +198,12 @@ pub fn execute_add_members(
                 actual: config.num_members,
             });
         }
-        let addr = deps.api.addr_validate(&add)?;
+        let addr = deps.api.addr_validate(&add.address)?;
         if WHITELIST_STAGES.has(deps.storage, (msg.stage_id, addr.clone())) {
             continue;
         }
         members_added += 1;
-        WHITELIST_STAGES.save(deps.storage, (msg.stage_id, addr.clone()), &true)?;
+        WHITELIST_STAGES.save(deps.storage, (msg.stage_id, addr.clone()), &add.mint_count)?;
         config.num_members += 1;
     }
 
@@ -259,7 +257,7 @@ pub fn execute_add_stage(
     env: Env,
     info: MessageInfo,
     msg: Stage,
-    mut members: Vec<String>,
+    members: Vec<Member>,
 ) -> Result<Response, ContractError> {
     can_execute(&deps, info.sender.clone())?;
     let mut config = CONFIG.load(deps.storage)?;
@@ -271,9 +269,6 @@ pub fn execute_add_stage(
     validate_stages(&env, &config.stages)?;
     let stage_id = config.stages.len().checked_sub(1).unwrap_or(0) as u32;
 
-    // remove duplicate members
-    members.sort_unstable();
-    members.dedup();
     for add in members.into_iter() {
         if config.num_members >= config.member_limit {
             return Err(ContractError::MembersExceeded {
@@ -281,11 +276,16 @@ pub fn execute_add_stage(
                 actual: config.num_members,
             });
         }
-        let addr = deps.api.addr_validate(&add)?;
+        let addr = deps.api.addr_validate(&add.address)?;
+        if let Some(whale_cap) = config.whale_cap {
+            if add.mint_count > whale_cap {
+                return Err(ContractError::ExceededWhaleCap {});
+            }
+        }
         if WHITELIST_STAGES.has(deps.storage, (stage_id, addr.clone())) {
             continue;
         }
-        WHITELIST_STAGES.save(deps.storage, (stage_id, addr.clone()), &true)?;
+        WHITELIST_STAGES.save(deps.storage, (stage_id, addr.clone()), &add.mint_count)?;
         config.num_members += 1;
     }
 
@@ -398,6 +398,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::Stages {} => to_json_binary(&query_stage_list(deps)?),
         QueryMsg::AdminList {} => to_json_binary(&query_admin_list(deps)?),
         QueryMsg::CanExecute { sender, .. } => to_json_binary(&query_can_execute(deps, &sender)?),
+        QueryMsg::Member { member } => to_json_binary(&query_member(deps, env, member)?),
     }
 }
 
@@ -437,8 +438,14 @@ pub fn query_members(
         .prefix(stage_id)
         .range(deps.storage, start, None, Order::Ascending)
         .take(limit)
-        .map(|addr| addr.unwrap().0.to_string())
-        .collect::<Vec<String>>();
+        .map(|addr| {
+            let (k, v) = addr?;
+            Ok(Member {
+                address: k.to_string(),
+                mint_count: v,
+            })
+        })
+        .collect::<StdResult<Vec<Member>>>()?;
 
     Ok(MembersResponse { members })
 }
@@ -453,17 +460,31 @@ pub fn query_has_member(deps: Deps, env: Env, member: String) -> StdResult<HasMe
     Ok(HasMemberResponse { has_member })
 }
 
+pub fn query_member(deps: Deps, env: Env, member: String) -> StdResult<Member> {
+    let addr = deps.api.addr_validate(&member)?;
+    let active_stage_id = fetch_active_stage_index(deps.storage, &env);
+    if active_stage_id.is_none() {
+        return Err(StdError::generic_err("No active stage found"));
+    }
+    let mint_count =
+        WHITELIST_STAGES.load(deps.storage, (active_stage_id.unwrap(), addr.clone()))?;
+    Ok(Member {
+        address: addr.into_string(),
+        mint_count,
+    })
+}
+
 pub fn query_config(deps: Deps, env: Env) -> StdResult<ConfigResponse> {
     let config = CONFIG.load(deps.storage)?;
     let active_stage = fetch_active_stage(deps.storage, &env);
     if let Some(stage) = active_stage {
         Ok(ConfigResponse {
             num_members: config.num_members,
-            per_address_limit: stage.per_address_limit,
             member_limit: config.member_limit,
             start_time: stage.start_time,
             end_time: stage.end_time,
             mint_price: stage.mint_price,
+            whale_cap: config.whale_cap,
             is_active: true,
         })
     } else if config.stages.len() > 0 {
@@ -474,17 +495,16 @@ pub fn query_config(deps: Deps, env: Env) -> StdResult<ConfigResponse> {
         };
         Ok(ConfigResponse {
             num_members: config.num_members,
-            per_address_limit: stage.per_address_limit,
             member_limit: config.member_limit,
             start_time: stage.start_time,
             end_time: stage.end_time,
             mint_price: stage.mint_price,
+            whale_cap: config.whale_cap,
             is_active: false,
         })
     } else {
         Ok(ConfigResponse {
             num_members: config.num_members,
-            per_address_limit: 0,
             member_limit: config.member_limit,
             start_time: Timestamp::from_seconds(0),
             end_time: Timestamp::from_seconds(0),
@@ -492,6 +512,7 @@ pub fn query_config(deps: Deps, env: Env) -> StdResult<ConfigResponse> {
                 denom: NATIVE_DENOM.to_string(),
                 amount: Uint128::zero(),
             },
+            whale_cap: config.whale_cap,
             is_active: false,
         })
     }

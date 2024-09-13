@@ -1,22 +1,20 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "InstantiateMsg",
+  "title": "ConfigResponse",
   "type": "object",
   "required": [
-    "admins",
-    "admins_mutable",
+    "end_time",
+    "is_active",
     "member_limit",
-    "members",
-    "stages"
+    "mint_price",
+    "num_members",
+    "start_time"
   ],
   "properties": {
-    "admins": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
+    "end_time": {
+      "$ref": "#/definitions/Timestamp"
     },
-    "admins_mutable": {
+    "is_active": {
       "type": "boolean"
     },
     "member_limit": {
@@ -24,20 +22,24 @@
       "format": "uint32",
       "minimum": 0.0
     },
-    "members": {
-      "type": "array",
-      "items": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
+    "mint_price": {
+      "$ref": "#/definitions/Coin"
     },
-    "stages": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/Stage"
-      }
+    "num_members": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    },
+    "start_time": {
+      "$ref": "#/definitions/Timestamp"
+    },
+    "whale_cap": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "format": "uint32",
+      "minimum": 0.0
     }
   },
   "additionalProperties": false,
@@ -56,36 +58,6 @@
           "type": "string"
         }
       }
-    },
-    "Stage": {
-      "type": "object",
-      "required": [
-        "end_time",
-        "mint_price",
-        "name",
-        "per_address_limit",
-        "start_time"
-      ],
-      "properties": {
-        "end_time": {
-          "$ref": "#/definitions/Timestamp"
-        },
-        "mint_price": {
-          "$ref": "#/definitions/Coin"
-        },
-        "name": {
-          "type": "string"
-        },
-        "per_address_limit": {
-          "type": "integer",
-          "format": "uint32",
-          "minimum": 0.0
-        },
-        "start_time": {
-          "$ref": "#/definitions/Timestamp"
-        }
-      },
-      "additionalProperties": false
     },
     "Timestamp": {
       "description": "A point in time in nanosecond precision.\n\nThis type can represent times from 1970-01-01T00:00:00Z to 2554-07-21T23:34:33Z.\n\n## Examples\n\n``` # use cosmwasm_std::Timestamp; let ts = Timestamp::from_nanos(1_000_000_202); assert_eq!(ts.nanos(), 1_000_000_202); assert_eq!(ts.seconds(), 1); assert_eq!(ts.subsec_nanos(), 202);\n\nlet ts = ts.plus_seconds(2); assert_eq!(ts.nanos(), 3_000_000_202); assert_eq!(ts.seconds(), 3); assert_eq!(ts.subsec_nanos(), 202); ```",
