@@ -4393,6 +4393,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "tiered-whitelist-merkletree"
+version = "3.14.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus 1.2.0",
+ "cw-utils 1.0.3",
+ "cw2 1.1.2",
+ "hex",
+ "rs_merkle",
+ "rust_decimal",
+ "schemars",
+ "semver",
+ "serde",
+ "serde_json",
+ "sg-std",
+ "sg1",
+ "thiserror",
+ "url",
+]
+
+[[package]]
 name = "time"
 version = "0.3.34"
 source = "registry+https://github.com/rust-lang/crates.io-index"

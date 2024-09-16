@@ -1,0 +1,99 @@
+use crate::contract::{MAX_PER_ADDRESS_LIMIT, MIN_MINT_PRICE};
+use crate::state::{Config, Stage, CONFIG};
+use crate::ContractError;
+use cosmwasm_std::{ensure, Env, StdError, StdResult, Storage};
+use url::Url;
+
+pub fn verify_tree_uri(tree_uri: &String) -> StdResult<()> {
+    let res = Url::parse(tree_uri);
+    if res.is_err() {
+        return Err(cosmwasm_std::StdError::GenericErr {
+            msg: "Invalid tree uri".to_string(),
+        });
+    }
+    Ok(())
+}
+
+pub fn fetch_active_stage(deps: &dyn Storage, env: &Env) -> Option<Stage> {
+    let config: Config = CONFIG.load(deps).ok()?;
+    let current_time = env.block.time;
+    config
+        .stages
+        .iter()
+        .find(|stage| stage.start_time <= current_time && current_time <= stage.end_time)
+        .cloned()
+}
+
+pub fn fetch_active_stage_index(deps: &dyn Storage, env: &Env) -> Option<u32> {
+    let config: Config = CONFIG.load(deps).ok()?;
+    let current_time = env.block.time;
+    config
+        .stages
+        .iter()
+        .position(|stage| stage.start_time <= current_time && current_time <= stage.end_time)
+        .map(|i| i as u32)
+}
+
+pub fn validate_stages(env: &Env, stages: &[Stage]) -> Result<(), ContractError> {
+    ensure!(
+        stages.len() > 0,
+        StdError::generic_err("Must have at least one stage")
+    );
+    ensure!(
+        stages.len() < 4,
+        StdError::generic_err("Cannot have more than 3 stages")
+    );
+
+    // Check per address limit is valid
+    if stages.iter().any(|stage| {
+        stage.per_address_limit == 0 || stage.per_address_limit > MAX_PER_ADDRESS_LIMIT
+    }) {
+        return Err(ContractError::InvalidPerAddressLimit {
+            max: MAX_PER_ADDRESS_LIMIT.to_string(),
+            got: stages
+                .iter()
+                .map(|s| s.per_address_limit)
+                .max()
+                .unwrap()
+                .to_string(),
+        })
+        .into();
+    }
+
+    // Check mint price is valid
+    if stages
+        .iter()
+        .any(|stage| stage.mint_price.amount.u128() < MIN_MINT_PRICE)
+    {
+        return Err(ContractError::InvalidUnitPrice {
+            0: MIN_MINT_PRICE,
+            1: stages
+                .iter()
+                .map(|s| s.mint_price.amount.u128())
+                .min()
+                .unwrap(),
+        })
+        .into();
+    }
+
+    ensure!(
+        stages[0].start_time > env.block.time,
+        StdError::generic_err("Stages must have a start time in the future")
+    );
+    for i in 0..stages.len() {
+        let stage = &stages[i];
+        ensure!(
+            stage.start_time < stage.end_time,
+            StdError::generic_err("Stage start time must be before the end time")
+        );
+
+        for j in i + 1..stages.len() {
+            let other_stage = &stages[j];
+            ensure!(
+                other_stage.start_time >= stage.end_time,
+                StdError::generic_err("Stages must have non-overlapping times")
+            );
+        }
+    }
+    Ok(())
+}
