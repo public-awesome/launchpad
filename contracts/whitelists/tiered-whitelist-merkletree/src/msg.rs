@@ -49,6 +49,8 @@ pub enum QueryMsg {
     HasEnded {},
     #[returns(IsActiveResponse)]
     IsActive {},
+    #[returns(StageResponse)]
+    ActiveStage {},
     #[returns(HasMemberResponse)]
     HasMember {
         member: String,
@@ -56,6 +58,10 @@ pub enum QueryMsg {
     },
     #[returns(ConfigResponse)]
     Config {},
+    #[returns(StageResponse)]
+    Stage { stage_id: u32 },
+    #[returns(StagesResponse)]
+    Stages {},
     #[returns(AdminListResponse)]
     AdminList {},
     #[returns(CanExecuteResponse)]
@@ -63,9 +69,9 @@ pub enum QueryMsg {
         sender: String,
         msg: CosmosMsg<Empty>,
     },
-    #[returns(MerkleRootsResponse)]
+    #[returns(MerkleRootResponse)]
     MerkleRoot {},
-    #[returns(MerkleTreeURIsResponse)]
+    #[returns(MerkleTreeURIResponse)]
     MerkleTreeURI {},
 }
 
@@ -106,13 +112,13 @@ pub struct ConfigResponse {
 }
 
 #[cw_serde]
-pub struct MerkleRootsResponse {
-    pub merkle_roots: Vec<String>,
+pub struct MerkleRootResponse {
+    pub merkle_root: Vec<String>,
 }
 
 #[cw_serde]
-pub struct MerkleTreeURIsResponse {
-    pub merkle_tree_uris: Option<Vec<String>>,
+pub struct MerkleTreeURIResponse {
+    pub merkle_tree_uri: Option<Vec<String>>,
 }
 
 #[cw_serde]
@@ -126,4 +132,14 @@ pub enum SudoMsg {
 #[cw_serde]
 pub struct CanExecuteResponse {
     pub can_execute: bool,
+}
+
+#[cw_serde]
+pub struct StageResponse {
+    pub stage: Stage,
+}
+
+#[cw_serde]
+pub struct StagesResponse {
+    pub stages: Vec<Stage>,
 }

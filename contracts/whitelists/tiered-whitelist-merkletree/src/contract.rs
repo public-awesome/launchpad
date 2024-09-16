@@ -9,8 +9,8 @@ use crate::helpers::utils::{
 use crate::helpers::validators::map_validate;
 use crate::msg::{
     ConfigResponse, ExecuteMsg, HasEndedResponse, HasMemberResponse, HasStartedResponse,
-    InstantiateMsg, IsActiveResponse, MerkleRootsResponse, MerkleTreeURIsResponse, QueryMsg,
-    UpdateStageConfigMsg,
+    InstantiateMsg, IsActiveResponse, MerkleRootResponse, MerkleTreeURIResponse, QueryMsg,
+    StageResponse, StagesResponse, UpdateStageConfigMsg,
 };
 use crate::state::{AdminList, Config, Stage, ADMIN_LIST, CONFIG, MERKLE_ROOTS, MERKLE_TREE_URIS};
 #[cfg(not(feature = "library"))]
@@ -207,6 +207,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::HasStarted {} => to_json_binary(&query_has_started(deps, env)?),
         QueryMsg::HasEnded {} => to_json_binary(&query_has_ended(deps, env)?),
         QueryMsg::IsActive {} => to_json_binary(&query_is_active(deps, env)?),
+        QueryMsg::ActiveStage {} => to_json_binary(&fetch_active_stage(deps.storage, &env)),
         QueryMsg::HasMember {
             member,
             proof_hashes,
@@ -214,6 +215,8 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::Config {} => to_json_binary(&query_config(deps, env)?),
         QueryMsg::AdminList {} => to_json_binary(&query_admin_list(deps)?),
         QueryMsg::CanExecute { sender, .. } => to_json_binary(&query_can_execute(deps, &sender)?),
+        QueryMsg::Stage { stage_id } => to_json_binary(&query_stage(deps, stage_id)?),
+        QueryMsg::Stages {} => to_json_binary(&query_stage_list(deps)?),
         QueryMsg::MerkleRoot {} => to_json_binary(&query_merkle_root(deps)?),
         QueryMsg::MerkleTreeURI {} => to_json_binary(&query_merkle_tree_uri(deps)?),
     }
@@ -324,15 +327,37 @@ pub fn query_config(deps: Deps, env: Env) -> StdResult<ConfigResponse> {
     }
 }
 
-pub fn query_merkle_root(deps: Deps) -> StdResult<MerkleRootsResponse> {
-    Ok(MerkleRootsResponse {
-        merkle_roots: MERKLE_ROOTS.load(deps.storage)?,
+pub fn query_merkle_root(deps: Deps) -> StdResult<MerkleRootResponse> {
+    Ok(MerkleRootResponse {
+        merkle_root: MERKLE_ROOTS.load(deps.storage)?,
     })
 }
 
-pub fn query_merkle_tree_uri(deps: Deps) -> StdResult<MerkleTreeURIsResponse> {
-    Ok(MerkleTreeURIsResponse {
-        merkle_tree_uris: MERKLE_TREE_URIS.may_load(deps.storage)?,
+pub fn query_merkle_tree_uri(deps: Deps) -> StdResult<MerkleTreeURIResponse> {
+    Ok(MerkleTreeURIResponse {
+        merkle_tree_uri: MERKLE_TREE_URIS.may_load(deps.storage)?,
+    })
+}
+
+pub fn query_stage(deps: Deps, stage_id: u32) -> StdResult<StageResponse> {
+    let config = CONFIG.load(deps.storage)?;
+    ensure!(
+        stage_id < config.stages.len() as u32,
+        StdError::generic_err("Stage not found")
+    );
+    Ok(StageResponse {
+        stage: config.stages[stage_id as usize].clone(),
+    })
+}
+
+pub fn query_stage_list(deps: Deps) -> StdResult<StagesResponse> {
+    let config = CONFIG.load(deps.storage)?;
+    ensure!(
+        !config.stages.is_empty(),
+        StdError::generic_err("No stages found")
+    );
+    Ok(StagesResponse {
+        stages: config.stages.clone(),
     })
 }
 
