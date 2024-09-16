@@ -28,7 +28,7 @@ pub fn fetch_active_stage_index(deps: &dyn Storage, env: &Env) -> Option<u32> {
 
 pub fn validate_stages(env: &Env, stages: &[Stage]) -> Result<(), ContractError> {
     ensure!(
-        stages.len() > 0,
+        !stages.is_empty(),
         StdError::generic_err("Must have at least one stage")
     );
     ensure!(
@@ -48,8 +48,7 @@ pub fn validate_stages(env: &Env, stages: &[Stage]) -> Result<(), ContractError>
                 .max()
                 .unwrap()
                 .to_string(),
-        })
-        .into();
+        });
     }
 
     // Check mint price is valid
@@ -57,15 +56,14 @@ pub fn validate_stages(env: &Env, stages: &[Stage]) -> Result<(), ContractError>
         .iter()
         .any(|stage| stage.mint_price.amount.u128() < MIN_MINT_PRICE)
     {
-        return Err(ContractError::InvalidUnitPrice {
-            0: MIN_MINT_PRICE,
-            1: stages
+        return Err(ContractError::InvalidUnitPrice(
+            MIN_MINT_PRICE,
+            stages
                 .iter()
                 .map(|s| s.mint_price.amount.u128())
                 .min()
                 .unwrap(),
-        })
-        .into();
+        ));
     }
 
     ensure!(
@@ -79,8 +77,7 @@ pub fn validate_stages(env: &Env, stages: &[Stage]) -> Result<(), ContractError>
             StdError::generic_err("Stage start time must be before the end time")
         );
 
-        for j in i + 1..stages.len() {
-            let other_stage = &stages[j];
+        for other_stage in stages.iter().skip(i + 1) {
             ensure!(
                 other_stage.start_time >= stage.end_time,
                 StdError::generic_err("Stages must have non-overlapping times")

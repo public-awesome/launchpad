@@ -225,7 +225,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
 fn query_has_started(deps: Deps, env: Env) -> StdResult<HasStartedResponse> {
     let config = CONFIG.load(deps.storage)?;
     Ok(HasStartedResponse {
-        has_started: (config.stages.len() > 0) && (env.block.time >= config.stages[0].start_time),
+        has_started: !config.stages.is_empty() && (env.block.time >= config.stages[0].start_time),
     })
 }
 
@@ -296,7 +296,7 @@ pub fn query_config(deps: Deps, env: Env) -> StdResult<ConfigResponse> {
             mint_price: stage.mint_price,
             is_active: true,
         })
-    } else if config.stages.len() > 0 {
+    } else if !config.stages.is_empty() {
         let stage = if env.block.time < config.stages[0].start_time {
             config.stages[0].clone()
         } else {

@@ -267,7 +267,7 @@ pub fn execute_add_stage(
     );
     config.stages.push(msg.clone());
     validate_stages(&env, &config.stages)?;
-    let stage_id = config.stages.len().checked_sub(1).unwrap_or(0) as u32;
+    let stage_id = config.stages.len().saturating_sub(1) as u32;
 
     for add in members.into_iter() {
         if config.num_members >= config.member_limit {
@@ -405,7 +405,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
 fn query_has_started(deps: Deps, env: Env) -> StdResult<HasStartedResponse> {
     let config = CONFIG.load(deps.storage)?;
     Ok(HasStartedResponse {
-        has_started: (config.stages.len() > 0) && (env.block.time >= config.stages[0].start_time),
+        has_started: !config.stages.is_empty() && (env.block.time >= config.stages[0].start_time),
     })
 }
 
@@ -487,7 +487,7 @@ pub fn query_config(deps: Deps, env: Env) -> StdResult<ConfigResponse> {
             whale_cap: config.whale_cap,
             is_active: true,
         })
-    } else if config.stages.len() > 0 {
+    } else if !config.stages.is_empty() {
         let stage = if env.block.time < config.stages[0].start_time {
             config.stages[0].clone()
         } else {
