@@ -156,6 +156,8 @@ pub fn instantiate(
     // Max token count (optional)
     if let Some(max_num_tokens) = msg.init_msg.num_tokens {
         MINTABLE_NUM_TOKENS.save(deps.storage, &max_num_tokens)?;
+    } else {
+        MINTABLE_NUM_TOKENS.save(deps.storage, &factory_params.extension.max_token_limit)?;
     }
 
     // Submessage to instantiate sg721 contract
@@ -221,19 +223,20 @@ pub fn execute_purge(
     info: MessageInfo,
 ) -> Result<Response, ContractError> {
     nonpayable(&info)?;
-    // check if sold out (optional)
-    let mintable_num_tokens = MINTABLE_NUM_TOKENS.may_load(deps.storage)?;
-    if let Some(mintable_nb_tokens) = mintable_num_tokens {
-        if mintable_nb_tokens != 0 {
-            return Err(ContractError::NotSoldOut {});
-        }
-    }
 
     // Check if mint has ended (optional)
     let end_time = CONFIG.load(deps.storage)?.extension.end_time;
     if let Some(end_time_u) = end_time {
         if env.block.time <= end_time_u {
             return Err(ContractError::MintingHasNotYetEnded {});
+        }
+    }
+
+    // check if sold out before end time (optional)
+    let mintable_num_tokens = MINTABLE_NUM_TOKENS.may_load(deps.storage)?;
+    if let Some(mintable_nb_tokens) = mintable_num_tokens {
+        if mintable_nb_tokens != 0 && end_time.is_none() {
+            return Err(ContractError::NotSoldOut {});
         }
     }
 
