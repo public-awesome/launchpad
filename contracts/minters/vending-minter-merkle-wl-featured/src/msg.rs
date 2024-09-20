@@ -11,6 +11,7 @@ pub struct InstantiateMsg {
 #[cw_serde]
 pub enum ExecuteMsg {
     Mint {
+        stage: Option<u32>,
         proof_hashes: Option<Vec<String>>,
         allocation: Option<u32>,
     },
