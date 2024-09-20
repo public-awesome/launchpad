@@ -11,7 +11,7 @@ use open_edition_minter::msg::{
 use sg4::StatusResponse;
 
 use crate::common_setup::setup_accounts_and_block::{coins_for_msg, setup_block_time};
-use crate::common_setup::setup_minter::common::constants::DEV_ADDRESS;
+use crate::common_setup::setup_minter::common::constants::{DEV_ADDRESS, MAX_TOKEN_LIMIT};
 use crate::common_setup::setup_minter::open_edition_minter::minter_params::{
     default_nft_data, init_msg,
 };
@@ -93,7 +93,7 @@ fn check_mint_revenues_distribution(num_tokens: Option<u32>, end_minter_time: Op
         .query_wasm_smart(minter_addr.clone(), &query_config_msg)
         .unwrap();
     if end_minter_time.is_some() {
-        assert_eq!(res.count, None);
+        assert_eq!(res.count, Some(MAX_TOKEN_LIMIT));
     } else {
         assert_eq!(res.count, Some(5));
     }
@@ -423,7 +423,7 @@ fn check_mint_revenues_distribution(num_tokens: Option<u32>, end_minter_time: Op
 }
 
 #[test]
-fn check_mint_revenues_distribution_without_end_time() {
+fn check_mint_revenues_distribution_with_end_time() {
     check_mint_revenues_distribution(
         None,
         Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
@@ -431,6 +431,6 @@ fn check_mint_revenues_distribution_without_end_time() {
 }
 
 #[test]
-fn check_mint_revenues_distribution_with_end_time() {
+fn check_mint_revenues_distribution_without_end_time() {
     check_mint_revenues_distribution(Some(5u32), None)
 }

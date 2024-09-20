@@ -218,7 +218,10 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
-        ExecuteMsg::Mint { proof_hashes } => execute_mint_sender(deps, env, info, proof_hashes),
+        ExecuteMsg::Mint {
+            proof_hashes,
+            allocation,
+        } => execute_mint_sender(deps, env, info, proof_hashes, allocation),
         ExecuteMsg::Purge {} => execute_purge(deps, env, info),
         ExecuteMsg::UpdateMintPrice { price } => execute_update_mint_price(deps, env, info, price),
         ExecuteMsg::UpdateStartTime(time) => execute_update_start_time(deps, env, info, time),
@@ -496,21 +499,26 @@ pub fn execute_mint_sender(
     env: Env,
     info: MessageInfo,
     proof_hashes: Option<Vec<String>>,
+    allocation: Option<u32>,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
     let action = "mint_sender";
 
     // If there is no active whitelist right now, check public mint
+    let is_public_mint = is_public_mint(deps.as_ref(), &info, proof_hashes, allocation)?;
     // Check if after start_time
-    if is_public_mint(deps.as_ref(), &info, proof_hashes)?
-        && (env.block.time < config.extension.start_time)
-    {
+    if is_public_mint && (env.block.time < config.extension.start_time) {
         return Err(ContractError::BeforeMintStartTime {});
     }
 
     // Check if already minted max per address limit
     let mint_count = mint_count(deps.as_ref(), &info)?;
-    if mint_count >= config.extension.per_address_limit {
+
+    if allocation.is_some() {
+        if is_public_mint && mint_count >= config.extension.per_address_limit {
+            return Err(ContractError::MaxPerAddressLimitExceeded {});
+        }
+    } else if mint_count >= config.extension.per_address_limit {
         return Err(ContractError::MaxPerAddressLimitExceeded {});
     }
 
@@ -523,6 +531,7 @@ fn is_public_mint(
     deps: Deps,
     info: &MessageInfo,
     proof_hashes: Option<Vec<String>>,
+    allocation: Option<u32>,
 ) -> Result<bool, ContractError> {
     let config = CONFIG.load(deps.storage)?;
 
@@ -545,7 +554,10 @@ fn is_public_mint(
         deps.querier.query_wasm_smart(
             whitelist,
             &WhitelistMtreeQueryMsg::HasMember {
-                member: info.sender.to_string(),
+                member: match allocation {
+                    Some(allocation) => format!("{}{}", info.sender, allocation),
+                    None => info.sender.to_string(),
+                },
                 proof_hashes: proof_hashes.unwrap(),
             },
         )?
@@ -566,7 +578,11 @@ fn is_public_mint(
 
     // Check wl per address limit
     let mint_count = mint_count(deps, info)?;
-    if mint_count >= wl_config.per_address_limit {
+    let max_count = match allocation {
+        Some(allocation) => allocation,
+        None => wl_config.per_address_limit,
+    };
+    if mint_count >= max_count {
         return Err(ContractError::MaxPerAddressLimitExceeded {});
     }
 
