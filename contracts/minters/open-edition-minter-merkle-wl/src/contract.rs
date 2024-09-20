@@ -196,9 +196,10 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::Mint {
+            stage,
             proof_hashes,
             allocation,
-        } => execute_mint_sender(deps, env, info, proof_hashes, allocation),
+        } => execute_mint_sender(deps, env, info, stage, proof_hashes, allocation),
         ExecuteMsg::Purge {} => execute_purge(deps, env, info),
         ExecuteMsg::UpdateMintPrice { price } => execute_update_mint_price(deps, env, info, price),
         ExecuteMsg::UpdateStartTime(time) => execute_update_start_time(deps, env, info, time),
@@ -352,6 +353,7 @@ pub fn execute_mint_sender(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
+    stage: Option<u32>,
     proof_hashes: Option<Vec<String>>,
     allocation: Option<u32>,
 ) -> Result<Response, ContractError> {
@@ -359,7 +361,7 @@ pub fn execute_mint_sender(
     let action = "mint_sender";
 
     // If there is no active whitelist right now, check public mint
-    let is_public_mint = is_public_mint(deps.as_ref(), &info, proof_hashes, allocation)?;
+    let is_public_mint = is_public_mint(deps.as_ref(), &info, stage, proof_hashes, allocation)?;
     // Check start and end time (if not optional)
     if is_public_mint && (env.block.time < config.extension.start_time) {
         return Err(ContractError::BeforeMintStartTime {});
@@ -384,6 +386,7 @@ pub fn execute_mint_sender(
 fn is_public_mint(
     deps: Deps,
     info: &MessageInfo,
+    stage: Option<u32>,
     proof_hashes: Option<Vec<String>>,
     allocation: Option<u32>,
 ) -> Result<bool, ContractError> {
@@ -408,9 +411,13 @@ fn is_public_mint(
         deps.querier.query_wasm_smart(
             whitelist,
             &WhitelistQueryMsg::HasMember {
-                member: match allocation {
-                    Some(allocation) => format!("{}{}", info.sender, allocation),
-                    None => info.sender.to_string(),
+                member: match (stage, allocation) {
+                    (None, Some(allocation)) => format!("{}{}", info.sender, allocation),
+                    (Some(stage), None) => format!("{}{}", stage, info.sender),
+                    (Some(stage), Some(allocation)) => {
+                        format!("{}{}{}", stage, info.sender, allocation)
+                    }
+                    (None, None) => info.sender.to_string(),
                 },
                 proof_hashes: proof_hashes.unwrap(),
             },
