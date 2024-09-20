@@ -3642,7 +3642,7 @@ dependencies = [
 
 [[package]]
 name = "sg-tiered-whitelist"
-version = "3.14.0"
+version = "3.15.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -3659,7 +3659,7 @@ dependencies = [
 
 [[package]]
 name = "sg-tiered-whitelist-flex"
-version = "3.14.0"
+version = "3.15.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -4270,7 +4270,7 @@ dependencies = [
 
 [[package]]
 name = "tiered-whitelist-merkletree"
-version = "3.14.0"
+version = "3.15.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
