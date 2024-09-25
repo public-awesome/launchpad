@@ -16,7 +16,7 @@ pub const TO_VERSION: &str = "3.0.0";
 
 pub type Extension = Option<Empty>;
 
-// #[cfg(not(feature = "library"))]
+#[cfg(not(feature = "library"))]
 pub mod entry {
     use super::*;
 
