@@ -16,12 +16,14 @@ pub const TO_VERSION: &str = "3.0.0";
 
 pub type Extension = Option<Empty>;
 
-#[cfg(not(feature = "library"))]
+// #[cfg(not(feature = "library"))]
 pub mod entry {
     use super::*;
 
-    use cosmwasm_std::{entry_point, Binary, Deps, DepsMut, Env, MessageInfo, StdError, StdResult};
-
+    use cosmwasm_std::{
+        entry_point, Binary, Deps, DepsMut, Env, Event, MessageInfo, StdError, StdResult,
+    };
+    use semver::Version;
     use sg721_base::{msg::QueryMsg, ContractError};
     use sg_std::Response;
 
@@ -57,33 +59,58 @@ pub mod entry {
     }
 
     #[entry_point]
-    pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
+    pub fn migrate(mut deps: DepsMut, env: Env, _msg: Empty) -> Result<Response, ContractError> {
         // make sure the correct contract is being upgraded, and it's being
         // upgraded from the correct version.
-        if CONTRACT_VERSION < EARLIEST_VERSION {
+        let prev_contract_info = cw2::get_contract_version(deps.storage)?;
+        let prev_contract_name: String = prev_contract_info.contract;
+        let prev_contract_version: Version = prev_contract_info
+            .version
+            .parse()
+            .map_err(|_| StdError::generic_err("Unable to retrieve previous contract version"))?;
+
+        let new_version: Version = CONTRACT_VERSION
+            .parse()
+            .map_err(|_| StdError::generic_err("Invalid contract version"))?;
+
+        let earliest_version: Version = EARLIEST_VERSION
+            .parse()
+            .map_err(|_| StdError::generic_err("Invalid contract version"))?;
+
+        if prev_contract_version < earliest_version {
             return Err(
-                StdError::generic_err("Cannot upgrade to a previous contract version").into(),
+                StdError::generic_err("The contract version is too old to be upgraded").into(),
             );
         }
-        if CONTRACT_VERSION > TO_VERSION {
+        if new_version < prev_contract_version {
             return Err(
                 StdError::generic_err("Cannot upgrade to a previous contract version").into(),
             );
         }
         // if same version return
-        if CONTRACT_VERSION == TO_VERSION {
+        if new_version == prev_contract_version {
             return Ok(Response::new());
         }
 
         // update contract version
         cw2::set_contract_version(deps.storage, CONTRACT_NAME, TO_VERSION)?;
 
-        // perform the upgrade
-        let cw17_res = cw721_base::upgrades::v0_17::migrate::<Extension, Empty, Empty, Empty>(deps)
-            .map_err(|e| sg721_base::ContractError::MigrationError(e.to_string()))?;
-        let mut sgz_res = Response::new();
-        sgz_res.attributes = cw17_res.attributes;
-        Ok(sgz_res)
+        let mut response = Response::new();
+
+        #[allow(clippy::cmp_owned)]
+        if prev_contract_version < Version::new(3, 0, 0) {
+            // perform the upgrade
+            response = sg721_base::upgrades::v3_0_0::upgrade(deps.branch(), &env, response)?;
+        }
+        response = response.add_event(
+            Event::new("migrate")
+                .add_attribute("from_name", prev_contract_name)
+                .add_attribute("from_version", prev_contract_version.to_string())
+                .add_attribute("to_name", CONTRACT_NAME)
+                .add_attribute("to_version", CONTRACT_VERSION),
+        );
+
+        Ok(response)
     }
 }
 
