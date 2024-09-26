@@ -3754,6 +3754,7 @@ dependencies = [
  "cw721 0.18.0",
  "cw721-base 0.18.0",
  "schemars",
+ "semver",
  "serde",
  "sg-metadata",
  "sg-std",
