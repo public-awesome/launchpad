@@ -10,6 +10,8 @@ const FEE_BURN_PERCENT: u64 = 50;
 const FOUNDATION: &str = "stars1xqz6xujjyz0r9uzn7srasle5uynmpa0zkjr5l8";
 const LAUNCHPAD_DAO_ADDRESS: &str =
     "stars1huqk6ha02jgrm69lxh8xfgl6wch9wlg7s65ujxydwdr725cxvuus423tj0";
+const LIQUIDITY_DAO_ADDRESS: &str =
+    "stars12he2ldxl950wfypvelqwkac4mdul7clzgd8wdlnmjvll8z2cc47qsatvl2";
 
 /// Burn and distribute fees and return an error if the fee is not enough
 pub fn checked_fair_burn(
@@ -69,6 +71,42 @@ pub fn ibc_denom_fair_burn(
             }));
         }
     }
+
+    res.events.push(event);
+    Ok(())
+}
+
+pub fn distribute_mint_fees(
+    fee: Coin,
+    res: &mut Response,
+    is_featured: bool,
+) -> Result<(), FeeError> {
+    let liquidity_dao_ratio: Decimal = Decimal::from_ratio(1u128, 5u128);
+    let liquidity_dao_ratio_featured: Decimal = Decimal::from_ratio(1u128, 8u128);
+
+    let mut event = Event::new("fee-distribution");
+    let liquidity_dao_ratio = if is_featured {
+        liquidity_dao_ratio_featured
+    } else {
+        liquidity_dao_ratio
+    };
+
+    let liquidity_dao_fee = (fee.amount.mul_ceil(liquidity_dao_ratio)).u128();
+    let liquidity_dao_coin = coin(liquidity_dao_fee, fee.denom.to_string());
+    let foundation_coin = coin(fee.amount.u128() - liquidity_dao_fee, fee.denom);
+
+    event = event.add_attribute("liquidity_DAO_addr", LIQUIDITY_DAO_ADDRESS.to_string());
+    event = event.add_attribute("liquidity_DAO_coin", liquidity_dao_coin.to_string());
+    event = event.add_attribute("foundation_coin", foundation_coin.to_string());
+
+    res.messages.push(SubMsg::new(BankMsg::Send {
+        to_address: LIQUIDITY_DAO_ADDRESS.to_string(),
+        amount: vec![liquidity_dao_coin],
+    }));
+    res.messages.push(SubMsg::new(BankMsg::Send {
+        to_address: FOUNDATION.to_string(),
+        amount: vec![foundation_coin],
+    }));
 
     res.events.push(event);
     Ok(())
