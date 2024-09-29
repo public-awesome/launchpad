@@ -21,7 +21,7 @@ use cw_utils::{may_pay, maybe_addr, nonpayable, parse_reply_instantiate_data};
 use rand_core::{RngCore, SeedableRng};
 use rand_xoshiro::Xoshiro128PlusPlus;
 use semver::Version;
-use sg1::checked_fair_burn;
+use sg1::{checked_fair_burn, distribute_mint_fees};
 use sg2::query::Sg2QueryMsg;
 use sg4::{MinterConfig, Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
@@ -664,14 +664,13 @@ fn _execute_mint(
 
     let network_fee = mint_price.amount * mint_fee;
 
-    // send non-native fees to community pool
-    let pa_dao = "stars159t8e03zlmgyekmdrpxnyf70rdky28v553kj53zsapqadaunt4wsmn5m3l".to_string();
-
     if !network_fee.is_zero() {
-        res = res.add_message(BankMsg::Send {
-            to_address: pa_dao.to_string(),
-            amount: vec![coin(network_fee.u128(), mint_price.denom.clone())],
-        });
+        distribute_mint_fees(
+            coin(network_fee.u128(), mint_price.clone().denom),
+            &mut res,
+            true,
+            None,
+        )?;
     }
 
     let mintable_token_mapping = match token_id {

@@ -86,7 +86,8 @@ pub fn distribute_mint_fees(
     let liquidity_dao_ratio_featured: Decimal = Decimal::from_ratio(1u128, 8u128);
 
     let mut event = Event::new("mint-fee-distribution");
-    let liquidity_dao_ratio = if is_featured {
+
+    let liquidity_dao_percentage = if is_featured {
         liquidity_dao_ratio_featured
     } else {
         liquidity_dao_ratio
@@ -98,7 +99,8 @@ pub fn distribute_mint_fees(
             let dev_coin = coin(dev_fee, fee.denom.to_string());
             let remaining_coin = coin(fee.amount.u128() - dev_fee, fee.denom.clone());
 
-            let liquidity_dao_fee = (remaining_coin.amount.mul_ceil(liquidity_dao_ratio)).u128();
+            let liquidity_dao_fee =
+                (remaining_coin.amount.mul_ceil(liquidity_dao_percentage)).u128();
             let liquidity_dao_coin = coin(liquidity_dao_fee, fee.denom.to_string());
             let foundation_coin = coin(remaining_coin.amount.u128() - liquidity_dao_fee, fee.denom);
 
@@ -123,7 +125,7 @@ pub fn distribute_mint_fees(
             }));
         }
         None => {
-            let liquidity_dao_fee = (fee.amount.mul_ceil(liquidity_dao_ratio)).u128();
+            let liquidity_dao_fee = (fee.amount.mul_ceil(liquidity_dao_percentage)).u128();
             let liquidity_dao_coin = coin(liquidity_dao_fee, fee.denom.to_string());
             let foundation_coin = coin(fee.amount.u128() - liquidity_dao_fee, fee.denom);
 

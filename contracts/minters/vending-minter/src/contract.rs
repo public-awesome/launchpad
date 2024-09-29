@@ -667,6 +667,7 @@ fn _execute_mint(
             coin(network_fee.u128(), mint_price.clone().denom),
             &mut res,
             false,
+            None,
         )?;
     }
 
