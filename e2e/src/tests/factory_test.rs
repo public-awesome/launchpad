@@ -339,9 +339,9 @@ fn test_start_trading_time(chain: &mut Chain) {
     assert_eq!(balance.amount, init_balance.amount + 9_000_000_000);
 
     // fairburn fees
-    // half of the 10% fees should be sent to fairburn pool
-    // 500STARS + 500STARS initially sent for collection creation fee
-    assert_eq!(total_fairburn_fees, 1_000_000_000);
+    // fairburn pool should remain unchanged
+    // 500STARS initially sent for collection creation fee
+    assert_eq!(total_fairburn_fees, 500_000_000);
 
     let total_supply = tokio_block(chain.orc.client.bank_query_supply(denom.parse().unwrap()))
         .unwrap()

@@ -523,13 +523,24 @@ fn test_start_trading_time(chain: &mut Chain) {
             total_fairburn_fees += amount.parse::<u128>().unwrap();
         }
 
-        let dev_fees = res
+        let mut dev_fees = res
             .res
             .find_event_tags("wasm-fair-burn".to_string(), "dev_amount".to_string());
 
         for fee in dev_fees {
             let amount = fee.value.split(&denom).collect::<Vec<&str>>()[0];
             total_dev_fees += amount.parse::<u128>().unwrap();
+        }
+
+        if (total_dev_fees == 0) {
+            dev_fees = res
+                .res
+                .find_event_tags("mint-fee-distribution".to_string(), "dev_amount".to_string());
+
+            for fee in dev_fees {
+                let amount = fee.value.split(&denom).collect::<Vec<&str>>()[0];
+                total_dev_fees += amount.parse::<u128>().unwrap();
+            }
         }
     }
 

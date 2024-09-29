@@ -95,7 +95,7 @@ pub fn distribute_mint_fees(
 
     match &developer {
         Some(developer) => {
-            let dev_fee = (fee.amount.mul_ceil(Decimal::percent(FEE_BURN_PERCENT))).u128();
+            let dev_fee = fee.amount.mul_ceil(Decimal::percent(FEE_BURN_PERCENT)).u128();
             let dev_coin = coin(dev_fee, fee.denom.to_string());
             let remaining_coin = coin(fee.amount.u128() - dev_fee, fee.denom.clone());
 
@@ -105,7 +105,7 @@ pub fn distribute_mint_fees(
             let foundation_coin = coin(remaining_coin.amount.u128() - liquidity_dao_fee, fee.denom);
 
             event = event.add_attribute("dev_addr", developer.to_string());
-            event = event.add_attribute("dev_coin", dev_coin.to_string());
+            event = event.add_attribute("dev_amount", dev_coin.amount.to_string());
             event = event.add_attribute("liquidity_DAO_addr", LIQUIDITY_DAO_ADDRESS.to_string());
             event = event.add_attribute("liquidity_DAO_coin", liquidity_dao_coin.to_string());
             event = event.add_attribute("foundation_addr", FOUNDATION.to_string());
@@ -125,7 +125,7 @@ pub fn distribute_mint_fees(
             }));
         }
         None => {
-            let liquidity_dao_fee = (fee.amount.mul_ceil(liquidity_dao_percentage)).u128();
+            let liquidity_dao_fee = fee.amount.mul_ceil(liquidity_dao_percentage).u128();
             let liquidity_dao_coin = coin(liquidity_dao_fee, fee.denom.to_string());
             let foundation_coin = coin(fee.amount.u128() - liquidity_dao_fee, fee.denom);
 
