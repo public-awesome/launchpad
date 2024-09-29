@@ -24,7 +24,7 @@ use crate::common_setup::{
     templates::{vending_minter_template, vending_minter_with_ibc_asset},
 };
 
-use crate::common_setup::setup_minter::common::constants::CREATION_FEE;
+use crate::common_setup::setup_minter::common::constants::{CREATION_FEE, LIQUIDITY_DAO_ADDRESS};
 use crate::common_setup::setup_minter::vending_minter::mock_params::mock_params;
 
 #[test]
@@ -259,5 +259,10 @@ fn wl_denom_mint() {
         .wrap()
         .query_balance(Addr::unchecked(FOUNDATION), denom)
         .unwrap();
-    assert_eq!(balance.amount, wl_mint_price.amount * Decimal::percent(10));
+    assert_eq!(balance.amount, wl_mint_price.amount * Decimal::percent(8));
+    let balance = app
+        .wrap()
+        .query_balance(Addr::unchecked(LIQUIDITY_DAO_ADDRESS), denom)
+        .unwrap();
+    assert_eq!(balance.amount, wl_mint_price.amount * Decimal::percent(2));
 }
