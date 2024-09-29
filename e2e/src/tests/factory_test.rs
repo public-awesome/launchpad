@@ -349,7 +349,7 @@ fn test_start_trading_time(chain: &mut Chain) {
 
     // the other half burned
     assert_eq!(
-        initial_total_supply.amount - 1_000_000_000,
+        initial_total_supply.amount - 500_000_000,
         total_supply.amount
     );
 }

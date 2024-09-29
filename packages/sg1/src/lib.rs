@@ -108,7 +108,7 @@ pub fn distribute_mint_fees(
             let foundation_coin = coin(remaining_coin.amount.u128() - liquidity_dao_fee, fee.denom);
 
             event = event.add_attribute("dev_addr", developer.to_string());
-            event = event.add_attribute("dev_amount", dev_coin.amount.to_string());
+            event = event.add_attribute("dev_coin", dev_coin.to_string());
             event = event.add_attribute("liquidity_DAO_addr", LIQUIDITY_DAO_ADDRESS.to_string());
             event = event.add_attribute("liquidity_DAO_coin", liquidity_dao_coin.to_string());
             event = event.add_attribute("foundation_addr", FOUNDATION.to_string());
