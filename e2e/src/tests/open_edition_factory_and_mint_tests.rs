@@ -533,9 +533,10 @@ fn test_start_trading_time(chain: &mut Chain) {
         }
 
         if (total_dev_fees == 0) {
-            dev_fees = res
-                .res
-                .find_event_tags("mint-fee-distribution".to_string(), "dev_amount".to_string());
+            dev_fees = res.res.find_event_tags(
+                "mint-fee-distribution".to_string(),
+                "dev_amount".to_string(),
+            );
 
             for fee in dev_fees {
                 let amount = fee.value.split(&denom).collect::<Vec<&str>>()[0];

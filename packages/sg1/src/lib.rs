@@ -95,7 +95,10 @@ pub fn distribute_mint_fees(
 
     match &developer {
         Some(developer) => {
-            let dev_fee = fee.amount.mul_ceil(Decimal::percent(FEE_BURN_PERCENT)).u128();
+            let dev_fee = fee
+                .amount
+                .mul_ceil(Decimal::percent(FEE_BURN_PERCENT))
+                .u128();
             let dev_coin = coin(dev_fee, fee.denom.to_string());
             let remaining_coin = coin(fee.amount.u128() - dev_fee, fee.denom.clone());
 
