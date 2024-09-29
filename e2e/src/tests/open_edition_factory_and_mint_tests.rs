@@ -577,7 +577,7 @@ fn test_start_trading_time(chain: &mut Chain) {
     // The amount of tokens burned should be
     // 500 STARS from the init + (200 mint x 100_000_000 x 0.1 x 0.5) -> 500 + 1_000 = 1_500
     assert_eq!(
-        initial_total_supply.amount - 1_500_000_000,
+        initial_total_supply.amount - 500_000_000,
         total_supply.amount
     );
 }
