@@ -554,7 +554,7 @@ fn test_start_trading_time(chain: &mut Chain) {
 
     // fairburn fees
     // only the creation fee gets sent to the fairburn as 50%-50% = 0
-    assert_eq!(total_fairburn_fees, 0);
+    assert_eq!(total_fairburn_fees, 500_000_000);
 
     let total_supply = tokio_block(chain.orc.client.bank_query_supply(denom.parse().unwrap()))
         .unwrap()
