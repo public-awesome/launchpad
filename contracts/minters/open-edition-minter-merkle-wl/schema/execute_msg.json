@@ -10,9 +10,6 @@
       "properties": {
         "mint": {
           "type": "object",
-          "required": [
-            "proof_hashes"
-          ],
           "properties": {
             "allocation": {
               "type": [
@@ -23,7 +20,10 @@
               "minimum": 0.0
             },
             "proof_hashes": {
-              "type": "array",
+              "type": [
+                "array",
+                "null"
+              ],
               "items": {
                 "type": "string"
               }
