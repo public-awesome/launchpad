@@ -20,11 +20,11 @@ use cw_utils::{may_pay, maybe_addr, nonpayable, parse_reply_instantiate_data};
 use rand_core::{RngCore, SeedableRng};
 use rand_xoshiro::Xoshiro128PlusPlus;
 use semver::Version;
-use sg1::{checked_fair_burn, ibc_denom_fair_burn};
+use sg1::{checked_fair_burn, distribute_mint_fees};
 use sg2::query::Sg2QueryMsg;
 use sg4::{MinterConfig, Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
-use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME, NATIVE_DENOM};
+use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME};
 use sg_whitelist_flex::msg::{
     ConfigResponse as WhitelistConfigResponse, HasMemberResponse, Member,
     QueryMsg as WhitelistQueryMsg,
@@ -654,18 +654,14 @@ fn _execute_mint(
         Decimal::bps(factory_params.mint_fee_bps)
     };
     let network_fee = mint_price.amount * mint_fee;
-    // use ibc_denom_fair_burn for non native denoms
-    if mint_price.denom != NATIVE_DENOM {
-        // only send non-zero amounts
-        if !network_fee.is_zero() {
-            ibc_denom_fair_burn(
-                coin(network_fee.u128(), mint_price.clone().denom),
-                None,
-                &mut res,
-            )?;
-        }
-    } else {
-        checked_fair_burn(&info, network_fee.u128(), None, &mut res)?;
+
+    if !network_fee.is_zero() {
+        distribute_mint_fees(
+            coin(network_fee.u128(), mint_price.clone().denom),
+            &mut res,
+            false,
+            None,
+        )?;
     }
 
     let mintable_token_mapping = match token_id {

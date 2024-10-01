@@ -4,6 +4,7 @@ use open_edition_factory::state::{OpenEditionMinterParams, ParamsExtension};
 use open_edition_minter::msg::ExecuteMsg;
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
+use crate::common_setup::setup_minter::common::constants::LIQUIDITY_DAO_ADDRESS;
 use crate::common_setup::{
     setup_accounts_and_block::setup_block_time,
     setup_minter::{
@@ -172,7 +173,13 @@ fn one_hundred_percent_burned_ibc_minter() {
         .wrap()
         .query_balance(Addr::unchecked(FOUNDATION), denom)
         .unwrap();
-    assert_eq!(balance.amount, mint_price.amount * Decimal::percent(50));
+    assert_eq!(balance.amount, mint_price.amount * Decimal::percent(40));
+
+    let balance = router
+        .wrap()
+        .query_balance(Addr::unchecked(LIQUIDITY_DAO_ADDRESS), denom)
+        .unwrap();
+    assert_eq!(balance.amount, mint_price.amount * Decimal::percent(10));
 }
 
 #[test]
