@@ -67,6 +67,7 @@ pub enum QueryMsg {
     HasEnded {},
     IsActive {},
     ActiveStage {},
+    ActiveStageId {},
     Members {
         start_after: Option<String>,
         limit: Option<u32>,

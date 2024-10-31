@@ -208,6 +208,9 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::HasEnded {} => to_json_binary(&query_has_ended(deps, env)?),
         QueryMsg::IsActive {} => to_json_binary(&query_is_active(deps, env)?),
         QueryMsg::ActiveStage {} => to_json_binary(&fetch_active_stage(deps.storage, &env)),
+        QueryMsg::ActiveStageId {} => {
+            to_json_binary(&fetch_active_stage_index(deps.storage, &env).map_or(0, |i| i + 1))
+        }
         QueryMsg::HasMember {
             member,
             proof_hashes,

@@ -21,7 +21,12 @@ pub type Config = MinterConfig<ConfigExtension>;
 pub const CONFIG: Item<Config> = Item::new("config");
 pub const SG721_ADDRESS: Item<Addr> = Item::new("sg721_address");
 pub const MINTER_ADDRS: Map<&Addr, u32> = Map::new("ma");
-
+// Keep track of the number of tokens minted by each address for regular whitelists
+pub const WHITELIST_MINTER_ADDRS: Map<&Addr, u32> = Map::new("wlma");
+// Keep track of the number of tokens minted by each address for first, second & third tiered whitelist stages
+pub const WHITELIST_FS_MINTER_ADDRS: Map<&Addr, u32> = Map::new("wlfsma");
+pub const WHITELIST_SS_MINTER_ADDRS: Map<&Addr, u32> = Map::new("wlssma");
+pub const WHITELIST_TS_MINTER_ADDRS: Map<&Addr, u32> = Map::new("wltsma");
 /// This keeps track of the mint count
 pub const TOTAL_MINT_COUNT: Item<u32> = Item::new("total_mint_count");
 

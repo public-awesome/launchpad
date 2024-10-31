@@ -5,7 +5,8 @@ use crate::msg::{
 };
 use crate::state::{
     Config, ConfigExtension, CONFIG, LAST_DISCOUNT_TIME, MINTABLE_NUM_TOKENS,
-    MINTABLE_TOKEN_POSITIONS, MINTER_ADDRS, SG721_ADDRESS, STATUS,
+    MINTABLE_TOKEN_POSITIONS, MINTER_ADDRS, SG721_ADDRESS, STATUS, WHITELIST_FS_MINTER_ADDRS,
+    WHITELIST_MINTER_ADDRS, WHITELIST_SS_MINTER_ADDRS, WHITELIST_TS_MINTER_ADDRS,
 };
 use crate::validation::{check_dynamic_per_address_limit, get_three_percent_of_tokens};
 #[cfg(not(feature = "library"))]
@@ -32,6 +33,7 @@ use sg_whitelist::msg::{
 use sha2::{Digest, Sha256};
 use shuffle::{fy::FisherYates, shuffler::Shuffler};
 use std::convert::TryInto;
+use tiered_whitelist_merkletree::msg::QueryMsg as TieredWhitelistQueryMsg;
 use url::Url;
 use vending_factory::msg::{ParamsResponse, VendingMinterCreateMsg};
 use vending_factory::state::VendingMinterParams;
@@ -516,15 +518,11 @@ pub fn execute_mint_sender(
     // Check if already minted max per address limit
     let mint_count = mint_count(deps.as_ref(), &info)?;
 
-    if allocation.is_some() {
-        if is_public_mint && mint_count >= config.extension.per_address_limit {
-            return Err(ContractError::MaxPerAddressLimitExceeded {});
-        }
-    } else if mint_count >= config.extension.per_address_limit {
+    if is_public_mint && mint_count >= config.extension.per_address_limit {
         return Err(ContractError::MaxPerAddressLimitExceeded {});
     }
 
-    _execute_mint(deps, env, info, action, false, None, None)
+    _execute_mint(deps, env, info, action, false, None, None, is_public_mint)
 }
 
 // Check if a whitelist exists and not ended
@@ -555,7 +553,7 @@ fn is_public_mint(
 
     let res: HasMemberResponse = if is_merkle_tree_wl(&wl_config) && proof_hashes.is_some() {
         deps.querier.query_wasm_smart(
-            whitelist,
+            whitelist.clone(),
             &WhitelistMtreeQueryMsg::HasMember {
                 member: match (stage, allocation) {
                     (None, Some(allocation)) => format!("{}{}", info.sender, allocation),
@@ -570,7 +568,7 @@ fn is_public_mint(
         )?
     } else {
         deps.querier.query_wasm_smart(
-            whitelist,
+            whitelist.clone(),
             &WhitelistQueryMsg::HasMember {
                 member: info.sender.to_string(),
             },
@@ -584,12 +582,12 @@ fn is_public_mint(
     }
 
     // Check wl per address limit
-    let mint_count = mint_count(deps, info)?;
+    let wl_mint_count = whitelist_mint_count(deps, info, whitelist.clone())?.0;
     let max_count = match allocation {
         Some(allocation) => allocation,
         None => wl_config.per_address_limit,
     };
-    if mint_count >= max_count {
+    if wl_mint_count >= max_count {
         return Err(ContractError::MaxPerAddressLimitExceeded {});
     }
 
@@ -617,7 +615,7 @@ pub fn execute_mint_to(
         ));
     }
 
-    _execute_mint(deps, env, info, action, true, Some(recipient), None)
+    _execute_mint(deps, env, info, action, true, Some(recipient), None, true)
 }
 
 pub fn execute_mint_for(
@@ -646,6 +644,7 @@ pub fn execute_mint_for(
         true,
         Some(recipient),
         Some(token_id),
+        true,
     )
 }
 
@@ -661,6 +660,7 @@ fn _execute_mint(
     is_admin: bool,
     recipient: Option<Addr>,
     token_id: Option<u32>,
+    is_public: bool,
 ) -> Result<Response, ContractError> {
     let mintable_num_tokens = MINTABLE_NUM_TOKENS.load(deps.storage)?;
     if mintable_num_tokens == 0 {
@@ -760,9 +760,22 @@ fn _execute_mint(
     let mintable_num_tokens = MINTABLE_NUM_TOKENS.load(deps.storage)?;
     // Decrement mintable num tokens
     MINTABLE_NUM_TOKENS.save(deps.storage, &(mintable_num_tokens - 1))?;
-    // Save the new mint count for the sender's address
-    let new_mint_count = mint_count(deps.as_ref(), &info)? + 1;
-    MINTER_ADDRS.save(deps.storage, &info.sender, &new_mint_count)?;
+
+    if is_public {
+        let new_mint_count = mint_count(deps.as_ref(), &info)? + 1;
+        MINTER_ADDRS.save(deps.storage, &info.sender, &new_mint_count)?;
+    } else {
+        let whitelist_addr = config.extension.whitelist.unwrap();
+        // Fetch and increment the mint count for the current whitelist stage
+        let wl_mint_count_response = whitelist_mint_count(deps.as_ref(), &info, whitelist_addr)?;
+        save_whitelist_mint_count(
+            deps,
+            &info,
+            wl_mint_count_response.1,
+            wl_mint_count_response.2,
+            wl_mint_count_response.0 + 1,
+        )?
+    }
 
     let seller_amount = if !is_admin {
         let amount = mint_price.amount - network_fee;
@@ -1125,6 +1138,78 @@ pub fn mint_price(deps: Deps, is_admin: bool) -> Result<Coin, StdError> {
 fn mint_count(deps: Deps, info: &MessageInfo) -> Result<u32, StdError> {
     let mint_count = (MINTER_ADDRS.key(&info.sender).may_load(deps.storage)?).unwrap_or(0);
     Ok(mint_count)
+}
+
+// Returns the stored whitelist mint count, whether the whitelist is a tiered wl, and the stage id if applicable
+fn whitelist_mint_count(
+    deps: Deps,
+    info: &MessageInfo,
+    whitelist_addr: Addr,
+) -> Result<(u32, bool, Option<u32>), StdError> {
+    let is_tiered_whitelist = cw2::query_contract_info(&deps.querier, whitelist_addr.clone())
+        .map(|info| info.contract.contains("tiered-whitelist"))
+        .unwrap_or(false);
+
+    if is_tiered_whitelist {
+        let active_stage_id = deps
+            .querier
+            .query_wasm_smart(whitelist_addr, &TieredWhitelistQueryMsg::ActiveStageId {})?;
+        match active_stage_id {
+            1 => Ok((
+                WHITELIST_FS_MINTER_ADDRS
+                    .key(&info.sender)
+                    .may_load(deps.storage)?
+                    .unwrap_or(0),
+                true,
+                Some(1),
+            )),
+            2 => Ok((
+                WHITELIST_SS_MINTER_ADDRS
+                    .key(&info.sender)
+                    .may_load(deps.storage)?
+                    .unwrap_or(0),
+                true,
+                Some(2),
+            )),
+            3 => Ok((
+                WHITELIST_TS_MINTER_ADDRS
+                    .key(&info.sender)
+                    .may_load(deps.storage)?
+                    .unwrap_or(0),
+                true,
+                Some(3),
+            )),
+            _ => Err(StdError::generic_err("Invalid stage ID")),
+        }
+    } else {
+        Ok((
+            WHITELIST_MINTER_ADDRS
+                .key(&info.sender)
+                .may_load(deps.storage)?
+                .unwrap_or(0),
+            false,
+            None,
+        ))
+    }
+}
+
+fn save_whitelist_mint_count(
+    deps: DepsMut,
+    info: &MessageInfo,
+    is_tiered_whitelist: bool,
+    stage_id: Option<u32>,
+    count: u32,
+) -> StdResult<()> {
+    if is_tiered_whitelist & stage_id.is_some() {
+        match stage_id {
+            Some(1) => WHITELIST_FS_MINTER_ADDRS.save(deps.storage, &info.sender, &count),
+            Some(2) => WHITELIST_SS_MINTER_ADDRS.save(deps.storage, &info.sender, &count),
+            Some(3) => WHITELIST_TS_MINTER_ADDRS.save(deps.storage, &info.sender, &count),
+            _ => Err(StdError::generic_err("Invalid stage ID")),
+        }
+    } else {
+        WHITELIST_MINTER_ADDRS.save(deps.storage, &info.sender, &count)
+    }
 }
 
 pub fn display_max_mintable_tokens(

@@ -23,6 +23,13 @@ pub const MINTABLE_TOKEN_POSITIONS: Map<u32, u32> = Map::new("mt");
 pub const MINTABLE_NUM_TOKENS: Item<u32> = Item::new("mintable_num_tokens");
 pub const MINTER_ADDRS: Map<&Addr, u32> = Map::new("ma");
 
+// Keep track of the number of tokens minted by each address for regular whitelists
+pub const WHITELIST_MINTER_ADDRS: Map<&Addr, u32> = Map::new("wlma");
+// Keep track of the number of tokens minted by each address for first, second & third tiered whitelist stages
+pub const WHITELIST_FS_MINTER_ADDRS: Map<&Addr, u32> = Map::new("wlfsma");
+pub const WHITELIST_SS_MINTER_ADDRS: Map<&Addr, u32> = Map::new("wlssma");
+pub const WHITELIST_TS_MINTER_ADDRS: Map<&Addr, u32> = Map::new("wltsma");
+
 pub const LAST_DISCOUNT_TIME: Item<Timestamp> = Item::new("last_discount_time");
 
 /// Holds the status of the minter. Can be changed with on-chain governance proposals.

@@ -51,6 +51,8 @@ pub enum QueryMsg {
     IsActive {},
     #[returns(StageResponse)]
     ActiveStage {},
+    #[returns(u32)]
+    ActiveStageId {},
     #[returns(HasMemberResponse)]
     HasMember {
         member: String,

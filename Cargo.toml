@@ -49,11 +49,13 @@ sg-multi-test        = { version = "3.1.0" }
 sg-splits            = { version = "3.14.0", path = "contracts/splits" }
 sg-std               = { version = "3.2.0" }
 sg-whitelist         = { version = "3.14.0", path = "contracts/whitelists/whitelist" }
+sg-tiered-whitelist  = { version = "3.14.0", path = "contracts/whitelists/tiered-whitelist" }
 thiserror            = "1.0.31"
 url                  = "2.2.2"
 sha2                 = { version = "0.10.2", default-features = false }
 
 whitelist-mtree             = { version = "3.14.0", path = "contracts/whitelists/whitelist-merkletree" }
+tiered-whitelist-merkletree     = { version = "3.14.0", path = "contracts/whitelists/tiered-whitelist-merkletree" }
 vending-minter-merkle-wl    = { version = "3.14.0", path = "contracts/minters/vending-minter-merkle-wl" }
 vending-factory      = { version = "3.14.0", path = "contracts/factories/vending-factory" }
 vending-minter       = { version = "3.14.0", path = "contracts/minters/vending-minter" }
@@ -61,6 +63,7 @@ open-edition-factory = { version = "3.14.0", path = "contracts/factories/open-ed
 open-edition-minter  = { version = "3.14.0", path = "contracts/minters/open-edition-minter" }
 whitelist-immutable  = { version = "3.14.0", path = "contracts/whitelists/whitelist-immutable" }
 sg-whitelist-flex    = { version = "3.14.0", path = "contracts/whitelists/whitelist-flex" }
+sg-tiered-whitelist-flex = { version = "3.14.0", path = "contracts/whitelists/tiered-whitelist-flex" }
 ethereum-verify      = { version = "3.14.0", path = "packages/ethereum-verify" }
 sg-eth-airdrop       = { version = "3.14.0", path = "contracts/sg-eth-airdrop" }
 test-suite           = { version = "3.14.0", path = "test-suite" }
