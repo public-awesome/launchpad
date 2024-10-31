@@ -25,7 +25,7 @@ use sg1::distribute_mint_fees;
 use sg2::query::Sg2QueryMsg;
 use sg4::{MinterConfig, Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
-use sg_std::{StargazeMsgWrapper};
+use sg_std::StargazeMsgWrapper;
 use tiered_whitelist_merkletree::msg::QueryMsg as TieredWhitelistQueryMsg;
 use url::Url;
 use whitelist_mtree::msg::{
