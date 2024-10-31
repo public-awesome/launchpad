@@ -1224,12 +1224,24 @@ pub fn query_status(deps: Deps) -> StdResult<StatusResponse> {
 fn query_mint_count(deps: Deps, address: String) -> StdResult<MintCountResponse> {
     let addr = deps.api.addr_validate(&address)?;
     let mint_count = (MINTER_ADDRS.key(&addr).may_load(deps.storage)?).unwrap_or(0);
-    let whitelist_mint_count =
+    let standard_wl_count =
         (WHITELIST_MINTER_ADDRS.key(&addr).may_load(deps.storage)?).unwrap_or(0);
+    let tiered_wl_count = (WHITELIST_FS_MINTER_ADDRS
+        .key(&addr)
+        .may_load(deps.storage)?)
+    .unwrap_or(0)
+        + (WHITELIST_SS_MINTER_ADDRS
+            .key(&addr)
+            .may_load(deps.storage)?)
+        .unwrap_or(0)
+        + (WHITELIST_TS_MINTER_ADDRS
+            .key(&addr)
+            .may_load(deps.storage)?)
+        .unwrap_or(0);
     Ok(MintCountResponse {
         address: addr.to_string(),
         count: mint_count,
-        whitelist_count: whitelist_mint_count,
+        whitelist_count: standard_wl_count + tiered_wl_count,
     })
 }
 
