@@ -21,7 +21,7 @@ use open_edition_factory::msg::{OpenEditionMinterCreateMsg, ParamsResponse};
 use open_edition_factory::state::OpenEditionMinterParams;
 use open_edition_factory::types::NftMetadataType;
 use semver::Version;
-use sg1::{checked_fair_burn, ibc_denom_fair_burn};
+use sg1::distribute_mint_fees;
 use sg2::query::Sg2QueryMsg;
 use sg4::{MinterConfig, Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
@@ -536,30 +536,15 @@ fn _execute_mint(
     };
     let network_fee = mint_price.amount * mint_fee;
 
-    // This is for the network fee msg
-    // send non-native fees to community pool
-    if mint_price.denom != NATIVE_DENOM {
-        // only send non-zero amounts
-        // send portion to dev addr
-        if !network_fee.is_zero() {
-            ibc_denom_fair_burn(
-                coin(network_fee.u128(), mint_price.denom.to_string()),
-                Some(
-                    deps.api
-                        .addr_validate(&factory_params.extension.dev_fee_address)?,
-                ),
-                &mut res,
-            )?;
-        }
-    } else if !network_fee.is_zero() {
-        checked_fair_burn(
-            &info,
-            network_fee.u128(),
+    if !network_fee.is_zero() {
+        distribute_mint_fees(
+            coin(network_fee.u128(), mint_price.clone().denom),
+            &mut res,
+            false,
             Some(
                 deps.api
                     .addr_validate(&factory_params.extension.dev_fee_address)?,
             ),
-            &mut res,
         )?;
     }
 

@@ -10,6 +10,8 @@ const FEE_BURN_PERCENT: u64 = 50;
 const FOUNDATION: &str = "stars1xqz6xujjyz0r9uzn7srasle5uynmpa0zkjr5l8";
 const LAUNCHPAD_DAO_ADDRESS: &str =
     "stars1huqk6ha02jgrm69lxh8xfgl6wch9wlg7s65ujxydwdr725cxvuus423tj0";
+const LIQUIDITY_DAO_ADDRESS: &str =
+    "stars12he2ldxl950wfypvelqwkac4mdul7clzgd8wdlnmjvll8z2cc47qsatvl2";
 
 /// Burn and distribute fees and return an error if the fee is not enough
 pub fn checked_fair_burn(
@@ -66,6 +68,82 @@ pub fn ibc_denom_fair_burn(
             res.messages.push(SubMsg::new(BankMsg::Send {
                 to_address: FOUNDATION.to_string(),
                 amount: vec![fee],
+            }));
+        }
+    }
+
+    res.events.push(event);
+    Ok(())
+}
+
+pub fn distribute_mint_fees(
+    fee: Coin,
+    res: &mut Response,
+    is_featured: bool,
+    developer: Option<Addr>,
+) -> Result<(), FeeError> {
+    let liquidity_dao_ratio: Decimal = Decimal::from_ratio(1u128, 5u128);
+    let liquidity_dao_ratio_featured: Decimal = Decimal::from_ratio(1u128, 8u128);
+
+    let mut event = Event::new("mint-fee-distribution");
+
+    let liquidity_dao_percentage = if is_featured {
+        liquidity_dao_ratio_featured
+    } else {
+        liquidity_dao_ratio
+    };
+
+    match &developer {
+        Some(developer) => {
+            let dev_fee = fee
+                .amount
+                .mul_ceil(Decimal::percent(FEE_BURN_PERCENT))
+                .u128();
+            let dev_coin = coin(dev_fee, fee.denom.to_string());
+            let remaining_coin = coin(fee.amount.u128() - dev_fee, fee.denom.clone());
+
+            let liquidity_dao_fee =
+                (remaining_coin.amount.mul_ceil(liquidity_dao_percentage)).u128();
+            let liquidity_dao_coin = coin(liquidity_dao_fee, fee.denom.to_string());
+            let foundation_coin = coin(remaining_coin.amount.u128() - liquidity_dao_fee, fee.denom);
+
+            event = event.add_attribute("dev_addr", developer.to_string());
+            event = event.add_attribute("dev_coin", dev_coin.to_string());
+            event = event.add_attribute("liquidity_DAO_addr", LIQUIDITY_DAO_ADDRESS.to_string());
+            event = event.add_attribute("liquidity_DAO_coin", liquidity_dao_coin.to_string());
+            event = event.add_attribute("foundation_addr", FOUNDATION.to_string());
+            event = event.add_attribute("foundation_coin", foundation_coin.to_string());
+
+            res.messages.push(SubMsg::new(BankMsg::Send {
+                to_address: developer.to_string(),
+                amount: vec![dev_coin],
+            }));
+            res.messages.push(SubMsg::new(BankMsg::Send {
+                to_address: LIQUIDITY_DAO_ADDRESS.to_string(),
+                amount: vec![liquidity_dao_coin],
+            }));
+            res.messages.push(SubMsg::new(BankMsg::Send {
+                to_address: FOUNDATION.to_string(),
+                amount: vec![foundation_coin],
+            }));
+        }
+        None => {
+            let liquidity_dao_fee = fee.amount.mul_ceil(liquidity_dao_percentage).u128();
+            let liquidity_dao_coin = coin(liquidity_dao_fee, fee.denom.to_string());
+            let foundation_coin = coin(fee.amount.u128() - liquidity_dao_fee, fee.denom);
+
+            event = event.add_attribute("liquidity_DAO_addr", LIQUIDITY_DAO_ADDRESS.to_string());
+            event = event.add_attribute("liquidity_DAO_coin", liquidity_dao_coin.to_string());
+            event = event.add_attribute("foundation_addr", FOUNDATION.to_string());
+            event = event.add_attribute("foundation_coin", foundation_coin.to_string());
+
+            res.messages.push(SubMsg::new(BankMsg::Send {
+                to_address: LIQUIDITY_DAO_ADDRESS.to_string(),
+                amount: vec![liquidity_dao_coin],
+            }));
+            res.messages.push(SubMsg::new(BankMsg::Send {
+                to_address: FOUNDATION.to_string(),
+                amount: vec![foundation_coin],
             }));
         }
     }
