@@ -230,7 +230,7 @@ pub fn execute_receive_nft(
     recipient: Option<String>,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
-    let mut action = "receive_nft";
+    let mut action = "receive_and_burn_nft";
     ensure!(
         env.block.time > config.extension.start_time,
         ContractError::BeforeMintStartTime {}
@@ -275,18 +275,36 @@ pub fn execute_receive_nft(
         config.extension.mint_tokens,
     )?;
 
+    // Create the burn message for the received token
+    let burn_msg = Sg721ExecuteMsg::<Extension, Empty>::Burn {
+        token_id: token_id.clone(),
+    };
+    let burn_cosmos_msg = CosmosMsg::Wasm(WasmMsg::Execute {
+        contract_addr: info.sender.to_string(),
+        msg: to_json_binary(&burn_msg)?,
+        funds: vec![],
+    });
+
     if !mint_requirement_fulfilled {
         return Ok(Response::new()
+            .add_message(burn_cosmos_msg)
             .add_attribute("action", action)
             .add_attribute("sender", sender)
             .add_attribute("collection", info.sender.to_string())
             .add_attribute("token_id", token_id));
     }
 
-    RECEIVED_TOKENS.remove(deps.storage, (&recipient_addr, info.sender.to_string()));
-
-    action = "mint_sender";
-    _execute_mint(deps, env, info, action, false, Some(recipient_addr), None)
+    action = "burn_and_mint_nft";
+    _execute_mint(
+        deps,
+        env,
+        info,
+        action,
+        false,
+        Some(recipient_addr),
+        None,
+        Some(burn_cosmos_msg),
+    )
 }
 
 // Purge frees data after a mint is sold out
@@ -382,7 +400,7 @@ pub fn execute_mint_to(
         ));
     }
 
-    _execute_mint(deps, env, info, action, true, Some(recipient), None)
+    _execute_mint(deps, env, info, action, true, Some(recipient), None, None)
 }
 
 pub fn execute_mint_for(
@@ -411,6 +429,7 @@ pub fn execute_mint_for(
         true,
         Some(recipient),
         Some(token_id),
+        None,
     )
 }
 
@@ -434,6 +453,7 @@ fn check_all_mint_tokens_received(
 // ReceiveNFT -> _execute_mint(recipient: None, token_id: None)
 // mint_to(recipient: "friend") -> _execute_mint(Some(recipient), token_id: None)
 // mint_for(recipient: "friend2", token_id: 420) -> _execute_mint(recipient, token_id)
+#[allow(clippy::too_many_arguments)]
 fn _execute_mint(
     deps: DepsMut,
     env: Env,
@@ -442,6 +462,7 @@ fn _execute_mint(
     is_admin: bool,
     recipient: Option<Addr>,
     token_id: Option<u32>,
+    burn_message: Option<CosmosMsg<StargazeMsgWrapper>>,
 ) -> Result<Response, ContractError> {
     let mut network_fee = Uint128::zero();
     let mintable_num_tokens = MINTABLE_NUM_TOKENS.load(deps.storage)?;
@@ -541,6 +562,18 @@ fn _execute_mint(
         funds: vec![],
     });
     res = res.add_message(msg);
+
+    // Burn the final token received
+    if let Some(burn_message) = burn_message {
+        res = res.add_message(burn_message);
+        // Clear received tokens record for recipient
+        for mint_token in config.extension.mint_tokens.iter() {
+            RECEIVED_TOKENS.remove(
+                deps.storage,
+                (&recipient_addr, mint_token.collection.clone()),
+            );
+        }
+    }
 
     // Remove mintable token position from map
     MINTABLE_TOKEN_POSITIONS.remove(deps.storage, mintable_token_mapping.position);
