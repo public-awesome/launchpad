@@ -2,20 +2,13 @@ use cosmwasm_schema::cw_serde;
 use cosmwasm_std::Timestamp;
 use cw721::Cw721ReceiveMsg;
 use token_merge_factory::msg::MintToken;
-use vending_factory::{msg::VendingMinterCreateMsg, state::VendingMinterParams};
-
-#[cw_serde]
-pub struct InstantiateMsg {
-    pub create_msg: VendingMinterCreateMsg,
-    pub params: VendingMinterParams,
-}
 
 #[cw_serde]
 pub enum ExecuteMsg {
     ReceiveNft(Cw721ReceiveMsg),
     Purge {},
     UpdateStartTime(Timestamp),
-    /// Runs custom checks against TradingStartTime on VendingMinter, then updates by calling sg721-base
+    /// Runs custom checks against TradingStartTime on TokenMergeMinter, then updates by calling sg721-base
     UpdateStartTradingTime(Option<Timestamp>),
     UpdatePerAddressLimit {
         per_address_limit: u32,

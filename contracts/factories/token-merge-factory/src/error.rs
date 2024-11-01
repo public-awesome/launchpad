@@ -21,6 +21,9 @@ pub enum ContractError {
     #[error("Factory frozen. Cannot make new minters.")]
     Frozen {},
 
+    #[error("InvalidCodeId")]
+    InvalidCollectionCodeId {},
+
     #[error("InvalidNumTokens {max}, min: 1")]
     InvalidNumTokens { max: u32, min: u32 },
 

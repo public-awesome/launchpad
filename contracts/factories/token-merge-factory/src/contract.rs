@@ -1,4 +1,3 @@
-use base_factory::contract::must_be_allowed_collection;
 use base_factory::ContractError as BaseContractError;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
@@ -10,13 +9,12 @@ use cw2::set_contract_version;
 use cw_utils::must_pay;
 use semver::Version;
 use sg1::{checked_fair_burn, transfer_funds_to_launchpad_dao};
-use sg2::query::{AllowedCollectionCodeIdResponse, AllowedCollectionCodeIdsResponse, Sg2QueryMsg};
 use sg_std::{Response, NATIVE_DENOM};
 
 use crate::error::ContractError;
 use crate::msg::{
-    ExecuteMsg, InstantiateMsg, ParamsResponse, SudoMsg, TokenMergeMinterCreateMsg,
-    TokenMergeUpdateParamsMsg,
+    AllowedCollectionCodeIdResponse, AllowedCollectionCodeIdsResponse, ExecuteMsg, InstantiateMsg,
+    ParamsResponse, QueryMsg, SudoMsg, TokenMergeMinterCreateMsg, TokenMergeUpdateParamsMsg,
 };
 use crate::state::SUDO_PARAMS;
 
@@ -59,7 +57,12 @@ pub fn execute_create_minter(
 ) -> Result<Response, ContractError> {
     let params = SUDO_PARAMS.load(deps.storage)?;
     must_pay(&info, &params.creation_fee.denom)?;
-    must_be_allowed_collection(deps.as_ref(), msg.collection_params.code_id)?;
+    ensure!(
+        params
+            .allowed_sg721_code_ids
+            .contains(&msg.collection_params.code_id),
+        ContractError::InvalidCollectionCodeId {}
+    );
 
     ensure!(!params.frozen, ContractError::Frozen {});
 
@@ -160,13 +163,13 @@ pub fn sudo_update_params(
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(deps: Deps, _env: Env, msg: Sg2QueryMsg) -> StdResult<Binary> {
+pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        Sg2QueryMsg::Params {} => to_json_binary(&query_params(deps)?),
-        Sg2QueryMsg::AllowedCollectionCodeIds {} => {
+        QueryMsg::Params {} => to_json_binary(&query_params(deps)?),
+        QueryMsg::AllowedCollectionCodeIds {} => {
             to_json_binary(&query_allowed_collection_code_ids(deps)?)
         }
-        Sg2QueryMsg::AllowedCollectionCodeId(code_id) => {
+        QueryMsg::AllowedCollectionCodeId(code_id) => {
             to_json_binary(&query_allowed_collection_code_id(deps, code_id)?)
         }
     }

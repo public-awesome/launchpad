@@ -23,13 +23,13 @@ use rand_core::{RngCore, SeedableRng};
 use rand_xoshiro::Xoshiro128PlusPlus;
 use semver::Version;
 use sg1::{checked_fair_burn, distribute_mint_fees};
-use sg2::query::Sg2QueryMsg;
 use sg4::{Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
 use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME};
 use sha2::{Digest, Sha256};
 use shuffle::{fy::FisherYates, shuffler::Shuffler};
 use std::convert::TryInto;
+use token_merge_factory::msg::QueryMsg as FactoryQueryMsg;
 use token_merge_factory::msg::{MintToken, ParamsResponse, TokenMergeMinterCreateMsg};
 use url::Url;
 pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
@@ -61,7 +61,7 @@ pub fn instantiate(
     // This will fail if the sender cannot parse a response from the factory contract
     let factory_response: ParamsResponse = deps
         .querier
-        .query_wasm_smart(factory.clone(), &Sg2QueryMsg::Params {})?;
+        .query_wasm_smart(factory.clone(), &FactoryQueryMsg::Params {})?;
     let factory_params = factory_response.params;
 
     // set default status so it can be queried without failing
@@ -283,6 +283,8 @@ pub fn execute_receive_nft(
             .add_attribute("token_id", token_id));
     }
 
+    RECEIVED_TOKENS.remove(deps.storage, (&recipient_addr, info.sender.to_string()));
+
     action = "mint_sender";
     _execute_mint(deps, env, info, action, false, Some(recipient_addr), None)
 }
@@ -328,7 +330,7 @@ pub fn execute_shuffle(
 
     let factory: ParamsResponse = deps
         .querier
-        .query_wasm_smart(config.factory, &Sg2QueryMsg::Params {})?;
+        .query_wasm_smart(config.factory, &FactoryQueryMsg::Params {})?;
     let factory_params = factory.params;
 
     // Check exact shuffle fee payment included in message
@@ -464,7 +466,7 @@ fn _execute_mint(
 
     let factory: ParamsResponse = deps
         .querier
-        .query_wasm_smart(config.factory, &Sg2QueryMsg::Params {})?;
+        .query_wasm_smart(config.factory, &FactoryQueryMsg::Params {})?;
     let factory_params = factory.params;
 
     if is_admin {
@@ -679,7 +681,7 @@ pub fn execute_update_start_trading_time(
     // add custom rules here
     let factory_params: ParamsResponse = deps
         .querier
-        .query_wasm_smart(config.factory.clone(), &Sg2QueryMsg::Params {})?;
+        .query_wasm_smart(config.factory.clone(), &FactoryQueryMsg::Params {})?;
     let default_start_time_with_offset = config
         .extension
         .start_time
@@ -732,7 +734,7 @@ pub fn execute_update_per_address_limit(
 
     let factory: ParamsResponse = deps
         .querier
-        .query_wasm_smart(config.factory.clone(), &Sg2QueryMsg::Params {})?;
+        .query_wasm_smart(config.factory.clone(), &FactoryQueryMsg::Params {})?;
     let factory_params = factory.params;
 
     if per_address_limit == 0 || per_address_limit > factory_params.max_per_address_limit {

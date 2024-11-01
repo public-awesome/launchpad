@@ -1,12 +1,11 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::Coin;
 use cw_storage_plus::Item;
-use sg2::CodeId;
 
 #[cw_serde]
-pub struct TokenMergeMinterParams {
+pub struct TokenMergeFactoryParams {
     pub code_id: u64,
-    pub allowed_sg721_code_ids: Vec<CodeId>,
+    pub allowed_sg721_code_ids: Vec<u64>,
     pub frozen: bool,
     pub creation_fee: Coin,
     pub max_trading_offset_secs: u64,
@@ -17,4 +16,4 @@ pub struct TokenMergeMinterParams {
     pub shuffle_fee: Coin,
 }
 
-pub const SUDO_PARAMS: Item<TokenMergeMinterParams> = Item::new("sudo-params");
+pub const SUDO_PARAMS: Item<TokenMergeFactoryParams> = Item::new("sudo-params");

@@ -43,13 +43,11 @@ serde           = { workspace = true }
 sha2            = { workspace = true }
 shuffle         = { git = "https://github.com/webmaster128/shuffle", branch = "rm-getrandom", version = "0.1.7" }
 sg1             = { workspace = true }
-sg2             = { workspace = true }
 sg4             = { workspace = true }
 sg721           = { workspace = true }
 sg-std          = { workspace = true }
 sg-whitelist    = { workspace = true, features = ["library"] }
 thiserror       = { workspace = true }
 url             = { workspace = true }
-vending-factory = { workspace = true, features = ["library"] }
 token-merge-factory = { workspace = true, features = ["library"] }
 semver           = {workspace = true  }
