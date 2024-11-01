@@ -3,8 +3,7 @@ use std::fs::create_dir_all;
 
 use cosmwasm_schema::{export_schema, remove_schemas, schema_for};
 
-use sg2::query::Sg2QueryMsg;
-use token_merge_factory::msg::InstantiateMsg;
+use token_merge_factory::msg::{InstantiateMsg, QueryMsg};
 
 fn main() {
     let mut out_dir = current_dir().unwrap();
@@ -13,5 +12,5 @@ fn main() {
     remove_schemas(&out_dir).unwrap();
 
     export_schema(&schema_for!(InstantiateMsg), &out_dir);
-    export_schema(&schema_for!(Sg2QueryMsg), &out_dir);
+    export_schema(&schema_for!(QueryMsg), &out_dir);
 }
