@@ -5,9 +5,10 @@ use crate::error::ContractError;
 use crate::helpers::validators::map_validate;
 use crate::helpers::{fetch_active_stage, fetch_active_stage_index, validate_stages};
 use crate::msg::{
-    AddMembersMsg, ConfigResponse, ExecuteMsg, HasEndedResponse, HasMemberResponse,
-    HasStartedResponse, InstantiateMsg, IsActiveResponse, Member, MembersResponse, QueryMsg,
-    RemoveMembersMsg, StageMemberInfoResponse, StageResponse, StagesResponse, UpdateStageConfigMsg,
+    AddMembersMsg, AllStageMemberInfoResponse, ConfigResponse, ExecuteMsg, HasEndedResponse,
+    HasMemberResponse, HasStartedResponse, InstantiateMsg, IsActiveResponse, Member,
+    MembersResponse, QueryMsg, RemoveMembersMsg, StageMemberInfoResponse, StageResponse,
+    StagesResponse, UpdateStageConfigMsg,
 };
 use crate::state::{AdminList, Config, Stage, ADMIN_LIST, CONFIG, WHITELIST_STAGES};
 #[cfg(not(feature = "library"))]
@@ -399,6 +400,9 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::StageMemberInfo { stage_id, member } => {
             to_json_binary(&query_stage_member_info(deps, stage_id, member)?)
         }
+        QueryMsg::AllStageMemberInfo { member } => {
+            to_json_binary(&query_all_stage_member_info(deps, member)?)
+        }
         QueryMsg::Config {} => to_json_binary(&query_config(deps, env)?),
         QueryMsg::Stage { stage_id } => to_json_binary(&query_stage(deps, stage_id)?),
         QueryMsg::Stages {} => to_json_binary(&query_stage_list(deps)?),
@@ -474,8 +478,30 @@ pub fn query_stage_member_info(
     let addr = deps.api.addr_validate(&member)?;
     let mint_count = WHITELIST_STAGES.may_load(deps.storage, (stage_id, addr.clone()))?;
     Ok(StageMemberInfoResponse {
+        stage_id,
         is_member: mint_count.is_some(),
         per_address_limit: mint_count.unwrap_or(0),
+    })
+}
+
+pub fn query_all_stage_member_info(
+    deps: Deps,
+    member: String,
+) -> StdResult<AllStageMemberInfoResponse> {
+    let addr = deps.api.addr_validate(&member)?;
+    let config = CONFIG.load(deps.storage)?;
+    let mut all_stage_member_info = vec![];
+    for stage_id in 0..config.stages.len() {
+        let mint_count =
+            WHITELIST_STAGES.may_load(deps.storage, (stage_id as u32, addr.clone()))?;
+        all_stage_member_info.push(StageMemberInfoResponse {
+            stage_id: stage_id as u32,
+            is_member: mint_count.is_some(),
+            per_address_limit: mint_count.unwrap_or(0),
+        });
+    }
+    Ok(AllStageMemberInfoResponse {
+        all_stage_member_info,
     })
 }
 
