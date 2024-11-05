@@ -220,8 +220,8 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::CanExecute { sender, .. } => to_json_binary(&query_can_execute(deps, &sender)?),
         QueryMsg::Stage { stage_id } => to_json_binary(&query_stage(deps, stage_id)?),
         QueryMsg::Stages {} => to_json_binary(&query_stage_list(deps)?),
-        QueryMsg::MerkleRoot {} => to_json_binary(&query_merkle_root(deps)?),
-        QueryMsg::MerkleTreeURI {} => to_json_binary(&query_merkle_tree_uri(deps)?),
+        QueryMsg::MerkleRoots {} => to_json_binary(&query_merkle_roots(deps)?),
+        QueryMsg::MerkleTreeURIs {} => to_json_binary(&query_merkle_tree_uris(deps)?),
     }
 }
 
@@ -330,15 +330,15 @@ pub fn query_config(deps: Deps, env: Env) -> StdResult<ConfigResponse> {
     }
 }
 
-pub fn query_merkle_root(deps: Deps) -> StdResult<MerkleRootResponse> {
+pub fn query_merkle_roots(deps: Deps) -> StdResult<MerkleRootResponse> {
     Ok(MerkleRootResponse {
-        merkle_root: MERKLE_ROOTS.load(deps.storage)?,
+        merkle_roots: MERKLE_ROOTS.load(deps.storage)?,
     })
 }
 
-pub fn query_merkle_tree_uri(deps: Deps) -> StdResult<MerkleTreeURIResponse> {
+pub fn query_merkle_tree_uris(deps: Deps) -> StdResult<MerkleTreeURIResponse> {
     Ok(MerkleTreeURIResponse {
-        merkle_tree_uri: MERKLE_TREE_URIS.may_load(deps.storage)?,
+        merkle_tree_uris: MERKLE_TREE_URIS.may_load(deps.storage)?,
     })
 }
 
@@ -348,8 +348,10 @@ pub fn query_stage(deps: Deps, stage_id: u32) -> StdResult<StageResponse> {
         stage_id < config.stages.len() as u32,
         StdError::generic_err("Stage not found")
     );
+    let merkle_root = MERKLE_ROOTS.load(deps.storage)?[stage_id as usize].clone();
     Ok(StageResponse {
         stage: config.stages[stage_id as usize].clone(),
+        merkle_root,
     })
 }
 
@@ -359,8 +361,10 @@ pub fn query_stage_list(deps: Deps) -> StdResult<StagesResponse> {
         !config.stages.is_empty(),
         StdError::generic_err("No stages found")
     );
+    let merkle_roots = MERKLE_ROOTS.load(deps.storage)?;
     Ok(StagesResponse {
         stages: config.stages.clone(),
+        merkle_roots,
     })
 }
 

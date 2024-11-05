@@ -76,6 +76,10 @@ pub enum QueryMsg {
     HasMember {
         member: String,
     },
+    StageMemberInfo {
+        member: String,
+        stage_id: u32,
+    },
     Config {},
 
     Stage {
@@ -154,4 +158,10 @@ pub struct StageResponse {
 #[cw_serde]
 pub struct StagesResponse {
     pub stages: Vec<Stage>,
+}
+
+#[cw_serde]
+pub struct StageMemberInfoResponse {
+    pub is_member: bool,
+    pub per_address_limit: u32,
 }

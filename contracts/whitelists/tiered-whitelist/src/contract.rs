@@ -7,7 +7,7 @@ use crate::helpers::{fetch_active_stage, fetch_active_stage_index, validate_stag
 use crate::msg::{
     AddMembersMsg, ConfigResponse, ExecuteMsg, HasEndedResponse, HasMemberResponse,
     HasStartedResponse, InstantiateMsg, IsActiveResponse, MembersResponse, QueryMsg,
-    RemoveMembersMsg, StageResponse, StagesResponse, UpdateStageConfigMsg,
+    RemoveMembersMsg, StageMemberInfoResponse, StageResponse, StagesResponse, UpdateStageConfigMsg,
 };
 use crate::state::{AdminList, Config, Stage, ADMIN_LIST, CONFIG, WHITELIST_STAGES};
 #[cfg(not(feature = "library"))]
@@ -396,6 +396,9 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
             to_json_binary(&fetch_active_stage_index(deps.storage, &env).map_or(0, |i| i + 1))
         }
         QueryMsg::HasMember { member } => to_json_binary(&query_has_member(deps, env, member)?),
+        QueryMsg::StageMemberInfo { stage_id, member } => {
+            to_json_binary(&query_stage_member_info(deps, stage_id, member)?)
+        }
         QueryMsg::Config {} => to_json_binary(&query_config(deps, env)?),
         QueryMsg::Stage { stage_id } => to_json_binary(&query_stage(deps, stage_id)?),
         QueryMsg::Stages {} => to_json_binary(&query_stage_list(deps)?),
@@ -454,6 +457,21 @@ pub fn query_has_member(deps: Deps, env: Env, member: String) -> StdResult<HasMe
         None => false,
     };
     Ok(HasMemberResponse { has_member })
+}
+
+pub fn query_stage_member_info(
+    deps: Deps,
+    stage_id: u32,
+    member: String,
+) -> StdResult<StageMemberInfoResponse> {
+    let addr = deps.api.addr_validate(&member)?;
+    let stage = CONFIG.load(deps.storage)?;
+    let stage = stage.stages[stage_id as usize].clone();
+    let is_member = WHITELIST_STAGES.has(deps.storage, (stage_id, addr.clone()));
+    Ok(StageMemberInfoResponse {
+        is_member,
+        per_address_limit: stage.per_address_limit,
+    })
 }
 
 pub fn query_config(deps: Deps, env: Env) -> StdResult<ConfigResponse> {

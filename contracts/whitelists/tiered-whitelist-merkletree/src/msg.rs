@@ -72,9 +72,9 @@ pub enum QueryMsg {
         msg: CosmosMsg<Empty>,
     },
     #[returns(MerkleRootResponse)]
-    MerkleRoot {},
+    MerkleRoots {},
     #[returns(MerkleTreeURIResponse)]
-    MerkleTreeURI {},
+    MerkleTreeURIs {},
 }
 
 #[cw_serde]
@@ -115,12 +115,12 @@ pub struct ConfigResponse {
 
 #[cw_serde]
 pub struct MerkleRootResponse {
-    pub merkle_root: Vec<String>,
+    pub merkle_roots: Vec<String>,
 }
 
 #[cw_serde]
 pub struct MerkleTreeURIResponse {
-    pub merkle_tree_uri: Option<Vec<String>>,
+    pub merkle_tree_uris: Option<Vec<String>>,
 }
 
 #[cw_serde]
@@ -139,9 +139,11 @@ pub struct CanExecuteResponse {
 #[cw_serde]
 pub struct StageResponse {
     pub stage: Stage,
+    pub merkle_root: String,
 }
 
 #[cw_serde]
 pub struct StagesResponse {
     pub stages: Vec<Stage>,
+    pub merkle_roots: Vec<String>,
 }
