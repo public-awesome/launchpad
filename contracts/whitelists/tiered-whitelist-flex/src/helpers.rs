@@ -1,7 +1,6 @@
 pub mod interface;
 pub mod validators;
 
-use crate::contract::MIN_MINT_PRICE;
 use crate::state::{Config, Stage, CONFIG};
 use crate::ContractError;
 use cosmwasm_std::{ensure, Env, StdError, Storage};
@@ -36,20 +35,20 @@ pub fn validate_stages(env: &Env, stages: &[Stage]) -> Result<(), ContractError>
         StdError::generic_err("Cannot have more than 3 stages")
     );
 
-    // Check mint price is valid
-    if stages
-        .iter()
-        .any(|stage| stage.mint_price.amount.u128() < MIN_MINT_PRICE)
-    {
-        return Err(ContractError::InvalidUnitPrice(
-            MIN_MINT_PRICE,
-            stages
-                .iter()
-                .map(|s| s.mint_price.amount.u128())
-                .min()
-                .unwrap(),
-        ));
-    }
+    // // Check mint price is valid
+    // if stages
+    //     .iter()
+    //     .any(|stage| stage.mint_price.amount.u128() < MIN_MINT_PRICE)
+    // {
+    //     return Err(ContractError::InvalidUnitPrice(
+    //         MIN_MINT_PRICE,
+    //         stages
+    //             .iter()
+    //             .map(|s| s.mint_price.amount.u128())
+    //             .min()
+    //             .unwrap(),
+    //     ));
+    // }
 
     ensure!(
         stages[0].start_time > env.block.time,

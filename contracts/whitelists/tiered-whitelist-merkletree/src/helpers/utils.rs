@@ -1,4 +1,4 @@
-use crate::contract::{MAX_PER_ADDRESS_LIMIT, MIN_MINT_PRICE};
+use crate::contract::MAX_PER_ADDRESS_LIMIT;
 use crate::state::{Config, Stage, CONFIG};
 use crate::ContractError;
 use cosmwasm_std::{ensure, Env, StdError, StdResult, Storage};
@@ -59,20 +59,20 @@ pub fn validate_stages(env: &Env, stages: &[Stage]) -> Result<(), ContractError>
         });
     }
 
-    // Check mint price is valid
-    if stages
-        .iter()
-        .any(|stage| stage.mint_price.amount.u128() < MIN_MINT_PRICE)
-    {
-        return Err(ContractError::InvalidUnitPrice(
-            MIN_MINT_PRICE,
-            stages
-                .iter()
-                .map(|s| s.mint_price.amount.u128())
-                .min()
-                .unwrap(),
-        ));
-    }
+    // // Check mint price is valid
+    // if stages
+    //     .iter()
+    //     .any(|stage| stage.mint_price.amount.u128() < MIN_MINT_PRICE)
+    // {
+    //     return Err(ContractError::InvalidUnitPrice(
+    //         MIN_MINT_PRICE,
+    //         stages
+    //             .iter()
+    //             .map(|s| s.mint_price.amount.u128())
+    //             .min()
+    //             .unwrap(),
+    //     ));
+    // }
 
     ensure!(
         stages[0].start_time > env.block.time,

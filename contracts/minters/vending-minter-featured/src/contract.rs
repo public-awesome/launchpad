@@ -613,6 +613,7 @@ pub fn execute_mint_for(
 // mint -> _execute_mint(recipient: None, token_id: None)
 // mint_to(recipient: "friend") -> _execute_mint(Some(recipient), token_id: None)
 // mint_for(recipient: "friend2", token_id: 420) -> _execute_mint(recipient, token_id)
+#[allow(clippy::too_many_arguments)]
 fn _execute_mint(
     deps: DepsMut,
     env: Env,
