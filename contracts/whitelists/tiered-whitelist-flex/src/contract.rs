@@ -10,7 +10,7 @@ use crate::msg::{
     MembersResponse, QueryMsg, RemoveMembersMsg, StageMemberInfoResponse, StageResponse,
     StagesResponse, UpdateStageConfigMsg,
 };
-use crate::state::{AdminList, Config, Stage, ADMIN_LIST, CONFIG, WHITELIST_STAGES};
+use crate::state::{AdminList, Config, Stage, ADMIN_LIST, CONFIG, MEMBER_COUNT, WHITELIST_STAGES};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
@@ -104,6 +104,11 @@ pub fn instantiate(
     }
 
     for stage in 0..msg.stages.clone().len() {
+        MEMBER_COUNT.save(
+            deps.storage,
+            stage as u32,
+            &(msg.members[stage].len() as u32),
+        )?;
         for member in msg.members[stage].iter() {
             let addr = deps.api.addr_validate(&member.address)?;
             if let Some(whale_cap) = config.whale_cap {
@@ -205,6 +210,9 @@ pub fn execute_add_members(
         }
         members_added += 1;
         WHITELIST_STAGES.save(deps.storage, (msg.stage_id, addr.clone()), &add.mint_count)?;
+        MEMBER_COUNT.update(deps.storage, msg.stage_id, |count| {
+            Ok::<u32, StdError>(count.unwrap_or(0) + 1)
+        })?;
         config.num_members += 1;
     }
 
@@ -242,6 +250,9 @@ pub fn execute_remove_members(
             return Err(ContractError::NoMemberFound(addr.to_string()));
         }
         WHITELIST_STAGES.remove(deps.storage, (msg.stage_id, addr.clone()));
+        MEMBER_COUNT.update(deps.storage, msg.stage_id, |count| {
+            Ok::<u32, StdError>(count.unwrap_or(0).saturating_sub(1))
+        })?;
         config.num_members -= 1;
     }
 
@@ -270,7 +281,7 @@ pub fn execute_add_stage(
     validate_stages(&env, &config.stages)?;
     let stage_id = config.stages.len().saturating_sub(1) as u32;
 
-    for add in members.into_iter() {
+    for add in members.clone().into_iter() {
         if config.num_members >= config.member_limit {
             return Err(ContractError::MembersExceeded {
                 expected: config.member_limit,
@@ -289,6 +300,7 @@ pub fn execute_add_stage(
         WHITELIST_STAGES.save(deps.storage, (stage_id, addr.clone()), &add.mint_count)?;
         config.num_members += 1;
     }
+    MEMBER_COUNT.save(deps.storage, stage_id, &(members.len() as u32))?;
 
     CONFIG.save(deps.storage, &config)?;
     Ok(Response::new()
@@ -328,6 +340,7 @@ pub fn execute_remove_stage(
             WHITELIST_STAGES.remove(deps.storage, (stage, member));
             config.num_members -= 1;
         }
+        MEMBER_COUNT.remove(deps.storage, stage);
     }
 
     CONFIG.save(deps.storage, &config)?;
@@ -572,7 +585,7 @@ pub fn query_stage(deps: Deps, stage_id: u32) -> StdResult<StageResponse> {
     Ok(StageResponse {
         stage_id,
         stage: config.stages[stage_id as usize].clone(),
-        member_count: count_keys_for_stage(deps.storage, stage_id)?,
+        member_count: MEMBER_COUNT.may_load(deps.storage, stage_id)?.unwrap_or(0),
     })
 }
 
@@ -589,17 +602,11 @@ pub fn query_stage_list(deps: Deps) -> StdResult<StagesResponse> {
         .map(|(i, stage)| StageResponse {
             stage_id: i as u32,
             stage: stage.clone(),
-            member_count: count_keys_for_stage(deps.storage, i as u32).unwrap_or(0),
+            member_count: MEMBER_COUNT
+                .may_load(deps.storage, i as u32)
+                .unwrap_or(Some(0u32))
+                .unwrap_or(0u32),
         })
         .collect();
     Ok(StagesResponse { stages })
-}
-
-fn count_keys_for_stage(storage: &dyn cosmwasm_std::Storage, stage: u32) -> StdResult<u32> {
-    let count = WHITELIST_STAGES
-        .prefix(stage)
-        .keys(storage, None, None, Order::Ascending)
-        .count();
-
-    Ok(count as u32)
 }

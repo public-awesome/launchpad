@@ -350,6 +350,7 @@ pub fn query_stage(deps: Deps, stage_id: u32) -> StdResult<StageResponse> {
     );
     let merkle_root = MERKLE_ROOTS.load(deps.storage)?[stage_id as usize].clone();
     Ok(StageResponse {
+        stage_id,
         stage: config.stages[stage_id as usize].clone(),
         merkle_root,
     })
@@ -362,10 +363,17 @@ pub fn query_stage_list(deps: Deps) -> StdResult<StagesResponse> {
         StdError::generic_err("No stages found")
     );
     let merkle_roots = MERKLE_ROOTS.load(deps.storage)?;
-    Ok(StagesResponse {
-        stages: config.stages.clone(),
-        merkle_roots,
-    })
+    let stages = config
+        .stages
+        .iter()
+        .enumerate()
+        .map(|(i, stage)| StageResponse {
+            stage_id: i as u32,
+            stage: stage.clone(),
+            merkle_root: merkle_roots[i].clone(),
+        })
+        .collect();
+    Ok(StagesResponse { stages })
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
