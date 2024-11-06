@@ -138,12 +138,12 @@ pub struct CanExecuteResponse {
 
 #[cw_serde]
 pub struct StageResponse {
+    pub stage_id: u32,
     pub stage: Stage,
     pub merkle_root: String,
 }
 
 #[cw_serde]
 pub struct StagesResponse {
-    pub stages: Vec<Stage>,
-    pub merkle_roots: Vec<String>,
+    pub stages: Vec<StageResponse>,
 }
