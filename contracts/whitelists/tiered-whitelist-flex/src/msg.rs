@@ -169,12 +169,14 @@ pub struct CanExecuteResponse {
 
 #[cw_serde]
 pub struct StageResponse {
+    pub stage_id: u32,
     pub stage: Stage,
+    pub member_count: u32,
 }
 
 #[cw_serde]
 pub struct StagesResponse {
-    pub stages: Vec<Stage>,
+    pub stages: Vec<StageResponse>,
 }
 
 #[cw_serde]

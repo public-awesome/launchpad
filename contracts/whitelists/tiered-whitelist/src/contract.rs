@@ -550,7 +550,9 @@ pub fn query_stage(deps: Deps, stage_id: u32) -> StdResult<StageResponse> {
         StdError::generic_err("Stage not found")
     );
     Ok(StageResponse {
+        stage_id,
         stage: config.stages[stage_id as usize].clone(),
+        member_count: count_keys_for_stage(deps.storage, stage_id)?,
     })
 }
 
@@ -560,7 +562,24 @@ pub fn query_stage_list(deps: Deps) -> StdResult<StagesResponse> {
         !config.stages.is_empty(),
         StdError::generic_err("No stages found")
     );
-    Ok(StagesResponse {
-        stages: config.stages.clone(),
-    })
+    let stages = config
+        .stages
+        .iter()
+        .enumerate()
+        .map(|(i, stage)| StageResponse {
+            stage_id: i as u32,
+            stage: stage.clone(),
+            member_count: count_keys_for_stage(deps.storage, i as u32).unwrap_or(0),
+        })
+        .collect();
+    Ok(StagesResponse { stages })
+}
+
+fn count_keys_for_stage(storage: &dyn cosmwasm_std::Storage, stage: u32) -> StdResult<u32> {
+    let count = WHITELIST_STAGES
+        .prefix(stage)
+        .keys(storage, None, None, Order::Ascending)
+        .count();
+
+    Ok(count as u32)
 }
