@@ -40,3 +40,5 @@ pub const ADMIN_LIST: Item<AdminList> = Item::new("admin_list");
 pub const CONFIG: Item<Config> = Item::new("config");
 
 pub const WHITELIST_STAGES: Map<(u32, Addr), bool> = Map::new("wl_stages");
+
+pub const MEMBER_COUNT: Map<u32, u32> = Map::new("member_count");
