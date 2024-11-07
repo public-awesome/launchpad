@@ -252,8 +252,6 @@ pub fn query_has_member(
     env: Env,
     proof_hashes: Vec<String>,
 ) -> StdResult<HasMemberResponse> {
-    deps.api.addr_validate(&member)?;
-
     let active_stage = fetch_active_stage_index(deps.storage, &env)
         .ok_or_else(|| StdError::generic_err("No active stage found"))?;
 
