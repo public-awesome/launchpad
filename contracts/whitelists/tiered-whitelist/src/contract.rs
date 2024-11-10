@@ -326,8 +326,6 @@ pub fn execute_remove_stage(
         env.block.time < config.stages[stage_id as usize].start_time,
         ContractError::AlreadyStarted {}
     );
-    // remove the stage and following stages permanently
-    config.stages = config.stages.into_iter().take(stage_id as usize).collect();
 
     // remove members from the WHITELIST_STAGES for stage_id and following stages. Reduce the num_members count
     for stage in stage_id..config.stages.len() as u32 {
@@ -342,6 +340,9 @@ pub fn execute_remove_stage(
         }
         MEMBER_COUNT.remove(deps.storage, stage);
     }
+
+    // remove the stage and following stages permanently
+    config.stages = config.stages.into_iter().take(stage_id as usize).collect();
 
     CONFIG.save(deps.storage, &config)?;
     Ok(Response::new()
