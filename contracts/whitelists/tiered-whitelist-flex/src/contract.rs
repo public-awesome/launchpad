@@ -14,8 +14,8 @@ use crate::state::{AdminList, Config, Stage, ADMIN_LIST, CONFIG, MEMBER_COUNT, W
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    ensure, to_json_binary, Binary, Coin, Deps, DepsMut, Env, MessageInfo, StdResult, Timestamp,
-    Uint128,
+    ensure, to_json_binary, Addr, Binary, Coin, Deps, DepsMut, Env, MessageInfo, StdResult,
+    Timestamp, Uint128,
 };
 use cosmwasm_std::{Order, StdError};
 use cw2::set_contract_version;
@@ -305,7 +305,7 @@ pub fn execute_add_stage(
     CONFIG.save(deps.storage, &config)?;
     Ok(Response::new()
         .add_attribute("action", "add_stage")
-        .add_attribute("stage_id", config.stages.len().to_string())
+        .add_attribute("stage_count", config.stages.len().to_string())
         .add_attribute("sender", info.sender))
 }
 
@@ -331,22 +331,23 @@ pub fn execute_remove_stage(
     for stage in stage_id..config.stages.len() as u32 {
         let members = WHITELIST_STAGES
             .prefix(stage)
-            .keys(deps.storage, None, None, Order::Ascending)
-            .map(|key| key.unwrap())
-            .collect::<Vec<_>>();
-        for member in members.into_iter() {
+            .range(deps.storage, None, None, Order::Ascending)
+            .map(|addr| addr.unwrap().0)
+            .collect::<Vec<Addr>>();
+        for member in members {
             WHITELIST_STAGES.remove(deps.storage, (stage, member));
             config.num_members -= 1;
         }
         MEMBER_COUNT.remove(deps.storage, stage);
     }
+
     // remove the stage and following stages permanently
     config.stages = config.stages.into_iter().take(stage_id as usize).collect();
 
     CONFIG.save(deps.storage, &config)?;
     Ok(Response::new()
-        .add_attribute("action", "add_stage")
-        .add_attribute("stage_id", config.stages.len().to_string())
+        .add_attribute("action", "remove_stage")
+        .add_attribute("stage_count", config.stages.len().to_string())
         .add_attribute("sender", info.sender))
 }
 
