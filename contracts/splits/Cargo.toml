@@ -38,3 +38,4 @@ serde           = { workspace = true }
 sg-controllers  = { workspace = true }
 sg-std          = { workspace = true }
 thiserror       = { workspace = true }
+semver          = {workspace = true }

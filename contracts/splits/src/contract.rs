@@ -1,12 +1,13 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coins, ensure, to_json_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Deps, DepsMut, Env,
-    MessageInfo, Reply, Response, StdResult, SubMsg, Uint128,
+    coins, ensure, to_json_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Deps, DepsMut, Empty,
+    Env, MessageInfo, Reply, Response, StdError, StdResult, SubMsg, Uint128,
 };
 use cw2::set_contract_version;
 use cw4::{Cw4Contract, Member, MemberListResponse, MemberResponse};
 use cw_utils::{maybe_addr, parse_reply_instantiate_data};
+use semver::Version;
 
 use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, Group, InstantiateMsg, QueryMsg};
@@ -235,4 +236,31 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractE
         }
         Err(_) => Err(ContractError::ReplyOnSuccess {}),
     }
+}
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
+    let current_version = cw2::get_contract_version(deps.storage)?;
+    if current_version.contract != CONTRACT_NAME {
+        return Err(StdError::generic_err("Cannot upgrade to a different contract").into());
+    }
+    let version: Version = current_version
+        .version
+        .parse()
+        .map_err(|_| StdError::generic_err("Invalid contract version"))?;
+    let new_version: Version = CONTRACT_VERSION
+        .parse()
+        .map_err(|_| StdError::generic_err("Invalid contract version"))?;
+
+    if version > new_version {
+        return Err(StdError::generic_err("Cannot upgrade to a previous contract version").into());
+    }
+    // if same version return
+    if version == new_version {
+        return Ok(Response::new());
+    }
+
+    // set new contract version
+    set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+    Ok(Response::new())
 }

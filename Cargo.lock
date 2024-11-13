@@ -3622,6 +3622,7 @@ dependencies = [
  "cw2 1.1.2",
  "cw4",
  "schemars",
+ "semver",
  "serde",
  "sg-controllers",
  "sg-std",
