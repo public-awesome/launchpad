@@ -294,7 +294,7 @@ pub fn execute_receive_nft(
             .add_attribute("token_id", token_id));
     }
 
-    action = "burn_and_mint_nft";
+    action = "mint_sender";
     _execute_mint(
         deps,
         env,
