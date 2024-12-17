@@ -61,6 +61,8 @@ vending-factory      = { version = "3.14.0", path = "contracts/factories/vending
 vending-minter       = { version = "3.14.0", path = "contracts/minters/vending-minter" }
 open-edition-factory = { version = "3.14.0", path = "contracts/factories/open-edition-factory" }
 open-edition-minter  = { version = "3.14.0", path = "contracts/minters/open-edition-minter" }
+token-merge-factory  = { version = "3.14.0", path = "contracts/factories/token-merge-factory" }
+token-merge-minter   = { version = "3.14.0", path = "contracts/minters/token-merge-minter" }
 whitelist-immutable  = { version = "3.14.0", path = "contracts/whitelists/whitelist-immutable" }
 sg-whitelist-flex    = { version = "3.14.0", path = "contracts/whitelists/whitelist-flex" }
 sg-tiered-whitelist-flex = { version = "3.14.0", path = "contracts/whitelists/tiered-whitelist-flex" }
