@@ -160,11 +160,11 @@ pub fn pick_token(storage: &mut dyn Storage, token_id: u32) -> Result<u32, Minte
     };
 
     // item has been picked, remove it from the bucket
-    bucket.remove(token_index as usize);
+    bucket.remove(token_index);
 
     // if the bucket is empty, remove it from the available buckets
     if bucket.is_empty() {
-        available_buckets.remove(bucket_index as usize);
+        available_buckets.remove(bucket_index);
         // if there are no more buckets, remove the available buckets key else update it with the remaining buckets
         if available_buckets.is_empty() {
             storage.remove(&AVAILABLE_BUCKETS_KEY);
