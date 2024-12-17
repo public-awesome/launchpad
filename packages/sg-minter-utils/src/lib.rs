@@ -1,5 +1,5 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::testing::mock_dependencies;
+
 use cosmwasm_std::{StdError, Storage};
 use cw_storage_plus::Item;
 use nois::{int_in_range, sub_randomness_with_key};
@@ -101,7 +101,8 @@ pub fn pick_any(storage: &mut dyn Storage, seed: [u8; 32]) -> Result<u32, Minter
     let Some(mut available_buckets) = storage.get(&AVAILABLE_BUCKETS_KEY) else {
         return Err(MinterUtilsError::NoAvailableBuckets {});
     };
-    let bucket_index = int_in_range(seed, 0, available_buckets.len() - 1) as u32;
+    let mut provider = sub_randomness_with_key(seed, b"pick_any");
+    let bucket_index = int_in_range(provider.provide(), 0, available_buckets.len() - 1) as u32;
     let bucket_id = available_buckets[bucket_index as usize];
     let bucket_key = bucket_key(bucket_id);
     let Some(mut bucket) = storage.get(&bucket_key) else {
@@ -110,7 +111,7 @@ pub fn pick_any(storage: &mut dyn Storage, seed: [u8; 32]) -> Result<u32, Minter
         });
     };
 
-    let index = int_in_range(seed, 0, bucket.len() - 1) as u32;
+    let index = int_in_range(provider.provide(), 0, bucket.len() - 1) as u32;
 
     // available correlative
     let correlative = bucket[index as usize];
@@ -253,7 +254,8 @@ mod tests {
     #[test]
     fn test_generate_mintable_tokens() {
         let mut deps = mock_dependencies();
-        initialize(&mut deps.storage, 10_000);
+        let r = initialize(&mut deps.storage, 10_000);
+        assert!(r.is_ok());
         let available_buckets = deps.storage.get(&AVAILABLE_BUCKETS_KEY).unwrap();
         assert_eq!(available_buckets.len(), 40);
         let bucket = deps.storage.get(&bucket_key(0)).unwrap();
@@ -307,13 +309,13 @@ mod tests {
         let r = initialize(&mut deps.storage, 10_000);
         assert!(r.is_ok());
         let token_id = pick_any(&mut deps.storage, provider.provide()).unwrap();
-        assert_eq!(token_id, 7659);
+        assert_eq!(token_id, 975);
 
         let (bucket_id, _) = get_bucket_and_index(token_id);
         let bucket = deps.storage.get(&bucket_key(bucket_id as u8)).unwrap();
         assert_eq!(bucket.len(), BUCKET_SIZE as usize - 1);
         let token_id = pick_any(&mut deps.storage, provider.provide()).unwrap();
-        assert_eq!(token_id, 3181);
+        assert_eq!(token_id, 367);
         let (bucket_id, _) = get_bucket_and_index(token_id);
         let bucket = deps.storage.get(&bucket_key(bucket_id as u8)).unwrap();
         assert_eq!(bucket.len(), BUCKET_SIZE as usize - 1);
