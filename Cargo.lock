@@ -2493,6 +2493,7 @@ dependencies = [
  "serde",
  "sg-metadata",
  "sg-std",
+ "sg-tiered-whitelist",
  "sg-whitelist",
  "sg1",
  "sg2",
@@ -2523,6 +2524,7 @@ dependencies = [
  "sg4",
  "sg721",
  "thiserror",
+ "tiered-whitelist-merkletree",
  "url",
  "whitelist-mtree",
 ]
@@ -2542,6 +2544,7 @@ dependencies = [
  "serde",
  "sg-metadata",
  "sg-std",
+ "sg-tiered-whitelist-flex",
  "sg-whitelist-flex",
  "sg1",
  "sg2",
@@ -3642,6 +3645,40 @@ dependencies = [
 ]
 
 [[package]]
+name = "sg-tiered-whitelist"
+version = "3.15.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus 1.2.0",
+ "cw-utils 1.0.3",
+ "cw2 1.1.2",
+ "rust_decimal",
+ "schemars",
+ "serde",
+ "sg-std",
+ "sg1",
+ "thiserror",
+]
+
+[[package]]
+name = "sg-tiered-whitelist-flex"
+version = "3.15.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus 1.2.0",
+ "cw-utils 1.0.3",
+ "cw2 1.1.2",
+ "rust_decimal",
+ "schemars",
+ "serde",
+ "sg-std",
+ "sg1",
+ "thiserror",
+]
+
+[[package]]
 name = "sg-whitelist"
 version = "3.15.0"
 dependencies = [
@@ -4237,6 +4274,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "tiered-whitelist-merkletree"
+version = "3.15.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus 1.2.0",
+ "cw-utils 1.0.3",
+ "cw2 1.1.2",
+ "hex",
+ "rs_merkle",
+ "rust_decimal",
+ "schemars",
+ "semver",
+ "serde",
+ "serde_json",
+ "sg-std",
+ "sg1",
+ "thiserror",
+ "url",
+]
+
+[[package]]
 name = "time"
 version = "0.3.36"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4679,6 +4738,7 @@ dependencies = [
  "semver",
  "serde",
  "sg-std",
+ "sg-tiered-whitelist",
  "sg-whitelist",
  "sg1",
  "sg2",
@@ -4708,6 +4768,7 @@ dependencies = [
  "semver",
  "serde",
  "sg-std",
+ "sg-tiered-whitelist",
  "sg-whitelist",
  "sg1",
  "sg2",
@@ -4745,6 +4806,7 @@ dependencies = [
  "sha2 0.10.8",
  "shuffle",
  "thiserror",
+ "tiered-whitelist-merkletree",
  "url",
  "vending-factory",
  "whitelist-mtree",
@@ -4775,6 +4837,7 @@ dependencies = [
  "sha2 0.10.8",
  "shuffle",
  "thiserror",
+ "tiered-whitelist-merkletree",
  "url",
  "vending-factory",
  "whitelist-mtree",
@@ -4797,6 +4860,7 @@ dependencies = [
  "semver",
  "serde",
  "sg-std",
+ "sg-tiered-whitelist-flex",
  "sg-whitelist-flex",
  "sg1",
  "sg2",
@@ -4826,6 +4890,7 @@ dependencies = [
  "semver",
  "serde",
  "sg-std",
+ "sg-tiered-whitelist-flex",
  "sg-whitelist-flex",
  "sg1",
  "sg2",

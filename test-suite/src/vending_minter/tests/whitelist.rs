@@ -321,14 +321,21 @@ fn whitelist_mint_count_query() {
     assert_eq!(res.count, 3);
     assert_eq!(res.address, buyer.to_string());
 
-    // Mint fails
+    // Public Mint
     let mint_msg = ExecuteMsg::Mint {};
+    let _res = router.execute_contract(
+        buyer.clone(),
+        minter_addr.clone(),
+        &mint_msg,
+        &coins(100_000_000, NATIVE_DENOM),
+    );
+    // Next Mint fails
     let err = router
         .execute_contract(
             buyer.clone(),
             minter_addr.clone(),
             &mint_msg,
-            &coins(WHITELIST_AMOUNT, NATIVE_DENOM),
+            &coins(100_000_000, NATIVE_DENOM),
         )
         .unwrap_err();
     assert_eq!(
@@ -346,7 +353,7 @@ fn whitelist_mint_count_query() {
             },
         )
         .unwrap();
-    assert_eq!(res.count, 3);
+    assert_eq!(res.count, 4);
     assert_eq!(res.address, buyer.to_string());
 }
 
