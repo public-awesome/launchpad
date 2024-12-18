@@ -2,7 +2,7 @@
 
 Common types needed for minter factories. New minter factories should extend these types to add their custom properties.
 
-Every minter requires a factory that stores the minter's governance paramaters. A minter factory creates minters based on these paramaters.
+Every minter requires a factory that stores the minter's governance parameters. A minter factory creates minters based on these parameters.
 
 Factories also restrict minters to a set of allowed sg721 code ids.
 

@@ -2,7 +2,7 @@
 
 Mint hooks are a way to run custom code before and after minting. Creators may write custom hooks to perform tasks such as implementing burn-to-mint.
 
-For example, a pre-mint hook could receive an NFT and check if its in the collection to be burned. Then after the mint is complete, the post-mint hook could do the actual burn operation.
+For example, a pre-mint hook could receive an NFT and check if it's in the collection to be burned. Then after the mint is complete, the post-mint hook could do the actual burn operation.
 
 The pre-mint action, mint, and post-mint actions are sub-messages that are implemented as a single atomic action. They are executed in order, and all rollback if one of them fails.
 

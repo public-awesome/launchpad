@@ -13,7 +13,7 @@ pub struct MinterConfig<T> {
 
 Custom minters can add more fields using `extension`.
 
-A minimum, Stargaze minters should specify at least one `Mint {}` operation that takes 0 to many arguments.
+At minimum, Stargaze minters should specify at least one `Mint {}` operation that takes 0 to many arguments.
 
 ```rs
 pub enum ExecuteMsg {
