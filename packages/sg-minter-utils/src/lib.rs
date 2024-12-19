@@ -58,6 +58,16 @@ pub enum MinterUtilsError {
     InvalidTokenId { token_id: u32 },
 }
 
+pub fn initialize_and_shuffle(
+    storage: &mut dyn Storage,
+    size: u32,
+    random_seed: [u8; 32],
+) -> Result<(), MinterUtilsError> {
+    initialize(storage, size)?;
+    shuffle(storage, random_seed)?;
+    Ok(())
+}
+
 pub fn initialize(storage: &mut dyn Storage, size: u32) -> Result<(), MinterUtilsError> {
     if size > MAX_SIZE {
         return Err(MinterUtilsError::InvalidSize {
@@ -456,6 +466,27 @@ mod tests {
         let r = initialize(&mut deps.storage, 10_000);
         assert!(r.is_ok());
         let r = shuffle(&mut deps.storage, [0; 32]);
+        assert!(r.is_ok());
+        let available_buckets = deps.storage.get(&AVAILABLE_BUCKETS_KEY).unwrap();
+        assert_eq!(available_buckets.len(), 40);
+        assert_ne!(
+            available_buckets,
+            (0..40).map(|x| x as u8).collect::<Vec<u8>>()
+        );
+        assert_eq!(
+            available_buckets,
+            [
+                21, 30, 37, 23, 11, 2, 29, 27, 8, 0, 7, 5, 15, 17, 6, 32, 25, 9, 36, 26, 13, 31,
+                24, 10, 39, 35, 33, 12, 20, 16, 28, 18, 34, 19, 1, 4, 38, 22, 14, 3
+            ]
+        );
+    }
+
+    #[test]
+    fn test_initialize_with_seed() {
+        let mut deps = mock_dependencies();
+        let r: Result<(), MinterUtilsError> =
+            initialize_and_shuffle(&mut deps.storage, 10_000, [0; 32]);
         assert!(r.is_ok());
         let available_buckets = deps.storage.get(&AVAILABLE_BUCKETS_KEY).unwrap();
         assert_eq!(available_buckets.len(), 40);

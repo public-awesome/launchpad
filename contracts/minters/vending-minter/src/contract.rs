@@ -167,7 +167,21 @@ pub fn instantiate(
     let last_discount_time = env.block.time.minus_seconds(60 * 60 * 12);
     LAST_DISCOUNT_TIME.save(deps.storage, &last_discount_time)?;
 
-    sg_minter_utils::initialize(deps.storage, msg.init_msg.num_tokens)
+    let sha256 = Sha256::digest(
+        format!(
+            "{}{}{}{}{}",
+            info.sender,
+            env.block.height,
+            &msg.init_msg.num_tokens,
+            env.block.time.nanos(),
+            env.transaction.map_or(0, |tx| tx.index),
+        )
+        .into_bytes(),
+    );
+    let randomness: [u8; 32] = sha256.to_vec()[0..32].try_into().map_err(|_| {
+        ContractError::Std(StdError::generic_err("Failed to convert sha256 to array"))
+    })?;
+    sg_minter_utils::initialize_and_shuffle(deps.storage, msg.init_msg.num_tokens, randomness)
         .map_err(ContractError::MinterUtils)?;
 
     // Submessage to instantiate sg721 contract
