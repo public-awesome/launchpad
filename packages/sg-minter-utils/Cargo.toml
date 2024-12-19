@@ -1,0 +1,37 @@
+[package]
+name        = "sg-minter-utils"
+authors     = ["Jorge Hernandez <contact@jhernandez.me>"]
+description = "Stargaze Minter Utils"
+version     = { workspace = true }
+edition     = { workspace = true }
+homepage    = { workspace = true }
+repository  = { workspace = true }
+license     = { workspace = true }
+
+exclude = [
+    # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
+    "contract.wasm",
+    "hash.txt",
+]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+# for more explicit tests, cargo test --features=backtraces
+backtraces = ["cosmwasm-std/backtraces"]
+# use library feature to disable all instantiate/execute/query exports
+library = []
+
+[dependencies]
+cosmwasm-schema = { workspace = true }
+cosmwasm-std    = { workspace = true }
+serde           = { workspace = true }
+thiserror       = { workspace = true }
+cw-storage-plus = { workspace = true }
+nois            = { version = "2.0.0" }
+
+[dev-dependencies]
+cw-multi-test = { workspace = true }

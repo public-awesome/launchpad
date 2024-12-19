@@ -1,12 +1,16 @@
 use cosmwasm_std::{Coin, StdError, Timestamp};
 use cw_utils::PaymentError;
 use sg1::FeeError;
+use sg_minter_utils::MinterUtilsError;
 use thiserror::Error;
 use url::ParseError;
 #[derive(Error, Debug, PartialEq)]
 pub enum ContractError {
     #[error("{0}")]
     Std(#[from] StdError),
+
+    #[error("{0}")]
+    MinterUtils(#[from] MinterUtilsError),
 
     #[error("{0}")]
     Payment(#[from] PaymentError),
