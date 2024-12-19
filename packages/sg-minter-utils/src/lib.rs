@@ -135,6 +135,30 @@ pub fn pick_any(storage: &mut dyn Storage, seed: [u8; 32]) -> Result<u32, Minter
     Ok(token_id)
 }
 
+pub fn purge_buckets(storage: &mut dyn Storage, max_buckets: u32) -> Result<u32, MinterUtilsError> {
+    let Some(mut available_buckets) = storage.get(&AVAILABLE_BUCKETS_KEY) else {
+        return Err(MinterUtilsError::NoAvailableBuckets {});
+    };
+    let mut buckets_to_remove = 0;
+    for i in 0..available_buckets.len() {
+        if i as u32 >= max_buckets {
+            break;
+        }
+        let bucket_key = bucket_key(available_buckets[i]);
+        storage.remove(&bucket_key);
+        buckets_to_remove += 1;
+    }
+
+    // remove from the end of the vector
+    available_buckets.truncate(available_buckets.len() - buckets_to_remove);
+    if available_buckets.is_empty() {
+        storage.remove(&AVAILABLE_BUCKETS_KEY);
+    } else {
+        storage.set(&AVAILABLE_BUCKETS_KEY, &available_buckets);
+    }
+    Ok(buckets_to_remove as u32)
+}
+
 pub fn pick_token(storage: &mut dyn Storage, token_id: u32) -> Result<u32, MinterUtilsError> {
     let Some(mut available_buckets) = storage.get(&AVAILABLE_BUCKETS_KEY) else {
         return Err(MinterUtilsError::NoAvailableBuckets {});
@@ -374,6 +398,44 @@ mod tests {
         picked.sort();
         picked.dedup();
         assert_eq!(picked.len(), 1000);
+        assert!(available_buckets.is_none());
+    }
+
+    #[test]
+    fn test_pick_twice() {
+        let mut deps = mock_dependencies();
+        let r = initialize(&mut deps.storage, 10_000);
+        assert!(r.is_ok());
+        let token_id = pick_token(&mut deps.storage, 975).unwrap();
+        assert_eq!(token_id, 975);
+        let res = pick_token(&mut deps.storage, 975);
+        assert!(res.is_err());
+    }
+    #[test]
+    fn test_purge_buckets() {
+        let mut deps = mock_dependencies();
+        let r = initialize(&mut deps.storage, 10_000);
+        assert!(r.is_ok());
+        let r = purge_buckets(&mut deps.storage, 10);
+        assert!(r.is_ok());
+        assert_eq!(r.unwrap(), 10);
+        let available_buckets = deps.storage.get(&AVAILABLE_BUCKETS_KEY).unwrap();
+        assert_eq!(available_buckets.len(), 30);
+        assert_eq!(
+            available_buckets,
+            (0..30).map(|x| x as u8).collect::<Vec<u8>>()
+        );
+    }
+
+    #[test]
+    fn test_purge_all() {
+        let mut deps = mock_dependencies();
+        let r = initialize(&mut deps.storage, 10_000);
+        assert!(r.is_ok());
+        let r = purge_buckets(&mut deps.storage, 40);
+        assert!(r.is_ok());
+        assert_eq!(r.unwrap(), 40);
+        let available_buckets = deps.storage.get(&AVAILABLE_BUCKETS_KEY);
         assert!(available_buckets.is_none());
     }
 }
