@@ -150,11 +150,11 @@ pub fn purge_buckets(storage: &mut dyn Storage, max_buckets: u32) -> Result<u32,
         return Err(MinterUtilsError::NoAvailableBuckets {});
     };
     let mut buckets_to_remove = 0;
-    for i in 0..available_buckets.len() {
-        if i as u32 >= max_buckets {
+    for (i, bucket) in available_buckets.iter().enumerate() {
+        if i >= max_buckets as usize {
             break;
         }
-        let bucket_key = bucket_key(available_buckets[i]);
+        let bucket_key = bucket_key(*bucket);
         storage.remove(&bucket_key);
         buckets_to_remove += 1;
     }
