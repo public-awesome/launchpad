@@ -21,7 +21,7 @@ use cw721_base::Extension;
 use cw_utils::{may_pay, maybe_addr, nonpayable, parse_reply_instantiate_data};
 
 use semver::Version;
-use sg1::distribute_mint_fees;
+use sg1::{checked_fair_burn, distribute_mint_fees};
 use sg2::query::Sg2QueryMsg;
 use sg4::{MinterConfig, Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
@@ -31,7 +31,6 @@ use sg_whitelist::msg::{
     ConfigResponse as WhitelistConfigResponse, HasMemberResponse, QueryMsg as WhitelistQueryMsg,
 };
 use sha2::{Digest, Sha256};
-
 use url::Url;
 use vending_factory::msg::{ParamsResponse, VendingMinterCreateMsg};
 use vending_factory::state::VendingMinterParams;
@@ -342,42 +341,49 @@ pub fn execute_purge(
 // Introduces another source of randomness to minting
 // There's a fee because this action is expensive.
 pub fn execute_shuffle(
-    _deps: DepsMut,
-    _env: Env,
+    deps: DepsMut,
+    env: Env,
     info: MessageInfo,
 ) -> Result<Response, ContractError> {
-    let res = Response::new();
+    let mut res = Response::new();
 
-    // let config = CONFIG.load(deps.storage)?;
+    let config = CONFIG.load(deps.storage)?;
 
-    // let factory: ParamsResponse = deps
-    //     .querier
-    //     .query_wasm_smart(config.factory, &Sg2QueryMsg::Params {})?;
-    // let factory_params = factory.params;
+    let factory: ParamsResponse = deps
+        .querier
+        .query_wasm_smart(config.factory, &Sg2QueryMsg::Params {})?;
+    let factory_params = factory.params;
 
-    // // Check exact shuffle fee payment included in message
-    // checked_fair_burn(
-    //     &info,
-    //     factory_params.extension.shuffle_fee.amount.u128(),
-    //     None,
-    //     &mut res,
-    // )?;
+    // Check exact shuffle fee payment included in message
+    checked_fair_burn(
+        &info,
+        factory_params.extension.shuffle_fee.amount.u128(),
+        None,
+        &mut res,
+    )?;
 
-    // // Check not sold out
-    // let mintable_num_tokens = MINTABLE_NUM_TOKENS.load(deps.storage)?;
-    // if mintable_num_tokens == 0 {
-    //     return Err(ContractError::SoldOut {});
-    // }
+    // Check not sold out
+    let mintable_num_tokens = MINTABLE_NUM_TOKENS.load(deps.storage)?;
+    if mintable_num_tokens == 0 {
+        return Err(ContractError::SoldOut {});
+    }
 
-    // // get positions and token_ids, then randomize token_ids and reassign positions
-    // let mut positions = vec![];
-    // let mut token_ids = vec![];
-    // for mapping in MINTABLE_TOKEN_POSITIONS.range(deps.storage, None, None, Order::Ascending) {
-    //     let (position, token_id) = mapping?;
-    //     positions.push(position);
-    //     token_ids.push(token_id);
-    // }
+    let sha256 = Sha256::digest(
+        format!(
+            "{}{}{}{}{}",
+            info.sender,
+            env.block.height,
+            mintable_num_tokens,
+            env.block.time.nanos(),
+            env.transaction.map_or(0, |tx| tx.index),
+        )
+        .into_bytes(),
+    );
+    let randomness: [u8; 32] = sha256.to_vec()[0..32].try_into().map_err(|_| {
+        ContractError::Std(StdError::generic_err("Failed to convert sha256 to array"))
+    })?;
 
+    sg_minter_utils::shuffle(deps.storage, randomness)?;
     Ok(res
         .add_attribute("action", "shuffle")
         .add_attribute("sender", info.sender))
@@ -750,70 +756,6 @@ fn _execute_mint(
         ))
 }
 
-// fn random_token_list(
-//     env: &Env,
-//     sender: Addr,
-//     mut tokens: Vec<u32>,
-// ) -> Result<Vec<u32>, ContractError> {
-//     let tx_index = if let Some(tx) = &env.transaction {
-//         tx.index
-//     } else {
-//         0
-//     };
-//     let sha256 = Sha256::digest(
-//         format!("{}{}{}{}", sender, env.block.height, tokens.len(), tx_index).into_bytes(),
-//     );
-//     // Cut first 16 bytes from 32 byte value
-//     let randomness: [u8; 16] = sha256.to_vec()[0..16].try_into().unwrap();
-//     let mut rng = Xoshiro128PlusPlus::from_seed(randomness);
-//     let mut shuffler = FisherYates::default();
-//     shuffler
-//         .shuffle(&mut tokens, &mut rng)
-//         .map_err(StdError::generic_err)?;
-//     Ok(tokens)
-// }
-
-// Does a baby shuffle, picking a token_id from the first or last 50 mintable positions.
-// fn random_mintable_token_mapping(
-//     deps: Deps,
-//     env: Env,
-//     sender: Addr,
-// ) -> Result<TokenPositionMapping, ContractError> {
-//     let num_tokens = MINTABLE_NUM_TOKENS.load(deps.storage)?;
-//     let tx_index = if let Some(tx) = &env.transaction {
-//         tx.index
-//     } else {
-//         0
-//     };
-//     let sha256 = Sha256::digest(
-//         format!("{}{}{}{}", sender, num_tokens, env.block.height, tx_index).into_bytes(),
-//     );
-//     // Cut first 16 bytes from 32 byte value
-//     let randomness: [u8; 16] = sha256.to_vec()[0..16].try_into().unwrap();
-
-//     let mut rng = Xoshiro128PlusPlus::from_seed(randomness);
-
-//     let r = rng.next_u32();
-
-//     let order = match r % 2 {
-//         1 => Order::Descending,
-//         _ => Order::Ascending,
-//     };
-//     let mut rem = 50;
-//     if rem > num_tokens {
-//         rem = num_tokens;
-//     }
-//     let n = r % rem;
-//     let position = MINTABLE_TOKEN_POSITIONS
-//         .keys(deps.storage, None, None, order)
-//         .skip(n as usize)
-//         .take(1)
-//         .collect::<StdResult<Vec<_>>>()?[0];
-
-//     let token_id = MINTABLE_TOKEN_POSITIONS.load(deps.storage, position)?;
-//     Ok(TokenPositionMapping { position, token_id })
-// }
-
 pub fn execute_update_mint_price(
     deps: DepsMut,
     env: Env,
@@ -1019,17 +961,9 @@ pub fn execute_burn_remaining(
     if mintable_num_tokens == 0 {
         return Err(ContractError::SoldOut {});
     }
-
-    // TODO: implement purge in sg_minter_utils
-    // let keys = MINTABLE_TOKEN_POSITIONS
-    //     .keys(deps.storage, None, None, Order::Ascending)
-    //     .collect::<Vec<_>>();
-    // let mut total: u32 = 0;
-    // for key in keys {
-    //     total += 1;
-    //     MINTABLE_TOKEN_POSITIONS.remove(deps.storage, key?);
-    // }
-    // Decrement mintable num tokens
+    // purge all buckets
+    sg_minter_utils::purge_buckets(deps.storage, sg_minter_utils::MAX_BUCKETS)?;
+    // Set mintable num tokens to 0
     MINTABLE_NUM_TOKENS.save(deps.storage, &0)?;
 
     let event = Event::new("burn-remaining")

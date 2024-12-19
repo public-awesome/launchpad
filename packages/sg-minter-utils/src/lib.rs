@@ -2,12 +2,12 @@ use cosmwasm_schema::cw_serde;
 
 use cosmwasm_std::{StdError, Storage};
 use cw_storage_plus::Item;
-use nois::{int_in_range, sub_randomness_with_key};
+use nois::{int_in_range, shuffle as nois_shuffle, sub_randomness_with_key};
 use thiserror::Error;
 // BUCKET_SIZE is limited to 256 to efficiently store ids as u8 partitioning into multiple buckets
-const BUCKET_SIZE: u32 = 256;
-
-const MAX_SIZE: u32 = 256 * 256;
+pub const BUCKET_SIZE: u32 = 256;
+pub const MAX_BUCKETS: u32 = 256;
+pub const MAX_SIZE: u32 = MAX_BUCKETS * BUCKET_SIZE;
 
 // buckets returns the number of necessary buckets for a given collection size.
 // it returns the number of buckets and the size of the last bucket
@@ -159,6 +159,16 @@ pub fn purge_buckets(storage: &mut dyn Storage, max_buckets: u32) -> Result<u32,
     Ok(buckets_to_remove as u32)
 }
 
+pub fn shuffle(storage: &mut dyn Storage, random_seed: [u8; 32]) -> Result<(), MinterUtilsError> {
+    let mut provider = sub_randomness_with_key(random_seed, b"shuffle");
+    let Some(available_buckets) = storage.get(&AVAILABLE_BUCKETS_KEY) else {
+        return Err(MinterUtilsError::NoAvailableBuckets {});
+    };
+    let shuffled = nois_shuffle(provider.provide(), available_buckets);
+    storage.set(&AVAILABLE_BUCKETS_KEY, &shuffled);
+    Ok(())
+}
+
 pub fn pick_token(storage: &mut dyn Storage, token_id: u32) -> Result<u32, MinterUtilsError> {
     let Some(mut available_buckets) = storage.get(&AVAILABLE_BUCKETS_KEY) else {
         return Err(MinterUtilsError::NoAvailableBuckets {});
@@ -166,7 +176,8 @@ pub fn pick_token(storage: &mut dyn Storage, token_id: u32) -> Result<u32, Minte
     let (bucket_id, correlative) = get_bucket_and_index(token_id);
 
     let bucket_id = bucket_id as u8;
-    let Ok(bucket_index) = available_buckets.binary_search(&bucket_id) else {
+    // bucket ids can be random
+    let Some(bucket_index) = available_buckets.iter().position(|item| *item == bucket_id) else {
         return Err(MinterUtilsError::InvalidBucket {
             bucket_id: bucket_id as u32,
         });
@@ -179,6 +190,7 @@ pub fn pick_token(storage: &mut dyn Storage, token_id: u32) -> Result<u32, Minte
         });
     };
     let correlative = correlative as u8;
+    // items within a bucket are sorted
     let Ok(token_index) = bucket.binary_search(&correlative) else {
         return Err(MinterUtilsError::InvalidTokenId { token_id });
     };
@@ -437,5 +449,38 @@ mod tests {
         assert_eq!(r.unwrap(), 40);
         let available_buckets = deps.storage.get(&AVAILABLE_BUCKETS_KEY);
         assert!(available_buckets.is_none());
+    }
+    #[test]
+    fn test_shuffle() {
+        let mut deps = mock_dependencies();
+        let r = initialize(&mut deps.storage, 10_000);
+        assert!(r.is_ok());
+        let r = shuffle(&mut deps.storage, [0; 32]);
+        assert!(r.is_ok());
+        let available_buckets = deps.storage.get(&AVAILABLE_BUCKETS_KEY).unwrap();
+        assert_eq!(available_buckets.len(), 40);
+        assert_ne!(
+            available_buckets,
+            (0..40).map(|x| x as u8).collect::<Vec<u8>>()
+        );
+        assert_eq!(
+            available_buckets,
+            [
+                21, 30, 37, 23, 11, 2, 29, 27, 8, 0, 7, 5, 15, 17, 6, 32, 25, 9, 36, 26, 13, 31,
+                24, 10, 39, 35, 33, 12, 20, 16, 28, 18, 34, 19, 1, 4, 38, 22, 14, 3
+            ]
+        );
+    }
+
+    #[test]
+    fn test_shuffle_and_pick_token() {
+        let mut deps = mock_dependencies();
+
+        let r = initialize(&mut deps.storage, 10_000);
+        assert!(r.is_ok());
+        let r = shuffle(&mut deps.storage, [0; 32]);
+        assert!(r.is_ok());
+        let token_id = pick_token(&mut deps.storage, 975).unwrap();
+        assert_eq!(token_id, 975);
     }
 }
