@@ -3,7 +3,7 @@ use sha3::{Digest, Keccak256};
 
 /// Get the recovery param from the value `v` when no chain ID for replay protection is used.
 ///
-/// This is needed for chain-agnostig aignatures like signed text.
+/// This is needed for chain-agnostic signatures like signed text.
 ///
 /// See [EIP-155] for how `v` is composed.
 ///
