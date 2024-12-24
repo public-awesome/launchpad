@@ -353,7 +353,7 @@ fn increase_member_limit() {
     assert!(res.is_ok());
 
     // 0 upgrade fee, fails when including a fee
-    // don't allow updating to the same number of memebers
+    // don't allow updating to the same number of members
     let msg = ExecuteMsg::IncreaseMemberLimit(1002);
     let info = mock_info(ADMIN, &[coin(1, "ustars")]);
     execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
