@@ -4,7 +4,7 @@ use crate::admin::{
 use crate::error::ContractError;
 use crate::helpers::crypto::{string_to_byte_slice, valid_hash_string, verify_merkle_root};
 use crate::helpers::utils::{
-    fetch_active_stage, fetch_active_stage_index, validate_stages, verify_tree_uri,
+    fetch_active_stage, fetch_active_stage_index, validate_stages, validate_update, verify_tree_uri,
 };
 use crate::helpers::validators::map_validate;
 use crate::msg::{
@@ -182,9 +182,12 @@ pub fn execute_update_stage_config(
         per_address_limit: msg
             .per_address_limit
             .unwrap_or(config.stages[stage_id].clone().per_address_limit),
+        mint_count_limit: msg
+            .mint_count_limit
+            .unwrap_or(config.stages[stage_id].clone().mint_count_limit),
     };
     config.stages[stage_id] = updated_stage.clone();
-    validate_stages(&env, &config.stages)?;
+    validate_update(&env, &config.stages)?;
     CONFIG.save(deps.storage, &config)?;
 
     Ok(Response::new()

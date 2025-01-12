@@ -6,8 +6,9 @@ use crate::msg::{
 };
 use crate::state::{
     increment_token_index, Config, ConfigExtension, CONFIG, MINTABLE_NUM_TOKENS, MINTER_ADDRS,
-    SG721_ADDRESS, STATUS, TOTAL_MINT_COUNT, WHITELIST_FS_MINTER_ADDRS, WHITELIST_MINTER_ADDRS,
-    WHITELIST_SS_MINTER_ADDRS, WHITELIST_TS_MINTER_ADDRS,
+    SG721_ADDRESS, STATUS, TOTAL_MINT_COUNT, WHITELIST_FS_MINTER_ADDRS, WHITELIST_FS_MINT_COUNT,
+    WHITELIST_MINTER_ADDRS, WHITELIST_SS_MINTER_ADDRS, WHITELIST_SS_MINT_COUNT,
+    WHITELIST_TS_MINTER_ADDRS, WHITELIST_TS_MINT_COUNT,
 };
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
@@ -26,7 +27,7 @@ use sg2::query::Sg2QueryMsg;
 use sg4::{MinterConfig, Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
 use sg_std::StargazeMsgWrapper;
-use sg_tiered_whitelist_flex::msg::QueryMsg as TieredWhitelistQueryMsg;
+use sg_tiered_whitelist_flex::msg::{QueryMsg as TieredWhitelistQueryMsg, StageResponse};
 use sg_whitelist_flex::msg::{
     ConfigResponse as WhitelistConfigResponse, HasMemberResponse, Member,
     QueryMsg as WhitelistQueryMsg,
@@ -416,22 +417,43 @@ fn is_public_mint(deps: Deps, info: &MessageInfo) -> Result<bool, ContractError>
     }
 
     // Check wl per address limit
-    let wl_mint_count = whitelist_mint_count(deps, info, whitelist.clone())?.0;
+    let wl_mint_count = whitelist_mint_count(deps, info, whitelist.clone())?;
     if config.extension.num_tokens.is_none() {
         ensure!(
-            wl_mint_count < config.extension.per_address_limit,
+            wl_mint_count.0 < config.extension.per_address_limit,
             ContractError::MaxPerAddressLimitExceeded {}
         );
     }
 
     let wl_limit: Member = deps.querier.query_wasm_smart(
-        whitelist,
+        whitelist.clone(),
         &WhitelistQueryMsg::Member {
             member: info.sender.to_string(),
         },
     )?;
-    if wl_mint_count >= wl_limit.mint_count {
+    if wl_mint_count.0 >= wl_limit.mint_count {
         return Err(ContractError::MaxPerAddressLimitExceeded {});
+    }
+
+    // Check if whitelist stage mint count limit is reached
+    if wl_mint_count.1 && wl_mint_count.2.is_some() {
+        let active_stage: StageResponse = deps.querier.query_wasm_smart(
+            whitelist.clone(),
+            &TieredWhitelistQueryMsg::Stage {
+                stage_id: wl_mint_count.2.unwrap() - 1,
+            },
+        )?;
+        if active_stage.stage.mint_count_limit.is_some() {
+            let stage_mint_count = match wl_mint_count.2.unwrap() {
+                1 => WHITELIST_FS_MINT_COUNT.may_load(deps.storage)?.unwrap_or(0),
+                2 => WHITELIST_SS_MINT_COUNT.may_load(deps.storage)?.unwrap_or(0),
+                3 => WHITELIST_TS_MINT_COUNT.may_load(deps.storage)?.unwrap_or(0),
+                _ => return Err(ContractError::InvalidStageID {}),
+            };
+            if stage_mint_count >= active_stage.stage.mint_count_limit.unwrap() {
+                return Err(ContractError::WhitelistMintCountLimitReached {});
+            }
+        }
     }
 
     Ok(false)
@@ -504,9 +526,27 @@ fn save_whitelist_mint_count(
 ) -> StdResult<()> {
     if is_tiered_whitelist & stage_id.is_some() {
         match stage_id {
-            Some(1) => WHITELIST_FS_MINTER_ADDRS.save(deps.storage, &info.sender, &count),
-            Some(2) => WHITELIST_SS_MINTER_ADDRS.save(deps.storage, &info.sender, &count),
-            Some(3) => WHITELIST_TS_MINTER_ADDRS.save(deps.storage, &info.sender, &count),
+            Some(1) => {
+                let _ = WHITELIST_FS_MINTER_ADDRS.save(deps.storage, &info.sender, &count);
+                let mut wl_fs_mint_count =
+                    WHITELIST_FS_MINT_COUNT.may_load(deps.storage)?.unwrap_or(0);
+                wl_fs_mint_count += 1;
+                WHITELIST_FS_MINT_COUNT.save(deps.storage, &wl_fs_mint_count)
+            }
+            Some(2) => {
+                let _ = WHITELIST_SS_MINTER_ADDRS.save(deps.storage, &info.sender, &count);
+                let mut wl_ss_mint_count =
+                    WHITELIST_SS_MINT_COUNT.may_load(deps.storage)?.unwrap_or(0);
+                wl_ss_mint_count += 1;
+                WHITELIST_SS_MINT_COUNT.save(deps.storage, &wl_ss_mint_count)
+            }
+            Some(3) => {
+                let _ = WHITELIST_TS_MINTER_ADDRS.save(deps.storage, &info.sender, &count);
+                let mut wl_ts_mint_count =
+                    WHITELIST_TS_MINT_COUNT.may_load(deps.storage)?.unwrap_or(0);
+                wl_ts_mint_count += 1;
+                WHITELIST_TS_MINT_COUNT.save(deps.storage, &wl_ts_mint_count)
+            }
             _ => Err(StdError::generic_err("Invalid stage ID")),
         }
     } else {

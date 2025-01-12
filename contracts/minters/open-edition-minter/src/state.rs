@@ -27,6 +27,9 @@ pub const WHITELIST_MINTER_ADDRS: Map<&Addr, u32> = Map::new("wlma");
 pub const WHITELIST_FS_MINTER_ADDRS: Map<&Addr, u32> = Map::new("wlfsma");
 pub const WHITELIST_SS_MINTER_ADDRS: Map<&Addr, u32> = Map::new("wlssma");
 pub const WHITELIST_TS_MINTER_ADDRS: Map<&Addr, u32> = Map::new("wltsma");
+pub const WHITELIST_FS_MINT_COUNT: Item<u32> = Item::new("wlfsmc");
+pub const WHITELIST_SS_MINT_COUNT: Item<u32> = Item::new("wlssmc");
+pub const WHITELIST_TS_MINT_COUNT: Item<u32> = Item::new("wltsmc");
 
 /// This keeps track of the mint count
 pub const TOTAL_MINT_COUNT: Item<u32> = Item::new("total_mint_count");
