@@ -1,46 +1,73 @@
-use cw721_base::state::TokenInfo;
-use url::Url;
+use cw721::msg::{CollectionInfoMsg, Cw721MigrateMsg};
+use cw721::state::{MAX_COLLECTION_DESCRIPTION_LENGTH, MINTER};
+use cw721::traits::{Contains, Cw721CustomMsg, Cw721State};
+use cw721_base::msg::{CollectionExtensionMsg, RoyaltyInfoResponse};
+use cw721_base::{
+    traits::StateFactory, DefaultOptionalCollectionExtension, DefaultOptionalCollectionExtensionMsg,
+};
 
 use cosmwasm_std::{
-    to_json_binary, Addr, Binary, ContractInfoResponse, Decimal, Deps, DepsMut, Empty, Env, Event,
-    MessageInfo, Response, StdError, StdResult, Storage, Timestamp, WasmQuery,
+    to_json_binary, Addr, Binary, ContractInfoResponse, CustomMsg, Deps, DepsMut, Env, Event,
+    MessageInfo, Response, StdError, Storage, Timestamp, WasmQuery,
 };
 
-use cw721::{ContractInfoResponse as CW721ContractInfoResponse, Cw721Execute};
+use cw721_base::traits::{Cw721Execute, Cw721Query};
 use cw_utils::nonpayable;
-use serde::{de::DeserializeOwned, Serialize};
 
-use sg721::{
-    CollectionInfo, ExecuteMsg, InstantiateMsg, RoyaltyInfo, RoyaltyInfoResponse,
-    UpdateCollectionInfoMsg,
-};
+#[allow(deprecated)]
+use sg721::{ExecuteMsg, InstantiateMsg, UpdateCollectionInfoMsg};
 
+#[allow(deprecated)]
 use crate::msg::{CollectionInfoResponse, NftParams, QueryMsg};
 use crate::{ContractError, Sg721Contract};
 
 use crate::entry::{CONTRACT_NAME, CONTRACT_VERSION};
 
-const MAX_DESCRIPTION_LENGTH: u32 = 512;
-const MAX_SHARE_DELTA_PCT: u64 = 2;
-const MAX_ROYALTY_SHARE_PCT: u64 = 10;
-
-impl<'a, T> Sg721Contract<'a, T>
+impl<
+        'a,
+        TNftExtension,
+        TNftExtensionMsg,
+        TExtensionMsg,
+        TExtensionQueryMsg,
+        TCustomResponseMsg,
+    >
+    Sg721Contract<
+        'a,
+        // NftInfo extension (onchain metadata).
+        TNftExtension,
+        // NftInfo extension msg for onchain metadata.
+        TNftExtensionMsg,
+        // CollectionInfo extension (onchain attributes).
+        DefaultOptionalCollectionExtension,
+        // CollectionInfo extension msg for onchain collection attributes.
+        DefaultOptionalCollectionExtensionMsg,
+        // Custom extension msg for custom contract logic. Default implementation is a no-op.
+        TExtensionMsg,
+        // Custom query msg for custom contract logic. Default implementation returns an empty binary.
+        TExtensionQueryMsg,
+        // Defines for `CosmosMsg::Custom<T>` in response. Barely used, so `Empty` can be used.
+        TCustomResponseMsg,
+    >
 where
-    T: Serialize + DeserializeOwned + Clone,
+    TNftExtension: Cw721State + Contains,
+    TNftExtensionMsg: Cw721CustomMsg + StateFactory<TNftExtension>,
+    TExtensionQueryMsg: Cw721CustomMsg,
+    TCustomResponseMsg: CustomMsg,
 {
+    #[allow(deprecated)]
     pub fn instantiate(
         &self,
         deps: DepsMut,
         env: Env,
         info: MessageInfo,
         msg: InstantiateMsg,
-    ) -> Result<Response, ContractError> {
+    ) -> Result<Response<TCustomResponseMsg>, ContractError> {
         // no funds should be sent to this contract
         nonpayable(&info)?;
 
         // check sender is a contract
         let req = WasmQuery::ContractInfo {
-            contract_addr: info.sender.into(),
+            contract_addr: info.sender.to_string(),
         }
         .into();
         let _res: ContractInfoResponse = deps
@@ -48,59 +75,27 @@ where
             .query(&req)
             .map_err(|_| ContractError::Unauthorized {})?;
 
-        // cw721 instantiation
-        let info = CW721ContractInfoResponse {
-            name: msg.name,
-            symbol: msg.symbol,
-        };
-        self.parent.contract_info.save(deps.storage, &info)?;
-        cw_ownable::initialize_owner(deps.storage, deps.api, Some(&msg.minter))?;
-
-        // sg721 instantiation
-        if msg.collection_info.description.len() > MAX_DESCRIPTION_LENGTH as usize {
-            return Err(ContractError::DescriptionTooLong {});
-        }
-
-        let image = Url::parse(&msg.collection_info.image)?;
-
-        if let Some(ref external_link) = msg.collection_info.external_link {
-            Url::parse(external_link)?;
-        }
-
-        let royalty_info: Option<RoyaltyInfo> = match msg.collection_info.royalty_info {
-            Some(royalty_info) => Some(RoyaltyInfo {
-                payment_address: deps.api.addr_validate(&royalty_info.payment_address)?,
-                share: share_validate(royalty_info.share)?,
-            }),
-            None => None,
-        };
-
-        deps.api.addr_validate(&msg.collection_info.creator)?;
-
-        let collection_info = CollectionInfo {
-            creator: msg.collection_info.creator,
-            description: msg.collection_info.description,
-            image: msg.collection_info.image,
-            external_link: msg.collection_info.external_link,
-            explicit_content: msg.collection_info.explicit_content,
-            start_trading_time: msg.collection_info.start_trading_time,
-            royalty_info,
-        };
-
-        self.collection_info.save(deps.storage, &collection_info)?;
-
-        self.frozen_collection_info.save(deps.storage, &false)?;
-
         self.royalty_updated_at
             .save(deps.storage, &env.block.time)?;
 
+        self.frozen_collection_info.save(deps.storage, &false)?;
+
+        self.parent.instantiate_with_version(
+            deps,
+            &env,
+            &info,
+            msg.clone().into(),
+            CONTRACT_NAME,
+            CONTRACT_VERSION,
+        )?;
+
         Ok(Response::new()
             .add_attribute("action", "instantiate")
-            .add_attribute("collection_name", info.name)
-            .add_attribute("collection_symbol", info.symbol)
-            .add_attribute("collection_creator", collection_info.creator)
+            .add_attribute("collection_name", msg.name)
+            .add_attribute("collection_symbol", msg.symbol)
+            .add_attribute("collection_creator", msg.collection_info.creator)
             .add_attribute("minter", msg.minter)
-            .add_attribute("image", image.to_string()))
+            .add_attribute("image", msg.collection_info.image.to_string()))
     }
 
     pub fn execute(
@@ -108,48 +103,11 @@ where
         deps: DepsMut,
         env: Env,
         info: MessageInfo,
-        msg: ExecuteMsg<T, Empty>,
-    ) -> Result<Response, ContractError> {
+        msg: ExecuteMsg<TNftExtensionMsg, DefaultOptionalCollectionExtensionMsg, TExtensionMsg>,
+    ) -> Result<Response<TCustomResponseMsg>, ContractError> {
         match msg {
-            ExecuteMsg::TransferNft {
-                recipient,
-                token_id,
-            } => self
-                .parent
-                .transfer_nft(deps, env, info, recipient, token_id)
-                .map_err(|e| e.into()),
-            ExecuteMsg::SendNft {
-                contract,
-                token_id,
-                msg,
-            } => self
-                .parent
-                .send_nft(deps, env, info, contract, token_id, msg)
-                .map_err(|e| e.into()),
-            ExecuteMsg::Approve {
-                spender,
-                token_id,
-                expires,
-            } => self
-                .parent
-                .approve(deps, env, info, spender, token_id, expires)
-                .map_err(|e| e.into()),
-            ExecuteMsg::Revoke { spender, token_id } => self
-                .parent
-                .revoke(deps, env, info, spender, token_id)
-                .map_err(|e| e.into()),
-            ExecuteMsg::ApproveAll { operator, expires } => self
-                .parent
-                .approve_all(deps, env, info, operator, expires)
-                .map_err(|e| e.into()),
-            ExecuteMsg::RevokeAll { operator } => self
-                .parent
-                .revoke_all(deps, env, info, operator)
-                .map_err(|e| e.into()),
-            ExecuteMsg::Burn { token_id } => self
-                .parent
-                .burn(deps, env, info, token_id)
-                .map_err(|e| e.into()),
+            // ---- sg721 specific msgs ----
+            #[allow(deprecated)]
             ExecuteMsg::UpdateCollectionInfo { collection_info } => {
                 self.update_collection_info(deps, env, info, collection_info)
             }
@@ -157,82 +115,38 @@ where
                 self.update_start_trading_time(deps, env, info, start_time)
             }
             ExecuteMsg::FreezeCollectionInfo {} => self.freeze_collection_info(deps, env, info),
-            ExecuteMsg::Mint {
-                token_id,
-                token_uri,
-                owner,
-                extension,
-            } => self.mint(
-                deps,
-                env,
-                info,
-                NftParams::NftData {
-                    token_id,
-                    owner,
-                    token_uri,
-                    extension,
-                },
-            ),
-            ExecuteMsg::Extension { msg: _ } => todo!(),
-            sg721::ExecuteMsg::UpdateOwnership(msg) => self
+            // ---- cw721_base msgs ----
+            msg => self
                 .parent
-                .execute(
-                    deps,
-                    env,
-                    info,
-                    cw721_base::ExecuteMsg::UpdateOwnership(msg),
-                )
-                .map_err(|e| ContractError::OwnershipUpdateError {
-                    error: e.to_string(),
-                }),
+                .execute(deps, &env, &info, msg.into())
+                .map_err(|e| e.into()),
         }
     }
 
+    #[allow(deprecated)]
     pub fn update_collection_info(
         &self,
         deps: DepsMut,
         env: Env,
         info: MessageInfo,
         collection_msg: UpdateCollectionInfoMsg<RoyaltyInfoResponse>,
-    ) -> Result<Response, ContractError> {
-        let mut collection = self.collection_info.load(deps.storage)?;
+    ) -> Result<Response<TCustomResponseMsg>, ContractError> {
+        let collection_info = self
+            .parent
+            .query_collection_info_and_extension(deps.as_ref())?;
 
         if self.frozen_collection_info.load(deps.storage)? {
             return Err(ContractError::CollectionInfoFrozen {});
         }
 
-        // only creator can update collection info
-        if collection.creator != info.sender {
-            return Err(ContractError::Unauthorized {});
-        }
+        // in this contract, extension is always present, so unwrap is safe
+        let collection_extension = collection_info.extension.unwrap();
 
-        if let Some(new_creator) = collection_msg.creator {
-            deps.api.addr_validate(&new_creator)?;
-            collection.creator = new_creator;
-        }
-
-        collection.description = collection_msg
-            .description
-            .unwrap_or_else(|| collection.description.to_string());
-        if collection.description.len() > MAX_DESCRIPTION_LENGTH as usize {
+        if collection_extension.description.len() > MAX_COLLECTION_DESCRIPTION_LENGTH as usize {
             return Err(ContractError::DescriptionTooLong {});
         }
 
-        collection.image = collection_msg
-            .image
-            .unwrap_or_else(|| collection.image.to_string());
-        Url::parse(&collection.image)?;
-
-        collection.external_link = collection_msg
-            .external_link
-            .unwrap_or_else(|| collection.external_link.as_ref().map(|s| s.to_string()));
-        if collection.external_link.as_ref().is_some() {
-            Url::parse(collection.external_link.as_ref().unwrap())?;
-        }
-
-        collection.explicit_content = collection_msg.explicit_content;
-
-        if let Some(Some(new_royalty_info_response)) = collection_msg.royalty_info {
+        if let Some(Some(_)) = collection_msg.royalty_info {
             let last_royalty_update = self.royalty_updated_at.load(deps.storage)?;
             if last_royalty_update.plus_seconds(24 * 60 * 60) > env.block.time {
                 return Err(ContractError::InvalidRoyalties(
@@ -240,36 +154,19 @@ where
                 ));
             }
 
-            let new_royalty_info = RoyaltyInfo {
-                payment_address: deps
-                    .api
-                    .addr_validate(&new_royalty_info_response.payment_address)?,
-                share: share_validate(new_royalty_info_response.share)?,
-            };
-
-            if let Some(old_royalty_info) = collection.royalty_info {
-                if old_royalty_info.share < new_royalty_info.share {
-                    let share_delta = new_royalty_info.share.abs_diff(old_royalty_info.share);
-
-                    if share_delta > Decimal::percent(MAX_SHARE_DELTA_PCT) {
-                        return Err(ContractError::InvalidRoyalties(format!(
-                            "Share increase cannot be greater than {MAX_SHARE_DELTA_PCT}%"
-                        )));
-                    }
-                    if new_royalty_info.share > Decimal::percent(MAX_ROYALTY_SHARE_PCT) {
-                        return Err(ContractError::InvalidRoyalties(format!(
-                            "Share cannot be greater than {MAX_ROYALTY_SHARE_PCT}%"
-                        )));
-                    }
-                }
-            }
-
-            collection.royalty_info = Some(new_royalty_info);
             self.royalty_updated_at
                 .save(deps.storage, &env.block.time)?;
         }
 
-        self.collection_info.save(deps.storage, &collection)?;
+        let collection_extension: CollectionExtensionMsg<RoyaltyInfoResponse> =
+            collection_msg.into();
+        let msg = CollectionInfoMsg {
+            name: None,
+            symbol: None,
+            extension: Some(collection_extension),
+        };
+        self.parent
+            .update_collection_info(deps, Some(&info), Some(&env), msg)?;
 
         let event = Event::new("update_collection_info").add_attribute("sender", info.sender);
         Ok(Response::new().add_event(event))
@@ -280,15 +177,26 @@ where
     pub fn update_start_trading_time(
         &self,
         deps: DepsMut,
-        _env: Env,
+        env: Env,
         info: MessageInfo,
         start_time: Option<Timestamp>,
-    ) -> Result<Response, ContractError> {
+    ) -> Result<Response<TCustomResponseMsg>, ContractError> {
         assert_minter_owner(deps.storage, &info.sender)?;
 
-        let mut collection_info = self.collection_info.load(deps.storage)?;
-        collection_info.start_trading_time = start_time;
-        self.collection_info.save(deps.storage, &collection_info)?;
+        let msg = CollectionInfoMsg {
+            name: None,
+            symbol: None,
+            extension: Some(CollectionExtensionMsg {
+                description: None,
+                image: None,
+                external_link: None,
+                explicit_content: None,
+                start_trading_time: start_time,
+                royalty_info: None,
+            }),
+        };
+        self.parent
+            .update_collection_info(deps, Some(&info), Some(&env), msg)?;
 
         let event = Event::new("update_start_trading_time").add_attribute("sender", info.sender);
         Ok(Response::new().add_event(event))
@@ -299,8 +207,9 @@ where
         deps: DepsMut,
         _env: Env,
         info: MessageInfo,
-    ) -> Result<Response, ContractError> {
+    ) -> Result<Response<TCustomResponseMsg>, ContractError> {
         let collection = self.query_collection_info(deps.as_ref())?;
+        #[allow(deprecated)]
         if collection.creator != info.sender {
             return Err(ContractError::Unauthorized {});
         }
@@ -314,10 +223,10 @@ where
     pub fn mint(
         &self,
         deps: DepsMut,
-        _env: Env,
+        env: Env,
         info: MessageInfo,
-        nft_data: NftParams<T>,
-    ) -> Result<Response, ContractError> {
+        nft_data: NftParams<TNftExtensionMsg>,
+    ) -> Result<Response<TCustomResponseMsg>, ContractError> {
         assert_minter_owner(deps.storage, &info.sender)?;
         let (token_id, owner, token_uri, extension) = match nft_data {
             NftParams::NftData {
@@ -328,63 +237,61 @@ where
             } => (token_id, owner, token_uri, extension),
         };
 
-        // create the token
-        let token = TokenInfo {
-            owner: deps.api.addr_validate(&owner)?,
-            approvals: vec![],
-            token_uri: token_uri.clone(),
-            extension,
-        };
-        self.parent
-            .tokens
-            .update(deps.storage, &token_id, |old| match old {
-                Some(_) => Err(ContractError::Claimed {}),
-                None => Ok(token),
-            })?;
-
-        self.parent.increment_tokens(deps.storage)?;
-
-        let mut res = Response::new()
-            .add_attribute("action", "mint")
-            .add_attribute("minter", info.sender)
-            .add_attribute("owner", owner)
-            .add_attribute("token_id", token_id);
-        if let Some(token_uri) = token_uri {
-            res = res.add_attribute("token_uri", token_uri);
-        }
-        Ok(res)
+        Ok(self
+            .parent
+            .mint(deps, &env, &info, token_id, owner, token_uri, extension)?)
     }
 
-    pub fn query(&self, deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
+    pub fn get_creator(&self, storage: &dyn Storage) -> Result<Option<Addr>, ContractError> {
+        // only creator can update collection info
+        let creator = self.parent.query_creator_ownership(storage)?.owner;
+        Ok(creator)
+    }
+
+    pub fn query(
+        &self,
+        deps: Deps,
+        env: Env,
+        msg: QueryMsg<TNftExtension, DefaultOptionalCollectionExtension, TExtensionQueryMsg>,
+    ) -> Result<Binary, ContractError> {
         match msg {
-            QueryMsg::CollectionInfo {} => to_json_binary(&self.query_collection_info(deps)?),
-            _ => self.parent.query(deps, env, msg.into()),
+            #[allow(deprecated)]
+            QueryMsg::CollectionInfo {} => Ok(to_json_binary(&self.query_collection_info(deps)?)?),
+            _ => Ok(self.parent.query(deps, &env, msg.into())?),
         }
     }
 
-    pub fn query_collection_info(&self, deps: Deps) -> StdResult<CollectionInfoResponse> {
-        let info = self.collection_info.load(deps.storage)?;
+    #[allow(deprecated)]
+    pub fn query_collection_info(
+        &self,
+        deps: Deps,
+    ) -> Result<CollectionInfoResponse, ContractError> {
+        let collection_info = self.parent.query_collection_info_and_extension(deps)?;
 
-        let royalty_info_res: Option<RoyaltyInfoResponse> = match info.royalty_info {
-            Some(royalty_info) => Some(RoyaltyInfoResponse {
-                payment_address: royalty_info.payment_address.to_string(),
-                share: royalty_info.share,
-            }),
-            None => None,
+        let creator = self
+            .get_creator(deps.storage)?
+            .map_or("none".to_string(), |c| c.to_string());
+        // in this contract, extension is always present, so unwrap is safe
+        let collection_extension = collection_info.extension.unwrap();
+
+        let collection_info = CollectionInfoResponse {
+            creator,
+            description: collection_extension.description,
+            image: collection_extension.image,
+            external_link: collection_extension.external_link,
+            explicit_content: collection_extension.explicit_content,
+            start_trading_time: collection_extension.start_trading_time,
+            royalty_info: collection_extension.royalty_info.map(|r| r.into()),
         };
 
-        Ok(CollectionInfoResponse {
-            creator: info.creator,
-            description: info.description,
-            image: info.image,
-            external_link: info.external_link,
-            explicit_content: info.explicit_content,
-            start_trading_time: info.start_trading_time,
-            royalty_info: royalty_info_res,
-        })
+        Ok(collection_info)
     }
 
-    pub fn migrate(mut deps: DepsMut, env: Env, _msg: Empty) -> Result<Response, ContractError> {
+    pub fn migrate(
+        mut deps: DepsMut,
+        env: Env,
+        msg: Cw721MigrateMsg,
+    ) -> Result<Response, ContractError> {
         let prev_contract_version = cw2::get_contract_version(deps.storage)?;
 
         let valid_contract_names = vec![CONTRACT_NAME.to_string()];
@@ -392,24 +299,20 @@ where
             return Err(StdError::generic_err("Invalid contract name for migration").into());
         }
 
-        #[allow(clippy::cmp_owned)]
-        if prev_contract_version.version >= CONTRACT_VERSION.to_string() {
-            return Err(StdError::generic_err("Must upgrade contract version").into());
-        }
-
         let mut response = Response::new();
 
-        #[allow(clippy::cmp_owned)]
-        if prev_contract_version.version < "3.0.0".to_string() {
-            response = crate::upgrades::v3_0_0::upgrade(deps.branch(), &env, response)?;
-        }
-
-        #[allow(clippy::cmp_owned)]
-        if prev_contract_version.version < "3.1.0".to_string() {
-            response = crate::upgrades::v3_1_0::upgrade(deps.branch(), &env, response)?;
-        }
-
-        cw2::set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+        // these upgrades can always be called. migration is only executed in case new stores are empty! It is safe calling these on any version.
+        response = crate::upgrades::v3_0_0_ownable_and_collection_info::upgrade(
+            deps.branch(),
+            &env,
+            response,
+            msg,
+        )?;
+        response =
+            crate::upgrades::v3_1_0_royalty_timestamp::upgrade(deps.branch(), &env, response)?;
+        // after migration of collection metadata in cw721, we can migrate collection info to new collection extension
+        response =
+            crate::upgrades::v3_8_0_collection_metadata::upgrade(deps.branch(), &env, response)?;
 
         response = response.add_event(
             Event::new("migrate")
@@ -423,18 +326,8 @@ where
     }
 }
 
-pub fn share_validate(share: Decimal) -> Result<Decimal, ContractError> {
-    if share > Decimal::one() {
-        return Err(ContractError::InvalidRoyalties(
-            "Share cannot be greater than 100%".to_string(),
-        ));
-    }
-
-    Ok(share)
-}
-
 pub fn get_owner_minter(storage: &mut dyn Storage) -> Result<Addr, ContractError> {
-    let ownership = cw_ownable::get_ownership(storage)?;
+    let ownership = MINTER.get_ownership(storage)?;
     match ownership.owner {
         Some(owner_value) => Ok(owner_value),
         None => Err(ContractError::MinterNotFound {}),
@@ -442,7 +335,7 @@ pub fn get_owner_minter(storage: &mut dyn Storage) -> Result<Addr, ContractError
 }
 
 pub fn assert_minter_owner(storage: &mut dyn Storage, sender: &Addr) -> Result<(), ContractError> {
-    let res = cw_ownable::assert_owner(storage, sender);
+    let res = MINTER.assert_owner(storage, sender);
     match res {
         Ok(_) => Ok(()),
         Err(_) => Err(ContractError::UnauthorizedOwner {}),

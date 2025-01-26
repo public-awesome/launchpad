@@ -3,12 +3,14 @@ use crate::common_setup::templates::vending_minter_template;
 use crate::common_setup::{
     setup_accounts_and_block::coins_for_msg, setup_accounts_and_block::setup_block_time,
 };
+use cosmwasm_std::Empty;
 use cosmwasm_std::{
     coin, coins,
     testing::{mock_dependencies_with_balance, mock_env, mock_info},
     Api, Coin, Timestamp, Uint128,
 };
-use cw721::{Cw721QueryMsg, OwnerOfResponse};
+use cw721::{DefaultOptionalCollectionExtension, DefaultOptionalNftExtension};
+use cw721_base::msg::{Cw721QueryMsg, OwnerOfResponse};
 use cw_multi_test::Executor;
 use sg2::tests::mock_collection_params_1;
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
@@ -22,6 +24,7 @@ const ADMIN_MINT_PRICE: u128 = 0;
 const MAX_TOKEN_LIMIT: u32 = 10000;
 
 #[test]
+#[allow(deprecated)]
 fn initialization() {
     let mut deps = mock_dependencies_with_balance(&coins(2, "token"));
 
@@ -149,7 +152,11 @@ fn happy_path() {
 
     // Check NFT owned by buyer
     // Random mint token_id 1
-    let query_owner_msg = Cw721QueryMsg::OwnerOf {
+    let query_owner_msg = Cw721QueryMsg::<
+        DefaultOptionalNftExtension,
+        DefaultOptionalCollectionExtension,
+        Empty,
+    >::OwnerOf {
         token_id: String::from("2"),
         include_expired: None,
     };
@@ -208,7 +215,11 @@ fn happy_path() {
     assert_eq!(0, minter_balance.len());
 
     // Check that NFT is transferred
-    let query_owner_msg = Cw721QueryMsg::OwnerOf {
+    let query_owner_msg = Cw721QueryMsg::<
+        DefaultOptionalNftExtension,
+        DefaultOptionalCollectionExtension,
+        Empty,
+    >::OwnerOf {
         token_id: String::from("1"),
         include_expired: None,
     };

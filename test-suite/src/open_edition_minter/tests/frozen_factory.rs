@@ -17,6 +17,7 @@ use crate::common_setup::setup_minter::open_edition_minter::mock_params::mock_cr
 use crate::common_setup::templates::open_edition_minter_custom_template;
 
 #[test]
+#[allow(deprecated)]
 fn frozen_factory_cannot_create_new_minters() {
     let params_extension = ParamsExtension {
         max_token_limit: 10,

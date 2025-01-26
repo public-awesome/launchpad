@@ -35,6 +35,17 @@ pub fn contract_vending_factory() -> Box<dyn Contract<Empty>> {
     Box::new(contract)
 }
 
+/// `v3.8.0-prerelease` is only used for testing migration from collection info (sg721) to new collection extension (cw721)
+pub fn contract_vending_factory_v3_8_0_prerelease() -> Box<dyn Contract<Empty>> {
+    let contract = ContractWrapper::new(
+        vending_factory_v3_8_0_prerelease::contract::execute,
+        vending_factory_v3_8_0_prerelease::contract::instantiate,
+        vending_factory_v3_8_0_prerelease::contract::query,
+    )
+    .with_sudo(vending_factory_v3_8_0_prerelease::contract::sudo);
+    Box::new(contract)
+}
+
 pub fn contract_open_edition_factory() -> Box<dyn Contract<Empty>> {
     let contract = ContractWrapper::new(
         open_edition_factory::contract::execute,
@@ -103,12 +114,35 @@ pub fn contract_vending_minter() -> Box<dyn Contract<Empty>> {
     Box::new(contract)
 }
 
+/// `v3.8.0-prerelease` is only used for testing migration from collection info (sg721) to new collection extension (cw721)
+pub fn contract_vending_minter_v3_8_0_prerelease() -> Box<dyn Contract<Empty>> {
+    let contract = ContractWrapper::new(
+        vending_minter_v3_8_0_prerelease::contract::execute,
+        vending_minter_v3_8_0_prerelease::contract::instantiate,
+        vending_minter_v3_8_0_prerelease::contract::query,
+    )
+    .with_reply(vending_minter_v3_8_0_prerelease::contract::reply);
+    Box::new(contract)
+}
+
 pub fn contract_sg721_base() -> Box<dyn Contract<Empty>> {
     let contract = ContractWrapper::new(
         sg721_base::entry::execute,
         sg721_base::entry::instantiate,
         sg721_base::entry::query,
-    );
+    )
+    .with_migrate(sg721_base::entry::migrate);
+    Box::new(contract)
+}
+
+/// `v3.8.0-prerelease` is only used for testing migration from collection info (sg721) to new collection extension (cw721)
+pub fn contract_sg721_base_v3_8_0_prerelease() -> Box<dyn Contract<Empty>> {
+    let contract = ContractWrapper::new(
+        sg721_base_v3_8_0_prerelease::entry::execute,
+        sg721_base_v3_8_0_prerelease::entry::instantiate,
+        sg721_base_v3_8_0_prerelease::entry::query,
+    )
+    .with_migrate(sg721_base_v3_8_0_prerelease::Sg721Contract::<Empty>::migrate);
     Box::new(contract)
 }
 

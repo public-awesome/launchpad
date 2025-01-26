@@ -50,6 +50,7 @@ pub fn build_init_msg(
 }
 
 // Upload contract code and instantiate open edition minter contract
+#[allow(deprecated)]
 pub fn setup_open_edition_minter_contract(
     setup_params: OpenEditionMinterSetupParams,
 ) -> MinterCollectionResponse {

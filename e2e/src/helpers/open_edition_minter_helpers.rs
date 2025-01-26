@@ -11,6 +11,7 @@ use sg2::{
     msg::{CollectionParams, CreateMinterMsg},
     MinterParams,
 };
+#[allow(deprecated)]
 use sg721::CollectionInfo;
 
 // contract names used by cosm-orc to register stored code ids / instantiated addresses:
@@ -104,6 +105,7 @@ pub fn create_minter_msg(
             code_id: code_id.unwrap_or_else(|| chain.orc.contract_map.code_id(SG721_NAME).unwrap()),
             name: "Collection".to_string(),
             symbol: "SYM".to_string(),
+            #[allow(deprecated)]
             info: CollectionInfo {
                 creator: creator_addr,
                 description: "Description".to_string(),

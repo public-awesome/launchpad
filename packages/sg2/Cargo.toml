@@ -1,15 +1,12 @@
 [package]
-name = "sg2"
-authors = [
-    "Shane Vitarana <s@noreply.publicawesome.com>",
-    "John Y <j@noreply.publicawesome.com>",
-]
+name        = "sg2"
+authors     = ["Shane Vitarana <s@noreply.publicawesome.com>", "John Y <j@noreply.publicawesome.com>"]
 description = "Definition and types for the SG2 interface"
-version = { workspace = true }
-edition = { workspace = true }
-homepage = { workspace = true }
-repository = { workspace = true }
-license = { workspace = true }
+version     = { workspace = true }
+edition     = { workspace = true }
+homepage    = { workspace = true }
+repository  = { workspace = true }
+license     = { workspace = true }
 
 [dependencies]
 cosmwasm-schema = { workspace = true }
@@ -19,4 +16,7 @@ cw-utils        = { workspace = true }
 schemars        = { workspace = true }
 serde           = { workspace = true }
 sg721           = { workspace = true }
-thiserror       = { workspace = true }
+# `v3.8.0-prerelease` is only used for testing migration from collection info (sg721) to new collection metadata extension (cw721)
+sg2-v3-8-0-prerelease   = { workspace = true }
+sg721-v3-8-0-prerelease = { workspace = true }
+thiserror               = { workspace = true }

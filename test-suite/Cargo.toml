@@ -33,40 +33,46 @@ optimize = """docker run --rm -v "$(pwd)":/code \
 """
 
 [dependencies]
-cosmwasm-schema      = { workspace = true }
-sg-std               = { workspace = true }
-cosmwasm-std         = { workspace = true }
-cw4                  = { workspace = true }
-cw-multi-test        = { workspace = true }
-sg-multi-test        = { workspace = true }
-sg721-base           = { workspace = true }
-sg721-updatable      = { workspace = true }
-cw4-group            = { workspace = true }
-sg-splits            = { workspace = true }
-anyhow               = "1.0.57"
-sg-eth-airdrop       = { workspace = true }
-whitelist-immutable  = { workspace = true, features = ["library"] }
-cw721                = { workspace = true }
-cw721-base           = { workspace = true, features = ["library"] }
-sg2                  = { workspace = true }
-sg721                = { workspace = true }
-sg-metadata          = { workspace = true }
-open-edition-factory = { workspace = true, features = ["library"] }
-open-edition-minter  = { workspace = true, features = ["library"] }
-sg-whitelist         = { workspace = true, features = ["library"] }
-vending-factory      = { workspace = true, features = ["library"] }
-vending-minter       = { workspace = true, features = ["library"] }
-base-factory         = { workspace = true }
-base-minter          = { workspace = true }
-sg721-nt             = { workspace = true }
-sg-controllers       = { workspace = true }
-cw-ownable           = "0.5.1"
-serde                = { workspace = true }
-anybuf               = { workspace = true }
+cosmwasm-schema                   = { workspace = true }
+sg-std                            = { workspace = true }
+cosmwasm-std                      = { workspace = true }
+cw2                               = { workspace = true }
+cw4                               = { workspace = true }
+cw-multi-test                     = { workspace = true }
+sg-multi-test                     = { workspace = true }
+sg721-base                        = { workspace = true }
+sg721-base-v3-8-0-prerelease      = { workspace = true }
+sg721-updatable                   = { workspace = true }
+cw4-group                         = { workspace = true }
+sg-splits                         = { workspace = true }
+anyhow                            = "1.0.57"
+sg-eth-airdrop                    = { workspace = true }
+whitelist-immutable               = { workspace = true, features = ["library"] }
+cw721                             = { workspace = true }
+cw721-base                        = { workspace = true, features = ["library"] }
+sg2                               = { workspace = true }
+sg2-v3-8-0-prerelease             = { workspace = true }
+sg721                             = { workspace = true }
+sg721-v3-8-0-prerelease           = { workspace = true }
+sg-metadata                       = { workspace = true }
+open-edition-factory              = { workspace = true, features = ["library"] }
+open-edition-minter               = { workspace = true, features = ["library"] }
+sg-whitelist                      = { workspace = true, features = ["library"] }
+vending-factory                   = { workspace = true, features = ["library"] }
+vending-minter                    = { workspace = true, features = ["library"] }
+vending-factory-v3-8-0-prerelease = { workspace = true, features = ["library"] }
+vending-minter-v3-8-0-prerelease  = { workspace = true, features = ["library"] }
+base-factory                      = { workspace = true }
+base-minter                       = { workspace = true }
+sg721-nt                          = { workspace = true }
+sg-controllers                    = { workspace = true }
+cw-ownable                        = { workspace = true }
+serde                             = { workspace = true }
+anybuf                            = { workspace = true }
 
-vending-minter-merkle-wl  = { workspace = true, features = ["library"] }
-whitelist-mtree           = { workspace = true, features = ["library"] }
-rs_merkle                 = { version = "1.4.1", default-features = false }
+vending-minter-merkle-wl = { workspace = true, features = ["library"] }
+whitelist-mtree          = { workspace = true, features = ["library"] }
+rs_merkle                = { version = "1.4.1", default-features = false }
 
 [dev-dependencies]
 serde           = { workspace = true }
