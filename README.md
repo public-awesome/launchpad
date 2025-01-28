@@ -12,7 +12,7 @@ Launchpad consists of minter factories, minters, and SG-721 collection contracts
 
 A minter factory is a singleton contract that encapsulates all governance parameters for a type of minter. It's sole responsibility is to instantiate new minters with the latest governance parameters.
 
-Each factory also maintains an inventory of minters it has created, along with a verified, blocked, and explicit status for each. Goverance can vote to verify and block minters.
+Each factory also maintains an inventory of minters it has created, along with a verified, blocked, and explicit status for each. Governance can vote to verify and block minters.
 
 ### Minters
 
