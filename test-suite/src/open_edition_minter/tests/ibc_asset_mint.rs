@@ -4,12 +4,14 @@ use open_edition_factory::state::{OpenEditionMinterParams, ParamsExtension};
 use open_edition_minter::msg::ExecuteMsg;
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
-use crate::common_setup::setup_minter::common::constants::LIQUIDITY_DAO_ADDRESS;
+use crate::common_setup::setup_minter::common::constants::{
+    LAUNCHPAD_DAO_ADDRESS, LIQUIDITY_DAO_ADDRESS,
+};
 use crate::common_setup::{
     setup_accounts_and_block::setup_block_time,
     setup_minter::{
         common::constants::{
-            CREATION_FEE, DEV_ADDRESS, FOUNDATION, MINT_FEE_FAIR_BURN, MIN_MINT_PRICE_OPEN_EDITION,
+            CREATION_FEE, DEV_ADDRESS, MINT_FEE_FAIR_BURN, MIN_MINT_PRICE_OPEN_EDITION,
         },
         open_edition_minter::minter_params::{default_nft_data, init_msg},
     },
@@ -171,7 +173,7 @@ fn one_hundred_percent_burned_ibc_minter() {
     // "community_pool" address from packages/sg-multi-test/src/multi.rs
     let balance = router
         .wrap()
-        .query_balance(Addr::unchecked(FOUNDATION), denom)
+        .query_balance(Addr::unchecked(LAUNCHPAD_DAO_ADDRESS), denom)
         .unwrap();
     assert_eq!(balance.amount, mint_price.amount * Decimal::percent(40));
 
