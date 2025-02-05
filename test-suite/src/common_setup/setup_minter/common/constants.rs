@@ -15,3 +15,5 @@ pub const MIN_MINT_PRICE_OPEN_EDITION: u128 = 100_000_000;
 pub const FOUNDATION: &str = "stars1xqz6xujjyz0r9uzn7srasle5uynmpa0zkjr5l8";
 pub const LIQUIDITY_DAO_ADDRESS: &str =
     "stars12he2ldxl950wfypvelqwkac4mdul7clzgd8wdlnmjvll8z2cc47qsatvl2";
+pub const LAUNCHPAD_DAO_ADDRESS: &str =
+    "stars1huqk6ha02jgrm69lxh8xfgl6wch9wlg7s65ujxydwdr725cxvuus423tj0";

@@ -1,6 +1,4 @@
-use crate::common_setup::{
-    setup_collection_whitelist::WHITELIST_AMOUNT, setup_minter::common::constants::FOUNDATION,
-};
+use crate::common_setup::setup_collection_whitelist::WHITELIST_AMOUNT;
 use cosmwasm_std::{coin, coins, Addr, Decimal, Uint128};
 use cw_multi_test::{BankSudo, Executor, SudoMsg};
 use sg2::{msg::Sg2ExecuteMsg, tests::mock_collection_params};
@@ -24,7 +22,9 @@ use crate::common_setup::{
     templates::{vending_minter_template, vending_minter_with_ibc_asset},
 };
 
-use crate::common_setup::setup_minter::common::constants::{CREATION_FEE, LIQUIDITY_DAO_ADDRESS};
+use crate::common_setup::setup_minter::common::constants::{
+    CREATION_FEE, LAUNCHPAD_DAO_ADDRESS, LIQUIDITY_DAO_ADDRESS,
+};
 use crate::common_setup::setup_minter::vending_minter::mock_params::mock_params;
 
 #[test]
@@ -257,7 +257,7 @@ fn wl_denom_mint() {
     assert_eq!(balance.amount, wl_mint_price.amount * Decimal::percent(90));
     let balance = app
         .wrap()
-        .query_balance(Addr::unchecked(FOUNDATION), denom)
+        .query_balance(Addr::unchecked(LAUNCHPAD_DAO_ADDRESS), denom)
         .unwrap();
     assert_eq!(balance.amount, wl_mint_price.amount * Decimal::percent(8));
     let balance = app
