@@ -3,7 +3,9 @@ use crate::admin::{
 };
 use crate::error::ContractError;
 use crate::helpers::validators::map_validate;
-use crate::helpers::{fetch_active_stage, fetch_active_stage_index, validate_stages};
+use crate::helpers::{
+    fetch_active_stage, fetch_active_stage_index, validate_stages, validate_update,
+};
 use crate::msg::{
     AddMembersMsg, AllStageMemberInfoResponse, ConfigResponse, ExecuteMsg, HasEndedResponse,
     HasMemberResponse, HasStartedResponse, InstantiateMsg, IsActiveResponse, MembersResponse,
@@ -164,9 +166,12 @@ pub fn execute_update_stage_config(
         per_address_limit: msg
             .per_address_limit
             .unwrap_or(config.stages[stage_id].clone().per_address_limit),
+        mint_count_limit: msg
+            .mint_count_limit
+            .unwrap_or(config.stages[stage_id].clone().mint_count_limit),
     };
     config.stages[stage_id] = updated_stage.clone();
-    validate_stages(&env, &config.stages)?;
+    validate_update(&env, &config.stages)?;
     CONFIG.save(deps.storage, &config)?;
 
     Ok(Response::new()

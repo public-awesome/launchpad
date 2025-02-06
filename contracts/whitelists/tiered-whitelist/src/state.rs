@@ -9,6 +9,7 @@ pub struct Stage {
     pub end_time: Timestamp,
     pub mint_price: Coin,
     pub per_address_limit: u32,
+    pub mint_count_limit: Option<u32>,
 }
 
 #[cw_serde]

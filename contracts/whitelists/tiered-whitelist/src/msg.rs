@@ -59,6 +59,7 @@ pub struct UpdateStageConfigMsg {
     pub end_time: Option<Timestamp>,
     pub mint_price: Option<Coin>,
     pub per_address_limit: Option<u32>,
+    pub mint_count_limit: Option<Option<u32>>,
 }
 
 #[cw_serde]

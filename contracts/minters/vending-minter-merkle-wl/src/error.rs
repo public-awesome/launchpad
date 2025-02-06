@@ -26,6 +26,9 @@ pub enum ContractError {
     #[error("Invalid reply ID")]
     InvalidReplyID {},
 
+    #[error("Invalid stage ID")]
+    InvalidStageID {},
+
     #[error("Not enough funds sent")]
     NotEnoughFunds {},
 
@@ -100,6 +103,9 @@ pub enum ContractError {
 
     #[error("Max minting limit per address exceeded")]
     MaxPerAddressLimitExceeded {},
+
+    #[error("WhitelistMintCountLimitReached")]
+    WhitelistMintCountLimitReached {},
 
     #[error("Token id: {token_id} already sold")]
     TokenIdAlreadySold { token_id: u32 },

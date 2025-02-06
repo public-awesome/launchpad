@@ -26,6 +26,9 @@ pub enum ContractError {
     #[error("Invalid reply ID")]
     InvalidReplyID {},
 
+    #[error("Invalid stage ID")]
+    InvalidStageID {},
+
     #[error("Not enough funds sent")]
     NotEnoughFunds {},
 
@@ -76,6 +79,9 @@ pub enum ContractError {
 
     #[error("WhitelistAlreadyStarted")]
     WhitelistAlreadyStarted {},
+
+    #[error("WhitelistMintCountLimitReached")]
+    WhitelistMintCountLimitReached {},
 
     #[error("InvalidStartTime {0} < {1}")]
     InvalidStartTime(Timestamp, Timestamp),
