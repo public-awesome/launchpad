@@ -23,7 +23,6 @@ use cw2::set_contract_version;
 use cw_utils::must_pay;
 use sg_std::{Response, NATIVE_DENOM};
 
-use rs_merkle::{algorithms::Sha256, Hasher};
 use semver::Version;
 use sg1::checked_fair_burn;
 
@@ -257,9 +256,10 @@ pub fn query_has_member(
 
     let merkle_root = MERKLE_ROOTS.load(deps.storage)?[active_stage as usize].clone();
 
-    let full_member_init_hash_slice = Sha256::hash(member.as_bytes());
-    let truncated_member_init_hash_slice: [u8; 16] =
-        full_member_init_hash_slice[..16].try_into().unwrap(); // Extract first 16 bytes
+    let full_member_init_hash_slice = blake3::hash(member.as_bytes());
+    let truncated_member_init_hash_slice: [u8; 16] = full_member_init_hash_slice.as_bytes()[..16]
+        .try_into()
+        .unwrap(); // Extract first 16 bytes
 
     let final_hash = proof_hashes.into_iter().try_fold(
         truncated_member_init_hash_slice,
@@ -271,8 +271,8 @@ pub fn query_has_member(
                 string_to_byte_slice(&new_proof_hashstring)?,
             ];
             hash_slices.sort_unstable();
-            let full_hash = Sha256::hash(&hash_slices.concat());
-            let truncated_hash: [u8; 16] = full_hash[..16].try_into().unwrap();
+            let full_hash = blake3::hash(&hash_slices.concat());
+            let truncated_hash: [u8; 16] = full_hash.as_bytes()[..16].try_into().unwrap();
             Result::<[u8; 16], StdError>::Ok(truncated_hash)
         },
     );
