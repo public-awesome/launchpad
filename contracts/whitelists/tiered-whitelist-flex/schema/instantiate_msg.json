@@ -95,6 +95,14 @@
         "end_time": {
           "$ref": "#/definitions/Timestamp"
         },
+        "mint_count_limit": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint32",
+          "minimum": 0.0
+        },
         "mint_price": {
           "$ref": "#/definitions/Coin"
         },

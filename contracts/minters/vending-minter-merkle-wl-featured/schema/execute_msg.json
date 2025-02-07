@@ -11,6 +11,14 @@
         "mint": {
           "type": "object",
           "properties": {
+            "allocation": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint32",
+              "minimum": 0.0
+            },
             "proof_hashes": {
               "type": [
                 "array",
@@ -19,6 +27,14 @@
               "items": {
                 "type": "string"
               }
+            },
+            "stage": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint32",
+              "minimum": 0.0
             }
           },
           "additionalProperties": false
