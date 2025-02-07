@@ -9,6 +9,7 @@ use std::marker::PhantomData;
 
 pub struct StargazeKeeper<ExecT, QueryT, SudoT>(PhantomData<(ExecT, QueryT, SudoT)>);
 
+#[allow(clippy::new_without_default)]
 impl<ExecT, QueryT, SudoT> StargazeKeeper<ExecT, QueryT, SudoT> {
     pub fn new() -> Self {
         Self(Default::default())
@@ -51,12 +52,12 @@ impl Module for StargazeStargateKeeper {
                 let amount = decoded_amount.string(2).unwrap();
                 let msg = BankMsg::Send {
                     to_address: "fairburn_pool".to_owned(),
-                    amount: coins(amount.parse::<u128>()?.into(), denom),
+                    amount: coins(amount.parse::<u128>()?, denom),
                 }
                 .into();
                 let resp = router.execute(api, storage, block, sender, msg);
                 match resp {
-                    Ok(_) => return Ok(AppResponse::default()),
+                    Ok(_) => Ok(AppResponse::default()),
                     Err(e) => bail!("Error executing fairburn pool funding: {}", e),
                 }
             }

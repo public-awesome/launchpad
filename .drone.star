@@ -11,7 +11,8 @@ def pipeline_test_and_build(ctx):
     "name": "test_and_build",
     "steps": [
       step_fetch(ctx),
-      cargo_test_all(ctx)
+      cargo_test_all(ctx),
+      cargo_lint(ctx)
     ],
   }
 
@@ -30,4 +31,16 @@ def cargo_test_all(ctx):
         "name": "test",
         "image": "rust:1.83",
         "commands": ["cargo test --locked"]
+    }
+
+def cargo_lint(ctx):
+    return {
+        "name": "lint",
+        "image": "rust:1.83",
+        "commands": [
+            "rustup component add rustfmt",
+            "rustup component add clippy",
+            "cargo fmt -- --check", 
+            "cargo clippy --all-targets -- -D warnings"
+        ]
     }

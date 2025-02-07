@@ -20,8 +20,7 @@ pub type App = cw_multi_test::App<
 pub fn custom_mock_app() -> App {
     let stargate_keeper = StargazeStargateKeeper::new();
     let app_builder = AppBuilder::default();
-    let app = app_builder.with_stargate(stargate_keeper).build(no_init);
-    app
+    app_builder.with_stargate(stargate_keeper).build(no_init)
 }
 pub fn contract_vending_factory() -> Box<dyn Contract<Empty>> {
     let contract = ContractWrapper::new(
