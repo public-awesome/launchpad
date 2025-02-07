@@ -1,9 +1,8 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
-    to_json_binary, Addr, Coin, ContractInfoResponse, CustomQuery, Querier, QuerierWrapper,
-    StdResult, WasmMsg, WasmQuery,
+    to_json_binary, Addr, Coin, ContractInfoResponse, CosmosMsg, CustomQuery, Querier,
+    QuerierWrapper, StdResult, WasmMsg, WasmQuery,
 };
-use sg_std::CosmosMsg;
 
 use crate::msg::ExecuteMsg;
 

@@ -14,8 +14,8 @@ use crate::validation::{check_dynamic_per_address_limit, get_three_percent_of_to
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     coin, ensure, to_json_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut,
-    Empty, Env, Event, MessageInfo, Order, Reply, ReplyOn, StdError, StdResult, Timestamp, Uint128,
-    WasmMsg,
+    Empty, Env, Event, MessageInfo, Order, Reply, ReplyOn, Response, StdError, StdResult, SubMsg,
+    Timestamp, Uint128, WasmMsg,
 };
 use cw2::set_contract_version;
 use cw721_base::Extension;
@@ -27,7 +27,7 @@ use sg1::{checked_fair_burn, distribute_mint_fees};
 use sg2::query::Sg2QueryMsg;
 use sg4::{MinterConfig, Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
-use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME};
+use sg_std::GENESIS_MINT_START_TIME;
 use sg_tiered_whitelist::msg::{QueryMsg as TieredWhitelistQueryMsg, StageResponse};
 use sg_whitelist::msg::{
     ConfigResponse as WhitelistConfigResponse, HasMemberResponse, QueryMsg as WhitelistQueryMsg,
@@ -38,9 +38,6 @@ use std::convert::TryInto;
 use url::Url;
 use vending_factory::msg::{ParamsResponse, VendingMinterCreateMsg};
 use vending_factory::state::VendingMinterParams;
-
-pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
-pub type SubMsg = cosmwasm_std::SubMsg<StargazeMsgWrapper>;
 
 pub struct TokenPositionMapping {
     pub position: u32,

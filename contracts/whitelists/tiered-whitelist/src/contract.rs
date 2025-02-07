@@ -16,8 +16,8 @@ use crate::state::{AdminList, Config, Stage, ADMIN_LIST, CONFIG, MEMBER_COUNT, W
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    ensure, to_json_binary, Addr, Binary, Coin, Deps, DepsMut, Env, MessageInfo, StdResult,
-    Timestamp, Uint128,
+    ensure, to_json_binary, Addr, Binary, Coin, Deps, DepsMut, Env, MessageInfo, Response,
+    StdResult, Timestamp, Uint128,
 };
 use cosmwasm_std::{Order, StdError};
 use cw2::set_contract_version;
@@ -26,7 +26,7 @@ use cw_utils::{may_pay, maybe_addr, must_pay};
 use rust_decimal::prelude::ToPrimitive;
 use rust_decimal::Decimal;
 use sg1::checked_fair_burn;
-use sg_std::{Response, NATIVE_DENOM};
+use sg_std::NATIVE_DENOM;
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sg-tiered-whitelist";

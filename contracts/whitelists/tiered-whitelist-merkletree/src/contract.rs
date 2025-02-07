@@ -16,12 +16,12 @@ use crate::state::{AdminList, Config, Stage, ADMIN_LIST, CONFIG, MERKLE_ROOTS, M
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    ensure, to_json_binary, Binary, Coin, Deps, DepsMut, Empty, Env, Event, MessageInfo, StdError,
-    StdResult, Timestamp, Uint128,
+    ensure, to_json_binary, Binary, Coin, Deps, DepsMut, Empty, Env, Event, MessageInfo, Response,
+    StdError, StdResult, Timestamp, Uint128,
 };
 use cw2::set_contract_version;
 use cw_utils::must_pay;
-use sg_std::{Response, NATIVE_DENOM};
+use sg_std::NATIVE_DENOM;
 
 use rs_merkle::{algorithms::Sha256, Hasher};
 use semver::Version;

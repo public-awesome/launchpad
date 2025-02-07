@@ -2,10 +2,9 @@ use cosmwasm_std::{Empty, Timestamp};
 use cw_storage_plus::Item;
 use serde::{de::DeserializeOwned, Serialize};
 use sg721::{CollectionInfo, RoyaltyInfo};
-use sg_std::StargazeMsgWrapper;
 use std::ops::Deref;
 
-type Parent<'a, T> = cw721_base::Cw721Contract<'a, T, StargazeMsgWrapper, Empty, Empty>;
+type Parent<'a, T> = cw721_base::Cw721Contract<'a, T, Empty, Empty, Empty>;
 pub struct Sg721Contract<'a, T>
 where
     T: Serialize + DeserializeOwned + Clone,

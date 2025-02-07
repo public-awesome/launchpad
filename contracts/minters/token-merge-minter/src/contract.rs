@@ -12,8 +12,8 @@ use crate::validation::{check_dynamic_per_address_limit, get_three_percent_of_to
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     coin, ensure, from_json, to_json_binary, Addr, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut,
-    Empty, Env, Event, MessageInfo, Order, Reply, ReplyOn, StdError, StdResult, Timestamp, Uint128,
-    WasmMsg,
+    Empty, Env, Event, MessageInfo, Order, Reply, ReplyOn, Response, StdError, StdResult, SubMsg,
+    Timestamp, Uint128, WasmMsg,
 };
 use cw2::set_contract_version;
 use cw721::Cw721ReceiveMsg;
@@ -25,15 +25,13 @@ use semver::Version;
 use sg1::{checked_fair_burn, distribute_mint_fees};
 use sg4::{Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
-use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME};
+use sg_std::GENESIS_MINT_START_TIME;
 use sha2::{Digest, Sha256};
 use shuffle::{fy::FisherYates, shuffler::Shuffler};
 use std::convert::TryInto;
 use token_merge_factory::msg::QueryMsg as FactoryQueryMsg;
 use token_merge_factory::msg::{MintToken, ParamsResponse, TokenMergeMinterCreateMsg};
 use url::Url;
-pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
-pub type SubMsg = cosmwasm_std::SubMsg<StargazeMsgWrapper>;
 
 pub struct TokenPositionMapping {
     pub position: u32,
@@ -462,7 +460,7 @@ fn _execute_mint(
     is_admin: bool,
     recipient: Option<Addr>,
     token_id: Option<u32>,
-    burn_message: Option<CosmosMsg<StargazeMsgWrapper>>,
+    burn_message: Option<CosmosMsg>,
 ) -> Result<Response, ContractError> {
     let mut network_fee = Uint128::zero();
     let mintable_num_tokens = MINTABLE_NUM_TOKENS.load(deps.storage)?;

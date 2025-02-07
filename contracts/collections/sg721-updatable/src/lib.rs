@@ -19,10 +19,8 @@ pub mod entry {
         msg::ExecuteMsg,
     };
     use cosmwasm_std::{entry_point, to_json_binary, Empty};
-    use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, StdResult};
+    use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
     use cw721_base::Extension;
-
-    use sg_std::Response;
 
     #[entry_point]
     pub fn instantiate(

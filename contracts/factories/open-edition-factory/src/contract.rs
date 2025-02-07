@@ -1,11 +1,12 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    ensure, to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, StdError, StdResult, WasmMsg,
+    ensure, to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdError, StdResult,
+    WasmMsg,
 };
 use cw2::set_contract_version;
 use semver::Version;
-use sg_std::{Response, NATIVE_DENOM};
+use sg_std::NATIVE_DENOM;
 
 use base_factory::contract::{
     must_be_allowed_collection, must_not_be_frozen, must_pay_exact_amount, update_params,

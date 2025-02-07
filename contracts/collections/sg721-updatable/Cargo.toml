@@ -1,9 +1,6 @@
 [package]
 name = "sg721-updatable"
-authors = [
-    "John Y <j@noreply.publicawesome.com>",
-    "Shane Vitarana <s@noreply.publicawesome.com>",
-]
+authors = ["John Y <j@noreply.publicawesome.com>", "Shane Vitarana <s@noreply.publicawesome.com>"]
 exclude = [
     # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
     "contract.wasm",
