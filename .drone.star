@@ -54,6 +54,8 @@ def cargo_wasm_build(ctx):
         "image": rust_version,
         "commands": [
             "rustup target add wasm32-unknown-unknown", 
-            "sh scripts/wasm_build.sh"
+            "sh scripts/wasm_build.sh",
+            "cargo install cosmwasm-check",
+            "sh scripts/wasm_check.sh"
         ]
     }
