@@ -21,11 +21,10 @@ pub mod entry {
     use super::*;
 
     use cosmwasm_std::{
-        entry_point, Binary, Deps, DepsMut, Env, Event, MessageInfo, StdError, StdResult,
+        entry_point, Binary, Deps, DepsMut, Env, Event, MessageInfo, Response, StdError, StdResult,
     };
     use semver::Version;
     use sg721_base::{msg::QueryMsg, ContractError};
-    use sg_std::Response;
 
     #[entry_point]
     pub fn instantiate(

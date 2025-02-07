@@ -1,19 +1,20 @@
 use cosmwasm_std::{coin, Addr, Timestamp};
-use cw_multi_test::Executor;
-use sg_multi_test::StargazeApp;
+
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use sg_whitelist::msg::InstantiateMsg as WhitelistInstantiateMsg;
 
 use crate::common_setup::{
-    contract_boxes::contract_collection_whitelist, setup_accounts_and_block::setup_block_time,
+    contract_boxes::contract_collection_whitelist, contract_boxes::App,
+    setup_accounts_and_block::setup_block_time,
 };
+use cw_multi_test::Executor;
 
 pub const WHITELIST_AMOUNT: u128 = 66_000_000;
 const ZERO_FEE_WHITELIST: u128 = 0;
 const WL_PER_ADDRESS_LIMIT: u32 = 1;
 
 pub fn setup_whitelist_contract(
-    router: &mut StargazeApp,
+    router: &mut App,
     creator: &Addr,
     whitelist_code_id: Option<u64>,
     denom: Option<&str>,
@@ -50,7 +51,7 @@ pub fn setup_whitelist_contract(
 }
 
 pub fn setup_zero_fee_whitelist_contract(
-    router: &mut StargazeApp,
+    router: &mut App,
     creator: &Addr,
     whitelist_code_id: Option<u64>,
 ) -> Addr {
@@ -82,7 +83,7 @@ pub fn setup_zero_fee_whitelist_contract(
 }
 
 pub fn configure_collection_whitelist(
-    router: &mut StargazeApp,
+    router: &mut App,
     creator: Addr,
     buyer: Addr,
     minter_addr: Addr,

@@ -111,13 +111,7 @@ fn set_invalid_whitelist() {
             &[],
         )
         .unwrap_err();
-    assert!(err
-        .source()
-        .unwrap()
-        .source()
-        .unwrap()
-        .to_string()
-        .contains("not found"));
+    assert!(err.source().unwrap().to_string().contains("not found"));
 
     // move time to make wl start
     setup_block_time(&mut router, GENESIS_MINT_START_TIME + 201, Some(11));

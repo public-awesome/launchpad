@@ -1,7 +1,8 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_schema::QueryResponses;
 use cosmwasm_std::{
-    coin, Addr, BankMsg, Binary, Empty, Event, StdError, StdResult, Timestamp, Uint128,
+    coin, Addr, BankMsg, Binary, Empty, Event, Response, StdError, StdResult, SubMsg, Timestamp,
+    Uint128,
 };
 use cw721::{
     AllNftInfoResponse, ApprovalResponse, ApprovalsResponse, ContractInfoResponse, NftInfoResponse,
@@ -13,7 +14,7 @@ use cw_ownable::cw_ownable_execute;
 use cw_ownable::cw_ownable_query;
 use cw_utils::Expiration;
 use sg721::RoyaltyInfoResponse;
-use sg_std::{Response, SubMsg, NATIVE_DENOM};
+use sg_std::NATIVE_DENOM;
 
 #[cw_ownable_execute]
 #[cw_serde]
@@ -117,7 +118,7 @@ pub enum QueryMsg {
     },
     #[returns(MinterResponse)]
     Minter {},
-    #[returns(MinterResponse)]
+    #[returns(CollectionInfoResponse)]
     CollectionInfo {},
 }
 

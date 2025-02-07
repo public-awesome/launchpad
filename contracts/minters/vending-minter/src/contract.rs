@@ -6,40 +6,37 @@ use crate::msg::{
 use crate::state::{
     Config, ConfigExtension, CONFIG, LAST_DISCOUNT_TIME, MINTABLE_NUM_TOKENS,
     MINTABLE_TOKEN_POSITIONS, MINTER_ADDRS, SG721_ADDRESS, STATUS, WHITELIST_FS_MINTER_ADDRS,
-    WHITELIST_MINTER_ADDRS, WHITELIST_SS_MINTER_ADDRS, WHITELIST_TS_MINTER_ADDRS,
+    WHITELIST_FS_MINT_COUNT, WHITELIST_MINTER_ADDRS, WHITELIST_SS_MINTER_ADDRS,
+    WHITELIST_SS_MINT_COUNT, WHITELIST_TS_MINTER_ADDRS, WHITELIST_TS_MINT_COUNT,
 };
 use crate::validation::{check_dynamic_per_address_limit, get_three_percent_of_tokens};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     coin, ensure, to_json_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut,
-    Empty, Env, Event, MessageInfo, Order, Reply, ReplyOn, StdError, StdResult, Timestamp, Uint128,
-    WasmMsg,
+    Empty, Env, Event, MessageInfo, Order, Reply, ReplyOn, Response, StdError, StdResult, SubMsg,
+    Timestamp, Uint128, WasmMsg,
 };
 use cw2::set_contract_version;
 use cw721_base::Extension;
 use cw_utils::{may_pay, maybe_addr, nonpayable, parse_reply_instantiate_data};
-use rand_core::{RngCore, SeedableRng};
-use rand_xoshiro::Xoshiro128PlusPlus;
+use nois::{int_in_range, shuffle};
+
 use semver::Version;
 use sg1::{checked_fair_burn, distribute_mint_fees};
 use sg2::query::Sg2QueryMsg;
 use sg4::{MinterConfig, Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
-use sg_std::{StargazeMsgWrapper, GENESIS_MINT_START_TIME};
-use sg_tiered_whitelist::msg::QueryMsg as TieredWhitelistQueryMsg;
+use sg_std::GENESIS_MINT_START_TIME;
+use sg_tiered_whitelist::msg::{QueryMsg as TieredWhitelistQueryMsg, StageResponse};
 use sg_whitelist::msg::{
     ConfigResponse as WhitelistConfigResponse, HasMemberResponse, QueryMsg as WhitelistQueryMsg,
 };
 use sha2::{Digest, Sha256};
-use shuffle::{fy::FisherYates, shuffler::Shuffler};
 use std::convert::TryInto;
 use url::Url;
 use vending_factory::msg::{ParamsResponse, VendingMinterCreateMsg};
 use vending_factory::state::VendingMinterParams;
-
-pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
-pub type SubMsg = cosmwasm_std::SubMsg<StargazeMsgWrapper>;
 
 pub struct TokenPositionMapping {
     pub position: u32,
@@ -548,10 +545,32 @@ fn is_public_mint(deps: Deps, info: &MessageInfo) -> Result<bool, ContractError>
         });
     }
 
-    // Check wl per address limit
-    let wl_mint_count = whitelist_mint_count(deps, info, whitelist.clone())?.0;
-    if wl_mint_count >= wl_config.per_address_limit {
+    let wl_mint_count = whitelist_mint_count(deps, info, whitelist.clone())?;
+
+    // Check if whitelist per address limit is reached
+    if wl_mint_count.0 >= wl_config.per_address_limit {
         return Err(ContractError::MaxPerAddressLimitExceeded {});
+    }
+
+    // Check if whitelist stage mint count limit is reached
+    if wl_mint_count.1 && wl_mint_count.2.is_some() {
+        let active_stage: StageResponse = deps.querier.query_wasm_smart(
+            whitelist.clone(),
+            &TieredWhitelistQueryMsg::Stage {
+                stage_id: wl_mint_count.2.unwrap() - 1,
+            },
+        )?;
+        if active_stage.stage.mint_count_limit.is_some() {
+            let stage_mint_count = match wl_mint_count.2.unwrap() {
+                1 => WHITELIST_FS_MINT_COUNT.may_load(deps.storage)?.unwrap_or(0),
+                2 => WHITELIST_SS_MINT_COUNT.may_load(deps.storage)?.unwrap_or(0),
+                3 => WHITELIST_TS_MINT_COUNT.may_load(deps.storage)?.unwrap_or(0),
+                _ => return Err(ContractError::InvalidStageID {}),
+            };
+            if stage_mint_count >= active_stage.stage.mint_count_limit.unwrap() {
+                return Err(ContractError::WhitelistMintCountLimitReached {});
+            }
+        }
     }
 
     Ok(false)
@@ -783,13 +802,8 @@ fn random_token_list(
     let sha256 = Sha256::digest(
         format!("{}{}{}{}", sender, env.block.height, tokens.len(), tx_index).into_bytes(),
     );
-    // Cut first 16 bytes from 32 byte value
-    let randomness: [u8; 16] = sha256.to_vec()[0..16].try_into().unwrap();
-    let mut rng = Xoshiro128PlusPlus::from_seed(randomness);
-    let mut shuffler = FisherYates::default();
-    shuffler
-        .shuffle(&mut tokens, &mut rng)
-        .map_err(StdError::generic_err)?;
+    let randomness: [u8; 32] = sha256.to_vec().try_into().unwrap();
+    tokens = shuffle(randomness, tokens);
     Ok(tokens)
 }
 
@@ -808,13 +822,8 @@ fn random_mintable_token_mapping(
     let sha256 = Sha256::digest(
         format!("{}{}{}{}", sender, num_tokens, env.block.height, tx_index).into_bytes(),
     );
-    // Cut first 16 bytes from 32 byte value
-    let randomness: [u8; 16] = sha256.to_vec()[0..16].try_into().unwrap();
-
-    let mut rng = Xoshiro128PlusPlus::from_seed(randomness);
-
-    let r = rng.next_u32();
-
+    let randomness: [u8; 32] = sha256.to_vec().try_into().unwrap();
+    let r = int_in_range(randomness, 0, 50);
     let order = match r % 2 {
         1 => Order::Descending,
         _ => Order::Ascending,
@@ -1162,9 +1171,27 @@ fn save_whitelist_mint_count(
 ) -> StdResult<()> {
     if is_tiered_whitelist & stage_id.is_some() {
         match stage_id {
-            Some(1) => WHITELIST_FS_MINTER_ADDRS.save(deps.storage, &info.sender, &count),
-            Some(2) => WHITELIST_SS_MINTER_ADDRS.save(deps.storage, &info.sender, &count),
-            Some(3) => WHITELIST_TS_MINTER_ADDRS.save(deps.storage, &info.sender, &count),
+            Some(1) => {
+                let _ = WHITELIST_FS_MINTER_ADDRS.save(deps.storage, &info.sender, &count);
+                let mut wl_fs_mint_count =
+                    WHITELIST_FS_MINT_COUNT.may_load(deps.storage)?.unwrap_or(0);
+                wl_fs_mint_count += 1;
+                WHITELIST_FS_MINT_COUNT.save(deps.storage, &wl_fs_mint_count)
+            }
+            Some(2) => {
+                let _ = WHITELIST_SS_MINTER_ADDRS.save(deps.storage, &info.sender, &count);
+                let mut wl_ss_mint_count =
+                    WHITELIST_SS_MINT_COUNT.may_load(deps.storage)?.unwrap_or(0);
+                wl_ss_mint_count += 1;
+                WHITELIST_SS_MINT_COUNT.save(deps.storage, &wl_ss_mint_count)
+            }
+            Some(3) => {
+                let _ = WHITELIST_TS_MINTER_ADDRS.save(deps.storage, &info.sender, &count);
+                let mut wl_ts_mint_count =
+                    WHITELIST_TS_MINT_COUNT.may_load(deps.storage)?.unwrap_or(0);
+                wl_ts_mint_count += 1;
+                WHITELIST_TS_MINT_COUNT.save(deps.storage, &wl_ts_mint_count)
+            }
             _ => Err(StdError::generic_err("Invalid stage ID")),
         }
     } else {

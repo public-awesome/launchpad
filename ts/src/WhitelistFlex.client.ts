@@ -6,7 +6,7 @@
 
 import { CosmWasmClient, SigningCosmWasmClient, ExecuteResult } from "@cosmjs/cosmwasm-stargate";
 import { StdFee } from "@cosmjs/amino";
-import { Timestamp, Uint64, Uint128, InstantiateMsg, Member, Coin, ExecuteMsg, AddMembersMsg, RemoveMembersMsg, QueryMsg, CosmosMsgForEmpty, BankMsg, WasmMsg, Binary, Empty, AdminListResponse, CanExecuteResponse, ConfigResponse, HasEndedResponse, HasMemberResponse, HasStartedResponse, IsActiveResponse, MemberResponse, MembersResponse } from "./WhitelistFlex.types";
+import { Timestamp, Uint64, Uint128, InstantiateMsg, Member, Coin, ExecuteMsg, AddMembersMsg, RemoveMembersMsg, QueryMsg, CosmosMsgForEmpty, BankMsg, Binary, IbcMsg, WasmMsg, GovMsg, VoteOption, Decimal, Empty, IbcTimeout, IbcTimeoutBlock, WeightedVoteOption, AdminListResponse, CanExecuteResponse, ConfigResponse, HasEndedResponse, HasMemberResponse, HasStartedResponse, IsActiveResponse, MemberResponse, MembersResponse } from "./WhitelistFlex.types";
 export interface WhitelistFlexReadOnlyInterface {
   contractAddress: string;
   hasStarted: () => Promise<HasStartedResponse>;

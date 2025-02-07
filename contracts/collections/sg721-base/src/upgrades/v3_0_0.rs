@@ -1,8 +1,7 @@
 use crate::ContractError;
 
-use cosmwasm_std::{DepsMut, Empty, Env, Event};
+use cosmwasm_std::{DepsMut, Empty, Env, Event, Response};
 use cw721_base::Extension;
-use sg_std::Response;
 
 pub fn upgrade(deps: DepsMut, _env: &Env, response: Response) -> Result<Response, ContractError> {
     let cw17_res = cw721_base::upgrades::v0_17::migrate::<Extension, Empty, Empty, Empty>(deps)

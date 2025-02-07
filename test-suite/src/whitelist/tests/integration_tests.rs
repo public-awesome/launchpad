@@ -1,6 +1,6 @@
 use cosmwasm_std::{coin, coins, Addr, Timestamp};
 use cw_multi_test::{BankSudo, Executor, SudoMsg as CWSudoMsg};
-use sg_multi_test::StargazeApp;
+
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
 use sg_whitelist::{
@@ -8,7 +8,7 @@ use sg_whitelist::{
     state::AdminList,
 };
 
-use crate::common_setup::contract_boxes::{contract_collection_whitelist, custom_mock_app};
+use crate::common_setup::contract_boxes::{contract_collection_whitelist, custom_mock_app, App};
 
 const COLLECTION_WHITELIST_ADDR: &str = "contract0";
 const ADMIN: &str = "admin";
@@ -18,7 +18,7 @@ const UNIT_AMOUNT: u128 = 0;
 const GENESIS_START_TIME: Timestamp = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
 const END_TIME: Timestamp = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 1000);
 
-fn instantiate_contract(admin_account: &str, app: &mut StargazeApp) {
+fn instantiate_contract(admin_account: &str, app: &mut App) {
     let admin = Addr::unchecked(admin_account);
     let funds_amount = 100000000;
 
@@ -53,7 +53,7 @@ fn instantiate_contract(admin_account: &str, app: &mut StargazeApp) {
     );
 }
 
-fn add_members_with_specified_admin(admin: &str, members: Vec<String>, app: &mut StargazeApp) {
+fn add_members_with_specified_admin(admin: &str, members: Vec<String>, app: &mut App) {
     let admin_addr = Addr::unchecked(admin);
     let collection_whitelist_contract = Addr::unchecked("contract0");
     let initial_members = vec!["member0".to_string()];
@@ -92,7 +92,7 @@ fn add_members_with_specified_admin(admin: &str, members: Vec<String>, app: &mut
     assert_eq!(query_result, expected_result);
 }
 
-fn remove_members_with_specified_admin(admin: &str, members: Vec<String>, app: &mut StargazeApp) {
+fn remove_members_with_specified_admin(admin: &str, members: Vec<String>, app: &mut App) {
     let admin_addr = Addr::unchecked(admin);
     let collection_whitelist_contract = Addr::unchecked("contract0");
     let initial_members = vec![
@@ -133,7 +133,7 @@ fn remove_members_with_specified_admin(admin: &str, members: Vec<String>, app: &
     assert_eq!(query_result, expected_result);
 }
 
-fn add_members_blocked(admin: &str, members: Vec<String>, app: &mut StargazeApp) {
+fn add_members_blocked(admin: &str, members: Vec<String>, app: &mut App) {
     let admin_addr = Addr::unchecked(admin);
     let collection_whitelist_contract = Addr::unchecked("contract0");
     let initial_members = vec!["member0".to_string()];

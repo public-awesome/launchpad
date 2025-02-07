@@ -1,4 +1,4 @@
-use crate::common_setup::contract_boxes::custom_mock_app;
+use crate::common_setup::contract_boxes::{custom_mock_app, App};
 use crate::common_setup::msg::MinterTemplateResponse;
 use crate::common_setup::{
     msg::MinterCollectionResponse,
@@ -24,7 +24,7 @@ use open_edition_factory::msg::OpenEditionMinterInitMsgExtension;
 use open_edition_factory::state::{OpenEditionMinterParams, ParamsExtension};
 use open_edition_factory::types::NftData;
 use sg2::tests::{mock_collection_params_1, mock_collection_two};
-use sg_multi_test::StargazeApp;
+
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
 pub fn vending_minter_template(num_tokens: u32) -> MinterTemplateResponse<Accounts> {
@@ -140,10 +140,7 @@ pub fn vending_minter_with_start_time(
     }
 }
 
-pub fn vending_minter_with_app(
-    num_tokens: u32,
-    mut app: StargazeApp,
-) -> MinterTemplateResponse<Accounts> {
+pub fn vending_minter_with_app(num_tokens: u32, mut app: App) -> MinterTemplateResponse<Accounts> {
     let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
     let (creator, buyer) = setup_accounts(&mut app);
     let collection_params = mock_collection_params_1(Some(start_time));
@@ -211,7 +208,7 @@ pub fn vending_minter_with_sg721_updatable(num_tokens: u32) -> MinterTemplateRes
 
 pub fn vending_minter_updatable_with_app(
     num_tokens: u32,
-    mut app: StargazeApp,
+    mut app: App,
 ) -> MinterTemplateResponse<Accounts> {
     let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
     let (creator, buyer) = setup_accounts(&mut app);
@@ -420,7 +417,7 @@ pub fn open_edition_minter_start_and_end_time(
 }
 
 pub fn open_edition_minter_custom_code_ids(
-    app: StargazeApp,
+    app: App,
     params_extension: ParamsExtension,
     init_msg: OpenEditionMinterInitMsgExtension,
     code_ids: CodeIds,

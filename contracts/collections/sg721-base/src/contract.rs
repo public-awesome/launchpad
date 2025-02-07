@@ -3,7 +3,7 @@ use url::Url;
 
 use cosmwasm_std::{
     to_json_binary, Addr, Binary, ContractInfoResponse, Decimal, Deps, DepsMut, Empty, Env, Event,
-    MessageInfo, StdError, StdResult, Storage, Timestamp, WasmQuery,
+    MessageInfo, Response, StdError, StdResult, Storage, Timestamp, WasmQuery,
 };
 
 use cw721::{ContractInfoResponse as CW721ContractInfoResponse, Cw721Execute};
@@ -14,7 +14,6 @@ use sg721::{
     CollectionInfo, ExecuteMsg, InstantiateMsg, RoyaltyInfo, RoyaltyInfoResponse,
     UpdateCollectionInfoMsg,
 };
-use sg_std::Response;
 
 use crate::msg::{CollectionInfoResponse, NftParams, QueryMsg};
 use crate::{ContractError, Sg721Contract};
@@ -25,7 +24,7 @@ const MAX_DESCRIPTION_LENGTH: u32 = 512;
 const MAX_SHARE_DELTA_PCT: u64 = 2;
 const MAX_ROYALTY_SHARE_PCT: u64 = 10;
 
-impl<'a, T> Sg721Contract<'a, T>
+impl<T> Sg721Contract<'_, T>
 where
     T: Serialize + DeserializeOwned + Clone,
 {

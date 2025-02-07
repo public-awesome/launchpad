@@ -1,8 +1,7 @@
 use crate::{ContractError, Sg721Contract};
 
-use cosmwasm_std::{DepsMut, Env, Event};
+use cosmwasm_std::{DepsMut, Env, Event, Response};
 use cw721_base::Extension;
-use sg_std::Response;
 
 pub fn upgrade(deps: DepsMut, env: &Env, response: Response) -> Result<Response, ContractError> {
     let contract = Sg721Contract::<Extension>::default();

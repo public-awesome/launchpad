@@ -1,5 +1,4 @@
-use cosmwasm_std::{Addr, Deps, DepsMut, Env, MessageInfo, StdResult};
-use sg_std::Response;
+use cosmwasm_std::{Addr, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
 
 use crate::{
     helpers::validators::map_validate,

@@ -80,3 +80,54 @@ pub fn validate_stages(env: &Env, stages: &[Stage]) -> Result<(), ContractError>
     }
     Ok(())
 }
+
+pub fn validate_update(_env: &Env, stages: &[Stage]) -> Result<(), ContractError> {
+    ensure!(
+        !stages.is_empty(),
+        StdError::generic_err("Must have at least one stage")
+    );
+    ensure!(
+        stages.len() < 4,
+        StdError::generic_err("Cannot have more than 3 stages")
+    );
+
+    // Check per address limit is valid
+    if stages.iter().any(|stage| {
+        stage.per_address_limit == 0 || stage.per_address_limit > MAX_PER_ADDRESS_LIMIT
+    }) {
+        return Err(ContractError::InvalidPerAddressLimit {
+            max: MAX_PER_ADDRESS_LIMIT.to_string(),
+            got: stages
+                .iter()
+                .map(|s| s.per_address_limit)
+                .max()
+                .unwrap()
+                .to_string(),
+        });
+    }
+
+    // Check stages have matching mint price denoms
+    let mint_denom = stages[0].mint_price.denom.clone();
+    ensure!(
+        stages
+            .iter()
+            .all(|stage| stage.mint_price.denom == mint_denom),
+        StdError::generic_err("All stages must have the same mint price denom")
+    );
+
+    for i in 0..stages.len() {
+        let stage = &stages[i];
+        ensure!(
+            stage.start_time < stage.end_time,
+            StdError::generic_err("Stage start time must be before the end time")
+        );
+
+        for other_stage in stages.iter().skip(i + 1) {
+            ensure!(
+                other_stage.start_time >= stage.end_time,
+                StdError::generic_err("Stages must have non-overlapping times")
+            );
+        }
+    }
+    Ok(())
+}
