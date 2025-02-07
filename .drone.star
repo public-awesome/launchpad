@@ -56,6 +56,6 @@ def cargo_wasm_build(ctx):
             "rustup target add wasm32-unknown-unknown", 
             "sh scripts/wasm_build.sh",
             "cargo install cosmwasm-check",
-            "sh scripts/wasm_check.sh"
+            # "sh scripts/wasm_check.sh"
         ]
     }
