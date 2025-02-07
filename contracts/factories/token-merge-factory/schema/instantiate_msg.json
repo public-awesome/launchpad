@@ -7,7 +7,7 @@
   ],
   "properties": {
     "params": {
-      "$ref": "#/definitions/MinterParams_for_ParamsExtension"
+      "$ref": "#/definitions/TokenMergeFactoryParams"
     }
   },
   "additionalProperties": false,
@@ -27,67 +27,18 @@
         }
       }
     },
-    "MinterParams_for_ParamsExtension": {
-      "description": "Common params for all minters used for storage",
-      "type": "object",
-      "required": [
-        "allowed_sg721_code_ids",
-        "code_id",
-        "creation_fee",
-        "extension",
-        "frozen",
-        "max_trading_offset_secs",
-        "min_mint_price",
-        "mint_fee_bps"
-      ],
-      "properties": {
-        "allowed_sg721_code_ids": {
-          "type": "array",
-          "items": {
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 0.0
-          }
-        },
-        "code_id": {
-          "description": "The minter code id",
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        },
-        "creation_fee": {
-          "$ref": "#/definitions/Coin"
-        },
-        "extension": {
-          "$ref": "#/definitions/ParamsExtension"
-        },
-        "frozen": {
-          "type": "boolean"
-        },
-        "max_trading_offset_secs": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        },
-        "min_mint_price": {
-          "$ref": "#/definitions/Coin"
-        },
-        "mint_fee_bps": {
-          "type": "integer",
-          "format": "uint64",
-          "minimum": 0.0
-        }
-      },
-      "additionalProperties": false
-    },
-    "ParamsExtension": {
-      "description": "Parameters common to all vending minters, as determined by governance",
+    "TokenMergeFactoryParams": {
       "type": "object",
       "required": [
         "airdrop_mint_fee_bps",
         "airdrop_mint_price",
+        "allowed_sg721_code_ids",
+        "code_id",
+        "creation_fee",
+        "frozen",
         "max_per_address_limit",
         "max_token_limit",
+        "max_trading_offset_secs",
         "shuffle_fee"
       ],
       "properties": {
@@ -99,6 +50,25 @@
         "airdrop_mint_price": {
           "$ref": "#/definitions/Coin"
         },
+        "allowed_sg721_code_ids": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          }
+        },
+        "code_id": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "creation_fee": {
+          "$ref": "#/definitions/Coin"
+        },
+        "frozen": {
+          "type": "boolean"
+        },
         "max_per_address_limit": {
           "type": "integer",
           "format": "uint32",
@@ -107,6 +77,11 @@
         "max_token_limit": {
           "type": "integer",
           "format": "uint32",
+          "minimum": 0.0
+        },
+        "max_trading_offset_secs": {
+          "type": "integer",
+          "format": "uint64",
           "minimum": 0.0
         },
         "shuffle_fee": {

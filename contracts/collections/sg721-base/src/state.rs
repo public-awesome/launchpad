@@ -17,7 +17,7 @@ where
     pub royalty_updated_at: Item<'a, Timestamp>,
 }
 
-impl<'a, T> Default for Sg721Contract<'a, T>
+impl<T> Default for Sg721Contract<'_, T>
 where
     T: Serialize + DeserializeOwned + Clone,
 {

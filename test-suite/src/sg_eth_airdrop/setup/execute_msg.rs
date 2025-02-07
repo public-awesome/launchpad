@@ -54,6 +54,7 @@ pub fn instantiate_contract(params: InstantiateParams) -> Result<cosmwasm_std::A
     )
 }
 
+#[allow(clippy::result_large_err)]
 pub fn execute_contract_with_msg(
     msg: ExecuteMsg,
     app: &mut App,

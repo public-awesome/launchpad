@@ -13,7 +13,7 @@ resolver = "2"
 
 [workspace.package]
 version      = "3.15.0"
-rust-version = "1.73.0"
+rust-version = "1.83.0"
 edition      = "2021"
 homepage     = "https://stargaze.zone"
 repository   = "https://github.com/public-awesome/launchpad"
@@ -23,7 +23,7 @@ license      = "Apache-2.0"
 base-factory        = { version = "3.14.0", path = "contracts/factories/base-factory" }
 base-minter         = { version = "3.14.0", path = "contracts/minters/base-minter" }
 cosmwasm-schema     = "1.5.10"
-cosmwasm-std        = "1.5.10"
+cosmwasm-std        = { version = "1.5.10", features = ["cosmwasm_1_4"] }
 cw-controllers      = "1.1.0"
 cw2                 = "1.1.0"
 cw4                 = "1.1.0"
@@ -69,10 +69,11 @@ sg-tiered-whitelist-flex    = { version = "3.14.0", path = "contracts/whitelists
 ethereum-verify             = { version = "3.14.0", path = "packages/ethereum-verify" }
 sg-eth-airdrop              = { version = "3.14.0", path = "contracts/sg-eth-airdrop" }
 test-suite                  = { version = "3.14.0", path = "test-suite" }
+nois                        = { version = "2.0.0" }
+semver                      = "1"
+cw-ownable                  = "0.5.1"
+anybuf                      = "0.5.2"
 
-semver     = "1"
-cw-ownable = "0.5.1"
-anybuf     = "0.5.2"
 [profile.release.package.sg721]
 codegen-units = 1
 incremental   = false

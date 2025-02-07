@@ -24,7 +24,7 @@ const MAX_DESCRIPTION_LENGTH: u32 = 512;
 const MAX_SHARE_DELTA_PCT: u64 = 2;
 const MAX_ROYALTY_SHARE_PCT: u64 = 10;
 
-impl<'a, T> Sg721Contract<'a, T>
+impl<T> Sg721Contract<'_, T>
 where
     T: Serialize + DeserializeOwned + Clone,
 {

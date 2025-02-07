@@ -1,3 +1,5 @@
+rust_version = "rust:1.83"
+
 def main(ctx):
     return [
         pipeline_test_and_build(ctx)
@@ -12,7 +14,8 @@ def pipeline_test_and_build(ctx):
     "steps": [
       step_fetch(ctx),
       cargo_test_all(ctx),
-      cargo_lint(ctx)
+      cargo_lint(ctx),
+      cargo_wasm_build(ctx)
     ],
   }
 
@@ -29,18 +32,30 @@ def step_fetch(ctx):
 def cargo_test_all(ctx):
     return {
         "name": "test",
-        "image": "rust:1.83",
+        "image": rust_version,
         "commands": ["cargo test --locked"]
     }
 
 def cargo_lint(ctx):
     return {
         "name": "lint",
-        "image": "rust:1.83",
+        "image": rust_version,
         "commands": [
             "rustup component add rustfmt",
             "rustup component add clippy",
             "cargo fmt -- --check", 
             "cargo clippy --all-targets -- -D warnings"
+        ]
+    }
+
+def cargo_wasm_build(ctx):
+    return {
+        "name": "wasm_build",
+        "image": rust_version,
+        "commands": [
+            "rustup target add wasm32-unknown-unknown", 
+            "sh scripts/wasm_build.sh",
+            "cargo install cosmwasm-check",
+            # "sh scripts/wasm_check.sh"
         ]
     }
