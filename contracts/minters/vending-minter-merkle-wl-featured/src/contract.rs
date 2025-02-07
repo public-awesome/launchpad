@@ -20,8 +20,7 @@ use cosmwasm_std::{
 use cw2::set_contract_version;
 use cw721_base::Extension;
 use cw_utils::{may_pay, maybe_addr, nonpayable, parse_reply_instantiate_data};
-use rand_core::{RngCore, SeedableRng};
-use rand_xoshiro::Xoshiro128PlusPlus;
+
 use semver::Version;
 use sg1::{checked_fair_burn, distribute_mint_fees};
 use sg2::query::Sg2QueryMsg;
@@ -32,14 +31,14 @@ use sg_whitelist::msg::{
     ConfigResponse as WhitelistConfigResponse, HasMemberResponse, QueryMsg as WhitelistQueryMsg,
 };
 use sha2::{Digest, Sha256};
-use shuffle::{fy::FisherYates, shuffler::Shuffler};
+
+use nois::{int_in_range, shuffle};
 use std::convert::TryInto;
 use tiered_whitelist_merkletree::msg::{QueryMsg as TieredWhitelistQueryMsg, StageResponse};
 use url::Url;
 use vending_factory::msg::{ParamsResponse, VendingMinterCreateMsg};
 use vending_factory::state::VendingMinterParams;
 use whitelist_mtree::msg::QueryMsg as WhitelistMtreeQueryMsg;
-
 pub struct TokenPositionMapping {
     pub position: u32,
     pub token_id: u32,
@@ -844,12 +843,8 @@ fn random_token_list(
         format!("{}{}{}{}", sender, env.block.height, tokens.len(), tx_index).into_bytes(),
     );
     // Cut first 16 bytes from 32 byte value
-    let randomness: [u8; 16] = sha256.to_vec()[0..16].try_into().unwrap();
-    let mut rng = Xoshiro128PlusPlus::from_seed(randomness);
-    let mut shuffler = FisherYates::default();
-    shuffler
-        .shuffle(&mut tokens, &mut rng)
-        .map_err(StdError::generic_err)?;
+    let randomness: [u8; 32] = sha256.to_vec().try_into().unwrap();
+    tokens = shuffle(randomness, tokens);
     Ok(tokens)
 }
 
@@ -868,12 +863,8 @@ fn random_mintable_token_mapping(
     let sha256 = Sha256::digest(
         format!("{}{}{}{}", sender, num_tokens, env.block.height, tx_index).into_bytes(),
     );
-    // Cut first 16 bytes from 32 byte value
-    let randomness: [u8; 16] = sha256.to_vec()[0..16].try_into().unwrap();
-
-    let mut rng = Xoshiro128PlusPlus::from_seed(randomness);
-
-    let r = rng.next_u32();
+    let randomness: [u8; 32] = sha256.to_vec().try_into().unwrap();
+    let r = int_in_range(randomness, 0, 50);
 
     let order = match r % 2 {
         1 => Order::Descending,

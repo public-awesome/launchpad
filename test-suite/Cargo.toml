@@ -79,11 +79,9 @@ rlp             = "0.5"
 cw2             = { workspace = true }
 cw-storage-plus = { workspace = true }
 cw-utils        = { workspace = true }
-rand_core       = { version = "0.6.4", default-features = false }
-rand_xoshiro    = { version = "0.6.0", default-features = false }
 schemars        = { workspace = true }
 sha2            = { workspace = true }
-shuffle         = { git = "https://github.com/webmaster128/shuffle", branch = "rm-getrandom", version = "0.1.7" }
 sg1             = { workspace = true }
 sg4             = { workspace = true }
 url             = { workspace = true }
+nois            = { workspace = true }
