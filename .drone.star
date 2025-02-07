@@ -52,5 +52,8 @@ def cargo_wasm_build(ctx):
     return {
         "name": "wasm_build",
         "image": rust_version,
-        "commands": ["sh scripts/wasm_build.sh"]
+        "commands": [
+            "rustup target add wasm32-unknown-unknown", 
+            "sh scripts/wasm_build.sh"
+        ]
     }
