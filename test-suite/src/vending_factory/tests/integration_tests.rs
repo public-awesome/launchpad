@@ -2,16 +2,16 @@
 mod tests {
     use cosmwasm_std::Addr;
     use cw_multi_test::Executor;
-    use sg_multi_test::StargazeApp;
+
     use vending_factory::helpers::FactoryContract;
     use vending_factory::msg::InstantiateMsg;
 
-    use crate::common_setup::contract_boxes::{contract_vending_factory, custom_mock_app};
+    use crate::common_setup::contract_boxes::{contract_vending_factory, custom_mock_app, App};
     use crate::common_setup::setup_minter::vending_minter::mock_params::mock_params;
 
     const GOVERNANCE: &str = "governance";
 
-    fn proper_instantiate() -> (StargazeApp, FactoryContract) {
+    fn proper_instantiate() -> (App, FactoryContract) {
         let mut app = custom_mock_app();
         let factory_id = app.store_code(contract_vending_factory());
         let minter_id = 2;

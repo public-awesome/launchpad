@@ -5,10 +5,9 @@ use crate::msg::{ExecuteMsg, InstantiateMsg};
 use crate::state::CONFIG;
 
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{DepsMut, Env, MessageInfo};
+use cosmwasm_std::{DepsMut, Env, MessageInfo, Response};
 use cw2::set_contract_version;
 use sg1::fair_burn;
-use sg_std::Response;
 
 use build_message::{state_config, whitelist_instantiate};
 use validation::validate_instantiation_params;
@@ -27,7 +26,7 @@ pub fn instantiate(
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
     validate_instantiation_params(info.clone(), msg.clone())?;
     let mut res = Response::new();
-    fair_burn(INSTANTIATION_FEE, None, &mut res);
+    fair_burn(info.sender.to_string(), INSTANTIATION_FEE, None, &mut res);
     let cfg = state_config(deps.as_ref(), info.clone(), msg.clone())?;
     CONFIG.save(deps.storage, &cfg)?;
     Ok(res
@@ -56,8 +55,8 @@ pub fn execute(
 mod build_message {
     use super::*;
     use crate::state::Config;
-    use cosmwasm_std::{to_json_binary, Deps, WasmMsg};
-    use sg_std::{StargazeMsgWrapper, SubMsg};
+    use cosmwasm_std::{to_json_binary, Deps, SubMsg, WasmMsg};
+
     use validation::validate_airdrop_amount;
     use whitelist_immutable::msg::InstantiateMsg as WGInstantiateMsg;
 
@@ -67,7 +66,7 @@ mod build_message {
     pub fn whitelist_instantiate(
         env: Env,
         msg: InstantiateMsg,
-    ) -> Result<cosmwasm_std::SubMsg<StargazeMsgWrapper>, ContractError> {
+    ) -> Result<cosmwasm_std::SubMsg, ContractError> {
         let whitelist_instantiate_msg = WGInstantiateMsg {
             addresses: msg.addresses,
             mint_discount_bps: Some(0),

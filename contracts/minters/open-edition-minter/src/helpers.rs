@@ -1,12 +1,11 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
-    to_json_binary, Addr, Coin, ContractInfoResponse, CustomQuery, Empty, Querier, QuerierWrapper,
-    StdError, StdResult, WasmMsg, WasmQuery,
+    to_json_binary, Addr, Coin, ContractInfoResponse, CosmosMsg, CustomQuery, Empty, Querier,
+    QuerierWrapper, StdError, StdResult, WasmMsg, WasmQuery,
 };
 use cw721_base::Extension;
 use sg721::ExecuteMsg as Sg721ExecuteMsg;
 use sg_metadata::Metadata;
-use sg_std::CosmosMsg;
 
 use crate::msg::{ConfigResponse, ExecuteMsg, QueryMsg};
 

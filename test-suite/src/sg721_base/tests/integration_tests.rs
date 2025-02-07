@@ -8,7 +8,6 @@ mod tests {
     use sg2::tests::mock_collection_params;
     use sg721::ExecuteMsg as Sg721ExecuteMsg;
     use sg721::{CollectionInfo, InstantiateMsg};
-    use sg_multi_test::StargazeApp;
     use vending_factory::helpers::FactoryContract;
     use vending_factory::msg::{
         ExecuteMsg, InstantiateMsg as FactoryInstantiateMsg, VendingMinterInitMsgExtension,
@@ -16,6 +15,7 @@ mod tests {
 
     use crate::common_setup::contract_boxes::{
         contract_sg721_base, contract_vending_factory, contract_vending_minter, custom_mock_app,
+        App,
     };
     use crate::common_setup::setup_minter::common::constants::CREATION_FEE;
     use crate::common_setup::setup_minter::vending_minter::mock_params::{
@@ -33,7 +33,7 @@ mod tests {
         assert_eq!(res.unwrap_err().source().unwrap().to_string(), expected);
     }
 
-    fn proper_instantiate_factory() -> (StargazeApp, FactoryContract) {
+    fn proper_instantiate_factory() -> (App, FactoryContract) {
         let mut app = custom_mock_app();
         let factory_id = app.store_code(contract_vending_factory());
         let minter_id = app.store_code(contract_vending_minter());
@@ -58,7 +58,7 @@ mod tests {
         (app, factory_contract)
     }
 
-    fn proper_instantiate() -> (StargazeApp, Addr) {
+    fn proper_instantiate() -> (App, Addr) {
         let (mut app, factory_contract) = proper_instantiate_factory();
         let sg721_id = app.store_code(contract_sg721_base());
 
@@ -89,7 +89,7 @@ mod tests {
 
     fn custom_proper_instantiate(
         custom_create_minter_msg: CreateMinterMsg<VendingMinterInitMsgExtension>,
-    ) -> (StargazeApp, Addr) {
+    ) -> (App, Addr) {
         let (mut app, factory_contract) = proper_instantiate_factory();
         let sg721_id = app.store_code(contract_sg721_base());
 
@@ -808,9 +808,10 @@ mod tests {
         use cw_multi_test::{BankSudo, Executor, SudoMsg};
         use sg2::tests::mock_collection_params;
         use sg721_updatable::msg::QueryMsg;
-        use sg_multi_test::StargazeApp;
+
         use sg_std::NATIVE_DENOM;
         const ADMIN: &str = "admin";
+        use crate::common_setup::contract_boxes::App;
 
         use crate::common_setup::setup_minter::common::constants::CREATION_FEE;
         use crate::{
@@ -822,7 +823,7 @@ mod tests {
         };
         use vending_factory::msg::ExecuteMsg;
 
-        fn proper_instantiate() -> (StargazeApp, Addr) {
+        fn proper_instantiate() -> (App, Addr) {
             let (mut app, factory_contract) = proper_instantiate_factory();
             let sg721_id = app.store_code(contract_sg721_updatable());
 

@@ -5,7 +5,7 @@ use cosmwasm_std::{Empty, StdError, Uint128};
 use cosmwasm_std::{Deps, StdResult};
 
 #[cfg(not(feature = "library"))]
-use cosmwasm_std::{DepsMut, Env, Event, MessageInfo};
+use cosmwasm_std::{DepsMut, Env, Event, MessageInfo, Response};
 use cw2::set_contract_version;
 use semver::Version;
 use sg721::InstantiateMsg;
@@ -20,7 +20,6 @@ use sg1::checked_fair_burn;
 use sg721_base::ContractError::Unauthorized;
 use sg721_base::Sg721Contract;
 pub type Sg721UpdatableContract<'a> = Sg721Contract<'a, Extension>;
-use sg_std::Response;
 
 const CONTRACT_NAME: &str = "crates.io:sg721-updatable";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");

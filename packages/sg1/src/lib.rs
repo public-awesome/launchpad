@@ -1,8 +1,10 @@
+use anybuf::Anybuf;
 use cosmwasm_std::{
-    coin, coins, ensure, Addr, BankMsg, Coin, Decimal, Event, MessageInfo, Uint128,
+    coin, coins, ensure, Addr, BankMsg, Coin, CosmosMsg, Decimal, Event, MessageInfo, Response,
+    SubMsg, Uint128,
 };
 use cw_utils::{may_pay, must_pay, PaymentError};
-use sg_std::{create_fund_fairburn_pool_msg, Response, SubMsg, NATIVE_DENOM};
+use sg_std::NATIVE_DENOM;
 use thiserror::Error;
 
 // governance parameters
@@ -27,7 +29,7 @@ pub fn checked_fair_burn(
     };
 
     if payment.u128() != 0u128 {
-        fair_burn(fee, developer, res);
+        fair_burn(info.sender.to_string(), fee, developer, res);
     }
 
     Ok(())
@@ -154,7 +156,7 @@ pub fn distribute_mint_fees(
 }
 
 /// Burn and distribute fees, assuming the right fee is passed in
-pub fn fair_burn(fee: u128, developer: Option<Addr>, res: &mut Response) {
+pub fn fair_burn(sender: String, fee: u128, developer: Option<Addr>, res: &mut Response) {
     let mut event = Event::new("fair-burn");
 
     // calculate the fair burn fee
@@ -175,17 +177,33 @@ pub fn fair_burn(fee: u128, developer: Option<Addr>, res: &mut Response) {
         event = event.add_attribute("dev", dev.to_string());
         event = event.add_attribute("dev_amount", Uint128::from(remainder).to_string());
     } else {
-        res.messages
-            .push(SubMsg::new(create_fund_fairburn_pool_msg(coins(
-                remainder,
-                NATIVE_DENOM,
-            ))));
+        let msg_fund_fairburn_pool =
+            create_fund_fairburn_pool_msg(sender, &coin(remainder, NATIVE_DENOM));
+        res.messages.push(SubMsg::new(msg_fund_fairburn_pool));
         event = event.add_attribute("dist_amount", Uint128::from(remainder).to_string());
     }
 
     res.events.push(event);
 }
 
+/// following the protobuf spec in
+/// https://github.com/public-awesome/stargaze/blob/efdb9212e037e05fc429c0cfbcf425ad11855e15/proto/publicawesome/stargaze/alloc/v1beta1/tx.proto#L49
+fn encode_msg_fund_fairburn_pool(sender: String, amount: &Coin) -> Vec<u8> {
+    let coin = Anybuf::new()
+        .append_string(1, &amount.denom)
+        .append_string(2, amount.amount.to_string());
+    Anybuf::new()
+        .append_string(1, sender)
+        .append_message(2, &coin)
+        .into_vec()
+}
+
+fn create_fund_fairburn_pool_msg(sender: String, amount: &Coin) -> CosmosMsg {
+    CosmosMsg::Stargate {
+        type_url: "/publicawesome.stargaze.alloc.v1beta1.MsgFundFairburnPool".to_string(),
+        value: encode_msg_fund_fairburn_pool(sender, amount).into(),
+    }
+}
 pub fn transfer_funds_to_launchpad_dao(
     info: &MessageInfo,
     fee: u128,
@@ -218,20 +236,23 @@ pub enum FeeError {
 
 #[cfg(test)]
 mod tests {
-    use cosmwasm_std::{coins, Addr, BankMsg};
-    use sg_std::{create_fund_fairburn_pool_msg, Response, NATIVE_DENOM};
+    use cosmwasm_std::{coin, coins, Addr, BankMsg, Response};
+    use sg_std::NATIVE_DENOM;
 
-    use crate::{fair_burn, SubMsg};
+    use crate::{create_fund_fairburn_pool_msg, fair_burn, SubMsg};
 
     #[test]
     fn check_fair_burn_no_dev_rewards() {
         let mut res = Response::new();
 
-        fair_burn(9u128, None, &mut res);
+        fair_burn(Addr::unchecked("sender").to_string(), 9u128, None, &mut res);
         let burn_msg = SubMsg::new(BankMsg::Burn {
             amount: coins(4, "ustars".to_string()),
         });
-        let dist_msg = SubMsg::new(create_fund_fairburn_pool_msg(coins(5, NATIVE_DENOM)));
+        let dist_msg = SubMsg::new(create_fund_fairburn_pool_msg(
+            Addr::unchecked("sender").to_string(),
+            &coin(5, NATIVE_DENOM),
+        ));
         assert_eq!(res.messages.len(), 2);
         assert_eq!(res.messages[0], burn_msg);
         assert_eq!(res.messages[1], dist_msg);
@@ -241,7 +262,12 @@ mod tests {
     fn check_fair_burn_with_dev_rewards() {
         let mut res = Response::new();
 
-        fair_burn(9u128, Some(Addr::unchecked("geordi")), &mut res);
+        fair_burn(
+            Addr::unchecked("sender").to_string(),
+            9u128,
+            Some(Addr::unchecked("geordi")),
+            &mut res,
+        );
         let bank_msg = SubMsg::new(BankMsg::Send {
             to_address: "geordi".to_string(),
             amount: coins(5, NATIVE_DENOM),
@@ -258,7 +284,12 @@ mod tests {
     fn check_fair_burn_with_dev_rewards_different_amount() {
         let mut res = Response::new();
 
-        fair_burn(1420u128, Some(Addr::unchecked("geordi")), &mut res);
+        fair_burn(
+            Addr::unchecked("sender").to_string(),
+            1420u128,
+            Some(Addr::unchecked("geordi")),
+            &mut res,
+        );
         let bank_msg = SubMsg::new(BankMsg::Send {
             to_address: "geordi".to_string(),
             amount: coins(710, NATIVE_DENOM),

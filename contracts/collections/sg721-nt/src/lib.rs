@@ -21,10 +21,11 @@ pub mod entry {
     use super::*;
 
     use crate::msg::ExecuteMsg;
-    use cosmwasm_std::{Binary, Deps, DepsMut, Empty, Env, MessageInfo, StdError, StdResult};
+    use cosmwasm_std::{
+        Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdError, StdResult,
+    };
     use cw721::Cw721Execute;
     use sg721_base::ContractError;
-    use sg_std::Response;
 
     #[entry_point]
     pub fn instantiate(

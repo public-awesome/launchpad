@@ -1,7 +1,7 @@
 use crate::common_setup::setup_accounts_and_block::setup_accounts;
 use crate::common_setup::setup_collection_whitelist::setup_whitelist_contract;
 
-use crate::common_setup::contract_boxes::contract_vending_factory;
+use crate::common_setup::contract_boxes::{contract_vending_factory, App};
 use crate::common_setup::setup_minter::vending_minter::mock_params::{
     mock_create_minter, mock_params,
 };
@@ -11,12 +11,12 @@ use cosmwasm_std::{coins, Addr, Timestamp};
 use cw_multi_test::Executor;
 use sg2::msg::Sg2ExecuteMsg;
 use sg2::tests::mock_collection_params_1;
-use sg_multi_test::StargazeApp;
+
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
 use crate::sg_eth_airdrop::setup::mock_whitelist_contract::mock_whitelist;
 
-fn configure_mock_minter(app: &mut StargazeApp, creator: Addr) {
+fn configure_mock_minter(app: &mut App, creator: Addr) {
     let minter_code_id = app.store_code(mock_minter());
 
     println!("minter_code_id: {minter_code_id}");
@@ -45,7 +45,7 @@ fn configure_mock_minter(app: &mut StargazeApp, creator: Addr) {
     let res = app.execute_contract(creator, factory_addr, &msg, &creation_fee);
     assert!(res.is_ok());
 }
-pub fn configure_mock_minter_with_mock_whitelist(app: &mut StargazeApp) {
+pub fn configure_mock_minter_with_mock_whitelist(app: &mut App) {
     let (creator, _) = setup_accounts(app);
     configure_mock_minter(app, creator.clone());
     let whitelist_code_id = app.store_code(mock_whitelist());

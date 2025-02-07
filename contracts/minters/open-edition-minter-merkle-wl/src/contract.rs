@@ -14,7 +14,8 @@ use crate::state::{
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     coin, ensure, to_json_binary, Addr, BankMsg, Binary, Coin, Decimal, Deps, DepsMut, Empty, Env,
-    Event, MessageInfo, Order, Reply, ReplyOn, StdError, StdResult, Timestamp, WasmMsg,
+    Event, MessageInfo, Order, Reply, ReplyOn, Response, StdError, StdResult, SubMsg, Timestamp,
+    WasmMsg,
 };
 use cw2::set_contract_version;
 use cw_utils::{may_pay, maybe_addr, nonpayable, parse_reply_instantiate_data};
@@ -26,14 +27,11 @@ use sg1::distribute_mint_fees;
 use sg2::query::Sg2QueryMsg;
 use sg4::{MinterConfig, Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
-use sg_std::StargazeMsgWrapper;
 use tiered_whitelist_merkletree::msg::{QueryMsg as TieredWhitelistQueryMsg, StageResponse};
 use url::Url;
 use whitelist_mtree::msg::{
     ConfigResponse as WhitelistConfigResponse, HasMemberResponse, QueryMsg as WhitelistQueryMsg,
 };
-pub type Response = cosmwasm_std::Response<StargazeMsgWrapper>;
-pub type SubMsg = cosmwasm_std::SubMsg<StargazeMsgWrapper>;
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sg-open-edition-minter";
