@@ -1,6 +1,6 @@
 use base_factory::msg::ParamsResponse;
 use cosmwasm_std::coin;
-use sg_std::NATIVE_DENOM;
+use sg_utils::NATIVE_DENOM;
 use vending_factory::msg::VendingUpdateParamsExtension;
 
 use crate::common_setup::setup_minter::base_minter::mock_params::MIN_MINT_PRICE;

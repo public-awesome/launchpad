@@ -4,7 +4,7 @@ use cosmwasm_std::{
     SubMsg, Uint128,
 };
 use cw_utils::{may_pay, must_pay, PaymentError};
-use sg_std::NATIVE_DENOM;
+use sg_utils::NATIVE_DENOM;
 use thiserror::Error;
 
 // governance parameters
@@ -237,7 +237,7 @@ pub enum FeeError {
 #[cfg(test)]
 mod tests {
     use cosmwasm_std::{coin, coins, Addr, BankMsg, Response};
-    use sg_std::NATIVE_DENOM;
+    use sg_utils::NATIVE_DENOM;
 
     use crate::{create_fund_fairburn_pool_msg, fair_burn, SubMsg};
 

@@ -5,7 +5,7 @@ mod tests {
     use cw_multi_test::{BankSudo, SudoMsg as CWSudoMsg};
     use rs_merkle::MerkleTree;
 
-    use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
+    use sg_utils::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
     use whitelist_mtree::{
         msg::*,

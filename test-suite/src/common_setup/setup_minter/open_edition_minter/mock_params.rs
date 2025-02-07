@@ -5,7 +5,7 @@ use open_edition_factory::{
     state::{OpenEditionMinterParams, ParamsExtension},
 };
 use sg2::msg::CollectionParams;
-use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
+use sg_utils::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
 use crate::common_setup::msg::OpenEditionMinterCustomParams;
 use crate::common_setup::setup_minter::common::constants::{

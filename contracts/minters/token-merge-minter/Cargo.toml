@@ -39,7 +39,7 @@ sha2                = { workspace = true }
 sg1                 = { workspace = true }
 sg4                 = { workspace = true }
 sg721               = { workspace = true }
-sg-std              = { workspace = true }
+sg-utils            = { workspace = true }
 sg-whitelist        = { workspace = true, features = ["library"] }
 thiserror           = { workspace = true }
 url                 = { workspace = true }

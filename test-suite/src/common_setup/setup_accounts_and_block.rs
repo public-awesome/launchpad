@@ -2,7 +2,7 @@ use cosmwasm_std::{coins, Addr, Coin, Timestamp, Uint128};
 use cw4::Member;
 use cw_multi_test::{BankSudo, Executor, SudoMsg};
 
-use sg_std::NATIVE_DENOM;
+use sg_utils::NATIVE_DENOM;
 
 use crate::common_setup::contract_boxes::{contract_group, App};
 use crate::common_setup::setup_minter::common::constants::DEV_ADDRESS;

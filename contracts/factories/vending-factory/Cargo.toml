@@ -38,5 +38,5 @@ serde           = { workspace = true }
 sg1             = { workspace = true }
 sg2             = { workspace = true }
 sg721           = { workspace = true }
-sg-std          = { workspace = true }
+sg-utils        = { workspace = true }
 thiserror       = { workspace = true }

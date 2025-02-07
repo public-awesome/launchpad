@@ -13,7 +13,7 @@ use cw_multi_test::{next_block, Executor};
 use sg2::tests::mock_collection_params_1;
 
 use sg_splits::msg::{ExecuteMsg as SplitsExecuteMsg, Group};
-use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
+use sg_utils::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
 const OWNER: &str = "admin0001";
 const MEMBER1: &str = "member0001";

@@ -51,7 +51,7 @@ cw721-base      = { workspace = true, features = ["library"] }
 sg1             = { workspace = true }
 sg721           = { workspace = true }
 sg721-base      = { workspace = true, features = ["library"] }
-sg-std          = { workspace = true }
+sg-utils        = { workspace = true }
 semver          = { workspace = true }
 
 [dev-dependencies]

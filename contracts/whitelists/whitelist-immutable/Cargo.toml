@@ -36,4 +36,4 @@ schemars        = { workspace = true }
 serde           = { workspace = true }
 thiserror       = { workspace = true }
 sg-whitelist    = { workspace = true }
-sg-std          = { workspace = true }
+sg-utils        = { workspace = true }

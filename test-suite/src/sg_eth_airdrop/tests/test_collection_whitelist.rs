@@ -13,7 +13,7 @@ use crate::sg_eth_airdrop::setup::setup_signatures::{get_msg_plaintext, get_wall
 use crate::sg_eth_airdrop::setup::test_msgs::InstantiateParams;
 use cosmwasm_std::Addr;
 use sg_eth_airdrop::msg::QueryMsg;
-use sg_std::GENESIS_MINT_START_TIME;
+use sg_utils::GENESIS_MINT_START_TIME;
 extern crate whitelist_immutable;
 use crate::common_setup::templates::vending_minter_template;
 use sg_eth_airdrop::contract::INSTANTIATION_FEE;

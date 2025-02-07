@@ -2,7 +2,7 @@ use cosmwasm_std::{coin, Addr, Coin, Decimal, Timestamp, Uint128};
 use cw_multi_test::{BankSudo, Executor, SudoMsg};
 use open_edition_factory::state::{OpenEditionMinterParams, ParamsExtension};
 use open_edition_minter::msg::ExecuteMsg;
-use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
+use sg_utils::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
 use crate::common_setup::setup_minter::common::constants::{
     LAUNCHPAD_DAO_ADDRESS, LIQUIDITY_DAO_ADDRESS,

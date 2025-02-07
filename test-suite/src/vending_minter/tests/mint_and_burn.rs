@@ -3,7 +3,7 @@ use crate::common_setup::templates::{vending_minter_template, vending_minter_wit
 use cosmwasm_std::Coin;
 use cosmwasm_std::{coins, Timestamp, Uint128};
 use cw_multi_test::Executor;
-use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
+use sg_utils::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use vending_minter::msg::{ExecuteMsg, MintCountResponse, QueryMsg, StartTimeResponse};
 use vending_minter::ContractError;
 

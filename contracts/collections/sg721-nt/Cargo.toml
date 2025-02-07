@@ -1,15 +1,12 @@
 [package]
-name = "sg721-nt"
-authors = [
-  "Shane Vitarana <s@noreply.publicawesome.com>",
-  "John Y <j@noreply.publicawesome.com>",
-]
+name        = "sg721-nt"
+authors     = ["Shane Vitarana <s@noreply.publicawesome.com>", "John Y <j@noreply.publicawesome.com>"]
 description = "Stargaze Non-transferrable NFT collection contract"
-version = { workspace = true }
-edition = { workspace = true }
-homepage = { workspace = true }
-repository = { workspace = true }
-license = { workspace = true }
+version     = { workspace = true }
+edition     = { workspace = true }
+homepage    = { workspace = true }
+repository  = { workspace = true }
+license     = { workspace = true }
 
 exclude = [
   # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
@@ -39,4 +36,4 @@ schemars        = { workspace = true }
 serde           = { workspace = true }
 sg721           = { workspace = true }
 sg721-base      = { workspace = true, features = ["library"] }
-sg-std          = { workspace = true }
+sg-utils        = { workspace = true }

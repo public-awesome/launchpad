@@ -34,11 +34,10 @@ optimize = """docker run --rm -v "$(pwd)":/code \
 
 [dependencies]
 cosmwasm-schema      = { workspace = true }
-sg-std               = { workspace = true }
+sg-utils             = { workspace = true }
 cosmwasm-std         = { workspace = true }
 cw4                  = { workspace = true }
 cw-multi-test        = { workspace = true }
-sg-multi-test        = { workspace = true }
 sg721-base           = { workspace = true }
 sg721-updatable      = { workspace = true }
 cw4-group            = { workspace = true }

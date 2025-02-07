@@ -9,7 +9,7 @@ use cw2::set_contract_version;
 use cw_utils::must_pay;
 use semver::Version;
 use sg1::{checked_fair_burn, transfer_funds_to_launchpad_dao};
-use sg_std::NATIVE_DENOM;
+use sg_utils::NATIVE_DENOM;
 
 use crate::error::ContractError;
 use crate::msg::{

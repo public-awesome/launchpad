@@ -21,7 +21,7 @@ use cw_utils::{may_pay, maybe_addr, must_pay};
 use rust_decimal::prelude::ToPrimitive;
 use rust_decimal::Decimal;
 use sg1::checked_fair_burn;
-use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
+use sg_utils::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sg-whitelist";

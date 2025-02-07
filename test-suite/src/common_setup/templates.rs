@@ -25,7 +25,7 @@ use open_edition_factory::state::{OpenEditionMinterParams, ParamsExtension};
 use open_edition_factory::types::NftData;
 use sg2::tests::{mock_collection_params_1, mock_collection_two};
 
-use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
+use sg_utils::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
 pub fn vending_minter_template(num_tokens: u32) -> MinterTemplateResponse<Accounts> {
     let mut app = custom_mock_app();

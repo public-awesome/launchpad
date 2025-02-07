@@ -9,7 +9,7 @@ use cosmwasm_std::{coins, Addr, Timestamp};
 use cw_multi_test::Executor;
 use sg2::tests::mock_collection_params_1;
 use sg721_base::msg::{CollectionInfoResponse, QueryMsg as Sg721QueryMsg};
-use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
+use sg_utils::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use vending_minter::msg::{ExecuteMsg, QueryMsg, StartTimeResponse};
 use vending_minter::ContractError;
 

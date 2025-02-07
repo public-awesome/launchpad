@@ -6,7 +6,7 @@ use cosmwasm_std::{
 };
 use cw2::set_contract_version;
 use semver::Version;
-use sg_std::NATIVE_DENOM;
+use sg_utils::NATIVE_DENOM;
 
 use base_factory::contract::{
     must_be_allowed_collection, must_not_be_frozen, must_pay_exact_amount, update_params,

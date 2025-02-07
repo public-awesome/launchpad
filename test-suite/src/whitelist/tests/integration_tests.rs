@@ -1,7 +1,7 @@
 use cosmwasm_std::{coin, coins, Addr, Timestamp};
 use cw_multi_test::{BankSudo, Executor, SudoMsg as CWSudoMsg};
 
-use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
+use sg_utils::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
 use sg_whitelist::{
     msg::{AddMembersMsg, ExecuteMsg, InstantiateMsg, MembersResponse, QueryMsg, RemoveMembersMsg},

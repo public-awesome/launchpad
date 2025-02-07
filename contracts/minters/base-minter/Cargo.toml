@@ -41,6 +41,6 @@ sg2             = { workspace = true }
 sg4             = { workspace = true }
 sg721           = { workspace = true }
 sg721-base      = { workspace = true, features = ["library"] }
-sg-std          = { workspace = true }
+sg-utils        = { workspace = true }
 thiserror       = { workspace = true }
 url             = { workspace = true }

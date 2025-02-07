@@ -809,7 +809,7 @@ mod tests {
         use sg2::tests::mock_collection_params;
         use sg721_updatable::msg::QueryMsg;
 
-        use sg_std::NATIVE_DENOM;
+        use sg_utils::NATIVE_DENOM;
         const ADMIN: &str = "admin";
         use crate::common_setup::contract_boxes::App;
 

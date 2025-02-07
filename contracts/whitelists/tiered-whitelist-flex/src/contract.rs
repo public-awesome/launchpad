@@ -26,7 +26,7 @@ use cw_utils::{may_pay, maybe_addr, must_pay};
 use rust_decimal::prelude::ToPrimitive;
 use rust_decimal::Decimal;
 use sg1::checked_fair_burn;
-use sg_std::NATIVE_DENOM;
+use sg_utils::NATIVE_DENOM;
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sg-tiered-whitelist-flex";

@@ -4,7 +4,7 @@ use open_edition_factory::{
     state::{OpenEditionMinterParams, ParamsExtension},
     types::{NftData, NftMetadataType},
 };
-use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
+use sg_utils::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
 use super::mock_params::mock_init_minter_extension;
 use crate::common_setup::{

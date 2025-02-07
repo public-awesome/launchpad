@@ -10,7 +10,7 @@ use cosmwasm_std::{coin, coins, to_json_binary, Addr};
 use cw_multi_test::{AppResponse, Executor};
 use sg2::msg::CreateMinterMsg;
 use sg2::msg::{CollectionParams, Sg2ExecuteMsg};
-use sg_std::NATIVE_DENOM;
+use sg_utils::NATIVE_DENOM;
 use vending_factory::msg::{VendingMinterInitMsgExtension, VendingUpdateParamsExtension};
 
 use crate::common_setup::msg::{CodeIds, MinterInstantiateParams};

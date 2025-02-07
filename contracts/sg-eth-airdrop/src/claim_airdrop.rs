@@ -45,7 +45,7 @@ pub fn increment_local_mint_count_for_address(
 
 mod build_messages {
     use super::*;
-    use sg_std::NATIVE_DENOM;
+    use sg_utils::NATIVE_DENOM;
 
     pub fn claim_and_whitelist_add(
         deps: &DepsMut,

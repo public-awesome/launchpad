@@ -16,7 +16,7 @@ use sg2::query::Sg2QueryMsg;
 use sg4::{QueryMsg, Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
 use sg721_base::msg::{CollectionInfoResponse, QueryMsg as Sg721QueryMsg};
-use sg_std::NATIVE_DENOM;
+use sg_utils::NATIVE_DENOM;
 use url::Url;
 
 const CONTRACT_NAME: &str = "crates.io:sg-base-minter";

@@ -376,30 +376,6 @@ jobs:
             - target
           key: cargocache-test-suite-rust:1.81.0-{{ checksum "~/project/Cargo.lock" }}
 
-  package_sg_std:
-    docker:
-      - image: rust:1.81.0
-    working_directory: ~/project/package/sg-std
-    steps:
-      - checkout:
-          path: ~/project
-      - run:
-          name: Version information
-          command: rustc --version; cargo --version; rustup --version
-      - restore_cache:
-          keys:
-            - cargocache-sg-std-rust:1.81.0-{{ checksum "~/project/Cargo.lock" }}
-      - run:
-          name: Unit Tests
-          environment:
-            RUST_BACKTRACE: 1
-          command: cargo unit-test --locked
-      - save_cache:
-          paths:
-            - /usr/local/cargo/registry
-            - target
-          key: cargocache-sg-std-rust:1.81.0-{{ checksum "~/project/Cargo.lock" }}
-
   package_sg_utils:
     docker:
       - image: rust:1.81.0
