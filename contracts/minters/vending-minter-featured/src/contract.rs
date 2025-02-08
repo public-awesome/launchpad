@@ -26,8 +26,8 @@ use sg1::{checked_fair_burn, distribute_mint_fees};
 use sg2::query::Sg2QueryMsg;
 use sg4::{MinterConfig, Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
-use sg_std::GENESIS_MINT_START_TIME;
 use sg_tiered_whitelist::msg::{QueryMsg as TieredWhitelistQueryMsg, StageResponse};
+use sg_utils::GENESIS_MINT_START_TIME;
 use sg_whitelist::msg::{
     ConfigResponse as WhitelistConfigResponse, HasMemberResponse, QueryMsg as WhitelistQueryMsg,
 };

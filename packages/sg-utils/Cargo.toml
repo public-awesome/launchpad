@@ -1,0 +1,9 @@
+[package]
+name        = "sg-utils"
+authors     = ["Jorge Hernandez <jorge@publicawesome.com>"]
+description = "Utils for Stargaze Launchpad"
+version     = { workspace = true }
+edition     = { workspace = true }
+homepage    = { workspace = true }
+repository  = { workspace = true }
+license     = { workspace = true }

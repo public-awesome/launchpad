@@ -101,7 +101,7 @@ mod validation {
     use super::*;
     use cosmwasm_std::Uint128;
     use cw_utils::must_pay;
-    use sg_std::NATIVE_DENOM;
+    use sg_utils::NATIVE_DENOM;
 
     const MIN_AIRDROP: u128 = 10_000_000; // 10 STARS
     const MAX_AIRDROP: u128 = 100_000_000_000_000; // 100 million STARS

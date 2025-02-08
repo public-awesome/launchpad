@@ -20,8 +20,8 @@ repository   = "https://github.com/public-awesome/launchpad"
 license      = "Apache-2.0"
 
 [workspace.dependencies]
-base-factory        = { version = "3.14.0", path = "contracts/factories/base-factory" }
-base-minter         = { version = "3.14.0", path = "contracts/minters/base-minter" }
+base-factory        = { version = "3.15.0", path = "contracts/factories/base-factory" }
+base-minter         = { version = "3.15.0", path = "contracts/minters/base-minter" }
 cosmwasm-schema     = "1.5.10"
 cosmwasm-std        = { version = "1.5.10", features = ["cosmwasm_1_4"] }
 cw-controllers      = "1.1.0"
@@ -35,46 +35,49 @@ cw-storage-plus     = "1.1.0"
 cw-utils            = "1.0.1"
 schemars            = "0.8.11"
 serde               = { version = "1.0.145", default-features = false, features = ["derive"] }
-sg1                 = { version = "3.14.0", path = "packages/sg1" }
-sg2                 = { version = "3.14.0", path = "packages/sg2" }
-sg4                 = { version = "3.14.0", path = "packages/sg4" }
-sg721               = { version = "3.14.0", path = "packages/sg721" }
-sg721-base          = { version = "3.14.0", path = "contracts/collections/sg721-base" }
-sg721-nt            = { version = "3.14.0", path = "contracts/collections/sg721-nt" }
-sg721-updatable     = { version = "3.14.0", path = "contracts/collections/sg721-updatable" }
-sg-controllers      = { version = "3.14.0", path = "packages/controllers" }
-sg-metadata         = { version = "3.14.0", path = "packages/sg-metadata" }
-sg-mint-hooks       = { version = "3.14.0", path = "packages/mint-hooks" }
-sg-multi-test       = { version = "3.1.0" }
-sg-splits           = { version = "3.14.0", path = "contracts/splits" }
-sg-std              = { version = "3.2.0" }
-sg-whitelist        = { version = "3.14.0", path = "contracts/whitelists/whitelist" }
-sg-tiered-whitelist = { version = "3.14.0", path = "contracts/whitelists/tiered-whitelist" }
+sg1                 = { version = "3.15.0", path = "packages/sg1" }
+sg2                 = { version = "3.15.0", path = "packages/sg2" }
+sg4                 = { version = "3.15.0", path = "packages/sg4" }
+sg721               = { version = "3.15.0", path = "packages/sg721" }
+sg-utils            = { version = "3.15.0", path = "packages/sg-utils" }
+sg721-base          = { version = "3.15.0", path = "contracts/collections/sg721-base" }
+sg721-nt            = { version = "3.15.0", path = "contracts/collections/sg721-nt" }
+sg721-updatable     = { version = "3.15.0", path = "contracts/collections/sg721-updatable" }
+sg-controllers      = { version = "3.15.0", path = "packages/controllers" }
+sg-metadata         = { version = "3.15.0", path = "packages/sg-metadata" }
+sg-mint-hooks       = { version = "3.15.0", path = "packages/mint-hooks" }
+sg-splits           = { version = "3.15.0", path = "contracts/splits" }
+sg-whitelist        = { version = "3.15.0", path = "contracts/whitelists/whitelist" }
+sg-tiered-whitelist = { version = "3.15.0", path = "contracts/whitelists/tiered-whitelist" }
 thiserror           = "1.0.31"
 url                 = "2.2.2"
 sha2                = { version = "0.10.2", default-features = false }
 
-whitelist-mtree             = { version = "3.14.0", path = "contracts/whitelists/whitelist-merkletree" }
-tiered-whitelist-merkletree = { version = "3.14.0", path = "contracts/whitelists/tiered-whitelist-merkletree" }
-vending-minter-merkle-wl    = { version = "3.14.0", path = "contracts/minters/vending-minter-merkle-wl" }
-vending-factory             = { version = "3.14.0", path = "contracts/factories/vending-factory" }
-vending-minter              = { version = "3.14.0", path = "contracts/minters/vending-minter" }
-open-edition-factory        = { version = "3.14.0", path = "contracts/factories/open-edition-factory" }
-open-edition-minter         = { version = "3.14.0", path = "contracts/minters/open-edition-minter" }
-token-merge-factory         = { version = "3.14.0", path = "contracts/factories/token-merge-factory" }
-token-merge-minter          = { version = "3.14.0", path = "contracts/minters/token-merge-minter" }
-whitelist-immutable         = { version = "3.14.0", path = "contracts/whitelists/whitelist-immutable" }
-sg-whitelist-flex           = { version = "3.14.0", path = "contracts/whitelists/whitelist-flex" }
-sg-tiered-whitelist-flex    = { version = "3.14.0", path = "contracts/whitelists/tiered-whitelist-flex" }
-ethereum-verify             = { version = "3.14.0", path = "packages/ethereum-verify" }
-sg-eth-airdrop              = { version = "3.14.0", path = "contracts/sg-eth-airdrop" }
-test-suite                  = { version = "3.14.0", path = "test-suite" }
+whitelist-mtree             = { version = "3.15.0", path = "contracts/whitelists/whitelist-merkletree" }
+tiered-whitelist-merkletree = { version = "3.15.0", path = "contracts/whitelists/tiered-whitelist-merkletree" }
+vending-minter-merkle-wl    = { version = "3.15.0", path = "contracts/minters/vending-minter-merkle-wl" }
+vending-factory             = { version = "3.15.0", path = "contracts/factories/vending-factory" }
+vending-minter              = { version = "3.15.0", path = "contracts/minters/vending-minter" }
+open-edition-factory        = { version = "3.15.0", path = "contracts/factories/open-edition-factory" }
+open-edition-minter         = { version = "3.15.0", path = "contracts/minters/open-edition-minter" }
+token-merge-factory         = { version = "3.15.0", path = "contracts/factories/token-merge-factory" }
+token-merge-minter          = { version = "3.15.0", path = "contracts/minters/token-merge-minter" }
+whitelist-immutable         = { version = "3.15.0", path = "contracts/whitelists/whitelist-immutable" }
+sg-whitelist-flex           = { version = "3.15.0", path = "contracts/whitelists/whitelist-flex" }
+sg-tiered-whitelist-flex    = { version = "3.15.0", path = "contracts/whitelists/tiered-whitelist-flex" }
+ethereum-verify             = { version = "3.15.0", path = "packages/ethereum-verify" }
+sg-eth-airdrop              = { version = "3.15.0", path = "contracts/sg-eth-airdrop" }
+test-suite                  = { version = "3.15.0", path = "test-suite" }
 nois                        = { version = "2.0.0" }
 semver                      = "1"
 cw-ownable                  = "0.5.1"
 anybuf                      = "0.5.2"
 
 [profile.release.package.sg721]
+codegen-units = 1
+incremental   = false
+
+[profile.release.package.sg-utils]
 codegen-units = 1
 incremental   = false
 

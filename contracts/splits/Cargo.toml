@@ -36,6 +36,6 @@ cw-utils        = { workspace = true }
 schemars        = { workspace = true }
 serde           = { workspace = true }
 sg-controllers  = { workspace = true }
-sg-std          = { workspace = true }
+sg-utils        = { workspace = true }
 thiserror       = { workspace = true }
-semver          = {workspace = true }
+semver          = { workspace = true }

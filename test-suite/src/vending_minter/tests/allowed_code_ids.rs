@@ -11,7 +11,7 @@ use sg2::{
     query::{AllowedCollectionCodeIdsResponse, Sg2QueryMsg},
     tests::mock_collection_params_1,
 };
-use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
+use sg_utils::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use vending_factory::msg::{
     SudoMsg, VendingMinterCreateMsg, VendingUpdateParamsExtension, VendingUpdateParamsMsg,
 };

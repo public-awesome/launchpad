@@ -1,6 +1,6 @@
 use cosmwasm_std::{Coin, Timestamp, Uint128};
 use open_edition_factory::state::ParamsExtension;
-use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
+use sg_utils::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
 use crate::common_setup::{
     contract_boxes::custom_mock_app,

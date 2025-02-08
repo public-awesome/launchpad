@@ -15,7 +15,7 @@ use open_edition_factory::msg::{
 use open_edition_factory::types::NftData;
 use sg2::msg::{CollectionParams, Sg2ExecuteMsg};
 
-use sg_std::NATIVE_DENOM;
+use sg_utils::NATIVE_DENOM;
 
 use crate::common_setup::msg::CodeIds;
 use crate::common_setup::setup_minter::open_edition_minter::mock_params::{

@@ -14,7 +14,7 @@ use cw721::TokensResponse;
 use cw_multi_test::Executor;
 use sg2::msg::Sg2ExecuteMsg;
 use sg2::tests::{mock_collection_params, mock_collection_params_1};
-use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
+use sg_utils::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use sg_whitelist::msg::AddMembersMsg;
 use vending_minter::msg::ExecuteMsg;
 

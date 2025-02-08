@@ -40,7 +40,7 @@ sha2                = { workspace = true }
 sha3                = "0.10"
 schemars            = { workspace = true }
 serde               = { workspace = true }
-sg-std              = { workspace = true }
+sg-utils            = { workspace = true }
 thiserror           = { workspace = true }
 vending-minter      = { workspace = true, features = ["library"] }
 whitelist-immutable = { workspace = true, features = ["library"] }
@@ -55,5 +55,4 @@ sg2             = { workspace = true }
 vending-factory = { workspace = true }
 sg721-base      = { workspace = true }
 cw-multi-test   = { workspace = true }
-sg-multi-test   = { workspace = true }
 anyhow          = "1.0.57"

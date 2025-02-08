@@ -1,7 +1,7 @@
 use base_factory::{msg::BaseMinterCreateMsg, state::BaseMinterParams};
 use cosmwasm_std::coin;
 use sg2::msg::CollectionParams;
-use sg_std::NATIVE_DENOM;
+use sg_utils::NATIVE_DENOM;
 
 const CREATION_FEE: u128 = 1_000_000_000;
 pub const MIN_MINT_PRICE: u128 = 50_000_000;

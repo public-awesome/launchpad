@@ -35,7 +35,7 @@ rust_decimal    = { version = "1.14.3" }
 schemars        = { workspace = true }
 serde           = { workspace = true }
 sg1             = { workspace = true }
-sg-std          = { workspace = true }
+sg-utils        = { workspace = true }
 thiserror       = { workspace = true }
 url             = { workspace = true }
 hex             = "0.4.3"

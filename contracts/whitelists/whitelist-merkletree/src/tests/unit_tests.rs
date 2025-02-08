@@ -12,7 +12,7 @@ mod tests {
         testing::{mock_dependencies, mock_env, mock_info},
         BlockInfo, DepsMut, Env, Timestamp,
     };
-    use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
+    use sg_utils::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
     const ADMIN: &str = "admin";
     const UNIT_AMOUNT: u128 = 100_000_000;

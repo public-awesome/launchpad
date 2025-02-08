@@ -1,8 +1,7 @@
 use cosmwasm_schema::cw_serde;
-use sg_std::SubMsg;
 use thiserror::Error;
 
-use cosmwasm_std::{Addr, CustomQuery, Deps, StdError, StdResult, Storage};
+use cosmwasm_std::{Addr, CustomQuery, Deps, StdError, StdResult, Storage, SubMsg};
 use cw_storage_plus::Item;
 
 #[cw_serde]

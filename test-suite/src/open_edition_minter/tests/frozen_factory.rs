@@ -1,7 +1,7 @@
 use cosmwasm_std::{coins, Coin, Timestamp, Uint128};
 use cw_multi_test::{BankSudo, Executor, SudoMsg};
 use open_edition_factory::state::ParamsExtension;
-use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
+use sg_utils::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
 use open_edition_factory::msg::{OpenEditionUpdateParamsExtension, OpenEditionUpdateParamsMsg};
 use open_edition_factory::types::{NftData, NftMetadataType};

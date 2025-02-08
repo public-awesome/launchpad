@@ -14,7 +14,7 @@ use cw_ownable::cw_ownable_execute;
 use cw_ownable::cw_ownable_query;
 use cw_utils::Expiration;
 use sg721::RoyaltyInfoResponse;
-use sg_std::NATIVE_DENOM;
+use sg_utils::NATIVE_DENOM;
 
 #[cw_ownable_execute]
 #[cw_serde]

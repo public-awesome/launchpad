@@ -1,6 +1,6 @@
 use cosmwasm_std::{coin, Timestamp};
 use sg2::msg::CollectionParams;
-use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
+use sg_utils::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use vending_factory::{
     msg::{VendingMinterCreateMsg, VendingMinterInitMsgExtension},
     state::{ParamsExtension, VendingMinterParams},

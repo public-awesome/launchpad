@@ -21,7 +21,7 @@ use cosmwasm_std::{
 };
 use cw2::set_contract_version;
 use cw_utils::must_pay;
-use sg_std::NATIVE_DENOM;
+use sg_utils::NATIVE_DENOM;
 
 use semver::Version;
 use sg1::checked_fair_burn;

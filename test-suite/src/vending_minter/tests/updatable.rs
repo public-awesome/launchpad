@@ -3,7 +3,7 @@ use cw721::{Cw721QueryMsg, NftInfoResponse, TokensResponse};
 use cw721_base::Extension;
 use cw_multi_test::Executor;
 use sg721_updatable::msg::ExecuteMsg as Sg721UpdatableExecMsg;
-use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
+use sg_utils::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use vending_minter::msg::ExecuteMsg;
 
 use crate::common_setup::{

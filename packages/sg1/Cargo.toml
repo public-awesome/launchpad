@@ -12,6 +12,6 @@ license     = { workspace = true }
 cosmwasm-std = { workspace = true, features = ["stargate"] }
 cw-utils     = { workspace = true }
 serde        = { workspace = true }
-sg-std       = { workspace = true }
+sg-utils     = { workspace = true }
 thiserror    = { workspace = true }
 anybuf       = { workspace = true }

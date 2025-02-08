@@ -9,7 +9,7 @@ use cosmwasm_std::{coin, Coin, Timestamp, Uint128};
 use open_edition_factory::msg::OpenEditionUpdateParamsExtension;
 use open_edition_factory::state::ParamsExtension;
 use sg2::query::Sg2QueryMsg::Params;
-use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
+use sg_utils::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
 #[test]
 fn happy_path_with_params_update() {

@@ -25,7 +25,7 @@ use semver::Version;
 use sg1::{checked_fair_burn, distribute_mint_fees};
 use sg4::{Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
-use sg_std::GENESIS_MINT_START_TIME;
+use sg_utils::GENESIS_MINT_START_TIME;
 use sha2::{Digest, Sha256};
 
 use std::convert::TryInto;

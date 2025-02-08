@@ -1,6 +1,6 @@
 use cosmwasm_std::DepsMut;
 use cosmwasm_std::Timestamp;
-use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
+use sg_utils::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use sg_whitelist::contract::{
     execute, instantiate, query_config, query_members, MAX_MEMBERS, MAX_PER_ADDRESS_LIMIT,
 };

@@ -3,7 +3,7 @@ use cw721::{Cw721QueryMsg, TokensResponse};
 use cw721_base::ExecuteMsg as Cw721ExecuteMsg;
 use cw_multi_test::Executor;
 use sg2::tests::mock_collection_params_1;
-use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
+use sg_utils::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
 use crate::common_setup::msg::MinterCollectionResponse;
 use crate::common_setup::setup_accounts_and_block::coins_for_msg;

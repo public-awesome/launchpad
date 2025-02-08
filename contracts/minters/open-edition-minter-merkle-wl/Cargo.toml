@@ -26,23 +26,23 @@ backtraces = ["cosmwasm-std/backtraces"]
 library = []
 
 [dependencies]
-cosmwasm-schema         = { workspace = true }
-cosmwasm-std            = { workspace = true }
-cw2                     = { workspace = true }
-cw721-base              = { workspace = true, features = ["library"] }
-cw-storage-plus         = { workspace = true }
-cw-utils                = { workspace = true }
-serde                   = { workspace = true }
-sg1                     = { workspace = true }
-sg2                     = { workspace = true }
-sg4                     = { workspace = true }
-sg721                   = { workspace = true }
-sg-std                  = { workspace = true }
-sg-whitelist            = { workspace = true, features = ["library"] }
-whitelist-mtree         = { workspace = true, features = ["library"] }
+cosmwasm-schema             = { workspace = true }
+cosmwasm-std                = { workspace = true }
+cw2                         = { workspace = true }
+cw721-base                  = { workspace = true, features = ["library"] }
+cw-storage-plus             = { workspace = true }
+cw-utils                    = { workspace = true }
+serde                       = { workspace = true }
+sg1                         = { workspace = true }
+sg2                         = { workspace = true }
+sg4                         = { workspace = true }
+sg721                       = { workspace = true }
+sg-utils                    = { workspace = true }
+sg-whitelist                = { workspace = true, features = ["library"] }
+whitelist-mtree             = { workspace = true, features = ["library"] }
 tiered-whitelist-merkletree = { workspace = true, features = ["library"] }
-sg-metadata             = { workspace = true }
-thiserror               = { workspace = true }
-url                     = { workspace = true }
-open-edition-factory    = { workspace = true, features = ["library"] }
-semver                  = {workspace = true }
+sg-metadata                 = { workspace = true }
+thiserror                   = { workspace = true }
+url                         = { workspace = true }
+open-edition-factory        = { workspace = true, features = ["library"] }
+semver                      = { workspace = true }

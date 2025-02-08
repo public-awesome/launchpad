@@ -1,6 +1,6 @@
 use cosmwasm_std::{coin, Addr, Timestamp};
 
-use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
+use sg_utils::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use whitelist_mtree::msg::InstantiateMsg as WhitelistInstantiateMsg;
 
 use crate::common_setup::contract_boxes::{contract_whitelist_merkletree, App};
