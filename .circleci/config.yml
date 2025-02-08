@@ -14,7 +14,6 @@ workflows:
       - contract_whitelist
       - sg-eth-airdrop
       - test-suite
-      - package_sg_std
       - package_sg_utils
       - lint
       - wasm-build
