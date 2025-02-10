@@ -12,8 +12,6 @@ pub const SHUFFLE_FEE: u128 = 500_000_000;
 pub const MAX_PER_ADDRESS_LIMIT: u32 = 50;
 pub const DEV_ADDRESS: &str = "stars1abcd4kdla12mh86psg4y4h6hh05g2hmqoap350";
 pub const MIN_MINT_PRICE_OPEN_EDITION: u128 = 100_000_000;
-pub const FOUNDATION: &str = "stars1xqz6xujjyz0r9uzn7srasle5uynmpa0zkjr5l8";
-pub const LIQUIDITY_DAO_ADDRESS: &str =
-    "stars12he2ldxl950wfypvelqwkac4mdul7clzgd8wdlnmjvll8z2cc47qsatvl2";
-pub const LAUNCHPAD_DAO_ADDRESS: &str =
-    "stars1huqk6ha02jgrm69lxh8xfgl6wch9wlg7s65ujxydwdr725cxvuus423tj0";
+pub const FOUNDATION: &str = "init1d7q84m8y8gy0dcql090sqg9h7w9kydzntzx5yk";
+pub const LIQUIDITY_DAO_ADDRESS: &str = "init176qen2pg7lmfel2ph4rrsmm04qtl8qv67mj84d";
+pub const LAUNCHPAD_DAO_ADDRESS: &str = "init1flaytkt2zyylnc2p9u77jjgwrct206x86m03ac";

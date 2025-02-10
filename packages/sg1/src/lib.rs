@@ -10,8 +10,8 @@ use thiserror::Error;
 // governance parameters
 const FEE_BURN_PERCENT: u64 = 50;
 const FOUNDATION: &str = "init1d7q84m8y8gy0dcql090sqg9h7w9kydzntzx5yk";
-const LAUNCHPAD_DAO_ADDRESS: &str = "init1d7q84m8y8gy0dcql090sqg9h7w9kydzntzx5yk";
-const LIQUIDITY_DAO_ADDRESS: &str = "init1d7q84m8y8gy0dcql090sqg9h7w9kydzntzx5yk";
+const LAUNCHPAD_DAO_ADDRESS: &str = "init1flaytkt2zyylnc2p9u77jjgwrct206x86m03ac";
+const LIQUIDITY_DAO_ADDRESS: &str = "init176qen2pg7lmfel2ph4rrsmm04qtl8qv67mj84d";
 
 /// Burn and distribute fees and return an error if the fee is not enough
 pub fn checked_fair_burn(
