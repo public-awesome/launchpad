@@ -4,7 +4,7 @@ A whitelist contract that relies on MerkleTree data structure for verifying incl
 
 Only merkle root (and optionaly URI of a tree) are stored within the state. Inclusion can be verified by submitting a user address and hex-encoded list of merklee proofs. This approach allows significant reduction of gas usage during storage phase with a downside of having actual data off-chain and reliance on 3rd parties for providing inclusiong proofs. 
 
-Inclusion operation is a slighly more complex and costly when compared to the standard map-based whitelist. The contract uses **Sha256** for hashing concatenated proofs. Hashes are sorted on byte level prior to concatenation, which significantly simplifies the verification process by not requiring submission of leaf positions. 
+Inclusion operation is a slightly more complex and costly when compared to the standard map-based whitelist. The contract uses **Sha256** for hashing concatenated proofs. Hashes are sorted on byte level prior to concatenation, which significantly simplifies the verification process by not requiring submission of leaf positions. 
 
 **Important:** Make sure that your algorithm for merkle tree construction also sort the hashes. See example of extending `rs-merkle` library in `tests/hasher.rs`
 
