@@ -32,7 +32,7 @@ pub const WHITELIST_SS_MINT_COUNT: Item<u32> = Item::new("wlssmc");
 pub const WHITELIST_TS_MINT_COUNT: Item<u32> = Item::new("wltsmc");
 /// This keeps track of the mint count
 pub const TOTAL_MINT_COUNT: Item<u32> = Item::new("total_mint_count");
-
+pub const AIRDROP_COUNT: Item<u32> = Item::new("airdrop_count");
 pub const MINTABLE_NUM_TOKENS: Item<u32> = Item::new("mintable_num_tokens");
 
 /// Holds the status of the minter. Can be changed with on-chain governance proposals.

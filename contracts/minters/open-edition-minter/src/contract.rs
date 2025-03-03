@@ -5,10 +5,10 @@ use crate::msg::{
     MintableNumTokensResponse, QueryMsg, StartTimeResponse, TotalMintCountResponse,
 };
 use crate::state::{
-    increment_token_index, Config, ConfigExtension, CONFIG, MINTABLE_NUM_TOKENS, MINTER_ADDRS,
-    SG721_ADDRESS, STATUS, TOTAL_MINT_COUNT, WHITELIST_FS_MINTER_ADDRS, WHITELIST_FS_MINT_COUNT,
-    WHITELIST_MINTER_ADDRS, WHITELIST_SS_MINTER_ADDRS, WHITELIST_SS_MINT_COUNT,
-    WHITELIST_TS_MINTER_ADDRS, WHITELIST_TS_MINT_COUNT,
+    increment_token_index, Config, ConfigExtension, AIRDROP_COUNT, CONFIG, MINTABLE_NUM_TOKENS,
+    MINTER_ADDRS, SG721_ADDRESS, STATUS, TOTAL_MINT_COUNT, WHITELIST_FS_MINTER_ADDRS,
+    WHITELIST_FS_MINT_COUNT, WHITELIST_MINTER_ADDRS, WHITELIST_SS_MINTER_ADDRS,
+    WHITELIST_SS_MINT_COUNT, WHITELIST_TS_MINTER_ADDRS, WHITELIST_TS_MINT_COUNT,
 };
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
@@ -673,6 +673,12 @@ fn _execute_mint(
             Ok(updated_mint_count)
         },
     )?;
+
+    // Update the airdrop count if is_admin
+    if is_admin {
+        let current_airdrop_count = AIRDROP_COUNT.may_load(deps.storage)?.unwrap_or(0);
+        AIRDROP_COUNT.save(deps.storage, &(current_airdrop_count + 1))?;
+    }
 
     // Update mintable count (optional)
     if let Some(mintable_nb_tokens) = mintable_num_tokens {

@@ -459,7 +459,7 @@ dependencies = [
 
 [[package]]
 name = "base-factory"
-version = "3.15.0"
+version = "3.16.0"
 dependencies = [
  "cosmwasm-schema 1.5.10",
  "cosmwasm-std 1.5.10",
@@ -477,7 +477,7 @@ dependencies = [
 
 [[package]]
 name = "base-minter"
-version = "3.15.0"
+version = "3.16.0"
 dependencies = [
  "base-factory",
  "cosmwasm-schema 1.5.10",
@@ -1718,7 +1718,7 @@ checksum = "feeef44e73baff3a26d371801df019877a9866a8c493d315ab00177843314f35"
 
 [[package]]
 name = "e2e"
-version = "3.15.0"
+version = "3.16.0"
 dependencies = [
  "assert_matches",
  "cosm-orc",
@@ -1981,7 +1981,7 @@ dependencies = [
 
 [[package]]
 name = "ethereum-verify"
-version = "3.15.0"
+version = "3.16.0"
 dependencies = [
  "cosmwasm-schema 1.5.10",
  "cosmwasm-std 1.5.10",
@@ -3057,7 +3057,7 @@ checksum = "c08d65885ee38876c4f86fa503fb49d7b507c2b62552df7c70b2fce627e06381"
 
 [[package]]
 name = "open-edition-factory"
-version = "3.15.0"
+version = "3.16.0"
 dependencies = [
  "base-factory",
  "cosmwasm-schema 1.5.10",
@@ -3076,7 +3076,7 @@ dependencies = [
 
 [[package]]
 name = "open-edition-minter"
-version = "3.15.0"
+version = "3.16.0"
 dependencies = [
  "cosmwasm-schema 1.5.10",
  "cosmwasm-std 1.5.10",
@@ -3101,7 +3101,7 @@ dependencies = [
 
 [[package]]
 name = "open-edition-minter-merkle-wl"
-version = "3.15.0"
+version = "3.16.0"
 dependencies = [
  "cosmwasm-schema 1.5.10",
  "cosmwasm-std 1.5.10",
@@ -3127,7 +3127,7 @@ dependencies = [
 
 [[package]]
 name = "open-edition-minter-wl-flex"
-version = "3.15.0"
+version = "3.16.0"
 dependencies = [
  "cosmwasm-schema 1.5.10",
  "cosmwasm-std 1.5.10",
@@ -4171,7 +4171,7 @@ dependencies = [
 
 [[package]]
 name = "sg-controllers"
-version = "3.15.0"
+version = "3.16.0"
 dependencies = [
  "cosmwasm-schema 1.5.10",
  "cosmwasm-std 1.5.10",
@@ -4185,7 +4185,7 @@ dependencies = [
 
 [[package]]
 name = "sg-eth-airdrop"
-version = "3.15.0"
+version = "3.16.0"
 dependencies = [
  "anyhow",
  "async-std",
@@ -4219,7 +4219,7 @@ dependencies = [
 
 [[package]]
 name = "sg-metadata"
-version = "3.15.0"
+version = "3.16.0"
 dependencies = [
  "cosmwasm-schema 1.5.10",
  "schemars",
@@ -4228,7 +4228,7 @@ dependencies = [
 
 [[package]]
 name = "sg-mint-hooks"
-version = "3.15.0"
+version = "3.16.0"
 dependencies = [
  "cosmwasm-schema 1.5.10",
  "cosmwasm-std 1.5.10",
@@ -4253,7 +4253,7 @@ dependencies = [
 
 [[package]]
 name = "sg-splits"
-version = "3.15.0"
+version = "3.16.0"
 dependencies = [
  "cosmwasm-schema 1.5.10",
  "cosmwasm-std 1.5.10",
@@ -4272,7 +4272,7 @@ dependencies = [
 
 [[package]]
 name = "sg-tiered-whitelist"
-version = "3.15.0"
+version = "3.16.0"
 dependencies = [
  "cosmwasm-schema 1.5.10",
  "cosmwasm-std 1.5.10",
@@ -4289,7 +4289,7 @@ dependencies = [
 
 [[package]]
 name = "sg-tiered-whitelist-flex"
-version = "3.15.0"
+version = "3.16.0"
 dependencies = [
  "cosmwasm-schema 1.5.10",
  "cosmwasm-std 1.5.10",
@@ -4306,11 +4306,11 @@ dependencies = [
 
 [[package]]
 name = "sg-utils"
-version = "3.15.0"
+version = "3.16.0"
 
 [[package]]
 name = "sg-whitelist"
-version = "3.15.0"
+version = "3.16.0"
 dependencies = [
  "cosmwasm-schema 1.5.10",
  "cosmwasm-std 1.5.10",
@@ -4327,7 +4327,7 @@ dependencies = [
 
 [[package]]
 name = "sg-whitelist-flex"
-version = "3.15.0"
+version = "3.16.0"
 dependencies = [
  "cosmwasm-schema 1.5.10",
  "cosmwasm-std 1.5.10",
@@ -4344,7 +4344,7 @@ dependencies = [
 
 [[package]]
 name = "sg1"
-version = "3.15.0"
+version = "3.16.0"
 dependencies = [
  "anybuf",
  "cosmwasm-std 1.5.10",
@@ -4356,7 +4356,7 @@ dependencies = [
 
 [[package]]
 name = "sg2"
-version = "3.15.0"
+version = "3.16.0"
 dependencies = [
  "cosmwasm-schema 1.5.10",
  "cosmwasm-std 1.5.10",
@@ -4370,7 +4370,7 @@ dependencies = [
 
 [[package]]
 name = "sg4"
-version = "3.15.0"
+version = "3.16.0"
 dependencies = [
  "cosmwasm-schema 1.5.10",
  "cosmwasm-std 1.5.10",
@@ -4381,7 +4381,7 @@ dependencies = [
 
 [[package]]
 name = "sg721"
-version = "3.15.0"
+version = "3.16.0"
 dependencies = [
  "cosmwasm-schema 1.5.10",
  "cosmwasm-std 1.5.10",
@@ -4395,7 +4395,7 @@ dependencies = [
 
 [[package]]
 name = "sg721-base"
-version = "3.15.0"
+version = "3.16.0"
 dependencies = [
  "cosmwasm-schema 1.5.10",
  "cosmwasm-std 1.5.10",
@@ -4414,7 +4414,7 @@ dependencies = [
 
 [[package]]
 name = "sg721-metadata-onchain"
-version = "3.15.0"
+version = "3.16.0"
 dependencies = [
  "cosmwasm-schema 1.5.10",
  "cosmwasm-std 1.5.10",
@@ -4433,7 +4433,7 @@ dependencies = [
 
 [[package]]
 name = "sg721-nt"
-version = "3.15.0"
+version = "3.16.0"
 dependencies = [
  "cosmwasm-schema 1.5.10",
  "cosmwasm-std 1.5.10",
@@ -4450,7 +4450,7 @@ dependencies = [
 
 [[package]]
 name = "sg721-updatable"
-version = "3.15.0"
+version = "3.16.0"
 dependencies = [
  "cosmwasm-schema 1.5.10",
  "cosmwasm-std 1.5.10",
@@ -4833,7 +4833,7 @@ dependencies = [
 
 [[package]]
 name = "test-suite"
-version = "3.15.0"
+version = "3.16.0"
 dependencies = [
  "anybuf",
  "anyhow",
@@ -4926,7 +4926,7 @@ dependencies = [
 
 [[package]]
 name = "tiered-whitelist-merkletree"
-version = "3.15.0"
+version = "3.16.0"
 dependencies = [
  "blake3",
  "cosmwasm-schema 1.5.10",
@@ -5013,7 +5013,7 @@ checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 
 [[package]]
 name = "token-merge-factory"
-version = "3.15.0"
+version = "3.16.0"
 dependencies = [
  "base-factory",
  "cosmwasm-schema 1.5.10",
@@ -5032,7 +5032,7 @@ dependencies = [
 
 [[package]]
 name = "token-merge-minter"
-version = "3.15.0"
+version = "3.16.0"
 dependencies = [
  "cosmwasm-schema 1.5.10",
  "cosmwasm-std 1.5.10",
@@ -5360,7 +5360,7 @@ checksum = "3ef4c4aa54d5d05a279399bfa921ec387b7aba77caf7a682ae8d86785b8fdad2"
 
 [[package]]
 name = "vending-factory"
-version = "3.15.0"
+version = "3.16.0"
 dependencies = [
  "base-factory",
  "cosmwasm-schema 1.5.10",
@@ -5380,7 +5380,7 @@ dependencies = [
 
 [[package]]
 name = "vending-minter"
-version = "3.15.0"
+version = "3.16.0"
 dependencies = [
  "cosmwasm-schema 1.5.10",
  "cosmwasm-std 1.5.10",
@@ -5408,7 +5408,7 @@ dependencies = [
 
 [[package]]
 name = "vending-minter-featured"
-version = "3.15.0"
+version = "3.16.0"
 dependencies = [
  "cosmwasm-schema 1.5.10",
  "cosmwasm-std 1.5.10",
@@ -5436,7 +5436,7 @@ dependencies = [
 
 [[package]]
 name = "vending-minter-merkle-wl"
-version = "3.15.0"
+version = "3.16.0"
 dependencies = [
  "cosmwasm-schema 1.5.10",
  "cosmwasm-std 1.5.10",
@@ -5465,7 +5465,7 @@ dependencies = [
 
 [[package]]
 name = "vending-minter-merkle-wl-featured"
-version = "3.15.0"
+version = "3.16.0"
 dependencies = [
  "cosmwasm-schema 1.5.10",
  "cosmwasm-std 1.5.10",
@@ -5494,7 +5494,7 @@ dependencies = [
 
 [[package]]
 name = "vending-minter-wl-flex"
-version = "3.15.0"
+version = "3.16.0"
 dependencies = [
  "cosmwasm-schema 1.5.10",
  "cosmwasm-std 1.5.10",
@@ -5522,7 +5522,7 @@ dependencies = [
 
 [[package]]
 name = "vending-minter-wl-flex-featured"
-version = "3.15.0"
+version = "3.16.0"
 dependencies = [
  "cosmwasm-schema 1.5.10",
  "cosmwasm-std 1.5.10",
@@ -5681,7 +5681,7 @@ dependencies = [
 
 [[package]]
 name = "whitelist-immutable"
-version = "3.15.0"
+version = "3.16.0"
 dependencies = [
  "cosmwasm-schema 1.5.10",
  "cosmwasm-std 1.5.10",
@@ -5698,7 +5698,7 @@ dependencies = [
 
 [[package]]
 name = "whitelist-mtree"
-version = "3.15.0"
+version = "3.16.0"
 dependencies = [
  "cosmwasm-schema 1.5.10",
  "cosmwasm-std 1.5.10",
