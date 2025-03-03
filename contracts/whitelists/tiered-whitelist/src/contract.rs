@@ -25,7 +25,8 @@ use cw_storage_plus::Bound;
 use cw_utils::{may_pay, maybe_addr, must_pay};
 use rust_decimal::prelude::ToPrimitive;
 use rust_decimal::Decimal;
-use sg1::ibc_denom_fair_burn;
+use sg1::checked_fair_burn;
+use sg_utils::NATIVE_DENOM;
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sg-tiered-whitelist";
@@ -65,7 +66,7 @@ pub fn instantiate(
         .to_u128()
         .unwrap()
         * PRICE_PER_1000_MEMBERS;
-    let payment = must_pay(&info, "ugaze")?;
+    let payment = must_pay(&info, NATIVE_DENOM)?;
     if payment.u128() != creation_fee {
         return Err(ContractError::IncorrectCreationFee(
             payment.u128(),
@@ -93,7 +94,7 @@ pub fn instantiate(
     ADMIN_LIST.save(deps.storage, &admin_config)?;
 
     let mut res = Response::new();
-    ibc_denom_fair_burn(info.funds[0].clone(), None, &mut res)?;
+    checked_fair_burn(&info, creation_fee, None, &mut res)?;
 
     if config.member_limit < config.num_members {
         return Err(ContractError::MembersExceeded {
@@ -378,7 +379,7 @@ pub fn execute_increase_member_limit(
     } else {
         0
     };
-    let payment = may_pay(&info, "ugaze")?;
+    let payment = may_pay(&info, NATIVE_DENOM)?;
     if payment.u128() != upgrade_fee {
         return Err(ContractError::IncorrectCreationFee(
             payment.u128(),
@@ -388,7 +389,7 @@ pub fn execute_increase_member_limit(
 
     let mut res = Response::new();
     if upgrade_fee > 0 {
-        ibc_denom_fair_burn(info.funds[0].clone(), None, &mut res)?;
+        checked_fair_burn(&info, upgrade_fee, None, &mut res)?
     }
 
     config.member_limit = member_limit;
@@ -553,7 +554,7 @@ pub fn query_config(deps: Deps, env: Env) -> StdResult<ConfigResponse> {
             start_time: Timestamp::from_seconds(0),
             end_time: Timestamp::from_seconds(0),
             mint_price: Coin {
-                denom: "ugaze".to_string(),
+                denom: NATIVE_DENOM.to_string(),
                 amount: Uint128::zero(),
             },
             is_active: false,
