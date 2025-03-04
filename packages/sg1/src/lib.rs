@@ -1,7 +1,7 @@
 use anybuf::Anybuf;
 use cosmwasm_std::{
-    coin, coins, ensure, Addr, BankMsg, Coin, CosmosMsg, Decimal, Event, MessageInfo, Response,
-    SubMsg, Uint128,
+    coin, coins, ensure, Addr, BankMsg, Coin, CosmosMsg, Decimal, Env, Event, MessageInfo,
+    Response, SubMsg, Uint128,
 };
 use cw_utils::{may_pay, must_pay, PaymentError};
 use sg_utils::NATIVE_DENOM;
@@ -18,6 +18,7 @@ const LIQUIDITY_DAO_ADDRESS: &str =
 /// Burn and distribute fees and return an error if the fee is not enough
 pub fn checked_fair_burn(
     info: &MessageInfo,
+    env: &Env,
     fee: u128,
     developer: Option<Addr>,
     res: &mut Response,
@@ -29,7 +30,7 @@ pub fn checked_fair_burn(
     };
 
     if payment.u128() != 0u128 {
-        fair_burn(info.sender.to_string(), fee, developer, res);
+        fair_burn(env.contract.address.to_string(), fee, developer, res);
     }
 
     Ok(())

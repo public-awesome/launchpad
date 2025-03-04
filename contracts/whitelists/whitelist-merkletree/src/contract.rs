@@ -74,7 +74,7 @@ pub fn instantiate(
     }
 
     let mut res = Response::new();
-    checked_fair_burn(&info, CREATION_FEE, None, &mut res)?;
+    checked_fair_burn(&info, &env, CREATION_FEE, None, &mut res)?;
 
     let config = Config {
         start_time: msg.start_time,

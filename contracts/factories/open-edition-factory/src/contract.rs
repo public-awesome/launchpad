@@ -70,7 +70,13 @@ pub fn execute_create_minter(
 
     let mut res = Response::new();
     if params.creation_fee.denom == NATIVE_DENOM {
-        checked_fair_burn(&info, params.creation_fee.amount.u128(), None, &mut res)?;
+        checked_fair_burn(
+            &info,
+            &env,
+            params.creation_fee.amount.u128(),
+            None,
+            &mut res,
+        )?;
     } else {
         transfer_funds_to_launchpad_dao(
             &info,

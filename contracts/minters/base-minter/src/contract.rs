@@ -102,7 +102,7 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
-        ExecuteMsg::Mint { token_uri } => execute_mint_sender(deps, info, token_uri),
+        ExecuteMsg::Mint { token_uri } => execute_mint_sender(deps, env, info, token_uri),
         ExecuteMsg::UpdateStartTradingTime(time) => {
             execute_update_start_trading_time(deps, env, info, time)
         }
@@ -111,6 +111,7 @@ pub fn execute(
 
 pub fn execute_mint_sender(
     deps: DepsMut,
+    env: Env,
     info: MessageInfo,
     token_uri: String,
 ) -> Result<Response, ContractError> {
@@ -149,7 +150,7 @@ pub fn execute_mint_sender(
     if network_fee != funds_sent {
         return Err(ContractError::InvalidMintPrice {});
     }
-    checked_fair_burn(&info, network_fee.u128(), None, &mut res)?;
+    checked_fair_burn(&info, &env, network_fee.u128(), None, &mut res)?;
 
     // Create mint msgs
     let mint_msg = Sg721ExecuteMsg::<Extension, Empty>::Mint {
