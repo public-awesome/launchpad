@@ -359,7 +359,8 @@ pub fn execute_shuffle(
     // Check exact shuffle fee payment included in message
     checked_fair_burn(
         &info,
-        &env, factory_params.extension.shuffle_fee.amount.u128(),
+        &env,
+        factory_params.extension.shuffle_fee.amount.u128(),
         None,
         &mut res,
     )?;
