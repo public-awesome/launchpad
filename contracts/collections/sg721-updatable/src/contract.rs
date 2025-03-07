@@ -50,7 +50,7 @@ pub fn _instantiate(
 
 pub fn execute_enable_updatable(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
 ) -> Result<Response, ContractError> {
     let enable_updates = ENABLE_UPDATABLE.load(deps.storage)?;
@@ -67,7 +67,7 @@ pub fn execute_enable_updatable(
     }
 
     // Check fee matches enable updatable fee and add fairburn msg
-    checked_fair_burn(&info, ENABLE_UPDATABLE_FEE, None, &mut res)?;
+    checked_fair_burn(&info, &env, ENABLE_UPDATABLE_FEE, None, &mut res)?;
 
     ENABLE_UPDATABLE.save(deps.storage, &true)?;
 
