@@ -4,7 +4,7 @@ use crate::msg::{
     QueryMsg, StartTimeResponse,
 };
 use crate::state::{
-    Config, ConfigExtension, CONFIG, LAST_DISCOUNT_TIME, MINTABLE_NUM_TOKENS,
+    Config, ConfigExtension, AIRDROP_COUNT, CONFIG, LAST_DISCOUNT_TIME, MINTABLE_NUM_TOKENS,
     MINTABLE_TOKEN_POSITIONS, MINTER_ADDRS, SG721_ADDRESS, STATUS, WHITELIST_FS_MINTER_ADDRS,
     WHITELIST_FS_MINT_COUNT, WHITELIST_MINTER_ADDRS, WHITELIST_SS_MINTER_ADDRS,
     WHITELIST_SS_MINT_COUNT, WHITELIST_TS_MINTER_ADDRS, WHITELIST_TS_MINT_COUNT,
@@ -779,6 +779,13 @@ fn _execute_mint(
     let mintable_num_tokens = MINTABLE_NUM_TOKENS.load(deps.storage)?;
     // Decrement mintable num tokens
     MINTABLE_NUM_TOKENS.save(deps.storage, &(mintable_num_tokens - 1))?;
+
+    // Update the airdrop count if is_admin
+    if is_admin {
+        let current_airdrop_count = AIRDROP_COUNT.may_load(deps.storage)?.unwrap_or(0);
+        AIRDROP_COUNT.save(deps.storage, &(current_airdrop_count + 1))?;
+    }
+
     if is_public {
         let new_mint_count = mint_count(deps.as_ref(), &info)? + 1;
         MINTER_ADDRS.save(deps.storage, &info.sender, &new_mint_count)?;
