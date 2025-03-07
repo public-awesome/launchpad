@@ -32,6 +32,7 @@ pub const WHITELIST_TS_MINTER_ADDRS: Map<&Addr, u32> = Map::new("wltsma");
 pub const WHITELIST_FS_MINT_COUNT: Item<u32> = Item::new("wlfsmc");
 pub const WHITELIST_SS_MINT_COUNT: Item<u32> = Item::new("wlssmc");
 pub const WHITELIST_TS_MINT_COUNT: Item<u32> = Item::new("wltsmc");
+pub const AIRDROP_COUNT: Item<u32> = Item::new("airdrop_count");
 
 pub const LAST_DISCOUNT_TIME: Item<Timestamp> = Item::new("last_discount_time");
 
