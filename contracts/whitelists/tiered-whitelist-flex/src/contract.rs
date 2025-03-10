@@ -25,7 +25,7 @@ use cw_storage_plus::Bound;
 use cw_utils::{may_pay, maybe_addr, must_pay};
 use rust_decimal::prelude::ToPrimitive;
 use rust_decimal::Decimal;
-use sg1::checked_fair_burn;
+use sg1::transfer_funds_to_launchpad_dao;
 use sg_utils::NATIVE_DENOM;
 
 // version info for migration info
@@ -96,7 +96,7 @@ pub fn instantiate(
     ADMIN_LIST.save(deps.storage, &admin_config)?;
 
     let mut res = Response::new();
-    checked_fair_burn(&info, &env, creation_fee, None, &mut res)?;
+    transfer_funds_to_launchpad_dao(&info, creation_fee, NATIVE_DENOM, &mut res)?;
 
     if config.member_limit < config.num_members {
         return Err(ContractError::MembersExceeded {
@@ -359,7 +359,7 @@ pub fn execute_remove_stage(
 /// Increase member limit. Must include a fee if crossing 1000, 2000, etc member limit.
 pub fn execute_increase_member_limit(
     deps: DepsMut,
-    env: Env,
+    _env: Env,
     info: MessageInfo,
     member_limit: u32,
 ) -> Result<Response, ContractError> {
@@ -390,7 +390,7 @@ pub fn execute_increase_member_limit(
 
     let mut res = Response::new();
     if upgrade_fee > 0 {
-        checked_fair_burn(&info, &env, upgrade_fee, None, &mut res)?
+        transfer_funds_to_launchpad_dao(&info, upgrade_fee, NATIVE_DENOM, &mut res)?;
     }
 
     config.member_limit = member_limit;

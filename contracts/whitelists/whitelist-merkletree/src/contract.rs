@@ -22,7 +22,7 @@ use sg_utils::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
 use rs_merkle::{algorithms::Sha256, Hasher};
 use semver::Version;
-use sg1::checked_fair_burn;
+use sg1::transfer_funds_to_launchpad_dao;
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:whitelist-merkletree";
@@ -74,7 +74,7 @@ pub fn instantiate(
     }
 
     let mut res = Response::new();
-    checked_fair_burn(&info, &env, CREATION_FEE, None, &mut res)?;
+    transfer_funds_to_launchpad_dao(&info, CREATION_FEE, NATIVE_DENOM, &mut res)?;
 
     let config = Config {
         start_time: msg.start_time,

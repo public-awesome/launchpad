@@ -22,11 +22,11 @@ use cw721_base::Extension;
 use cw_utils::{may_pay, maybe_addr, nonpayable, parse_reply_instantiate_data};
 use nois::{int_in_range, shuffle};
 use semver::Version;
-use sg1::{checked_fair_burn, distribute_mint_fees};
+use sg1::{distribute_mint_fees, transfer_funds_to_launchpad_dao};
 use sg2::query::Sg2QueryMsg;
 use sg4::{MinterConfig, Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
-use sg_utils::GENESIS_MINT_START_TIME;
+use sg_utils::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use sg_whitelist::msg::{
     ConfigResponse as WhitelistConfigResponse, HasMemberResponse, QueryMsg as WhitelistQueryMsg,
 };
@@ -368,12 +368,10 @@ pub fn execute_shuffle(
         .query_wasm_smart(config.factory, &Sg2QueryMsg::Params {})?;
     let factory_params = factory.params;
 
-    // Check exact shuffle fee payment included in message
-    checked_fair_burn(
+    transfer_funds_to_launchpad_dao(
         &info,
-        &env,
         factory_params.extension.shuffle_fee.amount.u128(),
-        None,
+        NATIVE_DENOM,
         &mut res,
     )?;
 
