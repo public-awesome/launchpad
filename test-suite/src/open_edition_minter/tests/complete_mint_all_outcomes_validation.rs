@@ -130,7 +130,7 @@ fn check_mint_revenues_distribution(num_tokens: Option<u32>, end_minter_time: Op
     );
     assert_eq!(
         res.err().unwrap().source().unwrap().to_string(),
-        "IncorrectPaymentAmount 100ustars != 100000000ustars"
+        "IncorrectPaymentAmount 100ugaze != 100000000ugaze"
     );
 
     // Invalid price
@@ -143,7 +143,7 @@ fn check_mint_revenues_distribution(num_tokens: Option<u32>, end_minter_time: Op
     );
     assert_eq!(
         res.err().unwrap().source().unwrap().to_string(),
-        "IncorrectPaymentAmount 200000000ustars != 100000000ustars"
+        "IncorrectPaymentAmount 200000000ugaze != 100000000ugaze"
     );
 
     // Invalid price
@@ -151,7 +151,7 @@ fn check_mint_revenues_distribution(num_tokens: Option<u32>, end_minter_time: Op
     let res = router.execute_contract(buyer.clone(), minter_addr.clone(), &mint_msg, &[]);
     assert_eq!(
         res.err().unwrap().source().unwrap().to_string(),
-        "IncorrectPaymentAmount 0ustars != 100000000ustars"
+        "IncorrectPaymentAmount 0ugaze != 100000000ugaze"
     );
 
     // Invalid denom

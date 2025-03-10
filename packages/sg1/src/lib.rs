@@ -246,7 +246,7 @@ mod tests {
 
         fair_burn(Addr::unchecked("sender").to_string(), 9u128, None, &mut res);
         let burn_msg = SubMsg::new(BankMsg::Burn {
-            amount: coins(4, "ustars".to_string()),
+            amount: coins(4, "ugaze".to_string()),
         });
         let dist_msg = SubMsg::new(create_fund_fairburn_pool_msg(
             Addr::unchecked("sender").to_string(),

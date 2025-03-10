@@ -61,7 +61,7 @@ fn query_config() -> ConfigResponse {
         sg721_address: "some_sg721_address".to_string(),
         sg721_code_id: 4,
         start_time: Timestamp::from_seconds(30),
-        mint_price: Coin::new(1000, "ustars"),
+        mint_price: Coin::new(1000, "ugaze"),
         factory: "some_factory".to_string(),
     }
 }
