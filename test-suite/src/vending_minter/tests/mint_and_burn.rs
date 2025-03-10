@@ -128,7 +128,7 @@ fn update_discount_mint_price() {
     assert_eq!(
         res.current_price,
         Coin {
-            denom: "ustars".to_string(),
+            denom: "ugaze".to_string(),
             amount: Uint128::new(MINT_PRICE + 1)
         }
     );
@@ -165,21 +165,21 @@ fn update_discount_mint_price() {
     assert_eq!(
         res.public_price,
         Coin {
-            denom: "ustars".to_string(),
+            denom: "ugaze".to_string(),
             amount: Uint128::new(MINT_PRICE + 1)
         }
     );
     assert_eq!(
         res.current_price,
         Coin {
-            denom: "ustars".to_string(),
+            denom: "ugaze".to_string(),
             amount: Uint128::new(MINT_PRICE - 5)
         }
     );
     assert_eq!(
         res.discount_price,
         Some(Coin {
-            denom: "ustars".to_string(),
+            denom: "ugaze".to_string(),
             amount: Uint128::new(MINT_PRICE - 5)
         })
     );
@@ -260,7 +260,7 @@ fn update_discount_mint_price() {
     assert_eq!(
         res.current_price,
         Coin {
-            denom: "ustars".to_string(),
+            denom: "ugaze".to_string(),
             amount: Uint128::new(MINT_PRICE + 1)
         }
     );

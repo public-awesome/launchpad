@@ -13,7 +13,7 @@ MSG=$(cat <<EOF
             "base_token_uri": "ipfs://QmVnos4WEq5z2zLwX8CR5EkaHyBUiF2RZYQLDWL4gm5DDU",
             "start_time": "$(echo $TIME)000000000",
             "num_tokens": 100,
-            "mint_price": {"amount": "10000000", "denom": "ustars"},
+            "mint_price": {"amount": "10000000", "denom": "ugaze"},
             "per_address_limit": 5
         },
         "collection_params": {
@@ -39,6 +39,6 @@ EOF
 
 echo $MSG
 
-starsd tx wasm execute $FACTORY "$MSG" --amount 5000000000ustars \
-  --gas-prices 0.025ustars --gas 2000000 --gas-adjustment 1.9 \
+starsd tx wasm execute $FACTORY "$MSG" --amount 5000000000ugaze \
+  --gas-prices 0.025ugaze --gas 2000000 --gas-adjustment 1.9 \
   --from $ADMIN -y -b block -o json | jq .

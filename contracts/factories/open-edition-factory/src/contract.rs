@@ -1,3 +1,7 @@
+use base_factory::contract::{
+    must_be_allowed_collection, must_not_be_frozen, must_pay_exact_amount, update_params,
+};
+use base_factory::ContractError as BaseContractError;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
@@ -6,13 +10,7 @@ use cosmwasm_std::{
 };
 use cw2::set_contract_version;
 use semver::Version;
-use sg_utils::NATIVE_DENOM;
-
-use base_factory::contract::{
-    must_be_allowed_collection, must_not_be_frozen, must_pay_exact_amount, update_params,
-};
-use base_factory::ContractError as BaseContractError;
-use sg1::{checked_fair_burn, transfer_funds_to_launchpad_dao};
+use sg1::transfer_funds_to_launchpad_dao;
 use sg2::query::{AllowedCollectionCodeIdResponse, AllowedCollectionCodeIdsResponse, Sg2QueryMsg};
 
 use crate::error::ContractError;
@@ -69,22 +67,13 @@ pub fn execute_create_minter(
     must_not_be_frozen(&params)?;
 
     let mut res = Response::new();
-    if params.creation_fee.denom == NATIVE_DENOM {
-        checked_fair_burn(
-            &info,
-            &env,
-            params.creation_fee.amount.u128(),
-            None,
-            &mut res,
-        )?;
-    } else {
-        transfer_funds_to_launchpad_dao(
-            &info,
-            params.creation_fee.amount.u128(),
-            &params.creation_fee.denom,
-            &mut res,
-        )?;
-    }
+
+    transfer_funds_to_launchpad_dao(
+        &info,
+        params.creation_fee.amount.u128(),
+        &params.creation_fee.denom,
+        &mut res,
+    )?;
 
     msg.init_msg = OpenEditionMinterInitMsgExtension::validate(
         msg.init_msg.clone(),

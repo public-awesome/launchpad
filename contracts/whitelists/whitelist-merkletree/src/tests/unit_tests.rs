@@ -41,7 +41,7 @@ mod tests {
         };
         let info = mock_info(ADMIN, &[coin(CREATION_AMOUNT, NATIVE_DENOM)]);
         let res = instantiate(deps, mock_env(), info, msg).unwrap();
-        assert_eq!(2, res.messages.len());
+        assert_eq!(1, res.messages.len());
         assert_eq!(5, res.attributes.len());
     }
 
@@ -97,7 +97,7 @@ mod tests {
                 per_address_limit: 1,
                 start_time: GENESIS_START_TIME,
                 end_time: END_TIME,
-                mint_price: coin(UNIT_AMOUNT, "not_ustars"),
+                mint_price: coin(UNIT_AMOUNT, "not_ugaze"),
                 admins: vec![ADMIN.to_string()],
                 admins_mutable: false,
             },

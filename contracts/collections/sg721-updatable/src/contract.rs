@@ -16,9 +16,10 @@ use crate::state::ENABLE_UPDATABLE;
 
 use cw721_base::Extension;
 use cw_utils::nonpayable;
-use sg1::checked_fair_burn;
+use sg1::transfer_funds_to_launchpad_dao;
 use sg721_base::ContractError::Unauthorized;
 use sg721_base::Sg721Contract;
+use sg_utils::NATIVE_DENOM;
 pub type Sg721UpdatableContract<'a> = Sg721Contract<'a, Extension>;
 
 const CONTRACT_NAME: &str = "crates.io:sg721-updatable";
@@ -50,7 +51,7 @@ pub fn _instantiate(
 
 pub fn execute_enable_updatable(
     deps: DepsMut,
-    env: Env,
+    _env: Env,
     info: MessageInfo,
 ) -> Result<Response, ContractError> {
     let enable_updates = ENABLE_UPDATABLE.load(deps.storage)?;
@@ -66,8 +67,7 @@ pub fn execute_enable_updatable(
         return Err(ContractError::Base(Unauthorized {}));
     }
 
-    // Check fee matches enable updatable fee and add fairburn msg
-    checked_fair_burn(&info, &env, ENABLE_UPDATABLE_FEE, None, &mut res)?;
+    transfer_funds_to_launchpad_dao(&info, ENABLE_UPDATABLE_FEE, NATIVE_DENOM, &mut res)?;
 
     ENABLE_UPDATABLE.save(deps.storage, &true)?;
 

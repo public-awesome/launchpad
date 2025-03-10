@@ -280,7 +280,7 @@ mod tests {
 
         #[test]
         fn distribute_non_member() {
-            const DENOM: &str = "ustars";
+            const DENOM: &str = "ugaze";
             let init_funds = coins(100, DENOM);
             let mut app = mock_app_builder_init_funds(&init_funds);
 
@@ -299,7 +299,7 @@ mod tests {
 
         #[test]
         fn distribute() {
-            const DENOM: &str = "ustars";
+            const DENOM: &str = "ugaze";
             let init_funds = coins(100, DENOM);
             let mut app = mock_app_builder_init_funds(&init_funds);
 
@@ -337,7 +337,7 @@ mod tests {
 
         #[test]
         fn distribute_under_funded() {
-            const DENOM: &str = "ustars";
+            const DENOM: &str = "ugaze";
             let init_funds = coins(79, DENOM);
             let mut app = mock_app_builder_init_funds(&init_funds);
 
@@ -359,7 +359,7 @@ mod tests {
 
         #[test]
         fn distribute_amount_with_remaining_balance() {
-            const DENOM: &str = "ustars";
+            const DENOM: &str = "ugaze";
             let init_funds = coins(479, DENOM);
             let mut app = mock_app_builder_init_funds(&init_funds);
 
@@ -397,7 +397,7 @@ mod tests {
 
         #[test]
         fn distribute_with_too_many_members() {
-            const DENOM: &str = "ustars";
+            const DENOM: &str = "ugaze";
             let init_funds = coins(255, DENOM);
             let mut app = mock_app_builder_init_funds(&init_funds);
 
@@ -418,7 +418,7 @@ mod tests {
 
         #[test]
         fn distribute_with_zero_weight_members() {
-            const DENOM: &str = "ustars";
+            const DENOM: &str = "ugaze";
             let init_funds = coins(255, DENOM);
             let mut app = mock_app_builder_init_funds(&init_funds);
 
@@ -453,7 +453,7 @@ mod tests {
 
         #[test]
         fn distribute_with_group_changes() {
-            const DENOM: &str = "ustars";
+            const DENOM: &str = "ugaze";
             let init_funds = coins(199, DENOM);
             let mut app = mock_app_builder_init_funds(&init_funds);
 

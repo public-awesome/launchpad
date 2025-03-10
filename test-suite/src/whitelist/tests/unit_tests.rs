@@ -33,9 +33,9 @@ fn setup_contract(deps: DepsMut) {
         admins: vec![ADMIN.to_string(), SECOND_ADMIN.to_string()],
         admins_mutable: true,
     };
-    let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
+    let info = mock_info(ADMIN, &[coin(100_000_000, "ugaze")]);
     let res = instantiate(deps, mock_env(), info, msg).unwrap();
-    assert_eq!(2, res.messages.len());
+    assert_eq!(1, res.messages.len());
 }
 
 #[test]
@@ -45,19 +45,19 @@ fn proper_initialization() {
 }
 
 #[test]
-fn not_ustars_denom() {
+fn not_ugaze_denom() {
     let mut deps = mock_dependencies();
     let msg = InstantiateMsg {
         members: vec!["adsfsa".to_string()],
         start_time: END_TIME,
         end_time: END_TIME,
-        mint_price: coin(UNIT_AMOUNT, "not_ustars"),
+        mint_price: coin(UNIT_AMOUNT, "not_ugaze"),
         per_address_limit: 1,
         member_limit: 1000,
         admins: vec![ADMIN.to_string()],
         admins_mutable: true,
     };
-    let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
+    let info = mock_info(ADMIN, &[coin(100_000_000, "ugaze")]);
     let res = instantiate(deps.as_mut(), mock_env(), info, msg);
     assert!(res.is_ok());
 }
@@ -69,13 +69,13 @@ fn improper_initialization_invalid_creation_fee() {
         members: vec!["adsfsa".to_string()],
         start_time: END_TIME,
         end_time: END_TIME,
-        mint_price: coin(UNIT_AMOUNT, "ustars"),
+        mint_price: coin(UNIT_AMOUNT, "ugaze"),
         per_address_limit: 1,
         member_limit: 3000,
         admins: vec![ADMIN.to_string()],
         admins_mutable: true,
     };
-    let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
+    let info = mock_info(ADMIN, &[coin(100_000_000, "ugaze")]);
     let err = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
     assert_eq!(
         err.to_string(),
@@ -100,7 +100,7 @@ fn improper_initialization_dedup() {
         admins: vec![ADMIN.to_string()],
         admins_mutable: true,
     };
-    let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
+    let info = mock_info(ADMIN, &[coin(100_000_000, "ugaze")]);
     let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
     let res = query_config(deps.as_ref(), mock_env()).unwrap();
     assert_eq!(1, res.num_members);
@@ -118,7 +118,7 @@ fn check_start_time_after_end_time() {
         admins: vec![ADMIN.to_string()],
         admins_mutable: true,
     };
-    let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
+    let info = mock_info(ADMIN, &[coin(100_000_000, "ugaze")]);
     let mut deps = mock_dependencies();
     instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
 }
@@ -287,9 +287,9 @@ fn query_members_pagination() {
         admins: vec![ADMIN.to_string()],
         admins_mutable: true,
     };
-    let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
+    let info = mock_info(ADMIN, &[coin(100_000_000, "ugaze")]);
     let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
-    assert_eq!(2, res.messages.len());
+    assert_eq!(1, res.messages.len());
 
     let mut all_elements: Vec<String> = vec![];
 
@@ -342,55 +342,55 @@ fn increase_member_limit() {
 
     // needs upgrade fee
     let msg = ExecuteMsg::IncreaseMemberLimit(1001);
-    let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
+    let info = mock_info(ADMIN, &[coin(100_000_000, "ugaze")]);
     let res = execute(deps.as_mut(), mock_env(), info, msg);
     assert!(res.is_ok());
 
     // 0 upgrade fee
     let msg = ExecuteMsg::IncreaseMemberLimit(1002);
-    let info = mock_info(ADMIN, &[coin(0, "ustars")]);
+    let info = mock_info(ADMIN, &[coin(0, "ugaze")]);
     let res = execute(deps.as_mut(), mock_env(), info, msg);
     assert!(res.is_ok());
 
     // 0 upgrade fee, fails when including a fee
     // don't allow updating to the same number of memebers
     let msg = ExecuteMsg::IncreaseMemberLimit(1002);
-    let info = mock_info(ADMIN, &[coin(1, "ustars")]);
+    let info = mock_info(ADMIN, &[coin(1, "ugaze")]);
     execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
 
     // 0 upgrade fee, fails when including a fee
     let msg = ExecuteMsg::IncreaseMemberLimit(1003);
-    let info = mock_info(ADMIN, &[coin(1, "ustars")]);
+    let info = mock_info(ADMIN, &[coin(1, "ugaze")]);
     let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
     assert_eq!(err.to_string(), "IncorrectCreationFee 1 < 0");
 
     // 0 upgrade fee
     let msg = ExecuteMsg::IncreaseMemberLimit(1502);
-    let info = mock_info(ADMIN, &[coin(0, "ustars")]);
+    let info = mock_info(ADMIN, &[coin(0, "ugaze")]);
     let res = execute(deps.as_mut(), mock_env(), info, msg);
     assert!(res.is_ok());
 
     // 0 upgrade fee
     let msg = ExecuteMsg::IncreaseMemberLimit(2000);
-    let info = mock_info(ADMIN, &[coin(0, "ustars")]);
+    let info = mock_info(ADMIN, &[coin(0, "ugaze")]);
     let res = execute(deps.as_mut(), mock_env(), info, msg);
     assert!(res.is_ok());
 
     // needs upgrade fee
     let msg = ExecuteMsg::IncreaseMemberLimit(2002);
-    let info = mock_info(ADMIN, &[coin(100_000_000, "ustars")]);
+    let info = mock_info(ADMIN, &[coin(100_000_000, "ugaze")]);
     let res = execute(deps.as_mut(), mock_env(), info, msg);
     assert!(res.is_ok());
 
     // needs upgrade fee
     let msg = ExecuteMsg::IncreaseMemberLimit(4002);
-    let info = mock_info(ADMIN, &[coin(200_000_000, "ustars")]);
+    let info = mock_info(ADMIN, &[coin(200_000_000, "ugaze")]);
     let res = execute(deps.as_mut(), mock_env(), info, msg);
     assert!(res.is_ok());
 
     // over MAX_MEMBERS, Invalid member limit
     let msg = ExecuteMsg::IncreaseMemberLimit(6000);
-    let info = mock_info(ADMIN, &[coin(400_000_000, "ustars")]);
+    let info = mock_info(ADMIN, &[coin(400_000_000, "ugaze")]);
     let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
     assert_eq!(
         err.to_string(),

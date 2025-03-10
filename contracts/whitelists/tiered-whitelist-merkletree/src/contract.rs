@@ -24,7 +24,7 @@ use cw_utils::must_pay;
 use sg_utils::NATIVE_DENOM;
 
 use semver::Version;
-use sg1::checked_fair_burn;
+use sg1::transfer_funds_to_launchpad_dao;
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:tiered-whitelist-merkletree";
@@ -63,7 +63,7 @@ pub fn instantiate(
     validate_stages(&env, &msg.stages)?;
 
     let mut res = Response::new();
-    checked_fair_burn(&info, &env, CREATION_FEE, None, &mut res)?;
+    transfer_funds_to_launchpad_dao(&info, CREATION_FEE, NATIVE_DENOM, &mut res)?;
 
     let config = Config { stages: msg.stages };
 

@@ -48,7 +48,7 @@ impl Module for StargazeStargateKeeper {
                 // field 1 is the denom
                 // field 2 is the amount
                 let denom = decoded_amount.string(1).unwrap();
-                assert_eq!("ustars", denom);
+                assert_eq!("ugaze", denom);
                 let amount = decoded_amount.string(2).unwrap();
                 let msg = BankMsg::Send {
                     to_address: "fairburn_pool".to_owned(),
