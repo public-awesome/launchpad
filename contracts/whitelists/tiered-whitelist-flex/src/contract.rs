@@ -26,7 +26,7 @@ use cw_utils::{may_pay, maybe_addr, must_pay};
 use rust_decimal::prelude::ToPrimitive;
 use rust_decimal::Decimal;
 use sg1::transfer_funds_to_launchpad_dao;
-use sg_utils::NATIVE_DENOM;
+use sg_utils::{FEE_DENOM, NATIVE_DENOM};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:sg-tiered-whitelist-flex";
@@ -34,7 +34,7 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 // contract governance params
 pub const MAX_MEMBERS: u32 = 30000;
-pub const PRICE_PER_1000_MEMBERS: u128 = 100_000_000;
+pub const PRICE_PER_1000_MEMBERS: u128 = 250_000;
 pub const MIN_MINT_PRICE: u128 = 0;
 pub const MAX_PER_ADDRESS_LIMIT: u32 = 30;
 
@@ -66,7 +66,7 @@ pub fn instantiate(
         .to_u128()
         .unwrap()
         * PRICE_PER_1000_MEMBERS;
-    let payment = must_pay(&info, NATIVE_DENOM)?;
+    let payment = must_pay(&info, FEE_DENOM)?;
     if payment.u128() != creation_fee {
         return Err(ContractError::IncorrectCreationFee(
             payment.u128(),
@@ -96,7 +96,7 @@ pub fn instantiate(
     ADMIN_LIST.save(deps.storage, &admin_config)?;
 
     let mut res = Response::new();
-    transfer_funds_to_launchpad_dao(&info, creation_fee, NATIVE_DENOM, &mut res)?;
+    transfer_funds_to_launchpad_dao(&info, creation_fee, FEE_DENOM, &mut res)?;
 
     if config.member_limit < config.num_members {
         return Err(ContractError::MembersExceeded {
@@ -380,7 +380,7 @@ pub fn execute_increase_member_limit(
     } else {
         0
     };
-    let payment = may_pay(&info, NATIVE_DENOM)?;
+    let payment = may_pay(&info, FEE_DENOM)?;
     if payment.u128() != upgrade_fee {
         return Err(ContractError::IncorrectCreationFee(
             payment.u128(),
@@ -390,7 +390,7 @@ pub fn execute_increase_member_limit(
 
     let mut res = Response::new();
     if upgrade_fee > 0 {
-        transfer_funds_to_launchpad_dao(&info, upgrade_fee, NATIVE_DENOM, &mut res)?;
+        transfer_funds_to_launchpad_dao(&info, upgrade_fee, FEE_DENOM, &mut res)?;
     }
 
     config.member_limit = member_limit;

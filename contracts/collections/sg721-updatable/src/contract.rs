@@ -19,7 +19,7 @@ use cw_utils::nonpayable;
 use sg1::transfer_funds_to_launchpad_dao;
 use sg721_base::ContractError::Unauthorized;
 use sg721_base::Sg721Contract;
-use sg_utils::NATIVE_DENOM;
+use sg_utils::FEE_DENOM;
 pub type Sg721UpdatableContract<'a> = Sg721Contract<'a, Extension>;
 
 const CONTRACT_NAME: &str = "crates.io:sg721-updatable";
@@ -31,7 +31,7 @@ const COMPATIBLE_CONTRACT_NAMES_FOR_MIGRATION: [&str; 4] = [
     "sg721-updatable",
     "crates.io:sg721-updatable",
 ];
-const ENABLE_UPDATABLE_FEE: u128 = 1_500_000_000;
+const ENABLE_UPDATABLE_FEE: u128 = 10_000_000;
 
 pub fn _instantiate(
     deps: DepsMut,
@@ -67,7 +67,7 @@ pub fn execute_enable_updatable(
         return Err(ContractError::Base(Unauthorized {}));
     }
 
-    transfer_funds_to_launchpad_dao(&info, ENABLE_UPDATABLE_FEE, NATIVE_DENOM, &mut res)?;
+    transfer_funds_to_launchpad_dao(&info, ENABLE_UPDATABLE_FEE, FEE_DENOM, &mut res)?;
 
     ENABLE_UPDATABLE.save(deps.storage, &true)?;
 

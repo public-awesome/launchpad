@@ -11,7 +11,7 @@ use cw_utils::must_pay;
 use semver::Version;
 use sg1::transfer_funds_to_launchpad_dao;
 use sg2::query::{AllowedCollectionCodeIdResponse, AllowedCollectionCodeIdsResponse, Sg2QueryMsg};
-use sg_utils::NATIVE_DENOM;
+use sg_utils::FEE_DENOM;
 
 use crate::error::ContractError;
 use crate::msg::{
@@ -145,7 +145,7 @@ pub fn sudo_update_params(
     if let Some(airdrop_mint_price) = param_msg.extension.airdrop_mint_price {
         ensure_eq!(
             &airdrop_mint_price.denom,
-            &NATIVE_DENOM,
+            &FEE_DENOM,
             ContractError::BaseError(BaseContractError::InvalidDenom {})
         );
         params.extension.airdrop_mint_price = airdrop_mint_price;
@@ -159,7 +159,7 @@ pub fn sudo_update_params(
     if let Some(shuffle_fee) = param_msg.extension.shuffle_fee {
         ensure_eq!(
             &shuffle_fee.denom,
-            &NATIVE_DENOM,
+            &FEE_DENOM,
             ContractError::BaseError(BaseContractError::InvalidDenom {})
         );
         params.extension.shuffle_fee = shuffle_fee;
@@ -246,7 +246,7 @@ pub fn migrate(
         if let Some(airdrop_mint_price) = msg.extension.airdrop_mint_price {
             ensure_eq!(
                 &airdrop_mint_price.denom,
-                &NATIVE_DENOM,
+                &FEE_DENOM,
                 ContractError::BaseError(BaseContractError::InvalidDenom {})
             );
             params.extension.airdrop_mint_price = airdrop_mint_price;
@@ -260,7 +260,7 @@ pub fn migrate(
         if let Some(shuffle_fee) = msg.extension.shuffle_fee {
             ensure_eq!(
                 &shuffle_fee.denom,
-                &NATIVE_DENOM,
+                &FEE_DENOM,
                 ContractError::BaseError(BaseContractError::InvalidDenom {})
             );
             params.extension.shuffle_fee = shuffle_fee;

@@ -16,7 +16,7 @@ use sg2::query::Sg2QueryMsg;
 use sg4::{QueryMsg, Status, StatusResponse, SudoMsg};
 use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
 use sg721_base::msg::{CollectionInfoResponse, QueryMsg as Sg721QueryMsg};
-use sg_utils::NATIVE_DENOM;
+use sg_utils::FEE_DENOM;
 use url::Url;
 
 const CONTRACT_NAME: &str = "crates.io:sg-base-minter";
@@ -141,7 +141,7 @@ pub fn execute_mint_sender(
         .query_wasm_smart(config.factory, &Sg2QueryMsg::Params {})?;
     let factory_params = factory.params;
 
-    let funds_sent = must_pay(&info, NATIVE_DENOM)?;
+    let funds_sent = must_pay(&info, FEE_DENOM)?;
 
     // Create network fee msgs
     let mint_fee_percent = Decimal::bps(factory_params.mint_fee_bps);
@@ -151,7 +151,7 @@ pub fn execute_mint_sender(
         return Err(ContractError::InvalidMintPrice {});
     }
 
-    transfer_funds_to_launchpad_dao(&info, network_fee.u128(), NATIVE_DENOM, &mut res)?;
+    transfer_funds_to_launchpad_dao(&info, network_fee.u128(), FEE_DENOM, &mut res)?;
 
     // Create mint msgs
     let mint_msg = Sg721ExecuteMsg::<Extension, Empty>::Mint {

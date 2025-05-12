@@ -97,7 +97,7 @@ mod tests {
                 per_address_limit: 1,
                 start_time: GENESIS_START_TIME,
                 end_time: END_TIME,
-                mint_price: coin(UNIT_AMOUNT, "not_ugaze"),
+                mint_price: coin(UNIT_AMOUNT, "incorrect_denom"),
                 admins: vec![ADMIN.to_string()],
                 admins_mutable: false,
             },

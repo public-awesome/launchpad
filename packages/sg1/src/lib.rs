@@ -9,9 +9,9 @@ use thiserror::Error;
 
 // governance parameters
 const FEE_BURN_PERCENT: u64 = 50;
-const FOUNDATION: &str = "init1d7q84m8y8gy0dcql090sqg9h7w9kydzntzx5yk";
-const LAUNCHPAD_DAO_ADDRESS: &str = "init1flaytkt2zyylnc2p9u77jjgwrct206x86m03ac";
-const LIQUIDITY_DAO_ADDRESS: &str = "init176qen2pg7lmfel2ph4rrsmm04qtl8qv67mj84d";
+const FOUNDATION: &str = "init19fp5yt25cdkdjnzp4dc3gqp6dmsjdslwatg0v8";
+const LAUNCHPAD_DAO_ADDRESS: &str = "init19fp5yt25cdkdjnzp4dc3gqp6dmsjdslwatg0v8";
+const LIQUIDITY_DAO_ADDRESS: &str = "init19fp5yt25cdkdjnzp4dc3gqp6dmsjdslwatg0v8";
 
 /// Burn and distribute fees and return an error if the fee is not enough
 pub fn checked_fair_burn(
@@ -246,7 +246,7 @@ mod tests {
 
         fair_burn(Addr::unchecked("sender").to_string(), 9u128, None, &mut res);
         let burn_msg = SubMsg::new(BankMsg::Burn {
-            amount: coins(4, "ugaze".to_string()),
+            amount: coins(4, NATIVE_DENOM.to_string()),
         });
         let dist_msg = SubMsg::new(create_fund_fairburn_pool_msg(
             Addr::unchecked("sender").to_string(),

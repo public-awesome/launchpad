@@ -5,6 +5,7 @@ use cosmwasm_std::{
 use cw_multi_test::error::{bail, AnyResult};
 use cw_multi_test::{AppResponse, CosmosRouter, Module, Stargate, StargateMsg, StargateQuery};
 use serde::de::DeserializeOwned;
+use sg_utils::NATIVE_DENOM;
 use std::marker::PhantomData;
 
 pub struct StargazeKeeper<ExecT, QueryT, SudoT>(PhantomData<(ExecT, QueryT, SudoT)>);
@@ -48,7 +49,7 @@ impl Module for StargazeStargateKeeper {
                 // field 1 is the denom
                 // field 2 is the amount
                 let denom = decoded_amount.string(1).unwrap();
-                assert_eq!("ugaze", denom);
+                assert_eq!(NATIVE_DENOM, denom);
                 let amount = decoded_amount.string(2).unwrap();
                 let msg = BankMsg::Send {
                     to_address: "fairburn_pool".to_owned(),
