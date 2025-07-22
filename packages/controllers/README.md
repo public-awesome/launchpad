@@ -6,4 +6,4 @@ style, where it is an element that encapsulated business logic and data access.
 We can also directly handle some `ExecuteMsg` and `QueryMsg` variants by
 adding a sub-router to these controllers.
 
-This work is derived from [cw-plus](https://github.com/CosmWasm/cw-plus/tree/main/packages/controllers).
+This work is derived from [cw-minus](https://github.com/CosmWasm/cw-minus/tree/main/packages/controllers).
