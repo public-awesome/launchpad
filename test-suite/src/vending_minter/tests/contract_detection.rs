@@ -37,10 +37,10 @@ fn test_short_addresses_treated_as_eoa() {
 
     // Create various short address formats (like typical EOAs)
     let short_addresses = vec![
-        Addr::unchecked("buyer"),  // 5 chars
-        Addr::unchecked("simple_string_address"),  // 21 chars  
-        Addr::unchecked("cosmos1abc123def456ghi789jkl012mno345"),  // 35 chars (typical bech32)
-        Addr::unchecked("terra1xyz789abc123def456ghi789jkl012"),   // 34 chars
+        Addr::unchecked("buyer"),                                 // 5 chars
+        Addr::unchecked("simple_string_address"),                 // 21 chars
+        Addr::unchecked("cosmos1abc123def456ghi789jkl012mno345"), // 35 chars (typical bech32)
+        Addr::unchecked("terra1xyz789abc123def456ghi789jkl012"),  // 34 chars
     ];
 
     // Set time after start time to enable minting
@@ -65,8 +65,12 @@ fn test_short_addresses_treated_as_eoa() {
             &mint_msg,
             &coins(MINT_PRICE, NATIVE_DENOM),
         );
-        
-        assert!(res.is_ok(), "Short address '{}' should be treated as EOA and allowed to mint", addr);
+
+        assert!(
+            res.is_ok(),
+            "Short address '{}' should be treated as EOA and allowed to mint",
+            addr
+        );
     }
 }
 
@@ -77,8 +81,9 @@ fn test_long_addresses_treated_as_contracts() {
     let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
 
     // Create a long address that looks like a contract address (>50 chars)
-    let long_contract_addr = Addr::unchecked("contract1234567890abcdefghijklmnopqrstuvwxyz1234567890abcdefghij");
-    
+    let long_contract_addr =
+        Addr::unchecked("contract1234567890abcdefghijklmnopqrstuvwxyz1234567890abcdefghij");
+
     // Fund this address
     router
         .sudo(cw_multi_test::SudoMsg::Bank(
@@ -102,8 +107,11 @@ fn test_long_addresses_treated_as_contracts() {
     );
 
     // This should fail with ContractsCannotMint error
-    assert!(res.is_err(), "Long address should be treated as contract and blocked from minting");
-    
+    assert!(
+        res.is_err(),
+        "Long address should be treated as contract and blocked from minting"
+    );
+
     let err = res.unwrap_err();
     let contract_err = err.downcast_ref::<ContractError>().unwrap();
     assert_eq!(*contract_err, ContractError::ContractsCannotMint {});
@@ -123,15 +131,18 @@ fn test_admin_mint_to_works_from_any_address() {
     let mint_to_msg = ExecuteMsg::MintTo {
         recipient: buyer.to_string(),
     };
-    
+
     let res = router.execute_contract(
         creator, // Admin performing the action
         minter_addr,
         &mint_to_msg,
         &[],
     );
-    
-    assert!(res.is_ok(), "Admin mint_to should work regardless of caller type");
+
+    assert!(
+        res.is_ok(),
+        "Admin mint_to should work regardless of caller type"
+    );
 }
 
 #[test]
@@ -177,8 +188,11 @@ fn test_boundary_address_length() {
         &mint_msg,
         &coins(MINT_PRICE, NATIVE_DENOM),
     );
-    assert!(res_51.is_err(), "51-char address should be treated as contract");
-    
+    assert!(
+        res_51.is_err(),
+        "51-char address should be treated as contract"
+    );
+
     let err = res_51.unwrap_err();
     let contract_err = err.downcast_ref::<ContractError>().unwrap();
     assert_eq!(*contract_err, ContractError::ContractsCannotMint {});

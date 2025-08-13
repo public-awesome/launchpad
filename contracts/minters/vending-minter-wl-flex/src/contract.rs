@@ -57,13 +57,14 @@ fn is_contract(deps: Deps, addr: &Addr) -> Result<bool, ContractError> {
     if addr.as_str().len() > 50 {
         return Ok(true);
     }
-    
+
     // Secondary check: try to query contract info using cw2
     // This catches contracts that might have shorter addresses or use cw2
-    let contract_info_result: Result<ContractVersion, _> = cw2::query_contract_info(&deps.querier, addr);
-    
+    let contract_info_result: Result<ContractVersion, _> =
+        cw2::query_contract_info(&deps.querier, addr);
+
     match contract_info_result {
-        Ok(_) => Ok(true),  // Address is a contract with cw2 info
+        Ok(_) => Ok(true),   // Address is a contract with cw2 info
         Err(_) => Ok(false), // Not a contract or no cw2 info (treat as EOA)
     }
 }
