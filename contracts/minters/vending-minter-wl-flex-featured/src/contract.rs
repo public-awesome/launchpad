@@ -16,7 +16,7 @@ use cosmwasm_std::{
     Empty, Env, Event, MessageInfo, Order, Reply, ReplyOn, Response, StdError, StdResult, SubMsg,
     Timestamp, Uint128, WasmMsg,
 };
-use cw2::set_contract_version;
+use cw2::{set_contract_version, ContractVersion};
 use cw721_base::Extension;
 use cw_utils::{may_pay, maybe_addr, nonpayable, parse_reply_instantiate_data};
 use nois::{int_in_range, shuffle};
@@ -48,6 +48,16 @@ const CONTRACT_NAME: &str = "crates.io:sg-vending-minter-flex";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 const INSTANTIATE_SG721_REPLY_ID: u64 = 1;
+
+fn is_contract(deps: Deps, addr: &Addr) -> Result<bool, ContractError> {
+    let contract_info_result: Result<ContractVersion, _> = cw2::query_contract_info(&deps.querier, addr);
+    
+    match contract_info_result {
+        Ok(_) => Ok(true),  // Address is a contract
+        Err(StdError::NotFound { .. }) => Ok(false),  // Address is an EOA
+        Err(e) => Err(ContractError::Std(e)),  // Other query error
+    }
+}
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -486,6 +496,11 @@ pub fn execute_mint_sender(
     let is_public = is_public_mint(deps.as_ref(), &info)?;
     if is_public && (env.block.time < config.extension.start_time) {
         return Err(ContractError::BeforeMintStartTime {});
+    }
+
+    // Check if sender is a contract (only for public and whitelist mints, not admin mints)
+    if is_contract(deps.as_ref(), &info.sender)? {
+        return Err(ContractError::ContractsCannotMint {});
     }
 
     // Check if already minted max per address limit

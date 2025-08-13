@@ -115,4 +115,7 @@ pub enum ContractError {
 
     #[error("Multiply Fraction Error")]
     CheckedMultiplyFractionError {},
+
+    #[error("Contracts cannot mint")]
+    ContractsCannotMint {},
 }
