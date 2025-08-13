@@ -52,12 +52,19 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 const INSTANTIATE_SG721_REPLY_ID: u64 = 1;
 
 fn is_contract(deps: Deps, addr: &Addr) -> Result<bool, ContractError> {
+    // First check by address length - contract addresses are typically longer (63+ chars)
+    // EOA addresses are usually shorter (20-44 chars depending on format)
+    if addr.as_str().len() > 50 {
+        return Ok(true);
+    }
+    
+    // Secondary check: try to query contract info using cw2
+    // This catches contracts that might have shorter addresses or use cw2
     let contract_info_result: Result<ContractVersion, _> = cw2::query_contract_info(&deps.querier, addr);
     
     match contract_info_result {
-        Ok(_) => Ok(true),  // Address is a contract
-        Err(StdError::NotFound { .. }) => Ok(false),  // Address is an EOA
-        Err(e) => Err(ContractError::Std(e)),  // Other query error
+        Ok(_) => Ok(true),  // Address is a contract with cw2 info
+        Err(_) => Ok(false), // Not a contract or no cw2 info (treat as EOA)
     }
 }
 
