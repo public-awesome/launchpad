@@ -17,7 +17,7 @@ use cosmwasm_std::{
     Empty, Env, Event, MessageInfo, Order, Reply, ReplyOn, Response, StdError, StdResult, SubMsg,
     Timestamp, Uint128, WasmMsg,
 };
-use cw2::{set_contract_version, ContractVersion};
+use cw2::set_contract_version;
 use cw721_base::Extension;
 use cw_utils::{may_pay, maybe_addr, nonpayable, parse_reply_instantiate_data};
 
@@ -57,14 +57,20 @@ fn is_contract(deps: Deps, addr: &Addr) -> Result<bool, ContractError> {
         return Ok(true);
     }
 
-    // Secondary check: try to query contract info using cw2
-    // This catches contracts that might have shorter addresses or use cw2
-    let contract_info_result: Result<ContractVersion, _> =
-        cw2::query_contract_info(&deps.querier, addr);
+    // Secondary check: try to query contract info directly
+    // This catches contracts that might have shorter addresses
+    use cosmwasm_std::{ContractInfoResponse, QueryRequest, WasmQuery};
+
+    let contract_info_query = QueryRequest::Wasm(WasmQuery::ContractInfo {
+        contract_addr: addr.to_string(),
+    });
+
+    let contract_info_result: Result<ContractInfoResponse, _> =
+        deps.querier.query(&contract_info_query);
 
     match contract_info_result {
-        Ok(_) => Ok(true),   // Address is a contract with cw2 info
-        Err(_) => Ok(false), // Not a contract or no cw2 info (treat as EOA)
+        Ok(_) => Ok(true),   // Address is a contract
+        Err(_) => Ok(false), // Not a contract (treat as EOA)
     }
 }
 
