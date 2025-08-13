@@ -197,3 +197,47 @@ fn test_boundary_address_length() {
     let contract_err = err.downcast_ref::<ContractError>().unwrap();
     assert_eq!(*contract_err, ContractError::ContractsCannotMint {});
 }
+
+#[test]
+fn test_real_contract_detected_by_contract_info_query() {
+    let vt = vending_minter_template(1);
+    let (mut router, _creator, _buyer) = (vt.router, vt.accts.creator, vt.accts.buyer);
+    let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
+
+    // Use the actual minter contract address (which is a real contract but short address)
+    // This tests the ContractInfo query fallback since the minter address is likely <50 chars
+    // but is definitely a contract that should be blocked from minting
+
+    // Set time after start time to enable minting
+    setup_block_time(&mut router, GENESIS_MINT_START_TIME + 1, None);
+
+    // Fund the minter contract address so it can attempt to mint
+    router
+        .sudo(cw_multi_test::SudoMsg::Bank(
+            cw_multi_test::BankSudo::Mint {
+                to_address: minter_addr.to_string(),
+                amount: coins(MINT_PRICE * 2, NATIVE_DENOM),
+            },
+        ))
+        .unwrap();
+
+    // The minter contract trying to mint from itself should be blocked
+    let mint_msg = ExecuteMsg::Mint {};
+    let res = router.execute_contract(
+        minter_addr.clone(),
+        minter_addr,
+        &mint_msg,
+        &coins(MINT_PRICE, NATIVE_DENOM),
+    );
+
+    // This should fail with ContractsCannotMint error because the ContractInfo
+    // query should detect that minter_addr is a contract, even if it's <50 chars
+    assert!(
+        res.is_err(),
+        "Real contract address should be blocked from minting via ContractInfo query"
+    );
+
+    let err = res.unwrap_err();
+    let contract_err = err.downcast_ref::<ContractError>().unwrap();
+    assert_eq!(*contract_err, ContractError::ContractsCannotMint {});
+}
