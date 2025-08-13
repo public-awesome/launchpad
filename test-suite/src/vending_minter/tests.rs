@@ -1,6 +1,7 @@
 mod address_limit;
 mod allowed_code_ids;
 mod contract_detection;
+mod contract_whitelist;
 mod frozen_factory;
 mod happy_unhappy;
 mod ibc_asset_mint;
