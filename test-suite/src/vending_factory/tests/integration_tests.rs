@@ -23,7 +23,10 @@ mod tests {
             .instantiate_contract(
                 factory_id,
                 Addr::unchecked(GOVERNANCE),
-                &InstantiateMsg { params },
+                &InstantiateMsg { 
+                    params,
+                    initial_whitelist: None,
+                },
                 &[],
                 "factory",
                 None,

@@ -7,6 +7,8 @@ use crate::state::VendingMinterParams;
 #[cw_serde]
 pub struct InstantiateMsg {
     pub params: VendingMinterParams,
+    /// Optional initial whitelist of contract addresses allowed to mint
+    pub initial_whitelist: Option<Vec<String>>,
 }
 
 #[cw_serde]
@@ -24,6 +26,19 @@ pub type VendingMinterCreateMsg = CreateMinterMsg<VendingMinterInitMsgExtension>
 #[cw_serde]
 pub enum ExecuteMsg {
     CreateMinter(VendingMinterCreateMsg),
+    /// Admin-only: Add a contract address to the whitelist
+    AddContractToWhitelist {
+        address: String,
+    },
+    /// Admin-only: Remove a contract address from the whitelist
+    RemoveContractFromWhitelist {
+        address: String,
+    },
+    /// Admin-only: Batch update the contract whitelist
+    UpdateContractWhitelist {
+        add: Vec<String>,
+        remove: Vec<String>,
+    },
 }
 
 #[cw_serde]
@@ -51,6 +66,20 @@ pub struct VendingUpdateParamsExtension {
     pub shuffle_fee: Option<Coin>,
 }
 pub type VendingUpdateParamsMsg = UpdateMinterParamsMsg<VendingUpdateParamsExtension>;
+
+#[cw_serde]
+pub struct MigrateMsg {
+    /// Optional whitelist operations during migration
+    pub whitelist_update: Option<WhitelistUpdate>,
+}
+
+#[cw_serde]
+pub struct WhitelistUpdate {
+    /// Contract addresses to add to whitelist
+    pub add: Vec<String>,
+    /// Contract addresses to remove from whitelist
+    pub remove: Vec<String>,
+}
 
 #[cw_serde]
 #[derive(QueryResponses)]

@@ -32,7 +32,10 @@ fn configure_mock_minter(app: &mut App, creator: Addr) {
         .instantiate_contract(
             factory_code_id,
             creator.clone(),
-            &vending_factory::msg::InstantiateMsg { params },
+            &vending_factory::msg::InstantiateMsg { 
+                params,
+                initial_whitelist: None,
+            },
             &[],
             "factory",
             None,

@@ -68,7 +68,10 @@ fn zero_mint_price() {
         .instantiate_contract(
             factory_code_id,
             minter_admin.clone(),
-            &vending_factory::msg::InstantiateMsg { params },
+            &vending_factory::msg::InstantiateMsg { 
+                params,
+                initial_whitelist: None,
+            },
             &[],
             "factory",
             None,
@@ -158,7 +161,10 @@ fn zero_wl_mint_price() {
         .instantiate_contract(
             factory_code_id,
             minter_admin.clone(),
-            &vending_factory::msg::InstantiateMsg { params },
+            &vending_factory::msg::InstantiateMsg { 
+                params,
+                initial_whitelist: None,
+            },
             &[],
             "factory",
             None,
@@ -255,7 +261,10 @@ fn zero_wl_mint_errs_with_min_mint_factory() {
         .instantiate_contract(
             factory_code_id,
             minter_admin.clone(),
-            &vending_factory::msg::InstantiateMsg { params },
+            &vending_factory::msg::InstantiateMsg { 
+                params,
+                initial_whitelist: None,
+            },
             &[],
             "factory",
             None,

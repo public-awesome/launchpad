@@ -41,7 +41,10 @@ mod tests {
         let mut params = mock_params(None);
         params.code_id = minter_id;
 
-        let msg = FactoryInstantiateMsg { params };
+        let msg = FactoryInstantiateMsg { 
+            params,
+            initial_whitelist: None,
+        };
         let factory_addr = app
             .instantiate_contract(
                 factory_id,

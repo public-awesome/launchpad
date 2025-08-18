@@ -59,7 +59,10 @@ pub fn setup_minter_contract(setup_params: MinterSetupParams) -> MinterCollectio
         .instantiate_contract(
             factory_code_id,
             minter_admin.clone(),
-            &vending_factory::msg::InstantiateMsg { params },
+            &vending_factory::msg::InstantiateMsg { 
+                params,
+                initial_whitelist: None,
+            },
             &[],
             "factory",
             None,
