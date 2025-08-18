@@ -59,15 +59,6 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::CreateMinter(msg) => execute_create_minter(deps, env, info, msg),
-        ExecuteMsg::AddContractToWhitelist { address } => {
-            execute_add_contract_to_whitelist(deps, env, info, address)
-        }
-        ExecuteMsg::RemoveContractFromWhitelist { address } => {
-            execute_remove_contract_from_whitelist(deps, env, info, address)
-        }
-        ExecuteMsg::UpdateContractWhitelist { add, remove } => {
-            execute_update_contract_whitelist(deps, env, info, add, remove)
-        }
     }
 }
 
@@ -252,73 +243,6 @@ fn query_allowed_collection_code_id(
     let code_ids = params.allowed_sg721_code_ids;
     let allowed = code_ids.contains(&code_id);
     Ok(AllowedCollectionCodeIdResponse { allowed })
-}
-
-pub fn execute_add_contract_to_whitelist(
-    deps: DepsMut,
-    _env: Env,
-    info: MessageInfo,
-    address: String,
-) -> Result<Response, ContractError> {
-    // Note: This is an open operation since factory doesn't have an admin field
-    // For restricted access, use sudo operations instead
-    
-    let addr = deps.api.addr_validate(&address)?;
-    WHITELISTED_CONTRACTS.save(deps.storage, &addr, &true)?;
-
-    Ok(Response::new()
-        .add_attribute("action", "add_contract_to_whitelist")
-        .add_attribute("sender", info.sender)
-        .add_attribute("contract_address", address))
-}
-
-pub fn execute_remove_contract_from_whitelist(
-    deps: DepsMut,
-    _env: Env,
-    info: MessageInfo,
-    address: String,
-) -> Result<Response, ContractError> {
-    // Note: This is an open operation since factory doesn't have an admin field
-    // For restricted access, use sudo operations instead
-    
-    let addr = deps.api.addr_validate(&address)?;
-    WHITELISTED_CONTRACTS.remove(deps.storage, &addr);
-
-    Ok(Response::new()
-        .add_attribute("action", "remove_contract_from_whitelist")
-        .add_attribute("sender", info.sender)
-        .add_attribute("contract_address", address))
-}
-
-pub fn execute_update_contract_whitelist(
-    deps: DepsMut,
-    _env: Env,
-    info: MessageInfo,
-    add: Vec<String>,
-    remove: Vec<String>,
-) -> Result<Response, ContractError> {
-    // Note: This is an open operation since factory doesn't have an admin field
-    // For restricted access, use sudo operations instead
-    
-    let mut response = Response::new()
-        .add_attribute("action", "update_contract_whitelist")
-        .add_attribute("sender", info.sender);
-
-    // Add contracts to whitelist
-    for address_str in add {
-        let addr = deps.api.addr_validate(&address_str)?;
-        WHITELISTED_CONTRACTS.save(deps.storage, &addr, &true)?;
-        response = response.add_attribute("added", address_str);
-    }
-
-    // Remove contracts from whitelist
-    for address_str in remove {
-        let addr = deps.api.addr_validate(&address_str)?;
-        WHITELISTED_CONTRACTS.remove(deps.storage, &addr);
-        response = response.add_attribute("removed", address_str);
-    }
-
-    Ok(response)
 }
 
 pub fn sudo_add_contract_to_whitelist(

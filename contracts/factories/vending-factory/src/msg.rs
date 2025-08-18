@@ -26,19 +26,6 @@ pub type VendingMinterCreateMsg = CreateMinterMsg<VendingMinterInitMsgExtension>
 #[cw_serde]
 pub enum ExecuteMsg {
     CreateMinter(VendingMinterCreateMsg),
-    /// Admin-only: Add a contract address to the whitelist
-    AddContractToWhitelist {
-        address: String,
-    },
-    /// Admin-only: Remove a contract address from the whitelist
-    RemoveContractFromWhitelist {
-        address: String,
-    },
-    /// Admin-only: Batch update the contract whitelist
-    UpdateContractWhitelist {
-        add: Vec<String>,
-        remove: Vec<String>,
-    },
 }
 
 #[cw_serde]
