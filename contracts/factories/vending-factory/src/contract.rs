@@ -10,13 +10,13 @@ use cw2::set_contract_version;
 use cw_utils::must_pay;
 use semver::Version;
 use sg1::{checked_fair_burn, transfer_funds_to_launchpad_dao};
-use sg2::query::{AllowedCollectionCodeIdResponse, AllowedCollectionCodeIdsResponse, Sg2QueryMsg};
+use sg2::query::{AllowedCollectionCodeIdResponse, AllowedCollectionCodeIdsResponse, IsContractWhitelistedResponse, Sg2QueryMsg, WhitelistedContractsResponse};
 use sg_utils::NATIVE_DENOM;
 
 use crate::error::ContractError;
 use crate::msg::{
-    ExecuteMsg, InstantiateMsg, IsContractWhitelistedResponse, MigrateMsg, ParamsResponse, QueryMsg, SudoMsg,
-    VendingMinterCreateMsg, VendingUpdateParamsMsg, WhitelistedContractsResponse, WhitelistUpdate,
+    ExecuteMsg, InstantiateMsg, MigrateMsg, ParamsResponse, SudoMsg,
+    VendingMinterCreateMsg, VendingUpdateParamsMsg, WhitelistUpdate,
 };
 use crate::state::{SUDO_PARAMS, WHITELISTED_CONTRACTS};
 
@@ -200,19 +200,7 @@ pub fn sudo_update_params(
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
-    match msg {
-        QueryMsg::Params {} => to_json_binary(&query_params(deps)?),
-        QueryMsg::IsContractWhitelisted { address } => {
-            to_json_binary(&query_is_contract_whitelisted(deps, address)?)
-        }
-        QueryMsg::WhitelistedContracts { start_after, limit } => {
-            to_json_binary(&query_whitelisted_contracts(deps, start_after, limit)?)
-        }
-    }
-}
-
-pub fn query_sg2(deps: Deps, _env: Env, msg: Sg2QueryMsg) -> StdResult<Binary> {
+pub fn query(deps: Deps, _env: Env, msg: Sg2QueryMsg) -> StdResult<Binary> {
     match msg {
         Sg2QueryMsg::Params {} => to_json_binary(&query_params(deps)?),
         Sg2QueryMsg::AllowedCollectionCodeIds {} => {
@@ -220,6 +208,12 @@ pub fn query_sg2(deps: Deps, _env: Env, msg: Sg2QueryMsg) -> StdResult<Binary> {
         }
         Sg2QueryMsg::AllowedCollectionCodeId(code_id) => {
             to_json_binary(&query_allowed_collection_code_id(deps, code_id)?)
+        }
+        Sg2QueryMsg::IsContractWhitelisted { address } => {
+            to_json_binary(&query_is_contract_whitelisted(deps, address)?)
+        }
+        Sg2QueryMsg::WhitelistedContracts { start_after, limit } => {
+            to_json_binary(&query_whitelisted_contracts(deps, start_after, limit)?)
         }
     }
 }

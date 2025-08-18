@@ -9,7 +9,7 @@ use cw_utils::must_pay;
 use semver::Version;
 use sg1::{checked_fair_burn, transfer_funds_to_launchpad_dao};
 use sg2::msg::UpdateMinterParamsMsg;
-use sg2::query::{AllowedCollectionCodeIdResponse, AllowedCollectionCodeIdsResponse, Sg2QueryMsg};
+use sg2::query::{AllowedCollectionCodeIdResponse, AllowedCollectionCodeIdsResponse, IsContractWhitelistedResponse, Sg2QueryMsg, WhitelistedContractsResponse};
 use sg2::MinterParams;
 use sg_utils::NATIVE_DENOM;
 
@@ -203,6 +203,12 @@ pub fn query(deps: Deps, _env: Env, msg: Sg2QueryMsg) -> StdResult<Binary> {
         Sg2QueryMsg::AllowedCollectionCodeId(code_id) => {
             to_json_binary(&query_allowed_collection_code_id(deps, code_id)?)
         }
+        Sg2QueryMsg::IsContractWhitelisted { address } => {
+            to_json_binary(&query_is_contract_whitelisted_base(deps, address)?)
+        }
+        Sg2QueryMsg::WhitelistedContracts { start_after: _, limit: _ } => {
+            to_json_binary(&query_whitelisted_contracts_base(deps)?)
+        }
     }
 }
 
@@ -225,6 +231,26 @@ fn query_allowed_collection_code_id(
     let code_ids = params.allowed_sg721_code_ids;
     let allowed = code_ids.contains(&code_id);
     Ok(AllowedCollectionCodeIdResponse { allowed })
+}
+
+fn query_is_contract_whitelisted_base(
+    _deps: Deps,
+    address: String,
+) -> StdResult<IsContractWhitelistedResponse> {
+    // Base factory doesn't have whitelist functionality, so all contracts are considered non-whitelisted
+    Ok(IsContractWhitelistedResponse {
+        address,
+        is_whitelisted: false,
+    })
+}
+
+fn query_whitelisted_contracts_base(
+    _deps: Deps,
+) -> StdResult<WhitelistedContractsResponse> {
+    // Base factory doesn't have whitelist functionality, so return empty list
+    Ok(WhitelistedContractsResponse {
+        contracts: vec![],
+    })
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]

@@ -53,7 +53,8 @@ fn sudo_params_update_creation_fee() {
 
 #[test]
 fn test_factory_whitelist_management() {
-    use vending_factory::msg::{IsContractWhitelistedResponse, QueryMsg as FactoryQueryMsg, SudoMsg, WhitelistedContractsResponse};
+    use vending_factory::msg::SudoMsg;
+    use sg2::query::{IsContractWhitelistedResponse, Sg2QueryMsg as FactoryQueryMsg, WhitelistedContractsResponse};
 
     let vt = vending_minter_template_with_code_ids_template(1);
     let (mut router, _, _) = (vt.router, vt.accts.creator, vt.accts.buyer);
@@ -102,7 +103,8 @@ fn test_factory_whitelist_management() {
 
 #[test]
 fn test_factory_batch_whitelist_update() {
-    use vending_factory::msg::{IsContractWhitelistedResponse, QueryMsg as FactoryQueryMsg, SudoMsg, WhitelistedContractsResponse};
+    use vending_factory::msg::SudoMsg;
+    use sg2::query::{IsContractWhitelistedResponse, Sg2QueryMsg as FactoryQueryMsg, WhitelistedContractsResponse};
 
     let vt = vending_minter_template_with_code_ids_template(1);
     let (mut router, _, _) = (vt.router, vt.accts.creator, vt.accts.buyer);

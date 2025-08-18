@@ -451,7 +451,7 @@ pub fn base_minter_with_sudo_update_params_template(
     let collection_params = mock_collection_params_1(Some(start_time));
     let minter_params = minter_params_token(num_tokens);
     let code_ids = base_minter_sg721_collection_code_ids(&mut app);
-    let minter_collection_response: Vec<MinterCollectionResponse> = configure_minter(
+    let minter_collection_response: Vec<MinterCollectionResponse> = configure_base_minter(
         &mut app,
         creator.clone(),
         vec![collection_params],

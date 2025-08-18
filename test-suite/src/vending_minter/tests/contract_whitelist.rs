@@ -3,7 +3,8 @@ use cosmwasm_std::{coins, Addr};
 use cw_multi_test::Executor;
 use sg_utils::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use vending_minter::msg::ExecuteMsg;
-use vending_factory::msg::{IsContractWhitelistedResponse, QueryMsg as FactoryQueryMsg, SudoMsg, WhitelistedContractsResponse};
+use vending_factory::msg::SudoMsg;
+use sg2::query::{IsContractWhitelistedResponse, Sg2QueryMsg as FactoryQueryMsg, WhitelistedContractsResponse};
 
 use crate::common_setup::setup_accounts_and_block::setup_block_time;
 
