@@ -81,7 +81,10 @@ fn denom_mismatch_creating_minter() {
         .instantiate_contract(
             factory_code_id,
             minter_admin.clone(),
-            &vending_factory::msg::InstantiateMsg { params },
+            &vending_factory::msg::InstantiateMsg { 
+                params,
+                initial_whitelist: None,
+            },
             &[],
             "factory",
             None,
@@ -155,7 +158,10 @@ fn wl_denom_mint() {
         .instantiate_contract(
             factory_code_id,
             minter_admin.clone(),
-            &vending_factory::msg::InstantiateMsg { params },
+            &vending_factory::msg::InstantiateMsg { 
+                params,
+                initial_whitelist: None,
+            },
             &[],
             "factory",
             None,

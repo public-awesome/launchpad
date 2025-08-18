@@ -1,12 +1,14 @@
-use cosmwasm_schema::cw_serde;
+use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Coin, Timestamp};
-use sg2::msg::{CreateMinterMsg, Sg2ExecuteMsg, UpdateMinterParamsMsg};
+use sg2::msg::{CreateMinterMsg, UpdateMinterParamsMsg};
 
 use crate::state::VendingMinterParams;
 
 #[cw_serde]
 pub struct InstantiateMsg {
     pub params: VendingMinterParams,
+    /// Optional initial whitelist of contract addresses allowed to mint
+    pub initial_whitelist: Option<Vec<String>>,
 }
 
 #[cw_serde]
@@ -21,11 +23,24 @@ pub struct VendingMinterInitMsgExtension {
 }
 pub type VendingMinterCreateMsg = CreateMinterMsg<VendingMinterInitMsgExtension>;
 
-pub type ExecuteMsg = Sg2ExecuteMsg<VendingMinterInitMsgExtension>;
+#[cw_serde]
+pub enum ExecuteMsg {
+    CreateMinter(VendingMinterCreateMsg),
+}
 
 #[cw_serde]
 pub enum SudoMsg {
     UpdateParams(Box<VendingUpdateParamsMsg>),
+    AddContractToWhitelist {
+        address: String,
+    },
+    RemoveContractFromWhitelist {
+        address: String,
+    },
+    UpdateContractWhitelist {
+        add: Vec<String>,
+        remove: Vec<String>,
+    },
 }
 
 /// Message for params so they can be updated individually by governance
@@ -40,6 +55,45 @@ pub struct VendingUpdateParamsExtension {
 pub type VendingUpdateParamsMsg = UpdateMinterParamsMsg<VendingUpdateParamsExtension>;
 
 #[cw_serde]
+pub struct MigrateMsg {
+    /// Optional whitelist operations during migration
+    pub whitelist_update: Option<WhitelistUpdate>,
+}
+
+#[cw_serde]
+pub struct WhitelistUpdate {
+    /// Contract addresses to add to whitelist
+    pub add: Vec<String>,
+    /// Contract addresses to remove from whitelist
+    pub remove: Vec<String>,
+}
+
+#[cw_serde]
+#[derive(QueryResponses)]
+pub enum QueryMsg {
+    #[returns(ParamsResponse)]
+    Params {},
+    #[returns(IsContractWhitelistedResponse)]
+    IsContractWhitelisted { address: String },
+    #[returns(WhitelistedContractsResponse)]
+    WhitelistedContracts {
+        start_after: Option<String>,
+        limit: Option<u32>,
+    },
+}
+
+#[cw_serde]
 pub struct ParamsResponse {
     pub params: VendingMinterParams,
+}
+
+#[cw_serde]
+pub struct IsContractWhitelistedResponse {
+    pub address: String,
+    pub is_whitelisted: bool,
+}
+
+#[cw_serde]
+pub struct WhitelistedContractsResponse {
+    pub contracts: Vec<String>,
 }

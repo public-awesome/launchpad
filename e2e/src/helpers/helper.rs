@@ -64,6 +64,7 @@ pub fn instantiate_factory(
                     },
                 },
             },
+            initial_whitelist: None,
         },
         key,
         Some(creator_addr.parse().unwrap()),

@@ -92,3 +92,4 @@ pub struct MintCountResponse {
     pub address: String,
     pub count: u32,
 }
+

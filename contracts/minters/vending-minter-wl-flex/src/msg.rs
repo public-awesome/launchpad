@@ -97,3 +97,4 @@ pub struct MintCountResponse {
     pub count: u32,
     pub whitelist_count: u32,
 }
+

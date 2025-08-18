@@ -1,13 +1,14 @@
 use crate::error::ContractError;
 use crate::msg::{
-    ConfigResponse, ExecuteMsg, MintCountResponse, MintPriceResponse, MintableNumTokensResponse,
-    QueryMsg, StartTimeResponse,
+    ConfigResponse, ExecuteMsg, MintCountResponse,
+    MintPriceResponse, MintableNumTokensResponse, QueryMsg, StartTimeResponse,
 };
 use crate::state::{
     Config, ConfigExtension, AIRDROP_COUNT, CONFIG, LAST_DISCOUNT_TIME, MINTABLE_NUM_TOKENS,
-    MINTABLE_TOKEN_POSITIONS, MINTER_ADDRS, SG721_ADDRESS, STATUS, WHITELIST_FS_MINTER_ADDRS,
-    WHITELIST_FS_MINT_COUNT, WHITELIST_MINTER_ADDRS, WHITELIST_SS_MINTER_ADDRS,
-    WHITELIST_SS_MINT_COUNT, WHITELIST_TS_MINTER_ADDRS, WHITELIST_TS_MINT_COUNT,
+    MINTABLE_TOKEN_POSITIONS, MINTER_ADDRS, SG721_ADDRESS, STATUS,
+    WHITELIST_FS_MINTER_ADDRS, WHITELIST_FS_MINT_COUNT, WHITELIST_MINTER_ADDRS,
+    WHITELIST_SS_MINTER_ADDRS, WHITELIST_SS_MINT_COUNT, WHITELIST_TS_MINTER_ADDRS,
+    WHITELIST_TS_MINT_COUNT,
 };
 use crate::validation::{check_dynamic_per_address_limit, get_three_percent_of_tokens};
 #[cfg(not(feature = "library"))]
@@ -49,6 +50,47 @@ const CONTRACT_NAME: &str = "crates.io:sg-minter";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 const INSTANTIATE_SG721_REPLY_ID: u64 = 1;
+
+fn is_contract(deps: Deps, addr: &Addr) -> Result<bool, ContractError> {
+    // First check: query factory to see if address is whitelisted
+    let config = CONFIG.load(deps.storage)?;
+    let factory_query = vending_factory::msg::QueryMsg::IsContractWhitelisted {
+        address: addr.to_string(),
+    };
+    
+    let factory_response: Result<vending_factory::msg::IsContractWhitelistedResponse, _> = deps
+        .querier
+        .query_wasm_smart(config.factory, &factory_query);
+    
+    // If factory query succeeds and address is whitelisted, treat as EOA
+    if let Ok(response) = factory_response {
+        if response.is_whitelisted {
+            return Ok(false); // Whitelisted contracts are treated as EOAs
+        }
+    }
+
+    // Second check by address length - contract addresses are typically longer (63+ chars)
+    // EOA addresses are usually shorter (20-44 chars depending on format)
+    if addr.as_str().len() > 50 {
+        return Ok(true);
+    }
+
+    // Third check: try to query contract info directly
+    // This catches contracts that might have shorter addresses
+    use cosmwasm_std::{ContractInfoResponse, QueryRequest, WasmQuery};
+
+    let contract_info_query = QueryRequest::Wasm(WasmQuery::ContractInfo {
+        contract_addr: addr.to_string(),
+    });
+
+    let contract_info_result: Result<ContractInfoResponse, _> =
+        deps.querier.query(&contract_info_query);
+
+    match contract_info_result {
+        Ok(_) => Ok(true),   // Address is a contract
+        Err(_) => Ok(false), // Not a contract (treat as EOA)
+    }
+}
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -506,6 +548,11 @@ pub fn execute_mint_sender(
     let is_public = is_public_mint(deps.as_ref(), &info)?;
     if is_public && (env.block.time < config.extension.start_time) {
         return Err(ContractError::BeforeMintStartTime {});
+    }
+
+    // Check if sender is a contract (only for public and whitelist mints, not admin mints)
+    if is_contract(deps.as_ref(), &info.sender)? {
+        return Err(ContractError::ContractsCannotMint {});
     }
 
     // Check if already minted max per address limit
@@ -1379,6 +1426,7 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractE
         Err(_) => Err(ContractError::InstantiateSg721Error {}),
     }
 }
+
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn migrate(deps: DepsMut, env: Env, _msg: Empty) -> Result<Response, ContractError> {

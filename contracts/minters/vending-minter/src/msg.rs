@@ -45,7 +45,9 @@ pub enum QueryMsg {
     MintableNumTokens {},
     StartTime {},
     MintPrice {},
-    MintCount { address: String },
+    MintCount {
+        address: String,
+    },
     Status {},
 }
 
@@ -88,3 +90,4 @@ pub struct MintCountResponse {
     pub address: String,
     pub count: u32,
 }
+

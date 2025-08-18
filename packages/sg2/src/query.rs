@@ -9,6 +9,13 @@ pub enum Sg2QueryMsg {
     Params {},
     AllowedCollectionCodeIds {},
     AllowedCollectionCodeId(CodeId),
+    /// Returns `IsContractWhitelistedResponse`
+    IsContractWhitelisted { address: String },
+    /// Returns `WhitelistedContractsResponse`
+    WhitelistedContracts {
+        start_after: Option<String>,
+        limit: Option<u32>,
+    },
 }
 
 #[cw_serde]
@@ -24,4 +31,15 @@ pub struct AllowedCollectionCodeIdsResponse {
 #[cw_serde]
 pub struct AllowedCollectionCodeIdResponse {
     pub allowed: bool,
+}
+
+#[cw_serde]
+pub struct IsContractWhitelistedResponse {
+    pub address: String,
+    pub is_whitelisted: bool,
+}
+
+#[cw_serde]
+pub struct WhitelistedContractsResponse {
+    pub contracts: Vec<String>,
 }

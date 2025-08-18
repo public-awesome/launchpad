@@ -13,7 +13,7 @@ use base_factory::contract::{
 };
 use base_factory::ContractError as BaseContractError;
 use sg1::{checked_fair_burn, transfer_funds_to_launchpad_dao};
-use sg2::query::{AllowedCollectionCodeIdResponse, AllowedCollectionCodeIdsResponse, Sg2QueryMsg};
+use sg2::query::{AllowedCollectionCodeIdResponse, AllowedCollectionCodeIdsResponse, IsContractWhitelistedResponse, Sg2QueryMsg, WhitelistedContractsResponse};
 
 use crate::error::ContractError;
 use crate::msg::{
@@ -190,6 +190,12 @@ pub fn query(deps: Deps, _env: Env, msg: Sg2QueryMsg) -> StdResult<Binary> {
         Sg2QueryMsg::AllowedCollectionCodeId(code_id) => {
             to_json_binary(&query_allowed_collection_code_id(deps, code_id)?)
         }
+        Sg2QueryMsg::IsContractWhitelisted { address } => {
+            to_json_binary(&query_is_contract_whitelisted_open_edition(deps, address)?)
+        }
+        Sg2QueryMsg::WhitelistedContracts { start_after: _, limit: _ } => {
+            to_json_binary(&query_whitelisted_contracts_open_edition(deps)?)
+        }
     }
 }
 
@@ -212,6 +218,26 @@ fn query_allowed_collection_code_id(
     let code_ids = params.allowed_sg721_code_ids;
     let allowed = code_ids.contains(&code_id);
     Ok(AllowedCollectionCodeIdResponse { allowed })
+}
+
+fn query_is_contract_whitelisted_open_edition(
+    _deps: Deps,
+    address: String,
+) -> StdResult<IsContractWhitelistedResponse> {
+    // Open edition factory doesn't have whitelist functionality, so all contracts are considered non-whitelisted
+    Ok(IsContractWhitelistedResponse {
+        address,
+        is_whitelisted: false,
+    })
+}
+
+fn query_whitelisted_contracts_open_edition(
+    _deps: Deps,
+) -> StdResult<WhitelistedContractsResponse> {
+    // Open edition factory doesn't have whitelist functionality, so return empty list
+    Ok(WhitelistedContractsResponse {
+        contracts: vec![],
+    })
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]

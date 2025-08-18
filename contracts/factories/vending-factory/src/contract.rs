@@ -10,15 +10,15 @@ use cw2::set_contract_version;
 use cw_utils::must_pay;
 use semver::Version;
 use sg1::{checked_fair_burn, transfer_funds_to_launchpad_dao};
-use sg2::query::{AllowedCollectionCodeIdResponse, AllowedCollectionCodeIdsResponse, Sg2QueryMsg};
+use sg2::query::{AllowedCollectionCodeIdResponse, AllowedCollectionCodeIdsResponse, IsContractWhitelistedResponse, Sg2QueryMsg, WhitelistedContractsResponse};
 use sg_utils::NATIVE_DENOM;
 
 use crate::error::ContractError;
 use crate::msg::{
-    ExecuteMsg, InstantiateMsg, ParamsResponse, SudoMsg, VendingMinterCreateMsg,
-    VendingUpdateParamsMsg,
+    ExecuteMsg, InstantiateMsg, MigrateMsg, ParamsResponse, SudoMsg,
+    VendingMinterCreateMsg, VendingUpdateParamsMsg, WhitelistUpdate,
 };
-use crate::state::SUDO_PARAMS;
+use crate::state::{SUDO_PARAMS, WHITELISTED_CONTRACTS};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:vending-factory";
@@ -36,7 +36,18 @@ pub fn instantiate(
 
     SUDO_PARAMS.save(deps.storage, &msg.params)?;
 
-    Ok(Response::new())
+    // Initialize whitelist if provided
+    if let Some(initial_whitelist) = msg.initial_whitelist {
+        for address_str in initial_whitelist {
+            let addr = deps.api.addr_validate(&address_str)?;
+            WHITELISTED_CONTRACTS.save(deps.storage, &addr, &true)?;
+        }
+    }
+
+    Ok(Response::new()
+        .add_attribute("action", "instantiate")
+        .add_attribute("contract_name", CONTRACT_NAME)
+        .add_attribute("contract_version", CONTRACT_VERSION))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -129,6 +140,15 @@ pub fn execute_create_minter(
 pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> Result<Response, ContractError> {
     match msg {
         SudoMsg::UpdateParams(params_msg) => sudo_update_params(deps, env, *params_msg),
+        SudoMsg::AddContractToWhitelist { address } => {
+            sudo_add_contract_to_whitelist(deps, env, address)
+        }
+        SudoMsg::RemoveContractFromWhitelist { address } => {
+            sudo_remove_contract_from_whitelist(deps, env, address)
+        }
+        SudoMsg::UpdateContractWhitelist { add, remove } => {
+            sudo_update_contract_whitelist(deps, env, add, remove)
+        }
     }
 }
 
@@ -189,6 +209,12 @@ pub fn query(deps: Deps, _env: Env, msg: Sg2QueryMsg) -> StdResult<Binary> {
         Sg2QueryMsg::AllowedCollectionCodeId(code_id) => {
             to_json_binary(&query_allowed_collection_code_id(deps, code_id)?)
         }
+        Sg2QueryMsg::IsContractWhitelisted { address } => {
+            to_json_binary(&query_is_contract_whitelisted(deps, address)?)
+        }
+        Sg2QueryMsg::WhitelistedContracts { start_after, limit } => {
+            to_json_binary(&query_whitelisted_contracts(deps, start_after, limit)?)
+        }
     }
 }
 
@@ -213,11 +239,100 @@ fn query_allowed_collection_code_id(
     Ok(AllowedCollectionCodeIdResponse { allowed })
 }
 
+pub fn sudo_add_contract_to_whitelist(
+    deps: DepsMut,
+    _env: Env,
+    address: String,
+) -> Result<Response, ContractError> {
+    let addr = deps.api.addr_validate(&address)?;
+    WHITELISTED_CONTRACTS.save(deps.storage, &addr, &true)?;
+
+    Ok(Response::new()
+        .add_attribute("action", "add_contract_to_whitelist")
+        .add_attribute("contract_address", address))
+}
+
+pub fn sudo_remove_contract_from_whitelist(
+    deps: DepsMut,
+    _env: Env,
+    address: String,
+) -> Result<Response, ContractError> {
+    let addr = deps.api.addr_validate(&address)?;
+    WHITELISTED_CONTRACTS.remove(deps.storage, &addr);
+
+    Ok(Response::new()
+        .add_attribute("action", "remove_contract_from_whitelist")
+        .add_attribute("contract_address", address))
+}
+
+pub fn sudo_update_contract_whitelist(
+    deps: DepsMut,
+    _env: Env,
+    add: Vec<String>,
+    remove: Vec<String>,
+) -> Result<Response, ContractError> {
+    let mut response = Response::new().add_attribute("action", "update_contract_whitelist");
+
+    // Add contracts to whitelist
+    for address in add {
+        let addr = deps.api.addr_validate(&address)?;
+        WHITELISTED_CONTRACTS.save(deps.storage, &addr, &true)?;
+        response = response.add_attribute("added", address);
+    }
+
+    // Remove contracts from whitelist
+    for address in remove {
+        let addr = deps.api.addr_validate(&address)?;
+        WHITELISTED_CONTRACTS.remove(deps.storage, &addr);
+        response = response.add_attribute("removed", address);
+    }
+
+    Ok(response)
+}
+
+fn query_is_contract_whitelisted(
+    deps: Deps,
+    address: String,
+) -> StdResult<IsContractWhitelistedResponse> {
+    let addr = deps.api.addr_validate(&address)?;
+    let is_whitelisted = WHITELISTED_CONTRACTS
+        .may_load(deps.storage, &addr)?
+        .unwrap_or(false);
+
+    Ok(IsContractWhitelistedResponse {
+        address,
+        is_whitelisted,
+    })
+}
+
+fn query_whitelisted_contracts(
+    deps: Deps,
+    start_after: Option<String>,
+    limit: Option<u32>,
+) -> StdResult<WhitelistedContractsResponse> {
+    let limit = limit.unwrap_or(30).min(100) as usize;
+    let start = start_after
+        .map(|s| deps.api.addr_validate(&s))
+        .transpose()?;
+    let start_bound = start.as_ref().map(cw_storage_plus::Bound::exclusive);
+
+    let contracts: Vec<String> = WHITELISTED_CONTRACTS
+        .range(deps.storage, start_bound, None, cosmwasm_std::Order::Ascending)
+        .take(limit)
+        .map(|item| {
+            let (addr, _) = item?;
+            Ok(addr.to_string())
+        })
+        .collect::<StdResult<Vec<String>>>()?;
+
+    Ok(WhitelistedContractsResponse { contracts })
+}
+
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn migrate(
     deps: DepsMut,
     _env: Env,
-    msg: Option<VendingUpdateParamsMsg>,
+    msg: MigrateMsg,
 ) -> Result<Response, ContractError> {
     let prev_contract_info = cw2::get_contract_version(deps.storage)?;
     let prev_contract_name: String = prev_contract_info.contract;
@@ -238,44 +353,37 @@ pub fn migrate(
         return Err(StdError::generic_err("Cannot migrate to a previous contract version").into());
     }
 
-    if let Some(msg) = msg {
-        let mut params = SUDO_PARAMS.load(deps.storage)?;
+    // Set new contract version
+    set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
-        update_params(&mut params, msg.clone())?;
+    let mut response = Response::new().add_attribute("action", "migrate");
 
-        params.extension.max_token_limit = msg
-            .extension
-            .max_token_limit
-            .unwrap_or(params.extension.max_token_limit);
-        params.extension.max_per_address_limit = msg
-            .extension
-            .max_per_address_limit
-            .unwrap_or(params.extension.max_per_address_limit);
-
-        if let Some(airdrop_mint_price) = msg.extension.airdrop_mint_price {
-            ensure_eq!(
-                &airdrop_mint_price.denom,
-                &NATIVE_DENOM,
-                ContractError::BaseError(BaseContractError::InvalidDenom {})
-            );
-            params.extension.airdrop_mint_price = airdrop_mint_price;
-        }
-
-        params.extension.airdrop_mint_fee_bps = msg
-            .extension
-            .airdrop_mint_fee_bps
-            .unwrap_or(params.extension.airdrop_mint_fee_bps);
-
-        if let Some(shuffle_fee) = msg.extension.shuffle_fee {
-            ensure_eq!(
-                &shuffle_fee.denom,
-                &NATIVE_DENOM,
-                ContractError::BaseError(BaseContractError::InvalidDenom {})
-            );
-            params.extension.shuffle_fee = shuffle_fee;
-        }
-
-        SUDO_PARAMS.save(deps.storage, &params)?;
+    // Handle whitelist updates during migration
+    if let Some(whitelist_update) = msg.whitelist_update {
+        response = apply_whitelist_update(deps, whitelist_update, response)?;
     }
-    Ok(Response::new().add_attribute("action", "migrate"))
+
+    Ok(response)
+}
+
+fn apply_whitelist_update(
+    deps: DepsMut,
+    whitelist_update: WhitelistUpdate,
+    mut response: Response,
+) -> Result<Response, ContractError> {
+    // Add contracts to whitelist
+    for address_str in whitelist_update.add {
+        let addr = deps.api.addr_validate(&address_str)?;
+        WHITELISTED_CONTRACTS.save(deps.storage, &addr, &true)?;
+        response = response.add_attribute("whitelist_added", address_str);
+    }
+
+    // Remove contracts from whitelist
+    for address_str in whitelist_update.remove {
+        let addr = deps.api.addr_validate(&address_str)?;
+        WHITELISTED_CONTRACTS.remove(deps.storage, &addr);
+        response = response.add_attribute("whitelist_removed", address_str);
+    }
+
+    Ok(response)
 }

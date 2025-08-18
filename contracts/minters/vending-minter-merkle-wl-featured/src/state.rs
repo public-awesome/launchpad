@@ -36,3 +36,4 @@ pub const LAST_DISCOUNT_TIME: Item<Timestamp> = Item::new("last_discount_time");
 
 /// Holds the status of the minter. Can be changed with on-chain governance proposals.
 pub const STATUS: Item<Status> = Item::new("status");
+
