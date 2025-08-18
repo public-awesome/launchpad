@@ -1,12 +1,11 @@
 use crate::error::ContractError;
 use crate::msg::{
-    ConfigResponse, ExecuteMsg, IsContractWhitelistedResponse, MintCountResponse,
+    ConfigResponse, ExecuteMsg, MintCountResponse,
     MintPriceResponse, MintableNumTokensResponse, QueryMsg, StartTimeResponse,
-    WhitelistedContractsResponse,
 };
 use crate::state::{
     Config, ConfigExtension, AIRDROP_COUNT, CONFIG, LAST_DISCOUNT_TIME, MINTABLE_NUM_TOKENS,
-    MINTABLE_TOKEN_POSITIONS, MINTER_ADDRS, SG721_ADDRESS, STATUS, WHITELISTED_CONTRACTS,
+    MINTABLE_TOKEN_POSITIONS, MINTER_ADDRS, SG721_ADDRESS, STATUS,
     WHITELIST_FS_MINTER_ADDRS, WHITELIST_FS_MINT_COUNT, WHITELIST_MINTER_ADDRS,
     WHITELIST_SS_MINTER_ADDRS, WHITELIST_SS_MINT_COUNT, WHITELIST_TS_MINTER_ADDRS,
     WHITELIST_TS_MINT_COUNT,
@@ -54,12 +53,21 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 const INSTANTIATE_SG721_REPLY_ID: u64 = 1;
 
 fn is_contract(deps: Deps, addr: &Addr) -> Result<bool, ContractError> {
-    // First check: if address is whitelisted, treat as EOA (allow minting)
-    let is_whitelisted = WHITELISTED_CONTRACTS
-        .may_load(deps.storage, addr)?
-        .unwrap_or(false);
-    if is_whitelisted {
-        return Ok(false); // Whitelisted contracts are treated as EOAs
+    // First check: query factory to see if address is whitelisted
+    let config = CONFIG.load(deps.storage)?;
+    let factory_query = vending_factory::msg::QueryMsg::IsContractWhitelisted {
+        address: addr.to_string(),
+    };
+    
+    let factory_response: Result<vending_factory::msg::IsContractWhitelistedResponse, _> = deps
+        .querier
+        .query_wasm_smart(config.factory, &factory_query);
+    
+    // If factory query succeeds and address is whitelisted, treat as EOA
+    if let Ok(response) = factory_response {
+        if response.is_whitelisted {
+            return Ok(false); // Whitelisted contracts are treated as EOAs
+        }
     }
 
     // Second check by address length - contract addresses are typically longer (63+ chars)
@@ -260,15 +268,6 @@ pub fn execute(
             execute_update_discount_price(deps, env, info, price)
         }
         ExecuteMsg::RemoveDiscountPrice {} => execute_remove_discount_price(deps, env, info),
-        ExecuteMsg::AddContractToWhitelist { address } => {
-            execute_add_contract_to_whitelist(deps, env, info, address)
-        }
-        ExecuteMsg::RemoveContractFromWhitelist { address } => {
-            execute_remove_contract_from_whitelist(deps, env, info, address)
-        }
-        ExecuteMsg::UpdateContractWhitelist { add, remove } => {
-            execute_update_contract_whitelist(deps, env, info, add, remove)
-        }
     }
 }
 
@@ -1265,95 +1264,6 @@ pub fn update_status(
     Ok(Response::new().add_attribute("action", "sudo_update_status"))
 }
 
-pub fn execute_add_contract_to_whitelist(
-    deps: DepsMut,
-    _env: Env,
-    info: MessageInfo,
-    address: String,
-) -> Result<Response, ContractError> {
-    nonpayable(&info)?;
-    let config = CONFIG.load(deps.storage)?;
-
-    // Check only admin can modify whitelist
-    if info.sender != config.extension.admin {
-        return Err(ContractError::Unauthorized(
-            "Only admin can modify contract whitelist".to_owned(),
-        ));
-    }
-
-    // Validate and convert the address
-    let contract_addr = deps.api.addr_validate(&address)?;
-
-    // Add to whitelist
-    WHITELISTED_CONTRACTS.save(deps.storage, &contract_addr, &true)?;
-
-    Ok(Response::new()
-        .add_attribute("action", "add_contract_to_whitelist")
-        .add_attribute("contract_address", contract_addr.to_string()))
-}
-
-pub fn execute_remove_contract_from_whitelist(
-    deps: DepsMut,
-    _env: Env,
-    info: MessageInfo,
-    address: String,
-) -> Result<Response, ContractError> {
-    nonpayable(&info)?;
-    let config = CONFIG.load(deps.storage)?;
-
-    // Check only admin can modify whitelist
-    if info.sender != config.extension.admin {
-        return Err(ContractError::Unauthorized(
-            "Only admin can modify contract whitelist".to_owned(),
-        ));
-    }
-
-    // Validate and convert the address
-    let contract_addr = deps.api.addr_validate(&address)?;
-
-    // Remove from whitelist
-    WHITELISTED_CONTRACTS.remove(deps.storage, &contract_addr);
-
-    Ok(Response::new()
-        .add_attribute("action", "remove_contract_from_whitelist")
-        .add_attribute("contract_address", contract_addr.to_string()))
-}
-
-pub fn execute_update_contract_whitelist(
-    deps: DepsMut,
-    _env: Env,
-    info: MessageInfo,
-    add: Vec<String>,
-    remove: Vec<String>,
-) -> Result<Response, ContractError> {
-    nonpayable(&info)?;
-    let config = CONFIG.load(deps.storage)?;
-
-    // Check only admin can modify whitelist
-    if info.sender != config.extension.admin {
-        return Err(ContractError::Unauthorized(
-            "Only admin can modify contract whitelist".to_owned(),
-        ));
-    }
-
-    let mut response = Response::new().add_attribute("action", "update_contract_whitelist");
-
-    // Add contracts to whitelist
-    for addr_str in add {
-        let contract_addr = deps.api.addr_validate(&addr_str)?;
-        WHITELISTED_CONTRACTS.save(deps.storage, &contract_addr, &true)?;
-        response = response.add_attribute("added", contract_addr.to_string());
-    }
-
-    // Remove contracts from whitelist
-    for addr_str in remove {
-        let contract_addr = deps.api.addr_validate(&addr_str)?;
-        WHITELISTED_CONTRACTS.remove(deps.storage, &contract_addr);
-        response = response.add_attribute("removed", contract_addr.to_string());
-    }
-
-    Ok(response)
-}
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
@@ -1364,12 +1274,6 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::MintableNumTokens {} => to_json_binary(&query_mintable_num_tokens(deps)?),
         QueryMsg::MintPrice {} => to_json_binary(&query_mint_price(deps)?),
         QueryMsg::MintCount { address } => to_json_binary(&query_mint_count(deps, address)?),
-        QueryMsg::IsContractWhitelisted { address } => {
-            to_json_binary(&query_is_contract_whitelisted(deps, address)?)
-        }
-        QueryMsg::WhitelistedContracts { start_after, limit } => {
-            to_json_binary(&query_whitelisted_contracts(deps, start_after, limit)?)
-        }
     }
 }
 
@@ -1469,50 +1373,6 @@ fn query_mint_price(deps: Deps) -> StdResult<MintPriceResponse> {
     })
 }
 
-fn query_is_contract_whitelisted(
-    deps: Deps,
-    address: String,
-) -> StdResult<IsContractWhitelistedResponse> {
-    let contract_addr = deps.api.addr_validate(&address)?;
-    let is_whitelisted = WHITELISTED_CONTRACTS
-        .may_load(deps.storage, &contract_addr)?
-        .unwrap_or(false);
-
-    Ok(IsContractWhitelistedResponse {
-        address,
-        is_whitelisted,
-    })
-}
-
-fn query_whitelisted_contracts(
-    deps: Deps,
-    start_after: Option<String>,
-    limit: Option<u32>,
-) -> StdResult<WhitelistedContractsResponse> {
-    use cw_storage_plus::Bound;
-
-    let limit = limit.unwrap_or(30).min(100) as usize;
-    let start = start_after
-        .map(|s| deps.api.addr_validate(&s))
-        .transpose()?;
-    let start_bound = start.as_ref().map(Bound::exclusive);
-
-    let contracts: Vec<String> = WHITELISTED_CONTRACTS
-        .range(
-            deps.storage,
-            start_bound,
-            None,
-            cosmwasm_std::Order::Ascending,
-        )
-        .take(limit)
-        .map(|item| {
-            let (addr, _) = item?;
-            Ok(addr.to_string())
-        })
-        .collect::<StdResult<Vec<String>>>()?;
-
-    Ok(WhitelistedContractsResponse { contracts })
-}
 
 // Reply callback triggered from cw721 contract instantiation
 #[cfg_attr(not(feature = "library"), entry_point)]

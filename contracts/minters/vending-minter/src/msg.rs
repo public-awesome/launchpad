@@ -37,16 +37,6 @@ pub enum ExecuteMsg {
         price: u128,
     },
     RemoveDiscountPrice {},
-    AddContractToWhitelist {
-        address: String,
-    },
-    RemoveContractFromWhitelist {
-        address: String,
-    },
-    UpdateContractWhitelist {
-        add: Vec<String>,
-        remove: Vec<String>,
-    },
 }
 
 #[cw_serde]
@@ -59,13 +49,6 @@ pub enum QueryMsg {
         address: String,
     },
     Status {},
-    IsContractWhitelisted {
-        address: String,
-    },
-    WhitelistedContracts {
-        start_after: Option<String>,
-        limit: Option<u32>,
-    },
 }
 
 #[cw_serde]
@@ -108,13 +91,3 @@ pub struct MintCountResponse {
     pub count: u32,
 }
 
-#[cw_serde]
-pub struct IsContractWhitelistedResponse {
-    pub address: String,
-    pub is_whitelisted: bool,
-}
-
-#[cw_serde]
-pub struct WhitelistedContractsResponse {
-    pub contracts: Vec<String>,
-}

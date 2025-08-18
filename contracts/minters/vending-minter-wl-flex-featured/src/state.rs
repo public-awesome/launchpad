@@ -37,5 +37,3 @@ pub const LAST_DISCOUNT_TIME: Item<Timestamp> = Item::new("last_discount_time");
 /// Holds the status of the minter. Can be changed with on-chain governance proposals.
 pub const STATUS: Item<Status> = Item::new("status");
 
-/// Stores whitelisted contract addresses that are allowed to mint despite being contracts
-pub const WHITELISTED_CONTRACTS: Map<&Addr, bool> = Map::new("wc");

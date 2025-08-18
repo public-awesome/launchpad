@@ -34,8 +34,6 @@ pub const WHITELIST_TS_MINT_COUNT: Item<u32> = Item::new("wltsmc");
 pub const AIRDROP_COUNT: Item<u32> = Item::new("airdrop_count");
 pub const LAST_DISCOUNT_TIME: Item<Timestamp> = Item::new("last_discount_time");
 
-/// Stores whitelisted contract addresses that are allowed to mint despite being contracts
-pub const WHITELISTED_CONTRACTS: Map<&Addr, bool> = Map::new("wc");
 
 /// Holds the status of the minter. Can be changed with on-chain governance proposals.
 pub const STATUS: Item<Status> = Item::new("status");

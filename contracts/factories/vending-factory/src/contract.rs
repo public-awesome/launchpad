@@ -15,10 +15,10 @@ use sg_utils::NATIVE_DENOM;
 
 use crate::error::ContractError;
 use crate::msg::{
-    ExecuteMsg, InstantiateMsg, ParamsResponse, SudoMsg, VendingMinterCreateMsg,
-    VendingUpdateParamsMsg,
+    ExecuteMsg, InstantiateMsg, IsContractWhitelistedResponse, ParamsResponse, QueryMsg, SudoMsg,
+    VendingMinterCreateMsg, VendingUpdateParamsMsg, WhitelistedContractsResponse,
 };
-use crate::state::SUDO_PARAMS;
+use crate::state::{SUDO_PARAMS, WHITELISTED_CONTRACTS};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:vending-factory";
@@ -129,6 +129,15 @@ pub fn execute_create_minter(
 pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> Result<Response, ContractError> {
     match msg {
         SudoMsg::UpdateParams(params_msg) => sudo_update_params(deps, env, *params_msg),
+        SudoMsg::AddContractToWhitelist { address } => {
+            sudo_add_contract_to_whitelist(deps, env, address)
+        }
+        SudoMsg::RemoveContractFromWhitelist { address } => {
+            sudo_remove_contract_from_whitelist(deps, env, address)
+        }
+        SudoMsg::UpdateContractWhitelist { add, remove } => {
+            sudo_update_contract_whitelist(deps, env, add, remove)
+        }
     }
 }
 
@@ -180,7 +189,19 @@ pub fn sudo_update_params(
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(deps: Deps, _env: Env, msg: Sg2QueryMsg) -> StdResult<Binary> {
+pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
+    match msg {
+        QueryMsg::Params {} => to_json_binary(&query_params(deps)?),
+        QueryMsg::IsContractWhitelisted { address } => {
+            to_json_binary(&query_is_contract_whitelisted(deps, address)?)
+        }
+        QueryMsg::WhitelistedContracts { start_after, limit } => {
+            to_json_binary(&query_whitelisted_contracts(deps, start_after, limit)?)
+        }
+    }
+}
+
+pub fn query_sg2(deps: Deps, _env: Env, msg: Sg2QueryMsg) -> StdResult<Binary> {
     match msg {
         Sg2QueryMsg::Params {} => to_json_binary(&query_params(deps)?),
         Sg2QueryMsg::AllowedCollectionCodeIds {} => {
@@ -211,6 +232,95 @@ fn query_allowed_collection_code_id(
     let code_ids = params.allowed_sg721_code_ids;
     let allowed = code_ids.contains(&code_id);
     Ok(AllowedCollectionCodeIdResponse { allowed })
+}
+
+pub fn sudo_add_contract_to_whitelist(
+    deps: DepsMut,
+    _env: Env,
+    address: String,
+) -> Result<Response, ContractError> {
+    let addr = deps.api.addr_validate(&address)?;
+    WHITELISTED_CONTRACTS.save(deps.storage, &addr, &true)?;
+
+    Ok(Response::new()
+        .add_attribute("action", "add_contract_to_whitelist")
+        .add_attribute("contract_address", address))
+}
+
+pub fn sudo_remove_contract_from_whitelist(
+    deps: DepsMut,
+    _env: Env,
+    address: String,
+) -> Result<Response, ContractError> {
+    let addr = deps.api.addr_validate(&address)?;
+    WHITELISTED_CONTRACTS.remove(deps.storage, &addr);
+
+    Ok(Response::new()
+        .add_attribute("action", "remove_contract_from_whitelist")
+        .add_attribute("contract_address", address))
+}
+
+pub fn sudo_update_contract_whitelist(
+    deps: DepsMut,
+    _env: Env,
+    add: Vec<String>,
+    remove: Vec<String>,
+) -> Result<Response, ContractError> {
+    let mut response = Response::new().add_attribute("action", "update_contract_whitelist");
+
+    // Add contracts to whitelist
+    for address in add {
+        let addr = deps.api.addr_validate(&address)?;
+        WHITELISTED_CONTRACTS.save(deps.storage, &addr, &true)?;
+        response = response.add_attribute("added", address);
+    }
+
+    // Remove contracts from whitelist
+    for address in remove {
+        let addr = deps.api.addr_validate(&address)?;
+        WHITELISTED_CONTRACTS.remove(deps.storage, &addr);
+        response = response.add_attribute("removed", address);
+    }
+
+    Ok(response)
+}
+
+fn query_is_contract_whitelisted(
+    deps: Deps,
+    address: String,
+) -> StdResult<IsContractWhitelistedResponse> {
+    let addr = deps.api.addr_validate(&address)?;
+    let is_whitelisted = WHITELISTED_CONTRACTS
+        .may_load(deps.storage, &addr)?
+        .unwrap_or(false);
+
+    Ok(IsContractWhitelistedResponse {
+        address,
+        is_whitelisted,
+    })
+}
+
+fn query_whitelisted_contracts(
+    deps: Deps,
+    start_after: Option<String>,
+    limit: Option<u32>,
+) -> StdResult<WhitelistedContractsResponse> {
+    let limit = limit.unwrap_or(30).min(100) as usize;
+    let start = start_after
+        .map(|s| deps.api.addr_validate(&s))
+        .transpose()?;
+    let start_bound = start.as_ref().map(cw_storage_plus::Bound::exclusive);
+
+    let contracts: Vec<String> = WHITELISTED_CONTRACTS
+        .range(deps.storage, start_bound, None, cosmwasm_std::Order::Ascending)
+        .take(limit)
+        .map(|item| {
+            let (addr, _) = item?;
+            Ok(addr.to_string())
+        })
+        .collect::<StdResult<Vec<String>>>()?;
+
+    Ok(WhitelistedContractsResponse { contracts })
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
