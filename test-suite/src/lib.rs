@@ -8,6 +8,7 @@
 #![allow(clippy::redundant_clone)]
 #![allow(clippy::unnecessary_to_owned)]
 #![allow(clippy::useless_vec)]
+// Allow slice::from_ref suggestion (lint name varies by Rust version)
 #![allow(clippy::cloned_ref_to_slice_refs)]
 
 pub mod common_setup;
