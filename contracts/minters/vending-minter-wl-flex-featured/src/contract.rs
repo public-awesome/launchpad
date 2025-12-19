@@ -1,3 +1,8 @@
+// Allow deprecated SubMsgResponse::data until chains migrate to msg_responses
+#![allow(deprecated)]
+// Allow too many arguments for execute_update_collection_info
+#![allow(clippy::too_many_arguments)]
+
 use crate::error::ContractError;
 use crate::msg::{
     ConfigResponse, ExecuteMsg, MintCountResponse, MintPriceResponse, MintableNumTokensResponse,

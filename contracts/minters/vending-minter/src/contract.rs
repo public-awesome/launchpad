@@ -14,15 +14,12 @@ use crate::validation::{check_dynamic_per_address_limit, get_three_percent_of_to
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     coin, ensure, to_json_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut,
-    Empty, Env, Event, MessageInfo, Order, Reply, ReplyOn, Response, StdError, StdResult, SubMsg,
-    Timestamp, Uint128, WasmMsg,
+    Empty, Env, Event, MessageInfo, Order, Reply, Response, StdError, StdResult, SubMsg, Timestamp,
+    Uint128, WasmMsg,
 };
 use cw2::set_contract_version;
 use cw721::msg::{CollectionExtensionMsg, RoyaltyInfoResponse};
-use cw721::Ownership;
-use cw721_base::msg::{
-    ExecuteMsg as Cw721ExecuteMsg, InstantiateMsg as Cw721InstantiateMsg, QueryMsg as Cw721QueryMsg,
-};
+use cw721_base::msg::{ExecuteMsg as Cw721ExecuteMsg, InstantiateMsg as Cw721InstantiateMsg};
 use cw_utils::{may_pay, maybe_addr, nonpayable, parse_instantiate_response_data};
 use nois::{int_in_range, shuffle};
 

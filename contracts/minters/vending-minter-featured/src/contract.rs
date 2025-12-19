@@ -21,10 +21,7 @@ use cw2::set_contract_version;
 use cw_utils::{may_pay, maybe_addr, nonpayable, parse_instantiate_response_data};
 
 use cw721::msg::{CollectionExtensionMsg, CollectionInfoMsg, RoyaltyInfoResponse};
-use cw721::Ownership;
-use cw721_base::msg::{
-    ExecuteMsg as Cw721ExecuteMsg, InstantiateMsg as Cw721InstantiateMsg, QueryMsg as Cw721QueryMsg,
-};
+use cw721_base::msg::{ExecuteMsg as Cw721ExecuteMsg, InstantiateMsg as Cw721InstantiateMsg};
 use semver::Version;
 use sg1::{distribute_mint_fees, transfer_funds_to_launchpad_dao};
 use sg2::query::Sg2QueryMsg;

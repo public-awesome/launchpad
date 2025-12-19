@@ -1,3 +1,6 @@
+// Allow deprecated query_all_balances until migrated to paginated queries
+#![allow(deprecated)]
+
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{

@@ -37,7 +37,7 @@ impl Hooks {
         if hooks.len() >= 5 {
             return Err(HookError::HookTooMany {});
         }
-        if !hooks.iter().any(|h| h == addr) {
+        if !hooks.contains(&addr) {
             hooks.push(addr);
         } else {
             return Err(HookError::HookAlreadyRegistered {});

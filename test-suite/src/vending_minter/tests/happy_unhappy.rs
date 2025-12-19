@@ -6,7 +6,7 @@ use crate::common_setup::{
 use cosmwasm_std::{
     coin, coins,
     testing::{mock_dependencies_with_balance, mock_env, mock_info},
-    Api, Coin, Timestamp, Uint128,
+    Coin, Timestamp, Uint128,
 };
 use cw721::msg::{OwnerOfResponse, TokensResponse};
 use cw721_base::msg::QueryMsg as Cw721QueryMsg;

@@ -1,3 +1,6 @@
+// Allow deprecated SubMsgResponse::data until chains migrate to msg_responses
+#![allow(deprecated)]
+
 use crate::error::ContractError;
 use crate::msg::{
     ConfigResponse, ExecuteMsg, MintCountResponse, MintPriceResponse, MintableNumTokensResponse,
@@ -14,8 +17,8 @@ use crate::validation::{check_dynamic_per_address_limit, get_three_percent_of_to
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     coin, ensure, to_json_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut,
-    Empty, Env, Event, MessageInfo, Order, Reply, ReplyOn, Response, StdError, StdResult, SubMsg,
-    Timestamp, Uint128, WasmMsg,
+    Empty, Env, Event, MessageInfo, Order, Reply, Response, StdError, StdResult, SubMsg, Timestamp,
+    Uint128, WasmMsg,
 };
 use cw2::set_contract_version;
 use cw721::msg::{CollectionExtensionMsg, CollectionInfoMsg, RoyaltyInfoResponse};

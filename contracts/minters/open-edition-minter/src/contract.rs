@@ -1,3 +1,6 @@
+// Allow deprecated SubMsgResponse::data until chains migrate to msg_responses
+#![allow(deprecated)]
+
 use crate::error::ContractError;
 use crate::helpers::mint_nft_msg;
 use crate::msg::{

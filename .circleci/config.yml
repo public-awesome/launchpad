@@ -3,8 +3,7 @@ workflows:
   version: 2
   test:
     jobs:
-      - contract_sg721_base
-      - contract_sg721_nt
+      - contract_cw721_migration
       - contract_base_factory
       - contract_base_minter
       - contract_vending_factory
@@ -28,10 +27,10 @@ workflows:
               ignore: /.*/
 
 jobs:
-  contract_sg721_base:
+  contract_cw721_migration:
     docker:
       - image: rust:1.81.0
-    working_directory: ~/project/contracts/collections/sg721-base
+    working_directory: ~/project/contracts/collections/cw721-migration
     steps:
       - checkout:
           path: ~/project
@@ -40,65 +39,17 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-sg721-rust:1.81.0-{{ checksum "~/project/Cargo.lock" }}
+            - cargocache-cw721-migration-rust:1.81.0-{{ checksum "~/project/Cargo.lock" }}
       - run:
           name: Unit Tests
           environment:
             RUST_BACKTRACE: 1
           command: cargo unit-test --locked
-      - run:
-          name: Build and run schema generator
-          command: cargo schema --locked
-      - run:
-          name: Ensure checked-in schemas are up-to-date
-          command: |
-            CHANGES_IN_REPO=$(git status --porcelain)
-            if [[ -n "$CHANGES_IN_REPO" ]]; then
-              echo "Repository is dirty. Showing 'git status' and 'git --no-pager diff' for debugging now:"
-              git status && git --no-pager diff
-              exit 1
-            fi
       - save_cache:
           paths:
             - /usr/local/cargo/registry
             - target
-          key: cargocache-sg721-rust:1.81.0-{{ checksum "~/project/Cargo.lock" }}
-
-  contract_sg721_nt:
-    docker:
-      - image: rust:1.81.0
-    working_directory: ~/project/contracts/collections/sg721-nt
-    steps:
-      - checkout:
-          path: ~/project
-      - run:
-          name: Version information
-          command: rustc --version; cargo --version; rustup --version
-      - restore_cache:
-          keys:
-            - cargocache-sg721-nt-rust:1.81.0-{{ checksum "~/project/Cargo.lock" }}
-      - run:
-          name: Unit Tests
-          environment:
-            RUST_BACKTRACE: 1
-          command: cargo unit-test --locked
-      - run:
-          name: Build and run schema generator
-          command: cargo schema --locked
-      - run:
-          name: Ensure checked-in schemas are up-to-date
-          command: |
-            CHANGES_IN_REPO=$(git status --porcelain)
-            if [[ -n "$CHANGES_IN_REPO" ]]; then
-              echo "Repository is dirty. Showing 'git status' and 'git --no-pager diff' for debugging now:"
-              git status && git --no-pager diff
-              exit 1
-            fi
-      - save_cache:
-          paths:
-            - /usr/local/cargo/registry
-            - target
-          key: cargocache-sg721-nt-rust:1.81.0-{{ checksum "~/project/Cargo.lock" }}
+          key: cargocache-cw721-migration-rust:1.81.0-{{ checksum "~/project/Cargo.lock" }}
 
   contract_base_factory:
     docker:
@@ -378,7 +329,7 @@ jobs:
   package_sg_utils:
     docker:
       - image: rust:1.81.0
-    working_directory: ~/project/package/sg-utils
+    working_directory: ~/project/packages/sg-utils
     steps:
       - checkout:
           path: ~/project

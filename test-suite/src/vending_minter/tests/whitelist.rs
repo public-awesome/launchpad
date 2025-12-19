@@ -1,4 +1,4 @@
-use cosmwasm_std::{coin, coins, Addr, Empty, Timestamp};
+use cosmwasm_std::{coin, coins, Addr, Timestamp};
 use cw721::msg::TokensResponse;
 use cw721_base::msg::ExecuteMsg as Cw721ExecuteMsg;
 use cw721_base::msg::QueryMsg as Cw721QueryMsg;
