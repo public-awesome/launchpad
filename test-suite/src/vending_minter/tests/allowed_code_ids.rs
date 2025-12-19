@@ -79,16 +79,36 @@ fn update_code_id() {
         init_msg,
         collection_params,
     };
-    msg.collection_params.info.creator = creator.to_string();
+    msg.collection_params.creator = creator.to_string();
     let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
     let msg = Sg2ExecuteMsg::CreateMinter(msg);
-    let res = router.execute_contract(creator, factory, &msg, &creation_fee);
-    assert!(res.is_ok());
+    let res = router
+        .execute_contract(creator, factory, &msg, &creation_fee)
+        .unwrap();
+
+    // Extract sg721 address from the instantiate event
+    let sg721_addr = res
+        .events
+        .iter()
+        .filter(|e| e.ty == "instantiate")
+        .find_map(|e| {
+            let code_id = e
+                .attributes
+                .iter()
+                .find(|a| a.key == "code_id")
+                .map(|a| a.value.parse::<u64>().unwrap_or(0));
+            if code_id == Some(sg721_code_id) {
+                e.attributes
+                    .iter()
+                    .find(|a| a.key == "_contract_address")
+                    .map(|a| a.value.clone())
+            } else {
+                None
+            }
+        })
+        .expect("sg721 address not found in events");
 
     // confirm new sg721 code id == sg721_code_id
-    let res = router
-        .wrap()
-        .query_wasm_contract_info("contract2".to_string())
-        .unwrap();
+    let res = router.wrap().query_wasm_contract_info(sg721_addr).unwrap();
     assert!(res.code_id == sg721_code_id);
 }

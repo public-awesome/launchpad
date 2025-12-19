@@ -7,7 +7,7 @@ use open_edition_minter::msg::ConfigResponse;
 use open_edition_minter::msg::{ExecuteMsg, QueryMsg};
 
 use crate::common_setup::setup_accounts_and_block::setup_block_time;
-use crate::common_setup::setup_minter::common::constants::DEV_ADDRESS;
+use crate::common_setup::setup_minter::common::constants::dev_address;
 use crate::common_setup::setup_minter::open_edition_minter::minter_params::{
     default_nft_data, init_msg,
 };
@@ -25,7 +25,7 @@ fn check_per_address_limit() {
             denom: NATIVE_DENOM.to_string(),
             amount: Uint128::new(100_000_000u128),
         },
-        dev_fee_address: DEV_ADDRESS.to_string(),
+        dev_fee_address: dev_address().to_string(),
     };
     let per_address_limit_minter = Some(2);
     let init_msg = init_msg(

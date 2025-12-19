@@ -1,6 +1,6 @@
 use base_factory::msg::ParamsResponse;
 use cosmwasm_std::coin;
-use sg_utils::NATIVE_DENOM;
+use sg_utils::FEE_DENOM;
 
 use crate::common_setup::setup_minter::base_minter::mock_params::MIN_MINT_PRICE;
 use crate::common_setup::setup_minter::base_minter::setup::sudo_update_params;
@@ -26,19 +26,24 @@ fn sudo_params_update_creation_fee() {
         add_sg721_code_ids: None,
         rm_sg721_code_ids: None,
         frozen: None,
-        creation_fee: Some(coin(999, NATIVE_DENOM)),
-        min_mint_price: Some(coin(MIN_MINT_PRICE, NATIVE_DENOM)),
+        creation_fee: Some(coin(999, FEE_DENOM)),
+        min_mint_price: Some(coin(MIN_MINT_PRICE, FEE_DENOM)),
         mint_fee_bps: None,
         max_trading_offset_secs: Some(100),
         extension: Empty {},
     };
-    sudo_update_params(
+    let results = sudo_update_params(
         &mut router,
         &vt.collection_response_vec,
         vt.code_ids,
         Some(update_msg),
     );
 
+    // Check that all sudo calls succeeded
+    for result in &results {
+        assert!(result.is_ok(), "Sudo update failed: {:?}", result);
+    }
+
     let res: ParamsResponse = router.wrap().query_wasm_smart(factory, &Params {}).unwrap();
-    assert_eq!(res.params.creation_fee, coin(999, NATIVE_DENOM));
+    assert_eq!(res.params.creation_fee, coin(999, FEE_DENOM));
 }

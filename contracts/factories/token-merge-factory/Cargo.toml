@@ -21,7 +21,6 @@ crate-type = ["cdylib", "rlib"]
 
 [features]
 # for more explicit tests, cargo test --features=backtraces
-backtraces = ["cosmwasm-std/backtraces"]
 # use library feature to disable all instantiate/execute/query exports
 library = []
 
@@ -30,12 +29,12 @@ base-factory    = { workspace = true, features = ["library"] }
 cosmwasm-schema = { workspace = true }
 cosmwasm-std    = { workspace = true }
 cw2             = { workspace = true }
+cw721           = { workspace = true }
 cw-storage-plus = { workspace = true }
 cw-utils        = { workspace = true }
 schemars        = { workspace = true }
 semver          = { workspace = true }
 serde           = { workspace = true }
 sg1             = { workspace = true }
-sg721           = { workspace = true }
 sg-utils        = { workspace = true }
 thiserror       = { workspace = true }

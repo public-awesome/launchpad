@@ -9,9 +9,9 @@ use thiserror::Error;
 
 // governance parameters
 const FEE_BURN_PERCENT: u64 = 50;
-const FOUNDATION: &str = "init1d7q84m8y8gy0dcql090sqg9h7w9kydzntzx5yk";
-const LAUNCHPAD_DAO_ADDRESS: &str = "init1flaytkt2zyylnc2p9u77jjgwrct206x86m03ac";
-const LIQUIDITY_DAO_ADDRESS: &str = "init176qen2pg7lmfel2ph4rrsmm04qtl8qv67mj84d";
+const FOUNDATION: &str = "init19fp5yt25cdkdjnzp4dc3gqp6dmsjdslwatg0v8";
+const LAUNCHPAD_DAO_ADDRESS: &str = "init19fp5yt25cdkdjnzp4dc3gqp6dmsjdslwatg0v8";
+const LIQUIDITY_DAO_ADDRESS: &str = "init19fp5yt25cdkdjnzp4dc3gqp6dmsjdslwatg0v8";
 
 /// Burn and distribute fees and return an error if the fee is not enough
 pub fn checked_fair_burn(
@@ -159,7 +159,9 @@ pub fn fair_burn(sender: String, fee: u128, developer: Option<Addr>, res: &mut R
     let mut event = Event::new("fair-burn");
 
     // calculate the fair burn fee
-    let burn_fee = (Uint128::from(fee) * Decimal::percent(FEE_BURN_PERCENT)).u128();
+    let burn_fee = Uint128::from(fee)
+        .mul_floor(Decimal::percent(FEE_BURN_PERCENT))
+        .u128();
     let burn_coin = coins(burn_fee, NATIVE_DENOM);
     res.messages
         .push(SubMsg::new(BankMsg::Burn { amount: burn_coin }));
@@ -198,10 +200,10 @@ fn encode_msg_fund_fairburn_pool(sender: String, amount: &Coin) -> Vec<u8> {
 }
 
 fn create_fund_fairburn_pool_msg(sender: String, amount: &Coin) -> CosmosMsg {
-    CosmosMsg::Stargate {
+    CosmosMsg::Any(cosmwasm_std::AnyMsg {
         type_url: "/publicawesome.stargaze.alloc.v1beta1.MsgFundFairburnPool".to_string(),
         value: encode_msg_fund_fairburn_pool(sender, amount).into(),
-    }
+    })
 }
 pub fn transfer_funds_to_launchpad_dao(
     info: &MessageInfo,
@@ -246,7 +248,7 @@ mod tests {
 
         fair_burn(Addr::unchecked("sender").to_string(), 9u128, None, &mut res);
         let burn_msg = SubMsg::new(BankMsg::Burn {
-            amount: coins(4, "ustars".to_string()),
+            amount: coins(4, NATIVE_DENOM.to_string()),
         });
         let dist_msg = SubMsg::new(create_fund_fairburn_pool_msg(
             Addr::unchecked("sender").to_string(),

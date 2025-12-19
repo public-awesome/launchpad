@@ -20,8 +20,9 @@ rand           = "0.8"
 
 cosmwasm-std         = { workspace = true }
 sg2                  = { workspace = true }
-sg721                = { workspace = true }
-sg721-base           = { workspace = true }
+cw721                = { workspace = true }
+cw721-base           = { workspace = true }
+cw721-migration      = { workspace = true }
 sg-metadata          = { workspace = true }
 vending-factory      = { workspace = true }
 vending-minter       = { workspace = true }

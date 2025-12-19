@@ -1,6 +1,6 @@
 chain_cfg: 
-  denom: "ustars"
-  prefix: "stars"
+  denom: "ugaze"
+  prefix: "init"
   chain_id: "testing"
   grpc_endpoint: "http://localhost:9090/"
   gas_prices: 0.1

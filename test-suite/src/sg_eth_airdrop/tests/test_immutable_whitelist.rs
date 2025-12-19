@@ -1,13 +1,12 @@
 use crate::common_setup::contract_boxes::custom_mock_app;
-use crate::sg_eth_airdrop::constants::claim_constants::{
-    CONFIG_PLAINTEXT, MOCK_AIRDROP_ADDR_STR, MOCK_MINTER_ADDR_STR, OWNER,
-};
+use crate::sg_eth_airdrop::constants::claim_constants::{owner, CONFIG_PLAINTEXT};
 use crate::sg_eth_airdrop::constants::collection_constants::WHITELIST_AMOUNT;
 use crate::sg_eth_airdrop::setup::configure_mock_minter::configure_mock_minter_with_mock_whitelist;
-use crate::sg_eth_airdrop::setup::execute_msg::instantiate_contract;
+use crate::sg_eth_airdrop::setup::execute_msg::{
+    instantiate_contract, instantiate_contract_with_whitelist,
+};
 use crate::sg_eth_airdrop::setup::test_msgs::InstantiateParams;
 
-use cosmwasm_std::Addr;
 use sg_eth_airdrop::contract::INSTANTIATION_FEE;
 use sg_eth_airdrop::msg::QueryMsg;
 use whitelist_immutable::helpers::WhitelistImmutableContract;
@@ -21,21 +20,19 @@ fn test_instantiate_with_addresses() {
     ];
 
     let mut app = custom_mock_app();
-    configure_mock_minter_with_mock_whitelist(&mut app);
-    let minter_addr = Addr::unchecked(MOCK_MINTER_ADDR_STR);
-    let airdrop_contract = Addr::unchecked(MOCK_AIRDROP_ADDR_STR);
+    let minter_addr = configure_mock_minter_with_mock_whitelist(&mut app);
 
     let params = InstantiateParams {
         addresses,
         funds_amount: WHITELIST_AMOUNT + INSTANTIATION_FEE,
         expected_airdrop_contract_id: 4,
         minter_address: minter_addr,
-        admin_account: Addr::unchecked(OWNER),
+        admin_account: owner(),
         app: &mut app,
         per_address_limit: 1,
         claim_msg_plaintext: CONFIG_PLAINTEXT.to_string(),
     };
-    instantiate_contract(params).unwrap();
+    let airdrop_contract = instantiate_contract(params).unwrap();
 
     let query_msg = QueryMsg::AirdropEligible {
         eth_address: "addr1".to_string(),
@@ -65,22 +62,20 @@ fn test_whitelist_immutable_address_limit() {
     ];
 
     let mut app = custom_mock_app();
-    configure_mock_minter_with_mock_whitelist(&mut app);
-    let minter_addr = Addr::unchecked(MOCK_MINTER_ADDR_STR);
+    let minter_addr = configure_mock_minter_with_mock_whitelist(&mut app);
 
     let params = InstantiateParams {
         addresses,
         funds_amount: WHITELIST_AMOUNT + INSTANTIATION_FEE,
         expected_airdrop_contract_id: 4,
         minter_address: minter_addr,
-        admin_account: Addr::unchecked(OWNER),
+        admin_account: owner(),
         app: &mut app,
         per_address_limit: 20,
         claim_msg_plaintext: CONFIG_PLAINTEXT.to_string(),
     };
-    instantiate_contract(params).unwrap();
-    let whitelist_immutable = Addr::unchecked("contract4");
-    let res: u32 = WhitelistImmutableContract(whitelist_immutable)
+    let response = instantiate_contract_with_whitelist(params).unwrap();
+    let res: u32 = WhitelistImmutableContract(response.whitelist_immutable)
         .per_address_limit(&app.wrap())
         .unwrap();
     assert_eq!(res, 20);
@@ -95,22 +90,20 @@ fn test_whitelist_immutable_address_count() {
     ];
 
     let mut app = custom_mock_app();
-    configure_mock_minter_with_mock_whitelist(&mut app);
-    let minter_addr = Addr::unchecked(MOCK_MINTER_ADDR_STR);
+    let minter_addr = configure_mock_minter_with_mock_whitelist(&mut app);
 
     let params = InstantiateParams {
         addresses,
         funds_amount: WHITELIST_AMOUNT + INSTANTIATION_FEE,
         expected_airdrop_contract_id: 4,
         minter_address: minter_addr,
-        admin_account: Addr::unchecked(OWNER),
+        admin_account: owner(),
         app: &mut app,
         per_address_limit: 20,
         claim_msg_plaintext: CONFIG_PLAINTEXT.to_string(),
     };
-    instantiate_contract(params).unwrap();
-    let whitelist_immutable = Addr::unchecked("contract4");
-    let res: u64 = WhitelistImmutableContract(whitelist_immutable)
+    let response = instantiate_contract_with_whitelist(params).unwrap();
+    let res: u64 = WhitelistImmutableContract(response.whitelist_immutable)
         .address_count(&app.wrap())
         .unwrap();
     assert_eq!(res, 3);
@@ -125,27 +118,25 @@ fn test_whitelist_immutable_address_includes() {
     ];
 
     let mut app = custom_mock_app();
-    configure_mock_minter_with_mock_whitelist(&mut app);
-    let minter_addr = Addr::unchecked(MOCK_MINTER_ADDR_STR);
+    let minter_addr = configure_mock_minter_with_mock_whitelist(&mut app);
 
     let params = InstantiateParams {
         addresses,
         funds_amount: WHITELIST_AMOUNT + INSTANTIATION_FEE,
         expected_airdrop_contract_id: 4,
         minter_address: minter_addr,
-        admin_account: Addr::unchecked(OWNER),
+        admin_account: owner(),
         app: &mut app,
         per_address_limit: 20,
         claim_msg_plaintext: CONFIG_PLAINTEXT.to_string(),
     };
-    instantiate_contract(params).unwrap();
-    let whitelist_immutable = Addr::unchecked("contract4");
-    let res: bool = WhitelistImmutableContract(whitelist_immutable.clone())
+    let response = instantiate_contract_with_whitelist(params).unwrap();
+    let res: bool = WhitelistImmutableContract(response.whitelist_immutable.clone())
         .includes(&app.wrap(), "addr3".to_string())
         .unwrap();
     assert!(res);
 
-    let res: bool = WhitelistImmutableContract(whitelist_immutable)
+    let res: bool = WhitelistImmutableContract(response.whitelist_immutable)
         .includes(&app.wrap(), "nonsense".to_string())
         .unwrap();
     assert!(!res);
@@ -160,26 +151,26 @@ fn test_whitelist_immutable_address_config() {
     ];
 
     let mut app = custom_mock_app();
-    configure_mock_minter_with_mock_whitelist(&mut app);
-    let minter_addr = Addr::unchecked(MOCK_MINTER_ADDR_STR);
+    let minter_addr = configure_mock_minter_with_mock_whitelist(&mut app);
 
     let params = InstantiateParams {
         addresses,
         funds_amount: WHITELIST_AMOUNT + INSTANTIATION_FEE,
         expected_airdrop_contract_id: 4,
         minter_address: minter_addr,
-        admin_account: Addr::unchecked(OWNER),
+        admin_account: owner(),
         app: &mut app,
         per_address_limit: 20,
         claim_msg_plaintext: CONFIG_PLAINTEXT.to_string(),
     };
-    instantiate_contract(params).unwrap();
-    let whitelist_immutable = Addr::unchecked("contract4");
-    let res: whitelist_immutable::state::Config = WhitelistImmutableContract(whitelist_immutable)
-        .config(&app.wrap())
-        .unwrap();
+    let response = instantiate_contract_with_whitelist(params).unwrap();
+    let res: whitelist_immutable::state::Config =
+        WhitelistImmutableContract(response.whitelist_immutable)
+            .config(&app.wrap())
+            .unwrap();
+    // The admin of whitelist_immutable is the airdrop contract (set in contract.rs:77)
     let expected_config = whitelist_immutable::state::Config {
-        admin: Addr::unchecked("contract3"),
+        admin: response.airdrop_contract,
         per_address_limit: 20,
         mint_discount_bps: Some(0),
     };

@@ -9,20 +9,28 @@ use crate::common_setup::{
 };
 use cosmwasm_std::{coins, Addr, Coin, Timestamp};
 use cw4::Member;
-use cw_multi_test::{next_block, Executor};
+use cw_multi_test::{next_block, Executor, IntoAddr};
 use sg2::tests::mock_collection_params_1;
 
 use sg_splits::msg::{ExecuteMsg as SplitsExecuteMsg, Group};
 use sg_utils::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
-const OWNER: &str = "admin0001";
-const MEMBER1: &str = "member0001";
-const MEMBER2: &str = "member0002";
-const MEMBER3: &str = "member0003";
+fn owner() -> Addr {
+    "admin0001".into_addr()
+}
+fn member1() -> Addr {
+    "member0001".into_addr()
+}
+fn member2() -> Addr {
+    "member0002".into_addr()
+}
+fn member3() -> Addr {
+    "member0003".into_addr()
+}
 
 const MINT_PRICE: u128 = 100_000_000;
 
-pub fn member<T: Into<String>>(addr: T, weight: u64) -> Member {
+pub fn member_struct<T: Into<String>>(addr: T, weight: u64) -> Member {
     Member {
         addr: addr.into(),
         weight,
@@ -37,18 +45,18 @@ fn instantiate_splits(app: &mut App, group_addr: Addr) -> Addr {
         group: Group::Cw4Address(group_addr.to_string()),
         admin: None,
     };
-    app.instantiate_contract(splits_id, Addr::unchecked(OWNER), &msg, &[], "splits", None)
+    app.instantiate_contract(splits_id, owner(), &msg, &[], "splits", None)
         .unwrap()
 }
 
 #[track_caller]
 fn setup_splits_test_case(app: &mut App, init_funds: Vec<Coin>) -> (Addr, Addr) {
-    // 1. Instantiate group contract with members (and OWNER as admin)
+    // 1. Instantiate group contract with members (and owner as admin)
     let members = vec![
-        member(OWNER, 50),
-        member(MEMBER1, 25),
-        member(MEMBER2, 20),
-        member(MEMBER3, 5),
+        member_struct(owner().to_string(), 50),
+        member_struct(member1().to_string(), 25),
+        member_struct(member2().to_string(), 20),
+        member_struct(member3().to_string(), 5),
     ];
     let group_addr = instantiate_group(app, members);
     app.update_block(next_block);
@@ -59,7 +67,7 @@ fn setup_splits_test_case(app: &mut App, init_funds: Vec<Coin>) -> (Addr, Addr) 
 
     // Bonus: set some funds on the splits contract for future proposals
     if !init_funds.is_empty() {
-        app.send_tokens(Addr::unchecked(OWNER), splits_addr.clone(), &init_funds)
+        app.send_tokens(owner(), splits_addr.clone(), &init_funds)
             .unwrap();
     }
     (splits_addr, group_addr)
@@ -96,15 +104,15 @@ fn mint_and_split() {
     assert!(res.is_ok());
 
     let dist_msg = SplitsExecuteMsg::Distribute { denom_list: None };
-    let res = app.execute_contract(Addr::unchecked(OWNER), splits_addr, &dist_msg, &[]);
+    let res = app.execute_contract(owner(), splits_addr, &dist_msg, &[]);
     assert!(res.is_ok());
 
-    let amount = app.wrap().query_balance(OWNER, NATIVE_DENOM).unwrap();
+    let amount = app.wrap().query_balance(owner(), NATIVE_DENOM).unwrap();
     assert_eq!(amount.amount.u128(), 45000000);
-    let amount = app.wrap().query_balance(MEMBER1, NATIVE_DENOM).unwrap();
+    let amount = app.wrap().query_balance(member1(), NATIVE_DENOM).unwrap();
     assert_eq!(amount.amount.u128(), 22500000);
-    let amount = app.wrap().query_balance(MEMBER2, NATIVE_DENOM).unwrap();
+    let amount = app.wrap().query_balance(member2(), NATIVE_DENOM).unwrap();
     assert_eq!(amount.amount.u128(), 18000000);
-    let amount = app.wrap().query_balance(MEMBER3, NATIVE_DENOM).unwrap();
+    let amount = app.wrap().query_balance(member3(), NATIVE_DENOM).unwrap();
     assert_eq!(amount.amount.u128(), 4500000);
 }

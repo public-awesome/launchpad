@@ -66,7 +66,7 @@ fn frozen_factory_cannot_create_new_minters() {
     let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
     let mut msg = mock_create_minter(None, mock_collection_params(), Some(start_time));
     msg.init_msg = build_init_msg(None, msg.clone(), num_tokens);
-    msg.collection_params.info.creator = creator.to_string();
+    msg.collection_params.creator = creator.to_string();
     let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
     let msg = Sg2ExecuteMsg::CreateMinter(msg);
     let res = router.execute_contract(creator, factory, &msg, &creation_fee);

@@ -21,17 +21,17 @@ use cosmwasm_std::{
 };
 use cw2::set_contract_version;
 use cw_utils::must_pay;
-use sg_utils::NATIVE_DENOM;
+use sg_utils::{FEE_DENOM, NATIVE_DENOM};
 
 use semver::Version;
-use sg1::checked_fair_burn;
+use sg1::transfer_funds_to_launchpad_dao;
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:tiered-whitelist-merkletree";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 // contract governance params
-pub const CREATION_FEE: u128 = 1_000_000_000;
+pub const CREATION_FEE: u128 = 10_000_000;
 pub const MIN_MINT_PRICE: u128 = 0;
 pub const MAX_PER_ADDRESS_LIMIT: u32 = 50;
 
@@ -52,7 +52,7 @@ pub fn instantiate(
     }
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
-    let payment = must_pay(&info, NATIVE_DENOM)?;
+    let payment = must_pay(&info, FEE_DENOM)?;
     if payment.u128() != CREATION_FEE {
         return Err(ContractError::IncorrectCreationFee(
             payment.u128(),
@@ -63,7 +63,7 @@ pub fn instantiate(
     validate_stages(&env, &msg.stages)?;
 
     let mut res = Response::new();
-    checked_fair_burn(&info, &env, CREATION_FEE, None, &mut res)?;
+    transfer_funds_to_launchpad_dao(&info, CREATION_FEE, FEE_DENOM, &mut res)?;
 
     let config = Config { stages: msg.stages };
 
@@ -281,9 +281,7 @@ pub fn query_has_member(
     );
 
     if final_hash.is_err() {
-        return Err(cosmwasm_std::StdError::GenericErr {
-            msg: "Invalid Merkle Proof".to_string(),
-        });
+        return Err(cosmwasm_std::StdError::generic_err("Invalid Merkle Proof"));
     }
 
     Ok(HasMemberResponse {

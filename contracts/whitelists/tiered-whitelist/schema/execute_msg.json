@@ -168,7 +168,8 @@
         "denom": {
           "type": "string"
         }
-      }
+      },
+      "additionalProperties": false
     },
     "RemoveMembersMsg": {
       "type": "object",

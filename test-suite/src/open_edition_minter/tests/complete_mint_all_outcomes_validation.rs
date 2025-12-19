@@ -1,5 +1,6 @@
 use cosmwasm_std::{coins, Coin, Timestamp, Uint128};
-use cw721::{Cw721QueryMsg, NumTokensResponse, OwnerOfResponse};
+use cw721::msg::{NumTokensResponse, OwnerOfResponse};
+use cw721_base::msg::QueryMsg as Cw721QueryMsg;
 use cw_multi_test::{BankSudo, Executor, SudoMsg};
 use open_edition_factory::state::ParamsExtension;
 use sg_utils::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
@@ -11,7 +12,7 @@ use open_edition_minter::msg::{
 use sg4::StatusResponse;
 
 use crate::common_setup::setup_accounts_and_block::{coins_for_msg, setup_block_time};
-use crate::common_setup::setup_minter::common::constants::{DEV_ADDRESS, MAX_TOKEN_LIMIT};
+use crate::common_setup::setup_minter::common::constants::{dev_address, MAX_TOKEN_LIMIT};
 use crate::common_setup::setup_minter::open_edition_minter::minter_params::{
     default_nft_data, init_msg,
 };
@@ -28,7 +29,7 @@ fn check_mint_revenues_distribution(num_tokens: Option<u32>, end_minter_time: Op
             denom: NATIVE_DENOM.to_string(),
             amount: Uint128::new(100_000_000u128),
         },
-        dev_fee_address: DEV_ADDRESS.to_string(),
+        dev_fee_address: dev_address().to_string(),
     };
     let per_address_limit_minter = Some(3);
     let init_msg = init_msg(
@@ -49,14 +50,20 @@ fn check_mint_revenues_distribution(num_tokens: Option<u32>, end_minter_time: Op
     // Set to genesis mint start time
     setup_block_time(&mut router, GENESIS_MINT_START_TIME + 101, None);
 
-    let initial_buyer_balances = router.wrap().query_all_balances(buyer.clone()).unwrap();
-    let initial_creator_balances = router.wrap().query_all_balances(creator.clone()).unwrap();
-    assert_eq!(
-        initial_creator_balances[0].amount,
-        Uint128::new(2_000_000_000)
-    );
-    let initial_dev_balances = router.wrap().query_all_balances(DEV_ADDRESS).unwrap();
-    assert_eq!(initial_dev_balances[0].amount, Uint128::new(2_000_000_000));
+    let initial_buyer_balance = router
+        .wrap()
+        .query_balance(buyer.clone(), NATIVE_DENOM)
+        .unwrap();
+    let initial_creator_balance = router
+        .wrap()
+        .query_balance(creator.clone(), NATIVE_DENOM)
+        .unwrap();
+    assert_eq!(initial_creator_balance.amount, Uint128::new(2_000_000_000));
+    let initial_dev_balance = router
+        .wrap()
+        .query_balance(dev_address(), NATIVE_DENOM)
+        .unwrap();
+    assert_eq!(initial_dev_balance.amount, Uint128::new(2_000_000_000));
 
     // Query Start Time
     // We know it is GENESIS_MINT_START_TIME + 100
@@ -130,7 +137,10 @@ fn check_mint_revenues_distribution(num_tokens: Option<u32>, end_minter_time: Op
     );
     assert_eq!(
         res.err().unwrap().source().unwrap().to_string(),
-        "IncorrectPaymentAmount 100ustars != 100000000ustars"
+        format!(
+            "IncorrectPaymentAmount 100{} != 100000000{}",
+            NATIVE_DENOM, NATIVE_DENOM
+        )
     );
 
     // Invalid price
@@ -143,7 +153,10 @@ fn check_mint_revenues_distribution(num_tokens: Option<u32>, end_minter_time: Op
     );
     assert_eq!(
         res.err().unwrap().source().unwrap().to_string(),
-        "IncorrectPaymentAmount 200000000ustars != 100000000ustars"
+        format!(
+            "IncorrectPaymentAmount 200000000{} != 100000000{}",
+            NATIVE_DENOM, NATIVE_DENOM
+        )
     );
 
     // Invalid price
@@ -151,7 +164,10 @@ fn check_mint_revenues_distribution(num_tokens: Option<u32>, end_minter_time: Op
     let res = router.execute_contract(buyer.clone(), minter_addr.clone(), &mint_msg, &[]);
     assert_eq!(
         res.err().unwrap().source().unwrap().to_string(),
-        "IncorrectPaymentAmount 0ustars != 100000000ustars"
+        format!(
+            "IncorrectPaymentAmount 0{} != 100000000{}",
+            NATIVE_DENOM, NATIVE_DENOM
+        )
     );
 
     // Invalid denom
@@ -188,25 +204,34 @@ fn check_mint_revenues_distribution(num_tokens: Option<u32>, end_minter_time: Op
     }
 
     // Buyer should be -100 x2 stars
-    let buyer_balances = router.wrap().query_all_balances(buyer.clone()).unwrap();
+    let buyer_balance = router
+        .wrap()
+        .query_balance(buyer.clone(), NATIVE_DENOM)
+        .unwrap();
     assert_eq!(
-        buyer_balances[1].amount,
-        initial_buyer_balances[0].amount - Uint128::new(200_000_000u128)
+        buyer_balance.amount,
+        initial_buyer_balance.amount - Uint128::new(200_000_000u128)
     );
 
     // Creator should be at +100 x2 stars - mint fees (currently at 10 x2) [Mint fees include Dev fees]
-    let creator_balances = router.wrap().query_all_balances(creator.clone()).unwrap();
+    let creator_balance = router
+        .wrap()
+        .query_balance(creator.clone(), NATIVE_DENOM)
+        .unwrap();
     assert_eq!(
-        creator_balances[0].amount,
-        initial_creator_balances[0].amount + Uint128::new(200_000_000 - 20_000_000)
+        creator_balance.amount,
+        initial_creator_balance.amount + Uint128::new(200_000_000 - 20_000_000)
     );
 
     // Mint fees / mint = 10_000_000 where 50% is toward the fair burn pool and 50% is
     // toward the dev so the dev should get 10_000_000 * 0.5 = 5_000_000 / mint
-    let dev_balances = router.wrap().query_all_balances(DEV_ADDRESS).unwrap();
+    let dev_balance = router
+        .wrap()
+        .query_balance(dev_address(), NATIVE_DENOM)
+        .unwrap();
     assert_eq!(
-        dev_balances[0].amount,
-        initial_dev_balances[0].amount + Uint128::new(5_000_000 * 2)
+        dev_balance.amount,
+        initial_dev_balance.amount + Uint128::new(5_000_000 * 2)
     );
 
     // Should be owner of the token -> 2

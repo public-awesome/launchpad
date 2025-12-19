@@ -3,7 +3,7 @@ use crate::error::ContractError;
 use crate::state::CONFIG;
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{DepsMut, Env, Reply, Response};
-use cw_utils::{parse_reply_instantiate_data, MsgInstantiateContractResponse, ParseReplyError};
+use cw_utils::{parse_instantiate_response_data, MsgInstantiateContractResponse, ParseReplyError};
 
 const INIT_WHITELIST_REPLY_ID: u64 = 1;
 
@@ -12,7 +12,17 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractE
     if msg.id != INIT_WHITELIST_REPLY_ID {
         return Err(ContractError::InvalidReplyID {});
     }
-    let reply = parse_reply_instantiate_data(msg);
+    let result = msg
+        .result
+        .into_result()
+        .map_err(|_| ContractError::ReplyOnSuccess {})?;
+    let data = result
+        .msg_responses
+        .first()
+        .ok_or(ContractError::ReplyOnSuccess {})?
+        .value
+        .clone();
+    let reply = parse_instantiate_response_data(&data);
     match_reply(deps, reply)
 }
 

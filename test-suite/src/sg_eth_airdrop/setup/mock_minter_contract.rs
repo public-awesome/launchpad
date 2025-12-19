@@ -4,6 +4,7 @@ use cosmwasm_std::{
     Timestamp,
 };
 use cw_multi_test::{Contract, ContractWrapper};
+use cw_storage_plus::Item;
 use sg_eth_airdrop::error::ContractError;
 use vending_factory::msg::VendingMinterCreateMsg;
 use vending_minter::msg::{ExecuteMsg, QueryMsg};
@@ -23,6 +24,9 @@ pub struct ConfigResponse {
     pub factory: String,
 }
 
+// Store whitelist address in state
+const WHITELIST: Item<String> = Item::new("whitelist");
+
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     _deps: DepsMut,
@@ -35,33 +39,40 @@ pub fn instantiate(
 }
 
 pub fn execute(
-    _deps: DepsMut,
+    deps: DepsMut,
     _env: Env,
     _info: MessageInfo,
-    _msg: ExecuteMsg,
+    msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
-    Err(ContractError::CollectionWhitelistMinterNotSet {})
+    match msg {
+        ExecuteMsg::SetWhitelist { whitelist } => {
+            WHITELIST.save(deps.storage, &whitelist)?;
+            Ok(Response::new())
+        }
+        _ => Err(ContractError::CollectionWhitelistMinterNotSet {}),
+    }
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(_deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
+pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::Config {} => to_json_binary(&query_config()),
+        QueryMsg::Config {} => to_json_binary(&query_config(deps)),
         _ => to_json_binary("invalid"),
     }
 }
 
-fn query_config() -> ConfigResponse {
+fn query_config(deps: Deps) -> ConfigResponse {
+    let whitelist = WHITELIST.may_load(deps.storage).ok().flatten();
     ConfigResponse {
         admin: "some_admin".to_string(),
-        whitelist: Some("contract2".to_string()),
+        whitelist,
         base_token_uri: "some_uri".to_string(),
         num_tokens: 5,
         per_address_limit: 5,
         sg721_address: "some_sg721_address".to_string(),
         sg721_code_id: 4,
         start_time: Timestamp::from_seconds(30),
-        mint_price: Coin::new(1000, "ustars"),
+        mint_price: Coin::new(1000u128, "ugaze"),
         factory: "some_factory".to_string(),
     }
 }

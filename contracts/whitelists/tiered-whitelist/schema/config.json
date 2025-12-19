@@ -40,7 +40,8 @@
         "denom": {
           "type": "string"
         }
-      }
+      },
+      "additionalProperties": false
     },
     "Stage": {
       "type": "object",

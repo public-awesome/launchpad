@@ -14,7 +14,7 @@ MSG=$(cat <<EOF
   "end_time": "$(echo $ENDTIME)000000000",
   "mint_price": {
     "amount": "0",
-    "denom": "ustars"
+    "denom": "ugaze"
   },
   "per_address_limit": 3,
   "member_limit": 10,
@@ -26,6 +26,6 @@ EOF
 echo $MSG
 
 
-starsd tx wasm instantiate $WL_CODE_ID "$MSG" --label "ZeroMintFeeWhitelist" --amount 100000000ustars \
-  --no-admin --gas-prices 0.025ustars --gas 500000 --gas-adjustment 1.9 \
+starsd tx wasm instantiate $WL_CODE_ID "$MSG" --label "ZeroMintFeeWhitelist" --amount 100000000ugaze \
+  --no-admin --gas-prices 0.025ugaze --gas 500000 --gas-adjustment 1.9 \
   --from $KEY -y -b block -o json | jq .

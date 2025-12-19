@@ -11,7 +11,8 @@ use crate::common_setup::{
     templates::vending_minter_template,
 };
 use cosmwasm_std::{coin, coins, Coin, Timestamp, Uint128};
-use cw721::{Cw721QueryMsg, OwnerOfResponse, TokensResponse};
+use cw721::msg::{OwnerOfResponse, TokensResponse};
+use cw721_base::msg::QueryMsg as Cw721QueryMsg;
 use cw_multi_test::Executor;
 use sg2::tests::mock_collection_params_1;
 use sg_utils::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
@@ -439,29 +440,31 @@ fn mint_for_token_id_addr() {
         err.source().unwrap().to_string()
     );
 
-    // Test mint_for token_id 2 then normal mint
-    let token_id = 2;
+    // Test mint_for with an unsold token_id then normal mint
+    // Pick a token_id that wasn't sold in the random mint
+    let token_id = if sold_token_id == 2 { 1 } else { 2 };
     let mint_for_msg = ExecuteMsg::MintFor {
         token_id,
         recipient: buyer.to_string(),
     };
-    let res = router.execute_contract(
-        creator,
-        minter_addr.clone(),
-        &mint_for_msg,
-        &coins_for_msg(Coin {
-            amount: Uint128::from(ADMIN_MINT_PRICE),
-            denom: NATIVE_DENOM.to_string(),
-        }),
-    );
-    assert!(res.is_ok());
+    router
+        .execute_contract(
+            creator,
+            minter_addr.clone(),
+            &mint_for_msg,
+            &coins_for_msg(Coin {
+                amount: Uint128::from(ADMIN_MINT_PRICE),
+                denom: NATIVE_DENOM.to_string(),
+            }),
+        )
+        .unwrap();
 
     let res: OwnerOfResponse = router
         .wrap()
         .query_wasm_smart(
             collection_addr,
             &Cw721QueryMsg::OwnerOf {
-                token_id: 2.to_string(),
+                token_id: token_id.to_string(),
                 include_expired: None,
             },
         )

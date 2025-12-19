@@ -12,16 +12,16 @@ MSG=$(cat <<EOF
     "code_id": $MINTER_CODE_ID,
     "allowed_sg721_code_ids": [1979],
     "frozen": false,
-    "creation_fee": {"amount": "5000000000", "denom": "ustars"},
-    "min_mint_price": {"amount": "0", "denom": "ustars"},
+    "creation_fee": {"amount": "5000000000", "denom": "ugaze"},
+    "min_mint_price": {"amount": "0", "denom": "ugaze"},
     "mint_fee_bps": 1000,
     "max_trading_offset_secs": 604800,
     "extension": {
         "max_token_limit": 10000,
         "max_per_address_limit": 50,
-        "airdrop_mint_price": { "denom": "ustars", "amount": "0" },
+        "airdrop_mint_price": { "denom": "ugaze", "amount": "0" },
         "airdrop_mint_fee_bps": 10000,
-        "shuffle_fee": { "amount": "500000000", "denom": "ustars" }
+        "shuffle_fee": { "amount": "500000000", "denom": "ugaze" }
     }
   }
 }
@@ -31,5 +31,5 @@ echo $MSG
 
 
 starsd tx wasm instantiate $FACTORY_CODE_ID "$MSG" --label "Factory" \
-  --no-admin --gas-prices 0.025ustars --gas 500000 --gas-adjustment 1.9 \
+  --no-admin --gas-prices 0.025ugaze --gas 500000 --gas-adjustment 1.9 \
   --from $KEY -y -b block -o json | jq .

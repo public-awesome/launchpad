@@ -110,7 +110,7 @@ pub fn setup_open_edition_minter_contract(
         whitelist.clone(),
     );
     msg.collection_params.code_id = sg721_code_id;
-    msg.collection_params.info.creator = minter_admin.to_string();
+    msg.collection_params.creator = minter_admin.to_string();
 
     let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
     let msg = Sg2ExecuteMsg::CreateMinter(msg);

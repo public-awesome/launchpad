@@ -10,7 +10,7 @@ use crate::common_setup::setup_minter::vending_minter::mock_params::{
 };
 use crate::common_setup::setup_minter::vending_minter::setup::vending_minter_code_ids;
 use cosmwasm_std::{coin, coins, Addr, Timestamp};
-use cw721::TokensResponse;
+use cw721::msg::TokensResponse;
 use cw_multi_test::Executor;
 use sg2::msg::Sg2ExecuteMsg;
 use sg2::tests::{mock_collection_params, mock_collection_params_1};
@@ -79,18 +79,42 @@ fn zero_mint_price() {
     init_msg.mint_price = coin(MINT_PRICE, NATIVE_DENOM);
     let mut msg = mock_create_minter_init_msg(mock_collection_params(), init_msg);
     msg.collection_params.code_id = sg721_code_id;
-    msg.collection_params.info.creator = minter_admin.to_string();
+    msg.collection_params.creator = minter_admin.to_string();
     let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
     let msg = Sg2ExecuteMsg::CreateMinter(msg);
 
     let res = router.execute_contract(minter_admin, factory_addr, &msg, &creation_fee);
     assert!(res.is_ok());
+    let res = res.unwrap();
+
+    // Extract minter and collection addresses from instantiate events
+    let instantiate_events: Vec<_> = res
+        .events
+        .iter()
+        .filter(|e| e.ty == "instantiate")
+        .collect();
+    let minter_addr = instantiate_events
+        .first()
+        .and_then(|e| {
+            e.attributes
+                .iter()
+                .find(|a| a.key == "_contract_address" || a.key == "_contract_addr")
+                .map(|a| Addr::unchecked(&a.value))
+        })
+        .expect("Minter address not found in events");
+    let sg721 = instantiate_events
+        .get(1)
+        .and_then(|e| {
+            e.attributes
+                .iter()
+                .find(|a| a.key == "_contract_address" || a.key == "_contract_addr")
+                .map(|a| Addr::unchecked(&a.value))
+        })
+        .expect("Collection address not found in events");
 
     setup_block_time(router, GENESIS_MINT_START_TIME + 1, None);
 
     // Mint succeeds
-    let minter_addr = Addr::unchecked("contract1");
-    let sg721 = Addr::unchecked("contract2");
     let mint_msg = ExecuteMsg::Mint {};
     let res = router.execute_contract(buyer.clone(), minter_addr, &mint_msg, &[]);
     assert!(res.is_ok());
@@ -100,7 +124,7 @@ fn zero_mint_price() {
         .wrap()
         .query_wasm_smart(
             sg721,
-            &sg721_base::msg::QueryMsg::Tokens {
+            &cw721_base::msg::QueryMsg::Tokens {
                 owner: buyer.to_string(),
                 start_after: None,
                 limit: None,
@@ -169,14 +193,29 @@ fn zero_wl_mint_price() {
     init_msg.mint_price = coin(MINT_PRICE, NATIVE_DENOM);
     let mut msg = mock_create_minter_init_msg(mock_collection_params(), init_msg);
     msg.collection_params.code_id = sg721_code_id;
-    msg.collection_params.info.creator = minter_admin.to_string();
+    msg.collection_params.creator = minter_admin.to_string();
     let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
     let msg = Sg2ExecuteMsg::CreateMinter(msg);
 
     let res = router.execute_contract(minter_admin, factory_addr, &msg, &creation_fee);
     assert!(res.is_ok());
+    let res = res.unwrap();
 
-    let minter_addr = Addr::unchecked("contract1");
+    // Extract minter address from instantiate events
+    let instantiate_events: Vec<_> = res
+        .events
+        .iter()
+        .filter(|e| e.ty == "instantiate")
+        .collect();
+    let minter_addr = instantiate_events
+        .first()
+        .and_then(|e| {
+            e.attributes
+                .iter()
+                .find(|a| a.key == "_contract_address" || a.key == "_contract_addr")
+                .map(|a| Addr::unchecked(&a.value))
+        })
+        .expect("Minter address not found in events");
 
     // set up free mint whitelist
     let whitelist_addr = setup_zero_fee_whitelist_contract(router, &creator, None);
@@ -266,14 +305,29 @@ fn zero_wl_mint_errs_with_min_mint_factory() {
     init_msg.mint_price = coin(min_mint_price, NATIVE_DENOM);
     let mut msg = mock_create_minter_init_msg(mock_collection_params(), init_msg);
     msg.collection_params.code_id = sg721_code_id;
-    msg.collection_params.info.creator = minter_admin.to_string();
+    msg.collection_params.creator = minter_admin.to_string();
     let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
     let msg = Sg2ExecuteMsg::CreateMinter(msg);
 
     let res = router.execute_contract(minter_admin, factory_addr, &msg, &creation_fee);
     assert!(res.is_ok());
+    let res = res.unwrap();
 
-    let minter_addr = Addr::unchecked("contract1");
+    // Extract minter address from instantiate events
+    let instantiate_events: Vec<_> = res
+        .events
+        .iter()
+        .filter(|e| e.ty == "instantiate")
+        .collect();
+    let minter_addr = instantiate_events
+        .first()
+        .and_then(|e| {
+            e.attributes
+                .iter()
+                .find(|a| a.key == "_contract_address" || a.key == "_contract_addr")
+                .map(|a| Addr::unchecked(&a.value))
+        })
+        .expect("Minter address not found in events");
 
     // set up free mint whitelist
     let whitelist_addr = setup_zero_fee_whitelist_contract(router, &creator, None);

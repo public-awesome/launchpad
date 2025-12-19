@@ -25,7 +25,8 @@
         "denom": {
           "type": "string"
         }
-      }
+      },
+      "additionalProperties": false
     },
     "MinterParams_for_ParamsExtension": {
       "description": "Common params for all minters used for storage",

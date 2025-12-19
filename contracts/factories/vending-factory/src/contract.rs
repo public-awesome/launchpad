@@ -9,9 +9,9 @@ use cosmwasm_std::{
 use cw2::set_contract_version;
 use cw_utils::must_pay;
 use semver::Version;
-use sg1::{checked_fair_burn, transfer_funds_to_launchpad_dao};
+use sg1::transfer_funds_to_launchpad_dao;
 use sg2::query::{AllowedCollectionCodeIdResponse, AllowedCollectionCodeIdsResponse, Sg2QueryMsg};
-use sg_utils::NATIVE_DENOM;
+use sg_utils::FEE_DENOM;
 
 use crate::error::ContractError;
 use crate::msg::{
@@ -53,7 +53,7 @@ pub fn execute(
 
 pub fn execute_create_minter(
     deps: DepsMut,
-    env: Env,
+    _env: Env,
     info: MessageInfo,
     msg: VendingMinterCreateMsg,
 ) -> Result<Response, ContractError> {
@@ -64,22 +64,13 @@ pub fn execute_create_minter(
     must_not_be_frozen(&params)?;
 
     let mut res = Response::new();
-    if params.creation_fee.denom == NATIVE_DENOM {
-        checked_fair_burn(
-            &info,
-            &env,
-            params.creation_fee.amount.u128(),
-            None,
-            &mut res,
-        )?;
-    } else {
-        transfer_funds_to_launchpad_dao(
-            &info,
-            params.creation_fee.amount.u128(),
-            &params.creation_fee.denom,
-            &mut res,
-        )?;
-    }
+
+    transfer_funds_to_launchpad_dao(
+        &info,
+        params.creation_fee.amount.u128(),
+        &params.creation_fee.denom,
+        &mut res,
+    )?;
 
     // Check the number of tokens is more than zero and less than the max limit
     if msg.init_msg.num_tokens == 0 || msg.init_msg.num_tokens > params.extension.max_token_limit {
@@ -154,7 +145,7 @@ pub fn sudo_update_params(
     if let Some(airdrop_mint_price) = param_msg.extension.airdrop_mint_price {
         ensure_eq!(
             &airdrop_mint_price.denom,
-            &NATIVE_DENOM,
+            &FEE_DENOM,
             ContractError::BaseError(BaseContractError::InvalidDenom {})
         );
         params.extension.airdrop_mint_price = airdrop_mint_price;
@@ -168,7 +159,7 @@ pub fn sudo_update_params(
     if let Some(shuffle_fee) = param_msg.extension.shuffle_fee {
         ensure_eq!(
             &shuffle_fee.denom,
-            &NATIVE_DENOM,
+            &FEE_DENOM,
             ContractError::BaseError(BaseContractError::InvalidDenom {})
         );
         params.extension.shuffle_fee = shuffle_fee;
@@ -255,7 +246,7 @@ pub fn migrate(
         if let Some(airdrop_mint_price) = msg.extension.airdrop_mint_price {
             ensure_eq!(
                 &airdrop_mint_price.denom,
-                &NATIVE_DENOM,
+                &FEE_DENOM,
                 ContractError::BaseError(BaseContractError::InvalidDenom {})
             );
             params.extension.airdrop_mint_price = airdrop_mint_price;
@@ -269,7 +260,7 @@ pub fn migrate(
         if let Some(shuffle_fee) = msg.extension.shuffle_fee {
             ensure_eq!(
                 &shuffle_fee.denom,
-                &NATIVE_DENOM,
+                &FEE_DENOM,
                 ContractError::BaseError(BaseContractError::InvalidDenom {})
             );
             params.extension.shuffle_fee = shuffle_fee;

@@ -8,7 +8,7 @@ mod tests {
     use cw2::{query_contract_info, ContractVersion};
     use cw4::{Cw4ExecuteMsg, Member, MemberListResponse};
     use cw4_group::msg::ExecuteMsg as Cw4GroupExecuteMsg;
-    use cw_multi_test::{next_block, App, Executor as TestExecutor};
+    use cw_multi_test::{next_block, App, Executor as TestExecutor, IntoAddr};
     use sg_controllers::ContractInstantiateMsg;
     use sg_splits::contract::MAX_GROUP_SIZE;
     use sg_splits::msg::Group;
@@ -16,20 +16,29 @@ mod tests {
         msg::{InstantiateMsg, QueryMsg},
         ContractError,
     };
+    use std::collections::HashMap;
 
-    const OWNER: &str = "admin0001";
-    const MEMBER1: &str = "member0001";
-    const MEMBER2: &str = "member0002";
-    const MEMBER3: &str = "member0003";
+    fn owner() -> Addr {
+        "admin0001".into_addr()
+    }
+    fn member1() -> Addr {
+        "member0001".into_addr()
+    }
+    fn member2() -> Addr {
+        "member0002".into_addr()
+    }
+    fn member3() -> Addr {
+        "member0003".into_addr()
+    }
 
     // uploads code and returns address of group contract
     fn instantiate_group(app: &mut App, members: Vec<Member>) -> Addr {
         let group_id = app.store_code(contract_group());
         let msg = cw4_group::msg::InstantiateMsg {
-            admin: Some(OWNER.into()),
+            admin: Some(owner().to_string()),
             members,
         };
-        app.instantiate_contract(group_id, Addr::unchecked(OWNER), &msg, &[], "group", None)
+        app.instantiate_contract(group_id, owner(), &msg, &[], "group", None)
             .unwrap()
     }
 
@@ -40,7 +49,7 @@ mod tests {
             group: Group::Cw4Address(group_addr.to_string()),
             admin: None,
         };
-        app.instantiate_contract(flex_id, Addr::unchecked(OWNER), &msg, &[], "splits", None)
+        app.instantiate_contract(flex_id, owner(), &msg, &[], "splits", None)
             .unwrap()
     }
 
@@ -48,12 +57,12 @@ mod tests {
     fn instantiate_splits(app: &mut App) -> Addr {
         let flex_id = app.store_code(contract_splits());
         let group_msg = cw4_group::msg::InstantiateMsg {
-            admin: Some(OWNER.into()),
+            admin: Some(owner().to_string()),
             members: vec![
-                member(OWNER, 50),
-                member(MEMBER1, 25),
-                member(MEMBER2, 20),
-                member(MEMBER3, 5),
+                member(owner().to_string(), 50),
+                member(member1().to_string(), 25),
+                member(member2().to_string(), 20),
+                member(member3().to_string(), 5),
             ],
         };
 
@@ -64,9 +73,9 @@ mod tests {
                 admin: None,
                 label: "cw4-group".to_string(),
             }),
-            admin: Some(OWNER.into()),
+            admin: Some(owner().to_string()),
         };
-        app.instantiate_contract(flex_id, Addr::unchecked(OWNER), &msg, &[], "splits", None)
+        app.instantiate_contract(flex_id, owner(), &msg, &[], "splits", None)
             .unwrap()
     }
 
@@ -75,12 +84,11 @@ mod tests {
         let flex_id = app.store_code(contract_splits());
 
         let members: Vec<Member> = (1..=MAX_GROUP_SIZE + 1)
-            .map(|i| member(format!("member{i:04}"), 1))
+            .map(|i| member(format!("member{i:04}").into_addr().to_string(), 1))
             .collect();
-        // members.push(member(OWNER, 1));
 
         let group_msg = cw4_group::msg::InstantiateMsg {
-            admin: Some(OWNER.into()),
+            admin: Some(owner().to_string()),
             members,
         };
 
@@ -91,9 +99,9 @@ mod tests {
                 admin: None,
                 label: "cw4-group".to_string(),
             }),
-            admin: Some(OWNER.into()),
+            admin: Some(owner().to_string()),
         };
-        app.instantiate_contract(flex_id, Addr::unchecked(OWNER), &msg, &[], "splits", None)
+        app.instantiate_contract(flex_id, owner(), &msg, &[], "splits", None)
             .unwrap()
     }
 
@@ -103,12 +111,12 @@ mod tests {
         init_funds: Vec<Coin>,
         multisig_as_group_admin: bool,
     ) -> (Addr, Addr) {
-        // 1. Instantiate group contract with members (and OWNER as admin)
+        // 1. Instantiate group contract with members (and owner as admin)
         let members = vec![
-            member(OWNER, 50),
-            member(MEMBER1, 25),
-            member(MEMBER2, 20),
-            member(MEMBER3, 5),
+            member(owner().to_string(), 50),
+            member(member1().to_string(), 25),
+            member(member2().to_string(), 20),
+            member(member3().to_string(), 5),
         ];
         let group_addr = instantiate_group(app, members);
         app.update_block(next_block);
@@ -122,19 +130,14 @@ mod tests {
             let update_admin = Cw4ExecuteMsg::UpdateAdmin {
                 admin: Some(splits_addr.to_string()),
             };
-            app.execute_contract(
-                Addr::unchecked(OWNER),
-                group_addr.clone(),
-                &update_admin,
-                &[],
-            )
-            .unwrap();
+            app.execute_contract(owner(), group_addr.clone(), &update_admin, &[])
+                .unwrap();
             app.update_block(next_block);
         }
 
         // Bonus: set some funds on the splits contract for future proposals
         if !init_funds.is_empty() {
-            app.send_tokens(Addr::unchecked(OWNER), splits_addr.clone(), &init_funds)
+            app.send_tokens(owner(), splits_addr.clone(), &init_funds)
                 .unwrap();
         }
         (splits_addr, group_addr)
@@ -148,7 +151,7 @@ mod tests {
 
         // Bonus: set some funds on the splits contract for future proposals
         if !init_funds.is_empty() {
-            app.send_tokens(Addr::unchecked(OWNER), splits_addr.clone(), &init_funds)
+            app.send_tokens(owner(), splits_addr.clone(), &init_funds)
                 .unwrap();
         }
 
@@ -168,7 +171,7 @@ mod tests {
 
         // Bonus: set some funds on the splits contract for future proposals
         if !init_funds.is_empty() {
-            app.send_tokens(Addr::unchecked(OWNER), splits_addr.clone(), &init_funds)
+            app.send_tokens(owner(), splits_addr.clone(), &init_funds)
                 .unwrap();
         }
 
@@ -186,7 +189,7 @@ mod tests {
         let splits_id = app.store_code(contract_splits());
 
         // make a simple group
-        let group_addr = instantiate_group(&mut app, vec![member(OWNER, 0)]);
+        let group_addr = instantiate_group(&mut app, vec![member(owner().to_string(), 0)]);
 
         // Zero weight fails
         let instantiate_msg = InstantiateMsg {
@@ -196,7 +199,7 @@ mod tests {
         let err = app
             .instantiate_contract(
                 splits_id,
-                Addr::unchecked(OWNER),
+                owner(),
                 &instantiate_msg,
                 &[],
                 "greater than zero required total weight",
@@ -209,7 +212,7 @@ mod tests {
         );
 
         // Single member group with weight is valid
-        let group_addr = instantiate_group(&mut app, vec![member(OWNER, 1)]);
+        let group_addr = instantiate_group(&mut app, vec![member(owner().to_string(), 1)]);
 
         let instantiate_msg = InstantiateMsg {
             group: Group::Cw4Address(group_addr.to_string()),
@@ -218,7 +221,7 @@ mod tests {
         let splits_addr = app
             .instantiate_contract(
                 splits_id,
-                Addr::unchecked(OWNER),
+                owner(),
                 &instantiate_msg,
                 &[],
                 "single member group with weight is valid",
@@ -250,7 +253,7 @@ mod tests {
         assert_eq!(
             members.members,
             vec![Member {
-                addr: OWNER.into(),
+                addr: owner().to_string(),
                 weight: 1
             }]
         );
@@ -273,14 +276,14 @@ mod tests {
             let msg = ExecuteMsg::Distribute { denom_list: None };
 
             let err = app
-                .execute_contract(Addr::unchecked(OWNER), splits_addr, &msg, &[])
+                .execute_contract(owner(), splits_addr, &msg, &[])
                 .unwrap_err();
             assert_eq!(ContractError::NoFunds {}, err.downcast().unwrap());
         }
 
         #[test]
         fn distribute_non_member() {
-            const DENOM: &str = "ustars";
+            const DENOM: &str = "ugaze";
             let init_funds = coins(100, DENOM);
             let mut app = mock_app_builder_init_funds(&init_funds);
 
@@ -299,7 +302,7 @@ mod tests {
 
         #[test]
         fn distribute() {
-            const DENOM: &str = "ustars";
+            const DENOM: &str = "ugaze";
             let init_funds = coins(100, DENOM);
             let mut app = mock_app_builder_init_funds(&init_funds);
 
@@ -307,37 +310,37 @@ mod tests {
 
             let msg = ExecuteMsg::Distribute { denom_list: None };
 
-            app.execute_contract(Addr::unchecked(OWNER), splits_addr.clone(), &msg, &[])
+            app.execute_contract(owner(), splits_addr.clone(), &msg, &[])
                 .unwrap();
 
             // make sure the contract doesn't have a balance
             let bal = app.wrap().query_all_balances(splits_addr.clone()).unwrap();
             assert_eq!(bal, &[]);
 
-            // verify amounts for each member
+            // verify amounts for each member - compare by address rather than relying on order
             let msg = QueryMsg::ListMembers {
                 start_after: None,
                 limit: None,
             };
             let list: MemberListResponse = app.wrap().query_wasm_smart(splits_addr, &msg).unwrap();
-            let mut expected_balances = vec![
-                Uint128::new(5),
-                Uint128::new(20),
-                Uint128::new(25),
-                Uint128::new(50),
+            // Map expected balances by address based on weight
+            let expected_by_addr = vec![
+                (owner(), Uint128::new(50)),
+                (member1(), Uint128::new(25)),
+                (member2(), Uint128::new(20)),
+                (member3(), Uint128::new(5)),
             ];
-            for member in list.members.iter() {
-                let bal = app
-                    .wrap()
-                    .query_balance(member.addr.to_string(), DENOM)
-                    .unwrap();
-                assert_eq!(bal.amount, expected_balances.pop().unwrap())
+            for (addr, expected_bal) in expected_by_addr.iter() {
+                let bal = app.wrap().query_balance(addr.to_string(), DENOM).unwrap();
+                assert_eq!(bal.amount, *expected_bal, "Balance mismatch for {}", addr);
             }
+            // Also verify the total number of members
+            assert_eq!(list.members.len(), 4);
         }
 
         #[test]
         fn distribute_under_funded() {
-            const DENOM: &str = "ustars";
+            const DENOM: &str = "ugaze";
             let init_funds = coins(79, DENOM);
             let mut app = mock_app_builder_init_funds(&init_funds);
 
@@ -348,7 +351,7 @@ mod tests {
             let msg = ExecuteMsg::Distribute { denom_list: None };
 
             let err = app
-                .execute_contract(Addr::unchecked(OWNER), splits_addr, &msg, &[])
+                .execute_contract(owner(), splits_addr, &msg, &[])
                 .unwrap_err();
 
             assert_eq!(
@@ -359,7 +362,7 @@ mod tests {
 
         #[test]
         fn distribute_amount_with_remaining_balance() {
-            const DENOM: &str = "ustars";
+            const DENOM: &str = "ugaze";
             let init_funds = coins(479, DENOM);
             let mut app = mock_app_builder_init_funds(&init_funds);
 
@@ -372,7 +375,7 @@ mod tests {
             let msg = ExecuteMsg::Distribute { denom_list: None };
 
             let _ = app
-                .execute_contract(Addr::unchecked(OWNER), splits_addr.clone(), &msg, &[])
+                .execute_contract(owner(), splits_addr.clone(), &msg, &[])
                 .unwrap();
 
             // contract has a balance
@@ -397,7 +400,7 @@ mod tests {
 
         #[test]
         fn distribute_with_too_many_members() {
-            const DENOM: &str = "ustars";
+            const DENOM: &str = "ugaze";
             let init_funds = coins(255, DENOM);
             let mut app = mock_app_builder_init_funds(&init_funds);
 
@@ -405,7 +408,7 @@ mod tests {
 
             let msg = ExecuteMsg::Distribute { denom_list: None };
             let err = app
-                .execute_contract(Addr::unchecked(OWNER), splits_addr, &msg, &[])
+                .execute_contract(owner(), splits_addr, &msg, &[])
                 .unwrap_err();
             assert_eq!(
                 err.source().unwrap().to_string(),
@@ -418,42 +421,41 @@ mod tests {
 
         #[test]
         fn distribute_with_zero_weight_members() {
-            const DENOM: &str = "ustars";
+            const DENOM: &str = "ugaze";
             let init_funds = coins(255, DENOM);
             let mut app = mock_app_builder_init_funds(&init_funds);
 
             let (splits_addr, group_addr) =
                 setup_test_case_with_internal_group(&mut app, init_funds);
 
+            let member100 = "member0100".into_addr();
+            let member101 = "member0101".into_addr();
             let msg = Cw4GroupExecuteMsg::UpdateMembers {
                 remove: vec![],
-                add: vec![member("member0100", 0), member("member0101", 0)],
+                add: vec![
+                    member(member100.to_string(), 0),
+                    member(member101.to_string(), 0),
+                ],
             };
             let _ = app
-                .execute_contract(Addr::unchecked(OWNER), group_addr, &msg, &[])
+                .execute_contract(owner(), group_addr, &msg, &[])
                 .unwrap();
 
             let msg = ExecuteMsg::Distribute { denom_list: None };
             let _ = app
-                .execute_contract(Addr::unchecked(OWNER), splits_addr, &msg, &[])
+                .execute_contract(owner(), splits_addr, &msg, &[])
                 .unwrap();
 
             // confirm zero weight members have no balance
-            let bal = app
-                .wrap()
-                .query_balance("memeber0100".to_string(), DENOM)
-                .unwrap();
+            let bal = app.wrap().query_balance(member100.clone(), DENOM).unwrap();
             assert_eq!(bal.amount, Uint128::zero());
-            let bal = app
-                .wrap()
-                .query_balance("memeber0101".to_string(), DENOM)
-                .unwrap();
+            let bal = app.wrap().query_balance(member101.clone(), DENOM).unwrap();
             assert_eq!(bal.amount, Uint128::zero());
         }
 
         #[test]
         fn distribute_with_group_changes() {
-            const DENOM: &str = "ustars";
+            const DENOM: &str = "ugaze";
             let init_funds = coins(199, DENOM);
             let mut app = mock_app_builder_init_funds(&init_funds);
 
@@ -463,12 +465,12 @@ mod tests {
                 .unwrap();
             let multiplier = init_funds[0].amount / Uint128::from(total_weight);
             let contract_balance = init_funds[0].amount - multiplier * Uint128::from(total_weight);
-            let mut payouts = vec![];
+            let mut payouts: HashMap<String, Uint128> = HashMap::new();
 
             let msg = ExecuteMsg::Distribute { denom_list: None };
 
             let _ = app
-                .execute_contract(Addr::unchecked(OWNER), splits_addr.clone(), &msg, &[])
+                .execute_contract(owner(), splits_addr.clone(), &msg, &[])
                 .unwrap();
 
             // contract has a balance
@@ -490,30 +492,35 @@ mod tests {
                     .wrap()
                     .query_balance(member.addr.to_string(), DENOM)
                     .unwrap();
-                payouts.push(bal.amount);
+                payouts.insert(member.addr.clone(), bal.amount);
                 assert_eq!(bal.amount, Uint128::from(member.weight) * multiplier)
             }
 
             // add members to group
+            let member100 = "member0100".into_addr();
+            let member101 = "member0101".into_addr();
             let msg = Cw4GroupExecuteMsg::UpdateMembers {
                 remove: vec![],
-                add: vec![member("member0100", 2), member("member0101", 23)],
+                add: vec![
+                    member(member100.to_string(), 2),
+                    member(member101.to_string(), 23),
+                ],
             };
             let _ = app
-                .execute_contract(Addr::unchecked(OWNER), group_addr.clone(), &msg, &[])
+                .execute_contract(owner(), group_addr.clone(), &msg, &[])
                 .unwrap();
-            payouts.push(Uint128::zero());
-            payouts.push(Uint128::zero());
+            payouts.insert(member100.to_string(), Uint128::zero());
+            payouts.insert(member101.to_string(), Uint128::zero());
 
             // confirm members were added
-            let member = Cw4Contract(group_addr.clone())
-                .is_member(&app.wrap(), &Addr::unchecked("member0100"), None)
+            let mem = Cw4Contract(group_addr.clone())
+                .is_member(&app.wrap(), &member100, None)
                 .unwrap();
-            assert!(member.is_some());
-            let member = Cw4Contract(group_addr.clone())
-                .is_member(&app.wrap(), &Addr::unchecked("member0101"), None)
+            assert!(mem.is_some());
+            let mem = Cw4Contract(group_addr.clone())
+                .is_member(&app.wrap(), &member101, None)
                 .unwrap();
-            assert!(member.is_some());
+            assert!(mem.is_some());
 
             // add more funds from bank module to contract
             let more_funds = coins(12345u128, DENOM);
@@ -536,7 +543,7 @@ mod tests {
             // distribute again and check accounting
             let msg = ExecuteMsg::Distribute { denom_list: None };
             let _ = app
-                .execute_contract(Addr::unchecked(OWNER), splits_addr.clone(), &msg, &[])
+                .execute_contract(owner(), splits_addr.clone(), &msg, &[])
                 .unwrap();
 
             // contract has a balance
@@ -554,14 +561,20 @@ mod tests {
                 limit: None,
             };
             let list: MemberListResponse = app.wrap().query_wasm_smart(splits_addr, &msg).unwrap();
-            for (i, member) in list.members.iter().enumerate() {
+            for member in list.members.iter() {
                 let bal = app
                     .wrap()
                     .query_balance(member.addr.to_string(), DENOM)
                     .unwrap();
+                let prev_payout = payouts
+                    .get(&member.addr)
+                    .copied()
+                    .unwrap_or(Uint128::zero());
                 assert_eq!(
                     bal.amount,
-                    payouts[i] + Uint128::from(member.weight) * new_multiplier
+                    prev_payout + Uint128::from(member.weight) * new_multiplier,
+                    "Balance mismatch for member {}",
+                    member.addr
                 )
             }
         }

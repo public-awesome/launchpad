@@ -1,6 +1,6 @@
 {
   "contract_name": "vending-minter-wl-flex-featured",
-  "contract_version": "3.15.0",
+  "contract_version": "3.16.0",
   "idl_version": "1.0.0",
   "instantiate": {
     "$schema": "http://json-schema.org/draft-07/schema#",
@@ -20,6 +20,10 @@
     },
     "additionalProperties": false,
     "definitions": {
+      "Addr": {
+        "description": "A human readable address.\n\nIn Cosmos, this is typically bech32 encoded. But for multi-chain smart contracts no assumptions should be made other than being UTF-8 encoded and of reasonable length.\n\nThis type represents a validated address. It can be created in the following ways 1. Use `Addr::unchecked(input)` 2. Use `let checked: Addr = deps.api.addr_validate(input)?` 3. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?` 4. Deserialize from JSON. This must only be done from JSON that was validated before such as a contract's state. `Addr` must not be used in messages sent by the user because this would result in unvalidated instances.\n\nThis type is immutable. If you really need to mutate it (Really? Are you sure?), create a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String` instance.",
+        "type": "string"
+      },
       "Coin": {
         "type": "object",
         "required": [
@@ -33,19 +37,16 @@
           "denom": {
             "type": "string"
           }
-        }
+        },
+        "additionalProperties": false
       },
-      "CollectionInfo_for_RoyaltyInfoResponse": {
+      "CollectionExtension_for_RoyaltyInfo": {
         "type": "object",
         "required": [
-          "creator",
           "description",
           "image"
         ],
         "properties": {
-          "creator": {
-            "type": "string"
-          },
           "description": {
             "type": "string"
           },
@@ -67,7 +68,7 @@
           "royalty_info": {
             "anyOf": [
               {
-                "$ref": "#/definitions/RoyaltyInfoResponse"
+                "$ref": "#/definitions/RoyaltyInfo"
               },
               {
                 "type": "null"
@@ -91,6 +92,7 @@
         "type": "object",
         "required": [
           "code_id",
+          "creator",
           "info",
           "name",
           "symbol"
@@ -102,8 +104,17 @@
             "format": "uint64",
             "minimum": 0.0
           },
+          "creator": {
+            "description": "Collection creator address",
+            "type": "string"
+          },
           "info": {
-            "$ref": "#/definitions/CollectionInfo_for_RoyaltyInfoResponse"
+            "description": "Collection info extension",
+            "allOf": [
+              {
+                "$ref": "#/definitions/CollectionExtension_for_RoyaltyInfo"
+              }
+            ]
           },
           "name": {
             "type": "string"
@@ -222,7 +233,7 @@
         },
         "additionalProperties": false
       },
-      "RoyaltyInfoResponse": {
+      "RoyaltyInfo": {
         "type": "object",
         "required": [
           "payment_address",
@@ -230,7 +241,7 @@
         ],
         "properties": {
           "payment_address": {
-            "type": "string"
+            "$ref": "#/definitions/Addr"
           },
           "share": {
             "$ref": "#/definitions/Decimal"
@@ -409,6 +420,55 @@
       {
         "type": "object",
         "required": [
+          "update_collection_info"
+        ],
+        "properties": {
+          "update_collection_info": {
+            "type": "object",
+            "properties": {
+              "description": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "explicit_content": {
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              },
+              "external_link": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "image": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "royalty_info": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/RoyaltyInfoResponse"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
           "update_per_address_limit"
         ],
         "properties": {
@@ -541,6 +601,26 @@
       }
     ],
     "definitions": {
+      "Decimal": {
+        "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
+        "type": "string"
+      },
+      "RoyaltyInfoResponse": {
+        "type": "object",
+        "required": [
+          "payment_address",
+          "share"
+        ],
+        "properties": {
+          "payment_address": {
+            "type": "string"
+          },
+          "share": {
+            "$ref": "#/definitions/Decimal"
+          }
+        },
+        "additionalProperties": false
+      },
       "Timestamp": {
         "description": "A point in time in nanosecond precision.\n\nThis type can represent times from 1970-01-01T00:00:00Z to 2554-07-21T23:34:33Z.\n\n## Examples\n\n``` # use cosmwasm_std::Timestamp; let ts = Timestamp::from_nanos(1_000_000_202); assert_eq!(ts.nanos(), 1_000_000_202); assert_eq!(ts.seconds(), 1); assert_eq!(ts.subsec_nanos(), 202);\n\nlet ts = ts.plus_seconds(2); assert_eq!(ts.nanos(), 3_000_000_202); assert_eq!(ts.seconds(), 3); assert_eq!(ts.subsec_nanos(), 202); ```",
         "allOf": [
@@ -731,7 +811,8 @@
             "denom": {
               "type": "string"
             }
-          }
+          },
+          "additionalProperties": false
         },
         "Timestamp": {
           "description": "A point in time in nanosecond precision.\n\nThis type can represent times from 1970-01-01T00:00:00Z to 2554-07-21T23:34:33Z.\n\n## Examples\n\n``` # use cosmwasm_std::Timestamp; let ts = Timestamp::from_nanos(1_000_000_202); assert_eq!(ts.nanos(), 1_000_000_202); assert_eq!(ts.seconds(), 1); assert_eq!(ts.subsec_nanos(), 202);\n\nlet ts = ts.plus_seconds(2); assert_eq!(ts.nanos(), 3_000_000_202); assert_eq!(ts.seconds(), 3); assert_eq!(ts.subsec_nanos(), 202); ```",
@@ -832,7 +913,8 @@
             "denom": {
               "type": "string"
             }
-          }
+          },
+          "additionalProperties": false
         },
         "Uint128": {
           "description": "A thin wrapper around u128 that is using strings for JSON encoding/decoding, such that the full u128 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u128` to get the value out:\n\n``` # use cosmwasm_std::Uint128; let a = Uint128::from(123u128); assert_eq!(a.u128(), 123);\n\nlet b = Uint128::from(42u64); assert_eq!(b.u128(), 42);\n\nlet c = Uint128::from(70u32); assert_eq!(c.u128(), 70); ```",

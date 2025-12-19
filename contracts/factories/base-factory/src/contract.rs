@@ -7,11 +7,11 @@ use cosmwasm_std::{
 use cw2::set_contract_version;
 use cw_utils::must_pay;
 use semver::Version;
-use sg1::{checked_fair_burn, transfer_funds_to_launchpad_dao};
+use sg1::transfer_funds_to_launchpad_dao;
 use sg2::msg::UpdateMinterParamsMsg;
 use sg2::query::{AllowedCollectionCodeIdResponse, AllowedCollectionCodeIdsResponse, Sg2QueryMsg};
 use sg2::MinterParams;
-use sg_utils::NATIVE_DENOM;
+use sg_utils::FEE_DENOM;
 
 use crate::error::ContractError;
 use crate::msg::{
@@ -53,7 +53,7 @@ pub fn execute(
 
 pub fn execute_create_minter(
     deps: DepsMut,
-    env: Env,
+    _env: Env,
     info: MessageInfo,
     msg: BaseMinterCreateMsg,
 ) -> Result<Response, ContractError> {
@@ -64,22 +64,13 @@ pub fn execute_create_minter(
     must_not_be_frozen(&params)?;
 
     let mut res = Response::new();
-    if params.creation_fee.denom == NATIVE_DENOM {
-        checked_fair_burn(
-            &info,
-            &env,
-            params.creation_fee.amount.u128(),
-            None,
-            &mut res,
-        )?;
-    } else {
-        transfer_funds_to_launchpad_dao(
-            &info,
-            params.creation_fee.amount.u128(),
-            &params.creation_fee.denom,
-            &mut res,
-        )?;
-    }
+
+    transfer_funds_to_launchpad_dao(
+        &info,
+        params.creation_fee.amount.u128(),
+        &params.creation_fee.denom,
+        &mut res,
+    )?;
 
     let msg = WasmMsg::Instantiate {
         admin: Some(info.sender.to_string()),
@@ -165,7 +156,7 @@ pub fn update_params<T, C>(
     if let Some(min_mint_price) = param_msg.min_mint_price {
         ensure_eq!(
             &min_mint_price.denom,
-            &NATIVE_DENOM,
+            &FEE_DENOM,
             ContractError::InvalidDenom {}
         );
         params.min_mint_price = min_mint_price;

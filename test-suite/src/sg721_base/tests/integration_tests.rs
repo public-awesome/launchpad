@@ -27,7 +27,7 @@ mod tests {
 
     const GOVERNANCE: &str = "governance";
     const ADMIN: &str = "admin";
-    const NATIVE_DENOM: &str = "ustars";
+    const NATIVE_DENOM: &str = "ugaze";
 
     pub fn assert_error(res: Result<AppResponse, Error>, expected: String) {
         assert_eq!(res.unwrap_err().source().unwrap().to_string(), expected);

@@ -13,10 +13,10 @@ jobs:
     env:
       GAS_OUT_DIR: gas_reports
       ENABLE_MAX_COLLECTION: true
-      GAS_LIMIT: 150000000
+      GAS_LIMIT: 225000000
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install latest toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -25,7 +25,7 @@ jobs:
           targets: wasm32-unknown-unknown
 
       - name: Rust Dependencies Cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ~/.cargo/registry/index/
@@ -40,7 +40,7 @@ jobs:
 
       - name: Mainnet block GAS_LIMIT changed
         if: ${{ env.MAINNET_GAS_LIMIT != env.GAS_LIMIT }}
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           script: core.setFailed(`Integration tests must update GAS_LIMIT from ${process.env.GAS_LIMIT} to ${process.env.MAINNET_GAS_LIMIT}`)
 
@@ -64,7 +64,7 @@ jobs:
 
       - name: Upload Gas Report
         if: ${{ github.ref == 'refs/heads/main' }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: launchpad-gas-report-${{ env.GIT_BRANCH }}
           path: e2e/gas_report.json
@@ -79,7 +79,7 @@ jobs:
         # NOTE: We can't use github's `actions/download-artifact` because it doesnt support
         # downloading an artifact cross workflows yet
         # https://github.com/actions/download-artifact/issues/3
-        uses: dawidd6/action-download-artifact@v2
+        uses: dawidd6/action-download-artifact@v6
         with:
           branch: main
           workflow: e2e.yml

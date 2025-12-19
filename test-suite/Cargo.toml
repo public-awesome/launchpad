@@ -21,7 +21,6 @@ crate-type = ["cdylib", "rlib"]
 
 [features]
 # for more explicit tests, cargo test --features=backtraces
-backtraces = ["cosmwasm-std/backtraces"]
 # use library feature to disable all instantiate/execute/query exports
 library = []
 
@@ -38,8 +37,7 @@ sg-utils             = { workspace = true }
 cosmwasm-std         = { workspace = true }
 cw4                  = { workspace = true }
 cw-multi-test        = { workspace = true }
-sg721-base           = { workspace = true }
-sg721-updatable      = { workspace = true }
+cw721-migration      = { workspace = true, features = ["library"] }
 cw4-group            = { workspace = true }
 sg-splits            = { workspace = true }
 anyhow               = "1.0.57"
@@ -48,7 +46,6 @@ whitelist-immutable  = { workspace = true, features = ["library"] }
 cw721                = { workspace = true }
 cw721-base           = { workspace = true, features = ["library"] }
 sg2                  = { workspace = true }
-sg721                = { workspace = true }
 sg-metadata          = { workspace = true }
 open-edition-factory = { workspace = true, features = ["library"] }
 open-edition-minter  = { workspace = true, features = ["library"] }
@@ -57,7 +54,6 @@ vending-factory      = { workspace = true, features = ["library"] }
 vending-minter       = { workspace = true, features = ["library"] }
 base-factory         = { workspace = true }
 base-minter          = { workspace = true }
-sg721-nt             = { workspace = true }
 sg-controllers       = { workspace = true }
 cw-ownable           = "0.5.1"
 

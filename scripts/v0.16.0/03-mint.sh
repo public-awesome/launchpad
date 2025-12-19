@@ -8,6 +8,6 @@ EOF
 
 echo $MSG
 
-starsd tx wasm execute $MINTER "$MSG" --amount 10000000ustars \
-  --gas-prices 0.025ustars --gas 500000 --gas-adjustment 1.9 \
+starsd tx wasm execute $MINTER "$MSG" --amount 10000000ugaze \
+  --gas-prices 0.025ugaze --gas 500000 --gas-adjustment 1.9 \
   --from $ADMIN -y -b block -o json | jq .

@@ -1,4 +1,7 @@
-rust_version = "rust:1.81"
+rust_version = "rust:1.91.1"
+# Use Rust 1.83.0 for wasm builds - Rust 1.84+ enables reference-types by default
+# which isn't supported by cosmwasm-check's wasmer version
+rust_wasm_version = "rust:1.83.0"
 
 def main(ctx):
     return [
@@ -51,9 +54,9 @@ def cargo_lint(ctx):
 def cargo_wasm_build(ctx):
     return {
         "name": "wasm_build",
-        "image": rust_version,
+        "image": rust_wasm_version,
         "commands": [
-            "rustup target add wasm32-unknown-unknown", 
+            "rustup target add wasm32-unknown-unknown",
             "sh scripts/wasm_build.sh",
             "cargo install cosmwasm-check",
             "sh scripts/wasm_check.sh"
