@@ -1,14 +1,16 @@
 use cosmwasm_std::{Addr, Coin};
 use cw4::Member;
-use cw_multi_test::{App, AppBuilder};
+use cw_multi_test::{App, AppBuilder, IntoAddr};
 
-const OWNER: &str = "admin0001";
+pub fn owner_addr() -> Addr {
+    "admin0001".into_addr()
+}
 
 pub fn mock_app_builder_init_funds(init_funds: &[Coin]) -> App {
     AppBuilder::new().build(|router, _, storage| {
         router
             .bank
-            .init_balance(storage, &Addr::unchecked(OWNER), init_funds.to_vec())
+            .init_balance(storage, &owner_addr(), init_funds.to_vec())
             .unwrap();
     })
 }

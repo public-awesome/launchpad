@@ -21,7 +21,6 @@ crate-type = ["cdylib", "rlib"]
 
 [features]
 # for more explicit tests, cargo test --features=backtraces
-backtraces = ["cosmwasm-std/backtraces"]
 # use library feature to disable all instantiate/execute/query exports
 library = []
 
@@ -38,7 +37,6 @@ serde               = { workspace = true }
 sha2                = { workspace = true }
 sg1                 = { workspace = true }
 sg4                 = { workspace = true }
-sg721               = { workspace = true }
 sg-utils            = { workspace = true }
 sg-whitelist        = { workspace = true, features = ["library"] }
 thiserror           = { workspace = true }

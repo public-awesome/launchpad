@@ -8,9 +8,11 @@ use crate::common_setup::templates::{
     vending_minter_updatable_with_app, vending_minter_with_updatable_and_start_time,
 };
 use cosmwasm_std::{coins, Addr, Timestamp};
+use cw721::msg::CollectionInfoAndExtensionResponse;
+use cw721::DefaultOptionalCollectionExtension;
+use cw721_base::msg::QueryMsg as Sg721QueryMsg;
 use cw_multi_test::Executor;
 use sg2::tests::mock_collection_params_1;
-use sg721_base::msg::{CollectionInfoResponse, QueryMsg as Sg721QueryMsg};
 use sg_utils::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use vending_minter::msg::{ExecuteMsg, QueryMsg, StartTimeResponse};
 use vending_minter::ContractError;
@@ -167,7 +169,6 @@ fn test_invalid_start_time() {
         code_ids,
     );
     let minter_addr = minter_collection_response[0].minter.clone().unwrap();
-    assert_eq!(minter_addr.to_string(), "contract3");
 
     // Update to a start time in the past
     let msg = ExecuteMsg::UpdateStartTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME - 100));
@@ -283,16 +284,16 @@ fn update_start_trading_time() {
     assert!(res.is_ok());
 
     // confirm trading start time
-    let res: CollectionInfoResponse = router
+    let res: CollectionInfoAndExtensionResponse<DefaultOptionalCollectionExtension> = router
         .wrap()
         .query_wasm_smart(
             collection_addr.to_string(),
-            &Sg721QueryMsg::CollectionInfo {},
+            &Sg721QueryMsg::GetCollectionInfoAndExtension {},
         )
         .unwrap();
 
     assert_eq!(
-        res.start_trading_time,
+        res.extension.as_ref().and_then(|e| e.start_trading_time),
         Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME).plus_seconds(max_trading_offset))
     );
 }

@@ -1,5 +1,6 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Coin, Timestamp};
+use cw721::msg::RoyaltyInfoResponse;
 use sg4::StatusResponse;
 use vending_factory::{msg::VendingMinterCreateMsg, state::VendingMinterParams};
 
@@ -22,6 +23,13 @@ pub enum ExecuteMsg {
     UpdateStartTime(Timestamp),
     /// Runs custom checks against TradingStartTime on VendingMinter, then updates by calling sg721-base
     UpdateStartTradingTime(Option<Timestamp>),
+    UpdateCollectionInfo {
+        description: Option<String>,
+        image: Option<String>,
+        external_link: Option<String>,
+        explicit_content: Option<bool>,
+        royalty_info: Option<RoyaltyInfoResponse>,
+    },
     UpdatePerAddressLimit {
         per_address_limit: u32,
     },

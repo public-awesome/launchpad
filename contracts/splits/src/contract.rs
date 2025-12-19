@@ -6,7 +6,7 @@ use cosmwasm_std::{
 };
 use cw2::set_contract_version;
 use cw4::{Cw4Contract, Member, MemberListResponse, MemberResponse};
-use cw_utils::{maybe_addr, parse_reply_instantiate_data};
+use cw_utils::{maybe_addr, parse_instantiate_response_data};
 use semver::Version;
 
 use crate::error::ContractError;
@@ -220,7 +220,18 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractE
         return Err(ContractError::InvalidReplyID {});
     }
 
-    let reply = parse_reply_instantiate_data(msg);
+    let result = msg
+        .result
+        .into_result()
+        .map_err(|_| ContractError::ReplyOnSuccess {})?;
+    let data = result
+        .msg_responses
+        .first()
+        .ok_or(ContractError::ReplyOnSuccess {})?
+        .value
+        .clone();
+
+    let reply = parse_instantiate_response_data(&data);
     match reply {
         Ok(res) => {
             let group =

@@ -1,8 +1,8 @@
-use cosmwasm_std::{coins, Empty};
-use cw721::{Cw721QueryMsg, NftInfoResponse, TokensResponse};
-use cw721_base::Extension;
+use cosmwasm_std::coins;
+use cw721::msg::{NftInfoResponse, TokensResponse};
+use cw721::EmptyOptionalNftExtension;
+use cw721_base::msg::ExecuteMsg as Cw721ExecuteMsg;
 use cw_multi_test::Executor;
-use sg721_updatable::msg::ExecuteMsg as Sg721UpdatableExecMsg;
 use sg_utils::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use vending_minter::msg::ExecuteMsg;
 
@@ -33,7 +33,7 @@ fn update_token_metadata() {
     assert!(res.is_ok());
 
     // query buyer token_id
-    let query_tokens_msg = Cw721QueryMsg::Tokens {
+    let query_tokens_msg = cw721_base::msg::QueryMsg::Tokens {
         owner: buyer.to_string(),
         start_after: None,
         limit: None,
@@ -44,11 +44,12 @@ fn update_token_metadata() {
         .unwrap();
     let token_id = res.tokens[0].to_string();
 
-    // update token metadata
+    // update token metadata using cw721 UpdateNftInfo
     let token_uri = Some("ipfs://new_token_uri".to_string());
-    let msg = Sg721UpdatableExecMsg::<Empty, Empty>::UpdateTokenMetadata {
+    let msg = Cw721ExecuteMsg::UpdateNftInfo {
         token_id: token_id.clone(),
         token_uri: token_uri.clone(),
+        extension: None,
     };
     let res = router.execute_contract(creator, collection_addr.clone(), &msg, &[]);
     assert!(res.is_ok());
@@ -59,8 +60,8 @@ fn update_token_metadata() {
         .query_wasm_smart(collection_addr.clone(), &query_tokens_msg)
         .unwrap();
     assert_eq!(res.tokens[0], token_id);
-    let query_token_msg = Cw721QueryMsg::NftInfo { token_id };
-    let res: NftInfoResponse<Extension> = router
+    let query_token_msg = cw721_base::msg::QueryMsg::NftInfo { token_id };
+    let res: NftInfoResponse<EmptyOptionalNftExtension> = router
         .wrap()
         .query_wasm_smart(collection_addr, &query_token_msg)
         .unwrap();

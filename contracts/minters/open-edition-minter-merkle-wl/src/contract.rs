@@ -14,11 +14,12 @@ use crate::state::{
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     coin, ensure, to_json_binary, Addr, BankMsg, Binary, Coin, Decimal, Deps, DepsMut, Empty, Env,
-    Event, MessageInfo, Order, Reply, ReplyOn, Response, StdError, StdResult, SubMsg, Timestamp,
-    WasmMsg,
+    Event, MessageInfo, Order, Reply, Response, StdError, StdResult, SubMsg, Timestamp, WasmMsg,
 };
 use cw2::set_contract_version;
-use cw_utils::{may_pay, maybe_addr, nonpayable, parse_reply_instantiate_data};
+use cw721::msg::{CollectionExtensionMsg, CollectionInfoMsg, RoyaltyInfoResponse};
+use cw721_base::msg::{ExecuteMsg as Cw721ExecuteMsg, InstantiateMsg as Cw721InstantiateMsg};
+use cw_utils::{may_pay, maybe_addr, nonpayable, parse_instantiate_response_data};
 use open_edition_factory::msg::{OpenEditionMinterCreateMsg, ParamsResponse};
 use open_edition_factory::state::OpenEditionMinterParams;
 use open_edition_factory::types::NftMetadataType;
@@ -26,7 +27,6 @@ use semver::Version;
 use sg1::distribute_mint_fees;
 use sg2::query::Sg2QueryMsg;
 use sg4::{MinterConfig, Status, StatusResponse, SudoMsg};
-use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
 use tiered_whitelist_merkletree::msg::{QueryMsg as TieredWhitelistQueryMsg, StageResponse};
 use url::Url;
 use whitelist_mtree::msg::{
@@ -134,9 +134,7 @@ pub fn instantiate(
         factory: factory.clone(),
         collection_code_id: msg.collection_params.code_id,
         extension: ConfigExtension {
-            admin: deps
-                .api
-                .addr_validate(&msg.collection_params.info.creator)?,
+            admin: deps.api.addr_validate(&msg.collection_params.creator)?,
             payment_address: maybe_addr(deps.api, msg.init_msg.payment_address)?,
             per_address_limit: msg.init_msg.per_address_limit,
             start_time: msg.init_msg.start_time,
@@ -160,25 +158,38 @@ pub fn instantiate(
         MINTABLE_NUM_TOKENS.save(deps.storage, &factory_params.extension.max_token_limit)?;
     }
 
-    // Submessage to instantiate sg721 contract
-    let submsg = SubMsg {
-        msg: WasmMsg::Instantiate {
-            code_id: msg.collection_params.code_id,
-            msg: to_json_binary(&Sg721InstantiateMsg {
-                name: msg.collection_params.name.clone(),
-                symbol: msg.collection_params.symbol,
-                minter: env.contract.address.to_string(),
-                collection_info,
-            })?,
-            funds: info.funds,
-            admin: Some(config.extension.admin.to_string()),
-            label: format!("SG721-{}", msg.collection_params.name.trim()),
-        }
-        .into(),
-        id: INSTANTIATE_SG721_REPLY_ID,
-        gas_limit: None,
-        reply_on: ReplyOn::Success,
+    // Create collection info extension
+    let collection_info_extension = CollectionExtensionMsg {
+        description: Some(collection_info.description.clone()),
+        image: Some(collection_info.image.clone()),
+        external_link: collection_info.external_link.clone(),
+        explicit_content: collection_info.explicit_content,
+        start_trading_time: collection_info.start_trading_time,
+        royalty_info: collection_info
+            .royalty_info
+            .as_ref()
+            .map(|r| RoyaltyInfoResponse {
+                payment_address: r.payment_address.to_string(),
+                share: r.share,
+            }),
     };
+
+    // Submessage to instantiate sg721 contract
+    let wasm_msg = WasmMsg::Instantiate {
+        code_id: msg.collection_params.code_id,
+        msg: to_json_binary(&Cw721InstantiateMsg {
+            name: msg.collection_params.name.clone(),
+            symbol: msg.collection_params.symbol.clone(),
+            minter: Some(env.contract.address.to_string()),
+            creator: Some(msg.collection_params.creator.clone()),
+            collection_info_extension: Some(collection_info_extension),
+            withdraw_address: None,
+        })?,
+        funds: info.funds,
+        admin: Some(config.extension.admin.to_string()),
+        label: format!("SG721-{}", msg.collection_params.name.trim()),
+    };
+    let submsg = SubMsg::reply_on_success(wasm_msg, INSTANTIATE_SG721_REPLY_ID);
 
     Ok(Response::new()
         .add_attribute("action", "instantiate")
@@ -554,7 +565,7 @@ fn _execute_mint(
     } else {
         Decimal::bps(factory_params.mint_fee_bps)
     };
-    let network_fee = mint_price.amount * mint_fee;
+    let network_fee = mint_price.amount.mul_floor(mint_fee);
 
     if !network_fee.is_zero() {
         distribute_mint_fees(
@@ -571,19 +582,12 @@ fn _execute_mint(
     // Token ID to mint + update the config counter
     let token_id = increment_token_index(deps.storage)?.to_string();
 
-    // Create mint msg -> dependents on the NFT data type
+    // Create mint msg
     let msg = mint_nft_msg(
         sg721_address,
         token_id.clone(),
         recipient_addr.clone(),
-        match config.extension.nft_data.nft_data_type {
-            NftMetadataType::OnChainMetadata => config.extension.nft_data.extension,
-            NftMetadataType::OffChainMetadata => None,
-        },
-        match config.extension.nft_data.nft_data_type {
-            NftMetadataType::OnChainMetadata => None,
-            NftMetadataType::OffChainMetadata => config.extension.nft_data.token_uri,
-        },
+        config.extension.nft_data.token_uri.clone(),
     )?;
     res = res.add_message(msg);
 
@@ -834,9 +838,20 @@ pub fn execute_update_start_trading_time(
     // execute sg721 contract
     let msg = WasmMsg::Execute {
         contract_addr: sg721_contract_addr.to_string(),
-        msg: to_json_binary(&Sg721ExecuteMsg::<Empty, Empty>::UpdateStartTradingTime(
-            start_time,
-        ))?,
+        msg: to_json_binary(&Cw721ExecuteMsg::UpdateCollectionInfo {
+            collection_info: CollectionInfoMsg {
+                name: None,
+                symbol: None,
+                extension: Some(CollectionExtensionMsg {
+                    description: None,
+                    image: None,
+                    external_link: None,
+                    explicit_content: None,
+                    start_trading_time: start_time,
+                    royalty_info: None,
+                }),
+            },
+        })?,
         funds: vec![],
     };
 
@@ -1218,7 +1233,13 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractE
         return Err(ContractError::InvalidReplyID {});
     }
 
-    let reply = parse_reply_instantiate_data(msg);
+    let data = msg
+        .result
+        .into_result()
+        .map_err(|_| ContractError::InstantiateSg721Error {})?;
+    let msg_responses = data.data.ok_or(ContractError::InstantiateSg721Error {})?;
+
+    let reply = parse_instantiate_response_data(&msg_responses);
     match reply {
         Ok(res) => {
             let sg721_address = res.contract_address;

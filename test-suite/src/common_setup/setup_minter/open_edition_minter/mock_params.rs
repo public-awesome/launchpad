@@ -9,7 +9,7 @@ use sg_utils::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
 use crate::common_setup::msg::OpenEditionMinterCustomParams;
 use crate::common_setup::setup_minter::common::constants::{
-    CREATION_FEE, DEV_ADDRESS, MAX_TOKEN_LIMIT, MINT_FEE_FAIR_BURN, MIN_MINT_PRICE_OPEN_EDITION,
+    dev_address, CREATION_FEE, MAX_TOKEN_LIMIT, MINT_FEE_FAIR_BURN, MIN_MINT_PRICE_OPEN_EDITION,
 };
 
 #[allow(clippy::too_many_arguments)]
@@ -89,7 +89,7 @@ pub fn mock_params_proper() -> OpenEditionMinterParams {
                 denom: NATIVE_DENOM.to_string(),
                 amount: Uint128::new(100_000_000u128),
             },
-            dev_fee_address: DEV_ADDRESS.to_string(),
+            dev_fee_address: dev_address().to_string(),
         },
     }
 }
@@ -116,7 +116,7 @@ pub fn mock_params_custom(custom_params: OpenEditionMinterCustomParams) -> OpenE
                 denom: denom.to_string(),
                 amount: airdrop_mint_price_amount,
             },
-            dev_fee_address: DEV_ADDRESS.to_string(),
+            dev_fee_address: dev_address().to_string(),
         },
     }
 }
@@ -138,7 +138,7 @@ pub fn mock_params_custom_min_mint_price(
             max_per_address_limit: 10,
             airdrop_mint_fee_bps: 100,
             airdrop_mint_price,
-            dev_fee_address: DEV_ADDRESS.to_string(),
+            dev_fee_address: dev_address().to_string(),
         },
     }
 }

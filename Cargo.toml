@@ -22,27 +22,24 @@ license      = "Apache-2.0"
 [workspace.dependencies]
 base-factory        = { version = "3.15.0", path = "contracts/factories/base-factory" }
 base-minter         = { version = "3.15.0", path = "contracts/minters/base-minter" }
-cosmwasm-schema     = "1.5.10"
-cosmwasm-std        = { version = "1.5.10", features = ["cosmwasm_1_4"] }
-cw-controllers      = "1.1.0"
-cw2                 = "1.1.0"
-cw4                 = "1.1.0"
-cw4-group           = "1.1.0"
-cw721               = "0.18.0"
-cw721-base          = "0.18.0"
-cw-multi-test       = "1.2.0"
-cw-storage-plus     = "1.1.0"
-cw-utils            = "1.0.1"
+cosmwasm-schema     = "2.2.1"
+cosmwasm-std        = { version = "2.2.1", features = ["cosmwasm_2_1"] }
+cw-controllers      = "2.0.0"
+cw2                 = "2.0.0"
+cw4                 = "2.0.0"
+cw4-group           = "2.0.0"
+cw721               = "0.20.0"
+cw721-base          = "0.20.0"
+cw721-migration     = { version = "3.16.0", path = "contracts/collections/cw721-migration" }
+cw-multi-test       = { version = "2.3.0", features = ["staking", "stargate", "cosmwasm_2_1"] }
+cw-storage-plus     = "2.0.0"
+cw-utils            = "2.0.0"
 schemars            = "0.8.11"
 serde               = { version = "1.0.145", default-features = false, features = ["derive"] }
 sg1                 = { version = "3.15.0", path = "packages/sg1" }
 sg2                 = { version = "3.15.0", path = "packages/sg2" }
 sg4                 = { version = "3.15.0", path = "packages/sg4" }
-sg721               = { version = "3.15.0", path = "packages/sg721" }
 sg-utils            = { version = "3.15.0", path = "packages/sg-utils" }
-sg721-base          = { version = "3.15.0", path = "contracts/collections/sg721-base" }
-sg721-nt            = { version = "3.15.0", path = "contracts/collections/sg721-nt" }
-sg721-updatable     = { version = "3.15.0", path = "contracts/collections/sg721-updatable" }
 sg-controllers      = { version = "3.15.0", path = "packages/controllers" }
 sg-metadata         = { version = "3.15.0", path = "packages/sg-metadata" }
 sg-mint-hooks       = { version = "3.15.0", path = "packages/mint-hooks" }
@@ -70,10 +67,10 @@ sg-eth-airdrop              = { version = "3.15.0", path = "contracts/sg-eth-air
 test-suite                  = { version = "3.15.0", path = "test-suite" }
 nois                        = { version = "2.0.0" }
 semver                      = "1"
-cw-ownable                  = "0.5.1"
+cw-ownable                  = "2.0.0"
 anybuf                      = "0.5.2"
 
-[profile.release.package.sg721]
+[profile.release.package.cw721-migration]
 codegen-units = 1
 incremental   = false
 
@@ -90,18 +87,6 @@ codegen-units = 1
 incremental   = false
 
 [profile.release.package.sg4]
-codegen-units = 1
-incremental   = false
-
-[profile.release.package.sg721-base]
-codegen-units = 1
-incremental   = false
-
-[profile.release.package.sg721-nt]
-codegen-units = 1
-incremental   = false
-
-[profile.release.package.sg721-updatable]
 codegen-units = 1
 incremental   = false
 

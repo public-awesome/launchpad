@@ -15,7 +15,10 @@ use crate::msg::{
 use crate::state::{AdminList, Config, Stage, ADMIN_LIST, CONFIG, MEMBER_COUNT, WHITELIST_STAGES};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{ensure, to_json_binary, Addr, Binary, Coin, Deps, DepsMut, Env, MessageInfo, Response, StdResult, Timestamp, Uint128};
+use cosmwasm_std::{
+    ensure, to_json_binary, Addr, Binary, Coin, Deps, DepsMut, Env, MessageInfo, Response,
+    StdResult, Timestamp, Uint128,
+};
 use cosmwasm_std::{Order, StdError};
 use cw2::set_contract_version;
 use cw_storage_plus::Bound;

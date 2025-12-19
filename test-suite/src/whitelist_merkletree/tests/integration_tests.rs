@@ -2,7 +2,7 @@
 mod tests {
     use cosmwasm_std::{coin, coins, Addr, Timestamp};
     use cw_multi_test::Executor;
-    use cw_multi_test::{BankSudo, SudoMsg as CWSudoMsg};
+    use cw_multi_test::{BankSudo, IntoAddr, SudoMsg as CWSudoMsg};
     use rs_merkle::MerkleTree;
 
     use sg_utils::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
@@ -18,7 +18,9 @@ mod tests {
 
     type Tree = MerkleTree<SortingSha256Hasher>;
 
-    const CREATOR: &str = "creator";
+    fn creator() -> Addr {
+        "creator".into_addr()
+    }
     const START_TIME: Timestamp = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
     const END_TIME: Timestamp = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 1000);
 
@@ -51,9 +53,10 @@ mod tests {
         per_address_limit: u32,
         merkle_root: String,
     ) -> Addr {
+        let creator = creator();
         app.sudo(CWSudoMsg::Bank({
             BankSudo::Mint {
-                to_address: CREATOR.to_string(),
+                to_address: creator.to_string(),
                 amount: coins(1000000000u128, NATIVE_DENOM),
             }
         }))
@@ -72,7 +75,7 @@ mod tests {
         let wl_id = app.store_code(contract_whitelist_merkletree());
         app.instantiate_contract(
             wl_id,
-            Addr::unchecked(CREATOR),
+            creator,
             &msg,
             &[coin(1000000000u128, NATIVE_DENOM)],
             "wl-contract-mtree".to_string(),

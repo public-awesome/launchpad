@@ -9,14 +9,16 @@ use base_factory::msg::{BaseMinterCreateMsg, BaseUpdateParamsMsg, SudoMsg};
 
 use base_minter::msg::{ConfigResponse, ExecuteMsg};
 use cosmwasm_std::{coin, coins, Addr, Timestamp};
-use cw721::{Cw721ExecuteMsg, Cw721QueryMsg, OwnerOfResponse};
+use cw721::msg::{CollectionInfoAndExtensionResponse, OwnerOfResponse};
+use cw721::DefaultOptionalCollectionExtension;
+use cw721_base::msg::{ExecuteMsg as Cw721ExecuteMsg, QueryMsg as Cw721QueryMsg};
+type Sg721QueryMsg = Cw721QueryMsg;
 use cw_multi_test::Executor;
 use sg2::msg::Sg2ExecuteMsg;
 use sg2::query::{AllowedCollectionCodeIdsResponse, Sg2QueryMsg};
 use sg2::tests::mock_collection_params_1;
 use sg4::QueryMsg;
-use sg721_base::msg::{CollectionInfoResponse, QueryMsg as Sg721QueryMsg};
-use sg_utils::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
+use sg_utils::{FEE_DENOM, GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
 #[test]
 fn init() {
@@ -73,16 +75,37 @@ fn update_code_id() {
         init_msg: None,
         collection_params,
     };
-    msg.collection_params.info.creator = creator.to_string();
+    msg.collection_params.creator = creator.to_string();
     let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
     let msg = Sg2ExecuteMsg::CreateMinter(msg);
     let res = router.execute_contract(creator, factory, &msg, &creation_fee);
     assert!(res.is_ok());
 
+    // Extract collection address from the response events
+    // There are two instantiate events: minter (code_id 1) and collection (code_id = sg721_code_id)
+    // We need the collection address which is the second instantiate event
+    let res = res.unwrap();
+    let instantiate_events: Vec<_> = res
+        .events
+        .iter()
+        .filter(|e| e.ty == "instantiate")
+        .collect();
+
+    // The collection is the second instantiate event (after the minter)
+    let collection_addr = instantiate_events
+        .get(1)
+        .and_then(|e| {
+            e.attributes
+                .iter()
+                .find(|a| a.key == "_contract_address" || a.key == "_contract_addr")
+                .map(|a| a.value.clone())
+        })
+        .expect("Collection address not found in events");
+
     // confirm new sg721 code id == sg721_code_id
     let res = router
         .wrap()
-        .query_wasm_contract_info("contract2".to_string())
+        .query_wasm_contract_info(collection_addr)
         .unwrap();
     assert!(res.code_id == sg721_code_id);
 }
@@ -109,7 +132,7 @@ fn check_mint() {
         creator.clone(),
         minter_addr.clone(),
         &mint_msg,
-        &[coin(MIN_MINT_PRICE + 100, NATIVE_DENOM)],
+        &[coin(MIN_MINT_PRICE + 100, FEE_DENOM)],
     );
     assert!(err.is_err());
 
@@ -121,7 +144,7 @@ fn check_mint() {
         buyer,
         minter_addr.clone(),
         &mint_msg,
-        &[coin(MIN_MINT_PRICE, NATIVE_DENOM)],
+        &[coin(MIN_MINT_PRICE, FEE_DENOM)],
     );
     assert!(err.is_err());
 
@@ -133,26 +156,28 @@ fn check_mint() {
         creator.clone(),
         minter_addr.clone(),
         &mint_msg,
-        &[coin(MIN_MINT_PRICE, NATIVE_DENOM)],
+        &[coin(MIN_MINT_PRICE, FEE_DENOM)],
     );
 
     println!("res is {res:?}");
     assert!(res.is_ok());
 
-    let creator_balances = router.wrap().query_all_balances(creator.clone()).unwrap();
+    // Check FEE_DENOM balance (used for minting)
+    let creator_fee_balance = router
+        .wrap()
+        .query_balance(creator.clone(), FEE_DENOM)
+        .unwrap();
     assert_eq!(
-        creator_balances,
-        coins(
-            (INITIAL_BALANCE + CREATION_FEE) - CREATION_FEE - MIN_MINT_PRICE,
-            NATIVE_DENOM
-        )
+        creator_fee_balance.amount.u128(),
+        (INITIAL_BALANCE + CREATION_FEE) - MIN_MINT_PRICE
     );
 
     let res: ConfigResponse = router
         .wrap()
         .query_wasm_smart(minter_addr, &QueryMsg::Config {})
         .unwrap();
-    assert_eq!(res.collection_address, "contract2".to_string());
+    // With MockApiBech32, collection_address is a proper bech32 address
+    assert_eq!(res.collection_address, collection_addr.to_string());
     assert_eq!(res.config.mint_price.amount.u128(), MIN_MINT_PRICE);
 
     let query_owner_msg = Cw721QueryMsg::OwnerOf {
@@ -219,9 +244,15 @@ fn update_start_trading_time() {
     assert!(res.is_ok());
 
     // confirm trading start time
-    let res: CollectionInfoResponse = router
+    let res: CollectionInfoAndExtensionResponse<DefaultOptionalCollectionExtension> = router
         .wrap()
-        .query_wasm_smart(collection_addr, &Sg721QueryMsg::CollectionInfo {})
+        .query_wasm_smart(
+            collection_addr,
+            &Sg721QueryMsg::GetCollectionInfoAndExtension {},
+        )
         .unwrap();
-    assert_eq!(res.start_trading_time, Some(default_start_trading_time));
+    assert_eq!(
+        res.extension.as_ref().and_then(|e| e.start_trading_time),
+        Some(default_start_trading_time)
+    );
 }

@@ -1,7 +1,7 @@
 use crate::state::TokenMergeFactoryParams;
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Coin, Timestamp};
-use sg721::{CollectionInfo, RoyaltyInfoResponse};
+use cw721::state::{CollectionExtension, RoyaltyInfo};
 
 #[cw_serde]
 pub struct InstantiateMsg {
@@ -23,7 +23,9 @@ pub struct CollectionParams {
     pub code_id: u64,
     pub name: String,
     pub symbol: String,
-    pub info: CollectionInfo<RoyaltyInfoResponse>,
+    /// Collection creator address
+    pub creator: String,
+    pub info: CollectionExtension<RoyaltyInfo>,
 }
 #[cw_serde]
 pub struct CreateMinterMsg<T> {

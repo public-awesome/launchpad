@@ -159,7 +159,9 @@ pub fn fair_burn(sender: String, fee: u128, developer: Option<Addr>, res: &mut R
     let mut event = Event::new("fair-burn");
 
     // calculate the fair burn fee
-    let burn_fee = (Uint128::from(fee) * Decimal::percent(FEE_BURN_PERCENT)).u128();
+    let burn_fee = Uint128::from(fee)
+        .mul_floor(Decimal::percent(FEE_BURN_PERCENT))
+        .u128();
     let burn_coin = coins(burn_fee, NATIVE_DENOM);
     res.messages
         .push(SubMsg::new(BankMsg::Burn { amount: burn_coin }));
@@ -198,10 +200,10 @@ fn encode_msg_fund_fairburn_pool(sender: String, amount: &Coin) -> Vec<u8> {
 }
 
 fn create_fund_fairburn_pool_msg(sender: String, amount: &Coin) -> CosmosMsg {
-    CosmosMsg::Stargate {
+    CosmosMsg::Any(cosmwasm_std::AnyMsg {
         type_url: "/publicawesome.stargaze.alloc.v1beta1.MsgFundFairburnPool".to_string(),
         value: encode_msg_fund_fairburn_pool(sender, amount).into(),
-    }
+    })
 }
 pub fn transfer_funds_to_launchpad_dao(
     info: &MessageInfo,

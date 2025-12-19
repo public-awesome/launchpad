@@ -9,7 +9,7 @@ use sg2::msg::Sg2ExecuteMsg;
 use sg2::tests::mock_collection_params_1;
 
 use crate::common_setup::setup_minter::common::constants::MIN_MINT_PRICE_OPEN_EDITION;
-use crate::common_setup::setup_minter::common::constants::{CREATION_FEE, DEV_ADDRESS};
+use crate::common_setup::setup_minter::common::constants::{dev_address, CREATION_FEE};
 use crate::common_setup::setup_minter::open_edition_minter::minter_params::{
     default_nft_data, init_msg,
 };
@@ -26,7 +26,7 @@ fn frozen_factory_cannot_create_new_minters() {
             denom: NATIVE_DENOM.to_string(),
             amount: Uint128::new(100_000_000u128),
         },
-        dev_fee_address: DEV_ADDRESS.to_string(),
+        dev_fee_address: dev_address().to_string(),
     };
     let init_msg = init_msg(
         default_nft_data(),
@@ -93,7 +93,7 @@ fn frozen_factory_cannot_create_new_minters() {
         None,
     );
     msg.collection_params.code_id = 3;
-    msg.collection_params.info.creator = creator.to_string();
+    msg.collection_params.creator = creator.to_string();
     let creation_fee = coins(CREATION_FEE, NATIVE_DENOM);
     let msg = Sg2ExecuteMsg::CreateMinter(msg);
     router

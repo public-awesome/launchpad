@@ -8,8 +8,9 @@ mod base_minter;
 mod open_edition_factory;
 #[cfg(test)]
 mod open_edition_minter;
-#[cfg(test)]
-mod sg721_base;
+// Disabled: sg721_base has been replaced with cw721-migration
+// #[cfg(test)]
+// mod sg721_base;
 #[cfg(test)]
 mod sg_eth_airdrop;
 #[cfg(test)]

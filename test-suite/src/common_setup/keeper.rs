@@ -1,39 +1,35 @@
 use anybuf::Bufany;
 use cosmwasm_std::{
-    coins, Addr, Api, BankMsg, Binary, BlockInfo, CustomMsg, CustomQuery, Empty, Querier, Storage,
+    coins, Addr, AnyMsg, Api, BankMsg, Binary, BlockInfo, CustomMsg, CustomQuery, Querier, Storage,
 };
 use cw_multi_test::error::{bail, AnyResult};
-use cw_multi_test::{AppResponse, CosmosRouter, Module, Stargate, StargateMsg, StargateQuery};
+use cw_multi_test::{AppResponse, CosmosRouter, Stargate};
 use serde::de::DeserializeOwned;
 use sg_utils::NATIVE_DENOM;
-use std::marker::PhantomData;
 
-pub struct StargazeKeeper<ExecT, QueryT, SudoT>(PhantomData<(ExecT, QueryT, SudoT)>);
+pub struct StargazeStargateKeeper;
 
-#[allow(clippy::new_without_default)]
-impl<ExecT, QueryT, SudoT> StargazeKeeper<ExecT, QueryT, SudoT> {
+impl StargazeStargateKeeper {
     pub fn new() -> Self {
-        Self(Default::default())
+        Self
     }
 }
 
-pub type StargazeStargateKeeper = StargazeKeeper<StargateMsg, StargateQuery, Empty>;
-impl Stargate for StargazeStargateKeeper {}
+impl Default for StargazeStargateKeeper {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
-impl Module for StargazeStargateKeeper {
-    // These associated types must match your type alias.
-    type ExecT = StargateMsg;
-    type QueryT = StargateQuery;
-    type SudoT = Empty;
-
-    fn execute<ExecC, QueryC>(
+impl Stargate for StargazeStargateKeeper {
+    fn execute_any<ExecC, QueryC>(
         &self,
         api: &dyn Api,
         storage: &mut dyn Storage,
         router: &dyn CosmosRouter<ExecC = ExecC, QueryC = QueryC>,
         block: &BlockInfo,
         sender: Addr,
-        msg: Self::ExecT,
+        msg: AnyMsg,
     ) -> AnyResult<AppResponse>
     where
         ExecC: CustomMsg + DeserializeOwned + 'static,
@@ -51,12 +47,12 @@ impl Module for StargazeStargateKeeper {
                 let denom = decoded_amount.string(1).unwrap();
                 assert_eq!(NATIVE_DENOM, denom);
                 let amount = decoded_amount.string(2).unwrap();
-                let msg = BankMsg::Send {
+                let bank_msg = BankMsg::Send {
                     to_address: "fairburn_pool".to_owned(),
                     amount: coins(amount.parse::<u128>()?, denom),
                 }
                 .into();
-                let resp = router.execute(api, storage, block, sender, msg);
+                let resp = router.execute(api, storage, block, sender, bank_msg);
                 match resp {
                     Ok(_) => Ok(AppResponse::default()),
                     Err(e) => bail!("Error executing fairburn pool funding: {}", e),
@@ -66,28 +62,13 @@ impl Module for StargazeStargateKeeper {
         }
     }
 
-    fn sudo<ExecC, QueryC>(
-        &self,
-        _api: &dyn Api,
-        _storage: &mut dyn Storage,
-        _router: &dyn CosmosRouter<ExecC = ExecC, QueryC = QueryC>,
-        _block: &BlockInfo,
-        _msg: Self::SudoT,
-    ) -> AnyResult<AppResponse>
-    where
-        ExecC: CustomMsg + DeserializeOwned + 'static,
-        QueryC: CustomQuery + DeserializeOwned + 'static,
-    {
-        Ok(AppResponse::default())
-    }
-
-    fn query(
+    fn query_grpc(
         &self,
         _api: &dyn Api,
         _storage: &dyn Storage,
         _querier: &dyn Querier,
         _block: &BlockInfo,
-        _request: Self::QueryT,
+        _request: cosmwasm_std::GrpcQuery,
     ) -> AnyResult<Binary> {
         Ok(Binary::default())
     }

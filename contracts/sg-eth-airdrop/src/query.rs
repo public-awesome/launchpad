@@ -25,9 +25,7 @@ pub fn query_airdrop_is_eligible(deps: Deps, eth_address: String) -> StdResult<b
     match config.whitelist_address {
         Some(address) => WhitelistImmutableContract(deps.api.addr_validate(&address)?)
             .includes(&deps.querier, eth_address),
-        None => Err(cosmwasm_std::StdError::NotFound {
-            kind: "Whitelist Contract".to_string(),
-        }),
+        None => Err(cosmwasm_std::StdError::not_found("Whitelist Contract")),
     }
 }
 
@@ -46,8 +44,6 @@ pub fn query_per_address_limit(deps: &Deps) -> StdResult<u32> {
     match config.whitelist_address {
         Some(address) => WhitelistImmutableContract(deps.api.addr_validate(&address)?)
             .per_address_limit(&deps.querier),
-        None => Err(cosmwasm_std::StdError::NotFound {
-            kind: "Whitelist Contract".to_string(),
-        }),
+        None => Err(cosmwasm_std::StdError::not_found("Whitelist Contract")),
     }
 }

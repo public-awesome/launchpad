@@ -1,11 +1,9 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
-    to_json_binary, Addr, Coin, ContractInfoResponse, CosmosMsg, CustomQuery, Empty, Querier,
+    to_json_binary, Addr, Coin, ContractInfoResponse, CosmosMsg, CustomQuery, Querier,
     QuerierWrapper, StdError, StdResult, WasmMsg, WasmQuery,
 };
-use cw721_base::Extension;
-use sg721::ExecuteMsg as Sg721ExecuteMsg;
-use sg_metadata::Metadata;
+use cw721_base::msg::ExecuteMsg as Cw721ExecuteMsg;
 
 use crate::msg::{ConfigResponse, ExecuteMsg, QueryMsg};
 
@@ -67,31 +65,17 @@ pub fn mint_nft_msg(
     sg721_address: Addr,
     token_id: String,
     recipient_addr: Addr,
-    extension: Option<Metadata>,
     token_uri: Option<String>,
 ) -> Result<CosmosMsg, StdError> {
-    let mint_msg = if let Some(extension) = extension {
-        CosmosMsg::Wasm(WasmMsg::Execute {
-            contract_addr: sg721_address.to_string(),
-            msg: to_json_binary(&Sg721ExecuteMsg::<Metadata, Empty>::Mint {
-                token_id,
-                owner: recipient_addr.to_string(),
-                token_uri: None,
-                extension,
-            })?,
-            funds: vec![],
-        })
-    } else {
-        CosmosMsg::Wasm(WasmMsg::Execute {
-            contract_addr: sg721_address.to_string(),
-            msg: to_json_binary(&Sg721ExecuteMsg::<Extension, Empty>::Mint {
-                token_id,
-                owner: recipient_addr.to_string(),
-                token_uri,
-                extension: None,
-            })?,
-            funds: vec![],
-        })
-    };
+    let mint_msg = CosmosMsg::Wasm(WasmMsg::Execute {
+        contract_addr: sg721_address.to_string(),
+        msg: to_json_binary(&Cw721ExecuteMsg::Mint {
+            token_id,
+            owner: recipient_addr.to_string(),
+            token_uri,
+            extension: None,
+        })?,
+        funds: vec![],
+    });
     Ok(mint_msg)
 }

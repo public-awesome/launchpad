@@ -8,7 +8,8 @@ use cosmwasm_std::{
     testing::{mock_dependencies_with_balance, mock_env, mock_info},
     Api, Coin, Timestamp, Uint128,
 };
-use cw721::{Cw721QueryMsg, OwnerOfResponse};
+use cw721::msg::{OwnerOfResponse, TokensResponse};
+use cw721_base::msg::QueryMsg as Cw721QueryMsg;
 use cw_multi_test::Executor;
 use sg2::tests::mock_collection_params_1;
 use sg_utils::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
@@ -25,48 +26,43 @@ const MAX_TOKEN_LIMIT: u32 = 10000;
 fn initialization() {
     let mut deps = mock_dependencies_with_balance(&coins(2, "token"));
 
-    // Check valid addr
-    let addr = "earth1";
-    let res = deps.api.addr_validate(addr);
-    assert!(res.is_ok());
+    // Create valid bech32 address for creator using the MockApi
+    let creator_addr = deps.api.addr_make("creator");
 
     // 0 per address limit returns error
-    let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
-    // let mut msg = minter_init();
+    let info = mock_info(creator_addr.as_str(), &coins(INITIAL_BALANCE, NATIVE_DENOM));
 
     let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME);
-    let collection_params = mock_collection_params_1(Some(start_time));
+    let mut collection_params = mock_collection_params_1(Some(start_time));
+    collection_params.creator = creator_addr.to_string();
     let mut msg = mock_create_minter(None, collection_params.clone(), None);
     msg.init_msg.num_tokens = 100;
     msg.collection_params.code_id = 1;
-    msg.collection_params.info.creator = info.sender.to_string();
+    msg.collection_params.creator = creator_addr.to_string();
 
     instantiate(deps.as_mut(), mock_env(), info, msg.clone()).unwrap_err();
 
     // Invalid uri returns error
-    let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
+    let info = mock_info(creator_addr.as_str(), &coins(INITIAL_BALANCE, NATIVE_DENOM));
     instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
 
     // Invalid denom returns error
     let wrong_denom = "uosmo";
-    let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
-    // let mut msg = minter_init();
+    let info = mock_info(creator_addr.as_str(), &coins(INITIAL_BALANCE, NATIVE_DENOM));
     let mut msg = mock_create_minter(None, collection_params.clone(), None);
-    // msg.init_msg.mint_price = 100;
     msg.init_msg.mint_price = coin(MINT_PRICE, wrong_denom);
 
     instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
 
     // Insufficient mint price returns error
-    let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
+    let info = mock_info(creator_addr.as_str(), &coins(INITIAL_BALANCE, NATIVE_DENOM));
     let mut msg = mock_create_minter(None, collection_params.clone(), None);
     msg.init_msg.mint_price = coin(1, NATIVE_DENOM);
 
     instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
 
     // Over max token limit
-    let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
-    // let mut msg = minter_init();
+    let info = mock_info(creator_addr.as_str(), &coins(INITIAL_BALANCE, NATIVE_DENOM));
     let mut msg = mock_create_minter(None, collection_params.clone(), None);
     msg.init_msg.mint_price = coin(MINT_PRICE, NATIVE_DENOM);
     msg.init_msg.num_tokens = MAX_TOKEN_LIMIT + 1;
@@ -74,8 +70,7 @@ fn initialization() {
     instantiate(deps.as_mut(), mock_env(), info, msg).unwrap_err();
 
     // Under min token limit
-    let info = mock_info("creator", &coins(INITIAL_BALANCE, NATIVE_DENOM));
-    // let mut msg = minter_init();
+    let info = mock_info(creator_addr.as_str(), &coins(INITIAL_BALANCE, NATIVE_DENOM));
     let mut msg = mock_create_minter(None, collection_params, None);
     msg.init_msg.num_tokens = 0;
 
@@ -123,17 +118,20 @@ fn happy_path() {
 
     // Balances are correct
     // The creator should get the unit price - mint fee for the mint above
-    let creator_balances = router.wrap().query_all_balances(creator.clone()).unwrap();
+    let creator_balance = router
+        .wrap()
+        .query_balance(creator.clone(), NATIVE_DENOM)
+        .unwrap();
     assert_eq!(
-        creator_balances,
-        coins(INITIAL_BALANCE + MINT_PRICE - MINT_FEE, NATIVE_DENOM)
+        creator_balance.amount.u128(),
+        INITIAL_BALANCE + MINT_PRICE - MINT_FEE
     );
     // The buyer's tokens should reduce by unit price
-    let buyer_balances = router.wrap().query_all_balances(buyer.clone()).unwrap();
-    assert_eq!(
-        buyer_balances,
-        coins(INITIAL_BALANCE - MINT_PRICE, NATIVE_DENOM)
-    );
+    let buyer_balance = router
+        .wrap()
+        .query_balance(buyer.clone(), NATIVE_DENOM)
+        .unwrap();
+    assert_eq!(buyer_balance.amount.u128(), INITIAL_BALANCE - MINT_PRICE);
 
     let res: MintCountResponse = router
         .wrap()
@@ -147,10 +145,23 @@ fn happy_path() {
     assert_eq!(res.count, 1);
     assert_eq!(res.address, buyer.to_string());
 
+    // Query all tokens to get the actual minted token ID
+    // (vending-minter shuffles token IDs, so we can't assume the order)
+    let all_tokens_query = Cw721QueryMsg::AllTokens {
+        start_after: None,
+        limit: None,
+    };
+    let all_tokens: TokensResponse = router
+        .wrap()
+        .query_wasm_smart(collection_addr.clone(), &all_tokens_query)
+        .unwrap();
+    assert!(!all_tokens.tokens.is_empty(), "No tokens minted");
+
     // Check NFT owned by buyer
-    // Random mint token_id 1
+    let token_id = all_tokens.tokens[0].clone();
+
     let query_owner_msg = Cw721QueryMsg::OwnerOf {
-        token_id: String::from("2"),
+        token_id: token_id.clone(),
         include_expired: None,
     };
 
@@ -207,9 +218,17 @@ fn happy_path() {
         .unwrap();
     assert_eq!(0, minter_balance.len());
 
-    // Check that NFT is transferred
+    // Check that NFT is transferred - query all tokens again to get the second token
+    let all_tokens: TokensResponse = router
+        .wrap()
+        .query_wasm_smart(collection_addr.clone(), &all_tokens_query)
+        .unwrap();
+    // Both tokens should now belong to buyer
+    assert_eq!(all_tokens.tokens.len(), 2);
+    // Check the second token (MintTo'd one) is also owned by buyer
+    let second_token_id = all_tokens.tokens.iter().find(|t| **t != token_id).unwrap();
     let query_owner_msg = Cw721QueryMsg::OwnerOf {
-        token_id: String::from("1"),
+        token_id: second_token_id.clone(),
         include_expired: None,
     };
     let res: OwnerOfResponse = router

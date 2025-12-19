@@ -1,12 +1,14 @@
 use crate::common_setup::keeper::StargazeStargateKeeper;
-use cosmwasm_std::testing::{MockApi, MockStorage};
+use cosmwasm_std::testing::MockStorage;
 use cosmwasm_std::Empty;
 use cw_multi_test::{
-    no_init, AppBuilder, BankKeeper, Contract, ContractWrapper, FailingModule, WasmKeeper,
+    no_init, AppBuilder, BankKeeper, Contract, ContractWrapper, FailingModule, MockApiBech32,
+    WasmKeeper,
 };
+
 pub type App = cw_multi_test::App<
     BankKeeper,
-    MockApi,
+    MockApiBech32,
     MockStorage,
     FailingModule<Empty, Empty, Empty>,
     WasmKeeper<Empty, Empty>,
@@ -19,8 +21,11 @@ pub type App = cw_multi_test::App<
 
 pub fn custom_mock_app() -> App {
     let stargate_keeper = StargazeStargateKeeper::new();
-    let app_builder = AppBuilder::default();
-    app_builder.with_stargate(stargate_keeper).build(no_init)
+    let api = MockApiBech32::new("cosmwasm");
+    AppBuilder::default()
+        .with_api(api)
+        .with_stargate(stargate_keeper)
+        .build(no_init)
 }
 pub fn contract_vending_factory() -> Box<dyn Contract<Empty>> {
     let contract = ContractWrapper::new(
@@ -64,9 +69,9 @@ pub fn contract_base_minter() -> Box<dyn Contract<Empty>> {
 
 pub fn contract_nt_collection() -> Box<dyn Contract<Empty>> {
     let contract = ContractWrapper::new(
-        sg721_nt::entry::execute,
-        sg721_nt::entry::instantiate,
-        sg721_nt::entry::query,
+        cw721_migration::entry::execute,
+        cw721_migration::entry::instantiate,
+        cw721_migration::entry::query,
     );
     Box::new(contract)
 }
@@ -102,20 +107,20 @@ pub fn contract_vending_minter() -> Box<dyn Contract<Empty>> {
 
 pub fn contract_sg721_base() -> Box<dyn Contract<Empty>> {
     let contract = ContractWrapper::new(
-        sg721_base::entry::execute,
-        sg721_base::entry::instantiate,
-        sg721_base::entry::query,
+        cw721_migration::entry::execute,
+        cw721_migration::entry::instantiate,
+        cw721_migration::entry::query,
     );
     Box::new(contract)
 }
 
 pub fn contract_sg721_updatable() -> Box<dyn Contract<Empty>> {
     let contract = ContractWrapper::new(
-        sg721_updatable::entry::execute,
-        sg721_updatable::entry::instantiate,
-        sg721_updatable::entry::query,
+        cw721_migration::entry::execute,
+        cw721_migration::entry::instantiate,
+        cw721_migration::entry::query,
     )
-    .with_migrate(sg721_updatable::entry::migrate);
+    .with_migrate(cw721_migration::entry::migrate);
     Box::new(contract)
 }
 

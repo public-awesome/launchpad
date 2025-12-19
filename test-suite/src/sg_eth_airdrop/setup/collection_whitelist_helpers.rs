@@ -1,4 +1,4 @@
-use crate::sg_eth_airdrop::constants::claim_constants::{NATIVE_DENOM, STARGAZE_WALLET_01};
+use crate::sg_eth_airdrop::constants::claim_constants::{stargaze_wallet_01, NATIVE_DENOM};
 use crate::sg_eth_airdrop::constants::collection_constants::{MINT_PRICE, WHITELIST_AMOUNT};
 
 use crate::common_setup::contract_boxes::App;
@@ -33,16 +33,16 @@ pub fn send_funds_to_address(app: &mut App, target_address_str: &str, amount: u1
 
 pub fn execute_mint_fail_not_on_whitelist(app: &mut App, minter_addr: Addr) {
     //before mintlist add, fail
-    let stargaze_wallet_01 = Addr::unchecked(STARGAZE_WALLET_01);
+    let wallet_01 = stargaze_wallet_01();
     let mint_msg = vending_minter::msg::ExecuteMsg::Mint {};
     let res = app.execute_contract(
-        stargaze_wallet_01,
+        wallet_01.clone(),
         minter_addr,
         &mint_msg,
         &coins(MINT_PRICE, NATIVE_DENOM),
     );
 
-    let expected_error = format!("address not on whitelist: {STARGAZE_WALLET_01}");
+    let expected_error = format!("address not on whitelist: {}", wallet_01);
     assert_eq!(res.unwrap_err().root_cause().to_string(), expected_error);
 }
 

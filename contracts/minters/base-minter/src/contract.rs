@@ -2,7 +2,6 @@ use crate::error::ContractError;
 use crate::msg::{ConfigResponse, ExecuteMsg};
 use crate::state::{increment_token_index, Config, COLLECTION_ADDRESS, CONFIG, STATUS};
 use base_factory::msg::{BaseMinterCreateMsg, ParamsResponse};
-use base_factory::state::Extension;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
@@ -10,12 +9,15 @@ use cosmwasm_std::{
     Reply, Response, StdResult, SubMsg, Timestamp, WasmMsg,
 };
 use cw2::set_contract_version;
-use cw_utils::{must_pay, nonpayable, parse_reply_instantiate_data};
+use cw721::msg::{CollectionExtensionMsg, RoyaltyInfoResponse};
+use cw721::Ownership;
+use cw721_base::msg::{
+    ExecuteMsg as Cw721ExecuteMsg, InstantiateMsg as Cw721InstantiateMsg, QueryMsg as Cw721QueryMsg,
+};
+use cw_utils::{must_pay, nonpayable, parse_instantiate_response_data};
 use sg1::transfer_funds_to_launchpad_dao;
 use sg2::query::Sg2QueryMsg;
 use sg4::{QueryMsg, Status, StatusResponse, SudoMsg};
-use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
-use sg721_base::msg::{CollectionInfoResponse, QueryMsg as Sg721QueryMsg};
 use sg_utils::FEE_DENOM;
 use url::Url;
 
@@ -53,33 +55,48 @@ pub fn instantiate(
     };
 
     // Use default start trading time if not provided
-    let mut collection_info = msg.collection_params.info.clone();
     let offset = factory_params.params.max_trading_offset_secs;
     let start_trading_time = msg
         .collection_params
         .info
         .start_trading_time
         .or_else(|| Some(env.block.time.plus_seconds(offset)));
-    collection_info.start_trading_time = start_trading_time;
+
+    // Convert CollectionExtension to CollectionExtensionMsg
+    let collection_info_extension = CollectionExtensionMsg {
+        description: Some(msg.collection_params.info.description.clone()),
+        image: Some(msg.collection_params.info.image.clone()),
+        external_link: msg.collection_params.info.external_link.clone(),
+        explicit_content: msg.collection_params.info.explicit_content,
+        start_trading_time,
+        royalty_info: msg.collection_params.info.royalty_info.as_ref().map(|ri| {
+            RoyaltyInfoResponse {
+                payment_address: ri.payment_address.to_string(),
+                share: ri.share,
+            }
+        }),
+    };
 
     CONFIG.save(deps.storage, &config)?;
 
     let wasm_msg = WasmMsg::Instantiate {
         code_id: msg.collection_params.code_id,
-        msg: to_json_binary(&Sg721InstantiateMsg {
+        msg: to_json_binary(&Cw721InstantiateMsg {
             name: msg.collection_params.name.clone(),
-            symbol: msg.collection_params.symbol,
-            minter: env.contract.address.to_string(),
-            collection_info,
+            symbol: msg.collection_params.symbol.clone(),
+            minter: Some(env.contract.address.to_string()),
+            creator: Some(msg.collection_params.creator.clone()),
+            collection_info_extension: Some(collection_info_extension),
+            withdraw_address: None,
         })?,
         funds: info.funds,
         admin: Some(
             deps.api
-                .addr_validate(&msg.collection_params.info.creator)?
+                .addr_validate(&msg.collection_params.creator)?
                 .to_string(),
         ),
         label: format!(
-            "SG721-{}-{}",
+            "CW721-{}-{}",
             msg.collection_params.code_id,
             msg.collection_params.name.trim()
         ),
@@ -120,14 +137,17 @@ pub fn execute_mint_sender(
 
     // This is a 1:1 minter, minted at min_mint_price
     // Should mint and then list on the marketplace for secondary sales
-    let collection_info: CollectionInfoResponse = deps.querier.query_wasm_smart(
+    let creator_ownership: Ownership<Addr> = deps.querier.query_wasm_smart(
         collection_address.clone(),
-        &Sg721QueryMsg::CollectionInfo {},
+        &Cw721QueryMsg::GetCreatorOwnership {},
     )?;
-    // allow only sg721 creator address to mint
-    if collection_info.creator != info.sender {
+    // allow only cw721 creator address to mint
+    let creator = creator_ownership
+        .owner
+        .ok_or_else(|| ContractError::Unauthorized("No creator set".to_owned()))?;
+    if creator != info.sender {
         return Err(ContractError::Unauthorized(
-            "Sender is not sg721 creator".to_owned(),
+            "Sender is not cw721 creator".to_owned(),
         ));
     };
 
@@ -145,7 +165,7 @@ pub fn execute_mint_sender(
 
     // Create network fee msgs
     let mint_fee_percent = Decimal::bps(factory_params.mint_fee_bps);
-    let network_fee = config.mint_price.amount * mint_fee_percent;
+    let network_fee = config.mint_price.amount.mul_floor(mint_fee_percent);
     // For the base 1/1 minter, the entire mint price should be Fair Burned
     if network_fee != funds_sent {
         return Err(ContractError::InvalidMintPrice {});
@@ -154,7 +174,7 @@ pub fn execute_mint_sender(
     transfer_funds_to_launchpad_dao(&info, network_fee.u128(), FEE_DENOM, &mut res)?;
 
     // Create mint msgs
-    let mint_msg = Sg721ExecuteMsg::<Extension, Empty>::Mint {
+    let mint_msg = Cw721ExecuteMsg::Mint {
         token_id: increment_token_index(deps.storage)?.to_string(),
         owner: info.sender.to_string(),
         token_uri: Some(token_uri.clone()),
@@ -181,13 +201,16 @@ pub fn execute_update_start_trading_time(
     start_time: Option<Timestamp>,
 ) -> Result<Response, ContractError> {
     nonpayable(&info)?;
-    let sg721_contract_addr = COLLECTION_ADDRESS.load(deps.storage)?;
+    let cw721_contract_addr = COLLECTION_ADDRESS.load(deps.storage)?;
 
-    let collection_info: CollectionInfoResponse = deps.querier.query_wasm_smart(
-        sg721_contract_addr.clone(),
-        &Sg721QueryMsg::CollectionInfo {},
+    let creator_ownership: Ownership<Addr> = deps.querier.query_wasm_smart(
+        cw721_contract_addr.clone(),
+        &Cw721QueryMsg::GetCreatorOwnership {},
     )?;
-    if info.sender != collection_info.creator {
+    let creator = creator_ownership
+        .owner
+        .ok_or_else(|| ContractError::Unauthorized("No creator set".to_owned()))?;
+    if info.sender != creator {
         return Err(ContractError::Unauthorized(
             "Sender is not creator".to_owned(),
         ));
@@ -203,12 +226,24 @@ pub fn execute_update_start_trading_time(
         }
     }
 
-    // execute sg721 contract
+    // execute cw721 contract - update collection info with new start trading time
+    let update_msg: CollectionExtensionMsg<RoyaltyInfoResponse> = CollectionExtensionMsg {
+        description: None,
+        image: None,
+        external_link: None,
+        explicit_content: None,
+        royalty_info: None,
+        start_trading_time: start_time,
+    };
     let msg = WasmMsg::Execute {
-        contract_addr: sg721_contract_addr.to_string(),
-        msg: to_json_binary(
-            &Sg721ExecuteMsg::<Extension, Empty>::UpdateStartTradingTime(start_time),
-        )?,
+        contract_addr: cw721_contract_addr.to_string(),
+        msg: to_json_binary(&Cw721ExecuteMsg::UpdateCollectionInfo {
+            collection_info: cw721::msg::CollectionInfoMsg {
+                name: None,
+                symbol: None,
+                extension: Some(update_msg),
+            },
+        })?,
         funds: vec![],
     };
 
@@ -270,21 +305,32 @@ pub fn query_status(deps: Deps) -> StdResult<StatusResponse> {
     Ok(StatusResponse { status })
 }
 
-// Reply callback triggered from sg721 contract instantiation in instantiate()
+// Reply callback triggered from cw721 contract instantiation in instantiate()
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
     if msg.id != INSTANTIATE_SG721_REPLY_ID {
         return Err(ContractError::InvalidReplyID {});
     }
 
-    let reply = parse_reply_instantiate_data(msg);
+    let result = msg
+        .result
+        .into_result()
+        .map_err(|_| ContractError::InstantiateSg721Error {})?;
+    let data = result
+        .msg_responses
+        .first()
+        .ok_or(ContractError::InstantiateSg721Error {})?
+        .value
+        .clone();
+
+    let reply = parse_instantiate_response_data(&data);
     match reply {
         Ok(res) => {
             let collection_address = res.contract_address;
             COLLECTION_ADDRESS.save(deps.storage, &Addr::unchecked(collection_address.clone()))?;
             Ok(Response::default()
-                .add_attribute("action", "instantiate_sg721_reply")
-                .add_attribute("sg721_address", collection_address))
+                .add_attribute("action", "instantiate_cw721_reply")
+                .add_attribute("cw721_address", collection_address))
         }
         Err(_) => Err(ContractError::InstantiateSg721Error {}),
     }

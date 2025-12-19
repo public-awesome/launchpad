@@ -1,7 +1,21 @@
-pub const OWNER: &str = "admin0001";
-pub const MOCK_AIRDROP_ADDR_STR: &str = "contract3";
-pub const MOCK_MINTER_ADDR_STR: &str = "contract1";
-pub const STARGAZE_WALLET_01: &str = "0xstargaze_wallet_01";
-pub const STARGAZE_WALLET_02: &str = "0xstargaze_wallet_02";
+use cosmwasm_std::Addr;
+use cw_multi_test::IntoAddr;
+
+pub fn owner() -> Addr {
+    "admin0001".into_addr()
+}
+
+pub fn stargaze_wallet_01() -> Addr {
+    "stargaze_wallet_01".into_addr()
+}
+
+pub fn stargaze_wallet_02() -> Addr {
+    "stargaze_wallet_02".into_addr()
+}
+
+pub fn mock_airdrop_addr() -> Addr {
+    "contract4".into_addr()
+}
+
 pub const CONFIG_PLAINTEXT: &str = "My Stargaze address is {wallet} and I want a Winter Pal.";
-pub const NATIVE_DENOM: &str = "ugaze";
+pub const NATIVE_DENOM: &str = "ugas";

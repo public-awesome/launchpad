@@ -13,18 +13,18 @@ use crate::state::{
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     coin, ensure, to_json_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut,
-    Empty, Env, Event, MessageInfo, Order, Reply, ReplyOn, Response, StdError, StdResult, SubMsg,
-    Timestamp, Uint128, WasmMsg,
+    Empty, Env, Event, MessageInfo, Order, Reply, Response, StdError, StdResult, SubMsg, Timestamp,
+    Uint128, WasmMsg,
 };
 use cw2::set_contract_version;
-use cw721_base::Extension;
-use cw_utils::{may_pay, maybe_addr, nonpayable, parse_reply_instantiate_data};
+use cw721::msg::{CollectionExtensionMsg, CollectionInfoMsg, RoyaltyInfoResponse};
+use cw721_base::msg::{ExecuteMsg as Cw721ExecuteMsg, InstantiateMsg as Cw721InstantiateMsg};
+use cw_utils::{may_pay, maybe_addr, nonpayable};
 use nois::{int_in_range, shuffle};
 use semver::Version;
 use sg1::{distribute_mint_fees, transfer_funds_to_launchpad_dao};
 use sg2::query::Sg2QueryMsg;
 use sg4::{MinterConfig, Status, StatusResponse, SudoMsg};
-use sg721::{ExecuteMsg as Sg721ExecuteMsg, InstantiateMsg as Sg721InstantiateMsg};
 use sg_tiered_whitelist_flex::msg::{QueryMsg as TieredWhitelistQueryMsg, StageResponse};
 use sg_utils::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use sg_whitelist_flex::msg::{
@@ -132,9 +132,7 @@ pub fn instantiate(
         factory: factory.clone(),
         collection_code_id: msg.collection_params.code_id,
         extension: ConfigExtension {
-            admin: deps
-                .api
-                .addr_validate(&msg.collection_params.info.creator)?,
+            admin: deps.api.addr_validate(&msg.collection_params.creator)?,
             payment_address: maybe_addr(deps.api, msg.init_msg.payment_address)?,
             base_token_uri,
             num_tokens: msg.init_msg.num_tokens,
@@ -154,8 +152,7 @@ pub fn instantiate(
 
     let token_ids = random_token_list(
         &env,
-        deps.api
-            .addr_validate(&msg.collection_params.info.creator)?,
+        deps.api.addr_validate(&msg.collection_params.creator)?,
         (1..=msg.init_msg.num_tokens).collect::<Vec<u32>>(),
     )?;
     // Save mintable token ids map
@@ -165,25 +162,39 @@ pub fn instantiate(
         token_position += 1;
     }
 
+    // Create collection info extension
+    let collection_info_extension = CollectionExtensionMsg {
+        description: Some(msg.collection_params.info.description.clone()),
+        image: Some(msg.collection_params.info.image.clone()),
+        external_link: msg.collection_params.info.external_link.clone(),
+        explicit_content: msg.collection_params.info.explicit_content,
+        start_trading_time,
+        royalty_info: msg.collection_params.info.royalty_info.as_ref().map(|ri| {
+            RoyaltyInfoResponse {
+                payment_address: ri.payment_address.to_string(),
+                share: ri.share,
+            }
+        }),
+    };
+
     // Submessage to instantiate sg721 contract
-    let submsg = SubMsg {
-        msg: WasmMsg::Instantiate {
+    let submsg = SubMsg::reply_on_success(
+        WasmMsg::Instantiate {
             code_id: msg.collection_params.code_id,
-            msg: to_json_binary(&Sg721InstantiateMsg {
+            msg: to_json_binary(&Cw721InstantiateMsg {
                 name: msg.collection_params.name.clone(),
                 symbol: msg.collection_params.symbol,
-                minter: env.contract.address.to_string(),
-                collection_info,
+                minter: Some(env.contract.address.to_string()),
+                creator: Some(msg.collection_params.creator.clone()),
+                collection_info_extension: Some(collection_info_extension),
+                withdraw_address: None,
             })?,
             funds: info.funds,
             admin: Some(config.extension.admin.to_string()),
             label: format!("SG721-{}", msg.collection_params.name.trim()),
-        }
-        .into(),
-        id: INSTANTIATE_SG721_REPLY_ID,
-        gas_limit: None,
-        reply_on: ReplyOn::Success,
-    };
+        },
+        INSTANTIATE_SG721_REPLY_ID,
+    );
 
     Ok(Response::new()
         .add_attribute("action", "instantiate")
@@ -205,9 +216,22 @@ pub fn execute(
         ExecuteMsg::Purge {} => execute_purge(deps, env, info),
         ExecuteMsg::UpdateMintPrice { price } => execute_update_mint_price(deps, env, info, price),
         ExecuteMsg::UpdateStartTime(time) => execute_update_start_time(deps, env, info, time),
-        ExecuteMsg::UpdateStartTradingTime(time) => {
-            execute_update_start_trading_time(deps, env, info, time)
-        }
+        ExecuteMsg::UpdateCollectionInfo {
+            description,
+            image,
+            external_link,
+            explicit_content,
+            royalty_info,
+        } => execute_update_collection_info(
+            deps,
+            env,
+            info,
+            description,
+            image,
+            external_link,
+            explicit_content,
+            royalty_info,
+        ),
         ExecuteMsg::UpdatePerAddressLimit { per_address_limit } => {
             execute_update_per_address_limit(deps, env, info, per_address_limit)
         }
@@ -225,6 +249,9 @@ pub fn execute(
             execute_update_discount_price(deps, env, info, price)
         }
         ExecuteMsg::RemoveDiscountPrice {} => execute_remove_discount_price(deps, env, info),
+        ExecuteMsg::UpdateStartTradingTime(start_time) => {
+            execute_update_start_trading_time(deps, env, info, start_time)
+        }
     }
 }
 
@@ -672,7 +699,7 @@ fn _execute_mint(
     } else {
         Decimal::bps(factory_params.mint_fee_bps)
     };
-    let network_fee = mint_price.amount * mint_fee;
+    let network_fee = mint_price.amount.mul_floor(mint_fee);
 
     if !network_fee.is_zero() {
         distribute_mint_fees(
@@ -705,7 +732,7 @@ fn _execute_mint(
     };
 
     // Create mint msgs
-    let mint_msg = Sg721ExecuteMsg::<Extension, Empty>::Mint {
+    let mint_msg = Cw721ExecuteMsg::Mint {
         token_id: mintable_token_mapping.token_id.to_string(),
         owner: recipient_addr.to_string(),
         token_uri: Some(format!(
@@ -917,6 +944,52 @@ pub fn execute_update_start_time(
         .add_attribute("start_time", start_time.to_string()))
 }
 
+pub fn execute_update_collection_info(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    description: Option<String>,
+    image: Option<String>,
+    external_link: Option<String>,
+    explicit_content: Option<bool>,
+    royalty_info: Option<RoyaltyInfoResponse>,
+) -> Result<Response, ContractError> {
+    nonpayable(&info)?;
+    let config = CONFIG.load(deps.storage)?;
+    let sg721_contract_addr = SG721_ADDRESS.load(deps.storage)?;
+
+    if info.sender != config.extension.admin {
+        return Err(ContractError::Unauthorized(
+            "Sender is not an admin".to_owned(),
+        ));
+    }
+
+    // execute sg721 contract
+    let msg = WasmMsg::Execute {
+        contract_addr: sg721_contract_addr.to_string(),
+        msg: to_json_binary(&Cw721ExecuteMsg::UpdateCollectionInfo {
+            collection_info: CollectionInfoMsg {
+                name: None,
+                symbol: None,
+                extension: Some(CollectionExtensionMsg {
+                    description,
+                    image,
+                    external_link,
+                    explicit_content,
+                    start_trading_time: None,
+                    royalty_info,
+                }),
+            },
+        })?,
+        funds: vec![],
+    };
+
+    Ok(Response::new()
+        .add_attribute("action", "update_collection_info")
+        .add_attribute("sender", info.sender)
+        .add_message(msg))
+}
+
 pub fn execute_update_start_trading_time(
     deps: DepsMut,
     env: Env,
@@ -961,9 +1034,20 @@ pub fn execute_update_start_trading_time(
     // execute sg721 contract
     let msg = WasmMsg::Execute {
         contract_addr: sg721_contract_addr.to_string(),
-        msg: to_json_binary(&Sg721ExecuteMsg::<Empty, Empty>::UpdateStartTradingTime(
-            start_time,
-        ))?,
+        msg: to_json_binary(&Cw721ExecuteMsg::UpdateCollectionInfo {
+            collection_info: CollectionInfoMsg {
+                name: None,
+                symbol: None,
+                extension: Some(CollectionExtensionMsg {
+                    description: None,
+                    image: None,
+                    external_link: None,
+                    explicit_content: None,
+                    start_trading_time: start_time,
+                    royalty_info: None,
+                }),
+            },
+        })?,
         funds: vec![],
     };
 
@@ -1329,17 +1413,29 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractE
         return Err(ContractError::InvalidReplyID {});
     }
 
-    let reply = parse_reply_instantiate_data(msg);
-    match reply {
-        Ok(res) => {
-            let sg721_address = res.contract_address;
-            SG721_ADDRESS.save(deps.storage, &Addr::unchecked(sg721_address.clone()))?;
-            Ok(Response::default()
-                .add_attribute("action", "instantiate_sg721_reply")
-                .add_attribute("sg721_address", sg721_address))
-        }
-        Err(_) => Err(ContractError::InstantiateSg721Error {}),
-    }
+    let result = msg.result.into_result().map_err(StdError::generic_err)?;
+
+    // Extract contract address from msg_responses
+    let sg721_address = result
+        .msg_responses
+        .iter()
+        .find(|r| r.type_url == "/cosmwasm.wasm.v1.MsgInstantiateContractResponse")
+        .and_then(|r| {
+            // Parse the protobuf response
+            let data = r.value.as_slice();
+            // Skip the length prefix (first byte) and extract the address
+            if data.len() > 1 {
+                String::from_utf8(data[1..].to_vec()).ok()
+            } else {
+                None
+            }
+        })
+        .ok_or_else(|| StdError::generic_err("Failed to extract contract address from reply"))?;
+
+    SG721_ADDRESS.save(deps.storage, &Addr::unchecked(sg721_address.clone()))?;
+    Ok(Response::default()
+        .add_attribute("action", "instantiate_sg721_reply")
+        .add_attribute("sg721_address", sg721_address))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]

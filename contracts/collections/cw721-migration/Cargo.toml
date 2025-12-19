@@ -1,0 +1,24 @@
+[package]
+name        = "cw721-migration"
+authors     = ["Stargaze <contact@stargaze.zone>"]
+description = "CW721 NFT collection contract for migration"
+version     = { workspace = true }
+edition     = { workspace = true }
+homepage    = { workspace = true }
+repository  = { workspace = true }
+license     = { workspace = true }
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+library = []
+
+[dependencies]
+cosmwasm-schema = { workspace = true }
+cosmwasm-std    = { workspace = true }
+cw2             = { workspace = true }
+cw721           = { workspace = true }
+cw721-base      = { workspace = true, features = ["library"] }
+cw-ownable      = { workspace = true }
+thiserror       = { workspace = true }

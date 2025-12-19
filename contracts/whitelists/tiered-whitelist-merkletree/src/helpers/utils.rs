@@ -7,9 +7,7 @@ use url::Url;
 pub fn verify_tree_uri(tree_uri: &str) -> StdResult<()> {
     let res = Url::parse(tree_uri);
     if res.is_err() {
-        return Err(cosmwasm_std::StdError::GenericErr {
-            msg: "Invalid tree uri".to_string(),
-        });
+        return Err(cosmwasm_std::StdError::generic_err("Invalid tree uri"));
     }
     Ok(())
 }

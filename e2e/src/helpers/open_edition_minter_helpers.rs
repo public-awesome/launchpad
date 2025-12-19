@@ -2,6 +2,7 @@ use super::chain::Chain;
 use cosm_orc::orchestrator::error::ProcessError;
 use cosm_orc::orchestrator::{InstantiateResponse, SigningKey};
 use cosmwasm_std::{Coin, Timestamp, Uint128};
+use cw721_migration::CollectionExtension;
 use open_edition_factory::types::NftData;
 use open_edition_factory::{
     msg::{InstantiateMsg, OpenEditionMinterInitMsgExtension},
@@ -11,7 +12,6 @@ use sg2::{
     msg::{CollectionParams, CreateMinterMsg},
     MinterParams,
 };
-use sg721::CollectionInfo;
 
 // contract names used by cosm-orc to register stored code ids / instantiated addresses:
 #[allow(dead_code)]
@@ -106,8 +106,8 @@ pub fn create_minter_msg(
             code_id: code_id.unwrap_or_else(|| chain.orc.contract_map.code_id(SG721_NAME).unwrap()),
             name: "Collection".to_string(),
             symbol: "SYM".to_string(),
-            info: CollectionInfo {
-                creator: creator_addr,
+            creator: creator_addr,
+            info: CollectionExtension {
                 description: "Description".to_string(),
                 image: "https://example.com/image.png".to_string(),
                 start_trading_time,
