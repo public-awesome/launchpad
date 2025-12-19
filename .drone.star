@@ -1,4 +1,4 @@
-rust_version = "rust:1.83"
+rust_version = "rust:1.91.1"
 
 def main(ctx):
     return [
