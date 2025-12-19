@@ -44,7 +44,8 @@
         "denom": {
           "type": "string"
         }
-      }
+      },
+      "additionalProperties": false
     },
     "ConfigExtension": {
       "type": "object",

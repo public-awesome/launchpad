@@ -95,7 +95,8 @@
         "denom": {
           "type": "string"
         }
-      }
+      },
+      "additionalProperties": false
     },
     "Metadata": {
       "description": "OpenSea metadata standard, used by Stargaze marketplace. See [this link](https://docs.opensea.io/docs/metadata-standards) for details.",

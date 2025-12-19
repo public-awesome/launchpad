@@ -1,6 +1,6 @@
 {
   "contract_name": "base-minter",
-  "contract_version": "3.15.0",
+  "contract_version": "3.16.0",
   "idl_version": "1.0.0",
   "instantiate": {
     "$schema": "http://json-schema.org/draft-07/schema#",
@@ -20,6 +20,10 @@
     },
     "additionalProperties": false,
     "definitions": {
+      "Addr": {
+        "description": "A human readable address.\n\nIn Cosmos, this is typically bech32 encoded. But for multi-chain smart contracts no assumptions should be made other than being UTF-8 encoded and of reasonable length.\n\nThis type represents a validated address. It can be created in the following ways 1. Use `Addr::unchecked(input)` 2. Use `let checked: Addr = deps.api.addr_validate(input)?` 3. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?` 4. Deserialize from JSON. This must only be done from JSON that was validated before such as a contract's state. `Addr` must not be used in messages sent by the user because this would result in unvalidated instances.\n\nThis type is immutable. If you really need to mutate it (Really? Are you sure?), create a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String` instance.",
+        "type": "string"
+      },
       "Coin": {
         "type": "object",
         "required": [
@@ -33,19 +37,16 @@
           "denom": {
             "type": "string"
           }
-        }
+        },
+        "additionalProperties": false
       },
-      "CollectionInfo_for_RoyaltyInfoResponse": {
+      "CollectionExtension_for_RoyaltyInfo": {
         "type": "object",
         "required": [
-          "creator",
           "description",
           "image"
         ],
         "properties": {
-          "creator": {
-            "type": "string"
-          },
           "description": {
             "type": "string"
           },
@@ -67,7 +68,7 @@
           "royalty_info": {
             "anyOf": [
               {
-                "$ref": "#/definitions/RoyaltyInfoResponse"
+                "$ref": "#/definitions/RoyaltyInfo"
               },
               {
                 "type": "null"
@@ -91,6 +92,7 @@
         "type": "object",
         "required": [
           "code_id",
+          "creator",
           "info",
           "name",
           "symbol"
@@ -102,8 +104,17 @@
             "format": "uint64",
             "minimum": 0.0
           },
+          "creator": {
+            "description": "Collection creator address",
+            "type": "string"
+          },
           "info": {
-            "$ref": "#/definitions/CollectionInfo_for_RoyaltyInfoResponse"
+            "description": "Collection info extension",
+            "allOf": [
+              {
+                "$ref": "#/definitions/CollectionExtension_for_RoyaltyInfo"
+              }
+            ]
           },
           "name": {
             "type": "string"
@@ -141,8 +152,9 @@
         "type": "string"
       },
       "Empty": {
-        "description": "An empty struct that serves as a placeholder in different places, such as contracts that don't set a custom message.\n\nIt is designed to be expressable in correct JSON and JSON Schema but contains no meaningful data. Previously we used enums without cases, but those cannot represented as valid JSON Schema (https://github.com/CosmWasm/cosmwasm/issues/451)",
-        "type": "object"
+        "description": "An empty struct that serves as a placeholder in different places, such as contracts that don't set a custom message.\n\nIt is designed to be expressible in correct JSON and JSON Schema but contains no meaningful data. Previously we used enums without cases, but those cannot represented as valid JSON Schema (https://github.com/CosmWasm/cosmwasm/issues/451)",
+        "type": "object",
+        "additionalProperties": false
       },
       "MinterParams_for_Nullable_Empty": {
         "description": "Common params for all minters used for storage",
@@ -203,7 +215,7 @@
         },
         "additionalProperties": false
       },
-      "RoyaltyInfoResponse": {
+      "RoyaltyInfo": {
         "type": "object",
         "required": [
           "payment_address",
@@ -211,7 +223,7 @@
         ],
         "properties": {
           "payment_address": {
-            "type": "string"
+            "$ref": "#/definitions/Addr"
           },
           "share": {
             "$ref": "#/definitions/Decimal"

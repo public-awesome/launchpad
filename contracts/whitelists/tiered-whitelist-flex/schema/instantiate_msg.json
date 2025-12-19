@@ -63,7 +63,8 @@
         "denom": {
           "type": "string"
         }
-      }
+      },
+      "additionalProperties": false
     },
     "Member": {
       "type": "object",
