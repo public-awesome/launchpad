@@ -423,9 +423,9 @@ jobs:
   # We also sanity-check the resultant wasm files.
   wasm-build:
     docker:
-      # Use 1.82.0 for wasm builds - Rust 1.91+ enables reference-types by default
+      # Use 1.83.0 for wasm builds - Rust 1.84+ enables reference-types by default
       # which isn't supported by cosmwasm-check's wasmer version
-      - image: rust:1.82.0
+      - image: rust:1.83.0
     steps:
       - checkout:
           path: ~/project
@@ -434,7 +434,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-wasm-rust-no-wasm:1.82.0-{{ checksum "~/project/Cargo.lock" }}
+            - cargocache-wasm-rust-no-wasm:1.83.0-{{ checksum "~/project/Cargo.lock" }}
       - run:
           name: Add wasm32 target
           command: rustup target add wasm32-unknown-unknown
@@ -481,7 +481,7 @@ jobs:
             - /target/debug
             - /target/release
             - /target/tarpaulin
-          key: cargocache-wasm-rust-no-wasm:1.82.0-{{ checksum "~/project/Cargo.lock" }}
+          key: cargocache-wasm-rust-no-wasm:1.83.0-{{ checksum "~/project/Cargo.lock" }}
       - run:
           name: Check wasm contracts
           command: |
